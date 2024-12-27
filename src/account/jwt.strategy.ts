@@ -20,9 +20,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
             jwtFromRequest: (req: Request) => {
                 let token = null;
                 if (req && req.headers) {
-                    token = req.headers['x-buildo-jwt'];
+                    token = req.headers['x-nuvix-jwt'];
                 }
-                return token;
+                return token || ExtractJwt.fromAuthHeaderAsBearerToken;
             },
             ignoreExpiration: false,
             secretOrKey: JWT_SECRET,
@@ -35,9 +35,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         if (!session || !session.$isValid) return null;
         let user = await this.userModel.findById(session.userId);
         if (!user || !user.$isValid) return null;
-        return {
-            ...user.toObject(),
-            session: session
-        }
+        user.password = null
+        user.session = session
+        return user
     }
 }

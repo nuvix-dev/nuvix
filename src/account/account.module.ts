@@ -4,7 +4,7 @@ import { AccountController } from './account.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Identities, IdentitiesSchema, Session, SessionSchema } from './schemas/account.schema';
 import { UserService } from 'src/user/user.service';
-import { User, UserSchema } from 'src/user/schemas/user.schema';
+import { Organization, OrganizationSchema, User, UserSchema } from 'src/user/schemas/user.schema';
 import { JwtModule } from '@nestjs/jwt';
 import { JWT_SECRET } from 'src/Utils/constants';
 import { JwtStrategy } from './jwt.strategy';
@@ -20,6 +20,7 @@ import { JwtStrategy } from './jwt.strategy';
     MongooseModule.forFeature([
       { name: Identities.name, schema: IdentitiesSchema },
       { name: Session.name, schema: SessionSchema },
+      { name: Organization.name, schema: OrganizationSchema },
       {
         name: User.name,
         schema: UserSchema,

@@ -268,6 +268,9 @@ export class Exception extends HttpException {
     /** Schedules */
     static readonly SCHEDULE_NOT_FOUND = 'schedule_not_found';
 
+    /** MISC */
+    static readonly MISSING_REQUIRED_PARMS = 'missing_params';
+
     protected type: string = '';
     protected errors: Record<string, any> = errorCodes;
     protected publish: boolean;
@@ -1335,4 +1338,11 @@ const errorCodes: Record<string, ErrorCode> = {
         'description': 'Target has an invalid provider type.',
         'code': 400,
     },
+
+    /** MISC */
+    [Exception.MISSING_REQUIRED_PARMS]: {
+        'name': Exception.MISSING_REQUIRED_PARMS,
+        'description': 'Missing required parameters.',
+        'code': 400,
+    }
 };

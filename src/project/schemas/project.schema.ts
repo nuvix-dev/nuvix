@@ -18,6 +18,13 @@ export class Project {
   $id: string;
 
   /**
+   * User of the project.
+   * @type {string}
+   */
+  @Prop({ required: true })
+  $userId: string;
+
+  /**
    * Name of the project.
    * @type {string}
    */

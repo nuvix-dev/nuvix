@@ -1,15 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Req, UseGuards } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
+import { Request } from 'express';
+import { JwtAuthGuard } from 'src/account/jwt-auth.guard';
 
 @Controller()
 export class ProjectController {
-  constructor(private readonly projectService: ProjectService) {}
+  constructor(private readonly projectService: ProjectService) { }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() createProjectDto: CreateProjectDto) {
-    return this.projectService.create(createProjectDto);
+  create(@Body() createProjectDto: CreateProjectDto, @Req() req: Request) {
+    return this.projectService.create(createProjectDto, req.user.id);
   }
 
   @Get()

@@ -1,7 +1,7 @@
 
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument, Types } from 'mongoose';
-import { Identities, Session } from 'src/account/schemas/account.schema';
+import { Identities, Session, SessionDocument } from 'src/account/schemas/account.schema';
 
 export type UserDocument = HydratedDocument<User>;
 export type OrganizationDocument = HydratedDocument<Organization>;
@@ -71,6 +71,8 @@ export class User {
    */
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Session' }] })
   sessions: Session[];
+
+  session: SessionDocument;
 }
 
 
@@ -80,6 +82,9 @@ export class User {
 export class Organization {
   @Prop({ required: true })
   $id: string
+
+  @Prop({ required: true })
+  $userId: string
 
   @Prop({ required: true })
   name: string;

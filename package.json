@@ -41,6 +41,8 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/passport-local": "^1.0.38",
     "bcryptjs": "^2.4.3",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
     "crypto": "^1.0.1",
     "graphql": "^16.9.0",
     "mongodb": "^6.11.0",

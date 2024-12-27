@@ -97,11 +97,11 @@ export class AccountService {
     if (!token) throw new Exception(null, 'Please include refreshToken in body to refresh the access token.', 401)
     try {
       let session = await this.sessionModel.findOne({ where: { refreshToken: token } })
-      if (session && session.refreshTokenExpires < new Date()) {
+      if (session && session.refreshTokenExpires > new Date()) {
         session.accessToken = this.jwtService.sign({ _id: session.id })
         await session.save()
         return session.accessToken
-      } else throw new Exception(Exception.USER_SESSION_NOT_FOUND)
+      } else throw new Exception(null, 'Refresh token expired or session invalid.', 403)
     } catch (err: any) {
       if (err instanceof Exception) {
         throw err

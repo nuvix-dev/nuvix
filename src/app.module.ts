@@ -60,7 +60,7 @@ let mongo_url_params = "?retryWrites=true&w=majority&appName=Buildo"
       connectionName: 'server',
       onConnectionCreate: (connection) => {
         console.log(`MongoDB connected to "${connection.host}" database`);
-      }
+      },
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       path: '/graphql',
