@@ -6,12 +6,13 @@ import { UserService } from 'src/user/user.service';
 import emailValidator from 'src/core/validators/common.validator';
 import { Request, Response } from 'express';
 import { InjectModel } from '@nestjs/mongoose';
-import { Session } from './schemas/account.schema';
+import { Session, SessionDocument } from './schemas/account.schema';
 import { Model } from 'mongoose';
 import { User, UserDocument } from 'src/user/schemas/user.schema';
 import { JwtService } from '@nestjs/jwt';
 import { Exception } from 'src/core/extend/exception';
 import { ID } from 'src/core/helper/ID.helper';
+import { CreateEmailSessionDto } from './dto/create-email-session.dto';
 
 @Injectable()
 export class AccountService {
@@ -40,6 +41,25 @@ export class AccountService {
 
   remove(id: number) {
     return `This action removes a #${id} account`;
+  }
+
+  async emailLogin(input: CreateEmailSessionDto, req: Request, headers: Request["headers"]): Promise<SessionDocument> {
+    if (input.email !== undefined && input.password !== undefined && emailValidator(input.email)) {
+      let user = await this.userSerice.findOneByEmail(input.email);
+      if (!user || !user.password) {
+        throw new Exception(Exception.USER_NOT_FOUND)
+      }
+      let isPasswordValid = await this.userSerice.comparePasswords(input.password, user.password);
+      if (isPasswordValid) {
+        let session = await this.createSession(user, req, headers);
+        if (!session.success) {
+          throw new Exception(undefined, "Session creation failed.", 200)
+        }
+        return session.session
+      } else {
+        throw new Exception(Exception.USER_PASSWORD_MISMATCH)
+      }
+    }
   }
 
   async login(loginDto: LoginDto, @Res() res: Response, @Req() req: Request, @Headers() headers: Request["headers"]) {

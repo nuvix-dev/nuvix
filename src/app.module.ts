@@ -102,6 +102,10 @@ let mongo_url_params = "?retryWrites=true&w=majority&appName=Buildo"
             ]
           },
           {
+            path: "account",
+            module: AccountModule
+          },
+          {
             path: "database",
             module: DatabaseModule
           },

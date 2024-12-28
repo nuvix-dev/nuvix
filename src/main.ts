@@ -16,7 +16,7 @@ async function bootstrap() {
   });
 
   app.enableCors({
-    origin: ['https://www.merabestie.com', 'http://localhost:3000', "*"],
+    origin: ['https://www.merabestie.com', 'http://localhost:3000', "https://nuvix-console.vercel.app", "*"],
     methods: 'GET,POST,PUT,DELETE',
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-HTTP-Method-Override', 'Accept'],
   })
