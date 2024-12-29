@@ -1,6 +1,6 @@
 import { All, Controller, Res } from '@nestjs/common';
 
-@Controller('base')
+@Controller()
 export class BaseController {
   constructor() { }
 
