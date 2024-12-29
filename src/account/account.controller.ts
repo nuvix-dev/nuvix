@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Headers, Res, Req, UseFilters, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Headers, Res, Req, UseFilters, UseGuards, Put } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
@@ -9,6 +9,7 @@ import { HttpExceptionFilter } from 'src/core/filters/http-exception.filter';
 import { CreateEmailSessionDto } from './dto/create-email-session.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { UserService } from 'src/user/user.service';
+import { Public } from 'src/Utils/decorator';
 
 @Controller()
 @UseFilters(new HttpExceptionFilter())
@@ -17,17 +18,138 @@ export class AccountController {
     private readonly userService: UserService
   ) { }
 
-  @Post()
-  create(@Body() createAccountDto: CreateAccountDto) {
-    return this.accountService.create(createAccountDto);
-  }
-
   @UseGuards(JwtAuthGuard)
   @Get()
+  /**
+   * [GET]: /account - Retrieves the user information from the request.
+   * @param req - The request object.
+   * @returns The user information.
+   */
   find(@Req() req) {
     return req.user;
   }
 
+  @Public()
+  @Post()
+  /**
+   * [POST]: /account - Creates a new account.
+   * @param createAccountDto - The account information.
+   * @returns The new account.
+   * @throws Exception - If the account already exists.
+   * @throws Exception - If the account creation fails.
+   **/
+  create(@Body() createAccountDto: CreateAccountDto) {
+    return this.accountService.create(createAccountDto);
+  }
+
+  @Delete()
+  /**
+   * @todo: Implement the delete account functionality.
+   * [DELETE]: /account - Deletes the account.
+   * @param req - The request object.
+   * @returns The account information.
+   * @throws Exception - If the account deletion fails.
+   **/
+  delete(@Req() req: Request, @Res() res: Response) {
+    // return this.accountService.delete(req.user.id);
+    return res.clearCookie('a_session').status(200).json({ message: 'Logged out' })
+  }
+
+  @Get('billing-addresses')
+  /**
+   * @todo: Implement the get billing addresses functionality.
+   * [GET]: /account/billing-addresses - Retrieves the billing addresses.
+   * @param req - The request object.
+   * @returns The billing addresses.
+   * @throws Exception - If the billing addresses retrieval fails.
+   * @throws Exception - If the billing addresses are not found.
+   **/
+  async getBillingAddresses(@Req() req: Request, @Res() res: Response) {
+    // Some logic to get the billing addresses.
+    return res.json({
+      total: 0,
+      data: []
+    }).status(200)
+  }
+
+  @Post('billing-addresses')
+  /**
+   * @todo: Implement the create billing address functionality.
+   * [POST]: /account/billing-addresses - Creates a new billing address.
+   * @param req - The request object.
+   * @returns The new billing address.
+   * @throws Exception
+   **/
+  async createBillingAddress(@Req() req: Request, @Res() res: Response, @Body() input: any) {
+    // Some logic to create the billing address.
+    return res.json({}).status(200)
+  }
+
+  @Get('billing-addresses/:id')
+  /**
+   * @todo: Implement the get billing address functionality.
+   * [GET]: /account/billing-addresses/:id - Retrieves the billing address.
+   * @param req - The request object.
+   * @returns The billing address.
+   * @throws Exception - If the billing address retrieval fails.
+   **/
+  async getBillingAddress(@Req() req: Request, @Res() res: Response) {
+    // Some logic to get the billing address.
+    return res.json({}).status(200)
+  }
+
+  @Put('billing-addresses/:id')
+  /**
+   * @todo: Implement the update billing address functionality.
+   * [PUT]: /account/billing-addresses/:id - Updates the billing address.
+   * @param req - The request object.
+   * @returns The updated billing address.
+   * @throws Exception - If the billing address update fails.
+   **/
+  async updateBillingAddress(@Req() req: Request, @Res() res: Response, @Body() input: any) {
+    // Some logic to update the billing address.
+    return res.json({}).status(200)
+  }
+
+  @Delete('billing-addresses/:id')
+  /**
+   * @todo: Implement the delete billing address functionality.
+   * [DELETE]: /account/billing-addresses/:id - Deletes the billing address.
+   * @param req - The request object.
+   * @throws Exception - If the billing address deletion fails.
+   **/
+  async deleteBillingAddress(@Req() req: Request, @Res() res: Response) {
+    // Some logic to delete the billing address.
+    return res.json({}).status(200)
+  }
+
+  @Patch('email')
+  /**
+   * @todo: Implement the update email functionality.
+   * [PATCH]: /account/email - Updates the email.
+   * @param req - The request object.
+   * @param res - The response object.
+   **/
+  async updateEmail(@Req() req: Request, @Res() res: Response, @Body() input: any) {
+    // Some logic to update the email.
+    return res.json({}).status(200)
+  }
+
+  @Get('identities')
+  /**
+   * @todo: Implement the get identities functionality.
+   * [GET]: /account/identities - Retrieves the identities.
+   * @param req - The request object.
+   **/
+  async getIdentities(@Req() req: Request, @Res() res: Response) {
+    // Some logic to get the identities.
+    return res.json({
+      total: 0,
+      data: []
+    }).status(200)
+  }
+
+  @Public()
   @Post('sessions/email')
   async createEmailSession(@Body() createEmailSessionDto: CreateEmailSessionDto, @Req() req, @Res() res: Response) {
     let session = await this.accountService.emailLogin(createEmailSessionDto, req, req.headers)

@@ -1,4 +1,4 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory, Virtual } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
 import {
   Identities,
@@ -12,7 +12,7 @@ export type OrganizationDocument = HydratedDocument<Organization>;
 /**
  * Represents a User in the system.
  */
-@Schema({id: false})
+@Schema({ id: false, toJSON: { virtuals: true }, toObject: { virtuals: true } })
 export class User {
   @Prop({ required: true, unique: true, index: true, type: String })
   id: string;
@@ -81,13 +81,23 @@ export class User {
   @Prop({ type: mongoose.Schema.Types.Mixed })
   prefs: any;
 
+  @Virtual({
+    get(this: User) {
+      return this.id;
+    },
+    set(id: string) {
+      this.id
+    }
+  })
+  $id: string;
+
   session: SessionDocument;
 }
 
 /**
  * Represents an organization with a unique identifier, name, and associated users.
  */
-@Schema({id: false})
+@Schema({ id: false, toJSON: { virtuals: true }, toObject: { virtuals: true } })
 export class Organization {
   @Prop({ required: true, unique: true, index: true, type: String })
   id: string;
@@ -175,6 +185,16 @@ export class Organization {
 
   @Prop({ required: true, type: Boolean, default: false })
   markedForDeletion: boolean;
+
+  @Virtual({
+    get(this: Organization) {
+      return this.id;
+    },
+    set(id: string) {
+      this.id
+    }
+  })
+  $id: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

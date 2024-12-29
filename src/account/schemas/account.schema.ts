@@ -1,4 +1,4 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Prop, Schema, SchemaFactory, Virtual } from '@nestjs/mongoose';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { HydratedDocument, Types } from 'mongoose';
 
@@ -40,7 +40,7 @@ export class Identities {
 /**
  * Represents a user session.
  */
-@Schema({ timestamps: true })
+@Schema({ toJSON: { virtuals: true }, toObject: { virtuals: true }, timestamps: true })
 export class Session {
   /**
    * The ID of the user associated with the session.
@@ -120,6 +120,13 @@ export class Session {
    */
   @Prop({ required: true, type: Date })
   accessTokenExpires: Date;
+
+  @Virtual({
+    get(this: SessionDocument): string {
+      return this._id.toHexString();
+    },
+  })
+  $id: string;
 }
 
 export const IdentitiesSchema = SchemaFactory.createForClass(Identities);
