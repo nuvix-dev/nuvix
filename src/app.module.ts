@@ -14,6 +14,7 @@ import { DatabaseModule } from './database/database.module';
 import { AccountModule } from './account/account.module';
 import { ProjectModule } from './project/project.module';
 import { RouterModule } from '@nestjs/core';
+import { ConsoleModule } from './console/console.module';
 import path from 'path';
 
 config();
@@ -87,9 +88,11 @@ let mongo_url_params = "?retryWrites=true&w=majority&appName=Buildo"
     RouterModule.register([
       {
         path: "v1",
+        module: BaseModule,
         children: [
           {
             path: "console",
+            module: ConsoleModule,
             children: [
               {
                 path: "users",
@@ -111,7 +114,8 @@ let mongo_url_params = "?retryWrites=true&w=majority&appName=Buildo"
           }
         ]
       }
-    ])
+    ]),
+    ConsoleModule
   ],
   controllers: [AppController],
   providers: [AppService],

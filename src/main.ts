@@ -4,7 +4,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { config } from 'dotenv'
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 import { NextFunction, Request, Response } from 'express';
-import cookieParser from 'cookie-parser';
+const cookieParser = require('cookie-parser');
 
 config();
 
