@@ -40,6 +40,8 @@ async function bootstrap() {
       'x-sdk-name',
       'x-sdk-platform',
       'x-sdk-version',
+      'x-nuvix-project',
+      ...((process.env.CORS_HEADERS ?? '').split(',')),
     ],
     exposedHeaders: [
       'X-Nuvix-Session',
