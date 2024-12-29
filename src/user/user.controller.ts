@@ -54,7 +54,7 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Post('organization')
+  @Post('organizations')
   async createOrganization(
     @Req() req: Request,
     @Body() createOrgDto: CreateOrgDto,
@@ -68,7 +68,7 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Get('organization/:id')
+  @Get('organizations/:id')
   async findOneOrganization(@Param('id') id: string, @Req() req: Request) {
     const org = await this.userService.findOneOrganization(id, req.user.id);
     if (org) {
@@ -78,7 +78,7 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Patch('organization/:id')
+  @Patch('organizations/:id')
   async updateOrganization(
     @Param('id') id: string,
     @Req() req,
@@ -88,7 +88,7 @@ export class UserController {
   }
 
   @UseGuards(JwtAuthGuard)
-  @Delete('organization/:id')
+  @Delete('organizations/:id')
   async deleteOrganization(
     @Param('id') id: string,
     @Req() req: Request,

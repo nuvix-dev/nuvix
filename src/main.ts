@@ -3,7 +3,8 @@ import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { config } from 'dotenv'
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
-const cookieParser = require('cookie-parser')
+import { NextFunction, Request, Response } from 'express';
+import cookieParser from 'cookie-parser';
 
 config();
 
@@ -12,17 +13,39 @@ async function bootstrap() {
 
   app.use(cookieParser())
 
-  app.use((req, res, next) => {
+  app.use((req: Request, res: Response, next: NextFunction) => {
     res.header('X-Powered-By', 'Nuvix-Server');
     res.header('Server', 'Nuvix');
     next();
   });
 
   app.enableCors({
-    origin: ['https://www.merabestie.com', 'http://localhost:3000', "https://nuvix-console.vercel.app", "*"],
-    methods: 'GET,POST,PUT,DELETE',
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-HTTP-Method-Override', 'Accept'],
-  })
+    origin: [...(process.env.CORS_ORIGIN ?? '').split(',')],
+    methods: 'GET,PUT,PATCH,POST,DELETE',
+    credentials: true,
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'X-HTTP-Method-Override',
+      'Accept',
+      'X-Nuvix-Project',
+      'X-Nuvix-Key',
+      'X-Nuvix-Locale',
+      'X-Nuvix-Mode',
+      'X-Nuvix-JWT',
+      'X-Nuvix-Response-Format',
+      'X-Nuvix-Timeout',
+      'x-sdk-language',
+      'x-sdk-name',
+      'x-sdk-platform',
+      'x-sdk-version',
+    ],
+    exposedHeaders: [
+      'X-Nuvix-Session',
+      'X-Fallback-Cookies',
+    ],
+  });
 
   app.useGlobalFilters(new HttpExceptionFilter());
   await app.listen(process.env.PORT ?? 3000);
