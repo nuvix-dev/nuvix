@@ -12,7 +12,7 @@ export type OrganizationDocument = HydratedDocument<Organization>;
 /**
  * Represents a User in the system.
  */
-@Schema()
+@Schema({id: false})
 export class User {
   @Prop({ required: true, unique: true, index: true, type: String })
   id: string;
@@ -87,7 +87,7 @@ export class User {
 /**
  * Represents an organization with a unique identifier, name, and associated users.
  */
-@Schema()
+@Schema({id: false})
 export class Organization {
   @Prop({ required: true, unique: true, index: true, type: String })
   id: string;

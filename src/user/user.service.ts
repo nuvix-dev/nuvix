@@ -58,6 +58,7 @@ export class UserService {
       // Create a new Organization document
       input.organizationId = ID.auto(input.organizationId);
       const createdOrg = new this.orgModel({
+        id: input.organizationId,
         ...input,
         $createdAt: new Date(),
         $updatedAt: new Date(),
