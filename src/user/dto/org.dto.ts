@@ -5,7 +5,7 @@ import { PartialType } from "@nestjs/mapped-types"
 export class CreateOrgDto {
     @IsString()
     @IsNotEmpty()
-    id: string
+    organizationId: string
 
     @IsString()
     @IsNotEmpty()

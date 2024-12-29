@@ -14,6 +14,9 @@ export type OrganizationDocument = HydratedDocument<Organization>;
  */
 @Schema()
 export class User {
+  @Prop({ required: true, unique: true, index: true, type: String })
+  id: string;
+
   /**
    * The email address of the user.
    * @type {string}
@@ -75,13 +78,16 @@ export class User {
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Session' }] })
   sessions: Session[];
 
+  @Prop({ type: mongoose.Schema.Types.Mixed })
+  prefs: any;
+
   session: SessionDocument;
 }
 
 /**
  * Represents an organization with a unique identifier, name, and associated users.
  */
-@Schema({ id: false })
+@Schema()
 export class Organization {
   @Prop({ required: true, unique: true, index: true, type: String })
   id: string;
@@ -92,8 +98,83 @@ export class Organization {
   @Prop({ required: true, type: String })
   name: string;
 
-  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] })
-  users: User[];
+  @Prop({ required: true, type: Date })
+  $createdAt: Date;
+
+  @Prop({ required: true, type: Date })
+  $updatedAt: Date;
+
+  @Prop({ type: Number })
+  total: number;
+
+  @Prop({ type: mongoose.Schema.Types.Mixed })
+  prefs: any;
+
+  @Prop({ type: Number })
+  billingBudget: number;
+
+  @Prop({ type: [String] })
+  budgetAlerts: string[];
+
+  @Prop({ type: String })
+  billingPlan: string;
+
+  @Prop({ type: String })
+  billingEmail: string;
+
+  @Prop({ type: String })
+  billingStartDate: string;
+
+  @Prop({ type: String })
+  billingCurrentInvoiceDate: string;
+
+  @Prop({ type: String })
+  billingNextInvoiceDate: string;
+
+  @Prop({ type: String })
+  billingTrialStartDate: string;
+
+  @Prop({ type: Number })
+  billingTrialDays: number;
+
+  @Prop({ type: String })
+  billingAggregationId: string;
+
+  @Prop({ type: String })
+  paymentMethodId: string;
+
+  @Prop({ type: String })
+  billingAddressId: string;
+
+  @Prop({ type: String })
+  backupPaymentMethodId: string;
+
+  @Prop({ type: String })
+  agreementBAA: string;
+
+  @Prop({ type: String })
+  programManagerName: string;
+
+  @Prop({ type: String })
+  programManagerCalendar: string;
+
+  @Prop({ type: String })
+  programDiscordChannelName: string;
+
+  @Prop({ type: String })
+  programDiscordChannelUrl: string;
+
+  @Prop({ type: mongoose.Schema.Types.Mixed })
+  billingLimits: object;
+
+  @Prop({ type: mongoose.Schema.Types.Mixed })
+  billingPlanDowngrade: object;
+
+  @Prop({ type: String })
+  billingTaxId: string;
+
+  @Prop({ required: true, type: Boolean, default: false })
+  markedForDeletion: boolean;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

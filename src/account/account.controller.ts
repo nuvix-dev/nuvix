@@ -8,11 +8,14 @@ import { Exception } from 'src/core/extend/exception';
 import { HttpExceptionFilter } from 'src/core/filters/http-exception.filter';
 import { CreateEmailSessionDto } from './dto/create-email-session.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { UserService } from 'src/user/user.service';
 
 @Controller()
 @UseFilters(new HttpExceptionFilter())
 export class AccountController {
-  constructor(private readonly accountService: AccountService) { }
+  constructor(private readonly accountService: AccountService,
+    private readonly userService: UserService
+  ) { }
 
   @Post()
   create(@Body() createAccountDto: CreateAccountDto) {
@@ -34,6 +37,18 @@ export class AccountController {
     }
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Get('prefs')
+  async getPrefs(@Res() res, @Req() req: Request) {
+    return res.json(await this.userService.getPrefs(req.user.id)).status(200)
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Patch('prefs')
+  async updatePrefs(@Res() res, @Req() req: Request, @Body() input: { prefs: any }) {
+    if (typeof input.prefs === undefined) throw new Exception(Exception.MISSING_REQUIRED_PARMS)
+    return await res.jsone(await this.userService.updatePrefs(req.user.id, input.prefs)).status(200)
+  }
 
   @Get(':id')
   findOne(@Param('id') id: string) {

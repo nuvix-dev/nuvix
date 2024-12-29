@@ -56,12 +56,13 @@ export class UserService {
   async createOrganization(userId: string, input: CreateOrgDto): Promise<Organization> {
     try {
       // Create a new Organization document
-      input.id = ID.auto(input.id);
+      input.organizationId = ID.auto(input.organizationId);
       const createdOrg = new this.orgModel({
         ...input,
+        $createdAt: new Date(),
+        $updatedAt: new Date(),
         userId: userId, // Associate the organization with the user
       });
-      console.log(createdOrg, createdOrg.toObject(), input, userId);
       // Save the new organization to the database
       const savedOrg = await createdOrg.save();
 
@@ -130,6 +131,36 @@ export class UserService {
         throw new Exception(null, "Failed to delete organization."); // Wrap other errors in custom exception
       }
     }
+  }
+
+  /**
+ * Retrieves the preferences of a user by their ID.
+ *
+ * @param userId - The unique identifier of the user.
+ * @returns A promise that resolves to the user's preferences object. If the user has no preferences, an empty object is returned.
+ * @throws Exception if the user is not found.
+ */
+  async getPrefs(userId: string) {
+    let user = await this.userModel.findOne({ id: userId })
+    await user.save()
+    if (!user) throw new Exception(Exception.USER_NOT_FOUND)
+    return user.prefs ?? {}
+  }
+
+  /**
+   * Updates the preferences of a user.
+   *
+   * @param userId - The ID of the user whose preferences are to be updated.
+   * @param prefs - The new preferences to be set for the user.
+   * @returns The updated preferences of the user.
+   * @throws Exception if the user is not found.
+   */
+  async updatePrefs(userId: string, prefs: any) {
+    let user = await this.userModel.findOne({ id: userId })
+    if (!user) throw new Exception(Exception.USER_NOT_FOUND)
+    user.prefs = prefs
+    await user.save()
+    return user.prefs ?? {}
   }
 
   async findOneByEmail(email: string) {

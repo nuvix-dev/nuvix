@@ -59,10 +59,10 @@ export class UserController {
     @Req() req: Request,
     @Body() createOrgDto: CreateOrgDto,
   ) {
-    if (!createOrgDto.id || !createOrgDto.name)
+    if (!createOrgDto.organizationId || !createOrgDto.name)
       throw new Exception(
         Exception.MISSING_REQUIRED_PARMS,
-        'Please provide `id` and `name` fields in body.',
+        'Please provide `organizationId` and `name` fields in body.',
       );
     return await this.userService.createOrganization(req.user.id, createOrgDto);
   }
