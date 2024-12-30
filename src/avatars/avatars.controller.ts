@@ -1,11 +1,18 @@
 import { Controller, Get, Query, Res } from '@nestjs/common';
 import { AvatarsService } from './avatars.service';
 import { Response } from 'express';
-import { createCanvas } from 'canvas';
+import { HttpService } from '@nestjs/axios';
+import { AxiosResponse } from 'axios';
+import { firstValueFrom } from 'rxjs';
+import { Exception } from 'src/core/extend/exception';
+import { PYTHON_API_URL } from 'src/Utils/constants';
 
 @Controller()
 export class AvatarsController {
-  constructor(private readonly avatarsService: AvatarsService) { }
+  constructor(
+    private readonly avatarsService: AvatarsService,
+    private httpService: HttpService
+  ) { }
 
   @Get('initials')
   async generateAvatar(
@@ -15,21 +22,17 @@ export class AvatarsController {
     @Query('background') background: string = '#3498db',
     @Res() res: Response
   ) {
-    const canvas = createCanvas(Math.max(1, Number(width)), Math.max(1, Number(height)));
-    const ctx = canvas.getContext('2d');
-    if (!ctx) throw new Error('Could not get canvas context');
+    try {
+      const url = PYTHON_API_URL + `/avatar/generate?name=${name}&width=${width}&height=${height}&background=${background}`;
+      const response: AxiosResponse<any> = await firstValueFrom(
+        this.httpService.get(url, { responseType: 'arraybuffer' })
+      );
 
-    ctx.fillStyle = background;
-    ctx.fillRect(0, 0, Number(width), Number(height));
-
-    ctx.font = `${Number(width) / 2}px sans-serif`;
-    ctx.fillStyle = 'white';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(this.avatarsService.getInitials(name), Number(width) / 2, Number(height) / 2);
-
-    res.set('Content-Type', 'image/png');
-    canvas.createPNGStream().pipe(res);
-
+      res.set('Content-Type', 'image/png');
+      res.send(Buffer.from(response.data));
+    } catch (error) {
+      console.error('Error fetching image:', error);
+      throw new Exception(Exception.GENERAL_SERVER_ERROR);
+    }
   }
 }
