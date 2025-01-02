@@ -6,6 +6,9 @@ import {
   SessionDocument,
 } from 'src/account/schemas/account.schema';
 import { BaseSchema } from 'src/base/schemas/base.schema';
+import Challenges from './challenge.schema';
+import Token from './token.schema';
+import Authenticator from './authenticator.schema';
 
 export type UserDocument = HydratedDocument<User>;
 export type TargetDocument = HydratedDocument<Target>;
@@ -13,56 +16,91 @@ export type TargetDocument = HydratedDocument<Target>;
 /**
  * Represents a User in the system.
  */
-@Schema({ timestamps: { createdAt: "$createdAt" }, versionKey: false, id: false, toJSON: { virtuals: true }, toObject: { virtuals: true }, virtuals: true, minimize: false })
+@Schema({
+  timestamps: { createdAt: "$createdAt" },
+  versionKey: false,
+  id: false,
+  toJSON: { virtuals: true, minimize: false, useProjection: true },
+  toObject: { virtuals: true, minimize: false, useProjection: true },
+  virtuals: true,
+  minimize: false
+})
 export class User extends BaseSchema {
 
   @Prop({ type: String, unique: true, index: true, required: true })
   id: string;
 
+  @Prop({ required: true, type: String, index: true })
+  name: string;
+
   @Prop({ required: true, unique: true, index: true, type: String })
   email: string;
 
-  @Prop({ type: String, maxlength: 16, match: /^\+\d{1,15}$/ })
+  @Prop({ type: String, maxlength: 16, match: /^\+\d{1,15}$/, index: true })
   phone: string;
 
-  @Prop({ required: true, type: String })
-  password: string;
+  @Prop({ default: false, type: Boolean, index: true })
+  emailVerification: boolean;
 
-  @Prop({ required: true, type: String })
-  name: string;
-
-  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Identities' }] })
-  identities: Identities[];
+  @Prop({ default: false, type: Boolean, index: true })
+  phoneVerification: boolean;
 
   @Prop({ default: false, type: Boolean })
   mfa: boolean;
 
-  @Prop({ default: false, type: Boolean })
-  emailVerification: boolean;
+  @Prop({ type: Boolean, default: true, index: true })
+  status: boolean;
 
-  @Prop({ default: false, type: Boolean })
-  phoneVerification: boolean;
+  @Prop({ type: Boolean, default: false })
+  reset: boolean;
 
-  @Prop({ type: Date, default: new Date() })
-  registration: Date;
+  @Prop({ required: true, type: String })
+  password: string;
 
-  @Prop({ type: Date })
+  @Prop({ type: Date, default: null, index: true })
   passwordUpdate: Date;
 
-  @Prop({ type: Boolean, default: true })
-  status: boolean;
+  @Prop({ type: [String] })
+  passwordHistory: string[];
+
+  @Prop({ type: String })
+  hash: string;
+
+  @Prop({ type: Object })
+  hashOptions: object;
+
+  @Prop({ type: [String] })
+  mfaRecoveryCodes: string[];
 
   @Prop({ type: [String], default: [] })
   labels: string[]
 
-  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Session' }] })
-  sessions: Session[];
+  @Prop({ type: mongoose.Schema.Types.Mixed, default: {} })
+  prefs: { [key: string]: any };
+
+  @Prop({ type: Date, default: new Date(), index: true })
+  registration: Date;
+
+  @Prop({ type: Date, default: null, index: true })
+  accessedAt: Date;
+
+  // @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Identities' }] })
+  // identities: Identities[];
 
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Target' }] })
   targets: Target[];
 
-  @Prop({ type: mongoose.Schema.Types.Mixed, default: {} })
-  prefs: { [key: string]: any };
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Session' }] })
+  sessions: Session[];
+
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Challenges' }] })
+  challenges: Challenges[];
+
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Token' }] })
+  tokens: Token[];
+
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Authenticator' }] })
+  authenticators: Authenticator[];
 
   @Virtual({
     get(this: any) {
@@ -95,22 +133,39 @@ export class User extends BaseSchema {
 }
 
 
-@Schema({ timestamps: { createdAt: "$createdAt" }, versionKey: false, id: false, toJSON: { virtuals: true }, toObject: { virtuals: true }, virtuals: true })
+@Schema({
+  timestamps: { createdAt: "$createdAt" },
+  versionKey: false,
+  id: false,
+  toJSON: { virtuals: true, minimize: false, useProjection: true },
+  toObject: { virtuals: true, minimize: false, useProjection: true },
+  virtuals: true,
+  minimize: false
+})
 export class Target extends BaseSchema {
   @Prop({ type: String, required: true, index: true, unique: true })
   id: string;
 
-  @Prop({ type: String, default: "" })
+  @Prop({ type: String, default: "", index: true })
   name: string;
 
-  @Prop({ type: String, required: true })
+  @Prop({ type: String, index: true })
   userId: string;
 
-  @Prop({ type: mongoose.Types.ObjectId, required: true })
+  @Prop({ type: mongoose.Types.ObjectId, required: true, index: true })
   userInternalId: mongoose.Types.ObjectId;
+
+  @Prop({ type: String, index: true })
+  sessionId: string;
+
+  @Prop({ type: mongoose.Types.ObjectId, required: true, index: true })
+  sessionInternalId: mongoose.Types.ObjectId;
 
   @Prop({ type: String })
   providerId: string | null;
+
+  @Prop({ type: mongoose.Types.ObjectId, index: true })
+  providerInternalId: string | null;
 
   @Prop({ type: String, required: true })
   providerType: string;

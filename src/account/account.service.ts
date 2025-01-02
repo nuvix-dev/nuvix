@@ -1,4 +1,4 @@
-import { Headers, Injectable, Req, Res } from '@nestjs/common';
+import { Headers, Injectable, Logger, Req, Res } from '@nestjs/common';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
@@ -20,6 +20,8 @@ import Permissions from 'src/core/validators/permissions.validator';
 
 @Injectable()
 export class AccountService {
+  private readonly logger = new Logger(AccountService.name)
+
   constructor(
     private readonly userSerice: UserService,
     @InjectModel(Session.name, 'server')
@@ -88,8 +90,8 @@ export class AccountService {
   }
 
 
-  findOne(id: number) {
-    return `This action returns a #${id} account`;
+  findOne(id: string) {
+    return this.userModel.findOne({ id: id });
   }
 
   update(id: number, updateAccountDto: UpdateAccountDto) {
@@ -182,12 +184,12 @@ export class AccountService {
   async refreshToken(token: string) {
     if (!token) throw new Exception(null, 'Please include refreshToken in body to refresh the access token.', 401)
     try {
-      let session = await this.sessionModel.findOne({ where: { refreshToken: token } })
-      if (session && session.refreshTokenExpires > new Date()) {
-        session.accessToken = this.jwtService.sign({ _id: session.id })
-        await session.save()
-        return session.accessToken
-      } else throw new Exception(null, 'Refresh token expired or session invalid.', 403)
+      // let session = await this.sessionModel.findOne({ where: { refreshToken: token } })
+      // if (session && session.refreshTokenExpires > new Date()) {
+      //   session.accessToken = this.jwtService.sign({ _id: session.id })
+      //   await session.accessTokensave()
+      //   return session.
+      // } else throw new Exception(null, 'Refresh token expired or session invalid.', 403)
     } catch (err: any) {
       if (err instanceof Exception) {
         throw err
@@ -204,25 +206,25 @@ export class AccountService {
 
     try {
       let session = await this.sessionModel.create({
-        userAgent: userAgent,
-        ipAddress: ipAddress,
-        location: location,
-        device: device,
         userId: user.id,
-        accessToken: "--",
-        accessTokenExpires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
-        refreshToken: refresh_token,
-        refreshTokenExpires: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30)
+        userInternalId: user._id,
+        provider: 'email',
+        userAgent: userAgent,
+        ip: ipAddress,
+        countryName: location,
+        deviceName: device,
+        secret: "--",
+        expire: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
       })
       if (!session || !session.$isValid) throw new Error("Session validation error.");
-      session.accessToken = this.jwtService.sign({ _id: session.id })
+      session.secret = this.jwtService.sign({ _id: session.id })
       await session.save()
       return {
         success: true,
         session: session
       }
     } catch (e) {
-      console.log('[SESSION:CREATE] ', e)
+      this.logger.error('[SESSION:CREATE] ', e)
       return {
         success: false,
         message: "An error occured while creating session."

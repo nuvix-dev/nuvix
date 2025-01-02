@@ -8,7 +8,15 @@ export type OrganizationDocument = HydratedDocument<Organization>;
 /**
  * Represents an organization with a unique identifier, name, and associated users.
  */
-@Schema({ timestamps: { createdAt: "$createdAt" }, versionKey: false, id: false, toJSON: { virtuals: true }, toObject: { virtuals: true }, virtuals: true, minimize: false })
+@Schema({
+  timestamps: { createdAt: "$createdAt" },
+  versionKey: false,
+  id: false,
+  toJSON: { virtuals: true, minimize: false, useProjection: true },
+  toObject: { virtuals: true, minimize: false, useProjection: true },
+  virtuals: true,
+  minimize: false
+})
 export class Organization extends BaseSchema {
   @Prop({ type: String, unique: true, index: true, required: true })
   id: string;

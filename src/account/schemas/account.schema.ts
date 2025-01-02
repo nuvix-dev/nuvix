@@ -1,6 +1,8 @@
 import { Prop, Schema, SchemaFactory, Virtual } from '@nestjs/mongoose';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { HydratedDocument, Types } from 'mongoose';
+import mongoose, { HydratedDocument, Types } from 'mongoose';
+import { BaseSchema } from 'src/base/schemas/base.schema';
+import { ID } from 'src/core/helper/ID.helper';
 
 export type IdentitiesDocument = HydratedDocument<Identities>;
 export type SessionDocument = HydratedDocument<Session>;
@@ -16,117 +18,178 @@ export type SessionDocument = HydratedDocument<Session>;
  * @property {number} [expiresIn] - The duration (in seconds) for which the access token is valid.
  * @property {string} [tokenType] - The type of the token provided by the identity provider.
  */
-@Schema({ timestamps: true })
-export class Identities {
+@Schema({
+  timestamps: { createdAt: "$createdAt" },
+  versionKey: false,
+  id: false,
+  toJSON: { virtuals: true, minimize: false, useProjection: true },
+  toObject: { virtuals: true, minimize: false, useProjection: true },
+  virtuals: true,
+  minimize: false
+})
+export class Identities extends BaseSchema {
+
+  @Prop({ type: String, required: true, index: true, unique: true, default: ID.unique() })
+  id: string;
+
   @Prop({ required: true, type: String })
+  userId: string;
+
+  @Prop({ required: true, type: String, index: true })
+  userInternalId: string;
+
+  @Prop({ type: String, default: null })
   provider: string;
 
-  @Prop({ required: true, type: String })
-  providerId: string;
+  @Prop({ default: null, type: String })
+  providerUid: string;
 
   @Prop({ type: String })
-  accessToken: string;
+  providerEmail: string;
 
   @Prop({ type: String })
-  refreshToken: string;
+  providerAccessToken: string;
 
-  @Prop({ type: Number })
-  expiresIn: number;
+  @Prop({ type: Date })
+  providerAccessTokenExpiry: Date;
 
   @Prop({ type: String })
-  tokenType: string;
+  providerRefreshToken: string;
+
+  @Prop({ type: mongoose.Schema.Types.Mixed })
+  secrets: any;
+
+  @Virtual({
+    get(this: any) {
+      return this.id;
+    },
+    set(...args) {
+      this.id = args[0];
+    }
+  })
+  $id: string;
+
+  @Virtual({
+    get(this: any) {
+      return this.updatedAt;
+    }
+  })
+  $updatedAt: Date;
 }
 
 /**
  * Represents a user session.
  */
-@Schema({ toJSON: { virtuals: true }, toObject: { virtuals: true }, timestamps: true })
-export class Session {
-  /**
-   * The ID of the user associated with the session.
-   * @type {string}
-   * @memberof Session
-   * @required
-   */
+@Schema({
+  timestamps: { createdAt: "$createdAt" },
+  versionKey: false,
+  id: false,
+  toJSON: { virtuals: true, minimize: false, useProjection: true },
+  toObject: { virtuals: true, minimize: false, useProjection: true },
+  virtuals: true,
+  minimize: false
+})
+export class Session extends BaseSchema {
+  @Prop({ type: String, required: true, index: true, unique: true, default: ID.unique() })
+  id: string;
+
   @Prop({ required: true, type: String })
   userId: string;
 
-  /**
-   * The user agent string of the device used in the session.
-   * @type {string}
-   * @memberof Session
-   * @required
-   */
+  @Prop({ required: true, type: String, index: true })
+  userInternalId: string;
+
+  @Prop({ required: true, type: String })
+  expire: string;
+
+  @Prop({ type: String })
+  provider: string;
+
+  @Prop({ type: String, index: true })
+  providerUid: string;
+
+  @Prop({ type: String })
+  providerAccessToken: string;
+
+  @Prop({ type: String })
+  providerAccessTokenExpiry: string;
+
+  @Prop({ type: String })
+  providerRefreshToken: string;
+
   @Prop({ type: String })
   userAgent: string;
 
-  /**
-   * The IP address from which the session was initiated.
-   * @type {string}
-   * @memberof Session
-   * @required
-   */
   @Prop({ type: String })
-  ipAddress: string;
+  countryCode: string;
 
-  /**
-   * The geographical location of the session.
-   * @type {string}
-   * @memberof Session
-   */
   @Prop({ type: String })
-  location: string;
+  ip: string;
 
-  /**
-   * The type of device used in the session.
-   * @type {string}
-   * @memberof Session
-   */
   @Prop({ type: String })
-  device: string;
+  osCode: string;
 
-  /**
-   * The refresh token for the session.
-   * @type {string}
-   * @memberof Session
-   * @required
-   */
-  @Prop({ required: true, type: String })
-  refreshToken: string;
+  @Prop({ type: String })
+  osName: string;
 
-  /**
-   * The expiration date of the refresh token.
-   * @type {Date}
-   * @memberof Session
-   * @required
-   */
-  @Prop({ required: true, type: Date })
-  refreshTokenExpires: Date;
+  @Prop({ type: String })
+  osVersion: string;
 
-  /**
-   * The access token for the session.
-   * @type {string}
-   * @memberof Session
-   * @required
-   */
-  @Prop({ required: true, type: String })
-  accessToken: string;
+  @Prop({ type: String })
+  clientType: string;
 
-  /**
-   * The expiration date of the access token.
-   * @type {Date}
-   * @memberof Session
-   * @required
-   */
-  @Prop({ required: true, type: Date })
-  accessTokenExpires: Date;
+  @Prop({ type: String })
+  clientCode: string;
+
+  @Prop({ type: String })
+  clientName: string;
+
+  @Prop({ type: String })
+  clientVersion: string;
+
+  @Prop({ type: String })
+  clientEngine: string;
+
+  @Prop({ type: String })
+  clientEngineVersion: string;
+
+  @Prop({ type: String })
+  deviceName: string;
+
+  @Prop({ type: String })
+  deviceBrand: string;
+
+  @Prop({ type: String })
+  deviceModel: string;
+
+  @Prop({ type: String })
+  countryName: string;
+
+  @Prop({ type: [String] })
+  factors: string[];
+
+  @Prop({ type: String })
+  secret: string;
+
+  @Prop({ type: String })
+  mfaUpdatedAt: string;
 
   @Virtual({
-    get(this: SessionDocument): string {
-      return this._id.toHexString();
+    get(this: any) {
+      return this.id;
     },
+    set(...args) {
+      this.id = args[0];
+    }
   })
   $id: string;
+
+  @Virtual({
+    get(this: any) {
+      return this.updatedAt;
+    }
+  })
+  $updatedAt: Date;
 }
 
 export const IdentitiesSchema = SchemaFactory.createForClass(Identities);

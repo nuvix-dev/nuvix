@@ -73,7 +73,7 @@ export class UserService {
         id: ID.unique(),
         userId: user.id,
         orgId: createdOrg.id,
-        role: ['owner'],
+        roles: ['owner'],
         userEmail: user.email,
         userName: user.name,
         invited: new Date(),

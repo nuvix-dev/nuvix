@@ -1,4 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Headers, Res, Req, UseFilters, UseGuards, Put } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Headers,
+  Res,
+  Req,
+  Put,
+  UseInterceptors,
+  ClassSerializerInterceptor
+} from '@nestjs/common';
 import { AccountService } from './account.service';
 import { CreateAccountDto } from './dto/create-account.dto';
 import { UpdateAccountDto } from './dto/update-account.dto';
@@ -6,27 +20,28 @@ import { LoginDto, RefreshDto, RegisterDto } from './dto/auth.dto';
 import { Request, Response } from 'express';
 import { Exception } from 'src/core/extend/exception';
 import { CreateEmailSessionDto } from './dto/create-email-session.dto';
-import { JwtAuthGuard } from './jwt-auth.guard';
 import { UserService } from 'src/user/user.service';
 import { Public } from 'src/Utils/decorator';
+import { AccountModel } from './models/account.model';
 
 @Controller()
+@UseInterceptors(ClassSerializerInterceptor)
 export class AccountController {
   constructor(private readonly accountService: AccountService,
     private readonly userService: UserService
   ) { }
 
-  @UseGuards(JwtAuthGuard)
   @Get()
-  find(@Req() req) {
-    return req.user;
+  async find(@Req() req: Request): Promise<AccountModel> {
+    let user = await this.accountService.findOne(req.user.$id).populate('targets')
+    return new AccountModel(user);
   }
 
   @Public()
   @Post()
-  async create(@Body() createAccountDto: CreateAccountDto) {
+  async create(@Body() createAccountDto: CreateAccountDto): Promise<AccountModel> {
     let account = await this.accountService.create(createAccountDto);
-    return account;
+    return new AccountModel(account);
   }
 
   @Delete()
@@ -36,21 +51,14 @@ export class AccountController {
   }
 
   @Get('prefs')
-  async getPrefs(@Res() res: Response, @Req() req: Request) {
-    return res.json(await this.userService.getPrefs(req.user.id)).status(200)
+  async getPrefs(@Req() req: Request) {
+    return await this.userService.getPrefs(req.user.id)
   }
 
   @Patch('prefs')
-  /**
-   * [PATCH]: /account/prefs - Updates the user preferences.
-   * @param req - The request object.
-   * @param input - The preferences information.
-   * @returns The updated user preferences.
-   * @throws Exception - If the user preferences update fails.
-   */
-  async updatePrefs(@Res() res: Response, @Req() req: Request, @Body() input: { prefs: any }) {
+  async updatePrefs(@Req() req: Request, @Body() input: { prefs: any }) {
     if (typeof input.prefs === undefined) throw new Exception(Exception.MISSING_REQUIRED_PARMS)
-    return res.json(await this.userService.updatePrefs(req.user.id, input.prefs)).status(200)
+    return await this.userService.updatePrefs(req.user.id, input.prefs)
   }
 
   @Get('billing-addresses')
@@ -387,18 +395,10 @@ export class AccountController {
 
   @Public()
   @Post('sessions/email')
-  /**
-   * [POST]: /account/sessions/email - Creates a new email session.
-   * @param createEmailSessionDto - The email session information.
-   * @param req - The request object.
-   * @param res - The response object.
-   * @returns The new email session.
-   * @throws Exception - If the email session creation fails.
-   **/
   async createEmailSession(@Body() createEmailSessionDto: CreateEmailSessionDto, @Req() req, @Res() res: Response) {
     let session = await this.accountService.emailLogin(createEmailSessionDto, req, req.headers)
     if (session) {
-      res.cookie('a_session', session.accessToken, { expires: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), httpOnly: true, sameSite: 'none', secure: true });
+      res.cookie('a_session', session.secret, { expires: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), httpOnly: true, sameSite: 'none', secure: true });
       return res.json(session).status(200);
     }
   }
@@ -570,7 +570,7 @@ export class AccountController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.accountService.findOne(+id);
+    return this.accountService.findOne(id);
   }
 
   @Patch(':id')

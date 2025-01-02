@@ -10,6 +10,8 @@ import {
   Req,
   Res,
   Put,
+  UseInterceptors,
+  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -21,8 +23,11 @@ import { Public } from 'src/Utils/decorator';
 import { InjectModel } from '@nestjs/mongoose';
 import { Organization } from './schemas/organization.schema';
 import { Model } from 'mongoose';
+import OrganizationModel, { OrganizationListModel } from './models/organization.model';
+import { MembershipsListModel } from './models/membership.model';
 
 @Controller()
+@UseInterceptors(ClassSerializerInterceptor)
 export class UserController {
   constructor(
     private readonly userService: UserService,
@@ -50,34 +55,33 @@ export class UserController {
 
 
   @Get('organizations')
-  async findOrganizations(@Req() req: Request, @Res() res: Response) {
+  async findOrganizations(@Req() req: Request): Promise<OrganizationListModel> {
     const orgs = await this.userService.findUserOrganizations(req.user.id);
-    return res.json({
+
+    return new OrganizationListModel({
       total: orgs.length,
       organizations: orgs,
-      teams: orgs // ....
-    }).status(200)
+    })
   }
 
   @Post('organizations')
   async createOrganization(
     @Req() req: Request,
     @Body() createOrgDto: CreateOrgDto,
-    @Res() res: Response,
-  ) {
+  ): Promise<OrganizationModel> {
     if (!createOrgDto.organizationId || !createOrgDto.name)
       throw new Exception(
         Exception.MISSING_REQUIRED_PARMS,
         'Please provide `organizationId` and `name` fields in body.',
       );
-    return res.status(200).json(await this.userService.createOrganization(req.user, createOrgDto));
+    return new OrganizationModel(await this.userService.createOrganization(req.user, createOrgDto));
   }
 
   @Get('organizations/:id')
-  async findOneOrganization(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
+  async findOneOrganization(@Param('id') id: string, @Req() req: Request): Promise<OrganizationModel> {
     const org = await this.userService.findOneOrganization(id, req.user.id);
     if (org) {
-      return res.status(200).json(org);
+      return new OrganizationModel(org);
     }
     throw new Exception(null, 'Organization not found.', 404);
   }
@@ -87,8 +91,8 @@ export class UserController {
     @Param('id') id: string,
     @Req() req,
     @Body() input: UpdateOrgDto,
-  ) {
-    return await this.userService.updateOrganization(id, req.user.id, input);
+  ): Promise<OrganizationModel> {
+    return new OrganizationModel(await this.userService.updateOrganization(id, req.user.id, input));
   }
 
   @Delete('organizations/:id')
@@ -106,8 +110,8 @@ export class UserController {
 
   @Get('organizations/:id/prefs')
   async getOrganizationPrefs(@Param('id') id: string, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    let prefs = await this.orgModel.findOne({ id: id }).select('prefs').exec();
-    return prefs ?? {};
+    let org = await this.orgModel.findOne({ id: id }).select('prefs').exec();
+    return org.prefs ?? {};
   }
 
   @Patch('organizations/:id/prefs')
@@ -401,12 +405,14 @@ export class UserController {
   }
 
   @Get('organizations/:id/memberships')
-  async findOrganizationMemberships(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
+  async findOrganizationMemberships(
+    @Param('id') id: string,
+  ): Promise<MembershipsListModel> {
     const memberships = await this.userService.getOrganizationMembers(id);
-    return res.json({
+    return new MembershipsListModel({
       total: memberships.length,
-      members: memberships
-    }).status(200)
+      memberships: memberships
+    })
   }
 
   @Post('organizations/:id/memberships')
