@@ -4,7 +4,7 @@ import {
   Identities,
   Session,
   SessionDocument,
-} from 'src/account/schemas/account.schema';
+} from 'src/console-account/schemas/account.schema';
 import { BaseSchema } from 'src/base/schemas/base.schema';
 import Challenges from './challenge.schema';
 import Token from './token.schema';

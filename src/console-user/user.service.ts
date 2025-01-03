@@ -10,6 +10,7 @@ import { Exception } from 'src/core/extend/exception';
 import { ID } from 'src/core/helper/ID.helper';
 import { Organization, OrganizationDocument } from './schemas/organization.schema';
 import { Membership } from './schemas/membersip.schema';
+import { UpdateEmailDto } from 'src/console-account/dto/update-account.dto';
 
 @Injectable()
 export class UserService {
@@ -43,6 +44,19 @@ export class UserService {
 
   remove(id: number) {
     return `This action removes a #${id} user`;
+  }
+
+  async updateEmail(userId: string, updateEmailDto: UpdateEmailDto) {
+    let user = await this.userModel.findOne({ id: userId });
+    if (!user) throw new Exception(Exception.USER_NOT_FOUND);
+    let authorized = await this.comparePasswords(updateEmailDto.password, user.password);
+    if (!authorized) throw new Exception(Exception.USER_UNAUTHORIZED);
+    user.email = updateEmailDto.email;
+    /**
+     * @todo Email Verification ...
+     **/
+    await user.save();
+    return user;
   }
 
   async findOneOrganization(id: string, userId: string) {

@@ -5,7 +5,7 @@ import { JWT_SECRET } from 'src/Utils/constants';
 import { Request } from 'express';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { User, UserDocument } from 'src/user/schemas/user.schema';
+import { User, UserDocument } from 'src/console-user/schemas/user.schema';
 import { Session } from './schemas/account.schema';
 
 @Injectable()

@@ -3,7 +3,7 @@ import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { Request } from 'express';
-import { JwtAuthGuard } from 'src/account/jwt-auth.guard';
+import { JwtAuthGuard } from 'src/console-account/jwt-auth.guard';
 
 @Controller()
 export class ProjectController {

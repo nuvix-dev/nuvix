@@ -3,15 +3,15 @@ import { AccountService } from './account.service';
 import { AccountController } from './account.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Identities, IdentitiesSchema, Session, SessionSchema } from './schemas/account.schema';
-import { UserService } from 'src/user/user.service';
-import { Target, TargetSchema, User, UserSchema } from 'src/user/schemas/user.schema';
+import { UserService } from 'src/console-user/user.service';
+import { Target, TargetSchema, User, UserSchema } from 'src/console-user/schemas/user.schema';
 import { JwtModule } from '@nestjs/jwt';
 import { JWT_SECRET } from 'src/Utils/constants';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { JwtStrategy } from './jwt.strategy';
 import { APP_GUARD } from '@nestjs/core';
-import { Organization, OrganizationSchema } from 'src/user/schemas/organization.schema';
-import { Membership, MembershipSchema } from 'src/user/schemas/membersip.schema';
+import { Organization, OrganizationSchema } from 'src/console-user/schemas/organization.schema';
+import { Membership, MembershipSchema } from 'src/console-user/schemas/membersip.schema';
 
 @Module({
   controllers: [AccountController],
@@ -34,4 +34,4 @@ import { Membership, MembershipSchema } from 'src/user/schemas/membersip.schema'
     ], 'server')
   ]
 })
-export class AccountModule { }
+export class ConsoleAccountModule { }

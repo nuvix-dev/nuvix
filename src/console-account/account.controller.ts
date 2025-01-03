@@ -15,14 +15,16 @@ import {
 } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { CreateAccountDto } from './dto/create-account.dto';
-import { UpdateAccountDto } from './dto/update-account.dto';
+import { UpdateAccountDto, UpdateEmailDto } from './dto/update-account.dto';
 import { LoginDto, RefreshDto, RegisterDto } from './dto/auth.dto';
 import { Request, Response } from 'express';
 import { Exception } from 'src/core/extend/exception';
 import { CreateEmailSessionDto } from './dto/create-email-session.dto';
-import { UserService } from 'src/user/user.service';
+import { UserService } from 'src/console-user/user.service';
 import { Public } from 'src/Utils/decorator';
 import { AccountModel } from './models/account.model';
+import { User } from 'src/console-user/decorators';
+import { UserDocument } from 'src/console-user/schemas/user.schema';
 
 @Controller()
 @UseInterceptors(ClassSerializerInterceptor)
@@ -61,46 +63,9 @@ export class AccountController {
     return await this.userService.updatePrefs(req.user.id, input.prefs)
   }
 
-  @Get('billing-addresses')
-  /**
-   * @todo: Implement the get billing addresses functionality.
-   * [GET]: /account/billing-addresses - Retrieves the billing addresses.
-   * @param req - The request object.
-   * @returns The billing addresses.
-   * @throws Exception - If the billing addresses retrieval fails.
-   * @throws Exception - If the billing addresses are not found.
-   **/
-  async getBillingAddresses(@Req() req: Request, @Res() res: Response) {
-    // Some logic to get the billing addresses.
-    return res.json({
-      total: 0,
-      data: []
-    }).status(200)
-  }
-
-  @Post('billing-addresses')
-  /**
-   * @todo: Implement the create billing address functionality.
-   * [POST]: /account/billing-addresses - Creates a new billing address.
-   * @param req - The request object.
-   * @returns The new billing address.
-   * @throws Exception
-   **/
-  async createBillingAddress(@Req() req: Request, @Res() res: Response, @Body() input: any) {
-    // Some logic to create the billing address.
-    return res.json({}).status(200)
-  }
-
   @Patch('email')
-  /**
-   * @todo: Implement the update email functionality.
-   * [PATCH]: /account/email - Updates the email.
-   * @param req - The request object.
-   * @param res - The response object.
-   **/
-  async updateEmail(@Req() req: Request, @Res() res: Response, @Body() input: any) {
-    // Some logic to update the email.
-    return res.json({}).status(200)
+  async updateEmail(@User() user: UserDocument, @Body() updateEmailDto: UpdateEmailDto) {
+    return await this.userService.updateEmail(user.id, updateEmailDto)
   }
 
   @Patch('name')
@@ -196,6 +161,36 @@ export class AccountController {
     **/
   async deleteSessions(@Req() req: Request, @Res() res: Response) {
     // Some logic to delete the sessions.
+    return res.json({}).status(200)
+  }
+
+  @Get('billing-addresses')
+  /**
+   * @todo: Implement the get billing addresses functionality.
+   * [GET]: /account/billing-addresses - Retrieves the billing addresses.
+   * @param req - The request object.
+   * @returns The billing addresses.
+   * @throws Exception - If the billing addresses retrieval fails.
+   * @throws Exception - If the billing addresses are not found.
+   **/
+  async getBillingAddresses(@Req() req: Request, @Res() res: Response) {
+    // Some logic to get the billing addresses.
+    return res.json({
+      total: 0,
+      data: []
+    }).status(200)
+  }
+
+  @Post('billing-addresses')
+  /**
+   * @todo: Implement the create billing address functionality.
+   * [POST]: /account/billing-addresses - Creates a new billing address.
+   * @param req - The request object.
+   * @returns The new billing address.
+   * @throws Exception
+   **/
+  async createBillingAddress(@Req() req: Request, @Res() res: Response, @Body() input: any) {
+    // Some logic to create the billing address.
     return res.json({}).status(200)
   }
 

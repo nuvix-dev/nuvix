@@ -5,13 +5,13 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { GraphQLModule } from '@nestjs/graphql';
 import { DirectiveLocation, GraphQLDirective } from 'graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserModule } from './user/user.module';
+import { UserModule } from './console-user/user.module';
 import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { MongooseModule } from '@nestjs/mongoose';
 import { config } from 'dotenv';
 import { BaseModule } from './base/base.module';
 import { DatabaseModule } from './database/database.module';
-import { AccountModule } from './account/account.module';
+import { ConsoleAccountModule } from './console-account/account.module';
 import { ProjectModule } from './project/project.module';
 import { RouterModule } from '@nestjs/core';
 import { ConsoleModule } from './console/console.module';
@@ -81,7 +81,7 @@ let mongo_url_params = "?retryWrites=true&w=majority&appName=Buildo"
     }),
     BaseModule,
     UserModule,
-    AccountModule,
+    ConsoleAccountModule,
     DatabaseModule,
     ProjectModule,
     RouterModule.register([
@@ -99,7 +99,7 @@ let mongo_url_params = "?retryWrites=true&w=majority&appName=Buildo"
               },
               {
                 path: "account",
-                module: AccountModule
+                module: ConsoleAccountModule
               }
             ]
           },

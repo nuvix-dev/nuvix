@@ -3,7 +3,7 @@ import { ProjectService } from './project.service';
 import { ProjectController } from './project.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Project, ProjectSchema } from './schemas/project.schema';
-import { Organization, OrganizationSchema } from 'src/user/schemas/organization.schema';
+import { Organization, OrganizationSchema } from 'src/console-user/schemas/organization.schema';
 
 @Module({
   controllers: [ProjectController],

@@ -5,7 +5,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Project } from './schemas/project.schema';
 import { Model } from 'mongoose';
 import { Exception } from 'src/core/extend/exception';
-import { Organization } from 'src/user/schemas/organization.schema';
+import { Organization } from 'src/console-user/schemas/organization.schema';
 
 @Injectable()
 export class ProjectService {
