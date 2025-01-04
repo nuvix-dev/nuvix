@@ -4,6 +4,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { Request } from 'express';
 import { JwtAuthGuard } from 'src/console-account/jwt-auth.guard';
+import { ProjectListModel, ProjectModel } from './models/project.model';
 
 @Controller()
 export class ProjectController {
@@ -11,13 +12,15 @@ export class ProjectController {
 
   @UseGuards(JwtAuthGuard)
   @Post()
-  create(@Body() createProjectDto: CreateProjectDto, @Req() req: Request) {
-    return this.projectService.create(createProjectDto, req.user.id);
+  async create(@Body() createProjectDto: CreateProjectDto, @Req() req: Request): Promise<ProjectModel> {
+    const project = await this.projectService.create(createProjectDto)
+    return new ProjectModel(project);
   }
 
   @Get()
-  async findAll() {
-    return await this.projectService.findAll();
+  async findAll(): Promise<ProjectListModel> {
+    let data = await this.projectService.findAll();
+    return new ProjectListModel(data);
   }
 
   @Get(':id')

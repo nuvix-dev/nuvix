@@ -7,7 +7,7 @@ import { DataSource } from 'typeorm';
 export class AppController {
   constructor(
     private readonly appService: AppService,
-    @InjectDataSource('default') private readonly dataSource: DataSource
+    // @InjectDataSource('default') private readonly dataSource: DataSource
   ) { }
 
   @Get()

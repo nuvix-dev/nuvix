@@ -18,6 +18,7 @@ import { ConsoleModule } from './console/console.module';
 import { AvatarsModule } from './avatars/avatars.module';
 import { UsersModule } from './users/users.module';
 import { AccountModule } from './account/account.module';
+import { TeamsModule } from './teams/teams.module';
 
 config();
 
@@ -39,25 +40,10 @@ class CustomLogger {
 
 const customLogger = new CustomLogger();
 
-let mongo_url_params = "?retryWrites=true&w=majority&appName=Buildo"
+let mongo_url_params = "?retryWrites=true&w=majority&appName=Nuvix"
 
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-      type: 'postgres',
-      logging: true,
-      host: process.env.DB_HOST || 'localhost',
-      username: process.env.DB_USER,
-      password: process.env.DB_PASSWORD,
-      // database: process.env.DB_NAME,
-      autoLoadEntities: true,
-      entities: [],
-      ssl: true,
-      synchronize: false,
-      extra: {
-        timezone: 'Z'
-      }
-    }),
     MongooseModule.forRoot(`${process.env.MONGO_URL}/server${mongo_url_params}`, {
       connectionName: 'server',
       onConnectionCreate: (connection) => {
@@ -114,6 +100,10 @@ let mongo_url_params = "?retryWrites=true&w=majority&appName=Buildo"
             module: AccountModule
           },
           {
+            path: "teams",
+            module: TeamsModule
+          },
+          {
             path: "users",
             module: UsersModule
           },
@@ -132,6 +122,7 @@ let mongo_url_params = "?retryWrites=true&w=majority&appName=Buildo"
         ]
       }
     ]),
+    TeamsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

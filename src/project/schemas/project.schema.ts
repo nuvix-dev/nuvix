@@ -3,6 +3,7 @@ import mongoose, { HydratedDocument } from 'mongoose';
 import { BaseSchema } from 'src/base/schemas/base.schema';
 import { Platform } from './platform.schema';
 import { Key } from './key.schema';
+import { Webhook } from './webhook.schema';
 
 export type ProjectDocument = HydratedDocument<Project>;
 
@@ -17,7 +18,18 @@ type ProjectSmtp = {}
 
 type ProjectTemplate = {}
 
-type ProjectAuth = {}
+export interface AuthConfig {
+  limit: number;
+  maxSessions: number;
+  passwordHistory: number;
+  passwordDictionary: boolean;
+  duration: number;
+  personalDataCheck: boolean;
+  mockNumbers: string[];
+  sessionAlerts: boolean;
+  [key: string]: any;
+}
+
 
 type ProjectOAuthProvider = {}
 
@@ -109,8 +121,8 @@ export class Project extends BaseSchema {
   })
   templates: any[];
 
-  @Prop({ required: false, type: [], default: [] })
-  auths: ProjectAuth[];
+  @Prop({ required: false, type: mongoose.Schema.Types.Mixed, default: [] })
+  auths: AuthConfig[];
 
   @Prop({ required: false, type: [], default: [] })
   oAuthProviders: ProjectOAuthProvider[];
@@ -118,14 +130,24 @@ export class Project extends BaseSchema {
   @Prop({ required: false, type: mongoose.Types.ObjectId, index: true, ref: 'Platform' })
   platforms: Platform[];
 
-  @Prop({ required: false, type: String, maxlength: 16384 })
-  webhooks: string[];
+  @Prop({ required: false, type: mongoose.Types.ObjectId, ref: 'Webhook'})
+  webhooks: Webhook[];
 
   @Prop({ required: false, type: mongoose.Types.ObjectId, index: true, ref: 'Key' })
   keys: Key[];
 
   @Prop({ required: false, type: String, maxlength: 16384 })
   search: string[];
+
+  @Virtual({
+    get(this: any) {
+      return this.orgId;
+    },
+    set(this: any, teamId: string) {
+      this.orgId = teamId;
+    }
+  })
+  teamId: string;
 
   @Virtual({
     get(this: any) {

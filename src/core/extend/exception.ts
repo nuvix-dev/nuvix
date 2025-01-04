@@ -271,6 +271,13 @@ export class Exception extends HttpException {
     /** MISC */
     static readonly MISSING_REQUIRED_PARMS = 'missing_params';
 
+    static fromValidation(error: any): Exception {
+        const messages = Object.values(error.errors)
+            .map((val: any) => val.message)
+            .join(', ');
+        return new Exception(null, `Validation failed: ${messages}`);
+    }
+
     protected type: string = '';
     protected errors: Record<string, any> = errorCodes;
     protected publish: boolean;

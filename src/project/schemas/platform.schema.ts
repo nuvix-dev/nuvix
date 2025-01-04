@@ -35,9 +35,6 @@ export class Platform extends BaseSchema {
   @Prop({ required: false, type: String })
   hostname: string;
 
-  override $permissions: string[];
-  override $deletedAt: Date;
-
   @Virtual({
     get(this: any) {
       return this.id;

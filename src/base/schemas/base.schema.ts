@@ -3,7 +3,7 @@ import { ID } from "src/core/helper/ID.helper";
 
 
 
-export class BaseSchema {
+export abstract class BaseSchema {
 
   @Prop({ type: String, index: true, unique: true, default: ID.unique() })
   id: string;

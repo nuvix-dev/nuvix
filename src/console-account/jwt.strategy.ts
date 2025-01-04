@@ -32,7 +32,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
 
   async validate(payload: any) {
     if (!payload) return null;
-    const session = await this.sessionModel.findById(payload._id);
+    const session = await this.sessionModel.findOne({ id: payload._id });
     if (!session || !session.$isValid) return null;
     const user = await this.userModel.findOne({ id: session.userId }).select('-password');
     if (!user) return null;

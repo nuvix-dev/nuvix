@@ -1,7 +1,9 @@
 import { Exclude, Expose } from "class-transformer";
+import mongoose, { Document } from "mongoose";
+import { dataToObject } from "../helper/model.helper";
 
 @Exclude()
-export default class BaseModel {
+export default abstract class BaseModel {
   /**
  *  ID.
  */
@@ -15,6 +17,24 @@ export default class BaseModel {
    */
   @Expose() $updatedAt: Date;
 
-  @Exclude() _id: string;
+  @Exclude() _id: mongoose.Types.ObjectId | any;
   @Exclude() id: string;
+
+  constructor(doc?: any) {
+    if (doc) {
+      Object.assign(this, dataToObject(doc));
+    }
+  }
+}
+
+
+interface BaseListModelInterface<T> {
+  fromDocuments(docs: Document[]): T[];
+}
+
+@Exclude()
+export abstract class BaseListModel {
+  @Expose() total: number;
+
+  constructor() { }
 }

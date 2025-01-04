@@ -1,32 +1,56 @@
-import { IsString, IsNotEmpty, IsArray, ValidateNested, ArrayMinSize } from 'class-validator';
+import { IsString, IsNotEmpty, IsArray, ValidateNested, ArrayMinSize, IsEmpty, IsOptional } from 'class-validator';
 import { Type } from 'class-transformer';
-
-export class ServiceDto {
-    @IsString()
-    @IsNotEmpty()
-    name: string;
-
-    @IsString()
-    @IsNotEmpty()
-    status: string;
-}
 
 export class CreateProjectDto {
     @IsString()
     @IsNotEmpty()
-    id: string;
+    projectId: string;
 
-    @IsString()
     @IsNotEmpty()
+    @IsString()
     name: string;
 
     @IsString()
     @IsNotEmpty()
-    orgnizationId: string;
+    teamId: string;
 
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => ServiceDto)
-    @ArrayMinSize(0)
-    services: ServiceDto[];
+    @IsString()
+    @IsNotEmpty()
+    region: string;
+
+    @IsOptional()
+    @IsString()
+    description: string;
+
+    @IsOptional()
+    @IsString()
+    logo: string;
+
+    @IsOptional()
+    @IsString()
+    url: string;
+
+    @IsOptional()
+    @IsString()
+    legalName: string;
+
+    @IsOptional()
+    @IsString()
+    legalCountry: string;
+
+    @IsOptional()
+    @IsString()
+    legalState: string;
+
+    @IsOptional()
+    @IsString()
+    legalCity: string;
+
+    @IsOptional()
+    @IsString()
+    legalAddress: string;
+
+    @IsOptional()
+    @IsString()
+    legalTaxId: string;
 }

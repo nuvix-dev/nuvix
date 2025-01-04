@@ -390,11 +390,11 @@ export class AccountController {
 
   @Public()
   @Post('sessions/email')
-  async createEmailSession(@Body() createEmailSessionDto: CreateEmailSessionDto, @Req() req, @Res() res: Response) {
+  async createEmailSession(@Body() createEmailSessionDto: CreateEmailSessionDto, @Req() req, @Res({ passthrough: true }) res: Response) {
     let session = await this.accountService.emailLogin(createEmailSessionDto, req, req.headers)
     if (session) {
       res.cookie('a_session', session.secret, { expires: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), httpOnly: true, sameSite: 'none', secure: true });
-      return res.json(session).status(200);
+      return session.toObject()
     }
   }
 
