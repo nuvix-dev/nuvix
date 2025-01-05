@@ -13,3 +13,13 @@ export class UpdateEmailDto {
   @IsString()
   password: string;
 }
+
+export class UpdatePasswordDto {
+  @IsNotEmpty()
+  @IsString()
+  password: string;
+
+  @IsNotEmpty()
+  @IsString()
+  oldPassword: string;
+}

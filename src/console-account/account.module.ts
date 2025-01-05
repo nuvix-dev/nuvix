@@ -20,6 +20,8 @@ import { BillingAddress, BillingAddressSchema } from 'src/console-user/schemas/b
 import Challenges, { ChallengesSchema } from 'src/console-user/schemas/challenge.schema';
 import { PaymentMethod, PaymentMethodSchema } from 'src/console-user/schemas/payment.schema';
 import Token, { TokenSchema } from 'src/console-user/schemas/token.schema';
+import { Invoice, InvoiceSchema } from 'src/console-user/schemas/invoce.schema';
+import { Log, LogSchema } from 'src/console-user/schemas/log.schema';
 
 @Module({
   controllers: [AccountController],
@@ -45,6 +47,8 @@ import Token, { TokenSchema } from 'src/console-user/schemas/token.schema';
       { name: Challenges.name, schema: ChallengesSchema },
       { name: PaymentMethod.name, schema: PaymentMethodSchema },
       { name: Token.name, schema: TokenSchema },
+      { name: Invoice.name, schema: InvoiceSchema },
+      { name: Log.name, schema: LogSchema },
     ], 'server')
   ]
 })

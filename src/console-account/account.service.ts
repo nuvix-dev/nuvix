@@ -6,8 +6,8 @@ import { UserService } from 'src/console-user/user.service';
 import emailValidator from 'src/core/validators/common.validator';
 import { Request, Response } from 'express';
 import { InjectModel } from '@nestjs/mongoose';
-import { Session, SessionDocument } from './schemas/account.schema';
-import { Model } from 'mongoose';
+import { Identities, Session, SessionDocument } from './schemas/account.schema';
+import mongoose, { Model } from 'mongoose';
 import { Target, User, UserDocument } from 'src/console-user/schemas/user.schema';
 import { JwtService } from '@nestjs/jwt';
 import { Exception } from 'src/core/extend/exception';
@@ -18,6 +18,10 @@ import Role from 'src/core/helper/role.helper';
 import { validate } from 'class-validator';
 import Permissions from 'src/core/validators/permissions.validator';
 import { BillingAddress } from 'src/console-user/schemas/billing.schema';
+import { CreateBillingAddressDto, UpdateBillingAddressDto } from './dto/billing.dto';
+import { Organization } from 'src/console-user/schemas/organization.schema';
+import { Invoice } from 'src/console-user/schemas/invoce.schema';
+import { Log } from 'src/console-user/schemas/log.schema';
 
 @Injectable()
 export class AccountService {
@@ -25,14 +29,14 @@ export class AccountService {
 
   constructor(
     private readonly userSerice: UserService,
-    @InjectModel(Session.name, 'server')
-    private readonly sessionModel: Model<Session>,
-    @InjectModel(User.name, 'server')
-    private readonly userModel: Model<User>,
-    @InjectModel(Target.name, 'server')
-    private readonly targetModel: Model<Target>,
-    @InjectModel(BillingAddress.name, 'server')
-    private readonly billingModel: Model<BillingAddress>,
+    @InjectModel(Session.name, 'server') private readonly sessionModel: Model<Session>,
+    @InjectModel(User.name, 'server') private readonly userModel: Model<User>,
+    @InjectModel(Organization.name, 'server') private readonly orgModel: Model<Organization>,
+    @InjectModel(Invoice.name, 'server') private readonly invoiceModel: Model<Invoice>,
+    @InjectModel(Target.name, 'server') private readonly targetModel: Model<Target>,
+    @InjectModel(Identities.name, 'server') private readonly identityModel: Model<Identities>,
+    @InjectModel(BillingAddress.name, 'server') private readonly billingModel: Model<BillingAddress>,
+    @InjectModel(Log.name, 'server') private readonly logModel: Model<Log>,
     private jwtService: JwtService
   ) { }
 
@@ -92,12 +96,182 @@ export class AccountService {
     }
   }
 
+  /**
+   * Update the name of a user
+   */
+  async updateName(userId: string, name: string) {
+    let user = await this.userModel.findOne({ id: userId })
+    if (!user) {
+      throw new Exception(Exception.USER_NOT_FOUND)
+    }
+    user.name = name
+    await user.save()
+    return user
+  }
+
+  /**
+   * Update the password of a user
+   */
+  async updatePassword(userId: string, password: string, oldPassword: string) {
+    let user = await this.userModel.findOne({ id: userId })
+    if (!user) {
+      throw new Exception(Exception.USER_NOT_FOUND)
+    }
+    let isPasswordValid = await this.userSerice.comparePasswords(oldPassword, user.password);
+    if (!isPasswordValid) {
+      throw new Exception(Exception.USER_PASSWORD_MISMATCH)
+    }
+    user.password = await this.userSerice.hashPassword(password)
+    await user.save()
+    return user;
+  }
+
+  /**
+   * Get Session by id
+   */
+  async getSession(id: string) {
+    let session = await this.sessionModel.findOne({ id })
+    if (!session) {
+      throw new Exception(Exception.USER_SESSION_NOT_FOUND)
+    }
+    return session
+  }
+
+  /**
+   * Get all the billing addresses of a user
+   */
   async getBillingAddresses(userId: string) {
     let addresses = await this.billingModel.find({ userId })
     return {
       total: addresses.length,
       billingAddresses: addresses
     }
+  }
+
+  /**
+   * Create a billing address for a user
+   */
+  async createBillingAddress(input: CreateBillingAddressDto, userId: string) {
+    try {
+      let address = await this.billingModel.create({
+        id: ID.unique(),
+        userId: userId,
+        country: input.country,
+        streetAddress: input.streetAddress,
+        city: input.city,
+        state: input.state,
+        postalCode: input.postalCode,
+        addressLine2: input.addressLine2
+      })
+      await address.save()
+      return address
+    } catch (e) {
+      // TODO: Log the error
+      throw new Exception(Exception.GENERAL_SERVER_ERROR)
+    }
+  }
+
+  /**
+   * Get a billing address for a user
+   */
+  async getBillingAddress(id: string) {
+    let address = await this.billingModel.findOne({ id })
+    if (!address) {
+      throw new Exception(Exception.GENERAL_NOT_FOUND)
+    }
+    return address
+  }
+
+  /**
+   * Update a billing address for a user
+   */
+  async updateBillingAddress(id: string, input: UpdateBillingAddressDto) {
+    let address = await this.billingModel.findOne({ id })
+    if (!address) {
+      throw new Exception(Exception.GENERAL_NOT_FOUND)
+    }
+
+    try {
+      if (input.country !== undefined) address.country = input.country;
+      if (input.streetAddress !== undefined) address.streetAddress = input.streetAddress;
+      if (input.city !== undefined) address.city = input.city;
+      if (input.state !== undefined) address.state = input.state;
+      if (input.postalCode !== undefined) address.postalCode = input.postalCode;
+      if (input.addressLine2 !== undefined) address.addressLine2 = input.addressLine2;
+
+      await address.save();
+      return address;
+    } catch (e) {
+      throw new Exception(Exception.UPDATE_FAILED)
+    }
+  }
+
+  /**
+   * Delete a billing address for a user
+   */
+  async deleteBillingAddress(id: string) {
+    let address = await this.billingModel.findOneAndDelete({ id })
+    if (!address) {
+      throw new Exception(Exception.GENERAL_NOT_FOUND)
+    }
+    return {} // Return empty object
+  }
+
+  /**
+   * Get Identities of a user
+   */
+  async getIdentities(userInternalId: mongoose.Types.ObjectId) {
+    let identities = await this.identityModel.find({ userInternalId })
+    return {
+      total: identities.length,
+      identities: identities
+    }
+  }
+
+  /**
+   * Delete an identity of a user
+   */
+  async deleteIdentity(id: string) {
+    let identity = await this.identityModel.findOneAndDelete({ id })
+    if (!identity) {
+      throw new Exception(Exception.GENERAL_NOT_FOUND)
+    }
+    return {} // Return empty object
+  }
+
+  /**
+   * List all the Invoices of a user
+   */
+  async getInvoices(userInternalId: mongoose.Types.ObjectId) {
+    let invoices = await this.invoiceModel.find({ userInternalId })
+    return {
+      total: invoices.length,
+      invoices
+    }
+  }
+
+  /**
+   * Get Logs of a user
+   */
+  async getLogs(userInternalId: mongoose.Types.ObjectId) {
+    let logs = await this.logModel.find({ userInternalId })
+    return {
+      total: logs.length,
+      logs: logs
+    }
+  }
+
+  /**
+   * Update MFA of a user
+   */
+  async updateMfa(id: mongoose.Types.ObjectId, mfa: boolean) {
+    let user = await this.userModel.findOne({ _id: id })
+    if (!user) {
+      throw new Exception(Exception.USER_NOT_FOUND)
+    }
+    user.mfa = mfa
+    await user.save()
+    return user
   }
 
   findOne(id: string) {

@@ -15,6 +15,7 @@ export class Exception extends HttpException {
     static readonly GENERAL_ARGUMENT_INVALID = 'general_argument_invalid';
     static readonly GENERAL_QUERY_LIMIT_EXCEEDED = 'general_query_limit_exceeded';
     static readonly GENERAL_QUERY_INVALID = 'general_query_invalid';
+    static readonly GENERAL_NOT_FOUND = 'general_not_found';
     static readonly GENERAL_ROUTE_NOT_FOUND = 'general_route_not_found';
     static readonly GENERAL_CURSOR_NOT_FOUND = 'general_cursor_not_found';
     static readonly GENERAL_SERVER_ERROR = 'general_server_error';
@@ -270,6 +271,11 @@ export class Exception extends HttpException {
 
     /** MISC */
     static readonly MISSING_REQUIRED_PARMS = 'missing_params';
+    static readonly INVALID_PARAMS = 'invalid_params';
+    static readonly UPDATE_FAILED = 'update_failed';
+    static readonly DELETE_FAILED = 'delete_failed';
+    static readonly CREATE_FAILED = 'create_failed';
+    static readonly INVALID_OPERATION = 'invalid_operation';
 
     static fromValidation(error: any): Exception {
         const messages = Object.values(error.errors)
@@ -403,6 +409,11 @@ const errorCodes: Record<string, ErrorCode> = {
         name: Exception.GENERAL_QUERY_INVALID,
         description: 'The query syntax is invalid. Please check the query and try again.',
         code: 400,
+    },
+    [Exception.GENERAL_NOT_FOUND]: {
+        name: Exception.GENERAL_NOT_FOUND,
+        description: 'The requested resource could not be found.',
+        code: 404,
     },
     [Exception.GENERAL_ROUTE_NOT_FOUND]: {
         name: Exception.GENERAL_ROUTE_NOT_FOUND,
@@ -1351,5 +1362,15 @@ const errorCodes: Record<string, ErrorCode> = {
         'name': Exception.MISSING_REQUIRED_PARMS,
         'description': 'Missing required parameters.',
         'code': 400,
-    }
+    },
+    [Exception.UPDATE_FAILED]: {
+        'name': Exception.UPDATE_FAILED,
+        'description': 'The update operation failed. Please verify your input data and ensure you have the necessary permissions to perform this update.',
+        'code': 400,
+    },
+    [Exception.DELETE_FAILED]: {
+        'name': Exception.DELETE_FAILED,
+        'description': 'The delete operation failed. Please verify your input data and ensure you have the necessary permissions to perform this delete.',
+        'code': 400,
+    },
 };

@@ -116,10 +116,6 @@ let mongo_url_params = "?retryWrites=true&w=majority&appName=Nuvix"
             module: ProjectModule
           },
           {
-            path: 'realtime',
-            module: RealtimeModule
-          },
-          {
             path: 'avatars',
             module: AvatarsModule
           }

@@ -35,7 +35,7 @@ export class Identities extends BaseSchema {
   @Prop({ required: true, type: String })
   userId: string;
 
-  @Prop({ required: true, type: String, index: true })
+  @Prop({ required: true, type: mongoose.Types.ObjectId, index: true })
   userInternalId: string;
 
   @Prop({ type: String, default: null })

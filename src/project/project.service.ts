@@ -13,6 +13,7 @@ import { APP_VERSION_STABLE } from 'src/Utils/constants';
 import authMethods, { AuthMethod, defaultAuthConfig } from 'src/core/config/auth';
 import { DbService } from 'src/core/db.service';
 import { UserEntity } from 'src/core/entities/user.entity';
+import { QueryBuilder } from 'src/Utils/mongo.filter';
 
 @Injectable()
 export class ProjectService {
@@ -53,10 +54,10 @@ export class ProjectService {
         legalCountry: createProjectDto.legalCountry,
         legalState: createProjectDto.legalState,
         legalTaxId: createProjectDto.legalTaxId,
-        platforms: null,
+        platforms: [],
         oAuthProviders: [],
-        webhooks: null,
-        keys: null,
+        webhooks: [],
+        keys: [],
         auths: auths,
         accessedAt: new Date(),
         version: APP_VERSION_STABLE,
@@ -105,10 +106,17 @@ export class ProjectService {
     }
   }
 
-  async findAll() {
+  async findAll(queries: string[]) {
+    const baseQuery = this.projectModel.find().populate(['platforms', 'keys', 'webhooks']);
+    const queryBuilder = new QueryBuilder(baseQuery);
+
+    queryBuilder.parseQueryStrings(queries);
+
+    let { results, totalCount } = await queryBuilder.execute();
+
     return {
-      total: await this.projectModel.countDocuments(),
-      projects: await this.projectModel.find().populate(['platforms', 'keys', 'webhooks'])
+      total: totalCount,
+      projects: results
     }
   }
 
@@ -131,8 +139,8 @@ export class ProjectService {
     let project = await this.projectModel.findOne({ id: id }).select('platforms').populate('platforms');
     if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
     return {
-      total: project.platforms.length,
-      platforms: project.platforms
+      total: project?.platforms?.length || 0,
+      platforms: project.platforms || []
     }
   }
 
@@ -143,8 +151,8 @@ export class ProjectService {
     let project = await this.projectModel.findOne({ id: id }).select('keys').populate('keys');
     if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
     return {
-      total: project.keys.length,
-      keys: project.keys
+      total: project?.keys?.length || 0,
+      keys: project.keys || []
     }
   }
 
@@ -155,8 +163,8 @@ export class ProjectService {
     let project = await this.projectModel.findOne({ id: id }).select('webhooks').populate('webhooks');
     if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
     return {
-      total: project.webhooks.length,
-      webhooks: project.webhooks
+      total: project?.webhooks?.length || 0,
+      webhooks: project.webhooks || []
     }
   }
 }

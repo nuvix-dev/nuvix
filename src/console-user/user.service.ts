@@ -17,6 +17,7 @@ import { BillingAddress } from './schemas/billing.schema';
 import Token from './schemas/token.schema';
 import Challenges from './schemas/challenge.schema';
 import Authenticator from './schemas/authenticator.schema';
+import { UpdatePaymentMethodDto } from 'src/console-account/dto/payment.dto';
 
 @Injectable()
 export class UserService {
@@ -82,6 +83,9 @@ export class UserService {
     return await this.orgModel.find().exec();
   }
 
+  /**
+   * Creates a new organization and adds the current user as the owner.
+   */
   async createOrganization(user: Express.User, input: CreateOrgDto): Promise<Organization> {
     try {
       // Create a new Organization document
@@ -191,12 +195,12 @@ export class UserService {
   }
 
   /**
- * Retrieves the preferences of a user by their ID.
- *
- * @param userId - The unique identifier of the user.
- * @returns A promise that resolves to the user's preferences object. If the user has no preferences, an empty object is returned.
- * @throws Exception if the user is not found.
- */
+    * Retrieves the preferences of a user by their ID.
+    *
+    * @param userId - The unique identifier of the user.
+    * @returns A promise that resolves to the user's preferences object. If the user has no preferences, an empty object is returned.
+    * @throws Exception if the user is not found.
+    */
   async getPrefs(userId: string) {
     let user = await this.userModel.findOne({ id: userId })
     await user.save()
@@ -220,8 +224,9 @@ export class UserService {
     return user.prefs ?? {}
   }
 
-  // ****************
-
+  /**
+   * Retrieves the payment methods of a user.
+   */
   async getPaymentMethods(userId: string) {
     let paymentMethods = await this.paymentModel.find({ userId })
     return {
@@ -230,10 +235,26 @@ export class UserService {
     };
   }
 
+  /**
+   * Retrieves a payment method by its ID.
+   */
   async getPaymentMethod(paymentMethodId: string) {
     let paymentMethod = await this.paymentModel.findOne({ id: paymentMethodId })
     return paymentMethod;
   }
+
+  /**
+   * Updates a new payment method for a user.
+   */
+  async updatePaymentMethod(paymentMethodId: string, input: UpdatePaymentMethodDto) {
+    let paymentMethod = await this.paymentModel.findOne({ id: paymentMethodId })
+    if (!paymentMethod) throw new Exception(Exception.GENERAL_NOT_FOUND)
+    /**
+     * @todo UPDATE.
+     */
+    return paymentMethod;
+  }
+
 
   async getBillingAddresses(userId: string) {
     let addresses = await this.billingModel.find({ userId })

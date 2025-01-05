@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { CreateAccountDto } from './dto/create-account.dto';
-import { UpdateAccountDto, UpdateEmailDto } from './dto/update-account.dto';
+import { UpdateAccountDto, UpdateEmailDto, UpdatePasswordDto } from './dto/update-account.dto';
 import { LoginDto, RefreshDto, RegisterDto } from './dto/auth.dto';
 import { Request, Response } from 'express';
 import { Exception } from 'src/core/extend/exception';
@@ -25,6 +25,14 @@ import { Public } from 'src/Utils/decorator';
 import { AccountModel } from './models/account.model';
 import { User } from 'src/console-user/decorators';
 import { UserDocument } from 'src/console-user/schemas/user.schema';
+import { CreateBillingAddressDto, UpdateBillingAddressDto } from './dto/billing.dto';
+import { BillingAddressListModel, BillingAddressModel } from 'src/console-user/models/billing.model';
+import { IdentitieListModel } from './models/identitie.model';
+import { InvoicesListModel } from 'src/console-user/models/invoice.model';
+import { LogsListModel } from 'src/console-user/models/log.model';
+import { PaymentMethodListModel, PaymentMethodModel } from 'src/console-user/models/payment.model';
+import { UpdatePaymentMethodDto } from './dto/payment.dto';
+import { SessionModel } from './models/session.model';
 
 @Controller()
 @UseInterceptors(ClassSerializerInterceptor)
@@ -64,22 +72,13 @@ export class AccountController {
   }
 
   @Patch('email')
-  async updateEmail(@User() user: UserDocument, @Body() updateEmailDto: UpdateEmailDto) {
-    return await this.userService.updateEmail(user.id, updateEmailDto)
+  async updateEmail(@User() user: UserDocument, @Body() updateEmailDto: UpdateEmailDto): Promise<AccountModel> {
+    return new AccountModel(await this.userService.updateEmail(user.id, updateEmailDto))
   }
 
   @Patch('name')
-  /**
-   * @todo: Implement the update name functionality.
-   * [PATCH]: /account/name - Updates the name.
-   * @param req - The request object.
-   * @param res - The response object.
-   * @throws Exception - If the name update fails.
-   * @returns The updated name.
-   **/
-  async updateName(@Req() req: Request, @Res() res: Response, @Body() input: any) {
-    // Some logic to update the name.
-    return res.json({}).status(200)
+  async updateName(@User() user: UserDocument, @Body() input: { name: string }): Promise<AccountModel> {
+    return new AccountModel(await this.accountService.updateName(user.id, input.name))
   }
 
   @Patch('phone')
@@ -97,16 +96,8 @@ export class AccountController {
   }
 
   @Patch('password')
-  /**
-   * @todo: Implement the update password functionality.
-   * [PATCH]: /account/password - Updates the password.
-   * @param req - The request object.
-   * @param res - The response object.
-   * @throws Exception - If the password update fails.
-   **/
-  async updatePassword(@Req() req: Request, @Res() res: Response, @Body() input: any) {
-    // Some logic to update the password.
-    return res.json({}).status(200)
+  async updatePassword(@User() user: UserDocument, @Body() input: UpdatePasswordDto): Promise<AccountModel> {
+    return new AccountModel(await this.accountService.updatePassword(user.id, input.password, input.oldPassword))
   }
 
   @Post('recovery')
@@ -165,36 +156,25 @@ export class AccountController {
   }
 
   @Get('billing-addresses')
-  async getBillingAddresses(@User() user: UserDocument) {
+  async getBillingAddresses(@User() user: UserDocument): Promise<BillingAddressListModel> {
     let data = await this.accountService.getBillingAddresses(user.id)
-    return data
+    return new BillingAddressListModel(data)
   }
 
   @Post('billing-addresses')
-  /**
-   * @todo: Implement the create billing address functionality.
-   * [POST]: /account/billing-addresses - Creates a new billing address.
-   * @param req - The request object.
-   * @returns The new billing address.
-   * @throws Exception
-   **/
-  async createBillingAddress(@Req() req: Request, @Res() res: Response, @Body() input: any) {
-    // Some logic to create the billing address.
-    return res.json({}).status(200)
+  async createBillingAddress(@Body() input: CreateBillingAddressDto, @User() user: UserDocument): Promise<BillingAddressModel> {
+    let data = await this.accountService.createBillingAddress(input, user.id)
+    return new BillingAddressModel(data)
   }
 
   @Get('payment-methods')
-  async getPaymentMethods(@User() user: UserDocument) {
-    return this.userService.getPaymentMethods(user.id)
+  async getPaymentMethods(@User() user: UserDocument): Promise<PaymentMethodListModel> {
+    return new PaymentMethodListModel(await this.userService.getPaymentMethods(user.id))
   }
 
   @Post('payment-methods')
   /**
    * @todo: Implement the create payment method functionality.
-   * [POST]: /account/payment-methods - Creates a new payment method.
-   * @param req - The request object.
-   * @returns The new payment method.
-   * @throws Exception - If the payment method creation fails.
    **/
   async createPaymentMethod(@Req() req: Request, @Res() res: Response) {
     // Some logic to create the payment method.
@@ -202,42 +182,18 @@ export class AccountController {
   }
 
   @Get('identities')
-  /**
-   * @todo: Implement the get identities functionality.
-   * [GET]: /account/identities - Retrieves the identities.
-   * @param req - The request object.
-   **/
-  async getIdentities(@Req() req: Request, @Res() res: Response) {
-    // Some logic to get the identities.
-    return res.json({
-      total: 0,
-      data: []
-    }).status(200)
+  async getIdentities(@User() user: UserDocument): Promise<IdentitieListModel> {
+    return new IdentitieListModel(await this.accountService.getIdentities(user._id))
   }
 
   @Get('invoices')
-  /**
-   * @todo: Implement the get invoices functionality.
-   * [GET]: /account/invoices - Retrieves the invoices.
-   * @param req - The request object.
-   * @returns The invoices.
-   * @throws Exception - If the invoices retrieval fails.
-   **/
-  async getInvoices(@Req() req: Request, @Res() res: Response) {
-    // Some logic to get the invoices.
-    return res.json({
-      total: 0,
-      data: []
-    }).status(200)
+  async getInvoices(@User() user: UserDocument): Promise<InvoicesListModel> {
+    return new InvoicesListModel(await this.accountService.getInvoices(user._id))
   }
 
   @Post('jwts')
   /**
    * @todo: Implement the create JWT functionality.
-   * [POST]: /account/jwts - Creates a new JWT.
-   * @param req - The request object.
-   * @returns The new JWT.
-   * @throws Exception - If the JWT creation fails.
    **/
   async createJwt(@Req() req: Request, @Res() res: Response) {
     // Some logic to create the JWT.
@@ -245,84 +201,41 @@ export class AccountController {
   }
 
   @Get('logs')
-  /**
-   * @todo: Implement the get logs functionality.
-   * [GET]: /account/logs - Retrieves the logs.
-   * @param req - The request object.
-   * @returns The logs.
-   * @throws Exception - If the logs retrieval fails.
-   **/
-  async getLogs(@Req() req: Request, @Res() res: Response) {
-    // Some logic to get the logs.
-    return res.json({
-      total: 0,
-      logs: []
-    }).status(200)
+  async getLogs(@User() user: UserDocument): Promise<LogsListModel> {
+    return new LogsListModel(await this.accountService.getLogs(user._id))
   }
 
   @Patch('mfa')
-  /**
-   * @todo: Implement the update MFA functionality.
-   * [PATCH]: /account/mfa - Updates the MFA.
-   * @param req - The request object.
-   * @param res - The response object.
-   * @throws Exception - If the MFA update fails.
-   * @returns The updated MFA.
-   **/
-  async updateMfa(@Req() req: Request, @Res() res: Response, @Body() input: any) {
-    // Some logic to update the MFA.
-    return res.json({}).status(200)
+  async updateMfa(@User() user: UserDocument, @Body() input: { mfa: boolean }): Promise<AccountModel> {
+    return new AccountModel(await this.accountService.updateMfa(user._id, input.mfa))
   }
 
 
   /*  ** 2 **   */
 
   @Get('billing-addresses/:id')
-  async getBillingAddress(@Param('id') id: string) {
-    return this.userService.getBillingAddress(id)
+  async getBillingAddress(@Param('id') id: string): Promise<BillingAddressModel> {
+    return new BillingAddressModel(await this.accountService.getBillingAddress(id));
   }
 
   @Put('billing-addresses/:id')
-  /**
-   * @todo: Implement the update billing address functionality.
-   * [PUT]: /account/billing-addresses/:id - Updates the billing address.
-   * @param req - The request object.
-   * @returns The updated billing address.
-   * @throws Exception - If the billing address update fails.
-   **/
-  async updateBillingAddress(@Req() req: Request, @Res() res: Response, @Body() input: any) {
-    // Some logic to update the billing address.
-    return res.json({}).status(200)
+  async updateBillingAddress(@Param('id') id: string, @Body() input: UpdateBillingAddressDto): Promise<BillingAddressModel> {
+    return new BillingAddressModel(await this.accountService.updateBillingAddress(id, input));
   }
 
   @Delete('billing-addresses/:id')
-  /**
-   * @todo: Implement the delete billing address functionality.
-   * [DELETE]: /account/billing-addresses/:id - Deletes the billing address.
-   * @param req - The request object.
-   * @throws Exception - If the billing address deletion fails.
-   **/
-  async deleteBillingAddress(@Req() req: Request, @Res() res: Response) {
-    // Some logic to delete the billing address.
-    return res.json({}).status(200)
+  async deleteBillingAddress(@Param('id') id: string) {
+    return this.accountService.deleteBillingAddress(id);
   }
 
   @Get('payment-methods/:id')
-  async getPaymentMethod(@Param('id') id: string) {
-    return this.userService.getPaymentMethod(id)
+  async getPaymentMethod(@Param('id') id: string): Promise<PaymentMethodModel> {
+    return new PaymentMethodModel(await this.userService.getPaymentMethod(id));
   }
 
   @Patch('payment-methods/:id')
-  /**
-   * @todo: Implement the update payment method functionality.
-   * [PATCH]: /account/payment-methods/:id - Updates the payment method.
-   * @param req - The request object.
-   * @returns The updated payment method.
-   * @throws Exception - If the payment method update fails.
-   **/
-  async updatePaymentMethod(@Req() req: Request, @Res() res: Response) {
-    // Some logic to update the payment method.
-    return res.json({}).status(200)
+  async updatePaymentMethod(@Param('id') id: string, @Body() input: UpdatePaymentMethodDto): Promise<PaymentMethodModel> {
+    return new PaymentMethodModel(await this.userService.updatePaymentMethod(id, input));
   }
 
   @Delete('payment-methods/:id')
@@ -339,15 +252,8 @@ export class AccountController {
   }
 
   @Delete('identities/:id')
-  /**
-   * @todo: Implement the delete identity functionality.
-   * [DELETE]: /account/identities/:id - Deletes the identity.
-   * @param req - The request object.
-   * @throws Exception - If the identity deletion fails.
-   **/
-  async deleteIdentity(@Req() req: Request, @Res() res: Response) {
-    // Some logic to delete the identity.
-    return res.json({}).status(200)
+  async deleteIdentity(@Param('id') id: string) {
+    return this.accountService.deleteIdentity(id);
   }
 
   @Public()
@@ -361,17 +267,8 @@ export class AccountController {
   }
 
   @Get('sessions/:id')
-  /**
-   * @todo: Implement the get session functionality.
-   * [GET]: /account/sessions/:id - Retrieves the session.
-   * @param req - The request object.
-   * @returns The session.
-   * @throws Exception - If the session retrieval fails.
-   * @throws Exception - If the session is not found.
-   **/
-  async getSession(@Req() req: Request, @Res() res: Response) {
-    // Some logic to get the session.
-    return res.json({}).status(200)
+  async getSession(@Param('id') id: string): Promise<SessionModel> {
+    return new SessionModel(await this.accountService.getSession(id));
   }
 
   @Post('mfa/challenge')

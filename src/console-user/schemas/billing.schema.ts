@@ -48,6 +48,12 @@ export class BillingAddress extends BaseSchema {
   })
   $id: string;
 
+  @Virtual({
+    get(this: any) {
+      return this.orgId;
+    },
+  })
+  teamId: string;
 }
 
 export const BillingAddressSchema = SchemaFactory.createForClass(BillingAddress)

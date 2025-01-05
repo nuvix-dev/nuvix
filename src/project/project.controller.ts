@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Req, UseGuards, UseInterceptors, ClassSerializerInterceptor } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Req, UseGuards, UseInterceptors, ClassSerializerInterceptor, Query } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -22,8 +22,9 @@ export class ProjectController {
   }
 
   @Get()
-  async findAll(): Promise<ProjectListModel> {
-    let data = await this.projectService.findAll();
+  async findAll(@Query('queries') queries: string[]): Promise<ProjectListModel> {
+    console.log(queries)
+    let data = await this.projectService.findAll(queries);
     return new ProjectListModel(data);
   }
 
