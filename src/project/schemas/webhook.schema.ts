@@ -5,7 +5,7 @@ import { BaseSchema } from "src/base/schemas/base.schema";
 export type WebhookDocument = HydratedDocument<Webhook>;
 
 @Schema({
-  timestamps: { createdAt: "$createdAt" },
+  timestamps: true,
   versionKey: false,
   id: false,
   toJSON: { virtuals: true, minimize: false, useProjection: true },
@@ -50,8 +50,8 @@ export class Webhook extends BaseSchema {
   @Prop({ required: false, type: Number, default: 0 })
   attempts: number;
 
-  override $permissions: string[];
-  override $deletedAt: Date;
+  override permissions: string[];
+  override deletedAt: Date;
 
   @Virtual({
     get(this: any) {
@@ -62,6 +62,26 @@ export class Webhook extends BaseSchema {
     }
   })
   $id: string;
+
+  @Virtual({
+    get(this: any) {
+      return this.createdAt;
+    },
+    set(this: any, createdAt: Date) {
+      this.createdAt = createdAt;
+    }
+  })
+  $createdAt: Date;
+
+  @Virtual({
+    get(this: any) {
+      return this.updatedAt;
+    },
+    set(this: any, updatedAt: Date) {
+      this.updatedAt = updatedAt;
+    }
+  })
+  $updatedAt: Date;
 }
 
 export const WebhookSchema = SchemaFactory.createForClass(Webhook);

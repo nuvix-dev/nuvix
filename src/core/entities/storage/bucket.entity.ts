@@ -1,5 +1,6 @@
-import { Column, Entity } from "typeorm";
-import BaseEntity from "./base.entity";
+import { Column, Entity, OneToMany, Relation } from "typeorm";
+import BaseEntity from "../base.entity";
+import { FileEntity } from "./file.entity";
 
 @Entity({ name: 'buckets', schema: 'storage' })
 export class BucketEntity extends BaseEntity {
@@ -26,6 +27,9 @@ export class BucketEntity extends BaseEntity {
 
   @Column({ type: 'boolean', default: true })
   antivirus: boolean;
+
+  @OneToMany(() => FileEntity, file => file.bucket)
+  files: Relation<FileEntity[]>;
 
   @Column({ type: 'varchar', length: 16384, nullable: true })
   search: string;

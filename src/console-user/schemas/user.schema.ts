@@ -9,6 +9,7 @@ import { BaseSchema } from 'src/base/schemas/base.schema';
 import Challenges from './challenge.schema';
 import Token from './token.schema';
 import Authenticator from './authenticator.schema';
+import { Membership } from './membersip.schema';
 
 export type UserDocument = HydratedDocument<User>;
 export type TargetDocument = HydratedDocument<Target>;
@@ -17,7 +18,7 @@ export type TargetDocument = HydratedDocument<Target>;
  * Represents a User in the system.
  */
 @Schema({
-  timestamps: { createdAt: "$createdAt" },
+  timestamps: true,
   versionKey: false,
   id: false,
   toJSON: { virtuals: true, minimize: false, useProjection: true },
@@ -102,15 +103,8 @@ export class User extends BaseSchema {
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Authenticator' }] })
   authenticators: Authenticator[];
 
-  @Virtual({
-    get(this: any) {
-      return this.deletedAt !== null && this.deletedAt !== undefined;
-    },
-    set(this: any, deleted: Boolean) {
-      this.deletedAt = deleted ? new Date() : null;
-    }
-  })
-  $deleted: Boolean;
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Membership' }] })
+  memberships: Membership[]
 
   @Virtual({
     get(this: any) {
@@ -124,17 +118,50 @@ export class User extends BaseSchema {
 
   @Virtual({
     get(this: any) {
+      return this.createdAt;
+    },
+    set(this: any, createdAt: Date) {
+      this.createdAt = createdAt;
+    }
+  })
+  $createdAt: Date;
+
+  @Virtual({
+    get(this: any) {
       return this.updatedAt;
+    },
+    set(this: any, updatedAt: Date) {
+      this.updatedAt = updatedAt;
     }
   })
   $updatedAt: Date;
+
+  @Virtual({
+    get(this: any) {
+      return this.deletedAt !== null && this.deletedAt !== undefined;
+    },
+    set(this: any, deleted: Boolean) {
+      this.deletedAt = deleted ? new Date() : null;
+    }
+  })
+  $deleted: Boolean;
+
+  @Virtual({
+    get(this: any) {
+      return this.permissions;
+    },
+    set(this: any, permissions: string[]) {
+      this.permissions = permissions;
+    }
+  })
+  $permissions: string[];
 
   session: SessionDocument;
 }
 
 
 @Schema({
-  timestamps: { createdAt: "$createdAt" },
+  timestamps: true,
   versionKey: false,
   id: false,
   toJSON: { virtuals: true, minimize: false, useProjection: true },
@@ -188,6 +215,26 @@ export class Target extends BaseSchema {
 
   @Virtual({
     get(this: any) {
+      return this.createdAt;
+    },
+    set(this: any, createdAt: Date) {
+      this.createdAt = createdAt;
+    }
+  })
+  $createdAt: Date;
+
+  @Virtual({
+    get(this: any) {
+      return this.updatedAt;
+    },
+    set(this: any, updatedAt: Date) {
+      this.updatedAt = updatedAt;
+    }
+  })
+  $updatedAt: Date;
+
+  @Virtual({
+    get(this: any) {
       return this.deletedAt !== null && this.deletedAt !== undefined;
     },
     set(this: any, deleted: Boolean) {
@@ -198,10 +245,13 @@ export class Target extends BaseSchema {
 
   @Virtual({
     get(this: any) {
-      return this.updatedAt;
+      return this.permissions;
+    },
+    set(this: any, permissions: string[]) {
+      this.permissions = permissions;
     }
   })
-  $updatedAt: Date;
+  $permissions: string[];
 }
 
 

@@ -5,7 +5,7 @@ import { AuthenticatorEntity } from "./authenticator.entity";
 import { ChallengeEntity } from "./challenge.entity";
 import { SessionEntity } from "./session.entity";
 import { MembershipEntity } from "./membership.entity";
-import { TargetEntity } from "./target.entity";
+import { TargetEntity } from "../messages/target.entity";
 
 @Entity({ name: 'users', schema: 'auth' })
 @Index("IDX_NAME", ["name"], { unique: false, })

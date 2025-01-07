@@ -1,8 +1,11 @@
-import { Column, CreateDateColumn, DeleteDateColumn, PrimaryColumn, UpdateDateColumn } from "typeorm";
+import { Column, CreateDateColumn, DeleteDateColumn, PrimaryColumn, PrimaryGeneratedColumn, UpdateDateColumn } from "typeorm";
 import Permission from "../helper/permission.helper";
 
 
 export default abstract class BaseEntity {
+  @PrimaryGeneratedColumn()
+  id: string;
+
   @PrimaryColumn({ unique: true })
   $id: string;
 

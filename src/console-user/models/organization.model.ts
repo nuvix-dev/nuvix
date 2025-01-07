@@ -147,3 +147,14 @@ export class OrganizationListModel {
     Object.assign(this, { ...partial, organizations: this.organizations, teams: this.organizations });
   }
 }
+
+export class RolesModel {
+  roles: string[] = [];
+
+  scopes: string[] = [];
+
+  constructor(partial: Partial<RolesModel>) {
+    Object.assign(this, partial);
+  }
+
+}

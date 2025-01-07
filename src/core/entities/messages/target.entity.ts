@@ -1,11 +1,12 @@
-import BaseEntity from "./base.entity";
-import { Entity, Column, OneToMany, ManyToOne, Relation } from "typeorm";
-import { UserEntity } from "./user.entity";
+import BaseEntity from "../base.entity";
+import { Entity, Column, ManyToOne, Relation, ManyToMany } from "typeorm";
+import { UserEntity } from "../users/user.entity";
+import { TopicEntity } from "./topic.entity";
 
 
-@Entity({ name: 'targets', schema: 'auth' })
+@Entity({ name: 'targets', schema: 'messages' })
 export class TargetEntity extends BaseEntity {
-  @Column({ type: 'varchar', length: 255, nullable: false })
+  @Column({ type: 'varchar', nullable: false })
   userId: string;
 
   @ManyToOne(() => UserEntity, user => user.targets)
@@ -34,4 +35,7 @@ export class TargetEntity extends BaseEntity {
 
   @Column({ type: 'boolean', default: false, nullable: true })
   expired: boolean;
+
+  @ManyToMany(() => TopicEntity, topic => topic.targets)
+  topics: TopicEntity[];
 }

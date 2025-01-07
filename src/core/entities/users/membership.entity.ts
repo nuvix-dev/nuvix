@@ -1,5 +1,5 @@
 import { Entity, ManyToOne, Relation } from "typeorm";
-import BaseEntity from "./base.entity";
+import BaseEntity from "../base.entity";
 import { Column, Index } from "typeorm";
 import { UserEntity } from "./user.entity";
 import { TeamEntity } from "./team.entity";
@@ -19,13 +19,13 @@ export class MembershipEntity extends BaseEntity {
   @ManyToOne(() => UserEntity, user => user.memberships)
   user: Relation<UserEntity>;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   userId: string;
 
   @ManyToOne(() => TeamEntity, team => team.members)
   team: Relation<TeamEntity>;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   teamId: string;
 
   @Column({ type: 'varchar', length: 128, nullable: true, array: true })

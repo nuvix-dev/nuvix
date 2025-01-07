@@ -23,6 +23,7 @@ import Token, { TokenSchema } from 'src/console-user/schemas/token.schema';
 import { Invoice, InvoiceSchema } from 'src/console-user/schemas/invoce.schema';
 import { Log, LogSchema } from 'src/console-user/schemas/log.schema';
 
+
 @Module({
   controllers: [AccountController],
   providers: [JwtStrategy, AccountService, UserService, {

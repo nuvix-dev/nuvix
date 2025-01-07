@@ -8,7 +8,7 @@ export class TokenEntity extends BaseEntity {
   @Index()
   user: Relation<UserEntity>;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   userId: string;
 
   @Column({ type: 'int', nullable: false })

@@ -5,7 +5,7 @@ import { BaseSchema } from "src/base/schemas/base.schema";
 export type ChallengesDocument = HydratedDocument<Challenges>;
 
 @Schema({
-  timestamps: { createdAt: "$createdAt" },
+  timestamps: true,
   versionKey: false,
   id: false,
   toJSON: { virtuals: true, minimize: false, useProjection: true },
@@ -48,6 +48,26 @@ export default class Challenges extends BaseSchema {
 
   @Virtual({
     get(this: any) {
+      return this.createdAt;
+    },
+    set(this: any, createdAt: Date) {
+      this.createdAt = createdAt;
+    }
+  })
+  $createdAt: Date;
+
+  @Virtual({
+    get(this: any) {
+      return this.updatedAt;
+    },
+    set(this: any, updatedAt: Date) {
+      this.updatedAt = updatedAt;
+    }
+  })
+  $updatedAt: Date;
+
+  @Virtual({
+    get(this: any) {
       return this.deletedAt !== null && this.deletedAt !== undefined;
     },
     set(this: any, deleted: Boolean) {
@@ -58,10 +78,13 @@ export default class Challenges extends BaseSchema {
 
   @Virtual({
     get(this: any) {
-      return this.updatedAt;
+      return this.permissions;
+    },
+    set(this: any, permissions: string[]) {
+      this.permissions = permissions;
     }
   })
-  $updatedAt: Date;
+  $permissions: string[];
 }
 
 export const ChallengesSchema = SchemaFactory.createForClass(Challenges);

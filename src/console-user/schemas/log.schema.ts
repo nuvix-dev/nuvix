@@ -5,7 +5,7 @@ import { BaseSchema } from "src/base/schemas/base.schema";
 export type LogDocument = HydratedDocument<Log>;
 
 @Schema({
-  timestamps: { createdAt: "$createdAt" },
+  timestamps: true,
   versionKey: false,
   id: false,
   toJSON: { virtuals: true, minimize: false, useProjection: true },
@@ -96,16 +96,6 @@ export class Log extends BaseSchema {
 
   @Virtual({
     get(this: any) {
-      return this.deletedAt !== null && this.deletedAt !== undefined;
-    },
-    set(this: any, deleted: Boolean) {
-      this.deletedAt = deleted ? new Date() : null;
-    }
-  })
-  $deleted: Boolean;
-
-  @Virtual({
-    get(this: any) {
       return this.id;
     },
     set(this: any, id: string) {
@@ -116,10 +106,43 @@ export class Log extends BaseSchema {
 
   @Virtual({
     get(this: any) {
+      return this.createdAt;
+    },
+    set(this: any, createdAt: Date) {
+      this.createdAt = createdAt;
+    }
+  })
+  $createdAt: Date;
+
+  @Virtual({
+    get(this: any) {
       return this.updatedAt;
+    },
+    set(this: any, updatedAt: Date) {
+      this.updatedAt = updatedAt;
     }
   })
   $updatedAt: Date;
+
+  @Virtual({
+    get(this: any) {
+      return this.deletedAt !== null && this.deletedAt !== undefined;
+    },
+    set(this: any, deleted: Boolean) {
+      this.deletedAt = deleted ? new Date() : null;
+    }
+  })
+  $deleted: Boolean;
+
+  @Virtual({
+    get(this: any) {
+      return this.permissions;
+    },
+    set(this: any, permissions: string[]) {
+      this.permissions = permissions;
+    }
+  })
+  $permissions: string[];
 }
 
 

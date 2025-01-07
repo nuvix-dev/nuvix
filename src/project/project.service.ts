@@ -12,7 +12,7 @@ import Role from 'src/core/helper/role.helper';
 import { APP_VERSION_STABLE } from 'src/Utils/constants';
 import authMethods, { AuthMethod, defaultAuthConfig } from 'src/core/config/auth';
 import { DbService } from 'src/core/db.service';
-import { UserEntity } from 'src/core/entities/user.entity';
+import { UserEntity } from 'src/core/entities/users/user.entity';
 import { QueryBuilder } from 'src/Utils/mongo.filter';
 
 @Injectable()
@@ -108,7 +108,7 @@ export class ProjectService {
 
   async findAll(queries: string[]) {
     const baseQuery = this.projectModel.find().populate(['platforms', 'keys', 'webhooks']);
-    const queryBuilder = new QueryBuilder(baseQuery);
+    const queryBuilder = new QueryBuilder(baseQuery, ['name', 'teamId']);
 
     queryBuilder.parseQueryStrings(queries);
 

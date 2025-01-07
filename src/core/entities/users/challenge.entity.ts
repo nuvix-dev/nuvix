@@ -1,4 +1,4 @@
-import BaseEntity from "./base.entity";
+import BaseEntity from "../base.entity";
 import { Entity, Column, Index, ManyToOne, Relation } from "typeorm";
 import { UserEntity } from "./user.entity";
 
@@ -9,7 +9,7 @@ export class ChallengeEntity extends BaseEntity {
   @ManyToOne(() => UserEntity, user => user.challenges)
   user: Relation<UserEntity>;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   userId: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })

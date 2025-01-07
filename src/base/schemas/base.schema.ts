@@ -9,9 +9,9 @@ export abstract class BaseSchema {
   id: string;
 
   @Prop({ type: Date, default: null })
-  $deletedAt: Date;
+  deletedAt: Date;
 
   @Prop({ type: [String], default: [] })
-  $permissions: string[];
+  permissions: string[];
 
 }

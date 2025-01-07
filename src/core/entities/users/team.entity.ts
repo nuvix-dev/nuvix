@@ -1,6 +1,6 @@
 import { Column, Entity, Index, OneToMany, Relation } from "typeorm";
 import { MembershipEntity } from "./membership.entity";
-import BaseEntity from "./base.entity";
+import BaseEntity from "../base.entity";
 
 @Entity({ name: 'teams', schema: 'auth' })
 export class TeamEntity extends BaseEntity {

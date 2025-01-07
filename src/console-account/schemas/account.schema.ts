@@ -19,7 +19,7 @@ export type SessionDocument = HydratedDocument<Session>;
  * @property {string} [tokenType] - The type of the token provided by the identity provider.
  */
 @Schema({
-  timestamps: { createdAt: "$createdAt" },
+  timestamps: true,
   versionKey: false,
   id: false,
   toJSON: { virtuals: true, minimize: false, useProjection: true },
@@ -63,25 +63,58 @@ export class Identities extends BaseSchema {
     get(this: any) {
       return this.id;
     },
-    set(...args) {
-      this.id = args[0];
+    set(this: any, id: string) {
+      this.id = id;
     }
   })
   $id: string;
 
   @Virtual({
     get(this: any) {
+      return this.createdAt;
+    },
+    set(this: any, createdAt: Date) {
+      this.createdAt = createdAt;
+    }
+  })
+  $createdAt: Date;
+
+  @Virtual({
+    get(this: any) {
       return this.updatedAt;
+    },
+    set(this: any, updatedAt: Date) {
+      this.updatedAt = updatedAt;
     }
   })
   $updatedAt: Date;
+
+  @Virtual({
+    get(this: any) {
+      return this.deletedAt !== null && this.deletedAt !== undefined;
+    },
+    set(this: any, deleted: Boolean) {
+      this.deletedAt = deleted ? new Date() : null;
+    }
+  })
+  $deleted: Boolean;
+
+  @Virtual({
+    get(this: any) {
+      return this.permissions;
+    },
+    set(this: any, permissions: string[]) {
+      this.permissions = permissions;
+    }
+  })
+  $permissions: string[];
 }
 
 /**
  * Represents a user session.
  */
 @Schema({
-  timestamps: { createdAt: "$createdAt" },
+  timestamps: true,
   versionKey: false,
   id: false,
   toJSON: { virtuals: true, minimize: false, useProjection: true },
@@ -99,8 +132,8 @@ export class Session extends BaseSchema {
   @Prop({ required: true, type: String, index: true })
   userInternalId: string;
 
-  @Prop({ required: true, type: String })
-  expire: string;
+  @Prop({ required: true, type: Date })
+  expire: Date;
 
   @Prop({ type: String })
   provider: string;
@@ -111,8 +144,8 @@ export class Session extends BaseSchema {
   @Prop({ type: String })
   providerAccessToken: string;
 
-  @Prop({ type: String })
-  providerAccessTokenExpiry: string;
+  @Prop({ type: Date })
+  providerAccessTokenExpiry: Date;
 
   @Prop({ type: String })
   providerRefreshToken: string;
@@ -171,25 +204,58 @@ export class Session extends BaseSchema {
   @Prop({ type: String })
   secret: string;
 
-  @Prop({ type: String })
-  mfaUpdatedAt: string;
+  @Prop({ type: Date })
+  mfaUpdatedAt: Date;
 
   @Virtual({
     get(this: any) {
       return this.id;
     },
-    set(...args) {
-      this.id = args[0];
+    set(this: any, id: string) {
+      this.id = id;
     }
   })
   $id: string;
 
   @Virtual({
     get(this: any) {
+      return this.createdAt;
+    },
+    set(this: any, createdAt: Date) {
+      this.createdAt = createdAt;
+    }
+  })
+  $createdAt: Date;
+
+  @Virtual({
+    get(this: any) {
       return this.updatedAt;
+    },
+    set(this: any, updatedAt: Date) {
+      this.updatedAt = updatedAt;
     }
   })
   $updatedAt: Date;
+
+  @Virtual({
+    get(this: any) {
+      return this.deletedAt !== null && this.deletedAt !== undefined;
+    },
+    set(this: any, deleted: Boolean) {
+      this.deletedAt = deleted ? new Date() : null;
+    }
+  })
+  $deleted: Boolean;
+
+  @Virtual({
+    get(this: any) {
+      return this.permissions;
+    },
+    set(this: any, permissions: string[]) {
+      this.permissions = permissions;
+    }
+  })
+  $permissions: string[];
 }
 
 export const IdentitiesSchema = SchemaFactory.createForClass(Identities);

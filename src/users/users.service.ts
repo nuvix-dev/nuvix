@@ -1,5 +1,5 @@
 import { Inject, Injectable, Logger, Scope } from '@nestjs/common';
-import { UserEntity } from 'src/core/entities/user.entity';
+import { UserEntity } from 'src/core/entities/users/user.entity';
 import { DataSource, Repository } from 'typeorm';
 
 @Injectable({ scope: Scope.REQUEST })

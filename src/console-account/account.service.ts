@@ -1,6 +1,6 @@
 import { Headers, Injectable, Logger, Req, Res } from '@nestjs/common';
 import { CreateAccountDto } from './dto/create-account.dto';
-import { UpdateAccountDto } from './dto/update-account.dto';
+import { UpdateAccountDto, UpdatePhoneDto } from './dto/update-account.dto';
 import { LoginDto, RegisterDto } from './dto/auth.dto';
 import { UserService } from 'src/console-user/user.service';
 import emailValidator from 'src/core/validators/common.validator';
@@ -40,6 +40,9 @@ export class AccountService {
     private jwtService: JwtService
   ) { }
 
+  /**
+   * Create Account for User
+   */
   async create(createAccountDto: CreateAccountDto) {
     validate(createAccountDto).then(errors => {
       if (errors.length > 0) {
@@ -77,30 +80,17 @@ export class AccountService {
       await target.save()
       user.targets.push(target)
       await user.save()
-      console.log(user)
       return user
     } catch (e) {
-      console.log(e)
+      this.logger.error(e)
       throw new Exception(Exception.GENERAL_SERVER_ERROR)
-    }
-  }
-
-  findAll() {
-    let userId = ID.unique();
-    return {
-      id: [
-        Permission.Read(Role.Any()).toString(),
-        Permission.Update(Role.User(userId)).toString(),
-        Permission.Delete(Role.User(userId)).toString(),
-      ]
     }
   }
 
   /**
    * Update the name of a user
    */
-  async updateName(userId: string, name: string) {
-    let user = await this.userModel.findOne({ id: userId })
+  async updateName(user: UserDocument, name: string) {
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
@@ -110,10 +100,25 @@ export class AccountService {
   }
 
   /**
+   * Update the phone of a user
+   */
+  async updatePhone(user: UserDocument, updatePhoneDto: UpdatePhoneDto) {
+    if (!user) {
+      throw new Exception(Exception.USER_NOT_FOUND)
+    }
+    let isPasswordValid = await this.userSerice.comparePasswords(updatePhoneDto.password, user.password);
+    if (!isPasswordValid) {
+      throw new Exception(Exception.USER_PASSWORD_MISMATCH)
+    }
+    user.phone = updatePhoneDto.phone
+    await user.save()
+    return user
+  }
+
+  /**
    * Update the password of a user
    */
-  async updatePassword(userId: string, password: string, oldPassword: string) {
-    let user = await this.userModel.findOne({ id: userId })
+  async updatePassword(user: UserDocument, password: string, oldPassword: string) {
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
@@ -264,11 +269,7 @@ export class AccountService {
   /**
    * Update MFA of a user
    */
-  async updateMfa(id: mongoose.Types.ObjectId, mfa: boolean) {
-    let user = await this.userModel.findOne({ _id: id })
-    if (!user) {
-      throw new Exception(Exception.USER_NOT_FOUND)
-    }
+  async updateMfa(user: UserDocument, mfa: boolean) {
     user.mfa = mfa
     await user.save()
     return user
@@ -282,17 +283,13 @@ export class AccountService {
     return `This action updates a #${id} account`;
   }
 
-  async remove(id: string, userId: string) {
-    let account = await this.userModel.findOne({ id: id });
-    if (!account) {
-      throw new Exception(Exception.USER_NOT_FOUND)
-    }
-    let isValid = new Permissions(0, [Permission.Delete(Role.User(userId)).toString()]).isValid(account.$permissions)
+  async remove(id: string, user: UserDocument) {
+    let isValid = new Permissions(0, [Permission.Delete(Role.User(user.$id)).toString()]).isValid(user.$permissions)
     if (!isValid) {
-      throw new Exception(Exception.GENERAL_REGION_ACCESS_DENIED)
+      throw new Exception(Exception.GENERAL_ACCESS_FORBIDDEN)
     }
-    await this.targetModel.deleteMany({ userInternalId: account._id })
-    await account.deleteOne()
+    await this.targetModel.deleteMany({ userInternalId: user._id })
+    await user.deleteOne()
   }
 
   async emailLogin(input: CreateEmailSessionDto, req: Request, headers: Request["headers"]): Promise<SessionDocument> {
@@ -386,7 +383,6 @@ export class AccountService {
     let ipAddress = req.ip;
     let location = req.headers['cf-ipcountry'];
     let device = req.headers['device'];
-    let refresh_token = ID.unique(15);
 
     try {
       let session = await this.sessionModel.create({
@@ -399,6 +395,11 @@ export class AccountService {
         deviceName: device,
         secret: "--",
         expire: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
+        $permissions: [
+          Permission.Read(Role.User(user.id)),
+          Permission.Update(Role.User(user.id)),
+          Permission.Delete(Role.User(user.id))
+        ]
       })
       if (!session || !session.$isValid) throw new Error("Session validation error.");
       session.secret = this.jwtService.sign({ _id: session.id })

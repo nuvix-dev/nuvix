@@ -17,7 +17,9 @@ export default class Roles {
   protected readonly length: number;
   protected message: string = 'Roles Error';
 
-  private static readonly USER_DIMENSIONS = ['verified', 'unverified'];
+  static readonly DIMENSION_VERIFIED = 'verified';
+  static readonly DIMENSION_UNVERIFIED = 'unverified';
+  private static readonly USER_DIMENSIONS = [Roles.DIMENSION_VERIFIED, Roles.DIMENSION_UNVERIFIED];
 
   private static readonly ROLE_CONFIG: Record<RoleType, RoleConfig> = {
     [RoleType.ANY]: {

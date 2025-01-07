@@ -23,7 +23,7 @@ import { Public } from 'src/Utils/decorator';
 import { InjectModel } from '@nestjs/mongoose';
 import { Organization } from './schemas/organization.schema';
 import { Model } from 'mongoose';
-import OrganizationModel, { OrganizationListModel } from './models/organization.model';
+import OrganizationModel, { OrganizationListModel, RolesModel } from './models/organization.model';
 import { MembershipsListModel } from './models/membership.model';
 import { BillingPlanModel } from './models/plan.model';
 
@@ -131,9 +131,9 @@ export class UserController {
   }
 
   @Get('organizations/:id/roles')
-  async findOrganizationRoles(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
+  async findOrganizationRoles(@Param('id') id: string): Promise<RolesModel> {
     // const roles = await this.userService.findOrganizationRoles(id, req.user.id);
-    return res.json({
+    return new RolesModel({
       "scopes": [
         "global",
         "public",
@@ -200,24 +200,20 @@ export class UserController {
       "roles": [
         "owner"
       ]
-    }).status(200)
+    })
   }
 
   @Get('organizations/:id/credits')
   /**
    * @todo Implement this method.
-   * [GET]: /organization/:id/credits - Retrieves the credits for the organization.
-   * @param id - The ID of the organization to retrieve credits for.
-   * @param req - The request object containing user information.
-   * @param res - The response object to send the credits data.
-   * @returns A JSON response with the total number of credits and the credits data.
    */
-  async findOrganizationCredits(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
+  async findOrganizationCredits(@Param('id') id: string, @Req() req: Request) {
     // const credits = await this.userService.findOrganizationCredits(id, req.user.id);
-    return res.json({
+    return {
       total: 0,// credits.length,
-      credits: {} // credits
-    }).status(200)
+      credits: [], // credits
+      available: 0
+    }
   }
 
   @Post('organizations/:id/credits')

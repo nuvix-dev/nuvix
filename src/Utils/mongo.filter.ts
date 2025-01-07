@@ -12,7 +12,19 @@ export class QueryBuilder {
   private query: any = {};
   private options: any = { limit: 25, skip: 0 }; // Default options
 
-  ALLOWED_ATTRIBUTES = [
+  static readonly OPTIONAL_ATTRIBUTES = [
+    'limit',
+    'orgId',
+    'id',
+    'updatedAt',
+    'cursorAfter',
+    'cursorBefore',
+    'offset',
+    'orderAsc',
+    'orderDesc',
+  ]
+
+  private ALLOWED_ATTRIBUTES = [
     '$id',
     '$createdAt',
     '$updatedAt',
@@ -30,6 +42,58 @@ export class QueryBuilder {
     }
   }
 
+  validateQuery(query: QueryOptions) {
+    const { method, attribute, values } = query;
+
+    if (attribute && !QueryBuilder.OPTIONAL_ATTRIBUTES.includes(attribute)) this.validateAttribute(attribute);
+
+    switch (method) {
+      case 'equal':
+      case 'notEqual':
+      case 'lessThan':
+      case 'greaterThan':
+      case 'greaterThanEqual':
+      case 'lessThanEqual':
+      case 'contains':
+      case 'search':
+      case 'isNull':
+      case 'isNotNull':
+      case 'between':
+      case 'startsWith':
+      case 'endsWith':
+        if (!attribute || !values) {
+          throw new Exception(Exception.GENERAL_QUERY_INVALID, 'Invalid query format');
+        }
+        break;
+      case 'limit':
+      case 'offset':
+        if (!values) {
+          throw new Exception(Exception.GENERAL_QUERY_INVALID, 'Invalid query format');
+        }
+        break;
+      case 'orderAsc':
+      case 'orderDesc':
+        if (!attribute === undefined) {
+          throw new Exception(Exception.GENERAL_QUERY_INVALID, 'Invalid query format');
+        }
+        break;
+      case 'cursorAfter':
+      case 'cursorBefore':
+        if (!attribute || !values) {
+          throw new Exception(Exception.GENERAL_QUERY_INVALID, 'Invalid query format');
+        }
+        break;
+      case 'and':
+      case 'or':
+        if (!values) {
+          throw new Exception(Exception.GENERAL_QUERY_INVALID, 'Invalid query format');
+        }
+        break;
+      default:
+        throw new Exception(Exception.GENERAL_QUERY_INVALID, `Unknown query method: ${method}`);
+    }
+  }
+
   parseQueryStrings(queryStrings?: string[]): void {
     const queries: QueryOptions[] = [];
 
@@ -41,24 +105,15 @@ export class QueryBuilder {
         // Parse the JSON query
         const parsedQuery = JSON.parse(decodedQuery);
 
-        // Validate the query structure
-        if (['limit'].includes(parsedQuery.method)) {
-          if (!parsedQuery.method || !parsedQuery.values) {
-            throw new Exception(Exception.GENERAL_QUERY_INVALID, 'Invalid query format');
-          }
-        } else {
-          if (!parsedQuery.method || !parsedQuery.attribute || !parsedQuery.values) {
-            throw new Exception(Exception.GENERAL_QUERY_INVALID, 'Invalid query format');
-          }
-        }
-
-        // Validate the attribute
-        if (parsedQuery.attribute) this.validateAttribute(parsedQuery.attribute);
+        // Validate the query
+        this.validateQuery(parsedQuery);
 
         // Convert special attributes
         if (parsedQuery.attribute) {
           if (parsedQuery.attribute === '$id') parsedQuery.attribute = 'id';
           if (parsedQuery.attribute === '$updatedAt') parsedQuery.attribute = 'updatedAt';
+          if (parsedQuery.attribute === '$createdAt') parsedQuery.attribute = 'createdAt';
+          if (parsedQuery.attribute === 'teamId') parsedQuery.attribute = 'orgId';
         }
 
         queries.push(parsedQuery);
@@ -72,15 +127,11 @@ export class QueryBuilder {
     this.parseQueries(queries);
   }
 
-  parseQueries(queries?: QueryOptions[]) {
+  parseQueries(queries?: QueryOptions[], validate = false): void {
     queries?.forEach(query => {
       const { method, attribute, values } = query;
 
-      if ((!method || !attribute || !values) && !['limit'].includes(method)) {
-        throw new Error('Query must have method, attribute, and values.');
-      }
-
-      if (attribute && !['id', 'updatedAt'].includes(attribute)) this.validateAttribute(attribute);
+      if (validate) this.validateQuery(query);
 
       switch (method) {
         case 'equal':
@@ -129,10 +180,18 @@ export class QueryBuilder {
           this.options.skip = values[0];
           break;
         case 'orderAsc':
-          this.options.sort = { [attribute]: 1 }; // Ascending order
+          if (attribute) {
+            this.options.sort = { [attribute]: 1 }; // Ascending order
+          } else {
+            this.options.sort = { createdAt: 1 }; // Ascending order without attribute
+          }
           break;
         case 'orderDesc':
-          this.options.sort = { [attribute]: -1 }; // Descending order
+          if (attribute) {
+            this.options.sort = { [attribute]: -1 }; // Descending order
+          } else {
+            this.options.sort = { createdAt: -1 }; // Descending order without attribute 
+          }
           break;
         case 'cursorAfter':
           this.options.cursorAfter = values[0]; // Handle cursor logic here if needed
@@ -156,7 +215,7 @@ export class QueryBuilder {
   private handleLogicalOperator(operator: 'and' | 'or', queries: QueryOptions[]) {
     const combinedQueries = queries.map(q => {
       const { method, attribute, values } = q;
-      this.validateAttribute(attribute);
+      if (attribute && !QueryBuilder.OPTIONAL_ATTRIBUTES.includes(attribute)) this.validateAttribute(attribute);
       switch (method) {
         case 'equal':
           return { [attribute]: { $in: values } };

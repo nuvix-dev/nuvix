@@ -23,3 +23,20 @@ export class UpdatePasswordDto {
   @IsString()
   oldPassword: string;
 }
+
+export class UpdateNameDto {
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+}
+
+export class UpdatePhoneDto {
+  @IsNotEmpty()
+  @IsString()
+  phone: string;
+
+  @IsNotEmpty()
+  @IsString()
+  password: string;
+}
+

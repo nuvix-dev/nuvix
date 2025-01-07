@@ -5,17 +5,24 @@ import { DataSource, QueryRunner } from 'typeorm';
 import { Exception } from './extend/exception';
 
 // Entities
-import { UserEntity } from './entities/user.entity';
-import { TeamEntity } from './entities/team.entity';
-import { SessionEntity } from './entities/session.entity';
-import { MembershipEntity } from './entities/membership.entity';
-import { AuthenticatorEntity } from './entities/authenticator.entity';
-import { TokenEntity } from './entities/token.entity';
-import { TargetEntity } from './entities/target.entity';
-import { ChallengeEntity } from './entities/challenge.entity';
-import { BucketEntity } from './entities/bucket.entity';
+import { UserEntity } from './entities/users/user.entity';
+import { TeamEntity } from './entities/users/team.entity';
+import { SessionEntity } from './entities/users/session.entity';
+import { MembershipEntity } from './entities/users/membership.entity';
+import { AuthenticatorEntity } from './entities/users/authenticator.entity';
+import { TokenEntity } from './entities/users/token.entity';
+import { TargetEntity } from './entities/messages/target.entity';
+import { ChallengeEntity } from './entities/users/challenge.entity';
+import { BucketEntity } from './entities/storage/bucket.entity';
 import { InitialMigration } from './entities/initial-migration';
 import { Request } from 'express';
+import { FileEntity } from './entities/storage/file.entity';
+import { TopicEntity } from './entities/messages/topic.entity';
+import { ProviderEntity } from './entities/messages/provider.entity';
+import { SubscriberEntity } from './entities/messages/subscriber.entity';
+import { MessageEntity } from './entities/messages/message.entity';
+import { DatabaseEntity } from './entities/meta/database.entity';
+import { StatsEntity } from './entities/meta/stats.entity';
 
 
 export const connectionFactory = {
@@ -64,14 +71,21 @@ export class DbService {
       database: tenantId,  // Tenant-specific database
       entities: [
         UserEntity,
-        TeamEntity,
         SessionEntity,
-        MembershipEntity,
         AuthenticatorEntity,
         TokenEntity,
-        TargetEntity,
         ChallengeEntity,
-        BucketEntity
+        TeamEntity,
+        MembershipEntity,
+        BucketEntity,
+        FileEntity,
+        TargetEntity,
+        TopicEntity,
+        ProviderEntity,
+        SubscriberEntity,
+        MessageEntity,
+        DatabaseEntity,
+        StatsEntity
       ],  // Dynamically load tenant entities
       migrations: [InitialMigration],  // Dynamically load tenant migrations
       migrationsRun: false,  // Don't auto-run tenant migrations

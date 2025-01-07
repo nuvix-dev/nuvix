@@ -37,6 +37,6 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const user = await this.userModel.findOne({ id: session.userId }).select('-password');
     if (!user) return null;
     user.session = session;
-    return user as UserDocument;
+    return user;
   }
 }

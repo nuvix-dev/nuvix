@@ -1,5 +1,5 @@
 import { Column, Entity, ManyToOne, Relation } from "typeorm";
-import BaseEntity from "./base.entity";
+import BaseEntity from "../base.entity";
 import { UserEntity } from "./user.entity";
 
 
@@ -8,7 +8,7 @@ export class SessionEntity extends BaseEntity {
   @ManyToOne(() => UserEntity, user => user.sessions)
   user: Relation<UserEntity>;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   userId: string;
 
   @Column({ type: 'varchar', length: 128, nullable: true })

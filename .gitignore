@@ -67,3 +67,6 @@ schema.gql
 app.js
 tmp/
 yarn.lock
+*.zip
+*.tar.gz
+*.tgz

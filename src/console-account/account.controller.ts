@@ -15,7 +15,7 @@ import {
 } from '@nestjs/common';
 import { AccountService } from './account.service';
 import { CreateAccountDto } from './dto/create-account.dto';
-import { UpdateAccountDto, UpdateEmailDto, UpdatePasswordDto } from './dto/update-account.dto';
+import { UpdateAccountDto, UpdateEmailDto, UpdateNameDto, UpdatePasswordDto, UpdatePhoneDto } from './dto/update-account.dto';
 import { LoginDto, RefreshDto, RegisterDto } from './dto/auth.dto';
 import { Request, Response } from 'express';
 import { Exception } from 'src/core/extend/exception';
@@ -24,7 +24,7 @@ import { UserService } from 'src/console-user/user.service';
 import { Public } from 'src/Utils/decorator';
 import { AccountModel } from './models/account.model';
 import { User } from 'src/console-user/decorators';
-import { UserDocument } from 'src/console-user/schemas/user.schema';
+import { UserDocument, User as UserSchema } from 'src/console-user/schemas/user.schema';
 import { CreateBillingAddressDto, UpdateBillingAddressDto } from './dto/billing.dto';
 import { BillingAddressListModel, BillingAddressModel } from 'src/console-user/models/billing.model';
 import { IdentitieListModel } from './models/identitie.model';
@@ -33,17 +33,18 @@ import { LogsListModel } from 'src/console-user/models/log.model';
 import { PaymentMethodListModel, PaymentMethodModel } from 'src/console-user/models/payment.model';
 import { UpdatePaymentMethodDto } from './dto/payment.dto';
 import { SessionModel } from './models/session.model';
+import { Auth } from './auth';
 
 @Controller()
 @UseInterceptors(ClassSerializerInterceptor)
 export class AccountController {
   constructor(private readonly accountService: AccountService,
-    private readonly userService: UserService
+    private readonly userService: UserService,
   ) { }
 
   @Get()
-  async find(@Req() req: Request): Promise<AccountModel> {
-    let user = await this.accountService.findOne(req.user.$id).populate('targets')
+  async find(@User() user: UserDocument): Promise<AccountModel> {
+    await user.populate(['targets', 'memberships'])
     return new AccountModel(user);
   }
 
@@ -55,20 +56,23 @@ export class AccountController {
   }
 
   @Delete()
-  async delete(@Req() req: Request, @Res() res: Response) {
-    await this.accountService.remove(req.user.id, req.user.id);
-    return res.clearCookie('a_session').status(200).json()
+  async delete(@User() user: UserDocument, @Res({ passthrough: true }) res: Response) {
+    await this.accountService.remove(user.id, user);
+    res.clearCookie('a_session')
+    return {}
   }
 
   @Get('prefs')
-  async getPrefs(@Req() req: Request) {
-    return await this.userService.getPrefs(req.user.id)
+  getPrefs(@User() user: UserDocument) {
+    return user.prefs
   }
 
   @Patch('prefs')
-  async updatePrefs(@Req() req: Request, @Body() input: { prefs: any }) {
+  async updatePrefs(@User() user: UserDocument, @Body() input: { prefs: any }) {
     if (typeof input.prefs === undefined) throw new Exception(Exception.MISSING_REQUIRED_PARMS)
-    return await this.userService.updatePrefs(req.user.id, input.prefs)
+    user.prefs = input.prefs
+    await user.save()
+    return user.prefs ?? {}
   }
 
   @Patch('email')
@@ -77,27 +81,18 @@ export class AccountController {
   }
 
   @Patch('name')
-  async updateName(@User() user: UserDocument, @Body() input: { name: string }): Promise<AccountModel> {
-    return new AccountModel(await this.accountService.updateName(user.id, input.name))
+  async updateName(@User() user: UserDocument, @Body() input: UpdateNameDto): Promise<AccountModel> {
+    return new AccountModel(await this.accountService.updateName(user, input.name))
   }
 
   @Patch('phone')
-  /**
-   * @todo: Implement the update phone functionality.
-   * [PATCH]: /account/phone - Updates the phone.
-   * @param req - The request object.
-   * @param res - The response object.
-   * @throws Exception - If the phone update fails.
-   * @returns The updated phone.  
-   **/
-  async updatePhone(@Req() req: Request, @Res() res: Response, @Body() input: any) {
-    // Some logic to update the phone.
-    return res.json({}).status(200)
+  async updatePhone(@User() user: UserDocument, @Body() updatePhoneDto: UpdatePhoneDto): Promise<AccountModel> {
+    return new AccountModel(await this.accountService.updatePhone(user, updatePhoneDto))
   }
 
   @Patch('password')
   async updatePassword(@User() user: UserDocument, @Body() input: UpdatePasswordDto): Promise<AccountModel> {
-    return new AccountModel(await this.accountService.updatePassword(user.id, input.password, input.oldPassword))
+    return new AccountModel(await this.accountService.updatePassword(user, input.password, input.oldPassword))
   }
 
   @Post('recovery')
@@ -127,13 +122,6 @@ export class AccountController {
   }
 
   @Get('sessions')
-  /**
-   * @todo: Implement the get sessions functionality.
-   * [GET]: /account/sessions - Retrieves the sessions.
-   * @param req - The request object.
-   * @returns The sessions.
-   * @throws Exception - If the sessions retrieval fails.
-   **/
   async getSessions(@Req() req: Request, @Res() res: Response) {
     // Some logic to get the sessions.
     return res.json({
@@ -207,7 +195,7 @@ export class AccountController {
 
   @Patch('mfa')
   async updateMfa(@User() user: UserDocument, @Body() input: { mfa: boolean }): Promise<AccountModel> {
-    return new AccountModel(await this.accountService.updateMfa(user._id, input.mfa))
+    return new AccountModel(await this.accountService.updateMfa(user, input.mfa))
   }
 
 
@@ -258,12 +246,18 @@ export class AccountController {
 
   @Public()
   @Post('sessions/email')
-  async createEmailSession(@Body() createEmailSessionDto: CreateEmailSessionDto, @Req() req, @Res({ passthrough: true }) res: Response) {
+  async createEmailSession(@Body() createEmailSessionDto: CreateEmailSessionDto, @Req() req, @Res({ passthrough: true }) res: Response): Promise<SessionModel> {
     let session = await this.accountService.emailLogin(createEmailSessionDto, req, req.headers)
     if (session) {
       res.cookie('a_session', session.secret, { expires: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), httpOnly: true, sameSite: 'none', secure: true });
-      return session.toObject()
+      return new SessionModel(session);
     }
+  }
+
+  @Get('sessions/current')
+  async getCurrentSession(@User() user: UserDocument): Promise<SessionModel> {
+    console.log(user.session.$permissions, typeof user.session.$permissions)
+    return new SessionModel(user.session);
   }
 
   @Get('sessions/:id')

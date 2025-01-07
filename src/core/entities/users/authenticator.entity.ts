@@ -7,7 +7,7 @@ export class AuthenticatorEntity extends BaseEntity {
   @ManyToOne(() => UserEntity, user => user.authenticators)
   user: Relation<UserEntity>;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   userId: string;
 
   @Column({ type: 'varchar', length: 255, nullable: true })
