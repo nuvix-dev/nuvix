@@ -6,6 +6,7 @@ import { ChallengeEntity } from "./challenge.entity";
 import { SessionEntity } from "./session.entity";
 import { MembershipEntity } from "./membership.entity";
 import { TargetEntity } from "../messages/target.entity";
+import { IdentityEntity } from "./identity.entity";
 
 @Entity({ name: 'users', schema: 'auth' })
 @Index("IDX_NAME", ["name"], { unique: false, })
@@ -87,6 +88,9 @@ export class UserEntity extends BaseEntity {
 
   @OneToMany(() => TargetEntity, target => target.user)
   targets: Relation<TargetEntity[]>;
+
+  @OneToMany(() => IdentityEntity, identity => identity.user)
+  identities: Relation<IdentityEntity[]>;
 
   @Column({ type: 'varchar', length: 16384, nullable: true })
   search: string;

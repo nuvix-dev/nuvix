@@ -8,7 +8,6 @@ import { KeyModel } from "./key.model";
 
 @Exclude()
 export class ProjectModel extends BaseModel {
-
   /**
    * Project name.
    */
@@ -234,7 +233,13 @@ export class ProjectModel extends BaseModel {
    */
   @Expose() region: string;
 
-  constructor(partial: Partial<ProjectModel> | Document) {
+  constructor(partial: Partial<ProjectModel> | Document | any) {
+    // if (Array.isArray(partial.services)) {
+    //   partial.services = partial.services.reduce((acc, service) => {
+    //     acc[service.key] = service.status;
+    //     return acc;
+    //   }, {});
+    // }
     super(partial, {
       flattenObj: true,
       covertOption: {

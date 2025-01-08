@@ -14,10 +14,13 @@ export const defaultAuthConfig: AuthConfig = {
   maxSessions: APP_LIMIT_USER_SESSIONS_DEFAULT,
   passwordHistory: 0,
   passwordDictionary: false,
-  duration: 3600,
+  duration: 31536000,
   personalDataCheck: false,
   mockNumbers: [],
   sessionAlerts: false,
+  membershipsUserName: false,
+  membershipsUserEmail: false,
+  membershipsMfa: false,
 };
 
 const authMethods: Record<string, AuthMethod> = {

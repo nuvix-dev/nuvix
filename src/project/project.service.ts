@@ -12,8 +12,10 @@ import Role from 'src/core/helper/role.helper';
 import { APP_VERSION_STABLE } from 'src/Utils/constants';
 import authMethods, { AuthMethod, defaultAuthConfig } from 'src/core/config/auth';
 import { DbService } from 'src/core/db.service';
-import { UserEntity } from 'src/core/entities/users/user.entity';
 import { QueryBuilder } from 'src/Utils/mongo.filter';
+import { oAuthProviders } from 'src/core/config/authProviders';
+import { defaultSmtpConfig } from 'src/core/config/smtp';
+import { services } from 'src/core/config/services';
 
 @Injectable()
 export class ProjectService {
@@ -24,22 +26,46 @@ export class ProjectService {
 
   private readonly logger = new Logger(ProjectService.name);
 
+  /**
+   * Create a new project.
+   */
   async create(createProjectDto: CreateProjectDto): Promise<ProjectDocument> {
     let projectId = createProjectDto.projectId === 'unique()' ? ID.unique() : ID.auto(createProjectDto.projectId)
     try {
       let org = await this.orgModel.findOne({ id: createProjectDto.teamId })
-      if (!org) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Organization not found.")
+      if (!org) throw new Exception(Exception.TEAM_NOT_FOUND, "Organization not found.")
 
       let auths = loadAuthConfig(authMethods);
+
+      let defaultoAuthProviders = []
+      let defaultServices = {}
+
+      Object.entries(oAuthProviders).forEach(([key, value]) => {
+        if (value.enabled) {
+          defaultoAuthProviders.push({
+            key: key,
+            name: value.name,
+            appId: '',
+            secret: '',
+            enabled: false,
+          })
+        }
+      })
+
+      Object.values(services).forEach((value) => {
+        if (value.optional) {
+          defaultServices[value.key] = true;
+        }
+      })
 
       const project = await this.projectModel.create({
         id: projectId,
         $permissions: [
-          Permission.Read(Role.Team(ID.custom(createProjectDto.teamId))).toString(),
-          Permission.Update(Role.Team(ID.custom(createProjectDto.teamId), 'owner')).toString(),
-          Permission.Update(Role.Team(ID.custom(createProjectDto.teamId), 'developer')).toString(),
-          Permission.Delete(Role.Team(ID.custom(createProjectDto.teamId), 'owner')).toString(),
-          Permission.Delete(Role.Team(ID.custom(createProjectDto.teamId), 'developer')).toString(),
+          Permission.Read(Role.Team(ID.custom(createProjectDto.teamId))),
+          Permission.Update(Role.Team(ID.custom(createProjectDto.teamId), 'owner')),
+          Permission.Update(Role.Team(ID.custom(createProjectDto.teamId), 'developer')),
+          Permission.Delete(Role.Team(ID.custom(createProjectDto.teamId), 'owner')),
+          Permission.Delete(Role.Team(ID.custom(createProjectDto.teamId), 'developer')),
         ],
         orgId: org.id,
         orgInternalId: org._id,
@@ -55,10 +81,12 @@ export class ProjectService {
         legalState: createProjectDto.legalState,
         legalTaxId: createProjectDto.legalTaxId,
         platforms: [],
-        oAuthProviders: [],
+        oAuthProviders: defaultoAuthProviders,
         webhooks: [],
+        smtp: defaultSmtpConfig,
         keys: [],
         auths: auths,
+        services: defaultServices,
         accessedAt: new Date(),
         version: APP_VERSION_STABLE,
         database: 'undefiend', // Will be updated after database creation
@@ -67,7 +95,7 @@ export class ProjectService {
       await project.save();
 
       const runner = (await new DbService().getConnection()).createQueryRunner("master");
-      await runner.createDatabase('project_' + project.id, true);
+      await runner.createDatabase('project_' + project.id);
       await runner.release();
 
       project.database = 'project_' + project.id;
@@ -78,14 +106,12 @@ export class ProjectService {
       const migrations = await db.runMigrations();
       this.logger.log('Migrations run for project ' + project.id + ': ' + migrations);
 
-      const userRepo = db.getRepository(UserEntity);
-      // Create the owner user
       return project;
     } catch (error) {
       try {
         await this.projectModel.deleteOne({ id: projectId });
       } catch (deleteError) {
-        console.error('Error deleting project after failure:', deleteError);
+        this.logger.error('Error deleting project after failure:', deleteError);
       }
       if (error instanceof Exception) {
         throw error;
@@ -128,8 +154,17 @@ export class ProjectService {
     return `This action updates a #${id} project`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} project`;
+  /**
+   * Remove a project.
+   */
+  async remove(id: string) {
+    let project = await this.projectModel.findOne({ id: id });
+    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    const runner = (await new DbService().getConnection()).createQueryRunner("master");
+    await runner.dropDatabase('project_' + project.id, true);
+    await runner.release();
+    await project.deleteOne();
+    return project;
   }
 
   /**
@@ -166,6 +201,36 @@ export class ProjectService {
       total: project?.webhooks?.length || 0,
       webhooks: project.webhooks || []
     }
+  }
+
+  /**
+   * Update service status of a project.
+   */
+  async updateServiceStatus(id: string, service: string, status: boolean) {
+    let project = await this.projectModel.findOne({ id: id });
+    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+
+    project.services[service] = status;
+    await project.save();
+
+    return project;
+  }
+
+  /**
+   * Update all services status of a project.
+   */
+  async updateAllServiceStatus(id: string, status: boolean) {
+    let project = await this.projectModel.findOne({ id: id });
+    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+
+    Object.values(services).forEach((value) => {
+      if (value.optional) {
+        project.services[value.key] = status;
+      }
+    })
+    await project.save();
+
+    return project;
   }
 }
 

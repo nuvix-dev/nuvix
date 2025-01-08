@@ -3,6 +3,7 @@ import { REQUEST } from '@nestjs/core';
 import { DatabaseError } from 'pg-protocol';
 import { DataSource, QueryRunner } from 'typeorm';
 import { Exception } from './extend/exception';
+import { Request } from 'express';
 
 // Entities
 import { UserEntity } from './entities/users/user.entity';
@@ -15,7 +16,6 @@ import { TargetEntity } from './entities/messages/target.entity';
 import { ChallengeEntity } from './entities/users/challenge.entity';
 import { BucketEntity } from './entities/storage/bucket.entity';
 import { InitialMigration } from './entities/initial-migration';
-import { Request } from 'express';
 import { FileEntity } from './entities/storage/file.entity';
 import { TopicEntity } from './entities/messages/topic.entity';
 import { ProviderEntity } from './entities/messages/provider.entity';
@@ -23,6 +23,13 @@ import { SubscriberEntity } from './entities/messages/subscriber.entity';
 import { MessageEntity } from './entities/messages/message.entity';
 import { DatabaseEntity } from './entities/meta/database.entity';
 import { StatsEntity } from './entities/meta/stats.entity';
+import { VariablesEntity } from './entities/meta/variables.entity';
+import { MigrationsEntity } from './entities/meta/migrations.entity';
+import { IdentityEntity } from './entities/users/identity.entity';
+import { FunctionEntity } from './entities/functions/function.entity';
+import { BuildsEntity } from './entities/functions/builds.entity';
+import { DeploymentEntity } from './entities/functions/deployment.entity';
+import { ExecutionsEntity } from './entities/functions/executions.entity';
 
 
 export const connectionFactory = {
@@ -73,6 +80,7 @@ export class DbService {
         UserEntity,
         SessionEntity,
         AuthenticatorEntity,
+        IdentityEntity,
         TokenEntity,
         ChallengeEntity,
         TeamEntity,
@@ -84,8 +92,14 @@ export class DbService {
         ProviderEntity,
         SubscriberEntity,
         MessageEntity,
+        FunctionEntity,
+        BuildsEntity,
+        DeploymentEntity,
+        ExecutionsEntity,
         DatabaseEntity,
-        StatsEntity
+        StatsEntity,
+        VariablesEntity,
+        MigrationsEntity
       ],  // Dynamically load tenant entities
       migrations: [InitialMigration],  // Dynamically load tenant migrations
       migrationsRun: false,  // Don't auto-run tenant migrations

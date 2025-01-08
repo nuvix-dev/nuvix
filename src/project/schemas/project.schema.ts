@@ -8,8 +8,7 @@ import { Webhook } from './webhook.schema';
 export type ProjectDocument = HydratedDocument<Project>;
 
 type ProjectService = {
-  name: string;
-  status: boolean;
+  [key: string]: boolean;
 }
 
 type ProjectApi = {}
@@ -95,10 +94,7 @@ export class Project extends BaseSchema {
   accessedAt: Date;
 
   @Prop({
-    required: false, type: [{
-      name: { type: String, required: true, maxlength: 128 },
-      status: { type: Boolean, required: true, default: true }
-    }], default: []
+    required: false, type: {}, default: []
   })
   services: ProjectService[];
 
@@ -110,11 +106,9 @@ export class Project extends BaseSchema {
   apis: ProjectApi[];
 
   @Prop({
-    required: false, type: [
-
-    ], default: []
+    required: false, type: {}, default: {}
   })
-  smtp: ProjectSmtp[];
+  smtp: ProjectSmtp;
 
   @Prop({
     required: false, type: mongoose.Schema.Types.Mixed, default: []
@@ -137,7 +131,7 @@ export class Project extends BaseSchema {
   keys: Key[];
 
   @Prop({ required: false, type: String, maxlength: 16384 })
-  search: string[];
+  search: string;
 
   @Virtual({
     get(this: any) {

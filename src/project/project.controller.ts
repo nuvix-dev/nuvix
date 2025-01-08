@@ -40,7 +40,7 @@ export class ProjectController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.projectService.remove(+id);
+    return this.projectService.remove(id);
   }
 
   @Get(':id/platforms')
