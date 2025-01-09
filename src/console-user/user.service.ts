@@ -18,6 +18,10 @@ import Token from './schemas/token.schema';
 import Challenges from './schemas/challenge.schema';
 import Authenticator from './schemas/authenticator.schema';
 import { UpdatePaymentMethodDto } from 'src/console-account/dto/payment.dto';
+import Permission from 'src/core/helper/permission.helper';
+import Role from 'src/core/helper/role.helper';
+import { QueryBuilder } from 'src/Utils/mongo.filter';
+import { ModelResolver } from 'src/core/resolver/model.resolver';
 
 @Injectable()
 export class UserService {
@@ -72,15 +76,33 @@ export class UserService {
     return user;
   }
 
-  async findOneOrganization(id: string, userId: string) {
-    let org = await this.orgModel.findOne(
-      { id: id }
-    )
-    return org
+  /**
+   * Retrieves Organization by ID.
+   */
+  async findOneOrganization(id: string) {
+    let org = await this.orgModel.findOne({ id: id })
+    return new ModelResolver(org).getDocument();
   }
 
-  async findUserOrganizations(userId: string): Promise<OrganizationDocument[]> {
-    return await this.orgModel.find().exec();
+  /**
+   * Retrieves Organizations.
+   */
+  async findOrganizations(queries?: string[], search?: string) {
+    const baseQuery = this.orgModel.find();
+    const queryBuilder = new QueryBuilder(baseQuery, ['name', 'userId']);
+
+    queryBuilder.parseQueryStrings(queries);
+
+    if (search) {
+      queryBuilder.addSearchFilter(search);
+    }
+
+    const { results, totalCount } = await queryBuilder.execute(true);
+
+    return {
+      total: totalCount,
+      organizations: results,
+    };
   }
 
   /**
@@ -89,10 +111,18 @@ export class UserService {
   async createOrganization(user: Express.User, input: CreateOrgDto): Promise<Organization> {
     try {
       // Create a new Organization document
-      input.organizationId = ID.auto(input.organizationId);
+      let orgId = ID.auto(input.organizationId);
       const createdOrg = new this.orgModel({
-        id: input.organizationId,
-        ...input,
+        id: orgId,
+        name: input.name,
+        permissions: [
+          Permission.Read(Role.Team(orgId)),
+          Permission.Update(Role.Team(orgId, 'owner')),
+          Permission.Delete(Role.Team(orgId, 'owner')),
+        ],
+        prefs: {},
+        billingPlan: input.plan,
+        budgetAlerts: false,
         total: 1
       });
 
@@ -102,7 +132,9 @@ export class UserService {
       const member = await this.membershipModel.create({
         id: ID.unique(),
         userId: user.id,
-        orgId: createdOrg.id,
+        userInternalId: user._id,
+        orgId: savedOrg.id,
+        orgInternalId: savedOrg._id,
         roles: ['owner'],
         userEmail: user.email,
         userName: user.name,
@@ -114,6 +146,8 @@ export class UserService {
       });
 
       await member.save();
+      user.memberships.push(member);
+      await user.save();
       return savedOrg;
     } catch (error) {
       if (error.name === 'ValidationError') {
@@ -133,7 +167,10 @@ export class UserService {
     }
   }
 
-  async updateOrganization(id: string, userId: string, input: UpdateOrgDto): Promise<Organization> {
+  /**
+   * Update an Organization.
+   */
+  async updateOrganization(id: string, input: UpdateOrgDto): Promise<Organization> {
     try {
       // Find the organization by ID and user ID
       const org = await this.orgModel.findOne({ id: id, }).exec(); // exec() for a proper Promise
@@ -161,7 +198,10 @@ export class UserService {
     }
   }
 
-  async deleteOrganization(id: string, userId: string) {
+  /**
+   * Delete An Organization.
+   */
+  async deleteOrganization(id: string) {
     try {
       // Find the organization by ID and user ID
       const org = await this.orgModel.findOneAndDelete({ id: id, }).exec(); // exec() for a proper Promise
@@ -181,11 +221,19 @@ export class UserService {
     }
   }
 
+  /**
+   * Get Members of a Organization.
+   */
   async getOrganizationMembers(id: string) {
-    let members = await this.membershipModel.find({ orgId: id })
+    let org = await this.findOneOrganization(id)
+    if (!org) throw new Exception(Exception.TEAM_NOT_FOUND)
+    let members = await this.membershipModel.find({ orgInternalId: org._id })
     return members;
   }
 
+  /**
+   * Get Organization Plan.
+   */
   async getOrganizationPlan(orgId: string) {
     let org = await this.orgModel.findOne({ id: orgId })
     if (!org) throw new Exception(Exception.TEAM_NOT_FOUND)

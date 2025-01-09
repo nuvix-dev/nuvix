@@ -1,5 +1,6 @@
 import { Model, Query } from 'mongoose';
 import { Exception } from 'src/core/extend/exception';
+import { ModelResolver } from 'src/core/resolver/model.resolver';
 
 interface QueryOptions {
   method: string;
@@ -251,24 +252,52 @@ export class QueryBuilder {
     this.query[operator === 'and' ? '$and' : '$or'] = combinedQueries;
   }
 
-  async execute() {
+  addSearchFilter(search: string): void {
+    this.query = { ...this.query, search: { $regex: search, $options: 'i' } };
+  }
+
+  async execute(auth = false) {
     const cursorQuery = this.options.cursorAfter ? { _id: { $gt: this.options.cursorAfter } } : {};
     const finalQuery = { ...this.query, ...cursorQuery };
 
-    // Get total count without limit and skip
-    const totalCount = await this.model.clone().find(finalQuery).countDocuments();
+    let totalCount = 0;
+    const results = [];
 
-    // Get paginated results
-    const results = await this.model.clone().find(finalQuery)
-      .sort(this.options.sort)
-      .limit(this.options.limit)
-      .skip(this.options.skip);
+    if (auth) {
+      const docsForCount = await this.model.clone().find(finalQuery).select('permissions');
+      for (const doc of docsForCount) {
+        const resolvedDoc = new ModelResolver(doc).getDocument();
+        if (resolvedDoc) {
+          totalCount++;
+        }
+      }
+      const docs = await this.model.clone().find(finalQuery)
+        .sort(this.options.sort)
+        .limit(this.options.limit)
+        .skip(this.options.skip);
+
+      for (const doc of docs) {
+        const resolvedDoc = new ModelResolver(doc).getDocument();
+        if (resolvedDoc) {
+          results.push(resolvedDoc);
+        }
+      }
+
+    } else {
+      totalCount = await this.model.clone().find(finalQuery).countDocuments();
+      const docs = await this.model.clone().find(finalQuery)
+        .sort(this.options.sort)
+        .limit(this.options.limit)
+        .skip(this.options.skip);
+
+      results.push(...docs);
+    }
 
     return {
       results,
       totalCount,
       limit: this.options.limit,
-      skip: this.options.skip
+      skip: this.options.skip,
     };
   }
 }

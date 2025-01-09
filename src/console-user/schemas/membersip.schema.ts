@@ -23,8 +23,8 @@ export class Membership extends BaseSchema {
   @Prop({ type: String, required: true, index: true, unique: true })
   id: string;
 
-  @Prop({ type: mongoose.Types.ObjectId, required: true, index: true })
-  userInternalId: string;
+  @Prop({ type: mongoose.Types.ObjectId, index: true })
+  userInternalId: mongoose.Types.ObjectId;
 
   @Prop({ type: String, index: true })
   userId: string;
@@ -39,7 +39,7 @@ export class Membership extends BaseSchema {
   orgId: string;
 
   @Prop({ type: mongoose.Types.ObjectId, required: true, index: true })
-  orgInternalId: string;
+  orgInternalId: mongoose.Types.ObjectId;
 
   @Prop({ type: String, default: "" })
   orgName: string;

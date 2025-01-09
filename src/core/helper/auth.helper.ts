@@ -5,8 +5,11 @@ import { SessionEntity } from "../entities/users/session.entity";
 import { UserEntity } from "../entities/users/user.entity";
 import { ClsServiceManager } from "nestjs-cls";
 import { Authorization } from "../validators/authorization.validator";
+import { createHash, randomBytes, createHmac, scryptSync } from 'crypto';
+import argon2 from 'argon2';
 
 export class Auth {
+
   public static readonly SUPPORTED_ALGOS = [
     'argon2',
     'bcrypt',
@@ -69,6 +72,8 @@ export class Auth {
   public static readonly MFA_RECENT_DURATION = 1800; // 30 mins
 
   public static cookieName: string = 'a_session';
+  public static cookieDomain = '';
+  public static cookieSamesite = 'none';
   public static unique: string = '';
   public static secret: string = '';
 
@@ -112,7 +117,10 @@ export class Auth {
     return require('crypto').createHash('sha256').update(string).digest('hex');
   }
 
-  public static passwordHash(string: string, algo: string, options: any = {}): string | null {
+  /**
+     * Hash a string using the specified algorithm.
+     */
+  public static async passwordHash(string: string, algo: string, options: any = {}): Promise<string | null> {
     if (algo === 'plaintext') {
       algo = Auth.DEFAULT_ALGO;
       options = Auth.DEFAULT_ALGO_OPTIONS;
@@ -122,63 +130,68 @@ export class Auth {
       throw new Error(`Hashing algorithm '${algo}' is not supported.`);
     }
 
-    // Implement hashing logic for each algorithm
     switch (algo) {
       case 'argon2':
-        // Implement Argon2 hashing
-        break;
+        return (await argon2.hash(string, { ...options })).toString('hex');
+
       case 'bcrypt':
-        // Implement Bcrypt hashing
-        break;
+        const saltRounds = options.saltRounds || 10;
+        return await this.getBcrypt().hash(string, saltRounds);
       case 'md5':
-        return require('crypto').createHash('md5').update(string).digest('hex');
+        return createHash('md5').update(string).digest('hex');
+
       case 'sha':
-        return Auth.hash(string);
+        return createHash('sha256').update(string).digest('hex');
+
       case 'phpass':
-        // Implement Phpass hashing
-        break;
+        // Basic phpass implementation (insecure, for legacy systems only)
+        const salt = options.salt || randomBytes(6).toString('base64');
+        return createHmac('sha1', salt).update(string).digest('base64');
       case 'scrypt':
-        // Implement Scrypt hashing
-        break;
+        const scryptSalt = options.salt || randomBytes(16);
+        const scryptOptions = { N: 16384, r: 8, p: 1, ...options };
+        return scryptSync(string, scryptSalt, 64, scryptOptions).toString('hex');
+
       case 'scryptMod':
-        // Implement Scrypt modified hashing
-        break;
+        const modSalt = options.salt || randomBytes(16);
+        return createHmac('sha256', modSalt).update(string).digest('hex');
+
       default:
         throw new Error(`Hashing algorithm '${algo}' is not supported.`);
     }
   }
 
-  public static passwordVerify(plain: string, hash: string, algo: string, options: any = {}): boolean {
-    if (algo === 'plaintext') {
-      algo = Auth.DEFAULT_ALGO;
-      options = Auth.DEFAULT_ALGO_OPTIONS;
-    }
+  /**
+    * Verify if a plain string matches a hashed value using the specified algorithm.
+    */
+  public static async passwordVerify(plain: string, hash: string, algo: string, options: any = {},): Promise<boolean> {
+    if (algo === 'plaintext') { algo = Auth.DEFAULT_ALGO; options = Auth.DEFAULT_ALGO_OPTIONS; }
 
     if (!Auth.SUPPORTED_ALGOS.includes(algo)) {
       throw new Error(`Hashing algorithm '${algo}' is not supported.`);
     }
 
-    // Implement verification logic for each algorithm
     switch (algo) {
       case 'argon2':
-        // Implement Argon2 verification
-        break;
+        return await argon2.verify(hash, plain, { ...options });
+
       case 'bcrypt':
-        // Implement Bcrypt verification
-        break;
+        return await this.getBcrypt().compare(plain, hash);
+
       case 'md5':
-        return this.hash(plain) === hash;
       case 'sha':
-        return this.hash(plain) === hash;
+        const generatedHash = await this.passwordHash(plain, algo, options);
+        return generatedHash === hash;
+
       case 'phpass':
-        // Implement Phpass verification
-        break;
+        const salt = hash.slice(0, 6); // Assuming the first 6 characters are the salt
+        return createHmac('sha1', salt).update(plain).digest('base64') === hash;
+
       case 'scrypt':
-        // Implement Scrypt verification
-        break;
       case 'scryptMod':
-        // Implement Scrypt modified verification
-        break;
+        const scryptGeneratedHash = await this.passwordHash(plain, algo, options);
+        return scryptGeneratedHash === hash;
+
       default:
         throw new Error(`Hashing algorithm '${algo}' is not supported.`);
     }
@@ -301,5 +314,18 @@ export class Auth {
 
   public static isAnonymousUser(user: UserEntity): boolean {
     return user.email === null && user.phone === null;
+  }
+
+  private static getBcrypt(): any {
+    try {
+      // Try to load native bcrypt and check if it is supported
+      let bcrypt = require('bcrypt');
+      bcrypt.hashSync('test', 10); // Test if native bcrypt is working
+      console.log('Using native bcrypt.');
+      return bcrypt;
+    } catch (error) {
+      console.warn('Native bcrypt not available, falling back to bcryptjs.');
+      return require('bcryptjs'); // Fallback to bcryptjs if native bcrypt fails
+    }
   }
 }

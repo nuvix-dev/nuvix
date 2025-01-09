@@ -31,7 +31,6 @@ export class Authorization {
     let permission = '-';
 
     for (permission of permissions) {
-      console.log(`${permission}: ${this.roles.hasOwnProperty(permission)}`)
       if (this.roles.hasOwnProperty(permission)) {
         return true;
       }

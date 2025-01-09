@@ -19,6 +19,7 @@ import { services } from 'src/core/config/services';
 import { UserDocument } from 'src/console-user/schemas/user.schema';
 import { ClsServiceManager } from 'nestjs-cls';
 import { Authorization } from 'src/core/validators/authorization.validator';
+import { ModelResolver } from 'src/core/resolver/model.resolver';
 
 @Injectable()
 export class ProjectService {
@@ -135,28 +136,27 @@ export class ProjectService {
     }
   }
 
-  async findAll(user: UserDocument, queries?: string[], search?: string) {
-    const cls = ClsServiceManager.getClsService();
+  async findAll(queries?: string[], search?: string) {
     const baseQuery = this.projectModel.find().populate(['platforms', 'keys', 'webhooks']);
     const queryBuilder = new QueryBuilder(baseQuery, ['name', 'teamId']);
 
     queryBuilder.parseQueryStrings(queries);
 
-    let { results, totalCount } = await queryBuilder.execute();
+    if (search) {
+      queryBuilder.addSearchFilter(search);
+    }
+
+    const { results, totalCount } = await queryBuilder.execute(true);
 
     return {
       total: totalCount,
-      projects: results
-    }
+      projects: results,
+    };
   }
 
   async findOne(id: string) {
-    let p = await this.projectModel.findOne({ id: id })
-    let cls = ClsServiceManager.getClsService();
-    let authorization = cls.get('authorization') as Authorization;
-    // authorization.setStatus(false);
-    console.log(authorization.getRoles(), authorization.getStatus());
-    return p;
+    const project = await this.projectModel.findOne({ id: id }).populate(['platforms', 'keys', 'webhooks'])
+    return new ModelResolver(project).getDocument();
   }
 
   update(id: number, updateProjectDto: UpdateProjectDto) {

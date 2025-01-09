@@ -85,8 +85,8 @@ export class User extends BaseSchema {
   @Prop({ type: Date, default: null, index: true })
   accessedAt: Date;
 
-  // @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Identities' }] })
-  // identities: Identities[];
+  @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Identities' }] })
+  identities: Identities[];
 
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Target' }] })
   targets: Target[];
@@ -185,7 +185,7 @@ export class Target extends BaseSchema {
   @Prop({ type: String, index: true })
   sessionId: string;
 
-  @Prop({ type: mongoose.Types.ObjectId, required: true, index: true })
+  @Prop({ type: mongoose.Types.ObjectId, required: false, index: true })
   sessionInternalId: mongoose.Types.ObjectId;
 
   @Prop({ type: String })

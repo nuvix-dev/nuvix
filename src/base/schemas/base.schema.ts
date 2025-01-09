@@ -1,8 +1,9 @@
 import { Prop, Schema, Virtual } from "@nestjs/mongoose";
+import { HydratedDocument } from "mongoose";
 import { Database } from "src/core/config/database";
 import { ID } from "src/core/helper/ID.helper";
 
-
+export type BaseDocument = HydratedDocument<BaseSchema>;
 
 export abstract class BaseSchema {
 
@@ -14,6 +15,9 @@ export abstract class BaseSchema {
 
   @Prop({ type: [String], default: [] })
   permissions: string[];
+
+  @Prop({ type: String, default: "" })
+  search: string;
 
   public getPermissions(): string[] {
     return Array.from(new Set(this.permissions || []));

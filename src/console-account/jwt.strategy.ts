@@ -7,6 +7,10 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from 'src/console-user/schemas/user.schema';
 import { Session } from './schemas/account.schema';
+import { ClsService } from 'nestjs-cls';
+import { Authorization } from 'src/core/validators/authorization.validator';
+import { Auth } from './auth';
+import Role from 'src/core/helper/role.helper';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -15,6 +19,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     private readonly sessionModel: Model<Session>,
     @InjectModel(User.name, 'server')
     private readonly userModel: Model<User>,
+    private readonly cls: ClsService,
   ) {
     super({
       jwtFromRequest: (req: Request) => {
@@ -41,6 +46,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       .exec()
     if (!user) return null;
     user.session = session;
+    let authorization = this.cls.get('authorization') as Authorization;
+    let roles = Auth.getRoles(user);
+    authorization.removeRole(Role.Any().toString())
+    for (let role of roles) {
+      authorization.addRole(role);
+    }
     return user;
   }
 }

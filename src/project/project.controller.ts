@@ -15,6 +15,7 @@ import { ClsService } from 'nestjs-cls';
 import { Authorization } from 'src/core/validators/authorization.validator';
 import { Input } from 'src/core/validators/authorization-input.validator';
 import { Database } from 'src/core/config/database';
+import { Exception } from 'src/core/extend/exception';
 
 @Controller()
 @UseInterceptors(ClassSerializerInterceptor)
@@ -31,19 +32,15 @@ export class ProjectController {
   }
 
   @Get()
-  async findAll(@User() user: UserDocument, @Query('queries') queries?: string[], @Query('search') search?: string): Promise<ProjectListModel> {
-    let data = await this.projectService.findAll(user, queries, search);
+  async findAll(@Query('queries') queries?: string[], @Query('search') search?: string): Promise<ProjectListModel> {
+    let data = await this.projectService.findAll(queries, search);
     return new ProjectListModel(data);
   }
 
   @Get(':id')
-  async findOne(@Param('id') id: string, @User() user: UserDocument): Promise<ProjectModel> {
+  async findOne(@Param('id') id: string): Promise<ProjectModel> {
     let project = await this.projectService.findOne(id)
-    let roles = Auth.getRoles(user)
-    console.log(roles, user)
-    let authorization = this.clsService.get('authorization') as Authorization;
-    let skipAuth = authorization.isValid(new Input(Database.PERMISSION_CREATE, project.$permissions))
-    console.log(skipAuth)
+    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND)
     return new ProjectModel(project);
   }
 

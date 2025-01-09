@@ -22,6 +22,11 @@ import { CreateBillingAddressDto, UpdateBillingAddressDto } from './dto/billing.
 import { Organization } from 'src/console-user/schemas/organization.schema';
 import { Invoice } from 'src/console-user/schemas/invoce.schema';
 import { Log } from 'src/console-user/schemas/log.schema';
+import { Auth } from './auth';
+import { ClsService } from 'nestjs-cls';
+import { Authorization } from 'src/core/validators/authorization.validator';
+import Token, { TokenDocument } from 'src/console-user/schemas/token.schema';
+import { SessionModel } from './models/session.model';
 
 @Injectable()
 export class AccountService {
@@ -36,7 +41,9 @@ export class AccountService {
     @InjectModel(Target.name, 'server') private readonly targetModel: Model<Target>,
     @InjectModel(Identities.name, 'server') private readonly identityModel: Model<Identities>,
     @InjectModel(BillingAddress.name, 'server') private readonly billingModel: Model<BillingAddress>,
+    @InjectModel(Token.name, 'server') private readonly tokenModel: Model<Token>,
     @InjectModel(Log.name, 'server') private readonly logModel: Model<Log>,
+    private readonly cls: ClsService,
     private jwtService: JwtService
   ) { }
 
@@ -59,9 +66,9 @@ export class AccountService {
         registration: new Date(),
         status: true,
         $permissions: [
-          Permission.Read(Role.Any()).toString(),
-          Permission.Update(Role.User(userId)).toString(),
-          Permission.Delete(Role.User(userId)).toString(),
+          Permission.Read(Role.Any()),
+          Permission.Update(Role.User(userId)),
+          Permission.Delete(Role.User(userId)),
         ]
       })
       await user.save()
@@ -72,9 +79,9 @@ export class AccountService {
         providerType: 'email',
         identifier: createAccountDto.email,
         $permissions: [
-          Permission.Read(Role.User(userId)).toString(),
-          Permission.Update(Role.User(userId)).toString(),
-          Permission.Delete(Role.User(userId)).toString(),
+          Permission.Read(Role.User(userId)),
+          Permission.Update(Role.User(userId)),
+          Permission.Delete(Role.User(userId)),
         ]
       })
       await target.save()
@@ -284,12 +291,10 @@ export class AccountService {
   }
 
   async remove(id: string, user: UserDocument) {
-    let isValid = new Permissions(0, [Permission.Delete(Role.User(user.$id)).toString()]).isValid(user.$permissions)
-    if (!isValid) {
-      throw new Exception(Exception.GENERAL_ACCESS_FORBIDDEN)
-    }
+    await this.sessionModel.deleteMany({ userInternalId: user._id })
     await this.targetModel.deleteMany({ userInternalId: user._id })
     await user.deleteOne()
+    return {}
   }
 
   async emailLogin(input: CreateEmailSessionDto, req: Request, headers: Request["headers"]): Promise<SessionDocument> {
@@ -300,13 +305,13 @@ export class AccountService {
       }
       let isPasswordValid = await this.userSerice.comparePasswords(input.password, user.password);
       if (isPasswordValid) {
-        let session = await this.createSession(user, req, headers);
+        let session = await this.createSessionOld(user, req, headers);
         if (!session.success) {
           throw new Exception(undefined, "Session creation failed.", 200)
         }
         return session.session
       } else {
-        throw new Exception(Exception.USER_PASSWORD_MISMATCH)
+        throw new Exception(Exception.USER_INVALID_CREDENTIALS)
       }
     }
   }
@@ -322,7 +327,7 @@ export class AccountService {
       }
       let isPasswordValid = await this.userSerice.comparePasswords(loginDto.password, user.password);
       if (isPasswordValid) {
-        let session = await this.createSession(user, req, headers);
+        let session = await this.createSessionOld(user, req, headers);
         if (!session.success) {
           throw new Exception(undefined, "Session creation failed.", 200)
         }
@@ -378,7 +383,7 @@ export class AccountService {
     }
   }
 
-  async createSession(user: UserDocument, @Req() req: Request, @Headers() headers: Request["headers"],) {
+  async createSessionOld(user: UserDocument, @Req() req: Request, @Headers() headers: Request["headers"],) {
     let userAgent = headers['user-agent'];
     let ipAddress = req.ip;
     let location = req.headers['cf-ipcountry'];
@@ -415,5 +420,148 @@ export class AccountService {
         message: "An error occured while creating session."
       }
     }
+  }
+
+  /**
+   * Create a new session
+   */
+  async createSession(
+    userId: string,
+    secret: string,
+    request: Request,
+    response: Response,
+    user: UserDocument | null,
+    // locale: Locale,
+    // geodb: Reader,
+    // queueForEvents: Event,
+    // queueForMails: Mail
+  ): Promise<SessionModel> {
+    let authorization = this.cls.get('authorization') as Authorization;
+    const roles = authorization.getRoles();
+    const isPrivilegedUser = Auth.isPrivilegedUser(roles);
+    const isAppUser = Auth.isAppUser(roles);
+
+    const userFromRequest = await this.userModel.findOne({ id: userId }).populate(['tokens']);
+
+    if (!userFromRequest) {
+      throw new Exception('USER_INVALID_TOKEN');
+    }
+
+    const verifiedToken = Auth.tokenVerify(userFromRequest.tokens as TokenDocument[], null, secret);
+
+    if (!verifiedToken) {
+      throw new Exception('USER_INVALID_TOKEN');
+    }
+
+    user = userFromRequest;
+
+    const duration = Auth.TOKEN_EXPIRATION_LOGIN_LONG;
+    const detector = {} //new Detector(request.getUserAgent() || 'UNKNOWN');
+    const record = {} as any //geodb.get(request.getIP());
+    const sessionSecret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION);
+
+    const factor = (() => {
+      switch (verifiedToken.type) {
+        case Auth.TOKEN_TYPE_MAGIC_URL:
+        case Auth.TOKEN_TYPE_OAUTH2:
+        case Auth.TOKEN_TYPE_EMAIL:
+          return 'email';
+        case Auth.TOKEN_TYPE_PHONE:
+          return 'phone';
+        case Auth.TOKEN_TYPE_GENERIC:
+          return 'token';
+        default:
+          throw new Exception('USER_INVALID_TOKEN');
+      }
+    })();
+
+    const sessionData = {
+      $id: ID.unique(),
+      userId: user.id,
+      userInternalId: user._id,
+      provider: Auth.getSessionProviderByTokenType(verifiedToken.type),
+      secret: Auth.hash(sessionSecret),
+      userAgent: request.headers['user-agent'] || 'UNKNOWN',
+      ip: request.ip,
+      factors: [factor],
+      countryCode: record ? record.country.iso_code.toLowerCase() : '--',
+      expire: new Date(Date.now() + duration * 1000),
+      // ...detector.getOS(),
+      // ...detector.getClient(),
+      // ...detector.getDevice()
+    };
+
+    const session = new this.sessionModel(sessionData)
+
+    authorization.addRole(Role.User(user.id).toString());
+
+    session.permissions = [
+      Permission.Read(Role.User(user.id)).toString(),
+      Permission.Update(Role.User(user.id)).toString(),
+      Permission.Delete(Role.User(user.id)).toString()
+    ];
+
+    try {
+      await session.save();
+    } catch (error) {
+      throw new Exception('GENERAL_SERVER_ERROR', 'Failed saving session to DB');
+    }
+
+    await authorization.skip(async () => await this.tokenModel.findByIdAndDelete(verifiedToken._id));
+
+    if ([Auth.TOKEN_TYPE_MAGIC_URL, Auth.TOKEN_TYPE_EMAIL].includes(verifiedToken.type)) {
+      user.emailVerification = true;
+    }
+
+    if (verifiedToken.type === Auth.TOKEN_TYPE_PHONE) {
+      user.phoneVerification = true;
+    }
+
+    try {
+      await user.save();
+    } catch (error) {
+      throw new Exception('GENERAL_SERVER_ERROR', 'Failed saving user to DB');
+    }
+
+    const isAllowedTokenType = ![Auth.TOKEN_TYPE_MAGIC_URL, Auth.TOKEN_TYPE_EMAIL].includes(verifiedToken.type);
+    const hasUserEmail = !!user.email;
+    const isSessionAlertsEnabled = true;
+    const isNotFirstSession = await this.sessionModel.countDocuments({ userId: user.id }) > 1;
+
+    if (isAllowedTokenType && hasUserEmail && isSessionAlertsEnabled && isNotFirstSession) {
+      // this.sendSessionAlert(locale, user, project, session, queueForMails);
+    }
+
+    // queueForEvents
+    //   .setParam('userId', user.getId())
+    //   .setParam('sessionId', session.getId());
+
+    const expire = new Date(Date.now() + duration * 1000);
+    const protocol = request.protocol;
+
+    response.cookie(`${Auth.cookieName}_legacy`, Auth.encodeSession(user.id, sessionSecret), {
+      expires: new Date(expire),
+      path: '/',
+      secure: protocol === 'https',
+      httpOnly: true
+    });
+
+    response.cookie(Auth.cookieName, Auth.encodeSession(user.id, sessionSecret), {
+      expires: new Date(expire),
+      path: '/',
+      domain: Auth.cookieDomain || undefined,
+      secure: protocol === 'https',
+      httpOnly: true,
+      sameSite: (Auth.cookieSamesite || 'lax') as any
+    });
+
+    const countryName = 'INDIA' // locale.getText(`countries.${session.countryCode}`, locale.getText('locale.country.unknown'));
+
+    const model = new SessionModel(session);
+    model.current = true;
+    model.countryName = countryName;
+    model.expire = expire;
+    model.secret = (isPrivilegedUser || isAppUser) ? Auth.encodeSession(user.id, sessionSecret) : ''
+    return model;
   }
 }

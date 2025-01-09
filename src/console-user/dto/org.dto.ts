@@ -10,6 +10,10 @@ export class CreateOrgDto {
     @IsString()
     @IsNotEmpty()
     name: string
+
+    @IsOptional()
+    @IsString()
+    plan: string
 }
 
 export class UpdateOrgDto extends PartialType(CreateOrgDto) { }

@@ -12,6 +12,7 @@ import {
   Put,
   UseInterceptors,
   ClassSerializerInterceptor,
+  Query,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -56,13 +57,9 @@ export class UserController {
 
 
   @Get('organizations')
-  async findOrganizations(@Req() req: Request): Promise<OrganizationListModel> {
-    const orgs = await this.userService.findUserOrganizations(req.user.id);
-
-    return new OrganizationListModel({
-      total: orgs.length,
-      organizations: orgs,
-    })
+  async findOrganizations(@Query('queries') queries?: string[], @Query('search') search?: string): Promise<OrganizationListModel> {
+    const data = await this.userService.findOrganizations(queries, search);
+    return new OrganizationListModel(data)
   }
 
   @Post('organizations')
@@ -79,12 +76,12 @@ export class UserController {
   }
 
   @Get('organizations/:id')
-  async findOneOrganization(@Param('id') id: string, @Req() req: Request): Promise<OrganizationModel> {
-    const org = await this.userService.findOneOrganization(id, req.user.id);
+  async findOneOrganization(@Param('id') id: string): Promise<OrganizationModel> {
+    const org = await this.userService.findOneOrganization(id);
     if (org) {
       return new OrganizationModel(org);
     }
-    throw new Exception(null, 'Organization not found.', 404);
+    throw new Exception(Exception.TEAM_NOT_FOUND, 'Organization not found.', 404);
   }
 
   @Put('organizations/:id')
@@ -93,7 +90,7 @@ export class UserController {
     @Req() req,
     @Body() input: UpdateOrgDto,
   ): Promise<OrganizationModel> {
-    return new OrganizationModel(await this.userService.updateOrganization(id, req.user.id, input));
+    return new OrganizationModel(await this.userService.updateOrganization(id, input));
   }
 
   @Delete('organizations/:id')
@@ -102,7 +99,7 @@ export class UserController {
     @Req() req: Request,
     @Res() res: Response,
   ) {
-    await this.userService.deleteOrganization(id, req.user.id);
+    await this.userService.deleteOrganization(id);
     return res.status(200).json({
       success: true,
       message: 'Organization deleted successfully.',

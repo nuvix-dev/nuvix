@@ -12,7 +12,7 @@ export class SessionModel extends BaseModel {
   /**
    * Session expiration date in ISO 8601 format.
    */
-  @Expose() expire: string = '';
+  @Expose() expire: Date;
   /**
    * Session Provider.
    */

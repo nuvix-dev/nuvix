@@ -36,7 +36,7 @@ export class Identities extends BaseSchema {
   userId: string;
 
   @Prop({ required: true, type: mongoose.Types.ObjectId, index: true })
-  userInternalId: string;
+  userInternalId: mongoose.Types.ObjectId;
 
   @Prop({ type: String, default: null })
   provider: string;
@@ -129,8 +129,8 @@ export class Session extends BaseSchema {
   @Prop({ required: true, type: String })
   userId: string;
 
-  @Prop({ required: true, type: String, index: true })
-  userInternalId: string;
+  @Prop({ required: true, type: mongoose.Types.ObjectId, index: true })
+  userInternalId: mongoose.Types.ObjectId;
 
   @Prop({ required: true, type: Date })
   expire: Date;
