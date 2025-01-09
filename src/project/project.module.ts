@@ -7,12 +7,14 @@ import { Organization, OrganizationSchema } from 'src/console-user/schemas/organ
 import { Platform, PlatformSchema } from './schemas/platform.schema';
 import { Key, KeySchema } from './schemas/key.schema';
 import { Webhook, WebhookSchema } from './schemas/webhook.schema';
+import { JwtAuthGuard } from 'src/console-account/jwt-auth.guard';
+import { GlobalMongooseModule } from 'src/core/resolver/mongoose.resolver';
 
 @Module({
   controllers: [ProjectController],
-  providers: [ProjectService],
+  providers: [ProjectService, JwtAuthGuard],
   imports: [
-    MongooseModule.forFeature([
+    GlobalMongooseModule.forFeature([
       { name: Project.name, schema: ProjectSchema },
       { name: Organization.name, schema: OrganizationSchema },
       { name: Platform.name, schema: PlatformSchema },

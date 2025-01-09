@@ -12,7 +12,7 @@ import BaseEntity from "../base.entity";
 @Index('_key_status', ['status'])
 @Index('_key_requestMethod', ['requestMethod'])
 @Index('_key_requestPath', ['requestPath'])
-@Index('_key_deployment', ['deploymentId'])
+@Index('_key_deploymentId', ['deploymentId'])
 @Index('_key_responseStatusCode', ['responseStatusCode'])
 @Index('_key_duration', ['duration'])
 export class ExecutionsEntity extends BaseEntity {

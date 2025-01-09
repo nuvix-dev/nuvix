@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, OnModuleInit } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -20,6 +20,8 @@ import { UsersModule } from './users/users.module';
 import { AccountModule } from './account/account.module';
 import { TeamsModule } from './teams/teams.module';
 import { RealtimeModule } from './realtime/realtime.module';
+import { ClsModule, ClsService, ClsServiceManager } from 'nestjs-cls';
+import { Authorization } from './core/validators/authorization.validator';
 
 config();
 
@@ -45,6 +47,17 @@ let mongo_url_params = "?retryWrites=true&w=majority&appName=Nuvix"
 
 @Module({
   imports: [
+    ClsModule.forRoot({
+      global: true,
+      middleware: {
+        mount: true,
+        setup(cls, req, res) {
+          cls.set('req', req);
+          cls.set('res', res);
+          cls.set('authorization', new Authorization());
+        },
+      },
+    }),
     MongooseModule.forRoot(`${process.env.MONGO_URL}/server${mongo_url_params}`, {
       connectionName: 'server',
     }),
@@ -127,4 +140,4 @@ let mongo_url_params = "?retryWrites=true&w=majority&appName=Nuvix"
   providers: [AppService],
 })
 
-export class AppModule { }
+export class AppModule { } 

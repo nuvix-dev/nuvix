@@ -11,11 +11,14 @@ import Permission from 'src/core/helper/permission.helper';
 import Role from 'src/core/helper/role.helper';
 import { APP_VERSION_STABLE } from 'src/Utils/constants';
 import authMethods, { AuthMethod, defaultAuthConfig } from 'src/core/config/auth';
-import { DbService } from 'src/core/db.service';
+import { DbService } from 'src/core/db.provider';
 import { QueryBuilder } from 'src/Utils/mongo.filter';
 import { oAuthProviders } from 'src/core/config/authProviders';
 import { defaultSmtpConfig } from 'src/core/config/smtp';
 import { services } from 'src/core/config/services';
+import { UserDocument } from 'src/console-user/schemas/user.schema';
+import { ClsServiceManager } from 'nestjs-cls';
+import { Authorization } from 'src/core/validators/authorization.validator';
 
 @Injectable()
 export class ProjectService {
@@ -132,7 +135,8 @@ export class ProjectService {
     }
   }
 
-  async findAll(queries: string[]) {
+  async findAll(user: UserDocument, queries?: string[], search?: string) {
+    const cls = ClsServiceManager.getClsService();
     const baseQuery = this.projectModel.find().populate(['platforms', 'keys', 'webhooks']);
     const queryBuilder = new QueryBuilder(baseQuery, ['name', 'teamId']);
 
@@ -146,8 +150,13 @@ export class ProjectService {
     }
   }
 
-  findOne(id: string) {
-    return this.projectModel.findOne({ id: id });
+  async findOne(id: string) {
+    let p = await this.projectModel.findOne({ id: id })
+    let cls = ClsServiceManager.getClsService();
+    let authorization = cls.get('authorization') as Authorization;
+    // authorization.setStatus(false);
+    console.log(authorization.getRoles(), authorization.getStatus());
+    return p;
   }
 
   update(id: number, updateProjectDto: UpdateProjectDto) {

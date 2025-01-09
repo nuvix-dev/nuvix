@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
 export class InitialMigration implements MigrationInterface {
-    name = 'Migration1736334436650'
+    name = 'Migration1736418718928'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE SCHEMA IF NOT EXISTS auth`);
@@ -17,6 +17,18 @@ export class InitialMigration implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "_key_resourceId_resourceType" ON "meta"."variables" ("resourceId", "resourceType") `);
         await queryRunner.query(`CREATE INDEX "_key_resourceType" ON "meta"."variables" ("resourceType") `);
         await queryRunner.query(`CREATE INDEX "_key_resourceInternalId" ON "meta"."variables" ("resourceInternalId") `);
+        await queryRunner.query(`CREATE TABLE "meta"."stats" ("id" SERIAL NOT NULL, "$id" character varying NOT NULL, "$createdAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$updatedAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$deletedAt" TIMESTAMP(0) WITH TIME ZONE, "$permissions" text, "metric" character varying(255) NOT NULL, "region" character varying(255) NOT NULL, "value" integer NOT NULL, "time" TIMESTAMP WITH TIME ZONE, "period" character varying(4) NOT NULL, CONSTRAINT "PK_899834554a81df3dd44e6004c1e" PRIMARY KEY ("id", "$id"))`);
+        await queryRunner.query(`CREATE INDEX "_key_metric_period_time" ON "meta"."stats" ("metric", "period", "time") `);
+        await queryRunner.query(`CREATE UNIQUE INDEX "_key_period_time" ON "meta"."stats" ("period", "time") `);
+        await queryRunner.query(`CREATE INDEX "_key_time" ON "meta"."stats" ("time") `);
+        await queryRunner.query(`CREATE TABLE "meta"."migrations" ("id" SERIAL NOT NULL, "$id" character varying NOT NULL, "$createdAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$updatedAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$deletedAt" TIMESTAMP(0) WITH TIME ZONE, "$permissions" text, "status" character varying(255) NOT NULL, "stage" character varying(255) NOT NULL, "source" character varying(8192) NOT NULL, "credentials" character varying(65536), "resources" character varying(255) array NOT NULL, "statusCounters" character varying(3000) NOT NULL, "resourceData" character varying(131070) NOT NULL, "errors" character varying(65535) array NOT NULL, "search" character varying(16384), CONSTRAINT "PK_b7adaac4efa52a42b1ec642a944" PRIMARY KEY ("id", "$id"))`);
+        await queryRunner.query(`CREATE INDEX "_fulltext__search" ON "meta"."migrations" ("search") `);
+        await queryRunner.query(`CREATE INDEX "_key_source" ON "meta"."migrations" ("source") `);
+        await queryRunner.query(`CREATE INDEX "_key_stage" ON "meta"."migrations" ("stage") `);
+        await queryRunner.query(`CREATE INDEX "_key_status" ON "meta"."migrations" ("status") `);
+        await queryRunner.query(`CREATE TABLE "meta"."databases" ("id" SERIAL NOT NULL, "$id" character varying NOT NULL, "$createdAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$updatedAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$deletedAt" TIMESTAMP(0) WITH TIME ZONE, "$permissions" text, "name" character varying(256) NOT NULL, "enabled" boolean DEFAULT true, "search" character varying(16384), CONSTRAINT "PK_a4f3afe454ad5428d0b400f708f" PRIMARY KEY ("id", "$id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_4f56ebcf8cba238205136aa00f" ON "meta"."databases" ("name") `);
+        await queryRunner.query(`CREATE INDEX "IDX_76768c4da0c82f87ca31cf732b" ON "meta"."databases" ("search") `);
         await queryRunner.query(`CREATE TABLE "auth"."tokens" ("id" SERIAL NOT NULL, "$id" character varying NOT NULL, "$createdAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$updatedAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$deletedAt" TIMESTAMP(0) WITH TIME ZONE, "$permissions" text, "userId" integer, "type" integer NOT NULL, "secret" character varying(512), "expire" TIMESTAMP, "userAgent" character varying(16384), "ip" character varying(45), "user_$id" character varying, CONSTRAINT "PK_b6a486db9ee76782688fb5b96d9" PRIMARY KEY ("id", "$id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_8c26f11a8b165c263af3ad865f" ON "auth"."tokens" ("userId", "user_$id") `);
         await queryRunner.query(`CREATE TABLE "auth"."authenticators" ("id" SERIAL NOT NULL, "$id" character varying NOT NULL, "$createdAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$updatedAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$deletedAt" TIMESTAMP(0) WITH TIME ZONE, "$permissions" text, "userId" integer, "type" character varying(255), "verified" boolean DEFAULT false, "data" text, "user_$id" character varying, CONSTRAINT "PK_abf143ba05a8dc08c7a11aca370" PRIMARY KEY ("id", "$id"))`);
@@ -93,7 +105,7 @@ export class InitialMigration implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "idx_status" ON "messages"."messages" ("status") `);
         await queryRunner.query(`CREATE INDEX "idx_provider_type" ON "messages"."messages" ("providerType") `);
         await queryRunner.query(`CREATE TABLE "functions"."functions" ("id" SERIAL NOT NULL, "$id" character varying NOT NULL, "$createdAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$updatedAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$deletedAt" TIMESTAMP(0) WITH TIME ZONE, "$permissions" text, "execute" character varying(128) array, "name" character varying(2048), "enabled" boolean NOT NULL, "live" boolean NOT NULL, "installationId" character varying(255), "installationInternalId" character varying(255), "providerRepositoryId" character varying(255), "repositoryId" character varying(255), "repositoryInternalId" character varying(255), "providerBranch" character varying(255), "providerRootDirectory" character varying(255), "providerSilentMode" boolean DEFAULT false, "logging" boolean NOT NULL, "runtime" character varying(2048), "deploymentInternalId" character varying(255), "deployment" character varying(255), "vars" character varying(16384), "varsProject" character varying(16384), "events" character varying(256) array, "scheduleInternalId" character varying(255), "scheduleId" character varying(255), "schedule" character varying(128), "timeout" integer, "search" character varying(16384), "version" character varying(8) DEFAULT 'v4', "entrypoint" character varying(16384), "commands" character varying(16384), "specification" character varying(128) DEFAULT '', "scopes" character varying(255) array, CONSTRAINT "PK_09d753532da4be1a856f8736623" PRIMARY KEY ("id", "$id"))`);
-        await queryRunner.query(`CREATE INDEX "_key_deployment" ON "functions"."functions" ("deployment") `);
+        await queryRunner.query(`CREATE INDEX "_key_idx_deployment" ON "functions"."functions" ("deployment") `);
         await queryRunner.query(`CREATE INDEX "_key_runtime" ON "functions"."functions" ("runtime") `);
         await queryRunner.query(`CREATE INDEX "_key_repositoryInternalId" ON "functions"."functions" ("repositoryInternalId") `);
         await queryRunner.query(`CREATE INDEX "_key_repositoryId" ON "functions"."functions" ("repositoryId") `);
@@ -102,11 +114,11 @@ export class InitialMigration implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "_key_installationId" ON "functions"."functions" ("installationId") `);
         await queryRunner.query(`CREATE INDEX "_key_enabled" ON "functions"."functions" ("enabled") `);
         await queryRunner.query(`CREATE UNIQUE INDEX "_key_name" ON "functions"."functions" ("name") `);
-        await queryRunner.query(`CREATE INDEX "_key_search" ON "functions"."functions" ("search") `);
+        await queryRunner.query(`CREATE INDEX "_key__search" ON "functions"."functions" ("search") `);
         await queryRunner.query(`CREATE TABLE "functions"."executions" ("id" SERIAL NOT NULL, "$id" character varying NOT NULL, "$createdAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$updatedAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$deletedAt" TIMESTAMP(0) WITH TIME ZONE, "$permissions" text, "functionInternalId" character varying(255), "functionId" character varying(255), "deploymentInternalId" character varying(255), "deploymentId" character varying(255), "trigger" character varying(128), "status" character varying(128), "duration" double precision, "errors" character varying(1000000), "logs" character varying(1000000), "requestMethod" character varying(128), "requestPath" character varying(2048), "requestHeaders" character varying(16384), "responseStatusCode" integer, "responseHeaders" character varying(16384), "search" character varying(16384), "scheduledAt" TIMESTAMP WITH TIME ZONE, "scheduleInternalId" character varying(255), "scheduleId" character varying(255), CONSTRAINT "PK_6765776f27449304b454f635738" PRIMARY KEY ("id", "$id"))`);
         await queryRunner.query(`CREATE INDEX "_key_duration" ON "functions"."executions" ("duration") `);
         await queryRunner.query(`CREATE INDEX "_key_responseStatusCode" ON "functions"."executions" ("responseStatusCode") `);
-        await queryRunner.query(`CREATE INDEX "_key_deployment" ON "functions"."executions" ("deploymentId") `);
+        await queryRunner.query(`CREATE INDEX "_key_deploymentId" ON "functions"."executions" ("deploymentId") `);
         await queryRunner.query(`CREATE INDEX "_key_requestPath" ON "functions"."executions" ("requestPath") `);
         await queryRunner.query(`CREATE INDEX "_key_requestMethod" ON "functions"."executions" ("requestMethod") `);
         await queryRunner.query(`CREATE INDEX "_key_status" ON "functions"."executions" ("status") `);
@@ -122,18 +134,6 @@ export class InitialMigration implements MigrationInterface {
         await queryRunner.query(`CREATE INDEX "_key_resource" ON "functions"."deployments" ("resourceId") `);
         await queryRunner.query(`CREATE TABLE "functions"."builds" ("id" SERIAL NOT NULL, "$id" character varying NOT NULL, "$createdAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$updatedAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$deletedAt" TIMESTAMP(0) WITH TIME ZONE, "$permissions" text, "startTime" TIMESTAMP WITH TIME ZONE, "endTime" TIMESTAMP WITH TIME ZONE, "duration" integer, "size" integer, "deploymentInternalId" character varying(255), "deploymentId" character varying(255), "runtime" character varying(2048) NOT NULL, "status" character varying(256) NOT NULL DEFAULT 'processing', "path" character varying(2048), "logs" character varying(1000000), "sourceType" character varying(2048) NOT NULL DEFAULT 'local', "source" character varying(2048) NOT NULL, CONSTRAINT "PK_66747429c84ce777acb41b5dd3c" PRIMARY KEY ("id", "$id"))`);
         await queryRunner.query(`CREATE INDEX "_key_deployment" ON "functions"."builds" ("deploymentId") `);
-        await queryRunner.query(`CREATE TABLE "meta"."stats" ("id" SERIAL NOT NULL, "$id" character varying NOT NULL, "$createdAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$updatedAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$deletedAt" TIMESTAMP(0) WITH TIME ZONE, "$permissions" text, "metric" character varying(255) NOT NULL, "region" character varying(255) NOT NULL, "value" integer NOT NULL, "time" TIMESTAMP WITH TIME ZONE, "period" character varying(4) NOT NULL, CONSTRAINT "PK_899834554a81df3dd44e6004c1e" PRIMARY KEY ("id", "$id"))`);
-        await queryRunner.query(`CREATE INDEX "_key_metric_period_time" ON "meta"."stats" ("metric", "period", "time") `);
-        await queryRunner.query(`CREATE UNIQUE INDEX "_key_period_time" ON "meta"."stats" ("period", "time") `);
-        await queryRunner.query(`CREATE INDEX "_key_time" ON "meta"."stats" ("time") `);
-        await queryRunner.query(`CREATE TABLE "meta"."migrations" ("id" SERIAL NOT NULL, "$id" character varying NOT NULL, "$createdAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$updatedAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$deletedAt" TIMESTAMP(0) WITH TIME ZONE, "$permissions" text, "status" character varying(255) NOT NULL, "stage" character varying(255) NOT NULL, "source" character varying(8192) NOT NULL, "credentials" character varying(65536), "resources" character varying(255) array NOT NULL, "statusCounters" character varying(3000) NOT NULL, "resourceData" character varying(131070) NOT NULL, "errors" character varying(65535) array NOT NULL, "search" character varying(16384), CONSTRAINT "PK_b7adaac4efa52a42b1ec642a944" PRIMARY KEY ("id", "$id"))`);
-        await queryRunner.query(`CREATE INDEX "_fulltext_search" ON "meta"."migrations" ("search") `);
-        await queryRunner.query(`CREATE INDEX "_key_source" ON "meta"."migrations" ("source") `);
-        await queryRunner.query(`CREATE INDEX "_key_stage" ON "meta"."migrations" ("stage") `);
-        await queryRunner.query(`CREATE INDEX "_key_status" ON "meta"."migrations" ("status") `);
-        await queryRunner.query(`CREATE TABLE "meta"."databases" ("id" SERIAL NOT NULL, "$id" character varying NOT NULL, "$createdAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$updatedAt" TIMESTAMP(0) WITH TIME ZONE NOT NULL DEFAULT now(), "$deletedAt" TIMESTAMP(0) WITH TIME ZONE, "$permissions" text, "name" character varying(256) NOT NULL, "enabled" boolean DEFAULT true, "search" character varying(16384), CONSTRAINT "PK_a4f3afe454ad5428d0b400f708f" PRIMARY KEY ("id", "$id"))`);
-        await queryRunner.query(`CREATE INDEX "IDX_4f56ebcf8cba238205136aa00f" ON "meta"."databases" ("name") `);
-        await queryRunner.query(`CREATE INDEX "IDX_76768c4da0c82f87ca31cf732b" ON "meta"."databases" ("search") `);
         await queryRunner.query(`ALTER TABLE "auth"."tokens" ADD CONSTRAINT "FK_8c26f11a8b165c263af3ad865f8" FOREIGN KEY ("userId", "user_$id") REFERENCES "auth"."users"("id","$id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "auth"."authenticators" ADD CONSTRAINT "FK_2f3a0e7f07ebe75b1a85fbc0e18" FOREIGN KEY ("userId", "user_$id") REFERENCES "auth"."users"("id","$id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "auth"."challenges" ADD CONSTRAINT "FK_fec373b440cc69f2abfa95eaf49" FOREIGN KEY ("userId", "user_$id") REFERENCES "auth"."users"("id","$id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
@@ -155,18 +155,6 @@ export class InitialMigration implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "auth"."challenges" DROP CONSTRAINT "FK_fec373b440cc69f2abfa95eaf49"`);
         await queryRunner.query(`ALTER TABLE "auth"."authenticators" DROP CONSTRAINT "FK_2f3a0e7f07ebe75b1a85fbc0e18"`);
         await queryRunner.query(`ALTER TABLE "auth"."tokens" DROP CONSTRAINT "FK_8c26f11a8b165c263af3ad865f8"`);
-        await queryRunner.query(`DROP INDEX "meta"."IDX_76768c4da0c82f87ca31cf732b"`);
-        await queryRunner.query(`DROP INDEX "meta"."IDX_4f56ebcf8cba238205136aa00f"`);
-        await queryRunner.query(`DROP TABLE "meta"."databases"`);
-        await queryRunner.query(`DROP INDEX "meta"."_key_status"`);
-        await queryRunner.query(`DROP INDEX "meta"."_key_stage"`);
-        await queryRunner.query(`DROP INDEX "meta"."_key_source"`);
-        await queryRunner.query(`DROP INDEX "meta"."_fulltext_search"`);
-        await queryRunner.query(`DROP TABLE "meta"."migrations"`);
-        await queryRunner.query(`DROP INDEX "meta"."_key_time"`);
-        await queryRunner.query(`DROP INDEX "meta"."_key_period_time"`);
-        await queryRunner.query(`DROP INDEX "meta"."_key_metric_period_time"`);
-        await queryRunner.query(`DROP TABLE "meta"."stats"`);
         await queryRunner.query(`DROP INDEX "functions"."_key_deployment"`);
         await queryRunner.query(`DROP TABLE "functions"."builds"`);
         await queryRunner.query(`DROP INDEX "functions"."_key_resource"`);
@@ -182,11 +170,11 @@ export class InitialMigration implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "functions"."_key_status"`);
         await queryRunner.query(`DROP INDEX "functions"."_key_requestMethod"`);
         await queryRunner.query(`DROP INDEX "functions"."_key_requestPath"`);
-        await queryRunner.query(`DROP INDEX "functions"."_key_deployment"`);
+        await queryRunner.query(`DROP INDEX "functions"."_key_deploymentId"`);
         await queryRunner.query(`DROP INDEX "functions"."_key_responseStatusCode"`);
         await queryRunner.query(`DROP INDEX "functions"."_key_duration"`);
         await queryRunner.query(`DROP TABLE "functions"."executions"`);
-        await queryRunner.query(`DROP INDEX "functions"."_key_search"`);
+        await queryRunner.query(`DROP INDEX "functions"."_key__search"`);
         await queryRunner.query(`DROP INDEX "functions"."_key_name"`);
         await queryRunner.query(`DROP INDEX "functions"."_key_enabled"`);
         await queryRunner.query(`DROP INDEX "functions"."_key_installationId"`);
@@ -195,7 +183,7 @@ export class InitialMigration implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "functions"."_key_repositoryId"`);
         await queryRunner.query(`DROP INDEX "functions"."_key_repositoryInternalId"`);
         await queryRunner.query(`DROP INDEX "functions"."_key_runtime"`);
-        await queryRunner.query(`DROP INDEX "functions"."_key_deployment"`);
+        await queryRunner.query(`DROP INDEX "functions"."_key_idx_deployment"`);
         await queryRunner.query(`DROP TABLE "functions"."functions"`);
         await queryRunner.query(`DROP INDEX "messages"."idx_provider_type"`);
         await queryRunner.query(`DROP INDEX "messages"."idx_status"`);
@@ -272,6 +260,18 @@ export class InitialMigration implements MigrationInterface {
         await queryRunner.query(`DROP TABLE "auth"."authenticators"`);
         await queryRunner.query(`DROP INDEX "auth"."IDX_8c26f11a8b165c263af3ad865f"`);
         await queryRunner.query(`DROP TABLE "auth"."tokens"`);
+        await queryRunner.query(`DROP INDEX "meta"."IDX_76768c4da0c82f87ca31cf732b"`);
+        await queryRunner.query(`DROP INDEX "meta"."IDX_4f56ebcf8cba238205136aa00f"`);
+        await queryRunner.query(`DROP TABLE "meta"."databases"`);
+        await queryRunner.query(`DROP INDEX "meta"."_key_status"`);
+        await queryRunner.query(`DROP INDEX "meta"."_key_stage"`);
+        await queryRunner.query(`DROP INDEX "meta"."_key_source"`);
+        await queryRunner.query(`DROP INDEX "meta"."_fulltext__search"`);
+        await queryRunner.query(`DROP TABLE "meta"."migrations"`);
+        await queryRunner.query(`DROP INDEX "meta"."_key_time"`);
+        await queryRunner.query(`DROP INDEX "meta"."_key_period_time"`);
+        await queryRunner.query(`DROP INDEX "meta"."_key_metric_period_time"`);
+        await queryRunner.query(`DROP TABLE "meta"."stats"`);
         await queryRunner.query(`DROP INDEX "meta"."_key_resourceInternalId"`);
         await queryRunner.query(`DROP INDEX "meta"."_key_resourceType"`);
         await queryRunner.query(`DROP INDEX "meta"."_key_resourceId_resourceType"`);
@@ -280,4 +280,6 @@ export class InitialMigration implements MigrationInterface {
         await queryRunner.query(`DROP INDEX "meta"."_fulltext_search"`);
         await queryRunner.query(`DROP TABLE "meta"."variables"`);
     }
+
 }
+

@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
-import { connectionFactory } from 'src/core/db.service';
+import { connectionFactory } from 'src/core/db.provider';
 
 @Module({
   controllers: [UsersController],

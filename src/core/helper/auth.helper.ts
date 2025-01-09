@@ -3,6 +3,8 @@ import Roles from "../validators/roles.validator";
 import { TokenEntity } from "../entities/users/token.entity";
 import { SessionEntity } from "../entities/users/session.entity";
 import { UserEntity } from "../entities/users/user.entity";
+import { ClsServiceManager } from "nestjs-cls";
+import { Authorization } from "../validators/authorization.validator";
 
 export class Auth {
   public static readonly SUPPORTED_ALGOS = [
@@ -249,10 +251,11 @@ export class Auth {
     return roles.includes(Auth.USER_ROLE_APPS);
   }
 
-  public static getRoles(user: UserEntity, requestRoles: string[]): string[] {
+  public static getRoles(user: UserEntity): string[] {
+    const authorization = ClsServiceManager.getClsService().get('authorization') as Authorization;
     const roles: string[] = [];
 
-    if (!this.isPrivilegedUser(requestRoles) && !this.isAppUser(requestRoles)) {
+    if (!this.isPrivilegedUser(authorization.getRoles()) && !this.isAppUser(authorization.getRoles())) {
       if (user.$id) {
         roles.push(Role.User(user.$id).toString());
         roles.push(Role.Users().toString());

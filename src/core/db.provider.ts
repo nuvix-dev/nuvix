@@ -1,4 +1,4 @@
-import { Injectable, Scope } from '@nestjs/common';
+import { FactoryProvider, Injectable, Scope } from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { DatabaseError } from 'pg-protocol';
 import { DataSource, QueryRunner } from 'typeorm';
@@ -30,12 +30,18 @@ import { FunctionEntity } from './entities/functions/function.entity';
 import { BuildsEntity } from './entities/functions/builds.entity';
 import { DeploymentEntity } from './entities/functions/deployment.entity';
 import { ExecutionsEntity } from './entities/functions/executions.entity';
+import { InjectModel, MongooseModule } from '@nestjs/mongoose';
+import { Project, ProjectSchema } from 'src/project/schemas/project.schema';
+import { Model } from 'mongoose';
 
 
-export const connectionFactory = {
+export const connectionFactory: FactoryProvider = {
   provide: 'CONNECTION',
   scope: Scope.REQUEST,
-  useFactory: async (request: Request) => {
+  useFactory: async (
+    request: Request,
+  ) => {
+
     const projectId = request.headers['x-project-id'];
     const tenantId = 'project_' + projectId;
 

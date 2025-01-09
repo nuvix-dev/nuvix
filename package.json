@@ -47,6 +47,7 @@
     "mongodb": "^6.11.0",
     "mongoose": "^8.9.2",
     "mysql2": "^3.11.5",
+    "nestjs-cls": "^4.5.0",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "passport-local": "^1.0.0",

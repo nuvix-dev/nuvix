@@ -7,7 +7,7 @@ import { Database } from "src/core/config/database";
   schema: 'functions',
   orderBy: { name: 'ASC' }
 })
-@Index('_key_search', ['search'])
+@Index('_key__search', ['search'])
 @Index('_key_name', ['name'], { unique: true })
 @Index('_key_enabled', ['enabled'])
 @Index('_key_installationId', ['installationId'])
@@ -16,7 +16,7 @@ import { Database } from "src/core/config/database";
 @Index('_key_repositoryId', ['repositoryId'])
 @Index('_key_repositoryInternalId', ['repositoryInternalId'])
 @Index('_key_runtime', ['runtime'])
-@Index('_key_deployment', ['deployment'])
+@Index('_key_idx_deployment', ['deployment'])
 export class FunctionEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 128, nullable: true, array: true })
   execute: string[];

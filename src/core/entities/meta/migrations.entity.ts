@@ -9,7 +9,7 @@ import BaseEntity from "../base.entity";
 @Index('_key_status', ['status'])
 @Index('_key_stage', ['stage'])
 @Index('_key_source', ['source'])
-@Index('_fulltext_search', ['search'])
+@Index('_fulltext__search', ['search'])
 export class MigrationsEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 255, nullable: false })
   status: string;
