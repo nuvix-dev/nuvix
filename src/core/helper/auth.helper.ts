@@ -6,7 +6,7 @@ import { UserEntity } from "../entities/users/user.entity";
 import { ClsServiceManager } from "nestjs-cls";
 import { Authorization } from "../validators/authorization.validator";
 import { createHash, randomBytes, createHmac, scryptSync } from 'crypto';
-import argon2 from 'argon2';
+import { Exception } from "../extend/exception";
 
 export class Auth {
 
@@ -132,7 +132,7 @@ export class Auth {
 
     switch (algo) {
       case 'argon2':
-        return (await argon2.hash(string, { ...options })).toString('hex');
+        return (await this.getArgon2().hash(string, { ...options })).toString('hex');
 
       case 'bcrypt':
         const saltRounds = options.saltRounds || 10;
@@ -173,7 +173,7 @@ export class Auth {
 
     switch (algo) {
       case 'argon2':
-        return await argon2.verify(hash, plain, { ...options });
+        return await this.getArgon2().verify(hash, plain, { ...options });
 
       case 'bcrypt':
         return await this.getBcrypt().compare(plain, hash);
@@ -326,6 +326,15 @@ export class Auth {
     } catch (error) {
       console.warn('Native bcrypt not available, falling back to bcryptjs.');
       return require('bcryptjs'); // Fallback to bcryptjs if native bcrypt fails
+    }
+  }
+
+  private static getArgon2() {
+    try {
+      let argon2 = require('argon2');
+      return argon2;
+    } catch (e) {
+      throw new Exception(Exception.GENERAL_SERVER_ERROR, 'Argon2 library is not available on the server.')
     }
   }
 }
