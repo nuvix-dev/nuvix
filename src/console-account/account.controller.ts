@@ -35,7 +35,7 @@ import { UpdatePaymentMethodDto } from './dto/payment.dto';
 import { SessionModel } from './models/session.model';
 import { Auth } from './auth';
 
-@Controller()
+@Controller({ version: ['1'], path: 'console/account' })
 @UseInterceptors(ClassSerializerInterceptor)
 export class AccountController {
   constructor(private readonly accountService: AccountService,

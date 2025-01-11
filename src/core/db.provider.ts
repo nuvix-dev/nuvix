@@ -31,7 +31,7 @@ import { BuildsEntity } from './entities/functions/builds.entity';
 import { DeploymentEntity } from './entities/functions/deployment.entity';
 import { ExecutionsEntity } from './entities/functions/executions.entity';
 import { InjectModel, MongooseModule } from '@nestjs/mongoose';
-import { Project, ProjectSchema } from 'src/project/schemas/project.schema';
+import { Project, ProjectSchema } from 'src/projects/schemas/project.schema';
 import { Model } from 'mongoose';
 
 

@@ -7,7 +7,7 @@ import { firstValueFrom } from 'rxjs';
 import { Exception } from 'src/core/extend/exception';
 import { PYTHON_API_URL } from 'src/Utils/constants';
 
-@Controller()
+@Controller({ version: ['1'], path: 'avatars' })
 export class AvatarsController {
   constructor(
     private readonly avatarsService: AvatarsService,

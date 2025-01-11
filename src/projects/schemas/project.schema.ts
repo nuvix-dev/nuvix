@@ -17,15 +17,14 @@ class ProjectApi {
 
 class ProjectSmtp {
   host: string;
-  port: string;
-  user: string;
-  pass: string;
-  from: string;
+  port: number;
+  username: string;
+  password: string;
   enabled: boolean;
   senderName: string;
   senderEmail: string;
   replyTo: string;
-  secure: boolean;
+  secure: 'tls' | 'ssl';
 }
 
 type ProjectTemplate = {}

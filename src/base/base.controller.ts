@@ -2,7 +2,7 @@ import { All, Controller, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { Public } from 'src/Utils/decorator';
 
-@Controller()
+@Controller({ version: ['1'] })
 export class BaseController {
   constructor() { }
 

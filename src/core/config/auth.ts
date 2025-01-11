@@ -1,4 +1,4 @@
-import { AuthConfig } from "src/project/schemas/project.schema";
+import { AuthConfig } from "src/projects/schemas/project.schema";
 import { APP_LIMIT_USER_SESSIONS_DEFAULT } from "src/Utils/constants";
 
 export interface AuthMethod {

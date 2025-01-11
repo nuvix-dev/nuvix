@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Post, Res } from '@nestjs/common';
 import { ConsoleService } from './console.service';
 
-@Controller()
+@Controller({ version: ['1'], path: 'console' })
 export class ConsoleController {
   constructor(private readonly consoleService: ConsoleService) { }
 

@@ -12,8 +12,7 @@ import { config } from 'dotenv';
 import { BaseModule } from './base/base.module';
 import { DatabaseModule } from './database/database.module';
 import { ConsoleAccountModule } from './console-account/account.module';
-import { ProjectModule } from './project/project.module';
-import { RouterModule } from '@nestjs/core';
+import { ProjectModule } from './projects/project.module';
 import { ConsoleModule } from './console/console.module';
 import { AvatarsModule } from './avatars/avatars.module';
 import { UsersModule } from './users/users.module';
@@ -89,52 +88,6 @@ let mongo_url_params = "?retryWrites=true&w=majority&appName=Nuvix"
     AccountModule,
     TeamsModule,
     RealtimeModule,
-    RouterModule.register([
-      {
-        path: "v1",
-        module: BaseModule,
-        children: [
-          {
-            path: "console",
-            module: ConsoleModule,
-            children: [
-              {
-                path: "users",
-                module: UserModule
-              },
-              {
-                path: "account",
-                module: ConsoleAccountModule
-              }
-            ]
-          },
-          {
-            path: "account",
-            module: AccountModule
-          },
-          {
-            path: "teams",
-            module: TeamsModule
-          },
-          {
-            path: "users",
-            module: UsersModule
-          },
-          {
-            path: "databases",
-            module: DatabaseModule
-          },
-          {
-            path: "projects",
-            module: ProjectModule
-          },
-          {
-            path: 'avatars',
-            module: AvatarsModule
-          }
-        ]
-      }
-    ]),
   ],
   controllers: [AppController],
   providers: [AppService],

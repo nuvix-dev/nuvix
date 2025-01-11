@@ -3,9 +3,9 @@ import { DatabaseService } from './database.service';
 import { CreateDatabaseDto } from './dto/create-database.dto';
 import { UpdateDatabaseDto } from './dto/update-database.dto';
 
-@Controller()
+@Controller({ version: ['1'], path: 'databases' })
 export class DatabaseController {
-  constructor(private readonly databaseService: DatabaseService) {}
+  constructor(private readonly databaseService: DatabaseService) { }
 
   @Post()
   create(@Body() createDatabaseDto: CreateDatabaseDto) {

@@ -13,9 +13,10 @@ import { BillingAddress, BillingAddressSchema } from './schemas/billing.schema';
 import Challenges, { ChallengesSchema } from './schemas/challenge.schema';
 import { PaymentMethod, PaymentMethodSchema } from './schemas/payment.schema';
 import Token, { TokenSchema } from './schemas/token.schema';
+import { OrganizationsController } from './organizations.controller';
 
 @Module({
-  controllers: [UserController],
+  controllers: [UserController, OrganizationsController],
   providers: [UserService, {
     provide: APP_GUARD,
     useClass: JwtAuthGuard

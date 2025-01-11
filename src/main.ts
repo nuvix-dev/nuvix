@@ -11,6 +11,8 @@ config();
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  app.enableVersioning()
+
   app.use(cookieParser())
 
   app.use((req: Request, res: Response, next: NextFunction) => {

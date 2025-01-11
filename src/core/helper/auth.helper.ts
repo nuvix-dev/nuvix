@@ -8,9 +8,10 @@ import { ClsServiceManager } from "nestjs-cls";
 import { Authorization } from "../validators/authorization.validator";
 import { createHash, randomBytes, createHmac, scryptSync } from 'crypto';
 import { Exception } from "../extend/exception";
+import { ENCRYPTION_KEY } from 'src/Utils/constants';
 
 const algorithm = 'aes-256-cbc';
-const key = process.env.ENCRYPTION_KEY ? Buffer.from(process.env.ENCRYPTION_KEY, 'hex') : undefined;
+const key = ENCRYPTION_KEY ? Buffer.from(ENCRYPTION_KEY, 'hex') : undefined;
 
 
 export class Auth {

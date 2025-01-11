@@ -16,11 +16,11 @@ import { Request } from 'express';
 import { ClsService } from 'nestjs-cls';
 import authMethods from 'src/core/config/auth';
 import { Exception } from 'src/core/extend/exception';
-import { ProjectService } from './project.service';
+import { ProjectService } from './projects.service';
 
 // Models
 import { ProjectListModel, ProjectModel } from './models/project.model';
-import { PlatformListModel } from './models/platform.model';
+import { PlatformListModel, PlatformModel } from './models/platform.model';
 import { KeyListModel, KeyModel } from './models/key.model';
 import { WebhookListModel, WebhookModel } from './models/webhook.model';
 
@@ -40,10 +40,12 @@ import {
   AuthPasswordDictionaryDto, AuthPersonalDataDto,
   AuthMaxSessionsDto, AuthMockNumbersDto
 } from './dto/project-auth.dto';
+import { CreatePlatformDto, UpdatePlatformDto } from './dto/platform.dto';
+import { SmtpTestsDto, UpdateSmtpDto } from './dto/smtp.dto';
 
-@Controller()
+@Controller({ version: ['1'], path: 'projects' })
 @UseInterceptors(ClassSerializerInterceptor)
-export class ProjectController {
+export class ProjectsController {
   constructor(
     private readonly projectService: ProjectService,
     private readonly clsService: ClsService
@@ -101,6 +103,39 @@ export class ProjectController {
   async getPlatforms(@Param('id') id: string): Promise<PlatformListModel> {
     let data = await this.projectService.getPlatforms(id);
     return new PlatformListModel(data);
+  }
+
+  @Post(':id/platforms')
+  async createPlatform(
+    @Param('id') id: string,
+    @Body() input: CreatePlatformDto
+  ): Promise<PlatformModel> {
+    return new PlatformModel(await this.projectService.createPlatform(id, input));
+  }
+
+  @Get(':id/platforms/:platformId')
+  async getPlatform(
+    @Param('id') id: string,
+    @Param('platformId') platformId: string,
+  ): Promise<PlatformModel> {
+    return new PlatformModel(await this.projectService.getPlatform(id, platformId))
+  }
+
+  @Put(':id/platforms/:platformId')
+  async updatePlatform(
+    @Param('id') id: string,
+    @Param('platformId') platformId: string,
+    @Body() input: UpdatePlatformDto
+  ): Promise<PlatformModel> {
+    return new PlatformModel(await this.projectService.updatePlatform(id, platformId, input))
+  }
+
+  @Delete(':id/platforms/:platformId')
+  async deletePlatform(
+    @Param('id') id: string,
+    @Param('platformId') platformId: string,
+  ): Promise<{}> {
+    return await this.projectService.deletePlatform(id, platformId)
   }
 
   @Get(':id/keys')
@@ -316,6 +351,67 @@ export class ProjectController {
   ): Promise<ProjectModel> {
     if (Object.values(authMethods).map((m) => m.key).indexOf(method) === -1) throw new Exception(Exception.INVALID_PARAMS, 'Invalid auth method');
     return new ProjectModel(await this.projectService.updateAuthMethod(id, method, input.status));
+  }
+
+  @Patch(':id/smtp')
+  async updateSMTP(
+    @Param('id') id: string,
+    @Body() input: UpdateSmtpDto
+  ): Promise<ProjectModel> {
+    return new ProjectModel(await this.projectService.updateSMTP(id, input));
+  }
+
+  @Post(':id/smtp/tests')
+  async testSMTP(
+    @Param('id') id: string,
+    @Body() input: SmtpTestsDto
+  ): Promise<{}> {
+    return await this.projectService.testSMTP(id, input);
+  }
+
+  @Get(':id/templates/sms/:type/:locale')
+  async getSMSTemplate(
+    @Param('id') id: string,
+    @Param('type') type: string,
+    @Param('locale') locale: string
+  ) {
+    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
+  }
+
+  @Patch(':id/templates/sms/:type/:locale')
+  async updateSmsTemplate() {
+    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
+  }
+
+  @Delete(':id/templates/sms/:type/:locale')
+  async deleteSmsTemplate() {
+    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
+  }
+
+  @Get(':id/templates/email/:type/:locale')
+  async getEmailTemplate(
+    @Param('id') id: string,
+    @Param('type') type: string,
+    @Param('locale') locale: string
+  ) {
+    return {
+      'message': "$message",
+      'subject': "$localeObj -> getText('emails.'.$type. '.subject')",
+      'senderEmail': '',
+      'senderName': '',
+      locale,
+      type
+    }
+  }
+
+  @Patch(':id/templates/email/:type/:locale')
+  async updateEmailTemplate() {
+    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
+  }
+
+  @Delete(':id/templates/email/:type/:locale')
+  async deleteEmailTemplate() {
+    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
   }
 
 }

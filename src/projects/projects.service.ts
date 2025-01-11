@@ -32,6 +32,8 @@ import { Auth } from 'src/core/helper/auth.helper';
 import { CreateKeyDto, UpdateKeyDto } from './dto/keys.dto';
 import { JwtService } from '@nestjs/jwt';
 import { CreateJwtDto } from './dto/create-jwt.dto';
+import { CreatePlatformDto, UpdatePlatformDto } from './dto/platform.dto';
+import { SmtpTestsDto, UpdateSmtpDto } from './dto/smtp.dto';
 
 @Injectable()
 export class ProjectService {
@@ -250,6 +252,82 @@ export class ProjectService {
       total: project?.platforms?.length || 0,
       platforms: project.platforms || []
     }
+  }
+
+  /**
+   * Create a platform for a project.
+   */
+  async createPlatform(id: string, input: CreatePlatformDto) {
+    let project = await this.findOne(id, Database.PERMISSION_UPDATE);
+    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+
+    let platform = new this.platformModel({
+      id: ID.unique(),
+      permissions: [
+        Permission.Read(Role.Any()),
+        Permission.Update(Role.Any()),
+        Permission.Delete(Role.Any())
+      ],
+      projectInternalId: project._id,
+      projectId: project.id,
+      name: input.name,
+      type: input.type,
+      key: input.key,
+      store: input.store,
+      hostname: input.hostname,
+    })
+    await platform.save()
+
+    project.platforms.push(platform)
+    await project.save()
+
+    return platform;
+  }
+
+  /**
+   * Get a Platform.
+   */
+  async getPlatform(id: string, platformId: string) {
+    let project = await this.findOne(id, Database.PERMISSION_READ);
+    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+
+    let platform = await this.platformModel.findOne({ projectInternalId: project._id, id: platformId })
+    if (!platform) throw new Exception(Exception.PLATFORM_NOT_FOUND)
+    return platform
+  }
+
+  /**
+   * Update a Platform.
+   */
+  async updatePlatform(id: string, platformId: string, input: UpdatePlatformDto) {
+    let project = await this.findOne(id, Database.PERMISSION_UPDATE);
+    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+
+    let platform = await this.platformModel.findOne({ projectInternalId: project._id, id: platformId })
+    if (!platform) throw new Exception(Exception.PLATFORM_NOT_FOUND)
+
+    platform.name = input.name;
+    platform.key = input.key;
+    platform.store = input.store;
+    platform.hostname = input.hostname;
+
+    await platform.save()
+    return platform;
+  }
+
+  /**
+   * Delete a Platform.
+   */
+  async deletePlatform(id: string, platformId: string) {
+    let project = await this.findOne(id, Database.PERMISSION_UPDATE);
+    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+
+    let platform = await this.platformModel.findOne({ projectInternalId: project._id, id: platformId })
+    if (!platform) throw new Exception(Exception.PLATFORM_NOT_FOUND)
+
+    await platform.deleteOne()
+
+    return {}
   }
 
   /**
@@ -684,6 +762,64 @@ export class ProjectService {
     await project.save();
 
     return project;
+  }
+
+  /**
+   * Update SMTP of a project.
+   */
+  async updateSMTP(id: string, input: UpdateSmtpDto) {
+    let project = await this.findOne(id, Database.PERMISSION_UPDATE);
+    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+
+    if (input.enabled) {
+      if (!input.senderName) throw new Exception(Exception.GENERAL_ARGUMENT_INVALID, 'Sender name is required when enabling SMTP.');
+      if (!input.senderEmail) throw new Exception(Exception.GENERAL_ARGUMENT_INVALID, 'Sender email is required when enabling SMTP.');
+      if (!input.host) throw new Exception(Exception.GENERAL_ARGUMENT_INVALID, 'Host is required when enabling SMTP.');
+      if (!input.port) throw new Exception(Exception.GENERAL_ARGUMENT_INVALID, 'Port is required when enabling SMTP.');
+
+      // Validate SMTP settings
+      // const mail = new PHPMailer(true);
+      // mail.isSMTP();
+      // mail.Username = input.username;
+      // mail.Password = input.password;
+      // mail.Host = input.host;
+      // mail.Port = input.port;
+      // mail.SMTPSecure = input.secure;
+      // mail.SMTPAutoTLS = false;
+      // mail.Timeout = 5;
+
+      // try {
+      //   const valid = await mail.SmtpConnect();
+      //   if (!valid) throw new Exception(Exception.PROJECT_SMTP_CONFIG_INVALID, 'Connection is not valid.');
+      // } catch (error) {
+      //   throw new Exception(Exception.PROJECT_SMTP_CONFIG_INVALID, 'Could not connect to SMTP server: ' + error.message);
+      // }
+    }
+
+    project.smtp = {
+      enabled: input.enabled,
+      senderName: input.senderName,
+      senderEmail: input.senderEmail,
+      replyTo: input.replyTo,
+      host: input.host,
+      port: input.port,
+      username: input.username,
+      password: input.password,
+      secure: input.secure,
+    };
+
+    await project.save();
+
+    return project;
+  }
+
+  /**
+   * @todo :- Impliment the function...
+   * Test SMTP
+   */
+  async testSMTP(id: string, input: SmtpTestsDto) {
+    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
+    return {}
   }
 }
 
