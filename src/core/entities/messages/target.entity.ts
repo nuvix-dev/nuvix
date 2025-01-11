@@ -1,10 +1,11 @@
 import BaseEntity from "../base.entity";
-import { Entity, Column, ManyToOne, Relation, ManyToMany } from "typeorm";
+import { Entity, Column, ManyToOne, Relation, ManyToMany, Unique } from "typeorm";
 import { UserEntity } from "../users/user.entity";
 import { TopicEntity } from "./topic.entity";
 
 
 @Entity({ name: 'targets', schema: 'messages' })
+@Unique('identifire_type', ['identifier', 'providerType'])
 export class TargetEntity extends BaseEntity {
   @Column({ type: 'varchar', nullable: false })
   userId: string;

@@ -27,8 +27,10 @@ export class Auth {
     'plaintext'
   ];
 
-  public static readonly DEFAULT_ALGO = 'argon2';
-  public static readonly DEFAULT_ALGO_OPTIONS = { type: 'argon2', memoryCost: 2048, timeCost: 4, threads: 3 };
+  // public static readonly DEFAULT_ALGO = 'argon2';
+  // public static readonly DEFAULT_ALGO_OPTIONS = { type: 'argon2', memoryCost: 2048, timeCost: 4, threads: 3 };
+  public static readonly DEFAULT_ALGO = 'bcrypt';
+  public static readonly DEFAULT_ALGO_OPTIONS = { saltRounds: 10 };
 
   // User Roles
   public static readonly USER_ROLE_ANY = 'any';

@@ -4,6 +4,7 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { config } from 'dotenv'
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 import { NextFunction, Request, Response } from 'express';
+import { ValidationPipe } from '@nestjs/common';
 const cookieParser = require('cookie-parser');
 
 config();
@@ -12,6 +13,10 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   app.enableVersioning()
+
+  app.useGlobalPipes(new ValidationPipe({
+    enableDebugMessages: true,
+  }));
 
   app.use(cookieParser())
 

@@ -18,10 +18,18 @@ export default abstract class BaseEntity {
   @DeleteDateColumn({ type: 'timestamptz', precision: 0 })
   $deletedAt: Date;
 
-  @Column({ type: 'text', nullable: true })
-  $permissions: string;
+  @Column({ type: 'varchar', length: 255, array: true, default: [] })
+  $permissions: Permission[] | string[];
 
   permissions() {
-    return Permission.parse(this.$permissions)
+    return Permission.parse(this.$permissions.toString());
+  }
+
+  getInternalId() {
+    return this.id;
+  }
+
+  getId() {
+    return this.$id;
   }
 }

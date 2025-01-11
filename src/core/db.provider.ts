@@ -32,10 +32,9 @@ import { DeploymentEntity } from './entities/functions/deployment.entity';
 import { ExecutionsEntity } from './entities/functions/executions.entity';
 
 // Services
-import { getModelToken } from '@nestjs/mongoose';
 import { Project } from 'src/projects/schemas/project.schema';
-import { Model } from 'mongoose';
 import { ClsService, ClsServiceManager } from 'nestjs-cls';
+import { PROJECT } from 'src/Utils/constants';
 
 
 export const connectionFactory: FactoryProvider = {
@@ -43,25 +42,16 @@ export const connectionFactory: FactoryProvider = {
   scope: Scope.REQUEST,
   durable: true,
   useFactory: async (
-    request: Request,
-    projectModel: Model<Project>,
     cls: ClsService,
   ) => {
     const logger = cls.get('logger') as Logger;
-    const projectId = cls.get('projectId');
-    logger.log(`Project ID: ${projectId}`);
-    if (!projectId) throw new Exception(Exception.PROJECT_NOT_FOUND);
-
-    const project = await projectModel.findOne({ id: projectId });
-    logger.log(`Project: ${project.name}`);
-    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND);
-
+    const project = cls.get(PROJECT) as Project;
     const tenantId = project.database;
 
     if (tenantId) {
       try {
         const connection = await new DbService().getTenantConnection(tenantId);
-        logger.log(`Connection: ${connection}`);
+        logger.log(`Connection: ${connection.options.database}`);
         return connection;
       } catch (error) {
         logger.error(error);
@@ -73,7 +63,7 @@ export const connectionFactory: FactoryProvider = {
 
     return null;
   },
-  inject: [REQUEST, getModelToken(Project.name, 'server'), ClsService],
+  inject: [ClsService],
 };
 
 const defaultConnectionOptions = {

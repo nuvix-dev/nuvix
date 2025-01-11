@@ -1,6 +1,7 @@
 import { Exclude, Expose } from "class-transformer";
 import mongoose, { Document } from "mongoose";
 import { dataToObject, DataToObjectOptions } from "../helper/model.helper";
+import Permission from "../helper/permission.helper";
 
 @Exclude()
 export default abstract class BaseModel {
@@ -17,7 +18,7 @@ export default abstract class BaseModel {
    */
   @Expose() $updatedAt: Date;
 
-  @Expose() $permissions: string[];
+  @Expose() $permissions: string[] | Permission[];
 
   @Exclude() _id: mongoose.Types.ObjectId | any;
   @Exclude() id: string;
@@ -29,10 +30,6 @@ export default abstract class BaseModel {
   }
 }
 
-
-interface BaseListModelInterface<T> {
-  fromDocuments(docs: Document[]): T[];
-}
 
 @Exclude()
 export abstract class BaseListModel {

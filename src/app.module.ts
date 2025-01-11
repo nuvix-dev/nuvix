@@ -22,6 +22,7 @@ import { RealtimeModule } from './realtime/realtime.module';
 import { ClsModule } from 'nestjs-cls';
 import { Authorization } from './core/validators/authorization.validator';
 import { Request } from 'express';
+import { FunctionsModule } from './functions/functions.module';
 
 config();
 
@@ -94,6 +95,7 @@ let mongo_url_params = "?retryWrites=true&w=majority&appName=Nuvix"
     AccountModule,
     TeamsModule,
     RealtimeModule,
+    FunctionsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

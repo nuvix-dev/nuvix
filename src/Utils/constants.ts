@@ -11,3 +11,5 @@ export const APP_LIMIT_USER_SESSIONS_DEFAULT = 10;
 
 export const API_KEY_STANDARD = 'standard';
 export const API_KEY_DYNAMIC = 'dynamic';
+
+export const PROJECT = Symbol('PROJECT');
