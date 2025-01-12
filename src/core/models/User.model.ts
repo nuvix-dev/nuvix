@@ -73,7 +73,7 @@ export class UserModel extends BaseModel {
    */
   @Expose() accessedAt: Date;
 
-  constructor(partial: Partial<UserModel>) {
+  constructor(partial: Partial<UserModel | any>) {
     super();
     Object.assign(this, partial);
   }

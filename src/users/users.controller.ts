@@ -1,6 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UserModel, UsersListModel } from 'src/core/models/user.model';
+import { UserModel, UsersListModel } from 'src/core/models/User.model';
 import { CreateUserDto } from './dto/user.dto';
 import { CreateTargetDto } from './dto/target.dto';
 
