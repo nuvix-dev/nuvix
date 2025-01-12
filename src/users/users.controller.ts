@@ -1,8 +1,16 @@
-import { Body, Controller, Get, Param, Post, Query, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseInterceptors
+} from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UserModel } from 'src/core/models/User.model';
 import { CreateUserDto } from './dto/user.dto';
 import { CreateTargetDto } from './dto/target.dto';
+import { Response } from 'src/core/helper/response.helper';
 import { ResolverInterceptor, ResponseType } from 'src/core/resolver/response.resolver';
 
 @Controller({ version: ['1'], path: 'users' })
@@ -11,7 +19,7 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
   @Get()
-  @ResponseType({ type: UserModel, list: true })
+  @ResponseType({ type: Response.MODEL_USER, list: true })
   async findAll(
     @Query('queries') queries: string[],
     @Query('search') search: string,
@@ -20,7 +28,7 @@ export class UsersController {
   }
 
   @Post()
-  @ResponseType({ type: UserModel })
+  @ResponseType({ type: Response.MODEL_USER })
   async create(
     @Body() createUserDto: CreateUserDto
   ) {
@@ -28,52 +36,59 @@ export class UsersController {
   }
 
   @Post('argon2')
+  @ResponseType({ type: Response.MODEL_USER })
   async createWithArgon2(
     @Body() createUserDto: CreateUserDto
-  ): Promise<UserModel> {
-    return new UserModel(await this.usersService.createWithArgon2(createUserDto));
+  ) {
+    return await this.usersService.createWithArgon2(createUserDto);
   }
 
   @Post('bcrypt')
+  @ResponseType({ type: Response.MODEL_USER })
   async createWithBcrypt(
     @Body() createUserDto: CreateUserDto
-  ): Promise<UserModel> {
-    return new UserModel(await this.usersService.createWithBcrypt(createUserDto));
+  ) {
+    return await this.usersService.createWithBcrypt(createUserDto);
   }
 
   @Post('md5')
+  @ResponseType({ type: Response.MODEL_USER })
   async createWithMd5(
     @Body() createUserDto: CreateUserDto
-  ): Promise<UserModel> {
-    return new UserModel(await this.usersService.createWithMd5(createUserDto));
+  ) {
+    return await this.usersService.createWithMd5(createUserDto);
   }
 
   @Post('sha')
+  @ResponseType({ type: Response.MODEL_USER })
   async createWithSha(
     @Body() createUserDto: CreateUserDto
-  ): Promise<UserModel> {
-    return new UserModel(await this.usersService.createWithSha(createUserDto));
+  ) {
+    return await this.usersService.createWithSha(createUserDto);
   }
 
   @Post('phpass')
+  @ResponseType({ type: Response.MODEL_USER })
   async createWithPhpass(
     @Body() createUserDto: CreateUserDto
-  ): Promise<UserModel> {
-    return new UserModel(await this.usersService.createWithPhpass(createUserDto));
+  ) {
+    return await this.usersService.createWithPhpass(createUserDto);
   }
 
   @Post('scrypt')
+  @ResponseType({ type: Response.MODEL_USER })
   async createWithScrypt(
     @Body() createUserDto: CreateUserDto
-  ): Promise<UserModel> {
-    return new UserModel(await this.usersService.createWithScrypt(createUserDto));
+  ) {
+    return await this.usersService.createWithScrypt(createUserDto);
   }
 
   @Post('scrypt-modified')
+  @ResponseType({ type: Response.MODEL_USER })
   async createWithScryptModified(
     @Body() createUserDto: CreateUserDto
-  ): Promise<UserModel> {
-    return new UserModel(await this.usersService.createWithScryptMod(createUserDto));
+  ) {
+    return await this.usersService.createWithScryptMod(createUserDto);
   }
 
   @Get('temp/migrate')
@@ -87,7 +102,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  @ResponseType({ type: UserModel })
+  @ResponseType({ type: Response.MODEL_USER })
   async findOne(
     @Param('id') id: string
   ) {
@@ -95,6 +110,7 @@ export class UsersController {
   }
 
   @Post(':id/targets')
+  @ResponseType({ type: Response.MODEL_TARGET })
   async addTarget(
     @Param('id') id: string,
     @Body() createTargetDto: CreateTargetDto
