@@ -57,9 +57,6 @@ let mongo_url_params = "?retryWrites=true&w=majority&appName=Nuvix"
           cls.set('res', res);
           cls.set('authorization', new Authorization());
           cls.set('logger', new Logger('NUVIX'))
-
-          // const projectId = req.headers['x-nuvix-project'] || req.query.project;
-          // if (projectId) cls.set('projectId', projectId);
         },
       },
     }),

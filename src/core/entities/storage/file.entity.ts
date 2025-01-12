@@ -62,7 +62,4 @@ export class FileEntity extends BaseEntity {
     @Column({ type: 'int', unsigned: true })
     chunksUploaded: number;
 
-    @Index()
-    @Column({ type: 'varchar', length: 16384, nullable: true })
-    search: string;
 }

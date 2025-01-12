@@ -15,8 +15,4 @@ export class DatabaseEntity extends BaseEntity {
 
     @Column({ type: 'boolean', nullable: true, default: true })
     enabled: boolean;
-
-    @Index()
-    @Column({ type: 'varchar', length: 16384, nullable: true })
-    search: string;
 }

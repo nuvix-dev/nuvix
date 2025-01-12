@@ -1,5 +1,6 @@
 import { Exclude, Expose, Type } from "class-transformer";
 import BaseModel from "src/core/models/base.model";
+import { TargetModel } from "./Target.model";
 
 type Preferences = {
   [key: string]: any;
@@ -66,8 +67,8 @@ export class UserModel extends BaseModel {
   /**
    * A user-owned message receiver. A single user may have multiple e.g. emails, phones, and a browser. Each target is registered with a single provider.
    */
-  // @Type(() => Target)
-  // @Expose() targets: Target[];
+  @Type(() => TargetModel)
+  @Expose() targets: TargetModel[];
   /**
    * Most recent access date in ISO 8601 format. This attribute is only updated again after 24 hours.
    */
@@ -90,12 +91,11 @@ export class UsersListModel {
   /**
    * List of users.
    */
+  @Type(() => UserModel)
   users: UserModel[] = [];
-  constructor(partial: Partial<UsersListModel | { users: any[] | { [key: string]: string }[] }>) {
-    if (partial.users) {
-      this.users = partial.users.map((user: any) => new UserModel(user));
-    }
-    Object.assign(this, { ...partial, users: this.users });
+
+  constructor(partial: Partial<UsersListModel>) {
+    Object.assign(this, partial);
   }
 
 }

@@ -28,7 +28,7 @@ export class BucketEntity extends BaseEntity {
   @Column({ type: 'boolean', default: true })
   antivirus: boolean;
 
-  @OneToMany(() => FileEntity, file => file.bucket)
+  @OneToMany(() => FileEntity, file => file.bucket, { cascade: true, onDelete: 'CASCADE' })
   files: Relation<FileEntity[]>;
 
   @Column({ type: 'varchar', length: 16384, nullable: true })

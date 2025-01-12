@@ -1,4 +1,4 @@
-import { Injectable, NestMiddleware } from "@nestjs/common";
+import { Injectable, Logger, NestMiddleware } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import { NextFunction, Request, Response } from "express";
 import { Model } from "mongoose";
@@ -17,6 +17,7 @@ export class ProjectMiddleware implements NestMiddleware {
   ) { }
 
   async use(req: Request, res: Response, next: NextFunction) {
+    const logger = this.store.get('logger') as Logger;
 
     const projectId = req.headers['x-nuvix-project']
       ? req.headers['x-nuvix-project']
@@ -26,7 +27,8 @@ export class ProjectMiddleware implements NestMiddleware {
           : req.query.project
         : null;
 
-    console.log('projectId', projectId, req.headers)
+    logger.debug(`Project ID: ${projectId}`)
+
     if (!projectId) throw new Exception(Exception.PROJECT_NOT_FOUND)
 
     const project = await this.projectModel.findOne({ id: projectId })

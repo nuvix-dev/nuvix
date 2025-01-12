@@ -12,13 +12,9 @@ export class TeamEntity extends BaseEntity {
   @Column({ type: 'int', nullable: true })
   total: number;
 
-  @Index({ fulltext: true })
-  @Column({ type: 'varchar', length: 16384, nullable: true })
-  search: string;
-
   @Column({ type: 'json', nullable: true, default: () => "'{}'" })
   prefs: object;
 
-  @OneToMany(() => MembershipEntity, member => member.team)
+  @OneToMany(() => MembershipEntity, member => member.team, { cascade: true, onDelete: 'CASCADE' })
   members: Relation<MembershipEntity[]>;
 }

@@ -103,9 +103,6 @@ export class DeploymentEntity extends BaseEntity {
   @Column({ type: 'int', nullable: true })
   chunksUploaded: number;
 
-  @Column({ type: 'varchar', length: 16384, nullable: true })
-  search: string;
-
   @Column({ type: 'boolean', nullable: true, default: false })
   activate: boolean;
 }

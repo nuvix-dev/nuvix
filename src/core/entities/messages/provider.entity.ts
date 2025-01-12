@@ -24,7 +24,4 @@ export class ProviderEntity extends BaseEntity {
     @Column({ type: 'varchar', length: 16384, nullable: true, default: '' })
     options: string;
 
-    @Index()
-    @Column({ type: 'varchar', length: 65535, nullable: true, default: '' })
-    search: string;
 }

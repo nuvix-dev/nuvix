@@ -58,9 +58,6 @@ export class ExecutionsEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 16384, nullable: true })
   responseHeaders: string;
 
-  @Column({ type: 'varchar', length: 16384, nullable: true })
-  search: string;
-
   @Column({ type: 'timestamptz', nullable: true })
   scheduledAt: Date;
 

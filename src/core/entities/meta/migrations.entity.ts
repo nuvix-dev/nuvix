@@ -34,7 +34,4 @@ export class MigrationsEntity extends BaseEntity {
 
   @Column({ type: 'varchar', length: 65535, nullable: false, array: true })
   errors: string[];
-
-  @Column({ type: 'varchar', length: 16384, nullable: true })
-  search: string;
 }

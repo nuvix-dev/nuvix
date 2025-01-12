@@ -31,7 +31,4 @@ export class SubscriberEntity extends BaseEntity {
     @Column({ type: 'varchar', length: 128, nullable: false })
     providerType: string;
 
-    @Index()
-    @Column({ type: 'varchar', length: 16384, nullable: true, default: '' })
-    search: string;
 }

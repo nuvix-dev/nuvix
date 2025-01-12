@@ -71,29 +71,26 @@ export class UserEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 256, array: true, nullable: true })
   mfaRecoveryCodes: string[];
 
-  @OneToMany(() => AuthenticatorEntity, auth => auth.user)
+  @OneToMany(() => AuthenticatorEntity, auth => auth.user, { cascade: true, onDelete: 'CASCADE' })
   authenticators: Relation<AuthenticatorEntity[]>;
 
-  @OneToMany(() => SessionEntity, session => session.user)
+  @OneToMany(() => SessionEntity, session => session.user, { cascade: true, onDelete: 'CASCADE' })
   sessions: Relation<SessionEntity[]>;
 
-  @OneToMany(() => TokenEntity, token => token.user)
+  @OneToMany(() => TokenEntity, token => token.user, { cascade: true, onDelete: 'CASCADE' })
   tokens: Relation<TokenEntity[]>;
 
-  @OneToMany(() => ChallengeEntity, challenge => challenge.user)
+  @OneToMany(() => ChallengeEntity, challenge => challenge.user, { cascade: true, onDelete: 'CASCADE' })
   challenges: Relation<ChallengeEntity[]>;
 
-  @OneToMany(() => MembershipEntity, membership => membership.user)
+  @OneToMany(() => MembershipEntity, membership => membership.user, { cascade: true, onDelete: 'CASCADE' })
   memberships: Relation<MembershipEntity[]>;
 
-  @OneToMany(() => TargetEntity, target => target.user)
+  @OneToMany(() => TargetEntity, target => target.user, { cascade: true, onDelete: 'CASCADE', eager: true })
   targets: Relation<TargetEntity[]>;
 
-  @OneToMany(() => IdentityEntity, identity => identity.user)
+  @OneToMany(() => IdentityEntity, identity => identity.user, { cascade: true, onDelete: 'CASCADE' })
   identities: Relation<IdentityEntity[]>;
-
-  @Column({ type: 'varchar', length: 16384, nullable: true })
-  search: string;
 
   @Column({ type: 'timestamp', nullable: true })
   accessedAt: Date;

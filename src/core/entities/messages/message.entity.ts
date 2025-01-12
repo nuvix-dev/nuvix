@@ -45,7 +45,4 @@ export class MessageEntity extends BaseEntity {
     @Column({ type: 'int', default: 0, nullable: true })
     deliveredTotal: number;
 
-    @Index()
-    @Column({ type: 'varchar', length: 16384, nullable: true, default: '' })
-    search: string;
 }

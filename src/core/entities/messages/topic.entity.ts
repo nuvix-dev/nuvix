@@ -23,7 +23,4 @@ export class TopicEntity extends BaseEntity {
     @ManyToMany(() => TargetEntity, target => target.topics, { eager: true })
     targets: TargetEntity[];
 
-    @Index()
-    @Column({ type: 'varchar', length: 16384, nullable: true, default: '' })
-    search: string;
 }

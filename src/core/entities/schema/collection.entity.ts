@@ -21,13 +21,10 @@ export class CollectionsEntity extends BaseEntity {
     documentSecurity: boolean;
 
     // One-to-Many relationship with Attributes
-    @OneToMany(() => AttributesEntity, (attribute) => attribute.collection)
+    @OneToMany(() => AttributesEntity, (attribute) => attribute.collection, { cascade: true, onDelete: 'CASCADE' })
     attributes: AttributesEntity[];
 
     // One-to-Many relationship with Indexes
-    @OneToMany(() => IndexesEntity, (index) => index.collection)
+    @OneToMany(() => IndexesEntity, (index) => index.collection, { cascade: true, onDelete: 'CASCADE' })
     indexes: IndexesEntity[];
-
-    @Column({ type: 'varchar', length: 16384, nullable: true })
-    search?: string;
 }

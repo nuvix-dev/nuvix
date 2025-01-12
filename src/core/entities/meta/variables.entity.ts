@@ -29,6 +29,4 @@ export class VariablesEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 8192, nullable: false })
   value: string;
 
-  @Column({ type: 'varchar', length: 16384, nullable: true })
-  search: string;
 }

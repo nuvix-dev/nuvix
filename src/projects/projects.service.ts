@@ -555,6 +555,8 @@ export class ProjectService {
     if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
 
     project.services[input.service] = input.status;
+
+    project.markModified('services');
     await project.save();
 
     return project;
@@ -572,6 +574,8 @@ export class ProjectService {
         project.services[value.key] = status;
       }
     })
+
+    project.markModified('services');
     await project.save();
 
     return project;
@@ -585,6 +589,8 @@ export class ProjectService {
     if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
 
     project.auths[input.api] = input.status;
+
+    project.markModified('auths');
     await project.save();
 
     return project;
@@ -601,6 +607,7 @@ export class ProjectService {
       project.auths[value.key] = status;
     })
 
+    project.markModified('auths');
     await project.save();
 
     return project;
@@ -633,6 +640,7 @@ export class ProjectService {
       });
     }
 
+    project.markModified('oAuthProviders');
     await project.save();
 
     return project;
@@ -646,6 +654,8 @@ export class ProjectService {
     if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
 
     project.auths.sessionAlerts = status;
+
+    project.markModified('auths');
     await project.save();
 
     return project;
@@ -659,6 +669,8 @@ export class ProjectService {
     if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
 
     project.auths.limit = limit;
+
+    project.markModified('auths');
     await project.save();
 
     return project;
@@ -672,6 +684,8 @@ export class ProjectService {
     if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
 
     project.auths.duration = duration;
+
+    project.markModified('auths');
     await project.save();
 
     return project;
@@ -689,6 +703,8 @@ export class ProjectService {
     }
 
     project.auths[method] = status;
+
+    project.markModified('auths');
     await project.save();
 
     return project;
@@ -702,6 +718,8 @@ export class ProjectService {
     if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
 
     project.auths.passwordHistory = limit;
+
+    project.markModified('auths');
     await project.save();
 
     return project;
@@ -715,6 +733,8 @@ export class ProjectService {
     if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
 
     project.auths.passwordDictionary = enabled;
+
+    project.markModified('auths');
     await project.save();
 
     return project;
@@ -728,6 +748,8 @@ export class ProjectService {
     if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
 
     project.auths.personalDataCheck = enabled;
+
+    project.markModified('auths');
     await project.save();
 
     return project;
@@ -741,6 +763,8 @@ export class ProjectService {
     if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
 
     project.auths.maxSessions = limit;
+
+    project.markModified('auths');
     await project.save();
 
     return project;
@@ -762,6 +786,8 @@ export class ProjectService {
     });
 
     project.auths.mockNumbers = input.numbers as any;
+
+    project.markModified('auths');
     await project.save();
 
     return project;
@@ -811,6 +837,7 @@ export class ProjectService {
       secure: input.secure,
     };
 
+    project.markModified('smtp');
     await project.save();
 
     return project;

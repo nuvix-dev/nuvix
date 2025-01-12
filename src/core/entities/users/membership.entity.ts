@@ -43,6 +43,4 @@ export class MembershipEntity extends BaseEntity {
   @Column({ type: 'varchar', length: 256, nullable: true })
   secret: string;
 
-  @Column({ type: 'varchar', length: 16384, nullable: true })
-  search: string;
 }

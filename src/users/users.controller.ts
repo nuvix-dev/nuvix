@@ -1,26 +1,30 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Query, UseInterceptors } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UserModel, UsersListModel } from 'src/core/models/User.model';
+import { UserModel } from 'src/core/models/User.model';
 import { CreateUserDto } from './dto/user.dto';
 import { CreateTargetDto } from './dto/target.dto';
+import { ResolverInterceptor, ResponseType } from 'src/core/resolver/response.resolver';
 
 @Controller({ version: ['1'], path: 'users' })
+@UseInterceptors(ResolverInterceptor)
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
   @Get()
+  @ResponseType({ type: UserModel, list: true })
   async findAll(
     @Query('queries') queries: string[],
     @Query('search') search: string,
-  ): Promise<UsersListModel> {
-    return new UsersListModel(await this.usersService.findAll(queries, search));
+  ) {
+    return await this.usersService.findAll(queries, search);
   }
 
   @Post()
+  @ResponseType({ type: UserModel })
   async create(
     @Body() createUserDto: CreateUserDto
-  ): Promise<UserModel> {
-    return new UserModel(await this.usersService.create(createUserDto));
+  ) {
+    return await this.usersService.create(createUserDto);
   }
 
   @Post('argon2')
@@ -72,11 +76,22 @@ export class UsersController {
     return new UserModel(await this.usersService.createWithScryptMod(createUserDto));
   }
 
+  @Get('temp/migrate')
+  async migrate() {
+    return this.usersService.tempDoMigrations();
+  }
+
+  @Get('temp/unmigrate')
+  async unmigrate() {
+    return await this.usersService.tempUndoMigrations();
+  }
+
   @Get(':id')
+  @ResponseType({ type: UserModel })
   async findOne(
     @Param('id') id: string
-  ): Promise<UserModel> {
-    return new UserModel(await this.usersService.findOne(id));
+  ) {
+    return await this.usersService.findOne(id);
   }
 
   @Post(':id/targets')

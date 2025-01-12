@@ -37,7 +37,8 @@ export class UsersService {
    * Find all users
    */
   async findAll(queries: string[], search: string) {
-    const users = await this.userRepo.findAndCount()
+    const users = await this.userRepo.findAndCount({ relations: ['targets'] });
+    console.log(users)
     return {
       users: users[0],
       total: users[1],
@@ -48,7 +49,11 @@ export class UsersService {
    * Find a user by id
    */
   async findOne(id: string) {
-    return await this.userRepo.findOneBy({ $id: id });
+    let user = await this.userRepo.findOne({ where: { $id: id }, relations: ['targets'] });
+    if (!user) {
+      throw new Exception(Exception.USER_NOT_FOUND);
+    }
+    return user;
   }
 
   /**
@@ -187,6 +192,19 @@ export class UsersService {
     );
   }
 
+  // TEMP MIGRATIONS
+  async tempUndoMigrations() {
+    return await this.dataSource.undoLastMigration()
+  }
+
+  // TEMP MIGRATIONS
+  async tempDoMigrations() {
+    return this.dataSource.runMigrations()
+  }
+
+  /**
+   * Create a new target
+   */
   async createTarget(userId: string, input: CreateTargetDto) {
     const targetId = input.targetId === 'unique()' ? ID.unique() : ID.custom(input.targetId);
 
@@ -232,7 +250,6 @@ export class UsersService {
     });
 
     await this.targetRepo.save(target);
-    user.targets.push(target);
     return target;
   }
 
@@ -347,7 +364,6 @@ export class UsersService {
           });
 
           await this.targetRepo.save(target);
-          createdUser.targets.push(target);
         } catch (error) {
           const existingTarget = await this.targetRepo.findOne({
             where: {
@@ -355,7 +371,8 @@ export class UsersService {
             }
           });
           if (existingTarget) {
-            createdUser.targets.push(existingTarget);
+            existingTarget.user = createdUser;
+            await this.targetRepo.save(existingTarget);
           }
         }
       }
@@ -383,7 +400,8 @@ export class UsersService {
             }
           });
           if (existingTarget) {
-            createdUser.targets.push(existingTarget)
+            existingTarget.user = createdUser;
+            await this.targetRepo.save(existingTarget);
           }
         }
       }
@@ -395,6 +413,5 @@ export class UsersService {
       throw new Exception(Exception.USER_ALREADY_EXISTS)
     }
   }
-
 
 }

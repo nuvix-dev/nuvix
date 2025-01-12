@@ -87,9 +87,6 @@ export class FunctionEntity extends BaseEntity {
   @Column({ type: 'int', nullable: true })
   timeout: number;
 
-  @Column({ type: 'varchar', length: 16384, nullable: true })
-  search: string;
-
   @Column({ type: 'varchar', length: 8, nullable: true, default: 'v4' })
   version: string;
 
