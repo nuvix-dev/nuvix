@@ -1,11 +1,19 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { DatabaseService } from './database.service';
 import { CreateDatabaseDto } from './dto/create-database.dto';
 import { UpdateDatabaseDto } from './dto/update-database.dto';
 
 @Controller({ version: ['1'], path: 'databases' })
 export class DatabaseController {
-  constructor(private readonly databaseService: DatabaseService) { }
+  constructor(private readonly databaseService: DatabaseService) {}
 
   @Post()
   create(@Body() createDatabaseDto: CreateDatabaseDto) {
@@ -23,7 +31,10 @@ export class DatabaseController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateDatabaseDto: UpdateDatabaseDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateDatabaseDto: UpdateDatabaseDto,
+  ) {
     return this.databaseService.update(+id, updateDatabaseDto);
   }
 

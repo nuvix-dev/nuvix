@@ -1,4 +1,3 @@
-
 export class PasswordValidator {
   private allowEmpty: boolean;
 

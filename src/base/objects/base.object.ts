@@ -1,4 +1,4 @@
-import { ArgsType, Field, InputType, Int, ObjectType } from "@nestjs/graphql";
+import { ArgsType, Field, InputType, Int, ObjectType } from '@nestjs/graphql';
 
 @ObjectType({ isAbstract: true }) // This is an abstract class
 export default abstract class BaseObject {
@@ -20,7 +20,10 @@ export class PageInfo {
   @Field(() => Int, { description: 'Current page number', defaultValue: 1 })
   page: number;
 
-  @Field(() => Int, { description: 'Number of items per page', defaultValue: 10 })
+  @Field(() => Int, {
+    description: 'Number of items per page',
+    defaultValue: 10,
+  })
   pageSize: number;
 
   @Field(() => Int, { description: 'Total number of pages', defaultValue: 0 })
@@ -143,7 +146,6 @@ export abstract class BaseFilter {
   @Field(() => DateFilter, { nullable: true })
   _deletedAt: DateFilter;
 }
-
 
 @ArgsType()
 export abstract class BaseArgs {

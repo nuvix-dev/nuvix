@@ -1,4 +1,4 @@
-import { PasswordValidator } from "./password.validator";
+import { PasswordValidator } from './password.validator';
 
 export class PersonalDataValidator extends PasswordValidator {
   constructor(
@@ -7,7 +7,7 @@ export class PersonalDataValidator extends PasswordValidator {
     private name: string | null = null,
     private phone: string | null = null,
     private strict: boolean = false,
-    allowEmpty: boolean = false
+    allowEmpty: boolean = false,
   ) {
     super(allowEmpty); // Call the base class constructor
   }

@@ -1,9 +1,8 @@
-import { Exclude, Expose } from "class-transformer";
-import BaseModel from "src/core/models/base.model";
+import { Exclude, Expose } from 'class-transformer';
+import BaseModel from 'src/core/models/base.model';
 
 @Exclude()
 export class BuildModel extends BaseModel {
-
   /**
    * The deployment that created this build.
    */

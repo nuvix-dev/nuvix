@@ -28,8 +28,9 @@ import { Model } from 'mongoose';
 export class UserController {
   constructor(
     private readonly userService: UserService,
-    @InjectModel(Organization.name, 'server') private readonly orgModel: Model<Organization>,
-  ) { }
+    @InjectModel(Organization.name, 'server')
+    private readonly orgModel: Model<Organization>,
+  ) {}
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {

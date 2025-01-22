@@ -1,9 +1,8 @@
-import { Exclude, Expose } from "class-transformer";
-import { TemplateModel } from "./Template.model";
+import { Exclude, Expose } from 'class-transformer';
+import { TemplateModel } from './Template.model';
 
 @Exclude()
 export class TemplateEmailModel extends TemplateModel {
-  
   /**
    * Name of the sender.
    */

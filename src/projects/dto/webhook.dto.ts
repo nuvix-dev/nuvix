@@ -1,4 +1,12 @@
-import { IsBoolean, IsString, IsUrl, MaxLength, ValidateNested, IsArray, IsOptional } from 'class-validator';
+import {
+  IsBoolean,
+  IsString,
+  IsUrl,
+  MaxLength,
+  ValidateNested,
+  IsArray,
+  IsOptional,
+} from 'class-validator';
 import { Type } from 'class-transformer';
 import { OmitType, PartialType } from '@nestjs/mapped-types';
 
@@ -13,7 +21,7 @@ export class CreateWebhookDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => String)
-  events: string[]
+  events: string[];
 
   @IsUrl({ protocols: ['http', 'https'] })
   url: string;
@@ -33,4 +41,4 @@ export class CreateWebhookDto {
   httpPass: string;
 }
 
-export class UpdateWebhookDto extends PartialType(CreateWebhookDto) { }
+export class UpdateWebhookDto extends PartialType(CreateWebhookDto) {}

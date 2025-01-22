@@ -1,9 +1,8 @@
-import { Exclude, Expose } from "class-transformer";
-import BaseModel from "src/core/models/base.model";
+import { Exclude, Expose } from 'class-transformer';
+import BaseModel from 'src/core/models/base.model';
 
 @Exclude()
 export class MockNumberModel extends BaseModel {
-
   /**
    * Mock phone number for testing phone authentication. Useful for testing phone authentication without sending an SMS.
    */

@@ -1,9 +1,8 @@
-import { Exclude, Expose } from "class-transformer";
-import BaseModel from "src/core/models/base.model";
+import { Exclude, Expose } from 'class-transformer';
+import BaseModel from 'src/core/models/base.model';
 
 @Exclude()
 export class UsageBucketsModel extends BaseModel {
-
   @Expose() range: string = ''; // Default to empty string
   @Expose() filesTotal: number = 0; // Default to 0
   @Expose() filesStorageTotal: number = 0; // Default to 0
@@ -18,7 +17,6 @@ export class UsageBucketsModel extends BaseModel {
 
 @Exclude()
 export class UsageCollectionModel extends BaseModel {
-
   @Expose() range: string = ''; // Default to empty string
   @Expose() documentsTotal: number = 0; // Default to 0
   @Expose() documents: any[] = []; // Default to empty array
@@ -31,7 +29,6 @@ export class UsageCollectionModel extends BaseModel {
 
 @Exclude()
 export class UsageDatabaseModel extends BaseModel {
-
   @Expose() range: string = ''; // Default to empty string
   @Expose() collectionsTotal: number = 0; // Default to 0
   @Expose() documentsTotal: number = 0; // Default to 0
@@ -46,7 +43,6 @@ export class UsageDatabaseModel extends BaseModel {
 
 @Exclude()
 export class UsageDatabasesModel extends BaseModel {
-
   @Expose() range: string = ''; // Default to empty string
   @Expose() databasesTotal: number = 0; // Default to 0
   @Expose() collectionsTotal: number = 0; // Default to 0
@@ -63,7 +59,6 @@ export class UsageDatabasesModel extends BaseModel {
 
 @Exclude()
 export class UsageFunctionModel extends BaseModel {
-
   @Expose() range: string = ''; // Default to empty string
   @Expose() deploymentsTotal: number = 0; // Default to 0
   @Expose() deploymentsStorageTotal: number = 0; // Default to 0
@@ -92,7 +87,6 @@ export class UsageFunctionModel extends BaseModel {
 
 @Exclude()
 export class UsageFunctionsModel extends BaseModel {
-
   @Expose() range: string = ''; // Default to empty string
   @Expose() functionsTotal: number = 0; // Default to 0
   @Expose() deploymentsTotal: number = 0; // Default to 0
@@ -123,7 +117,6 @@ export class UsageFunctionsModel extends BaseModel {
 
 @Exclude()
 export class UsageProjectModel extends BaseModel {
-
   @Expose() executionsTotal: number = 0; // Default to 0
   @Expose() documentsTotal: number = 0; // Default to 0
   @Expose() databasesTotal: number = 0; // Default to 0
@@ -153,7 +146,6 @@ export class UsageProjectModel extends BaseModel {
 
 @Exclude()
 export class UsageStorageModel extends BaseModel {
-
   @Expose() range: string = ''; // Default to empty string
   @Expose() bucketsTotal: number = 0; // Default to 0
   @Expose() filesTotal: number = 0; // Default to 0
@@ -170,7 +162,6 @@ export class UsageStorageModel extends BaseModel {
 
 @Exclude()
 export class UsageUsersModel extends BaseModel {
-
   @Expose() range: string = ''; // Default to empty string
   @Expose() usersTotal: number = 0; // Default to 0
   @Expose() sessionsTotal: number = 0; // Default to 0

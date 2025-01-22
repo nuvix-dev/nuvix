@@ -10,15 +10,14 @@ import { connectionFactory } from 'src/core/db.provider';
   controllers: [TeamsController],
   providers: [TeamsService, connectionFactory],
   imports: [
-    GlobalMongooseModule.forFeature([
-      { name: Project.name, schema: ProjectSchema }
-    ], 'server')
-  ]
+    GlobalMongooseModule.forFeature(
+      [{ name: Project.name, schema: ProjectSchema }],
+      'server',
+    ),
+  ],
 })
 export class TeamsModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(ProjectMiddleware)
-      .forRoutes(TeamsController);
+    consumer.apply(ProjectMiddleware).forRoutes(TeamsController);
   }
 }

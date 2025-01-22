@@ -1,4 +1,4 @@
-import { APP_LIMIT_USER_SESSIONS_DEFAULT } from "src/Utils/constants";
+import { APP_LIMIT_USER_SESSIONS_DEFAULT } from 'src/Utils/constants';
 
 export interface AuthMethod {
   name: string;
@@ -44,28 +44,28 @@ const authMethods: Record<string, AuthMethod> = {
     docs: 'https://appwrite.io/docs/references/cloud/client-web/account#accountCreateEmailToken',
     enabled: true,
   },
-  'anonymous': {
+  anonymous: {
     name: 'Anonymous',
     key: 'anonymous',
     icon: '/images/users/anonymous.png',
     docs: 'https://appwrite.io/docs/references/cloud/client-web/account#accountCreateAnonymousSession',
     enabled: true,
   },
-  'invites': {
+  invites: {
     name: 'Invites',
     key: 'invites',
     icon: '/images/users/invites.png',
     docs: 'https://appwrite.io/docs/client/teams?sdk=web-default#teamsCreateMembership',
     enabled: true,
   },
-  'jwt': {
+  jwt: {
     name: 'JWT',
     key: 'JWT',
     icon: '/images/users/jwt.png',
     docs: 'https://appwrite.io/docs/client/account?sdk=web-default#accountCreateJWT',
     enabled: true,
   },
-  'phone': {
+  phone: {
     name: 'Phone',
     key: 'phone',
     icon: '/images/users/phone.png',

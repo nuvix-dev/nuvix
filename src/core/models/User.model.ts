@@ -1,10 +1,10 @@
-import { Exclude, Expose, Type } from "class-transformer";
-import BaseModel from "src/core/models/base.model";
-import { TargetModel } from "./Target.model";
+import { Exclude, Expose, Type } from 'class-transformer';
+import BaseModel from 'src/core/models/base.model';
+import { TargetModel } from './Target.model';
 
 type Preferences = {
   [key: string]: any;
-}
+};
 
 @Exclude()
 export class UserModel extends BaseModel {
@@ -19,7 +19,7 @@ export class UserModel extends BaseModel {
   /**
    * Password hashing algorithm.
    */
-  @Expose() hash?: string = "";
+  @Expose() hash?: string = '';
   /**
    * Password hashing algorithm configuration.
    */
@@ -47,7 +47,7 @@ export class UserModel extends BaseModel {
   /**
    * User phone number in E.164 format.
    */
-  @Expose() phone: string = "";
+  @Expose() phone: string = '';
   /**
    * Email verification status.
    */
@@ -68,7 +68,8 @@ export class UserModel extends BaseModel {
    * A user-owned message receiver. A single user may have multiple e.g. emails, phones, and a browser. Each target is registered with a single provider.
    */
   @Type(() => TargetModel)
-  @Expose() targets: TargetModel[];
+  @Expose()
+  targets: TargetModel[];
   /**
    * Most recent access date in ISO 8601 format. This attribute is only updated again after 24 hours.
    */
@@ -78,9 +79,7 @@ export class UserModel extends BaseModel {
     super();
     Object.assign(this, partial);
   }
-
 }
-
 
 export class UsersListModel {
   /**
@@ -97,5 +96,4 @@ export class UsersListModel {
   constructor(partial: Partial<UsersListModel>) {
     Object.assign(this, partial);
   }
-
 }

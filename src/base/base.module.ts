@@ -5,9 +5,7 @@ import { BaseController } from './base.controller';
 
 @Module({
   providers: [BaseResolver, BaseService],
-  imports: [
-
-  ],
-  controllers: [BaseController]
+  imports: [],
+  controllers: [BaseController],
 })
-export class BaseModule { }
+export class BaseModule {}

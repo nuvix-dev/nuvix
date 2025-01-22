@@ -1,5 +1,3 @@
-
-
 export class LoginDto {
   email: string;
   password: string;
@@ -12,5 +10,5 @@ export class RegisterDto {
 }
 
 export class RefreshDto {
-  refreshToken: string
+  refreshToken: string;
 }

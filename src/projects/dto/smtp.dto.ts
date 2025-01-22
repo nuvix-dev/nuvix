@@ -1,5 +1,13 @@
-import { IsBoolean, IsEmail, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Length } from 'class-validator';
-
+import {
+  IsBoolean,
+  IsEmail,
+  IsIn,
+  IsInt,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Length,
+} from 'class-validator';
 
 export class UpdateSmtpDto {
   @IsBoolean()
@@ -46,7 +54,6 @@ export class UpdateSmtpDto {
   @IsNotEmpty()
   secure: 'tls' | 'ssl';
 }
-
 
 export class SmtpTestsDto {
   @IsEmail({}, { each: true })

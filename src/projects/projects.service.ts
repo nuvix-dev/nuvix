@@ -1,6 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CreateProjectDto } from './dto/create-project.dto';
-import { UpdateProjectDto, UpdateProjectTeamDto } from './dto/update-project.dto';
+import {
+  UpdateProjectDto,
+  UpdateProjectTeamDto,
+} from './dto/update-project.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { AuthConfig, Project, ProjectDocument } from './schemas/project.schema';
 import { Model } from 'mongoose';
@@ -9,8 +12,15 @@ import { Organization } from 'src/console-user/schemas/organization.schema';
 import { ID } from 'src/core/helper/ID.helper';
 import Permission from 'src/core/helper/permission.helper';
 import Role from 'src/core/helper/role.helper';
-import { API_KEY_DYNAMIC, API_KEY_STANDARD, APP_VERSION_STABLE } from 'src/Utils/constants';
-import authMethods, { AuthMethod, defaultAuthConfig } from 'src/core/config/auth';
+import {
+  API_KEY_DYNAMIC,
+  API_KEY_STANDARD,
+  APP_VERSION_STABLE,
+} from 'src/Utils/constants';
+import authMethods, {
+  AuthMethod,
+  defaultAuthConfig,
+} from 'src/core/config/auth';
 import { DbService } from 'src/core/db.provider';
 import { QueryBuilder } from 'src/Utils/mongo.filter';
 import { oAuthProviders } from 'src/core/config/authProviders';
@@ -38,13 +48,17 @@ import { SmtpTestsDto, UpdateSmtpDto } from './dto/smtp.dto';
 @Injectable()
 export class ProjectService {
   constructor(
-    @InjectModel(Project.name, 'server') private readonly projectModel: Model<Project>,
-    @InjectModel(Organization.name, 'server') private readonly orgModel: Model<Organization>,
-    @InjectModel(Platform.name, 'server') private readonly platformModel: Model<Platform>,
+    @InjectModel(Project.name, 'server')
+    private readonly projectModel: Model<Project>,
+    @InjectModel(Organization.name, 'server')
+    private readonly orgModel: Model<Organization>,
+    @InjectModel(Platform.name, 'server')
+    private readonly platformModel: Model<Platform>,
     @InjectModel(Key.name, 'server') private readonly keyModel: Model<Key>,
-    @InjectModel(Webhook.name, 'server') private readonly webhookModel: Model<Webhook>,
-    private readonly jwtService: JwtService
-  ) { }
+    @InjectModel(Webhook.name, 'server')
+    private readonly webhookModel: Model<Webhook>,
+    private readonly jwtService: JwtService,
+  ) {}
 
   private readonly logger = new Logger(ProjectService.name);
 
@@ -52,15 +66,22 @@ export class ProjectService {
    * Create a new project.
    */
   async create(createProjectDto: CreateProjectDto): Promise<ProjectDocument> {
-    let projectId = createProjectDto.projectId === 'unique()' ? ID.unique() : ID.auto(createProjectDto.projectId)
+    let projectId =
+      createProjectDto.projectId === 'unique()'
+        ? ID.unique()
+        : ID.auto(createProjectDto.projectId);
     try {
-      let org = await this.orgModel.findOne({ id: createProjectDto.teamId })
-      if (!org) throw new Exception(Exception.TEAM_NOT_FOUND, "Organization not found.")
+      let org = await this.orgModel.findOne({ id: createProjectDto.teamId });
+      if (!org)
+        throw new Exception(
+          Exception.TEAM_NOT_FOUND,
+          'Organization not found.',
+        );
 
       let auths = loadAuthConfig(authMethods);
 
-      let defaultoAuthProviders = []
-      let defaultServices = {}
+      let defaultoAuthProviders = [];
+      let defaultServices = {};
 
       Object.entries(oAuthProviders).forEach(([key, value]) => {
         if (value.enabled) {
@@ -70,24 +91,32 @@ export class ProjectService {
             appId: '',
             secret: '',
             enabled: false,
-          })
+          });
         }
-      })
+      });
 
       Object.values(services).forEach((value) => {
         if (value.optional) {
           defaultServices[value.key] = true;
         }
-      })
+      });
 
       const project = await this.projectModel.create({
         id: projectId,
         $permissions: [
           Permission.Read(Role.Team(ID.custom(createProjectDto.teamId))),
-          Permission.Update(Role.Team(ID.custom(createProjectDto.teamId), 'owner')),
-          Permission.Update(Role.Team(ID.custom(createProjectDto.teamId), 'developer')),
-          Permission.Delete(Role.Team(ID.custom(createProjectDto.teamId), 'owner')),
-          Permission.Delete(Role.Team(ID.custom(createProjectDto.teamId), 'developer')),
+          Permission.Update(
+            Role.Team(ID.custom(createProjectDto.teamId), 'owner'),
+          ),
+          Permission.Update(
+            Role.Team(ID.custom(createProjectDto.teamId), 'developer'),
+          ),
+          Permission.Delete(
+            Role.Team(ID.custom(createProjectDto.teamId), 'owner'),
+          ),
+          Permission.Delete(
+            Role.Team(ID.custom(createProjectDto.teamId), 'developer'),
+          ),
         ],
         orgId: org.id,
         orgInternalId: org._id,
@@ -112,11 +141,13 @@ export class ProjectService {
         accessedAt: new Date(),
         version: APP_VERSION_STABLE,
         database: 'undefiend', // Will be updated after database creation
-      })
+      });
 
       await project.save();
 
-      const runner = (await new DbService().getConnection()).createQueryRunner("master");
+      const runner = (await new DbService().getConnection()).createQueryRunner(
+        'master',
+      );
       await runner.createDatabase('project_' + project.id);
       await runner.release();
 
@@ -126,7 +157,9 @@ export class ProjectService {
       const db = await new DbService().getTenantConnection(project.database);
       this.logger.log('Running migrations for project ' + project.id);
       const migrations = await db.runMigrations();
-      this.logger.log('Migrations run for project ' + project.id + ': ' + migrations);
+      this.logger.log(
+        'Migrations run for project ' + project.id + ': ' + migrations,
+      );
 
       return project;
     } catch (error) {
@@ -139,12 +172,13 @@ export class ProjectService {
         throw error;
       } else if (error.name === 'ValidationError') {
         throw Exception.fromValidation(error);
-      } else if (error.code === 11000) { // Handle duplicate key errors
+      } else if (error.code === 11000) {
+        // Handle duplicate key errors
         // Check which field caused the duplicate key error. Adapt to your needs.
         if (error.keyPattern && error.keyPattern.name === 1) {
           throw new Exception(null, 'Project with this name already exists.');
         } else {
-          console.error("Duplicate key error details:", error);
+          console.error('Duplicate key error details:', error);
           throw new Exception(null, 'Duplicate key error occurred.');
         }
       } else {
@@ -155,7 +189,9 @@ export class ProjectService {
   }
 
   async findAll(queries?: string[], search?: string) {
-    const baseQuery = this.projectModel.find().populate(['platforms', 'keys', 'webhooks']);
+    const baseQuery = this.projectModel
+      .find()
+      .populate(['platforms', 'keys', 'webhooks']);
     const queryBuilder = new QueryBuilder(baseQuery, ['name', 'teamId']);
 
     queryBuilder.parseQueryStrings(queries);
@@ -173,28 +209,38 @@ export class ProjectService {
   }
 
   async findOne(id: string, action: string = Database.PERMISSION_READ) {
-    const project = await this.projectModel.findOne({ id: id }).populate(['platforms', 'keys', 'webhooks'])
+    const project = await this.projectModel
+      .findOne({ id: id })
+      .populate(['platforms', 'keys', 'webhooks']);
     return new ModelResolver(project).getDocument(action);
   }
 
   async update(id: string, updateProjectDto: UpdateProjectDto) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
     if (updateProjectDto.name) project.name = updateProjectDto.name;
-    if (updateProjectDto.description) project.description = updateProjectDto.description;
+    if (updateProjectDto.description)
+      project.description = updateProjectDto.description;
     if (updateProjectDto.logo) project.logo = updateProjectDto.logo;
     if (updateProjectDto.url) project.url = updateProjectDto.url;
-    if (updateProjectDto.legalName) project.legalName = updateProjectDto.legalName;
-    if (updateProjectDto.legalCity) project.legalCity = updateProjectDto.legalCity;
-    if (updateProjectDto.legalAddress) project.legalAddress = updateProjectDto.legalAddress;
-    if (updateProjectDto.legalCountry) project.legalCountry = updateProjectDto.legalCountry;
-    if (updateProjectDto.legalState) project.legalState = updateProjectDto.legalState;
-    if (updateProjectDto.legalTaxId) project.legalTaxId = updateProjectDto.legalTaxId;
+    if (updateProjectDto.legalName)
+      project.legalName = updateProjectDto.legalName;
+    if (updateProjectDto.legalCity)
+      project.legalCity = updateProjectDto.legalCity;
+    if (updateProjectDto.legalAddress)
+      project.legalAddress = updateProjectDto.legalAddress;
+    if (updateProjectDto.legalCountry)
+      project.legalCountry = updateProjectDto.legalCountry;
+    if (updateProjectDto.legalState)
+      project.legalState = updateProjectDto.legalState;
+    if (updateProjectDto.legalTaxId)
+      project.legalTaxId = updateProjectDto.legalTaxId;
 
     await project.save();
 
-    return
+    return;
   }
 
   /**
@@ -202,8 +248,11 @@ export class ProjectService {
    */
   async remove(id: string) {
     let project = await this.findOne(id, Database.PERMISSION_DELETE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
-    const runner = (await new DbService().getConnection()).createQueryRunner("master");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
+    const runner = (await new DbService().getConnection()).createQueryRunner(
+      'master',
+    );
     await runner.dropDatabase('project_' + project.id, true);
     await runner.release();
     await project.deleteOne();
@@ -215,19 +264,25 @@ export class ProjectService {
    */
   async updateProjectOrganization(id: string, input: UpdateProjectTeamDto) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
-    let org = await this.orgModel.findOne({ id: input.teamId })
+    let org = await this.orgModel.findOne({ id: input.teamId });
     org = new ModelResolver(org).getDocument(Database.PERMISSION_READ);
-    if (!org) throw new Exception(Exception.TEAM_NOT_FOUND, "Organization not found.")
+    if (!org)
+      throw new Exception(Exception.TEAM_NOT_FOUND, 'Organization not found.');
 
     const permissions = [
       Permission.Read(Role.Team(ID.custom(input.teamId))).toString(),
       Permission.Update(Role.Team(ID.custom(input.teamId), 'owner')).toString(),
-      Permission.Update(Role.Team(ID.custom(input.teamId), 'developer')).toString(),
+      Permission.Update(
+        Role.Team(ID.custom(input.teamId), 'developer'),
+      ).toString(),
       Permission.Delete(Role.Team(ID.custom(input.teamId), 'owner')).toString(),
-      Permission.Delete(Role.Team(ID.custom(input.teamId), 'developer')).toString(),
-    ]
+      Permission.Delete(
+        Role.Team(ID.custom(input.teamId), 'developer'),
+      ).toString(),
+    ];
 
     project.orgId = org.id;
     project.orgInternalId = org._id;
@@ -248,13 +303,16 @@ export class ProjectService {
     let project = await this.projectModel.findOne({ id: id });
 
     project = new ModelResolver(project).getDocument(Database.PERMISSION_READ);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
-    let platforms = await this.platformModel.find({ projectInternalId: project._id })
+    let platforms = await this.platformModel.find({
+      projectInternalId: project._id,
+    });
     return {
       total: platforms?.length || 0,
-      platforms: platforms || []
-    }
+      platforms: platforms || [],
+    };
   }
 
   /**
@@ -262,14 +320,15 @@ export class ProjectService {
    */
   async createPlatform(id: string, input: CreatePlatformDto) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.PROJECT_NOT_FOUND, 'Project not found.');
 
     let platform = new this.platformModel({
       id: ID.unique(),
       permissions: [
         Permission.Read(Role.Any()),
         Permission.Update(Role.Any()),
-        Permission.Delete(Role.Any())
+        Permission.Delete(Role.Any()),
       ],
       projectInternalId: project._id,
       projectId: project.id,
@@ -278,11 +337,11 @@ export class ProjectService {
       key: input.key,
       store: input.store,
       hostname: input.hostname,
-    })
-    await platform.save()
+    });
+    await platform.save();
 
-    project.platforms.push(platform)
-    await project.save()
+    project.platforms.push(platform);
+    await project.save();
 
     return platform;
   }
@@ -292,29 +351,41 @@ export class ProjectService {
    */
   async getPlatform(id: string, platformId: string) {
     let project = await this.findOne(id, Database.PERMISSION_READ);
-    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.PROJECT_NOT_FOUND, 'Project not found.');
 
-    let platform = await this.platformModel.findOne({ projectInternalId: project._id, id: platformId })
-    if (!platform) throw new Exception(Exception.PLATFORM_NOT_FOUND)
-    return platform
+    let platform = await this.platformModel.findOne({
+      projectInternalId: project._id,
+      id: platformId,
+    });
+    if (!platform) throw new Exception(Exception.PLATFORM_NOT_FOUND);
+    return platform;
   }
 
   /**
    * Update a Platform.
    */
-  async updatePlatform(id: string, platformId: string, input: UpdatePlatformDto) {
+  async updatePlatform(
+    id: string,
+    platformId: string,
+    input: UpdatePlatformDto,
+  ) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.PROJECT_NOT_FOUND, 'Project not found.');
 
-    let platform = await this.platformModel.findOne({ projectInternalId: project._id, id: platformId })
-    if (!platform) throw new Exception(Exception.PLATFORM_NOT_FOUND)
+    let platform = await this.platformModel.findOne({
+      projectInternalId: project._id,
+      id: platformId,
+    });
+    if (!platform) throw new Exception(Exception.PLATFORM_NOT_FOUND);
 
     platform.name = input.name;
     platform.key = input.key;
     platform.store = input.store;
     platform.hostname = input.hostname;
 
-    await platform.save()
+    await platform.save();
     return platform;
   }
 
@@ -323,27 +394,35 @@ export class ProjectService {
    */
   async deletePlatform(id: string, platformId: string) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.PROJECT_NOT_FOUND, 'Project not found.');
 
-    let platform = await this.platformModel.findOne({ projectInternalId: project._id, id: platformId })
-    if (!platform) throw new Exception(Exception.PLATFORM_NOT_FOUND)
+    let platform = await this.platformModel.findOne({
+      projectInternalId: project._id,
+      id: platformId,
+    });
+    if (!platform) throw new Exception(Exception.PLATFORM_NOT_FOUND);
 
-    await platform.deleteOne()
+    await platform.deleteOne();
 
-    return {}
+    return {};
   }
 
   /**
    * Get keys of a project.
    */
   async getKeys(id: string) {
-    let project = await this.projectModel.findOne({ id: id }).select('keys').populate('keys');
+    let project = await this.projectModel
+      .findOne({ id: id })
+      .select('keys')
+      .populate('keys');
     project = new ModelResolver(project).getDocument(Database.PERMISSION_READ);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
     return {
       total: project?.keys?.length || 0,
-      keys: project.keys || []
-    }
+      keys: project.keys || [],
+    };
   }
 
   /**
@@ -351,14 +430,15 @@ export class ProjectService {
    */
   async createKey(id: string, input: CreateKeyDto) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
     let key = new this.keyModel({
       id: ID.unique(),
       permissions: [
         Permission.Read(Role.Any()),
         Permission.Update(Role.Any()),
-        Permission.Delete(Role.Any())
+        Permission.Delete(Role.Any()),
       ],
       projectInternalId: project._id,
       projectId: project.id,
@@ -367,12 +447,12 @@ export class ProjectService {
       expire: input.expire,
       sdks: [],
       accessedAt: null,
-      secret: API_KEY_STANDARD + '_' + randomBytes(128).toString('hex')
-    })
-    await key.save()
+      secret: API_KEY_STANDARD + '_' + randomBytes(128).toString('hex'),
+    });
+    await key.save();
 
-    project.keys.push(key)
-    await project.save()
+    project.keys.push(key);
+    await project.save();
 
     return key;
   }
@@ -382,11 +462,15 @@ export class ProjectService {
    */
   async getKey(id: string, keyId: string) {
     let project = await this.findOne(id, Database.PERMISSION_READ);
-    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.PROJECT_NOT_FOUND, 'Project not found.');
 
-    let key = await this.keyModel.findOne({ projectInternalId: project._id, id: keyId })
-    if (!key) throw new Exception(Exception.KEY_NOT_FOUND)
-    return key
+    let key = await this.keyModel.findOne({
+      projectInternalId: project._id,
+      id: keyId,
+    });
+    if (!key) throw new Exception(Exception.KEY_NOT_FOUND);
+    return key;
   }
 
   /**
@@ -394,16 +478,20 @@ export class ProjectService {
    */
   async updateKey(id: string, keyId: string, input: UpdateKeyDto) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.PROJECT_NOT_FOUND, 'Project not found.');
 
-    let key = await this.keyModel.findOne({ projectInternalId: project._id, id: keyId })
-    if (!key) throw new Exception(Exception.KEY_NOT_FOUND)
+    let key = await this.keyModel.findOne({
+      projectInternalId: project._id,
+      id: keyId,
+    });
+    if (!key) throw new Exception(Exception.KEY_NOT_FOUND);
 
     key.name = input.name;
     key.scopes = input.scopes;
     key.expire = input.expire as any;
 
-    await key.save()
+    await key.save();
     return key;
   }
 
@@ -412,14 +500,18 @@ export class ProjectService {
    */
   async deleteKey(id: string, keyId: string) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.PROJECT_NOT_FOUND, 'Project not found.');
 
-    let key = await this.keyModel.findOne({ projectInternalId: project._id, id: keyId })
-    if (!key) throw new Exception(Exception.KEY_NOT_FOUND)
+    let key = await this.keyModel.findOne({
+      projectInternalId: project._id,
+      id: keyId,
+    });
+    if (!key) throw new Exception(Exception.KEY_NOT_FOUND);
 
-    await key.deleteOne()
+    await key.deleteOne();
 
-    return {}
+    return {};
   }
 
   /**
@@ -427,25 +519,33 @@ export class ProjectService {
    */
   async createJwt(id: string, input: CreateJwtDto) {
     let project = await this.findOne(id, Database.PERMISSION_READ);
-    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.PROJECT_NOT_FOUND, 'Project not found.');
 
-    let jwt = await this.jwtService.signAsync({ projectId: project.id, scopes: input.scopes }, { expiresIn: input.duration })
+    let jwt = await this.jwtService.signAsync(
+      { projectId: project.id, scopes: input.scopes },
+      { expiresIn: input.duration },
+    );
     return {
-      jwt: API_KEY_DYNAMIC + '_' + jwt
-    }
+      jwt: API_KEY_DYNAMIC + '_' + jwt,
+    };
   }
 
   /**
    * Get webhooks of a project.
    */
   async getWebhooks(id: string) {
-    let project = await this.projectModel.findOne({ id: id }).select('webhooks').populate('webhooks');
+    let project = await this.projectModel
+      .findOne({ id: id })
+      .select('webhooks')
+      .populate('webhooks');
     project = new ModelResolver(project).getDocument(Database.PERMISSION_READ);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
     return {
       total: project?.webhooks?.length || 0,
-      webhooks: project.webhooks || []
-    }
+      webhooks: project.webhooks || [],
+    };
   }
 
   /**
@@ -453,14 +553,15 @@ export class ProjectService {
    */
   async createWebhook(id: string, input: CreateWebhookDto) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
     let webhook = new this.webhookModel({
       id: ID.unique(),
       permissions: [
         Permission.Read(Role.Any()),
         Permission.Update(Role.Any()),
-        Permission.Delete(Role.Any())
+        Permission.Delete(Role.Any()),
       ],
       projectInternalId: project._id,
       projectId: project.id,
@@ -472,11 +573,11 @@ export class ProjectService {
       httpPass: Auth.encrypt(input.httpPass),
       signatureKey: randomBytes(64).toString('hex'),
       enabled: input.enabled,
-    })
-    await webhook.save()
+    });
+    await webhook.save();
 
-    project.webhooks.push(webhook)
-    await project.save()
+    project.webhooks.push(webhook);
+    await project.save();
 
     return webhook;
   }
@@ -486,11 +587,15 @@ export class ProjectService {
    */
   async getWebhook(id: string, webhookId: string) {
     let project = await this.findOne(id, Database.PERMISSION_READ);
-    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.PROJECT_NOT_FOUND, 'Project not found.');
 
-    let webhook = await this.webhookModel.findOne({ projectInternalId: project._id, id: webhookId })
-    if (!webhook) throw new Exception(Exception.WEBHOOK_NOT_FOUND)
-    return webhook
+    let webhook = await this.webhookModel.findOne({
+      projectInternalId: project._id,
+      id: webhookId,
+    });
+    if (!webhook) throw new Exception(Exception.WEBHOOK_NOT_FOUND);
+    return webhook;
   }
 
   /**
@@ -498,10 +603,14 @@ export class ProjectService {
    */
   async updateWebhook(id: string, webhookId: string, input: UpdateWebhookDto) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.PROJECT_NOT_FOUND, 'Project not found.');
 
-    let webhook = await this.webhookModel.findOne({ projectInternalId: project._id, id: webhookId })
-    if (!webhook) throw new Exception(Exception.WEBHOOK_NOT_FOUND)
+    let webhook = await this.webhookModel.findOne({
+      projectInternalId: project._id,
+      id: webhookId,
+    });
+    if (!webhook) throw new Exception(Exception.WEBHOOK_NOT_FOUND);
 
     webhook.name = input.name;
     webhook.events = input.events;
@@ -510,9 +619,9 @@ export class ProjectService {
     webhook.httpPass = Auth.encrypt(input.httpPass);
     if (typeof input.security === 'boolean') webhook.security = input.security;
     if (typeof input.enabled === 'boolean') webhook.enabled = input.enabled;
-    if (input.enabled) webhook.attempts = 0
+    if (input.enabled) webhook.attempts = 0;
 
-    await webhook.save()
+    await webhook.save();
     return webhook;
   }
 
@@ -521,13 +630,17 @@ export class ProjectService {
    */
   async updateWebhookSignature(id: string, webhookId: string) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.PROJECT_NOT_FOUND, 'Project not found.');
 
-    let webhook = await this.webhookModel.findOne({ projectInternalId: project._id, id: webhookId })
-    if (!webhook) throw new Exception(Exception.WEBHOOK_NOT_FOUND)
+    let webhook = await this.webhookModel.findOne({
+      projectInternalId: project._id,
+      id: webhookId,
+    });
+    if (!webhook) throw new Exception(Exception.WEBHOOK_NOT_FOUND);
 
-    webhook.signatureKey = randomBytes(64).toString('hex')
-    await webhook.save()
+    webhook.signatureKey = randomBytes(64).toString('hex');
+    await webhook.save();
 
     return webhook;
   }
@@ -537,14 +650,18 @@ export class ProjectService {
    */
   async deleteWebhook(id: string, webhookId: string) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.PROJECT_NOT_FOUND, 'Project not found.');
 
-    let webhook = await this.webhookModel.findOne({ projectInternalId: project._id, id: webhookId })
-    if (!webhook) throw new Exception(Exception.WEBHOOK_NOT_FOUND)
+    let webhook = await this.webhookModel.findOne({
+      projectInternalId: project._id,
+      id: webhookId,
+    });
+    if (!webhook) throw new Exception(Exception.WEBHOOK_NOT_FOUND);
 
-    await webhook.deleteOne()
+    await webhook.deleteOne();
 
-    return {}
+    return {};
   }
 
   /**
@@ -552,7 +669,8 @@ export class ProjectService {
    */
   async updateServiceStatus(id: string, input: UpdateProjectServiceDto) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
     project.services[input.service] = input.status;
 
@@ -567,13 +685,14 @@ export class ProjectService {
    */
   async updateAllServiceStatus(id: string, status: boolean) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
     Object.values(services).forEach((value) => {
       if (value.optional) {
         project.services[value.key] = status;
       }
-    })
+    });
 
     project.markModified('services');
     await project.save();
@@ -586,7 +705,8 @@ export class ProjectService {
    */
   async updateApiStatus(id: string, input: ProjectApiStatusDto) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
     project.auths[input.api] = input.status;
 
@@ -601,11 +721,12 @@ export class ProjectService {
    */
   async updateAllApiStatus(id: string, status: boolean) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
     Object.values(apis).forEach((value) => {
       project.auths[value.key] = status;
-    })
+    });
 
     project.markModified('auths');
     await project.save();
@@ -618,13 +739,16 @@ export class ProjectService {
    */
   async updateOAuth2(id: string, input: oAuth2Dto) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
     if (!oAuthProviders[input.provider]) {
-      throw new Exception(Exception.INVALID_PARAMS, "Invalid OAuth provider.");
+      throw new Exception(Exception.INVALID_PARAMS, 'Invalid OAuth provider.');
     }
 
-    let provider = project.oAuthProviders.find(provider => provider.key === input.provider);
+    let provider = project.oAuthProviders.find(
+      (provider) => provider.key === input.provider,
+    );
 
     if (provider) {
       if (input.appId) provider.appId = input.appId;
@@ -636,7 +760,7 @@ export class ProjectService {
         name: oAuthProviders[input.provider].name,
         appId: input.appId,
         secret: input.secret,
-        enabled: typeof input.enabled === 'boolean' ? input.enabled : true
+        enabled: typeof input.enabled === 'boolean' ? input.enabled : true,
       });
     }
 
@@ -651,7 +775,8 @@ export class ProjectService {
    */
   async updateSessionAlerts(id: string, status: boolean = false) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
     project.auths.sessionAlerts = status;
 
@@ -666,7 +791,8 @@ export class ProjectService {
    */
   async updateAuthLimit(id: string, limit: number) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
     project.auths.sessionsLimit = limit;
 
@@ -681,7 +807,8 @@ export class ProjectService {
    */
   async updateSessionDuration(id: string, duration: number) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
     project.auths.duration = duration;
 
@@ -696,10 +823,11 @@ export class ProjectService {
    */
   async updateAuthMethod(id: string, method: string, status: boolean) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
     if (!authMethods[method]) {
-      throw new Exception(Exception.INVALID_PARAMS, "Invalid auth method.");
+      throw new Exception(Exception.INVALID_PARAMS, 'Invalid auth method.');
     }
 
     project.auths[method] = status;
@@ -715,7 +843,8 @@ export class ProjectService {
    */
   async updatePasswordHistory(id: string, limit: number) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
     project.auths.passwordHistory = limit;
 
@@ -730,7 +859,8 @@ export class ProjectService {
    */
   async updatePasswordDictionary(id: string, enabled: boolean) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
     project.auths.passwordDictionary = enabled;
 
@@ -745,7 +875,8 @@ export class ProjectService {
    */
   async updatePersonalData(id: string, enabled: boolean) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
     project.auths.personalDataCheck = enabled;
 
@@ -760,7 +891,8 @@ export class ProjectService {
    */
   async updateMaxSessions(id: string, limit: number) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
     project.auths.sessionsLimit = limit;
 
@@ -775,12 +907,16 @@ export class ProjectService {
    */
   async updateMockNumbers(id: string, input: AuthMockNumbersDto) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.DOCUMENT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.DOCUMENT_NOT_FOUND, 'Project not found.');
 
     const uniqueNumbers = new Set();
-    input.numbers.forEach(number => {
+    input.numbers.forEach((number) => {
       if (uniqueNumbers.has(number.phone)) {
-        throw new Exception(Exception.GENERAL_BAD_REQUEST, 'Duplicate phone numbers are not allowed.');
+        throw new Exception(
+          Exception.GENERAL_BAD_REQUEST,
+          'Duplicate phone numbers are not allowed.',
+        );
       }
       uniqueNumbers.add(number.phone);
     });
@@ -798,13 +934,30 @@ export class ProjectService {
    */
   async updateSMTP(id: string, input: UpdateSmtpDto) {
     let project = await this.findOne(id, Database.PERMISSION_UPDATE);
-    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND, "Project not found.");
+    if (!project)
+      throw new Exception(Exception.PROJECT_NOT_FOUND, 'Project not found.');
 
     if (input.enabled) {
-      if (!input.senderName) throw new Exception(Exception.GENERAL_ARGUMENT_INVALID, 'Sender name is required when enabling SMTP.');
-      if (!input.senderEmail) throw new Exception(Exception.GENERAL_ARGUMENT_INVALID, 'Sender email is required when enabling SMTP.');
-      if (!input.host) throw new Exception(Exception.GENERAL_ARGUMENT_INVALID, 'Host is required when enabling SMTP.');
-      if (!input.port) throw new Exception(Exception.GENERAL_ARGUMENT_INVALID, 'Port is required when enabling SMTP.');
+      if (!input.senderName)
+        throw new Exception(
+          Exception.GENERAL_ARGUMENT_INVALID,
+          'Sender name is required when enabling SMTP.',
+        );
+      if (!input.senderEmail)
+        throw new Exception(
+          Exception.GENERAL_ARGUMENT_INVALID,
+          'Sender email is required when enabling SMTP.',
+        );
+      if (!input.host)
+        throw new Exception(
+          Exception.GENERAL_ARGUMENT_INVALID,
+          'Host is required when enabling SMTP.',
+        );
+      if (!input.port)
+        throw new Exception(
+          Exception.GENERAL_ARGUMENT_INVALID,
+          'Port is required when enabling SMTP.',
+        );
 
       // Validate SMTP settings
       // const mail = new PHPMailer(true);
@@ -848,16 +1001,15 @@ export class ProjectService {
    * Test SMTP
    */
   async testSMTP(id: string, input: SmtpTestsDto) {
-    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
-    return {}
+    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED);
+    return {};
   }
 }
-
 
 function loadAuthConfig(authMethods: Record<string, AuthMethod>): AuthConfig {
   const authConfig = { ...defaultAuthConfig };
 
-  Object.values(authMethods).forEach(method => {
+  Object.values(authMethods).forEach((method) => {
     if (method.enabled) {
       authConfig[method.key] = true;
     }

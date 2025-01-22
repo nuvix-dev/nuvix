@@ -1,6 +1,13 @@
-import { PartialType } from "@nestjs/mapped-types";
-import { IsArray, IsDate, IsDateString, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
-
+import { PartialType } from '@nestjs/mapped-types';
+import {
+  IsArray,
+  IsDate,
+  IsDateString,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class CreateKeyDto {
   @IsString()
@@ -17,5 +24,4 @@ export class CreateKeyDto {
   expire: string;
 }
 
-
-export class UpdateKeyDto extends PartialType(CreateKeyDto) { }
+export class UpdateKeyDto extends PartialType(CreateKeyDto) {}

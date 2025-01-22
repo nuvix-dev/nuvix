@@ -8,7 +8,10 @@ import * as bcrypt from 'bcryptjs';
 import { CreateOrgDto, UpdateOrgDto } from './dto/org.dto';
 import { Exception } from 'src/core/extend/exception';
 import { ID } from 'src/core/helper/ID.helper';
-import { Organization, OrganizationDocument } from './schemas/organization.schema';
+import {
+  Organization,
+  OrganizationDocument,
+} from './schemas/organization.schema';
 import { Membership } from './schemas/membersip.schema';
 import { UpdateEmailDto } from 'src/console-account/dto/update-account.dto';
 import { Plan } from 'src/console/schemas/plan.schema';
@@ -25,20 +28,25 @@ import { ModelResolver } from 'src/core/resolver/model.resolver';
 
 @Injectable()
 export class UserService {
-
   constructor(
     @InjectModel(User.name, 'server')
     private readonly userModel: Model<User>,
     @InjectModel(Organization.name, 'server')
     private readonly orgModel: Model<Organization>,
-    @InjectModel(Membership.name, 'server') private readonly membershipModel: Model<Membership>,
+    @InjectModel(Membership.name, 'server')
+    private readonly membershipModel: Model<Membership>,
     @InjectModel(Plan.name, 'server') private readonly planModel: Model<Plan>,
-    @InjectModel(PaymentMethod.name, 'server') private readonly paymentModel: Model<PaymentMethod>,
-    @InjectModel(BillingAddress.name, 'server') private readonly billingModel: Model<BillingAddress>,
-    @InjectModel(Token.name, 'server') private readonly tokenModel: Model<Token>,
-    @InjectModel(Challenges.name, 'server') private readonly challengeModel: Model<Challenges>,
-    @InjectModel(Authenticator.name, 'server') private readonly authenticatorModel: Model<Authenticator>
-  ) { }
+    @InjectModel(PaymentMethod.name, 'server')
+    private readonly paymentModel: Model<PaymentMethod>,
+    @InjectModel(BillingAddress.name, 'server')
+    private readonly billingModel: Model<BillingAddress>,
+    @InjectModel(Token.name, 'server')
+    private readonly tokenModel: Model<Token>,
+    @InjectModel(Challenges.name, 'server')
+    private readonly challengeModel: Model<Challenges>,
+    @InjectModel(Authenticator.name, 'server')
+    private readonly authenticatorModel: Model<Authenticator>,
+  ) {}
 
   async create(createUserDto: CreateUserDto) {
     let password = await this.hashPassword(createUserDto.password);
@@ -66,7 +74,10 @@ export class UserService {
   async updateEmail(userId: string, updateEmailDto: UpdateEmailDto) {
     let user = await this.userModel.findOne({ id: userId });
     if (!user) throw new Exception(Exception.USER_NOT_FOUND);
-    let authorized = await this.comparePasswords(updateEmailDto.password, user.password);
+    let authorized = await this.comparePasswords(
+      updateEmailDto.password,
+      user.password,
+    );
     if (!authorized) throw new Exception(Exception.USER_UNAUTHORIZED);
     user.email = updateEmailDto.email;
     /**
@@ -80,7 +91,7 @@ export class UserService {
    * Retrieves Organization by ID.
    */
   async findOneOrganization(id: string) {
-    let org = await this.orgModel.findOne({ id: id })
+    let org = await this.orgModel.findOne({ id: id });
     return new ModelResolver(org).getDocument();
   }
 
@@ -108,7 +119,10 @@ export class UserService {
   /**
    * Creates a new organization and adds the current user as the owner.
    */
-  async createOrganization(user: Express.User, input: CreateOrgDto): Promise<Organization> {
+  async createOrganization(
+    user: Express.User,
+    input: CreateOrgDto,
+  ): Promise<Organization> {
     try {
       // Create a new Organization document
       let orgId = ID.auto(input.organizationId);
@@ -123,7 +137,7 @@ export class UserService {
         prefs: {},
         billingPlan: input.plan,
         budgetAlerts: false,
-        total: 1
+        total: 1,
       });
 
       const savedOrg = await createdOrg.save();
@@ -142,7 +156,7 @@ export class UserService {
         joined: new Date(),
         confirm: true,
         orgName: createdOrg.name,
-        mfa: false
+        mfa: false,
       });
 
       await member.save();
@@ -152,14 +166,22 @@ export class UserService {
     } catch (error) {
       if (error.name === 'ValidationError') {
         // Handle Mongoose validation errors
-        const messages = Object.values(error.errors).map((val: any) => val.message);
+        const messages = Object.values(error.errors).map(
+          (val: any) => val.message,
+        );
         const errorMessage = messages.join(', '); // Join messages with comma and space
         throw new Exception(null, `Validation failed: ${errorMessage}`);
-      } else if (error.code === 11000 && error.keyPattern && error.keyPattern.name === 1) {
+      } else if (
+        error.code === 11000 &&
+        error.keyPattern &&
+        error.keyPattern.name === 1
+      ) {
         // Handle duplicate key error (e.g., duplicate organization name)
-        throw new Exception(null, 'Organization with this name already exists.');
-      }
-      else {
+        throw new Exception(
+          null,
+          'Organization with this name already exists.',
+        );
+      } else {
         // Handle other errors
         console.error('Error creating organization:', error);
         throw new Exception(null, 'Failed to create organization.');
@@ -170,10 +192,13 @@ export class UserService {
   /**
    * Update an Organization.
    */
-  async updateOrganization(id: string, input: UpdateOrgDto): Promise<Organization> {
+  async updateOrganization(
+    id: string,
+    input: UpdateOrgDto,
+  ): Promise<Organization> {
     try {
       // Find the organization by ID and user ID
-      const org = await this.orgModel.findOne({ id: id, }).exec(); // exec() for a proper Promise
+      const org = await this.orgModel.findOne({ id: id }).exec(); // exec() for a proper Promise
 
       if (!org) {
         throw new Exception(null, 'Organization not found.');
@@ -186,14 +211,13 @@ export class UserService {
       const updatedOrg = await org.save();
 
       return updatedOrg;
-
     } catch (error) {
       if (error instanceof Exception) {
         throw error; // Re-throw custom exceptions
       } else {
         // Handle other potential errors (e.g., validation errors)
-        console.error("Error updating organization:", error);
-        throw new Exception(null, "Failed to update organization."); // Wrap other errors in custom exception
+        console.error('Error updating organization:', error);
+        throw new Exception(null, 'Failed to update organization.'); // Wrap other errors in custom exception
       }
     }
   }
@@ -204,7 +228,7 @@ export class UserService {
   async deleteOrganization(id: string) {
     try {
       // Find the organization by ID and user ID
-      const org = await this.orgModel.findOneAndDelete({ id: id, }).exec(); // exec() for a proper Promise
+      const org = await this.orgModel.findOneAndDelete({ id: id }).exec(); // exec() for a proper Promise
 
       if (!org) {
         throw new Exception(null, 'Organization not found.');
@@ -215,8 +239,8 @@ export class UserService {
         throw error; // Re-throw custom exceptions
       } else {
         // Handle other potential errors (e.g., validation errors)
-        console.error("Error deleting organization:", error);
-        throw new Exception(null, "Failed to delete organization."); // Wrap other errors in custom exception
+        console.error('Error deleting organization:', error);
+        throw new Exception(null, 'Failed to delete organization.'); // Wrap other errors in custom exception
       }
     }
   }
@@ -225,9 +249,9 @@ export class UserService {
    * Get Members of a Organization.
    */
   async getOrganizationMembers(id: string) {
-    let org = await this.findOneOrganization(id)
-    if (!org) throw new Exception(Exception.TEAM_NOT_FOUND)
-    let members = await this.membershipModel.find({ orgInternalId: org._id })
+    let org = await this.findOneOrganization(id);
+    if (!org) throw new Exception(Exception.TEAM_NOT_FOUND);
+    let members = await this.membershipModel.find({ orgInternalId: org._id });
     return members;
   }
 
@@ -235,25 +259,25 @@ export class UserService {
    * Get Organization Plan.
    */
   async getOrganizationPlan(orgId: string) {
-    let org = await this.orgModel.findOne({ id: orgId })
-    if (!org) throw new Exception(Exception.TEAM_NOT_FOUND)
-    let plan = this.planModel.findOne({ id: org.billingPlan })
-    if (!plan) throw new Exception(undefined, 'Plan not Exists.')
+    let org = await this.orgModel.findOne({ id: orgId });
+    if (!org) throw new Exception(Exception.TEAM_NOT_FOUND);
+    let plan = this.planModel.findOne({ id: org.billingPlan });
+    if (!plan) throw new Exception(undefined, 'Plan not Exists.');
     return plan;
   }
 
   /**
-    * Retrieves the preferences of a user by their ID.
-    *
-    * @param userId - The unique identifier of the user.
-    * @returns A promise that resolves to the user's preferences object. If the user has no preferences, an empty object is returned.
-    * @throws Exception if the user is not found.
-    */
+   * Retrieves the preferences of a user by their ID.
+   *
+   * @param userId - The unique identifier of the user.
+   * @returns A promise that resolves to the user's preferences object. If the user has no preferences, an empty object is returned.
+   * @throws Exception if the user is not found.
+   */
   async getPrefs(userId: string) {
-    let user = await this.userModel.findOne({ id: userId })
-    await user.save()
-    if (!user) throw new Exception(Exception.USER_NOT_FOUND)
-    return user.prefs ?? {}
+    let user = await this.userModel.findOne({ id: userId });
+    await user.save();
+    if (!user) throw new Exception(Exception.USER_NOT_FOUND);
+    return user.prefs ?? {};
   }
 
   /**
@@ -265,21 +289,21 @@ export class UserService {
    * @throws Exception if the user is not found.
    */
   async updatePrefs(userId: string, prefs: any) {
-    let user = await this.userModel.findOne({ id: userId })
-    if (!user) throw new Exception(Exception.USER_NOT_FOUND)
-    user.prefs = prefs
-    await user.save()
-    return user.prefs ?? {}
+    let user = await this.userModel.findOne({ id: userId });
+    if (!user) throw new Exception(Exception.USER_NOT_FOUND);
+    user.prefs = prefs;
+    await user.save();
+    return user.prefs ?? {};
   }
 
   /**
    * Retrieves the payment methods of a user.
    */
   async getPaymentMethods(userId: string) {
-    let paymentMethods = await this.paymentModel.find({ userId })
+    let paymentMethods = await this.paymentModel.find({ userId });
     return {
       total: paymentMethods.length,
-      paymentMethods: paymentMethods
+      paymentMethods: paymentMethods,
     };
   }
 
@@ -287,33 +311,39 @@ export class UserService {
    * Retrieves a payment method by its ID.
    */
   async getPaymentMethod(paymentMethodId: string) {
-    let paymentMethod = await this.paymentModel.findOne({ id: paymentMethodId })
+    let paymentMethod = await this.paymentModel.findOne({
+      id: paymentMethodId,
+    });
     return paymentMethod;
   }
 
   /**
    * Updates a new payment method for a user.
    */
-  async updatePaymentMethod(paymentMethodId: string, input: UpdatePaymentMethodDto) {
-    let paymentMethod = await this.paymentModel.findOne({ id: paymentMethodId })
-    if (!paymentMethod) throw new Exception(Exception.GENERAL_NOT_FOUND)
+  async updatePaymentMethod(
+    paymentMethodId: string,
+    input: UpdatePaymentMethodDto,
+  ) {
+    let paymentMethod = await this.paymentModel.findOne({
+      id: paymentMethodId,
+    });
+    if (!paymentMethod) throw new Exception(Exception.GENERAL_NOT_FOUND);
     /**
      * @todo UPDATE.
      */
     return paymentMethod;
   }
 
-
   async getBillingAddresses(userId: string) {
-    let addresses = await this.billingModel.find({ userId })
+    let addresses = await this.billingModel.find({ userId });
     return {
       total: addresses.length,
-      billingAddresses: addresses
+      billingAddresses: addresses,
     };
   }
 
   async getBillingAddress(addressId: string) {
-    let address = await this.billingModel.findOne({ id: addressId })
+    let address = await this.billingModel.findOne({ id: addressId });
     return address;
   }
 
@@ -323,7 +353,7 @@ export class UserService {
   }
 
   async hashPassword(password: string) {
-    const saltRounds = 12;  // Higher is more secure but slower
+    const saltRounds = 12; // Higher is more secure but slower
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     return hashedPassword;
   }

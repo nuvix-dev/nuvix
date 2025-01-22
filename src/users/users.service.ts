@@ -5,7 +5,18 @@ import Permission from 'src/core/helper/permission.helper';
 import Role from 'src/core/helper/role.helper';
 import { PersonalDataValidator } from 'src/core/validators/personal-data.validator';
 import { ProjectDocument } from 'src/projects/schemas/project.schema';
-import { CreateUserDto, CreateUserWithScryptDto, CreateUserWithScryptModifedDto, CreateUserWithShaDto, UpdateUserEmailVerificationDto, UpdateUserLabelDto, UpdateUserNameDto, UpdateUserPasswordDto, UpdateUserPoneVerificationDto, UpdateUserStatusDto } from './dto/user.dto';
+import {
+  CreateUserDto,
+  CreateUserWithScryptDto,
+  CreateUserWithScryptModifedDto,
+  CreateUserWithShaDto,
+  UpdateUserEmailVerificationDto,
+  UpdateUserLabelDto,
+  UpdateUserNameDto,
+  UpdateUserPasswordDto,
+  UpdateUserPoneVerificationDto,
+  UpdateUserStatusDto,
+} from './dto/user.dto';
 import { ClsService } from 'nestjs-cls';
 import { PROJECT } from 'src/Utils/constants';
 import { Auth } from 'src/core/helper/auth.helper';
@@ -23,7 +34,7 @@ import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class UsersService {
-  private logger: Logger = new Logger(UsersService.name)
+  private logger: Logger = new Logger(UsersService.name);
   private userRepo: Repository<UserEntity>;
   private readonly identityRepo: Repository<IdentityEntity>;
   private readonly targetRepo: Repository<TargetEntity>;
@@ -37,7 +48,7 @@ export class UsersService {
   constructor(
     @Inject('CONNECTION') private readonly dataSource: DataSource,
     private readonly cls: ClsService,
-    private readonly jwtService: JwtService
+    private readonly jwtService: JwtService,
   ) {
     this.userRepo = this.dataSource.getRepository(UserEntity);
     this.identityRepo = this.dataSource.getRepository(IdentityEntity);
@@ -62,14 +73,17 @@ export class UsersService {
     return {
       users: results,
       total: totalCount,
-    }
+    };
   }
 
   /**
    * Find a user by id
    */
   async findOne(id: string) {
-    let user = await this.userRepo.findOne({ where: { $id: id }, relations: ['targets'] });
+    let user = await this.userRepo.findOne({
+      where: { $id: id },
+      relations: ['targets'],
+    });
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
@@ -154,7 +168,7 @@ export class UsersService {
    */
   async updatePassword(id: string, input: UpdateUserPasswordDto) {
     let Project = this.cls.get<ProjectDocument>(PROJECT);
-    let user = await this.userRepo.findOneBy({ $id: id })
+    let user = await this.userRepo.findOneBy({ $id: id });
 
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
@@ -179,10 +193,18 @@ export class UsersService {
       return user;
     }
 
-    let hasPassword = await Auth.passwordHash(input.password, Auth.DEFAULT_ALGO, Auth.DEFAULT_ALGO_OPTIONS);
+    let hasPassword = await Auth.passwordHash(
+      input.password,
+      Auth.DEFAULT_ALGO,
+      Auth.DEFAULT_ALGO_OPTIONS,
+    );
     let passwordHistory = Project.auths?.passwordHistory ?? 0;
     if (passwordHistory > 0) {
-      const validator = new PasswordHistoryValidator(user.passwordHistory, user.hash, user.hashOptions);
+      const validator = new PasswordHistoryValidator(
+        user.passwordHistory,
+        user.hash,
+        user.hashOptions,
+      );
       if (!validator.isValid(hasPassword)) {
         throw new Exception(Exception.USER_PASSWORD_RECENTLY_USED);
       }
@@ -193,8 +215,8 @@ export class UsersService {
 
     user.password = hasPassword;
     user.passwordUpdate = new Date();
-    user.hash = Auth.DEFAULT_ALGO
-    user.hashOptions = Auth.DEFAULT_ALGO_OPTIONS
+    user.hash = Auth.DEFAULT_ALGO;
+    user.hashOptions = Auth.DEFAULT_ALGO_OPTIONS;
 
     await this.userRepo.save(user);
     return user;
@@ -217,7 +239,7 @@ export class UsersService {
         where: {
           providerEmail: email,
           userId: Not(id),
-        }
+        },
       });
       if (identityWithMatchingEmail) {
         throw new Exception(Exception.USER_EMAIL_ALREADY_EXISTS);
@@ -226,7 +248,7 @@ export class UsersService {
       const target = await this.targetRepo.findOne({
         where: {
           identifier: email,
-        }
+        },
       });
 
       if (target) {
@@ -245,7 +267,7 @@ export class UsersService {
       const oldTarget = await this.targetRepo.findOne({
         where: {
           identifier: oldEmail,
-        }
+        },
       });
 
       if (oldTarget) {
@@ -297,7 +319,7 @@ export class UsersService {
       const target = await this.targetRepo.findOne({
         where: {
           identifier: phone,
-        }
+        },
       });
 
       if (target) {
@@ -311,7 +333,7 @@ export class UsersService {
       const oldTarget = await this.targetRepo.findOne({
         where: {
           identifier: oldPhone,
-        }
+        },
       });
 
       if (oldTarget) {
@@ -347,7 +369,10 @@ export class UsersService {
   /**
    * Update user emailVerification
    */
-  async updateEmailVerification(id: string, input: UpdateUserEmailVerificationDto) {
+  async updateEmailVerification(
+    id: string,
+    input: UpdateUserEmailVerificationDto,
+  ) {
     let user = await this.userRepo.findOneBy({ $id: id });
 
     if (!user) {
@@ -363,7 +388,10 @@ export class UsersService {
   /**
    * Update user's phoneVerification
    */
-  async updatePhoneVerification(id: string, input: UpdateUserPoneVerificationDto) {
+  async updatePhoneVerification(
+    id: string,
+    input: UpdateUserPoneVerificationDto,
+  ) {
     let user = await this.userRepo.findOneBy({ $id: id });
 
     if (!user) {
@@ -528,19 +556,20 @@ export class UsersService {
 
   // TEMP MIGRATIONS
   async tempUndoMigrations() {
-    return await this.dataSource.undoLastMigration()
+    return await this.dataSource.undoLastMigration();
   }
 
   // TEMP MIGRATIONS
   async tempDoMigrations() {
-    return this.dataSource.runMigrations()
+    return this.dataSource.runMigrations();
   }
 
   /**
    * Create a new target
    */
   async createTarget(userId: string, input: CreateTargetDto) {
-    const targetId = input.targetId === 'unique()' ? ID.unique() : ID.custom(input.targetId);
+    const targetId =
+      input.targetId === 'unique()' ? ID.unique() : ID.custom(input.targetId);
 
     switch (input.providerType) {
       case 'email':
@@ -591,16 +620,18 @@ export class UsersService {
    * Get all targets
    */
   async getTargets(userId: string) {
-    const user = await this.userRepo.findOne({ where: { $id: userId }, relations: ['targets'] });
-    console.log(user, user.targets)
+    const user = await this.userRepo.findOne({
+      where: { $id: userId },
+      relations: ['targets'],
+    });
+    console.log(user, user.targets);
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
 
+    let targets = await this.targetRepo.find();
 
-    let targets = await this.targetRepo.find()
-
-    console.log(targets)
+    console.log(targets);
 
     return { total: user.targets.length, targets: user.targets };
   }
@@ -609,7 +640,9 @@ export class UsersService {
    * Update a target
    */
   async updateTarget(userId: string, targetId: string, input: UpdateTargetDto) {
-    const target = await this.targetRepo.findOne({ where: { $id: targetId, userId } });
+    const target = await this.targetRepo.findOne({
+      where: { $id: targetId, userId },
+    });
     if (!target) {
       throw new Exception(Exception.USER_TARGET_NOT_FOUND);
     }
@@ -636,7 +669,9 @@ export class UsersService {
     }
 
     if (input.providerId) {
-      const provider = await this.providerRepo.findOne({ where: { $id: input.providerId } });
+      const provider = await this.providerRepo.findOne({
+        where: { $id: input.providerId },
+      });
 
       if (!provider) {
         throw new Exception(Exception.PROVIDER_NOT_FOUND);
@@ -662,7 +697,9 @@ export class UsersService {
    * Get A target
    */
   async getTarget(userId: string, targetId: string) {
-    const target = await this.targetRepo.findOne({ where: { $id: targetId, userId } });
+    const target = await this.targetRepo.findOne({
+      where: { $id: targetId, userId },
+    });
     if (!target) {
       throw new Exception(Exception.USER_TARGET_NOT_FOUND);
     }
@@ -674,7 +711,9 @@ export class UsersService {
    * Delete a target
    */
   async deleteTarget(userId: string, targetId: string) {
-    const target = await this.targetRepo.findOne({ where: { $id: targetId, userId } });
+    const target = await this.targetRepo.findOne({
+      where: { $id: targetId, userId },
+    });
     if (!target) {
       throw new Exception(Exception.USER_TARGET_NOT_FOUND);
     }
@@ -687,7 +726,10 @@ export class UsersService {
    * Get all sessions
    */
   async getSessions(userId: string) {
-    const user = await this.userRepo.findOne({ where: { $id: userId }, relations: ['sessions'] });
+    const user = await this.userRepo.findOne({
+      where: { $id: userId },
+      relations: ['sessions'],
+    });
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
@@ -704,7 +746,10 @@ export class UsersService {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
 
-    let memberships = await this.memberRepo.find({ where: { user: { id: user.id } }, relations: ['team'] });
+    let memberships = await this.memberRepo.find({
+      where: { user: { id: user.id } },
+      relations: ['team'],
+    });
 
     for (let i = 0; i < memberships.length; i++) {
       memberships[i].userEmail = user.email;
@@ -719,7 +764,10 @@ export class UsersService {
    * Get Mfa factors
    */
   async getMfaFactors(userId: string) {
-    const user = await this.userRepo.findOne({ where: { $id: userId }, relations: ['authenticators'] });
+    const user = await this.userRepo.findOne({
+      where: { $id: userId },
+      relations: ['authenticators'],
+    });
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
@@ -747,7 +795,7 @@ export class UsersService {
     }
 
     return {
-      recoveryCodes: user.mfaRecoveryCodes
+      recoveryCodes: user.mfaRecoveryCodes,
     };
   }
 
@@ -768,7 +816,7 @@ export class UsersService {
     await this.userRepo.save(user);
 
     return {
-      recoveryCodes: user.mfaRecoveryCodes
+      recoveryCodes: user.mfaRecoveryCodes,
     };
   }
 
@@ -789,7 +837,7 @@ export class UsersService {
     await this.userRepo.save(user);
 
     return {
-      recoveryCodes: user.mfaRecoveryCodes
+      recoveryCodes: user.mfaRecoveryCodes,
     };
   }
 
@@ -797,7 +845,10 @@ export class UsersService {
    * Delete Mfa Authenticator
    */
   async deleteMfaAuthenticator(userId: string, type: string) {
-    const user = await this.userRepo.findOne({ where: { $id: userId }, relations: { authenticators: true } });
+    const user = await this.userRepo.findOne({
+      where: { $id: userId },
+      relations: { authenticators: true },
+    });
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
@@ -827,7 +878,10 @@ export class UsersService {
    * Get all identities
    */
   async getIdentities(queries: string[], search: string) {
-    const query = new QueryBuilder(this.identityRepo, ['providerEmail', 'userId']);
+    const query = new QueryBuilder(this.identityRepo, [
+      'providerEmail',
+      'userId',
+    ]);
 
     query.parseQueryStrings(queries);
 
@@ -835,14 +889,16 @@ export class UsersService {
     return {
       identities: results,
       total: totalCount,
-    }
+    };
   }
 
   /**
    * Delete an identity
    */
   async deleteIdentity(identityId: string) {
-    const identity = await this.identityRepo.findOne({ where: { $id: identityId } });
+    const identity = await this.identityRepo.findOne({
+      where: { $id: identityId },
+    });
     if (!identity) {
       throw new Exception(Exception.USER_IDENTITY_NOT_FOUND);
     }
@@ -855,7 +911,11 @@ export class UsersService {
   /**
    * Create a new Token
    */
-  async createToken(userId: string, input: CreateTokenDto, context: { ip: string, ua: string }) {
+  async createToken(
+    userId: string,
+    input: CreateTokenDto,
+    context: { ip: string; ua: string },
+  ) {
     const user = await this.userRepo.findOne({ where: { $id: userId } });
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
@@ -886,7 +946,10 @@ export class UsersService {
    * Create Jwt
    */
   async createJwt(userId: string, input: CreateJwtDto) {
-    const user = await this.userRepo.findOne({ where: { $id: userId }, relations: { sessions: true } });
+    const user = await this.userRepo.findOne({
+      where: { $id: userId },
+      relations: { sessions: true },
+    });
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
@@ -898,7 +961,7 @@ export class UsersService {
     } else {
       for (let sess of user.sessions) {
         if (input.sessionId === sess.$id) {
-          session = sess
+          session = sess;
         }
       }
     }
@@ -906,7 +969,7 @@ export class UsersService {
     return {
       jwt: this.jwtService.sign(
         { userId: user.$id, sessionId: session ? session.$id : '' },
-        { expiresIn: input.duration }
+        { expiresIn: input.duration },
       ),
     };
   }
@@ -922,7 +985,7 @@ export class UsersService {
     }
 
     const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION);
-    const detector = new Detector(req.headers['user-agent'])
+    const detector = new Detector(req.headers['user-agent']);
 
     const duration = project.auths.duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG;
     const expire = new Date(Date.now() + duration * 1000);
@@ -940,7 +1003,7 @@ export class UsersService {
       ip: req.ip,
       userId: user.$id,
       user: user,
-      countryCode: '--', /**@todo: Get Country using geodb */
+      countryCode: '--' /**@todo: Get Country using geodb */,
       expire: expire,
       ...detector.getOS(),
       ...detector.getClient(),
@@ -949,7 +1012,7 @@ export class UsersService {
 
     await this.sessionRepo.save(session);
 
-    let countryName = ''
+    let countryName = '';
 
     session.secret = secret;
     session.countryName = countryName;
@@ -961,7 +1024,9 @@ export class UsersService {
    * Delete User Session
    */
   async deleteSession(userId: string, sessionId: string) {
-    const session = await this.sessionRepo.findOne({ where: { $id: sessionId, userId } });
+    const session = await this.sessionRepo.findOne({
+      where: { $id: sessionId, userId },
+    });
     if (!session) {
       throw new Exception(Exception.USER_SESSION_NOT_FOUND);
     }
@@ -975,12 +1040,15 @@ export class UsersService {
    * Delete User Sessions
    */
   async deleteSessions(userId: string) {
-    const user = await this.userRepo.findOne({ where: { $id: userId }, relations: ['sessions'] });
+    const user = await this.userRepo.findOne({
+      where: { $id: userId },
+      relations: ['sessions'],
+    });
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
 
-    await this.sessionRepo.remove(user.sessions)
+    await this.sessionRepo.remove(user.sessions);
 
     return {};
   }
@@ -1021,7 +1089,8 @@ export class UsersService {
     const project: ProjectDocument = this.cls.get(PROJECT);
 
     const plaintextPassword = password;
-    const hashOptionsObject = typeof hashOptions === 'string' ? JSON.parse(hashOptions) : hashOptions;
+    const hashOptionsObject =
+      typeof hashOptions === 'string' ? JSON.parse(hashOptions) : hashOptions;
     const passwordHistory = project.auths?.passwordHistory ?? 0;
 
     if (email) {
@@ -1030,8 +1099,8 @@ export class UsersService {
       // Ensure this email is not already used in another identity
       const identityWithMatchingEmail = await this.identityRepo.findOne({
         where: {
-          providerEmail: email
-        }
+          providerEmail: email,
+        },
       });
       if (identityWithMatchingEmail) {
         throw new Exception(Exception.USER_EMAIL_ALREADY_EXISTS);
@@ -1048,7 +1117,7 @@ export class UsersService {
           name,
           phone,
           false, // strict
-          true // allowEmpty
+          true, // allowEmpty
         );
         if (!personalDataValidator.isValid(plaintextPassword)) {
           throw new Exception(Exception.USER_PASSWORD_PERSONAL_DATA);
@@ -1078,7 +1147,10 @@ export class UsersService {
         passwordHistory: !password || passwordHistory === 0 ? [] : [password],
         passwordUpdate: password ? new Date() : null,
         hash: hash === 'plaintext' ? Auth.DEFAULT_ALGO : hash,
-        hashOptions: hash === 'plaintext' ? Auth.DEFAULT_ALGO_OPTIONS : { ...hashOptionsObject, type: hash },
+        hashOptions:
+          hash === 'plaintext'
+            ? Auth.DEFAULT_ALGO_OPTIONS
+            : { ...hashOptionsObject, type: hash },
         registration: new Date(),
         reset: false,
         name,
@@ -1115,14 +1187,14 @@ export class UsersService {
           if (error instanceof QueryFailedError) {
             const existingTarget = await this.targetRepo.findOne({
               where: {
-                identifier: email
-              }
+                identifier: email,
+              },
             });
             if (existingTarget) {
               existingTarget.user = createdUser;
               await this.targetRepo.save(existingTarget);
             }
-          } else throw error
+          } else throw error;
         }
       }
 
@@ -1146,24 +1218,23 @@ export class UsersService {
           if (error instanceof QueryFailedError) {
             const existingTarget = await this.targetRepo.findOne({
               where: {
-                identifier: phone
-              }
+                identifier: phone,
+              },
             });
             if (existingTarget) {
               existingTarget.user = createdUser;
               await this.targetRepo.save(existingTarget);
             }
-          } else throw error
+          } else throw error;
         }
       }
 
       // queueForEvents.setParam('userId', userId);
       return createdUser;
-
     } catch (error) {
-      this.logger.error(error)
+      this.logger.error(error);
       if (error instanceof QueryFailedError) {
-        throw new Exception(Exception.USER_ALREADY_EXISTS)
+        throw new Exception(Exception.USER_ALREADY_EXISTS);
       } else throw error;
     }
   }
@@ -1199,7 +1270,8 @@ export class UsersService {
       }
     }
 
-    const format = days.period === '1h' ? 'Y-m-d\TH:00:00.000P' : 'Y-m-d\T00:00:00.000P';
+    const format =
+      days.period === '1h' ? 'Y-m-d\TH:00:00.000P' : 'Y-m-d\T00:00:00.000P';
 
     for (const metric of metrics) {
       usage[metric] = { total: stats[metric].total, data: [] };

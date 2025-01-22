@@ -1,7 +1,7 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
-import { config } from 'dotenv'
+import { config } from 'dotenv';
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 import { NextFunction, Request, Response } from 'express';
 import { ValidationPipe } from '@nestjs/common';
@@ -12,13 +12,15 @@ config();
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-  app.enableVersioning()
+  app.enableVersioning();
 
-  app.useGlobalPipes(new ValidationPipe({
-    enableDebugMessages: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      enableDebugMessages: true,
+    }),
+  );
 
-  app.use(cookieParser())
+  app.use(cookieParser());
 
   app.use((req: Request, res: Response, next: NextFunction) => {
     res.header('X-Powered-By', 'Nuvix-Server');
@@ -48,12 +50,9 @@ async function bootstrap() {
       'x-sdk-platform',
       'x-sdk-version',
       'x-nuvix-project',
-      ...((process.env.CORS_HEADERS ?? '').split(',')),
+      ...(process.env.CORS_HEADERS ?? '').split(','),
     ],
-    exposedHeaders: [
-      'X-Nuvix-Session',
-      'X-Fallback-Cookies',
-    ],
+    exposedHeaders: ['X-Nuvix-Session', 'X-Fallback-Cookies'],
   });
 
   app.useGlobalFilters(new HttpExceptionFilter());

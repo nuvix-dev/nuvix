@@ -9,8 +9,6 @@ import { ProjectMiddleware } from 'src/core/resolver/middlewares/project.middlew
 })
 export class AccountModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(ProjectMiddleware)
-      .forRoutes(AccountController);
+    consumer.apply(ProjectMiddleware).forRoutes(AccountController);
   }
 }

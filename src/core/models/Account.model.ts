@@ -1,12 +1,11 @@
-import { Exclude } from "class-transformer";
-import { UserModel } from "./User.model";
-
+import { Exclude } from 'class-transformer';
+import { UserModel } from './User.model';
 
 @Exclude()
 export class AccountModel extends UserModel {
   /**
-    * Hashed user password.
-    */
+   * Hashed user password.
+   */
   override password?: string;
   /**
    * Password hashing algorithm.

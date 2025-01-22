@@ -1,9 +1,8 @@
-import { Exclude, Expose } from "class-transformer";
-import { AttributeModel } from "./Attribute.model";
+import { Exclude, Expose } from 'class-transformer';
+import { AttributeModel } from './Attribute.model';
 
 @Exclude()
 export class AttributeBooleanModel extends AttributeModel {
-
   @Expose() key: string = ''; // Default to empty string
   @Expose() type: string = 'boolean'; // Default to 'boolean'
   @Expose() default: boolean | null = null; // Default to null
@@ -16,7 +15,6 @@ export class AttributeBooleanModel extends AttributeModel {
 
 @Exclude()
 export class AttributeDatetimeModel extends AttributeModel {
-
   @Expose() key: string = ''; // Default to empty string
   @Expose() type: string = 'datetime'; // Default to 'datetime'
   @Expose() format: string = ''; // Default to empty string
@@ -30,7 +28,6 @@ export class AttributeDatetimeModel extends AttributeModel {
 
 @Exclude()
 export class AttributeEmailModel extends AttributeModel {
-
   @Expose() key: string = ''; // Default to empty string
   @Expose() type: string = 'string'; // Default to 'string'
   @Expose() format: string = ''; // Default to empty string
@@ -44,7 +41,6 @@ export class AttributeEmailModel extends AttributeModel {
 
 @Exclude()
 export class AttributeEnumModel extends AttributeModel {
-
   @Expose() key: string = ''; // Default to empty string
   @Expose() type: string = 'string'; // Default to 'string'
   @Expose() elements: string[] = []; // Default to empty array
@@ -59,7 +55,6 @@ export class AttributeEnumModel extends AttributeModel {
 
 @Exclude()
 export class AttributeFloatModel extends AttributeModel {
-
   @Expose() key: string = ''; // Default to empty string
   @Expose() type: string = 'double'; // Default to 'double'
   @Expose() min: number | null = null; // Default to null
@@ -74,7 +69,6 @@ export class AttributeFloatModel extends AttributeModel {
 
 @Exclude()
 export class AttributeIPModel extends AttributeModel {
-
   @Expose() key: string = ''; // Default to empty string
   @Expose() type: string = 'string'; // Default to 'string'
   @Expose() format: string = ''; // Default to empty string
@@ -88,7 +82,6 @@ export class AttributeIPModel extends AttributeModel {
 
 @Exclude()
 export class AttributeIntegerModel extends AttributeModel {
-
   @Expose() key: string = ''; // Default to empty string
   @Expose() type: string = 'integer'; // Default to 'integer'
   @Expose() min: number | null = null; // Default to null
@@ -103,7 +96,6 @@ export class AttributeIntegerModel extends AttributeModel {
 
 @Exclude()
 export class AttributeListModel extends AttributeModel {
-
   @Expose() total: number = 0; // Default to 0
   @Expose() attributes: any[] = []; // Default to empty array
 
@@ -115,7 +107,6 @@ export class AttributeListModel extends AttributeModel {
 
 @Exclude()
 export class AttributeRelationshipModel extends AttributeModel {
-
   @Expose() relatedCollection: string | null = null; // Default to null
   @Expose() relationType: string = ''; // Default to empty string
   @Expose() twoWay: boolean = false; // Default to false
@@ -131,7 +122,6 @@ export class AttributeRelationshipModel extends AttributeModel {
 
 @Exclude()
 export class AttributeStringModel extends AttributeModel {
-
   @Expose() key: string = ''; // Default to empty string
   @Expose() type: string = 'string'; // Default to 'string'
   @Expose() size: number = 0; // Default to 0
@@ -145,7 +135,6 @@ export class AttributeStringModel extends AttributeModel {
 
 @Exclude()
 export class AttributeURLModel extends AttributeModel {
-
   @Expose() key: string = ''; // Default to empty string
   @Expose() type: string = 'string'; // Default to 'string'
   @Expose() format: string = ''; // Default to empty string

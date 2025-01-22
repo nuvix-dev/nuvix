@@ -19,28 +19,30 @@ import { Organization } from './schemas/organization.schema';
 import { Model } from 'mongoose';
 import { Exception } from 'src/core/extend/exception';
 import { CreateOrgDto, UpdateOrgDto } from './dto/org.dto';
-import OrganizationModel, { OrganizationListModel, RolesModel } from './models/organization.model';
+import OrganizationModel, {
+  OrganizationListModel,
+  RolesModel,
+} from './models/organization.model';
 import { MembershipsListModel } from './models/membership.model';
 import { BillingPlanModel } from './models/plan.model';
 import { UserService } from './user.service';
 
-
 @Controller({ version: ['1'], path: 'console/users/organizations' })
 @UseInterceptors(ClassSerializerInterceptor)
 export class OrganizationsController {
-
   constructor(
     private readonly userService: UserService,
-    @InjectModel(Organization.name, 'server') private readonly orgModel: Model<Organization>,
-  ) { }
+    @InjectModel(Organization.name, 'server')
+    private readonly orgModel: Model<Organization>,
+  ) {}
 
   @Get()
   async findOrganizations(
     @Query('queries') queries?: string[],
-    @Query('search') search?: string
+    @Query('search') search?: string,
   ): Promise<OrganizationListModel> {
     const data = await this.userService.findOrganizations(queries, search);
-    return new OrganizationListModel(data)
+    return new OrganizationListModel(data);
   }
 
   @Post()
@@ -53,16 +55,24 @@ export class OrganizationsController {
         Exception.MISSING_REQUIRED_PARMS,
         'Please provide `organizationId` and `name` fields in body.',
       );
-    return new OrganizationModel(await this.userService.createOrganization(req.user, createOrgDto));
+    return new OrganizationModel(
+      await this.userService.createOrganization(req.user, createOrgDto),
+    );
   }
 
   @Get(':id')
-  async findOneOrganization(@Param('id') id: string): Promise<OrganizationModel> {
+  async findOneOrganization(
+    @Param('id') id: string,
+  ): Promise<OrganizationModel> {
     const org = await this.userService.findOneOrganization(id);
     if (org) {
       return new OrganizationModel(org);
     }
-    throw new Exception(Exception.TEAM_NOT_FOUND, 'Organization not found.', 404);
+    throw new Exception(
+      Exception.TEAM_NOT_FOUND,
+      'Organization not found.',
+      404,
+    );
   }
 
   @Put(':id')
@@ -71,7 +81,9 @@ export class OrganizationsController {
     @Req() req,
     @Body() input: UpdateOrgDto,
   ): Promise<OrganizationModel> {
-    return new OrganizationModel(await this.userService.updateOrganization(id, input));
+    return new OrganizationModel(
+      await this.userService.updateOrganization(id, input),
+    );
   }
 
   @Delete(':id')
@@ -88,97 +100,110 @@ export class OrganizationsController {
   }
 
   @Get(':id/prefs')
-  async getOrganizationPrefs(@Param('id') id: string, @Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  async getOrganizationPrefs(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     let org = await this.orgModel.findOne({ id: id }).select('prefs').exec();
     return org.prefs ?? {};
   }
 
   @Patch(':id/prefs')
-  async updateOrganizationPrefs(@Param('id') id: string, @Req() req: Request, @Body() prefs: any, @Res() res: Response) {
+  async updateOrganizationPrefs(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Body() prefs: any,
+    @Res() res: Response,
+  ) {
     await this.orgModel.updateOne({ id: id }, { prefs: prefs }).exec();
     return prefs;
   }
 
   @Get(':id/aggregations')
-  async findOrganizationAggregations(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
+  async findOrganizationAggregations(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     // const aggs = await this.userService.findOrganizationAggregations(id, req.user.id);
-    return res.json({
-      total: 0,// aggs.length,
-      aggregations: {} // aggs
-    }).status(200)
+    return res
+      .json({
+        total: 0, // aggs.length,
+        aggregations: {}, // aggs
+      })
+      .status(200);
   }
 
   @Get(':id/roles')
   findOrganizationRoles(@Param('id') id: string): RolesModel {
     // const roles = await this.userService.findOrganizationRoles(id, req.user.id);
     return new RolesModel({
-      "scopes": [
-        "global",
-        "public",
-        "home",
-        "console",
-        "graphql",
-        "sessions.write",
-        "documents.read",
-        "documents.write",
-        "files.read",
-        "files.write",
-        "locale.read",
-        "avatars.read",
-        "execution.write",
-        "organizations.write",
-        "account",
-        "teams.read",
-        "projects.read",
-        "users.read",
-        "databases.read",
-        "collections.read",
-        "buckets.read",
-        "assistant.read",
-        "functions.read",
-        "execution.read",
-        "platforms.read",
-        "keys.read",
-        "webhooks.read",
-        "rules.read",
-        "migrations.read",
-        "vcs.read",
-        "providers.read",
-        "messages.read",
-        "topics.read",
-        "targets.read",
-        "subscribers.read",
-        "teams.write",
-        "targets.write",
-        "subscribers.write",
-        "buckets.write",
-        "users.write",
-        "databases.write",
-        "collections.write",
-        "platforms.write",
-        "keys.write",
-        "webhooks.write",
-        "functions.write",
-        "rules.write",
-        "migrations.write",
-        "vcs.write",
-        "providers.write",
-        "messages.write",
-        "topics.write",
-        "policies.write",
-        "policies.read",
-        "archives.read",
-        "archives.write",
-        "restorations.read",
-        "restorations.write",
-        "billing.read",
-        "billing.write",
-        "projects.write"
+      scopes: [
+        'global',
+        'public',
+        'home',
+        'console',
+        'graphql',
+        'sessions.write',
+        'documents.read',
+        'documents.write',
+        'files.read',
+        'files.write',
+        'locale.read',
+        'avatars.read',
+        'execution.write',
+        'organizations.write',
+        'account',
+        'teams.read',
+        'projects.read',
+        'users.read',
+        'databases.read',
+        'collections.read',
+        'buckets.read',
+        'assistant.read',
+        'functions.read',
+        'execution.read',
+        'platforms.read',
+        'keys.read',
+        'webhooks.read',
+        'rules.read',
+        'migrations.read',
+        'vcs.read',
+        'providers.read',
+        'messages.read',
+        'topics.read',
+        'targets.read',
+        'subscribers.read',
+        'teams.write',
+        'targets.write',
+        'subscribers.write',
+        'buckets.write',
+        'users.write',
+        'databases.write',
+        'collections.write',
+        'platforms.write',
+        'keys.write',
+        'webhooks.write',
+        'functions.write',
+        'rules.write',
+        'migrations.write',
+        'vcs.write',
+        'providers.write',
+        'messages.write',
+        'topics.write',
+        'policies.write',
+        'policies.read',
+        'archives.read',
+        'archives.write',
+        'restorations.read',
+        'restorations.write',
+        'billing.read',
+        'billing.write',
+        'projects.write',
       ],
-      "roles": [
-        "owner"
-      ]
-    })
+      roles: ['owner'],
+    });
   }
 
   @Get(':id/credits')
@@ -188,10 +213,10 @@ export class OrganizationsController {
   async findOrganizationCredits(@Param('id') id: string, @Req() req: Request) {
     // const credits = await this.userService.findOrganizationCredits(id, req.user.id);
     return {
-      total: 0,// credits.length,
+      total: 0, // credits.length,
       credits: [], // credits
-      available: 0
-    }
+      available: 0,
+    };
   }
 
   @Post(':id/credits')
@@ -203,7 +228,11 @@ export class OrganizationsController {
    * @param input - The DTO containing credits details.
    * @returns The added credits details.
    */
-  async addOrganizationCredits(@Param('id') id: string, @Req() req: Request, @Body() input: any) {
+  async addOrganizationCredits(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Body() input: any,
+  ) {
     // return await this.userService.addOrganizationCredits(id, req.user.id, input);
     return input;
   }
@@ -217,7 +246,11 @@ export class OrganizationsController {
    * @param input - The DTO containing updated billing address details.
    * @returns The updated billing address details.
    */
-  async updateOrganizationBillingAddress(@Param('id') id: string, @Req() req: Request, @Body() input: any) {
+  async updateOrganizationBillingAddress(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Body() input: any,
+  ) {
     // return await this.userService.updateOrganizationBillingAddress(id, req.user.id, input);
     return input;
   }
@@ -231,7 +264,11 @@ export class OrganizationsController {
    * @param res - The response object to send the result.
    * @returns A JSON response indicating the success of the deletion.
    */
-  async deleteOrganizationBillingAddress(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
+  async deleteOrganizationBillingAddress(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     // await this.userService.deleteOrganizationBillingAddress(id, req.user.id);
     return res.status(200).json({
       success: true,
@@ -248,7 +285,11 @@ export class OrganizationsController {
    * @param input - The DTO containing updated billing email details.
    * @returns The updated billing email details.
    */
-  async updateOrganizationBillingEmail(@Param('id') id: string, @Req() req: Request, @Body() input: any) {
+  async updateOrganizationBillingEmail(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Body() input: any,
+  ) {
     // return await this.userService.updateOrganizationBillingEmail(id, req.user.id, input);
     return input;
   }
@@ -262,7 +303,11 @@ export class OrganizationsController {
    * @param input - The DTO containing updated budget details.
    * @returns The updated budget details.
    */
-  async updateOrganizationBudget(@Param('id') id: string, @Req() req: Request, @Body() input: any) {
+  async updateOrganizationBudget(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Body() input: any,
+  ) {
     // return await this.userService.updateOrganizationBudget(id, req.user.id, input);
     return input;
   }
@@ -276,12 +321,18 @@ export class OrganizationsController {
    * @param res - The response object to send the invoices data.
    * @returns A JSON response with the total number of invoices and the invoices data.
    */
-  async findOrganizationInvoices(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
+  async findOrganizationInvoices(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     // const invoices = await this.userService.findOrganizationInvoices(id, req.user.id);
-    return res.json({
-      total: 0,// invoices.length,
-      invoices: [] // invoices
-    }).status(200)
+    return res
+      .json({
+        total: 0, // invoices.length,
+        invoices: [], // invoices
+      })
+      .status(200);
   }
 
   @Patch(':id/payment-method')
@@ -293,7 +344,11 @@ export class OrganizationsController {
    * @param input - The DTO containing updated payment method details.
    * @returns The updated payment method details.
    */
-  async updateOrganizationPaymentMethod(@Param('id') id: string, @Req() req: Request, @Body() input: any) {
+  async updateOrganizationPaymentMethod(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Body() input: any,
+  ) {
     // return await this.userService.updateOrganizationPaymentMethod(id, req.user.id, input);
     return input;
   }
@@ -307,7 +362,11 @@ export class OrganizationsController {
    * @param res - The response object to send the result.
    * @returns A JSON response indicating the success of the deletion.
    */
-  async deleteOrganizationPaymentMethod(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
+  async deleteOrganizationPaymentMethod(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     // await this.userService.deleteOrganizationPaymentMethod(id, req.user.id);
     return res.status(200).json({
       success: true,
@@ -316,9 +375,11 @@ export class OrganizationsController {
   }
 
   @Get(':id/plan')
-  async findOneOrganizationPlan(@Param('id') id: string): Promise<BillingPlanModel> {
+  async findOneOrganizationPlan(
+    @Param('id') id: string,
+  ): Promise<BillingPlanModel> {
     const plan = await this.userService.getOrganizationPlan(id);
-    return new BillingPlanModel(plan)
+    return new BillingPlanModel(plan);
   }
 
   @Patch(':id/plan')
@@ -330,7 +391,11 @@ export class OrganizationsController {
    * @param input - The DTO containing updated plan details.
    * @returns The updated plan details.
    */
-  async updateOrganizationPlan(@Param('id') id: string, @Req() req: Request, @Body() input: any) {
+  async updateOrganizationPlan(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Body() input: any,
+  ) {
     // return await this.userService.updateOrganizationPlan(id, req.user.id, input);
     return input;
   }
@@ -344,7 +409,11 @@ export class OrganizationsController {
    * @param input - The DTO containing updated tax ID details.
    * @returns The updated tax ID details.
    */
-  async updateOrganizationTaxId(@Param('id') id: string, @Req() req: Request, @Body() input: any) {
+  async updateOrganizationTaxId(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Body() input: any,
+  ) {
     // return await this.userService.updateOrganizationTaxId(id, req.user.id, input);
     return input;
   }
@@ -359,7 +428,11 @@ export class OrganizationsController {
    * @returns The usage if found.
    * @throws Exception if the usage is not found.
    */
-  async findOneOrganizationUsage(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
+  async findOneOrganizationUsage(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     // const usage = await this.userService.findOneOrganizationUsage(id, req.user.id);
     // if (usage) {
     //   return res.status(200).json(usage);
@@ -374,8 +447,8 @@ export class OrganizationsController {
     const memberships = await this.userService.getOrganizationMembers(id);
     return new MembershipsListModel({
       total: memberships.length,
-      memberships: memberships
-    })
+      memberships: memberships,
+    });
   }
 
   @Post(':id/memberships')
@@ -387,12 +460,14 @@ export class OrganizationsController {
    * @param input - The DTO containing memberships details.
    * @returns The added memberships details.
    */
-  async addOrganizationMemberships(@Param('id') id: string, @Req() req: Request, @Body() input: any) {
+  async addOrganizationMemberships(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Body() input: any,
+  ) {
     // return await this.userService.addOrganizationMemberships(id, req.user.id, input);
     return input;
   }
-
-
 
   /*  ** 2 **   */
 
@@ -407,7 +482,12 @@ export class OrganizationsController {
    * @returns The membership if found.
    * @throws Exception if the membership is not found.
    */
-  async findOneOrganizationMembership(@Param('id') id: string, @Param('membershipId') membershipId: string, @Req() req: Request, @Res() res: Response) {
+  async findOneOrganizationMembership(
+    @Param('id') id: string,
+    @Param('membershipId') membershipId: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     // const membership = await this.userService.findOneOrganizationMembership(id, membershipId, req.user.id);
     // if (membership) {
     //   return res.status(200).json(membership);
@@ -425,7 +505,12 @@ export class OrganizationsController {
    * @param input - The DTO containing updated membership details.
    * @returns The updated membership details.
    */
-  async updateOrganizationMembership(@Param('id') id: string, @Param('membershipId') membershipId: string, @Req() req: Request, @Body() input: any) {
+  async updateOrganizationMembership(
+    @Param('id') id: string,
+    @Param('membershipId') membershipId: string,
+    @Req() req: Request,
+    @Body() input: any,
+  ) {
     // return await this.userService.updateOrganizationMembership(id, membershipId, req.user.id, input);
     return input;
   }
@@ -440,7 +525,12 @@ export class OrganizationsController {
    * @param res - The response object to send the result.
    * @returns A JSON response indicating the success of the deletion.
    */
-  async deleteOrganizationMembership(@Param('id') id: string, @Param('membershipId') membershipId: string, @Req() req: Request, @Res() res: Response) {
+  async deleteOrganizationMembership(
+    @Param('id') id: string,
+    @Param('membershipId') membershipId: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     // await this.userService.deleteOrganizationMembership(id, membershipId, req.user.id);
     return res.status(200).json({
       success: true,
@@ -457,7 +547,11 @@ export class OrganizationsController {
    * @param input - The DTO containing updated backup payment method details.
    * @returns The updated backup payment method details.
    */
-  async updateOrganizationBackupPaymentMethod(@Param('id') id: string, @Req() req: Request, @Body() input: any) {
+  async updateOrganizationBackupPaymentMethod(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Body() input: any,
+  ) {
     // return await this.userService.updateOrganizationBackupPaymentMethod(id, req.user.id, input);
     return input;
   }
@@ -471,7 +565,11 @@ export class OrganizationsController {
    * @param res - The response object to send the result.
    * @returns A JSON response indicating the success of the deletion.
    */
-  async deleteOrganizationBackupPaymentMethod(@Param('id') id: string, @Req() req: Request, @Res() res: Response) {
+  async deleteOrganizationBackupPaymentMethod(
+    @Param('id') id: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     // await this.userService.deleteOrganizationBackupPaymentMethod(id, req.user.id);
     return res.status(200).json({
       success: true,
@@ -490,7 +588,12 @@ export class OrganizationsController {
    * @returns The payment method if found.
    * @throws Exception if the payment method is not found.
    */
-  async findOneOrganizationPaymentMethod(@Param('id') id: string, @Param('methodId') methodId: string, @Req() req: Request, @Res() res: Response) {
+  async findOneOrganizationPaymentMethod(
+    @Param('id') id: string,
+    @Param('methodId') methodId: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     // const method = await this.userService.findOneOrganizationPaymentMethod(id, methodId, req.user.id);
     // if (method) {
     //   return res.status(200).json(method);
@@ -509,7 +612,12 @@ export class OrganizationsController {
    * @returns The invoice if found.
    * @throws Exception if the invoice is not found.
    */
-  async findOneOrganizationInvoice(@Param('id') id: string, @Param('invoiceId') invoiceId: string, @Req() req: Request, @Res() res: Response) {
+  async findOneOrganizationInvoice(
+    @Param('id') id: string,
+    @Param('invoiceId') invoiceId: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     // const invoice = await this.userService.findOneOrganizationInvoice(id, invoiceId, req.user.id);
     // if (invoice) {
     //   return res.status(200).json(invoice);
@@ -528,14 +636,18 @@ export class OrganizationsController {
    * @returns The billing address if found.
    * @throws Exception if the billing address is not found.
    */
-  async findOneOrganizationBillingAddress(@Param('id') id: string, @Param('addressId') addressId: string, @Req() req: Request, @Res() res: Response) {
+  async findOneOrganizationBillingAddress(
+    @Param('id') id: string,
+    @Param('addressId') addressId: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     // const address = await this.userService.findOneOrganizationBillingAddress(id, addressId, req.user.id);
     // if (address) {
     //   return res.status(200).json(address);
     // }
     throw new Exception(null, 'Billing address not found.', 404);
   }
-
 
   @Get(':id/credits/:creditId')
   /**
@@ -547,8 +659,13 @@ export class OrganizationsController {
    * @param res - The response object to send the credit data.
    * @returns The credit if found.
    * @throws Exception if the credit is not found.
-  */
-  async findOneOrganizationCredit(@Param('id') id: string, @Param('creditId') creditId: string, @Req() req: Request, @Res() res: Response) {
+   */
+  async findOneOrganizationCredit(
+    @Param('id') id: string,
+    @Param('creditId') creditId: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     // const credit = await this.userService.findOneOrganizationCredit(id, creditId, req.user.id);
     // if (credit) {
     //   return res.status(200).json(credit);
@@ -566,8 +683,13 @@ export class OrganizationsController {
    * @param res - The response object to send the role data.
    * @returns The role if found.
    * @throws Exception if the role is not found.
-  */
-  async findOneOrganizationRole(@Param('id') id: string, @Param('roleId') roleId: string, @Req() req: Request, @Res() res: Response) {
+   */
+  async findOneOrganizationRole(
+    @Param('id') id: string,
+    @Param('roleId') roleId: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     // const role = await this.userService.findOneOrganizationRole(id, roleId, req.user.id);
     // if (role) {
     //   return res.status(200).json(role);
@@ -586,7 +708,12 @@ export class OrganizationsController {
    * @returns The aggregation if found.
    * @throws Exception if the aggregation is not found.
    */
-  async findOneOrganizationAggregation(@Param('id') id: string, @Param('aggId') aggId: string, @Req() req: Request, @Res() res: Response) {
+  async findOneOrganizationAggregation(
+    @Param('id') id: string,
+    @Param('aggId') aggId: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     // const agg = await this.userService.findOneOrganizationAggregation(id, aggId, req.user.id);
     // if (agg) {
     //   return res.status(200).json(agg);
@@ -606,7 +733,12 @@ export class OrganizationsController {
    * @param input - The DTO containing updated membership status.
    * @returns The updated membership status.
    */
-  async updateOrganizationMembershipStatus(@Param('id') id: string, @Param('membershipId') membershipId: string, @Req() req: Request, @Body() input: any) {
+  async updateOrganizationMembershipStatus(
+    @Param('id') id: string,
+    @Param('membershipId') membershipId: string,
+    @Req() req: Request,
+    @Body() input: any,
+  ) {
     // return await this.userService.updateOrganizationMembershipStatus(id, membershipId, req.user.id, input);
     return input;
   }
@@ -622,7 +754,12 @@ export class OrganizationsController {
    * @returns The invoice file if found.
    * @throws Exception if the invoice is not found.
    */
-  async downloadOrganizationInvoice(@Param('id') id: string, @Param('invoiceId') invoiceId: string, @Req() req: Request, @Res() res: Response) {
+  async downloadOrganizationInvoice(
+    @Param('id') id: string,
+    @Param('invoiceId') invoiceId: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     // const invoice = await this.userService.findOneOrganizationInvoice(id, invoiceId, req.user.id);
     // if (invoice) {
     //   return res.download(invoice.file);
@@ -641,7 +778,12 @@ export class OrganizationsController {
    * @returns The invoice file if found.
    * @throws Exception if the invoice is not found.
    */
-  async viewOrganizationInvoice(@Param('id') id: string, @Param('invoiceId') invoiceId: string, @Req() req: Request, @Res() res: Response) {
+  async viewOrganizationInvoice(
+    @Param('id') id: string,
+    @Param('invoiceId') invoiceId: string,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
     // const invoice = await this.userService.findOneOrganizationInvoice(id, invoiceId, req.user.id);
     // if (invoice) {
     //   return res.sendFile(invoice.file);

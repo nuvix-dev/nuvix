@@ -8,7 +8,11 @@ import { Request, Response } from 'express';
 import { InjectModel } from '@nestjs/mongoose';
 import { Identities, Session, SessionDocument } from './schemas/account.schema';
 import mongoose, { Model } from 'mongoose';
-import { Target, User, UserDocument } from 'src/console-user/schemas/user.schema';
+import {
+  Target,
+  User,
+  UserDocument,
+} from 'src/console-user/schemas/user.schema';
 import { JwtService } from '@nestjs/jwt';
 import { Exception } from 'src/core/extend/exception';
 import { ID } from 'src/core/helper/ID.helper';
@@ -18,7 +22,10 @@ import Role from 'src/core/helper/role.helper';
 import { validate } from 'class-validator';
 import Permissions from 'src/core/validators/permissions.validator';
 import { BillingAddress } from 'src/console-user/schemas/billing.schema';
-import { CreateBillingAddressDto, UpdateBillingAddressDto } from './dto/billing.dto';
+import {
+  CreateBillingAddressDto,
+  UpdateBillingAddressDto,
+} from './dto/billing.dto';
 import { Organization } from 'src/console-user/schemas/organization.schema';
 import { Invoice } from 'src/console-user/schemas/invoce.schema';
 import { Log } from 'src/console-user/schemas/log.schema';
@@ -30,33 +37,43 @@ import { SessionModel } from './models/session.model';
 
 @Injectable()
 export class AccountService {
-  private readonly logger = new Logger(AccountService.name)
+  private readonly logger = new Logger(AccountService.name);
 
   constructor(
     private readonly userSerice: UserService,
-    @InjectModel(Session.name, 'server') private readonly sessionModel: Model<Session>,
+    @InjectModel(Session.name, 'server')
+    private readonly sessionModel: Model<Session>,
     @InjectModel(User.name, 'server') private readonly userModel: Model<User>,
-    @InjectModel(Organization.name, 'server') private readonly orgModel: Model<Organization>,
-    @InjectModel(Invoice.name, 'server') private readonly invoiceModel: Model<Invoice>,
-    @InjectModel(Target.name, 'server') private readonly targetModel: Model<Target>,
-    @InjectModel(Identities.name, 'server') private readonly identityModel: Model<Identities>,
-    @InjectModel(BillingAddress.name, 'server') private readonly billingModel: Model<BillingAddress>,
-    @InjectModel(Token.name, 'server') private readonly tokenModel: Model<Token>,
+    @InjectModel(Organization.name, 'server')
+    private readonly orgModel: Model<Organization>,
+    @InjectModel(Invoice.name, 'server')
+    private readonly invoiceModel: Model<Invoice>,
+    @InjectModel(Target.name, 'server')
+    private readonly targetModel: Model<Target>,
+    @InjectModel(Identities.name, 'server')
+    private readonly identityModel: Model<Identities>,
+    @InjectModel(BillingAddress.name, 'server')
+    private readonly billingModel: Model<BillingAddress>,
+    @InjectModel(Token.name, 'server')
+    private readonly tokenModel: Model<Token>,
     @InjectModel(Log.name, 'server') private readonly logModel: Model<Log>,
     private readonly cls: ClsService,
-    private jwtService: JwtService
-  ) { }
+    private jwtService: JwtService,
+  ) {}
 
   /**
    * Create Account for User
    */
   async create(createAccountDto: CreateAccountDto) {
-    validate(createAccountDto).then(errors => {
+    validate(createAccountDto).then((errors) => {
       if (errors.length > 0) {
-        throw new Exception(Exception.ATTRIBUTE_VALUE_INVALID)
+        throw new Exception(Exception.ATTRIBUTE_VALUE_INVALID);
       }
-    })
-    let userId = createAccountDto.userId === 'unique()' ? ID.unique() : createAccountDto.userId;
+    });
+    let userId =
+      createAccountDto.userId === 'unique()'
+        ? ID.unique()
+        : createAccountDto.userId;
     try {
       let user = await this.userModel.create({
         id: userId,
@@ -69,9 +86,9 @@ export class AccountService {
           Permission.Read(Role.Any()),
           Permission.Update(Role.User(userId)),
           Permission.Delete(Role.User(userId)),
-        ]
-      })
-      await user.save()
+        ],
+      });
+      await user.save();
       let target = await this.targetModel.create({
         id: ID.unique(),
         userId: user.$id,
@@ -82,15 +99,15 @@ export class AccountService {
           Permission.Read(Role.User(userId)),
           Permission.Update(Role.User(userId)),
           Permission.Delete(Role.User(userId)),
-        ]
-      })
-      await target.save()
-      user.targets.push(target)
-      await user.save()
-      return user
+        ],
+      });
+      await target.save();
+      user.targets.push(target);
+      await user.save();
+      return user;
     } catch (e) {
-      this.logger.error(e)
-      throw new Exception(Exception.GENERAL_SERVER_ERROR)
+      this.logger.error(e);
+      throw new Exception(Exception.GENERAL_SERVER_ERROR);
     }
   }
 
@@ -99,11 +116,11 @@ export class AccountService {
    */
   async updateName(user: UserDocument, name: string) {
     if (!user) {
-      throw new Exception(Exception.USER_NOT_FOUND)
+      throw new Exception(Exception.USER_NOT_FOUND);
     }
-    user.name = name
-    await user.save()
-    return user
+    user.name = name;
+    await user.save();
+    return user;
   }
 
   /**
@@ -111,30 +128,40 @@ export class AccountService {
    */
   async updatePhone(user: UserDocument, updatePhoneDto: UpdatePhoneDto) {
     if (!user) {
-      throw new Exception(Exception.USER_NOT_FOUND)
+      throw new Exception(Exception.USER_NOT_FOUND);
     }
-    let isPasswordValid = await this.userSerice.comparePasswords(updatePhoneDto.password, user.password);
+    let isPasswordValid = await this.userSerice.comparePasswords(
+      updatePhoneDto.password,
+      user.password,
+    );
     if (!isPasswordValid) {
-      throw new Exception(Exception.USER_PASSWORD_MISMATCH)
+      throw new Exception(Exception.USER_PASSWORD_MISMATCH);
     }
-    user.phone = updatePhoneDto.phone
-    await user.save()
-    return user
+    user.phone = updatePhoneDto.phone;
+    await user.save();
+    return user;
   }
 
   /**
    * Update the password of a user
    */
-  async updatePassword(user: UserDocument, password: string, oldPassword: string) {
+  async updatePassword(
+    user: UserDocument,
+    password: string,
+    oldPassword: string,
+  ) {
     if (!user) {
-      throw new Exception(Exception.USER_NOT_FOUND)
+      throw new Exception(Exception.USER_NOT_FOUND);
     }
-    let isPasswordValid = await this.userSerice.comparePasswords(oldPassword, user.password);
+    let isPasswordValid = await this.userSerice.comparePasswords(
+      oldPassword,
+      user.password,
+    );
     if (!isPasswordValid) {
-      throw new Exception(Exception.USER_PASSWORD_MISMATCH)
+      throw new Exception(Exception.USER_PASSWORD_MISMATCH);
     }
-    user.password = await this.userSerice.hashPassword(password)
-    await user.save()
+    user.password = await this.userSerice.hashPassword(password);
+    await user.save();
     return user;
   }
 
@@ -142,22 +169,22 @@ export class AccountService {
    * Get Session by id
    */
   async getSession(id: string) {
-    let session = await this.sessionModel.findOne({ id })
+    let session = await this.sessionModel.findOne({ id });
     if (!session) {
-      throw new Exception(Exception.USER_SESSION_NOT_FOUND)
+      throw new Exception(Exception.USER_SESSION_NOT_FOUND);
     }
-    return session
+    return session;
   }
 
   /**
    * Get all the billing addresses of a user
    */
   async getBillingAddresses(userId: string) {
-    let addresses = await this.billingModel.find({ userId })
+    let addresses = await this.billingModel.find({ userId });
     return {
       total: addresses.length,
-      billingAddresses: addresses
-    }
+      billingAddresses: addresses,
+    };
   }
 
   /**
@@ -173,13 +200,13 @@ export class AccountService {
         city: input.city,
         state: input.state,
         postalCode: input.postalCode,
-        addressLine2: input.addressLine2
-      })
-      await address.save()
-      return address
+        addressLine2: input.addressLine2,
+      });
+      await address.save();
+      return address;
     } catch (e) {
       // TODO: Log the error
-      throw new Exception(Exception.GENERAL_SERVER_ERROR)
+      throw new Exception(Exception.GENERAL_SERVER_ERROR);
     }
   }
 
@@ -187,34 +214,36 @@ export class AccountService {
    * Get a billing address for a user
    */
   async getBillingAddress(id: string) {
-    let address = await this.billingModel.findOne({ id })
+    let address = await this.billingModel.findOne({ id });
     if (!address) {
-      throw new Exception(Exception.GENERAL_NOT_FOUND)
+      throw new Exception(Exception.GENERAL_NOT_FOUND);
     }
-    return address
+    return address;
   }
 
   /**
    * Update a billing address for a user
    */
   async updateBillingAddress(id: string, input: UpdateBillingAddressDto) {
-    let address = await this.billingModel.findOne({ id })
+    let address = await this.billingModel.findOne({ id });
     if (!address) {
-      throw new Exception(Exception.GENERAL_NOT_FOUND)
+      throw new Exception(Exception.GENERAL_NOT_FOUND);
     }
 
     try {
       if (input.country !== undefined) address.country = input.country;
-      if (input.streetAddress !== undefined) address.streetAddress = input.streetAddress;
+      if (input.streetAddress !== undefined)
+        address.streetAddress = input.streetAddress;
       if (input.city !== undefined) address.city = input.city;
       if (input.state !== undefined) address.state = input.state;
       if (input.postalCode !== undefined) address.postalCode = input.postalCode;
-      if (input.addressLine2 !== undefined) address.addressLine2 = input.addressLine2;
+      if (input.addressLine2 !== undefined)
+        address.addressLine2 = input.addressLine2;
 
       await address.save();
       return address;
     } catch (e) {
-      throw new Exception(Exception.UPDATE_FAILED)
+      throw new Exception(Exception.UPDATE_FAILED);
     }
   }
 
@@ -222,64 +251,64 @@ export class AccountService {
    * Delete a billing address for a user
    */
   async deleteBillingAddress(id: string) {
-    let address = await this.billingModel.findOneAndDelete({ id })
+    let address = await this.billingModel.findOneAndDelete({ id });
     if (!address) {
-      throw new Exception(Exception.GENERAL_NOT_FOUND)
+      throw new Exception(Exception.GENERAL_NOT_FOUND);
     }
-    return {} // Return empty object
+    return {}; // Return empty object
   }
 
   /**
    * Get Identities of a user
    */
   async getIdentities(userInternalId: mongoose.Types.ObjectId) {
-    let identities = await this.identityModel.find({ userInternalId })
+    let identities = await this.identityModel.find({ userInternalId });
     return {
       total: identities.length,
-      identities: identities
-    }
+      identities: identities,
+    };
   }
 
   /**
    * Delete an identity of a user
    */
   async deleteIdentity(id: string) {
-    let identity = await this.identityModel.findOneAndDelete({ id })
+    let identity = await this.identityModel.findOneAndDelete({ id });
     if (!identity) {
-      throw new Exception(Exception.GENERAL_NOT_FOUND)
+      throw new Exception(Exception.GENERAL_NOT_FOUND);
     }
-    return {} // Return empty object
+    return {}; // Return empty object
   }
 
   /**
    * List all the Invoices of a user
    */
   async getInvoices(userInternalId: mongoose.Types.ObjectId) {
-    let invoices = await this.invoiceModel.find({ userInternalId })
+    let invoices = await this.invoiceModel.find({ userInternalId });
     return {
       total: invoices.length,
-      invoices
-    }
+      invoices,
+    };
   }
 
   /**
    * Get Logs of a user
    */
   async getLogs(userInternalId: mongoose.Types.ObjectId) {
-    let logs = await this.logModel.find({ userInternalId })
+    let logs = await this.logModel.find({ userInternalId });
     return {
       total: logs.length,
-      logs: logs
-    }
+      logs: logs,
+    };
   }
 
   /**
    * Update MFA of a user
    */
   async updateMfa(user: UserDocument, mfa: boolean) {
-    user.mfa = mfa
-    await user.save()
-    return user
+    user.mfa = mfa;
+    await user.save();
+    return user;
   }
 
   findOne(id: string) {
@@ -291,84 +320,112 @@ export class AccountService {
   }
 
   async remove(id: string, user: UserDocument) {
-    await this.sessionModel.deleteMany({ userInternalId: user._id })
-    await this.targetModel.deleteMany({ userInternalId: user._id })
-    await user.deleteOne()
-    return {}
+    await this.sessionModel.deleteMany({ userInternalId: user._id });
+    await this.targetModel.deleteMany({ userInternalId: user._id });
+    await user.deleteOne();
+    return {};
   }
 
-  async emailLogin(input: CreateEmailSessionDto, req: Request, headers: Request["headers"]): Promise<SessionDocument> {
-    if (input.email !== undefined && input.password !== undefined && emailValidator(input.email)) {
+  async emailLogin(
+    input: CreateEmailSessionDto,
+    req: Request,
+    headers: Request['headers'],
+  ): Promise<SessionDocument> {
+    if (
+      input.email !== undefined &&
+      input.password !== undefined &&
+      emailValidator(input.email)
+    ) {
       let user = await this.userSerice.findOneByEmail(input.email);
       if (!user || !user.password) {
-        throw new Exception(Exception.USER_NOT_FOUND)
+        throw new Exception(Exception.USER_NOT_FOUND);
       }
-      let isPasswordValid = await this.userSerice.comparePasswords(input.password, user.password);
+      let isPasswordValid = await this.userSerice.comparePasswords(
+        input.password,
+        user.password,
+      );
       if (isPasswordValid) {
         let session = await this.createSessionOld(user, req, headers);
         if (!session.success) {
-          throw new Exception(undefined, "Session creation failed.", 200)
+          throw new Exception(undefined, 'Session creation failed.', 200);
         }
-        return session.session
+        return session.session;
       } else {
-        throw new Exception(Exception.USER_INVALID_CREDENTIALS)
+        throw new Exception(Exception.USER_INVALID_CREDENTIALS);
       }
     }
   }
 
-  async login(loginDto: LoginDto, @Res() res: Response, @Req() req: Request, @Headers() headers: Request["headers"]) {
-    if (loginDto.email !== undefined && loginDto.password !== undefined && emailValidator(loginDto.email)) {
+  async login(
+    loginDto: LoginDto,
+    @Res() res: Response,
+    @Req() req: Request,
+    @Headers() headers: Request['headers'],
+  ) {
+    if (
+      loginDto.email !== undefined &&
+      loginDto.password !== undefined &&
+      emailValidator(loginDto.email)
+    ) {
       let user = await this.userSerice.findOneByEmail(loginDto.email);
       if (!user || !user.password) {
         return res.json({
           success: false,
-          message: "User not found"
-        })
+          message: 'User not found',
+        });
       }
-      let isPasswordValid = await this.userSerice.comparePasswords(loginDto.password, user.password);
+      let isPasswordValid = await this.userSerice.comparePasswords(
+        loginDto.password,
+        user.password,
+      );
       if (isPasswordValid) {
         let session = await this.createSessionOld(user, req, headers);
         if (!session.success) {
-          throw new Exception(undefined, "Session creation failed.", 200)
+          throw new Exception(undefined, 'Session creation failed.', 200);
         }
         return res.json({
           success: true,
-          message: "Login successful",
-          session: session.session
-        })
+          message: 'Login successful',
+          session: session.session,
+        });
       } else {
-        throw new Exception(Exception.USER_PASSWORD_MISMATCH)
+        throw new Exception(Exception.USER_PASSWORD_MISMATCH);
       }
     }
   }
 
   async register(registerDto: RegisterDto, @Res() res: Response) {
     if (!registerDto.email || !registerDto.password) {
-      throw new Exception(Exception.ATTRIBUTE_VALUE_INVALID)
+      throw new Exception(Exception.ATTRIBUTE_VALUE_INVALID);
     }
     try {
       let user = await this.userSerice.create(registerDto);
       if (user.$isValid)
         return res.json({
           success: true,
-          message: "User created successfully"
-        })
+          message: 'User created successfully',
+        });
       else {
         return res.json({
           success: false,
-          message: "User not created"
-        })
+          message: 'User not created',
+        });
       }
     } catch (e) {
       return res.json({
         success: false,
-        message: "An error ocured while creating User."
-      })
+        message: 'An error ocured while creating User.',
+      });
     }
   }
 
   async refreshToken(token: string) {
-    if (!token) throw new Exception(null, 'Please include refreshToken in body to refresh the access token.', 401)
+    if (!token)
+      throw new Exception(
+        null,
+        'Please include refreshToken in body to refresh the access token.',
+        401,
+      );
     try {
       // let session = await this.sessionModel.findOne({ where: { refreshToken: token } })
       // if (session && session.refreshTokenExpires > new Date()) {
@@ -378,12 +435,16 @@ export class AccountService {
       // } else throw new Exception(null, 'Refresh token expired or session invalid.', 403)
     } catch (err: any) {
       if (err instanceof Exception) {
-        throw err
-      } else throw new Exception(Exception.GENERAL_SERVER_ERROR)
+        throw err;
+      } else throw new Exception(Exception.GENERAL_SERVER_ERROR);
     }
   }
 
-  async createSessionOld(user: UserDocument, @Req() req: Request, @Headers() headers: Request["headers"],) {
+  async createSessionOld(
+    user: UserDocument,
+    @Req() req: Request,
+    @Headers() headers: Request['headers'],
+  ) {
     let userAgent = headers['user-agent'];
     let ipAddress = req.ip;
     let location = req.headers['cf-ipcountry'];
@@ -398,27 +459,28 @@ export class AccountService {
         ip: ipAddress,
         countryName: location,
         deviceName: device,
-        secret: "--",
+        secret: '--',
         expire: new Date(Date.now() + 1000 * 60 * 60 * 24 * 7),
         $permissions: [
           Permission.Read(Role.User(user.id)),
           Permission.Update(Role.User(user.id)),
-          Permission.Delete(Role.User(user.id))
-        ]
-      })
-      if (!session || !session.$isValid) throw new Error("Session validation error.");
-      session.secret = this.jwtService.sign({ _id: session.id })
-      await session.save()
+          Permission.Delete(Role.User(user.id)),
+        ],
+      });
+      if (!session || !session.$isValid)
+        throw new Error('Session validation error.');
+      session.secret = this.jwtService.sign({ _id: session.id });
+      await session.save();
       return {
         success: true,
-        session: session
-      }
+        session: session,
+      };
     } catch (e) {
-      this.logger.error('[SESSION:CREATE] ', e)
+      this.logger.error('[SESSION:CREATE] ', e);
       return {
         success: false,
-        message: "An error occured while creating session."
-      }
+        message: 'An error occured while creating session.',
+      };
     }
   }
 
@@ -441,13 +503,19 @@ export class AccountService {
     const isPrivilegedUser = Auth.isPrivilegedUser(roles);
     const isAppUser = Auth.isAppUser(roles);
 
-    const userFromRequest = await this.userModel.findOne({ id: userId }).populate(['tokens']);
+    const userFromRequest = await this.userModel
+      .findOne({ id: userId })
+      .populate(['tokens']);
 
     if (!userFromRequest) {
       throw new Exception('USER_INVALID_TOKEN');
     }
 
-    const verifiedToken = Auth.tokenVerify(userFromRequest.tokens as TokenDocument[], null, secret);
+    const verifiedToken = Auth.tokenVerify(
+      userFromRequest.tokens as TokenDocument[],
+      null,
+      secret,
+    );
 
     if (!verifiedToken) {
       throw new Exception('USER_INVALID_TOKEN');
@@ -456,8 +524,8 @@ export class AccountService {
     user = userFromRequest;
 
     const duration = Auth.TOKEN_EXPIRATION_LOGIN_LONG;
-    const detector = {} //new Detector(request.getUserAgent() || 'UNKNOWN');
-    const record = {} as any //geodb.get(request.getIP());
+    const detector = {}; //new Detector(request.getUserAgent() || 'UNKNOWN');
+    const record = {} as any; //geodb.get(request.getIP());
     const sessionSecret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION);
 
     const factor = (() => {
@@ -491,25 +559,34 @@ export class AccountService {
       // ...detector.getDevice()
     };
 
-    const session = new this.sessionModel(sessionData)
+    const session = new this.sessionModel(sessionData);
 
     authorization.addRole(Role.User(user.id).toString());
 
     session.permissions = [
       Permission.Read(Role.User(user.id)).toString(),
       Permission.Update(Role.User(user.id)).toString(),
-      Permission.Delete(Role.User(user.id)).toString()
+      Permission.Delete(Role.User(user.id)).toString(),
     ];
 
     try {
       await session.save();
     } catch (error) {
-      throw new Exception('GENERAL_SERVER_ERROR', 'Failed saving session to DB');
+      throw new Exception(
+        'GENERAL_SERVER_ERROR',
+        'Failed saving session to DB',
+      );
     }
 
-    await authorization.skip(async () => await this.tokenModel.findByIdAndDelete(verifiedToken._id));
+    await authorization.skip(
+      async () => await this.tokenModel.findByIdAndDelete(verifiedToken._id),
+    );
 
-    if ([Auth.TOKEN_TYPE_MAGIC_URL, Auth.TOKEN_TYPE_EMAIL].includes(verifiedToken.type)) {
+    if (
+      [Auth.TOKEN_TYPE_MAGIC_URL, Auth.TOKEN_TYPE_EMAIL].includes(
+        verifiedToken.type,
+      )
+    ) {
       user.emailVerification = true;
     }
 
@@ -523,12 +600,21 @@ export class AccountService {
       throw new Exception('GENERAL_SERVER_ERROR', 'Failed saving user to DB');
     }
 
-    const isAllowedTokenType = ![Auth.TOKEN_TYPE_MAGIC_URL, Auth.TOKEN_TYPE_EMAIL].includes(verifiedToken.type);
+    const isAllowedTokenType = ![
+      Auth.TOKEN_TYPE_MAGIC_URL,
+      Auth.TOKEN_TYPE_EMAIL,
+    ].includes(verifiedToken.type);
     const hasUserEmail = !!user.email;
     const isSessionAlertsEnabled = true;
-    const isNotFirstSession = await this.sessionModel.countDocuments({ userId: user.id }) > 1;
+    const isNotFirstSession =
+      (await this.sessionModel.countDocuments({ userId: user.id })) > 1;
 
-    if (isAllowedTokenType && hasUserEmail && isSessionAlertsEnabled && isNotFirstSession) {
+    if (
+      isAllowedTokenType &&
+      hasUserEmail &&
+      isSessionAlertsEnabled &&
+      isNotFirstSession
+    ) {
       // this.sendSessionAlert(locale, user, project, session, queueForMails);
     }
 
@@ -539,29 +625,40 @@ export class AccountService {
     const expire = new Date(Date.now() + duration * 1000);
     const protocol = request.protocol;
 
-    response.cookie(`${Auth.cookieName}_legacy`, Auth.encodeSession(user.id, sessionSecret), {
-      expires: new Date(expire),
-      path: '/',
-      secure: protocol === 'https',
-      httpOnly: true
-    });
+    response.cookie(
+      `${Auth.cookieName}_legacy`,
+      Auth.encodeSession(user.id, sessionSecret),
+      {
+        expires: new Date(expire),
+        path: '/',
+        secure: protocol === 'https',
+        httpOnly: true,
+      },
+    );
 
-    response.cookie(Auth.cookieName, Auth.encodeSession(user.id, sessionSecret), {
-      expires: new Date(expire),
-      path: '/',
-      domain: Auth.cookieDomain || undefined,
-      secure: protocol === 'https',
-      httpOnly: true,
-      sameSite: (Auth.cookieSamesite || 'lax') as any
-    });
+    response.cookie(
+      Auth.cookieName,
+      Auth.encodeSession(user.id, sessionSecret),
+      {
+        expires: new Date(expire),
+        path: '/',
+        domain: Auth.cookieDomain || undefined,
+        secure: protocol === 'https',
+        httpOnly: true,
+        sameSite: (Auth.cookieSamesite || 'lax') as any,
+      },
+    );
 
-    const countryName = 'INDIA' // locale.getText(`countries.${session.countryCode}`, locale.getText('locale.country.unknown'));
+    const countryName = 'INDIA'; // locale.getText(`countries.${session.countryCode}`, locale.getText('locale.country.unknown'));
 
     const model = new SessionModel(session);
     model.current = true;
     model.countryName = countryName;
     model.expire = expire;
-    model.secret = (isPrivilegedUser || isAppUser) ? Auth.encodeSession(user.id, sessionSecret) : ''
+    model.secret =
+      isPrivilegedUser || isAppUser
+        ? Auth.encodeSession(user.id, sessionSecret)
+        : '';
     return model;
   }
 }

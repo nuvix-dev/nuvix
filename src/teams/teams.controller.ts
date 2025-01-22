@@ -1,99 +1,97 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Put, Query, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Put,
+  Query,
+  UseInterceptors,
+} from '@nestjs/common';
 import { TeamsService } from './teams.service';
-import { ResolverInterceptor, ResponseType } from 'src/core/resolver/response.resolver';
+import {
+  ResolverInterceptor,
+  ResponseType,
+} from 'src/core/resolver/response.resolver';
 import { Response } from 'src/core/helper/response.helper';
-import { CreateTeamDto, UpdateTeamDto, UpdateTeamPrefsDto } from './dto/team.dto';
+import {
+  CreateTeamDto,
+  UpdateTeamDto,
+  UpdateTeamPrefsDto,
+} from './dto/team.dto';
 import { User } from 'src/core/resolver/user.resolver';
 import { UserEntity } from 'src/core/entities/users/user.entity';
-import { CreateMembershipDto, UpdateMembershipDto, UpdateMembershipStatusDto } from './dto/membership.dto';
+import {
+  CreateMembershipDto,
+  UpdateMembershipDto,
+  UpdateMembershipStatusDto,
+} from './dto/membership.dto';
 
 @Controller({ version: ['1'], path: 'teams' })
 @UseInterceptors(ResolverInterceptor)
 export class TeamsController {
-  constructor(private readonly teamsService: TeamsService) { }
+  constructor(private readonly teamsService: TeamsService) {}
 
   @Get()
   @ResponseType({ type: Response.MODEL_TEAM, list: true })
-  async findAll(
-    @Query('query') query: string,
-  ) {
+  async findAll(@Query('query') query: string) {
     return await this.teamsService.findAll();
   }
 
   @Post()
   @ResponseType({ type: Response.MODEL_TEAM })
-  async create(
-    @User() user: UserEntity | null,
-    @Body() input: CreateTeamDto
-  ) {
+  async create(@User() user: UserEntity | null, @Body() input: CreateTeamDto) {
     return await this.teamsService.create(user, input);
   }
 
   @Get(':id')
   @ResponseType({ type: Response.MODEL_TEAM })
-  async findOne(
-    @Param('id') id: string
-  ) {
+  async findOne(@Param('id') id: string) {
     return await this.teamsService.findOne(id);
   }
 
   @Put(':id')
   @ResponseType({ type: Response.MODEL_TEAM })
-  async update(
-    @Param('id') id: string,
-    @Body() input: UpdateTeamDto
-  ) {
+  async update(@Param('id') id: string, @Body() input: UpdateTeamDto) {
     return await this.teamsService.update(id, input);
   }
 
   @Delete(':id')
   @ResponseType({ type: Response.MODEL_NONE })
-  async remove(
-    @Param('id') id: string
-  ) {
+  async remove(@Param('id') id: string) {
     return await this.teamsService.remove(id);
   }
 
   @Get(':id/prefs')
-  async getPrefs(
-    @Param('id') id: string
-  ) {
+  async getPrefs(@Param('id') id: string) {
     return await this.teamsService.getPrefs(id);
   }
 
   @Put(':id/prefs')
-  async setPrefs(
-    @Param('id') id: string,
-    @Body() input: UpdateTeamPrefsDto
-  ) {
+  async setPrefs(@Param('id') id: string, @Body() input: UpdateTeamPrefsDto) {
     return await this.teamsService.setPrefs(id, input);
   }
 
   @Get(':id/logs')
   @ResponseType({ type: Response.MODEL_LOG, list: true })
-  async teamLogs(
-    @Param('id') id: string,
-  ) {
+  async teamLogs(@Param('id') id: string) {
     return {
       total: 0,
-      logs: []
-    }
+      logs: [],
+    };
   }
 
   @Post(':id/memberships')
   @ResponseType({ type: Response.MODEL_MEMBERSHIP })
-  async addMember(
-    @Param('id') id: string,
-    @Body() input: CreateMembershipDto
-  ) {
+  async addMember(@Param('id') id: string, @Body() input: CreateMembershipDto) {
     return await this.teamsService.addMember(id, input);
   }
 
   @Get(':id/memberships')
   @ResponseType({ type: Response.MODEL_MEMBERSHIP, list: true })
-  async getMembers(
-    @Param('id') id: string
-  ) {
+  async getMembers(@Param('id') id: string) {
     return await this.teamsService.getMembers(id);
   }
 
@@ -101,7 +99,7 @@ export class TeamsController {
   @ResponseType({ type: Response.MODEL_MEMBERSHIP })
   async getMember(
     @Param('id') id: string,
-    @Param('memberId') memberId: string
+    @Param('memberId') memberId: string,
   ) {
     return await this.teamsService.getMember(id, memberId);
   }
@@ -111,7 +109,7 @@ export class TeamsController {
   async updateMember(
     @Param('id') id: string,
     @Param('memberId') memberId: string,
-    @Body() input: UpdateMembershipDto
+    @Body() input: UpdateMembershipDto,
   ) {
     return await this.teamsService.updateMember(id, memberId, input);
   }
@@ -121,7 +119,7 @@ export class TeamsController {
   async updateMemberStatus(
     @Param('id') id: string,
     @Param('memberId') memberId: string,
-    @Body() input: UpdateMembershipStatusDto
+    @Body() input: UpdateMembershipStatusDto,
   ) {
     return await this.teamsService.updateMemberStatus(id, memberId, input);
   }
@@ -130,9 +128,8 @@ export class TeamsController {
   @ResponseType({ type: Response.MODEL_NONE })
   async removeMember(
     @Param('id') id: string,
-    @Param('memberId') memberId: string
+    @Param('memberId') memberId: string,
   ) {
     return await this.teamsService.deleteMember(id, memberId);
   }
-
 }

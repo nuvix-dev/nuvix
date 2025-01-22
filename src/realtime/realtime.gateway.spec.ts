@@ -34,7 +34,7 @@ describe('RealtimeGateway', () => {
     });
 
     ws.addEventListener('error', (error) => {
-      console.log(error, '_____________THE ERROR')
+      console.log(error, '_____________THE ERROR');
       done(error);
     });
   });

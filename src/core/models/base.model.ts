@@ -1,13 +1,13 @@
-import { Exclude, Expose } from "class-transformer";
-import mongoose, { Document } from "mongoose";
-import { dataToObject, DataToObjectOptions } from "../helper/model.helper";
-import Permission from "../helper/permission.helper";
+import { Exclude, Expose } from 'class-transformer';
+import mongoose, { Document } from 'mongoose';
+import { dataToObject, DataToObjectOptions } from '../helper/model.helper';
+import Permission from '../helper/permission.helper';
 
 @Exclude()
 export default abstract class BaseModel {
   /**
- *  ID.
- */
+   *  ID.
+   */
   @Expose() $id: string;
   /**
    * User creation date in ISO 8601 format.
@@ -30,10 +30,9 @@ export default abstract class BaseModel {
   }
 }
 
-
 @Exclude()
 export abstract class BaseListModel {
   @Expose() total: number;
 
-  constructor() { }
+  constructor() {}
 }

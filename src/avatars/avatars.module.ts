@@ -4,7 +4,7 @@ import { AvatarsController } from './avatars.controller';
 import { HttpModule } from '@nestjs/axios';
 
 @Module({
-  imports:[HttpModule],
+  imports: [HttpModule],
   controllers: [AvatarsController],
   providers: [AvatarsService],
 })

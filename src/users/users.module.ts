@@ -16,15 +16,14 @@ import { JWT_SECRET } from 'src/Utils/constants';
       secret: JWT_SECRET,
       signOptions: { expiresIn: '15m' },
     }),
-    GlobalMongooseModule.forFeature([
-      { name: Project.name, schema: ProjectSchema }
-    ], 'server')
-  ]
+    GlobalMongooseModule.forFeature(
+      [{ name: Project.name, schema: ProjectSchema }],
+      'server',
+    ),
+  ],
 })
 export class UsersModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(ProjectMiddleware)
-      .forRoutes(UsersController);
+    consumer.apply(ProjectMiddleware).forRoutes(UsersController);
   }
 }

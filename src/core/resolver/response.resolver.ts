@@ -7,7 +7,7 @@ import {
   CallHandler,
   ExecutionContext,
   ClassSerializerContextOptions,
-  SetMetadata
+  SetMetadata,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -29,10 +29,10 @@ export interface PlainLiteralObject {
 // between core and common packages
 const REFLECTOR = 'Reflector';
 
-export interface ResolverTypeContextOptions extends ClassSerializerContextOptions {
+export interface ResolverTypeContextOptions
+  extends ClassSerializerContextOptions {
   list?: boolean | string[];
 }
-
 
 export interface ClassSerializerInterceptorOptions
   extends ClassTransformOptions {
@@ -88,7 +88,9 @@ export class ResolverInterceptor implements NestInterceptor {
       return this.serializeList(response, options, keys);
     }
 
-    return Array.isArray(response) ? response.map(item => this.transformToPlain(item, options)) : this.transformToPlain(response, options);
+    return Array.isArray(response)
+      ? response.map((item) => this.transformToPlain(item, options))
+      : this.transformToPlain(response, options);
   }
 
   serializeList(
@@ -105,11 +107,14 @@ export class ResolverInterceptor implements NestInterceptor {
 
       for (const key of keys) {
         if (Array.isArray(response[key])) {
-          serializedResponse[key] = response[key].map(item =>
+          serializedResponse[key] = response[key].map((item) =>
             this.transformToPlain(item, options),
           );
         } else if (isObject(response[key])) {
-          serializedResponse[key] = this.transformToPlain(response[key], options);
+          serializedResponse[key] = this.transformToPlain(
+            response[key],
+            options,
+          );
         } else {
           serializedResponse[key] = response[key];
         }
@@ -121,9 +126,9 @@ export class ResolverInterceptor implements NestInterceptor {
     const serializedResponse: PlainLiteralObject = {};
 
     for (const key in response) {
-      console.log(key)
+      console.log(key);
       if (Array.isArray(response[key])) {
-        serializedResponse[key] = response[key].map(item =>
+        serializedResponse[key] = response[key].map((item) =>
           this.transformToPlain(item, options),
         );
       } else {

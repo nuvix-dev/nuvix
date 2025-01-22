@@ -1,6 +1,11 @@
-import { OmitType } from "@nestjs/mapped-types";
-import { IsNotEmpty, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
-
+import { OmitType } from '@nestjs/mapped-types';
+import {
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MaxLength,
+  MinLength,
+} from 'class-validator';
 
 export class CreatePlatformDto {
   @IsString()
@@ -31,4 +36,6 @@ export class CreatePlatformDto {
   hostname: string;
 }
 
-export class UpdatePlatformDto extends OmitType(CreatePlatformDto, ['type'] as const) { }
+export class UpdatePlatformDto extends OmitType(CreatePlatformDto, [
+  'type',
+] as const) {}

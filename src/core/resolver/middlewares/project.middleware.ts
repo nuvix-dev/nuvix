@@ -1,16 +1,17 @@
-import { createParamDecorator, Injectable, Logger, NestMiddleware } from "@nestjs/common";
-import { NextFunction, Request, Response } from "express";
-import { ClsService } from "nestjs-cls";
-import { Exception } from "src/core/extend/exception";
-import { PROJECT } from "src/Utils/constants";
-
+import {
+  createParamDecorator,
+  Injectable,
+  Logger,
+  NestMiddleware,
+} from '@nestjs/common';
+import { NextFunction, Request, Response } from 'express';
+import { ClsService } from 'nestjs-cls';
+import { Exception } from 'src/core/extend/exception';
+import { PROJECT } from 'src/Utils/constants';
 
 @Injectable()
 export class ProjectMiddleware implements NestMiddleware {
-
-  constructor(
-    private readonly store: ClsService
-  ) { }
+  constructor(private readonly store: ClsService) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
     const logger = this.store.get('logger') as Logger;
@@ -23,15 +24,15 @@ export class ProjectMiddleware implements NestMiddleware {
           : req.query.project
         : null;
 
-    logger.debug(`Project ID: ${projectId}`)
+    logger.debug(`Project ID: ${projectId}`);
 
-    if (!projectId) throw new Exception(Exception.PROJECT_NOT_FOUND)
+    if (!projectId) throw new Exception(Exception.PROJECT_NOT_FOUND);
 
-    const project = null //await this.projectModel.finOne({ id: projectId })
+    const project = null; //await this.projectModel.finOne({ id: projectId })
 
-    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND)
+    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND);
 
-    this.store.set(PROJECT, project)
+    this.store.set(PROJECT, project);
 
     next();
   }

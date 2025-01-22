@@ -10,7 +10,7 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   Query,
-  Put
+  Put,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ClsService } from 'nestjs-cls';
@@ -30,15 +30,28 @@ import { CreateJwtDto } from './dto/create-jwt.dto';
 import { CreateKeyDto, UpdateKeyDto } from './dto/keys.dto';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { CreateWebhookDto, UpdateWebhookDto } from './dto/webhook.dto';
-import { UpdateProjectDto, UpdateProjectTeamDto } from './dto/update-project.dto';
-import { ProjectApiStatusAllDto, ProjectApiStatusDto } from './dto/project-api.dto';
-import { UpdateProjectAllServiceDto, UpdateProjectServiceDto } from './dto/project-service.dto';
+import {
+  UpdateProjectDto,
+  UpdateProjectTeamDto,
+} from './dto/update-project.dto';
+import {
+  ProjectApiStatusAllDto,
+  ProjectApiStatusDto,
+} from './dto/project-api.dto';
+import {
+  UpdateProjectAllServiceDto,
+  UpdateProjectServiceDto,
+} from './dto/project-service.dto';
 import {
   AuthSessionAlertsDto,
-  AuthLimitDto, AuthDurationDto,
-  AuthMethodStatusDto, AuthPasswordHistoryDto,
-  AuthPasswordDictionaryDto, AuthPersonalDataDto,
-  AuthMaxSessionsDto, AuthMockNumbersDto
+  AuthLimitDto,
+  AuthDurationDto,
+  AuthMethodStatusDto,
+  AuthPasswordHistoryDto,
+  AuthPasswordDictionaryDto,
+  AuthPersonalDataDto,
+  AuthMaxSessionsDto,
+  AuthMockNumbersDto,
 } from './dto/project-auth.dto';
 import { CreatePlatformDto, UpdatePlatformDto } from './dto/platform.dto';
 import { SmtpTestsDto, UpdateSmtpDto } from './dto/smtp.dto';
@@ -48,42 +61,42 @@ import { SmtpTestsDto, UpdateSmtpDto } from './dto/smtp.dto';
 export class ProjectsController {
   constructor(
     private readonly projectService: ProjectService,
-    private readonly clsService: ClsService
-  ) { }
+    private readonly clsService: ClsService,
+  ) {}
 
   @Post()
   async create(
     @Body() createProjectDto: CreateProjectDto,
-    @Req() req: Request
+    @Req() req: Request,
   ): Promise<ProjectModel> {
-    const project = await this.projectService.create(createProjectDto)
+    const project = await this.projectService.create(createProjectDto);
     return new ProjectModel(project);
   }
 
   @Get()
   async findAll(
     @Query('queries') queries?: string[],
-    @Query('search') search?: string
+    @Query('search') search?: string,
   ): Promise<ProjectListModel> {
     let data = await this.projectService.findAll(queries, search);
     return new ProjectListModel(data);
   }
 
   @Get(':id')
-  async findOne(
-    @Param('id') id: string
-  ): Promise<ProjectModel> {
-    let project = await this.projectService.findOne(id)
-    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND)
+  async findOne(@Param('id') id: string): Promise<ProjectModel> {
+    let project = await this.projectService.findOne(id);
+    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND);
     return new ProjectModel(project);
   }
 
   @Patch(':id')
   async update(
     @Param('id') id: string,
-    @Body() updateProjectDto: UpdateProjectDto
+    @Body() updateProjectDto: UpdateProjectDto,
   ): Promise<ProjectModel> {
-    return new ProjectModel(await this.projectService.update(id, updateProjectDto));
+    return new ProjectModel(
+      await this.projectService.update(id, updateProjectDto),
+    );
   }
 
   @Delete(':id')
@@ -92,11 +105,8 @@ export class ProjectsController {
   }
 
   @Post(':id/jwts')
-  createJwt(
-    @Param('id') id: string,
-    @Body() input: CreateJwtDto
-  ) {
-    return this.projectService.createJwt(id, input)
+  createJwt(@Param('id') id: string, @Body() input: CreateJwtDto) {
+    return this.projectService.createJwt(id, input);
   }
 
   @Get(':id/platforms')
@@ -108,9 +118,11 @@ export class ProjectsController {
   @Post(':id/platforms')
   async createPlatform(
     @Param('id') id: string,
-    @Body() input: CreatePlatformDto
+    @Body() input: CreatePlatformDto,
   ): Promise<PlatformModel> {
-    return new PlatformModel(await this.projectService.createPlatform(id, input));
+    return new PlatformModel(
+      await this.projectService.createPlatform(id, input),
+    );
   }
 
   @Get(':id/platforms/:platformId')
@@ -118,16 +130,20 @@ export class ProjectsController {
     @Param('id') id: string,
     @Param('platformId') platformId: string,
   ): Promise<PlatformModel> {
-    return new PlatformModel(await this.projectService.getPlatform(id, platformId))
+    return new PlatformModel(
+      await this.projectService.getPlatform(id, platformId),
+    );
   }
 
   @Put(':id/platforms/:platformId')
   async updatePlatform(
     @Param('id') id: string,
     @Param('platformId') platformId: string,
-    @Body() input: UpdatePlatformDto
+    @Body() input: UpdatePlatformDto,
   ): Promise<PlatformModel> {
-    return new PlatformModel(await this.projectService.updatePlatform(id, platformId, input))
+    return new PlatformModel(
+      await this.projectService.updatePlatform(id, platformId, input),
+    );
   }
 
   @Delete(':id/platforms/:platformId')
@@ -135,7 +151,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Param('platformId') platformId: string,
   ): Promise<{}> {
-    return await this.projectService.deletePlatform(id, platformId)
+    return await this.projectService.deletePlatform(id, platformId);
   }
 
   @Get(':id/keys')
@@ -147,7 +163,7 @@ export class ProjectsController {
   @Post(':id/keys')
   async createKey(
     @Param('id') id: string,
-    @Body() input: CreateKeyDto
+    @Body() input: CreateKeyDto,
   ): Promise<KeyModel> {
     let data = await this.projectService.createKey(id, input);
     return new KeyModel(data);
@@ -158,16 +174,16 @@ export class ProjectsController {
     @Param('id') id: string,
     @Param('keyId') keyId: string,
   ): Promise<KeyModel> {
-    return new KeyModel(await this.projectService.getKey(id, keyId))
+    return new KeyModel(await this.projectService.getKey(id, keyId));
   }
 
   @Put(':id/keys/:keyId')
   async updateKey(
     @Param('id') id: string,
     @Param('keyId') keyId: string,
-    @Body() input: UpdateKeyDto
+    @Body() input: UpdateKeyDto,
   ): Promise<KeyModel> {
-    return new KeyModel(await this.projectService.updateKey(id, keyId, input))
+    return new KeyModel(await this.projectService.updateKey(id, keyId, input));
   }
 
   @Delete(':id/keys/:keyId')
@@ -175,13 +191,11 @@ export class ProjectsController {
     @Param('id') id: string,
     @Param('keyId') keyId: string,
   ): Promise<{}> {
-    return await this.projectService.deleteKey(id, keyId)
+    return await this.projectService.deleteKey(id, keyId);
   }
 
   @Get(':id/webhooks')
-  async getWebhooks(
-    @Param('id') id: string
-  ): Promise<WebhookListModel> {
+  async getWebhooks(@Param('id') id: string): Promise<WebhookListModel> {
     let data = await this.projectService.getWebhooks(id);
     return new WebhookListModel(data);
   }
@@ -189,7 +203,7 @@ export class ProjectsController {
   @Post(':id/webhooks')
   async createWebhook(
     @Param('id') id: string,
-    @Body() input: CreateWebhookDto
+    @Body() input: CreateWebhookDto,
   ): Promise<WebhookModel> {
     let data = await this.projectService.createWebhook(id, input);
     return new WebhookModel(data);
@@ -200,16 +214,20 @@ export class ProjectsController {
     @Param('id') id: string,
     @Param('webhookId') webhookId: string,
   ): Promise<WebhookModel> {
-    return new WebhookModel(await this.projectService.getWebhook(id, webhookId))
+    return new WebhookModel(
+      await this.projectService.getWebhook(id, webhookId),
+    );
   }
 
   @Put(':id/webhooks/:webhookId')
   async updateWebhook(
     @Param('id') id: string,
     @Param('webhookId') webhookId: string,
-    @Body() input: UpdateWebhookDto
+    @Body() input: UpdateWebhookDto,
   ): Promise<WebhookModel> {
-    return new WebhookModel(await this.projectService.updateWebhook(id, webhookId, input))
+    return new WebhookModel(
+      await this.projectService.updateWebhook(id, webhookId, input),
+    );
   }
 
   @Patch(':id/webhooks/:webhookId/signature')
@@ -217,7 +235,9 @@ export class ProjectsController {
     @Param('id') id: string,
     @Param('webhookId') webhookId: string,
   ): Promise<WebhookModel> {
-    return new WebhookModel(await this.projectService.updateWebhookSignature(id, webhookId))
+    return new WebhookModel(
+      await this.projectService.updateWebhookSignature(id, webhookId),
+    );
   }
 
   @Delete(':id/webhooks/:webhookId')
@@ -225,40 +245,46 @@ export class ProjectsController {
     @Param('id') id: string,
     @Param('webhookId') webhookId: string,
   ): Promise<{}> {
-    return await this.projectService.deleteWebhook(id, webhookId)
+    return await this.projectService.deleteWebhook(id, webhookId);
   }
 
   @Patch([':id/organization', ':id/team'])
   async updateTeam(
     @Param('id') id: string,
-    @Body() updateProjectTeamDto: UpdateProjectTeamDto
+    @Body() updateProjectTeamDto: UpdateProjectTeamDto,
   ): Promise<ProjectModel> {
     return new ProjectModel(
-      await this.projectService.updateProjectOrganization(id, updateProjectTeamDto)
+      await this.projectService.updateProjectOrganization(
+        id,
+        updateProjectTeamDto,
+      ),
     );
   }
-
 
   @Patch(':id/service')
   async updateService(
     @Param('id') id: string,
-    @Body() input: UpdateProjectServiceDto
+    @Body() input: UpdateProjectServiceDto,
   ): Promise<ProjectModel> {
-    return new ProjectModel(await this.projectService.updateServiceStatus(id, input));
+    return new ProjectModel(
+      await this.projectService.updateServiceStatus(id, input),
+    );
   }
 
   @Patch(':id/api')
   async updateApi(
     @Param('id') id: string,
-    @Body() input: ProjectApiStatusDto
+    @Body() input: ProjectApiStatusDto,
   ): Promise<ProjectModel> {
-    return new ProjectModel(await this.projectService.updateApiStatus(id, input));
+    return new ProjectModel(
+      await this.projectService.updateApiStatus(id, input),
+    );
   }
 
   @Patch(':id/oauth2')
   async updateOAuth2(
     @Param('id') id: string,
-    @Body() input: oAuth2Dto
+    @Body() input: oAuth2Dto,
   ): Promise<ProjectModel> {
     return new ProjectModel(await this.projectService.updateOAuth2(id, input));
   }
@@ -266,97 +292,124 @@ export class ProjectsController {
   @Patch(':id/service/all')
   async updateServiceAll(
     @Param('id') id: string,
-    @Body() input: UpdateProjectAllServiceDto
+    @Body() input: UpdateProjectAllServiceDto,
   ): Promise<ProjectModel> {
-    return new ProjectModel(await this.projectService.updateAllServiceStatus(id, input.status));
+    return new ProjectModel(
+      await this.projectService.updateAllServiceStatus(id, input.status),
+    );
   }
 
   @Patch(':id/api/all')
   async updateApiAll(
     @Param('id') id: string,
-    @Body() input: ProjectApiStatusAllDto
+    @Body() input: ProjectApiStatusAllDto,
   ): Promise<ProjectModel> {
-    return new ProjectModel(await this.projectService.updateAllApiStatus(id, input.status));
+    return new ProjectModel(
+      await this.projectService.updateAllApiStatus(id, input.status),
+    );
   }
 
   @Patch(':id/auth/session-alerts')
   async updateSessionAlerts(
     @Param('id') id: string,
-    @Body() input: AuthSessionAlertsDto
+    @Body() input: AuthSessionAlertsDto,
   ): Promise<ProjectModel> {
-    return new ProjectModel(await this.projectService.updateSessionAlerts(id, input.alerts));
+    return new ProjectModel(
+      await this.projectService.updateSessionAlerts(id, input.alerts),
+    );
   }
 
   @Patch(':id/auth/limit')
   async updateAuthLimit(
     @Param('id') id: string,
-    @Body() input: AuthLimitDto
+    @Body() input: AuthLimitDto,
   ): Promise<ProjectModel> {
-    return new ProjectModel(await this.projectService.updateAuthLimit(id, input.limit));
+    return new ProjectModel(
+      await this.projectService.updateAuthLimit(id, input.limit),
+    );
   }
 
   @Patch(':id/auth/duration')
   async updateAuthDuration(
     @Param('id') id: string,
-    @Body() input: AuthDurationDto
+    @Body() input: AuthDurationDto,
   ): Promise<ProjectModel> {
-    return new ProjectModel(await this.projectService.updateSessionDuration(id, input.duration));
+    return new ProjectModel(
+      await this.projectService.updateSessionDuration(id, input.duration),
+    );
   }
 
   @Patch(':id/auth/password-history')
   async updatePasswordHistory(
     @Param('id') id: string,
-    @Body() input: AuthPasswordHistoryDto
+    @Body() input: AuthPasswordHistoryDto,
   ): Promise<ProjectModel> {
-    return new ProjectModel(await this.projectService.updatePasswordHistory(id, input.limit));
+    return new ProjectModel(
+      await this.projectService.updatePasswordHistory(id, input.limit),
+    );
   }
 
   @Patch(':id/auth/password-dictionary')
   async updatePasswordDictionary(
     @Param('id') id: string,
-    @Body() input: AuthPasswordDictionaryDto
+    @Body() input: AuthPasswordDictionaryDto,
   ): Promise<ProjectModel> {
-    return new ProjectModel(await this.projectService.updatePasswordDictionary(id, input.enabled));
+    return new ProjectModel(
+      await this.projectService.updatePasswordDictionary(id, input.enabled),
+    );
   }
 
   @Patch(':id/auth/personal-data')
   async updatePersonalData(
     @Param('id') id: string,
-    @Body() input: AuthPersonalDataDto
+    @Body() input: AuthPersonalDataDto,
   ): Promise<ProjectModel> {
-    return new ProjectModel(await this.projectService.updatePersonalData(id, input.enabled));
+    return new ProjectModel(
+      await this.projectService.updatePersonalData(id, input.enabled),
+    );
   }
 
   @Patch(':id/auth/max-sessions')
   async updateMaxSessions(
     @Param('id') id: string,
-    @Body() input: AuthMaxSessionsDto
+    @Body() input: AuthMaxSessionsDto,
   ): Promise<ProjectModel> {
-    return new ProjectModel(await this.projectService.updateMaxSessions(id, input.limit));
+    return new ProjectModel(
+      await this.projectService.updateMaxSessions(id, input.limit),
+    );
   }
 
   @Patch(':id/auth/mock-numbers')
   async updateMockNumbers(
     @Param('id') id: string,
-    @Body() input: AuthMockNumbersDto
+    @Body() input: AuthMockNumbersDto,
   ): Promise<ProjectModel> {
-    return new ProjectModel(await this.projectService.updateMockNumbers(id, input));
+    return new ProjectModel(
+      await this.projectService.updateMockNumbers(id, input),
+    );
   }
 
   @Patch(':id/auth/:method')
   async updateAuthMethod(
     @Param('id') id: string,
     @Param('method') method: string,
-    @Body() input: AuthMethodStatusDto
+    @Body() input: AuthMethodStatusDto,
   ): Promise<ProjectModel> {
-    if (Object.keys(authMethods).map((m) => m).indexOf(method) === -1) throw new Exception(Exception.INVALID_PARAMS, 'Invalid auth method');
-    return new ProjectModel(await this.projectService.updateAuthMethod(id, method, input.status));
+    if (
+      Object.keys(authMethods)
+        .map((m) => m)
+        .indexOf(method) === -1
+    )
+      throw new Exception(Exception.INVALID_PARAMS, 'Invalid auth method');
+    return new ProjectModel(
+      await this.projectService.updateAuthMethod(id, method, input.status),
+    );
   }
 
   @Patch(':id/smtp')
   async updateSMTP(
     @Param('id') id: string,
-    @Body() input: UpdateSmtpDto
+    @Body() input: UpdateSmtpDto,
   ): Promise<ProjectModel> {
     return new ProjectModel(await this.projectService.updateSMTP(id, input));
   }
@@ -364,7 +417,7 @@ export class ProjectsController {
   @Post(':id/smtp/tests')
   async testSMTP(
     @Param('id') id: string,
-    @Body() input: SmtpTestsDto
+    @Body() input: SmtpTestsDto,
   ): Promise<{}> {
     return await this.projectService.testSMTP(id, input);
   }
@@ -373,45 +426,44 @@ export class ProjectsController {
   async getSMSTemplate(
     @Param('id') id: string,
     @Param('type') type: string,
-    @Param('locale') locale: string
+    @Param('locale') locale: string,
   ) {
-    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
+    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED);
   }
 
   @Patch(':id/templates/sms/:type/:locale')
   async updateSmsTemplate() {
-    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
+    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED);
   }
 
   @Delete(':id/templates/sms/:type/:locale')
   async deleteSmsTemplate() {
-    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
+    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED);
   }
 
   @Get(':id/templates/email/:type/:locale')
   async getEmailTemplate(
     @Param('id') id: string,
     @Param('type') type: string,
-    @Param('locale') locale: string
+    @Param('locale') locale: string,
   ) {
     return {
-      'message': "$message",
-      'subject': "$localeObj -> getText('emails.'.$type. '.subject')",
-      'senderEmail': '',
-      'senderName': '',
+      message: '$message',
+      subject: "$localeObj -> getText('emails.'.$type. '.subject')",
+      senderEmail: '',
+      senderName: '',
       locale,
-      type
-    }
+      type,
+    };
   }
 
   @Patch(':id/templates/email/:type/:locale')
   async updateEmailTemplate() {
-    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
+    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED);
   }
 
   @Delete(':id/templates/email/:type/:locale')
   async deleteEmailTemplate() {
-    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
+    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED);
   }
-
 }

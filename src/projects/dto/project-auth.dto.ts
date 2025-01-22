@@ -1,7 +1,13 @@
-import { Type } from "class-transformer";
-import { ArrayMaxSize, IsArray, IsBoolean, IsString, Matches, ValidateNested } from "class-validator";
-import { IsInt, Min, Max } from "class-validator";
-
+import { Type } from 'class-transformer';
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsBoolean,
+  IsString,
+  Matches,
+  ValidateNested,
+} from 'class-validator';
+import { IsInt, Min, Max } from 'class-validator';
 
 export class AuthSessionAlertsDto {
   @IsBoolean()
@@ -14,7 +20,6 @@ export class AuthLimitDto {
   @Max(100) /**@todo update to env variable */
   limit: number;
 }
-
 
 export class AuthDurationDto {
   @IsInt()

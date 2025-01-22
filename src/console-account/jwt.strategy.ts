@@ -26,7 +26,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
         let token = null;
         if (req && req.headers) {
           token = req.headers['x-nuvix-jwt'];
-          if (!token) token = req.cookies["a_session"]
+          if (!token) token = req.cookies['a_session'];
         }
         return token || ExtractJwt.fromAuthHeaderAsBearerToken;
       },
@@ -43,12 +43,12 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
       .findOne({ id: session.userId })
       .select('-password')
       .populate(['memberships'])
-      .exec()
+      .exec();
     if (!user) return null;
     user.session = session;
     let authorization = this.cls.get('authorization') as Authorization;
     let roles = Auth.getRoles(user);
-    authorization.removeRole(Role.Any().toString())
+    authorization.removeRole(Role.Any().toString());
     for (let role of roles) {
       authorization.addRole(role);
     }

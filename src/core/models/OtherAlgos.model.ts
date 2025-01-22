@@ -1,5 +1,5 @@
-import { Exclude, Expose } from "class-transformer";
-import BaseModel from "src/core/models/base.model";
+import { Exclude, Expose } from 'class-transformer';
+import BaseModel from 'src/core/models/base.model';
 
 @Exclude()
 export class AlgoPhpassModel extends BaseModel {
@@ -34,7 +34,6 @@ export class AlgoScryptModel extends BaseModel {
     Object.assign(this, partial);
   }
 }
-
 
 @Exclude()
 export class AlgoScryptModifiedModel extends BaseModel {

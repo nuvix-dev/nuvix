@@ -2,7 +2,6 @@ import { totp } from 'otplib';
 import { Auth } from '../helper/auth.helper';
 import { Document } from '@nuvix/database';
 
-
 abstract class MfaType {
   protected instance: typeof totp;
 
@@ -41,7 +40,10 @@ abstract class MfaType {
     return this.instance.toString();
   }
 
-  public static generateBackupCodes(length: number = 10, total: number = 6): string[] {
+  public static generateBackupCodes(
+    length: number = 10,
+    total: number = 6,
+  ): string[] {
     const backups: string[] = [];
 
     for (let i = 0; i < total; i++) {
@@ -52,16 +54,15 @@ abstract class MfaType {
   }
 }
 
-
 class TOTP extends MfaType {
   constructor() {
     super(totp);
   }
 
   public static getAuthenticatorFromUser(user: Document): Document {
-    const authenticators = user.getAttribute("authenticators", []);
+    const authenticators = user.getAttribute('authenticators', []);
     for (const authenticator of authenticators) {
-      if (authenticator.getAttribute("type") === MfaType.TOTP) {
+      if (authenticator.getAttribute('type') === MfaType.TOTP) {
         return authenticator;
       }
     }

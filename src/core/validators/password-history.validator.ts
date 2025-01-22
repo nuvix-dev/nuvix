@@ -1,5 +1,5 @@
-import { Auth } from "../helper/auth.helper";
-import { PasswordValidator } from "./password.validator";
+import { Auth } from '../helper/auth.helper';
+import { PasswordValidator } from './password.validator';
 
 export class PasswordHistoryValidator extends PasswordValidator {
   private history: string[];
@@ -33,7 +33,10 @@ export class PasswordHistoryValidator extends PasswordValidator {
    */
   isValid(value: string): boolean {
     for (const hash of this.history) {
-      if (hash && Auth.passwordVerify(value, hash, this.algo, this.algoOptions)) {
+      if (
+        hash &&
+        Auth.passwordVerify(value, hash, this.algo, this.algoOptions)
+      ) {
         return false;
       }
     }

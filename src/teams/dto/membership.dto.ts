@@ -1,6 +1,15 @@
-import { IsEmail, IsNotEmpty, IsPhoneNumber, IsString, MaxLength, IsArray, ArrayMaxSize, IsUrl, IsOptional } from 'class-validator';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsPhoneNumber,
+  IsString,
+  MaxLength,
+  IsArray,
+  ArrayMaxSize,
+  IsUrl,
+  IsOptional,
+} from 'class-validator';
 import { APP_LIMIT_ARRAY_PARAMS_SIZE } from 'src/Utils/constants';
-
 
 export class CreateMembershipDto {
   @IsOptional()
@@ -34,14 +43,12 @@ export class CreateMembershipDto {
   name: string;
 }
 
-
 export class UpdateMembershipDto {
   @IsArray()
   @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE)
   @IsString({ each: true })
   roles: string[];
 }
-
 
 export class UpdateMembershipStatusDto {
   @IsNotEmpty()

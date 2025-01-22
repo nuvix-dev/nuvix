@@ -1,4 +1,3 @@
-
 export interface SmtpConfig {
   host: string;
   port: string;
@@ -13,14 +12,14 @@ export interface SmtpConfig {
 }
 
 export const defaultSmtpConfig: SmtpConfig = {
-  host: "",
-  port: "",
-  user: "",
-  pass: "",
-  from: "",
+  host: '',
+  port: '',
+  user: '',
+  pass: '',
+  from: '',
   enabled: false,
-  senderName: "",
-  senderEmail: "",
-  replyTo: "",
-  secure: false
-}
+  senderName: '',
+  senderEmail: '',
+  replyTo: '',
+  secure: false,
+};

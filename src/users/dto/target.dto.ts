@@ -2,11 +2,11 @@ import { OmitType, PartialType } from '@nestjs/mapped-types';
 import { IsString, IsOptional, Length, Matches } from 'class-validator';
 import { Database } from 'src/core/config/database';
 
-
 export class CreateTargetDto {
   @IsString()
   @Matches(/^[a-zA-Z0-9][a-zA-Z0-9.-_]{0,35}$/, {
-    message: 'Target ID must be alphanumeric and can include period, hyphen, and underscore. Cannot start with a special character. Max length is 36 chars.',
+    message:
+      'Target ID must be alphanumeric and can include period, hyphen, and underscore. Cannot start with a special character. Max length is 36 chars.',
   })
   targetId: string;
 
@@ -29,5 +29,6 @@ export class CreateTargetDto {
   name: string;
 }
 
-
-export class UpdateTargetDto extends PartialType(OmitType(CreateTargetDto, ['targetId', 'providerType'])) { }
+export class UpdateTargetDto extends PartialType(
+  OmitType(CreateTargetDto, ['targetId', 'providerType']),
+) {}

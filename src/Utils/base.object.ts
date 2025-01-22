@@ -1,6 +1,6 @@
-import { Type } from "@nestjs/common";
-import { Field, ObjectType } from "@nestjs/graphql";
-import { PageInfo } from "src/base/objects/base.object";
+import { Type } from '@nestjs/common';
+import { Field, ObjectType } from '@nestjs/graphql';
+import { PageInfo } from 'src/base/objects/base.object';
 
 export interface IPaginatedType<T> {
   nodes: T[];

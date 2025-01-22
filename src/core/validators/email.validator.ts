@@ -1,6 +1,4 @@
-
 export class EmailValidator {
-
   private allowEmpty: boolean;
 
   constructor(allowEmpty: boolean = false) {

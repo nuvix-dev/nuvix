@@ -1,4 +1,3 @@
-
 export class PhoneValidator {
   private allowEmpty: boolean;
 
@@ -36,5 +35,4 @@ export class PhoneValidator {
     const regex = /^\+[1-9]\d{6,14}$/;
     return regex.test(value);
   }
-
 }

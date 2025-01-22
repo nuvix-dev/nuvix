@@ -1,16 +1,13 @@
 import * as crypto from 'crypto';
 import { createHash, randomBytes, createHmac, scryptSync } from 'crypto';
-import { Exception } from "../extend/exception";
+import { Exception } from '../extend/exception';
 import { ENCRYPTION_KEY } from 'src/Utils/constants';
-import { Authorization, Document, Roles } from '@nuvix/database';
-import Role from '@nuvix/database/dist/security/Role';
+import { Authorization, Document, Roles, Role } from '@nuvix/database';
 
 const algorithm = 'aes-256-cbc';
 const key = ENCRYPTION_KEY ? Buffer.from(ENCRYPTION_KEY, 'hex') : undefined;
 
-
 export class Auth {
-
   public static readonly SUPPORTED_ALGOS = [
     'argon2',
     'bcrypt',
@@ -19,7 +16,7 @@ export class Auth {
     'phpass',
     'scrypt',
     'scryptMod',
-    'plaintext'
+    'plaintext',
   ];
 
   // public static readonly DEFAULT_ALGO = 'argon2';
@@ -81,7 +78,7 @@ export class Auth {
   public static secret: string = '';
 
   public static setCookieName(name: string): string {
-    return this.cookieName = name;
+    return (this.cookieName = name);
   }
 
   public static encodeSession(id: string, secret: string): string {
@@ -105,7 +102,10 @@ export class Auth {
     }
   }
 
-  public static decodeSession(session: string): { id: string | null; secret: string } {
+  public static decodeSession(session: string): {
+    id: string | null;
+    secret: string;
+  } {
     const decoded = JSON.parse(Buffer.from(session, 'base64').toString());
     const defaultSession = { id: null, secret: '' };
 
@@ -121,9 +121,13 @@ export class Auth {
   }
 
   /**
-     * Hash a string using the specified algorithm.
-     */
-  public static async passwordHash(string: string, algo: string, options: any = {}): Promise<string | null> {
+   * Hash a string using the specified algorithm.
+   */
+  public static async passwordHash(
+    string: string,
+    algo: string,
+    options: any = {},
+  ): Promise<string | null> {
     if (algo === 'plaintext') {
       algo = Auth.DEFAULT_ALGO;
       options = Auth.DEFAULT_ALGO_OPTIONS;
@@ -135,7 +139,9 @@ export class Auth {
 
     switch (algo) {
       case 'argon2':
-        return (await this.getArgon2().hash(string, { ...options })).toString('hex');
+        return (await this.getArgon2().hash(string, { ...options })).toString(
+          'hex',
+        );
 
       case 'bcrypt':
         const saltRounds = options.saltRounds || 10;
@@ -153,7 +159,9 @@ export class Auth {
       case 'scrypt':
         const scryptSalt = options.salt || randomBytes(16);
         const scryptOptions = { N: 16384, r: 8, p: 1, ...options };
-        return scryptSync(string, scryptSalt, 64, scryptOptions).toString('hex');
+        return scryptSync(string, scryptSalt, 64, scryptOptions).toString(
+          'hex',
+        );
 
       case 'scryptMod':
         const modSalt = options.salt || randomBytes(16);
@@ -165,10 +173,18 @@ export class Auth {
   }
 
   /**
-    * Verify if a plain string matches a hashed value using the specified algorithm.
-    */
-  public static async passwordVerify(plain: string, hash: string, algo: string, options: any = {},): Promise<boolean> {
-    if (algo === 'plaintext') { algo = Auth.DEFAULT_ALGO; options = Auth.DEFAULT_ALGO_OPTIONS; }
+   * Verify if a plain string matches a hashed value using the specified algorithm.
+   */
+  public static async passwordVerify(
+    plain: string,
+    hash: string,
+    algo: string,
+    options: any = {},
+  ): Promise<boolean> {
+    if (algo === 'plaintext') {
+      algo = Auth.DEFAULT_ALGO;
+      options = Auth.DEFAULT_ALGO_OPTIONS;
+    }
 
     if (!Auth.SUPPORTED_ALGOS.includes(algo)) {
       throw new Error(`Hashing algorithm '${algo}' is not supported.`);
@@ -192,7 +208,11 @@ export class Auth {
 
       case 'scrypt':
       case 'scryptMod':
-        const scryptGeneratedHash = await this.passwordHash(plain, algo, options);
+        const scryptGeneratedHash = await this.passwordHash(
+          plain,
+          algo,
+          options,
+        );
         return scryptGeneratedHash === hash;
 
       default:
@@ -201,7 +221,10 @@ export class Auth {
   }
 
   public static passwordGenerator(length: number = 20): string {
-    return require('crypto').randomBytes(length).toString('hex').slice(0, length);
+    return require('crypto')
+      .randomBytes(length)
+      .toString('hex')
+      .slice(0, length);
   }
 
   public static tokenGenerator(length: number = 256): string {
@@ -225,15 +248,19 @@ export class Auth {
     return value;
   }
 
-  public static tokenVerify(tokens: Document[], type: number | null, secret: string): Document | false {
+  public static tokenVerify(
+    tokens: Document[],
+    type: number | null,
+    secret: string,
+  ): Document | false {
     for (const token of tokens) {
       if (
-        token.getAttribute("secret") !== null &&
-        token.getAttribute("expire") !== null &&
-        token.getAttribute("type") !== null &&
-        (type === null || token.getAttribute("type") === type) &&
-        token.getAttribute("secret") === this.hash(secret) &&
-        new Date(token.getAttribute("expire")) >= new Date()
+        token.getAttribute('secret') !== null &&
+        token.getAttribute('expire') !== null &&
+        token.getAttribute('type') !== null &&
+        (type === null || token.getAttribute('type') === type) &&
+        token.getAttribute('secret') === this.hash(secret) &&
+        new Date(token.getAttribute('expire')) >= new Date()
       ) {
         return token;
       }
@@ -242,14 +269,17 @@ export class Auth {
     return false;
   }
 
-  public static sessionVerify(sessions: Document[], secret: string): string | false {
+  public static sessionVerify(
+    sessions: Document[],
+    secret: string,
+  ): string | false {
     for (const session of sessions) {
       if (
-        session.getAttribute("secret") !== null &&
-        session.getAttribute("expire") !== null &&
-        session.getAttribute("provider") !== null &&
-        session.getAttribute("secret") === this.hash(secret) &&
-        new Date(session.getAttribute("expire")) >= new Date()
+        session.getAttribute('secret') !== null &&
+        session.getAttribute('expire') !== null &&
+        session.getAttribute('provider') !== null &&
+        session.getAttribute('secret') === this.hash(secret) &&
+        new Date(session.getAttribute('expire')) >= new Date()
       ) {
         return session.getId();
       }
@@ -259,9 +289,11 @@ export class Auth {
   }
 
   public static isPrivilegedUser(roles: string[]): boolean {
-    return roles.includes(Auth.USER_ROLE_OWNER) ||
+    return (
+      roles.includes(Auth.USER_ROLE_OWNER) ||
       roles.includes(Auth.USER_ROLE_DEVELOPER) ||
-      roles.includes(Auth.USER_ROLE_ADMIN);
+      roles.includes(Auth.USER_ROLE_ADMIN)
+    );
   }
 
   public static isAppUser(roles: string[]): boolean {
@@ -271,19 +303,26 @@ export class Auth {
   public static getRoles(user: Document): string[] {
     const roles: string[] = [];
 
-    if (!this.isPrivilegedUser(Authorization.getRoles()) && !this.isAppUser(Authorization.getRoles())) {
+    if (
+      !this.isPrivilegedUser(Authorization.getRoles()) &&
+      !this.isAppUser(Authorization.getRoles())
+    ) {
       if (user.getId()) {
         roles.push(Role.user(user.getId()).toString());
         roles.push(Role.users().toString());
 
-        const emailVerified = user.getAttribute("emailVerification");
-        const phoneVerified = user.getAttribute("phoneVerification");
+        const emailVerified = user.getAttribute('emailVerification');
+        const phoneVerified = user.getAttribute('phoneVerification');
 
         if (emailVerified || phoneVerified) {
-          roles.push(Role.user(user.getId(), Roles.DIMENSION_VERIFIED).toString());
+          roles.push(
+            Role.user(user.getId(), Roles.DIMENSION_VERIFIED).toString(),
+          );
           roles.push(Role.users(Roles.DIMENSION_VERIFIED).toString());
         } else {
-          roles.push(Role.user(user.getId(), Roles.DIMENSION_UNVERIFIED).toString());
+          roles.push(
+            Role.user(user.getId(), Roles.DIMENSION_UNVERIFIED).toString(),
+          );
           roles.push(Role.users(Roles.DIMENSION_UNVERIFIED).toString());
         }
       } else {
@@ -291,24 +330,26 @@ export class Auth {
       }
     }
 
-    for (const node of (user.getAttribute("memberships") || [])) {
-      if (!node.getAttribute("confirm")) {
+    for (const node of user.getAttribute('memberships') || []) {
+      if (!node.getAttribute('confirm')) {
         continue;
       }
 
-      if (node.getAttribute("$id") && node.getAttribute("teamId")) {
-        roles.push(Role.team(node.getAttribute("teamId")).toString());
+      if (node.getAttribute('$id') && node.getAttribute('teamId')) {
+        roles.push(Role.team(node.getAttribute('teamId')).toString());
         roles.push(Role.member(node.getId()).toString());
 
-        if (node.getAttribute("roles")) {
-          for (const nodeRole of node.getAttribute("roles")) {
-            roles.push(Role.team(node.getAttribute("teamId"), nodeRole).toString());
+        if (node.getAttribute('roles')) {
+          for (const nodeRole of node.getAttribute('roles')) {
+            roles.push(
+              Role.team(node.getAttribute('teamId'), nodeRole).toString(),
+            );
           }
         }
       }
     }
 
-    for (const label of (user.getAttribute("labels") || [])) {
+    for (const label of user.getAttribute('labels') || []) {
       roles.push(`label:${label}`);
     }
 
@@ -316,7 +357,9 @@ export class Auth {
   }
 
   public static isAnonymousUser(user: Document): boolean {
-    return user.getAttribute("email") === null && user.getAttribute("phone") === null;
+    return (
+      user.getAttribute('email') === null && user.getAttribute('phone') === null
+    );
   }
 
   private static getBcrypt(): any {
@@ -337,12 +380,18 @@ export class Auth {
       let argon2 = require('argon2');
       return argon2;
     } catch (e) {
-      throw new Exception(Exception.GENERAL_SERVER_ERROR, 'Argon2 library is not available on the server.')
+      throw new Exception(
+        Exception.GENERAL_SERVER_ERROR,
+        'Argon2 library is not available on the server.',
+      );
     }
   }
 
   static encrypt(text: string): string {
-    if (!key) throw Error('ENCRYPTION_KEY is required, make sure you have added in current environment.')
+    if (!key)
+      throw Error(
+        'ENCRYPTION_KEY is required, make sure you have added in current environment.',
+      );
     const iv = crypto.randomBytes(16);
     const cipher = crypto.createCipheriv(algorithm, key, iv);
     let encrypted = cipher.update(text);
@@ -351,7 +400,10 @@ export class Auth {
   }
 
   static decrypt(text: string): string {
-    if (!key) throw Error('ENCRYPTION_KEY is required, make sure you have added in current environment.')
+    if (!key)
+      throw Error(
+        'ENCRYPTION_KEY is required, make sure you have added in current environment.',
+      );
     const textParts = text.split(':');
     const iv = Buffer.from(textParts.shift(), 'hex');
     const encryptedText = Buffer.from(textParts.join(':'), 'hex');

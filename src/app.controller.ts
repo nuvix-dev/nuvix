@@ -8,12 +8,10 @@ export class AppController {
   constructor(
     private readonly appService: AppService,
     // @InjectDataSource('default') private readonly dataSource: DataSource
-  ) { }
+  ) {}
 
   @Get()
   async getHello(): Promise<string> {
     return this.appService.getHello();
   }
-
-
 }

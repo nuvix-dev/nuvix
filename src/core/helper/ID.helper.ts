@@ -1,10 +1,9 @@
-import { ID as BaseID } from "@nuvix/database"
+import { ID as BaseID } from '@nuvix/database';
 
 /**
  * Helper class to generate ID strings for resources.
  */
 export class ID extends BaseID {
-
   /**
    * Auto Handle the ID generation for the resource.
    *

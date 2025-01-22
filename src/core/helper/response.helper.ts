@@ -1,76 +1,108 @@
-import { AccountModel } from "../models/Account.model";
-import { AlgoArgon2Model } from "../models/AlgoArgon2.model";
-import { AlgoBcryptModel } from "../models/AlgoBcrypt.model";
-import { AlgoMd5Model } from "../models/AlgoMd5.model";
-import { AttributeModel } from "../models/Attribute.model";
-import { AuthProviderModel } from "../models/AuthProvider.model";
-import { BucketModel } from "../models/Bucket.model";
-import { BuildModel } from "../models/Build.model";
-import { CollectionModel } from "../models/Collection.model";
-import { ContinentModel } from "../models/Continent.model";
-import { CountryModel } from "../models/Country.model";
-import { CurrencyModel } from "../models/Currency.model";
-import { DatabaseModel } from "../models/Database.model";
-import { DeploymentModel } from "../models/Deployment.model";
-import { DetectionModel } from "../models/Detection.model";
-import { DocumentModel } from "../models/Document.model";
-import { ExecutionModel } from "../models/Execution.model";
-import { FileModel } from "../models/File.model";
-import { FunctionModel } from "../models/Func.model";
-import { HeadersModel } from "../models/Headers.model";
-import { IdentityModel } from "../models/Identity.model";
-import { IndexModel } from "../models/Index.model";
-import { InstallationModel } from "../models/Installation.model";
-import { JWTModel } from "../models/JWT.model";
-import { LanguageModel } from "../models/Language.model";
-import { LocaleModel } from "../models/Locale.model";
-import { LocaleCodeModel } from "../models/LocaleCode.model";
-import { LogModel } from "../models/Log.model";
-import { MembershipModel } from "../models/Membership.model";
-import { MessageModel } from "../models/Message.model";
-import { MetricModel } from "../models/Metric.model";
-import { MetricBreakdownModel } from "../models/MetricBreakdown.model";
-import { MFAChallengeModel } from "../models/MFAChallenge.model";
-import { MFAFactorsModel } from "../models/MFAFactors.model";
-import { MFARecoveryCodesModel } from "../models/MFARecoveryCodes.model";
-import { MFATypeModel } from "../models/MFAType.model";
-import { MigrationModel } from "../models/Migration.model";
-import { MigrationFirebaseProjectModel } from "../models/MigrationFirebaseProject.model";
-import { MigrationReportModel } from "../models/MigrationReport.model";
-import { MockNumberModel } from "../models/MockNumber.model";
-import { PhoneModel } from "../models/Phone.model";
-import { PlatformModel } from "../models/Platform.model";
-import { ProviderModel } from "../models/Provider.model";
-import { RuleModel } from "../models/Rule.model";
-import { RuntimeModel } from "../models/Runtime.model";
-import { SessionModel } from "../models/Session.model";
-import { SpecificationModel } from "../models/Specification.model";
-import { SubscriberModel } from "../models/Subscriber.model";
-import { TargetModel } from "../models/Target.model";
-import { TeamModel } from "../models/Team.model";
-import { TemplateEmailModel } from "../models/TemplateEmail.model";
-import { TemplateFunctionModel } from "../models/TemplateFunction.model";
-import { TemplateRuntimeModel } from "../models/TemplateRuntime.model";
-import { TemplateSMSModel } from "../models/TemplateSMS.model";
-import { TokenModel } from "../models/Token.model";
-import { TopicModel } from "../models/Topic.model";
-import { UserModel } from "../models/User.model";
-import { VariableModel } from "../models/Variable.model";
-import { VcsContentModel } from "../models/VcsContent.model";
-import { WebhookModel } from "../models/Webhook.model";
-import { AlgoPhpassModel, AlgoScryptModel, AlgoScryptModifiedModel, AlgoShaModel } from "../models/OtherAlgos.model";
-import { HealthAntivirusModel, HealthCertificateModel, HealthQueueModel, HealthStatusModel, HealthTimeModel, HealthVersionModel } from "../models/Health.model";
-import { UsageBucketsModel, UsageCollectionModel, UsageDatabaseModel, UsageDatabasesModel, UsageFunctionModel, UsageFunctionsModel, UsageProjectModel, UsageStorageModel, UsageUsersModel } from "../models/Usage.model";
-import { AttributeBooleanModel, AttributeDatetimeModel, AttributeEmailModel, AttributeEnumModel, AttributeFloatModel, AttributeIntegerModel, AttributeIPModel, AttributeRelationshipModel, AttributeStringModel, AttributeURLModel } from "../models/Attributes.model";
-
+import { AccountModel } from '../models/Account.model';
+import { AlgoArgon2Model } from '../models/AlgoArgon2.model';
+import { AlgoBcryptModel } from '../models/AlgoBcrypt.model';
+import { AlgoMd5Model } from '../models/AlgoMd5.model';
+import { AttributeModel } from '../models/Attribute.model';
+import { AuthProviderModel } from '../models/AuthProvider.model';
+import { BucketModel } from '../models/Bucket.model';
+import { BuildModel } from '../models/Build.model';
+import { CollectionModel } from '../models/Collection.model';
+import { ContinentModel } from '../models/Continent.model';
+import { CountryModel } from '../models/Country.model';
+import { CurrencyModel } from '../models/Currency.model';
+import { DatabaseModel } from '../models/Database.model';
+import { DeploymentModel } from '../models/Deployment.model';
+import { DetectionModel } from '../models/Detection.model';
+import { DocumentModel } from '../models/Document.model';
+import { ExecutionModel } from '../models/Execution.model';
+import { FileModel } from '../models/File.model';
+import { FunctionModel } from '../models/Func.model';
+import { HeadersModel } from '../models/Headers.model';
+import { IdentityModel } from '../models/Identity.model';
+import { IndexModel } from '../models/Index.model';
+import { InstallationModel } from '../models/Installation.model';
+import { JWTModel } from '../models/JWT.model';
+import { LanguageModel } from '../models/Language.model';
+import { LocaleModel } from '../models/Locale.model';
+import { LocaleCodeModel } from '../models/LocaleCode.model';
+import { LogModel } from '../models/Log.model';
+import { MembershipModel } from '../models/Membership.model';
+import { MessageModel } from '../models/Message.model';
+import { MetricModel } from '../models/Metric.model';
+import { MetricBreakdownModel } from '../models/MetricBreakdown.model';
+import { MFAChallengeModel } from '../models/MFAChallenge.model';
+import { MFAFactorsModel } from '../models/MFAFactors.model';
+import { MFARecoveryCodesModel } from '../models/MFARecoveryCodes.model';
+import { MFATypeModel } from '../models/MFAType.model';
+import { MigrationModel } from '../models/Migration.model';
+import { MigrationFirebaseProjectModel } from '../models/MigrationFirebaseProject.model';
+import { MigrationReportModel } from '../models/MigrationReport.model';
+import { MockNumberModel } from '../models/MockNumber.model';
+import { PhoneModel } from '../models/Phone.model';
+import { PlatformModel } from '../models/Platform.model';
+import { ProviderModel } from '../models/Provider.model';
+import { RuleModel } from '../models/Rule.model';
+import { RuntimeModel } from '../models/Runtime.model';
+import { SessionModel } from '../models/Session.model';
+import { SpecificationModel } from '../models/Specification.model';
+import { SubscriberModel } from '../models/Subscriber.model';
+import { TargetModel } from '../models/Target.model';
+import { TeamModel } from '../models/Team.model';
+import { TemplateEmailModel } from '../models/TemplateEmail.model';
+import { TemplateFunctionModel } from '../models/TemplateFunction.model';
+import { TemplateRuntimeModel } from '../models/TemplateRuntime.model';
+import { TemplateSMSModel } from '../models/TemplateSMS.model';
+import { TokenModel } from '../models/Token.model';
+import { TopicModel } from '../models/Topic.model';
+import { UserModel } from '../models/User.model';
+import { VariableModel } from '../models/Variable.model';
+import { VcsContentModel } from '../models/VcsContent.model';
+import { WebhookModel } from '../models/Webhook.model';
+import {
+  AlgoPhpassModel,
+  AlgoScryptModel,
+  AlgoScryptModifiedModel,
+  AlgoShaModel,
+} from '../models/OtherAlgos.model';
+import {
+  HealthAntivirusModel,
+  HealthCertificateModel,
+  HealthQueueModel,
+  HealthStatusModel,
+  HealthTimeModel,
+  HealthVersionModel,
+} from '../models/Health.model';
+import {
+  UsageBucketsModel,
+  UsageCollectionModel,
+  UsageDatabaseModel,
+  UsageDatabasesModel,
+  UsageFunctionModel,
+  UsageFunctionsModel,
+  UsageProjectModel,
+  UsageStorageModel,
+  UsageUsersModel,
+} from '../models/Usage.model';
+import {
+  AttributeBooleanModel,
+  AttributeDatetimeModel,
+  AttributeEmailModel,
+  AttributeEnumModel,
+  AttributeFloatModel,
+  AttributeIntegerModel,
+  AttributeIPModel,
+  AttributeRelationshipModel,
+  AttributeStringModel,
+  AttributeURLModel,
+} from '../models/Attributes.model';
 
 /**
  * The `Response` class provides a collection of static properties representing various models used in the application.
  * These models are categorized into different sections such as Database, Users, MFA, Storage, Locale, Messaging, Teams, VCS, Functions, Proxy, Migrations, Project, and Health.
  * Each static property holds a reference to a specific model class or a string identifier.
- * 
+ *
  * ## Models
- * 
+ *
  * ### General
  * - `MODEL_NONE`: Represents no model.
  * - `MODEL_ANY`: Represents any model.
@@ -88,13 +120,13 @@ import { AttributeBooleanModel, AttributeDatetimeModel, AttributeEmailModel, Att
  * - `MODEL_USAGE_FUNCTIONS`: Represents the `UsageFunctionsModel`.
  * - `MODEL_USAGE_FUNCTION`: Represents the `UsageFunctionModel`.
  * - `MODEL_USAGE_PROJECT`: Represents the `UsageProjectModel`.
- * 
+ *
  * ### Database
  * - `MODEL_DATABASE`: Represents the `DatabaseModel`.
  * - `MODEL_COLLECTION`: Represents the `CollectionModel`.
  * - `MODEL_INDEX`: Represents the `IndexModel`.
  * - `MODEL_DOCUMENT`: Represents the `DocumentModel`.
- * 
+ *
  * ### Database Attributes
  * - `MODEL_ATTRIBUTE`: Represents the `AttributeModel`.
  * - `MODEL_ATTRIBUTE_STRING`: Represents the `AttributeStringModel`.
@@ -107,7 +139,7 @@ import { AttributeBooleanModel, AttributeDatetimeModel, AttributeEmailModel, Att
  * - `MODEL_ATTRIBUTE_URL`: Represents the `AttributeURLModel`.
  * - `MODEL_ATTRIBUTE_DATETIME`: Represents the `AttributeDatetimeModel`.
  * - `MODEL_ATTRIBUTE_RELATIONSHIP`: Represents the `AttributeRelationshipModel`.
- * 
+ *
  * ### Users
  * - `MODEL_ACCOUNT`: Represents the `AccountModel`.
  * - `MODEL_USER`: Represents the `UserModel`.
@@ -116,14 +148,14 @@ import { AttributeBooleanModel, AttributeDatetimeModel, AttributeEmailModel, Att
  * - `MODEL_TOKEN`: Represents the `TokenModel`.
  * - `MODEL_JWT`: Represents the `JWTModel`.
  * - `MODEL_PREFERENCES`: Represents user preferences.
- * 
+ *
  * ### MFA (Multi-Factor Authentication)
  * - `MODEL_MFA_TYPE`: Represents the `MFATypeModel`.
  * - `MODEL_MFA_FACTORS`: Represents the `MFAFactorsModel`.
  * - `MODEL_MFA_OTP`: Represents the OTP (One-Time Password) model.
  * - `MODEL_MFA_CHALLENGE`: Represents the `MFAChallengeModel`.
  * - `MODEL_MFA_RECOVERY_CODES`: Represents the `MFARecoveryCodesModel`.
- * 
+ *
  * ### Users Password Algorithms
  * - `MODEL_ALGO_MD5`: Represents the `AlgoMd5Model`.
  * - `MODEL_ALGO_SHA`: Represents the `AlgoShaModel`.
@@ -132,11 +164,11 @@ import { AttributeBooleanModel, AttributeDatetimeModel, AttributeEmailModel, Att
  * - `MODEL_ALGO_BCRYPT`: Represents the `AlgoBcryptModel`.
  * - `MODEL_ALGO_ARGON2`: Represents the `AlgoArgon2Model`.
  * - `MODEL_ALGO_PHPASS`: Represents the `AlgoPhpassModel`.
- * 
+ *
  * ### Storage
  * - `MODEL_FILE`: Represents the `FileModel`.
  * - `MODEL_BUCKET`: Represents the `BucketModel`.
- * 
+ *
  * ### Locale
  * - `MODEL_LOCALE`: Represents the `LocaleModel`.
  * - `MODEL_LOCALE_CODE`: Represents the `LocaleCodeModel`.
@@ -145,25 +177,25 @@ import { AttributeBooleanModel, AttributeDatetimeModel, AttributeEmailModel, Att
  * - `MODEL_CURRENCY`: Represents the `CurrencyModel`.
  * - `MODEL_LANGUAGE`: Represents the `LanguageModel`.
  * - `MODEL_PHONE`: Represents the `PhoneModel`.
- * 
+ *
  * ### Messaging
  * - `MODEL_PROVIDER`: Represents the `ProviderModel`.
  * - `MODEL_MESSAGE`: Represents the `MessageModel`.
  * - `MODEL_TOPIC`: Represents the `TopicModel`.
  * - `MODEL_SUBSCRIBER`: Represents the `SubscriberModel`.
  * - `MODEL_TARGET`: Represents the `TargetModel`.
- * 
+ *
  * ### Teams
  * - `MODEL_TEAM`: Represents the `TeamModel`.
  * - `MODEL_MEMBERSHIP`: Represents the `MembershipModel`.
- * 
+ *
  * ### VCS (Version Control System)
  * - `MODEL_INSTALLATION`: Represents the `InstallationModel`.
  * - `MODEL_PROVIDER_REPOSITORY`: Represents the `ProviderModel`.
  * - `MODEL_BRANCH`: Represents a branch model.
  * - `MODEL_DETECTION`: Represents the `DetectionModel`.
  * - `MODEL_VCS_CONTENT`: Represents the `VcsContentModel`.
- * 
+ *
  * ### Functions
  * - `MODEL_FUNCTION`: Represents the `FunctionModel`.
  * - `MODEL_RUNTIME`: Represents the `RuntimeModel`.
@@ -176,15 +208,15 @@ import { AttributeBooleanModel, AttributeDatetimeModel, AttributeEmailModel, Att
  * - `MODEL_TEMPLATE_FUNCTION`: Represents the `TemplateFunctionModel`.
  * - `MODEL_TEMPLATE_RUNTIME`: Represents the `TemplateRuntimeModel`.
  * - `MODEL_TEMPLATE_VARIABLE`: Represents the `TemplateRuntimeModel`.
- * 
+ *
  * ### Proxy
  * - `MODEL_PROXY_RULE`: Represents the `RuleModel`.
- * 
+ *
  * ### Migrations
  * - `MODEL_MIGRATION`: Represents the `MigrationModel`.
  * - `MODEL_MIGRATION_REPORT`: Represents the `MigrationReportModel`.
  * - `MODEL_MIGRATION_FIREBASE_PROJECT`: Represents the `MigrationFirebaseProjectModel`.
- * 
+ *
  * ### Project
  * - `MODEL_PROJECT`: Represents a project model.
  * - `MODEL_WEBHOOK`: Represents the `WebhookModel`.
@@ -196,7 +228,7 @@ import { AttributeBooleanModel, AttributeDatetimeModel, AttributeEmailModel, Att
  * - `MODEL_VCS`: Represents a VCS model.
  * - `MODEL_SMS_TEMPLATE`: Represents the `TemplateSMSModel`.
  * - `MODEL_EMAIL_TEMPLATE`: Represents the `TemplateEmailModel`.
- * 
+ *
  * ### Health
  * - `MODEL_HEALTH_STATUS`: Represents the `HealthStatusModel`.
  * - `MODEL_HEALTH_VERSION`: Represents the `HealthVersionModel`.
@@ -206,8 +238,7 @@ import { AttributeBooleanModel, AttributeDatetimeModel, AttributeEmailModel, Att
  * - `MODEL_HEALTH_CERTIFICATE`: Represents the `HealthCertificateModel`.
  */
 export class Response {
-
-  public static MODEL_NONE = class { };
+  public static MODEL_NONE = class {};
   public static MODEL_ANY = 'any';
   public static MODEL_LOG = LogModel;
   public static MODEL_ERROR = 'error';
@@ -304,7 +335,7 @@ export class Response {
   public static MODEL_RUNTIME = RuntimeModel;
   public static MODEL_DEPLOYMENT = DeploymentModel;
   public static MODEL_EXECUTION = ExecutionModel;
-  public static MODEL_BUILD = BuildModel;  // Not used anywhere yet
+  public static MODEL_BUILD = BuildModel; // Not used anywhere yet
   public static MODEL_FUNC_PERMISSIONS = 'funcPermissions';
   public static MODEL_HEADERS = HeadersModel;
   public static MODEL_SPECIFICATION = SpecificationModel;
@@ -318,7 +349,8 @@ export class Response {
   // Migrations
   public static MODEL_MIGRATION = MigrationModel;
   public static MODEL_MIGRATION_REPORT = MigrationReportModel;
-  public static MODEL_MIGRATION_FIREBASE_PROJECT = MigrationFirebaseProjectModel;
+  public static MODEL_MIGRATION_FIREBASE_PROJECT =
+    MigrationFirebaseProjectModel;
 
   // Project
   public static MODEL_PROJECT = 'project';
@@ -339,6 +371,4 @@ export class Response {
   public static MODEL_HEALTH_TIME = HealthTimeModel;
   public static MODEL_HEALTH_ANTIVIRUS = HealthAntivirusModel;
   public static MODEL_HEALTH_CERTIFICATE = HealthCertificateModel;
-
-
 }

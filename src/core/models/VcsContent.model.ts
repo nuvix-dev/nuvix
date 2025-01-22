@@ -1,9 +1,8 @@
-import { Exclude, Expose } from "class-transformer";
-import BaseModel from "src/core/models/base.model";
+import { Exclude, Expose } from 'class-transformer';
+import BaseModel from 'src/core/models/base.model';
 
 @Exclude()
 export class VcsContentModel extends BaseModel {
-  
   /**
    * Content size in bytes. Only files have size, and for directories, 0 is returned.
    */

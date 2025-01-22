@@ -1,7 +1,6 @@
-import { createParamDecorator, ExecutionContext } from "@nestjs/common";
-import { Document } from "@nuvix/database";
-import { PROJECT_USER } from "src/Utils/constants";
-
+import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+import { Document } from '@nuvix/database';
+import { PROJECT_USER } from 'src/Utils/constants';
 
 export const User = createParamDecorator<any, any, Document | null>(
   (data: unknown, ctx: ExecutionContext): Document => {

@@ -1,11 +1,10 @@
-import { Exclude, Expose } from "class-transformer";
-import BaseModel from "src/core/models/base.model";
+import { Exclude, Expose } from 'class-transformer';
+import BaseModel from 'src/core/models/base.model';
 
 /**
  * Document model.
  */
 export class DocumentModel extends BaseModel {
-
   /**
    * Collection ID.
    */

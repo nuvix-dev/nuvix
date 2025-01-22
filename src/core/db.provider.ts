@@ -4,32 +4,29 @@ import { Exception } from './extend/exception';
 import { Request } from 'express';
 
 // Services
-import { Project } from 'src/projects/schemas/project.schema';
 import { ClsService, ClsServiceManager } from 'nestjs-cls';
-import { PROJECT } from 'src/Utils/constants';
+import { DB_FOR_CONSOLE, PROJECT } from 'src/Utils/constants';
 import { Database, MariaDB } from '@nuvix/database';
 
-
-export const connectionFactory: FactoryProvider = {
-  provide: 'CONNECTION',
-  scope: Scope.REQUEST,
+export const consoleDatabase: FactoryProvider = {
+  provide: DB_FOR_CONSOLE,
+  // scope: Scope.REQUEST,
   durable: true,
-  useFactory: async (
-    cls: ClsService,
-  ) => {
-    const logger = cls.get('logger') as Logger;
-    const project = cls.get(PROJECT) as Project;
-    const tenantId = project.database;
+  useFactory: async (cls: ClsService) => {
+    // const logger = cls.get('logger') as Logger;
+    // const project = cls.get(PROJECT) as Project;
+    // const tenantId = project.database;
 
     let adapter = new MariaDB({
       connection: {
         host: process.env.DATABASE_HOST || 'localhost',
         user: process.env.DATABASE_USER,
         password: process.env.DATABASE_PASSWORD,
-        database: "college1_test99",
+        database: 'college1_test99',
         port: 3306,
-      }
-    })
+      },
+      maxVarCharLimit: 499,
+    });
 
     await adapter.init();
 
@@ -37,11 +34,11 @@ export const connectionFactory: FactoryProvider = {
 
     await connection.ping();
 
-    if (tenantId) {
-      // WILL USE Database class FOR MULTITENANCY
-    }
+    // if (tenantId) {
+    //   // WILL USE Database class FOR MULTITENANCY
+    // }
 
-    return null;
+    return connection;
   },
   inject: [ClsService],
 };
@@ -53,8 +50,6 @@ const defaultConnectionOptions = {
   username: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   ssl: true,
-}
+};
 
-export class DbService {
-
-}
+export class DbService {}

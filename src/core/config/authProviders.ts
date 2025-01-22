@@ -52,7 +52,8 @@ export const oAuthProviders: Record<string, OAuthProvider> = {
   },
   autodesk: {
     name: 'Autodesk',
-    developers: 'https://forge.autodesk.com/en/docs/oauth/v2/developers_guide/overview/',
+    developers:
+      'https://forge.autodesk.com/en/docs/oauth/v2/developers_guide/overview/',
     icon: 'icon-autodesk',
     enabled: true,
     sandbox: false,
@@ -282,7 +283,8 @@ export const oAuthProviders: Record<string, OAuthProvider> = {
   },
   spotify: {
     name: 'Spotify',
-    developers: 'https://developer.spotify.com/documentation/general/guides/authorization-guide/',
+    developers:
+      'https://developer.spotify.com/documentation/general/guides/authorization-guide/',
     icon: 'icon-spotify',
     enabled: true,
     sandbox: false,

@@ -9,15 +9,14 @@ import { Project, ProjectSchema } from 'src/projects/schemas/project.schema';
   controllers: [FunctionsController],
   providers: [FunctionsService],
   imports: [
-    GlobalMongooseModule.forFeature([
-      { name: Project.name, schema: ProjectSchema }
-    ], 'server')
-  ]
+    GlobalMongooseModule.forFeature(
+      [{ name: Project.name, schema: ProjectSchema }],
+      'server',
+    ),
+  ],
 })
 export class FunctionsModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(ProjectMiddleware)
-      .forRoutes(FunctionsController);
+    consumer.apply(ProjectMiddleware).forRoutes(FunctionsController);
   }
 }

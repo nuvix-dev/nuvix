@@ -3,7 +3,10 @@ import { ProjectService } from './projects.service';
 import { ProjectsController } from './projects.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Project, ProjectSchema } from './schemas/project.schema';
-import { Organization, OrganizationSchema } from 'src/console-user/schemas/organization.schema';
+import {
+  Organization,
+  OrganizationSchema,
+} from 'src/console-user/schemas/organization.schema';
 import { Platform, PlatformSchema } from './schemas/platform.schema';
 import { Key, KeySchema } from './schemas/key.schema';
 import { Webhook, WebhookSchema } from './schemas/webhook.schema';
@@ -21,13 +24,16 @@ import { ProjectController } from './project.controller';
       secret: JWT_SECRET,
       signOptions: { expiresIn: '15m' },
     }),
-    GlobalMongooseModule.forFeature([
-      { name: Project.name, schema: ProjectSchema },
-      { name: Organization.name, schema: OrganizationSchema },
-      { name: Platform.name, schema: PlatformSchema },
-      { name: Key.name, schema: KeySchema },
-      { name: Webhook.name, schema: WebhookSchema }
-    ], 'server')
-  ]
+    GlobalMongooseModule.forFeature(
+      [
+        { name: Project.name, schema: ProjectSchema },
+        { name: Organization.name, schema: OrganizationSchema },
+        { name: Platform.name, schema: PlatformSchema },
+        { name: Key.name, schema: KeySchema },
+        { name: Webhook.name, schema: WebhookSchema },
+      ],
+      'server',
+    ),
+  ],
 })
-export class ProjectModule { }
+export class ProjectModule {}

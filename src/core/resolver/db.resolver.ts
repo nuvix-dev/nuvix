@@ -1,16 +1,19 @@
-import { Authorization, Database, Document, Query } from "@nuvix/database";
+import { Authorization, Database, Document, Query } from '@nuvix/database';
 import {
   APP_LIMIT_SUBQUERY,
   APP_LIMIT_SUBSCRIBERS_SUBQUERY,
-  APP_OPENSSL_KEY
-} from "src/Utils/constants";
+  APP_OPENSSL_KEY,
+} from 'src/Utils/constants';
 import crypto from 'crypto';
+import { EmailValidator } from '../validators/email.validator';
 
 const filters = {
   casting: {
     serialize: (value: any) => {
       return JSON.stringify({ value: value }, (key, value) => {
-        return typeof value === 'number' && !isFinite(value) ? String(value) : value;
+        return typeof value === 'number' && !isFinite(value)
+          ? String(value)
+          : value;
       });
     },
     deserialize: (value: any) => {
@@ -19,7 +22,7 @@ const filters = {
       }
 
       return JSON.parse(value).value;
-    }
+    },
   },
   enum: {
     serialize: ((value: any, attribute: Document) => {
@@ -30,13 +33,15 @@ const filters = {
       return value;
     }) as any,
     deserialize: ((value: any, attribute: Document) => {
-      const formatOptions = JSON.parse(attribute.getAttribute('formatOptions', '[]'));
+      const formatOptions = JSON.parse(
+        attribute.getAttribute('formatOptions', '[]'),
+      );
       if (formatOptions.elements) {
         attribute.setAttribute('elements', formatOptions.elements);
       }
 
       return value;
-    }) as any
+    }) as any,
   },
   range: {
     serialize: (value: any, attribute: Document) => {
@@ -50,7 +55,9 @@ const filters = {
       return value;
     },
     deserialize: (value: any, attribute: Document) => {
-      const formatOptions = JSON.parse(attribute.getAttribute('formatOptions', '[]'));
+      const formatOptions = JSON.parse(
+        attribute.getAttribute('formatOptions', '[]'),
+      );
       if (formatOptions.min || formatOptions.max) {
         attribute
           .setAttribute('min', formatOptions.min)
@@ -58,7 +65,7 @@ const filters = {
       }
 
       return value;
-    }
+    },
   },
   subQueryAttributes: {
     serialize: (value: any) => {
@@ -67,14 +74,16 @@ const filters = {
     deserialize: async (value: any, document: Document, database: Database) => {
       const attributes = await database.find('attributes', [
         Query.equal('collectionInternalId', [document.getInternalId()]),
-        Query.equal('databaseInternalId', [document.getAttribute('databaseInternalId')]),
+        Query.equal('databaseInternalId', [
+          document.getAttribute('databaseInternalId'),
+        ]),
         Query.limit(database.getLimitForAttributes()),
       ]);
 
-      attributes.forEach(attribute => {
+      attributes.forEach((attribute) => {
         if (attribute.getAttribute('type') === Database.VAR_RELATIONSHIP) {
           const options = attribute.getAttribute('options');
-          Object.keys(options).forEach(key => {
+          Object.keys(options).forEach((key) => {
             attribute.setAttribute(key, options[key]);
           });
           attribute.removeAttribute('options');
@@ -82,7 +91,7 @@ const filters = {
       });
 
       return attributes;
-    }
+    },
   },
   subQueryIndexes: {
     serialize: (value: any) => {
@@ -91,10 +100,12 @@ const filters = {
     deserialize: async (value: any, document: Document, database: Database) => {
       return await database.find('indexes', [
         Query.equal('collectionInternalId', [document.getInternalId()]),
-        Query.equal('databaseInternalId', [document.getAttribute('databaseInternalId')]),
+        Query.equal('databaseInternalId', [
+          document.getAttribute('databaseInternalId'),
+        ]),
         Query.limit(database.getLimitForIndexes()),
       ]);
-    }
+    },
   },
   subQueryPlatforms: {
     serialize: (value: any) => {
@@ -105,7 +116,7 @@ const filters = {
         Query.equal('projectInternalId', [document.getInternalId()]),
         Query.limit(APP_LIMIT_SUBQUERY),
       ]);
-    }
+    },
   },
 
   subQueryKeys: {
@@ -117,7 +128,7 @@ const filters = {
         Query.equal('projectInternalId', [document.getInternalId()]),
         Query.limit(APP_LIMIT_SUBQUERY),
       ]);
-    }
+    },
   },
   subQueryWebhooks: {
     serialize: (value: any) => {
@@ -128,7 +139,7 @@ const filters = {
         Query.equal('projectInternalId', [document.getInternalId()]),
         Query.limit(APP_LIMIT_SUBQUERY),
       ]);
-    }
+    },
   },
   subQuerySessions: {
     serialize: (value: any) => {
@@ -141,7 +152,7 @@ const filters = {
           Query.limit(APP_LIMIT_SUBQUERY),
         ]);
       });
-    }
+    },
   },
   subQueryTokens: {
     serialize: (value: any) => {
@@ -154,7 +165,7 @@ const filters = {
           Query.limit(APP_LIMIT_SUBQUERY),
         ]);
       });
-    }
+    },
   },
   subQueryChallenges: {
     serialize: (value: any) => {
@@ -167,7 +178,7 @@ const filters = {
           Query.limit(APP_LIMIT_SUBQUERY),
         ]);
       });
-    }
+    },
   },
   subQueryAuthenticators: {
     serialize: (value: any) => {
@@ -180,7 +191,7 @@ const filters = {
           Query.limit(APP_LIMIT_SUBQUERY),
         ]);
       });
-    }
+    },
   },
   subQueryMemberships: {
     serialize: (value: any) => {
@@ -193,7 +204,7 @@ const filters = {
           Query.limit(APP_LIMIT_SUBQUERY),
         ]);
       });
-    }
+    },
   },
   subQueryVariables: {
     serialize: (value: any) => {
@@ -205,7 +216,7 @@ const filters = {
         Query.equal('resourceType', ['function']),
         Query.limit(APP_LIMIT_SUBQUERY),
       ]);
-    }
+    },
   },
 
   encrypt: {
@@ -239,7 +250,7 @@ const filters = {
       decrypted += decipher.final('utf8');
 
       return decrypted;
-    }
+    },
   },
 
   subQueryProjectVariables: {
@@ -251,7 +262,7 @@ const filters = {
         Query.equal('resourceType', ['project']),
         Query.limit(APP_LIMIT_SUBQUERY),
       ]);
-    }
+    },
   },
   userSearch: {
     serialize: (value: any, user: Document) => {
@@ -259,7 +270,7 @@ const filters = {
         user.getId(),
         user.getAttribute('email', ''),
         user.getAttribute('name', ''),
-        user.getAttribute('phone', '')
+        user.getAttribute('phone', ''),
       ];
 
       user.getAttribute('labels', []).forEach((label: string) => {
@@ -270,7 +281,7 @@ const filters = {
     },
     deserialize: (value: any) => {
       return value;
-    }
+    },
   },
   subQueryTargets: {
     serialize: (value: any) => {
@@ -283,7 +294,7 @@ const filters = {
           Query.limit(APP_LIMIT_SUBQUERY),
         ]);
       });
-    }
+    },
   },
   subQueryTopicTargets: {
     serialize: (value: any) => {
@@ -295,7 +306,9 @@ const filters = {
           Query.equal('topicInternalId', [document.getInternalId()]),
           Query.limit(APP_LIMIT_SUBSCRIBERS_SUBQUERY),
         ]);
-        return subscribers.map((subscriber: Document) => subscriber.getAttribute('targetInternalId'));
+        return subscribers.map((subscriber: Document) =>
+          subscriber.getAttribute('targetInternalId'),
+        );
       });
 
       if (targetIds.length > 0) {
@@ -306,7 +319,7 @@ const filters = {
         });
       }
       return [];
-    }
+    },
   },
   providerSearch: {
     serialize: (value: any, provider: Document) => {
@@ -314,14 +327,14 @@ const filters = {
         provider.getId(),
         provider.getAttribute('name', ''),
         provider.getAttribute('provider', ''),
-        provider.getAttribute('type', '')
+        provider.getAttribute('type', ''),
       ];
 
       return searchValues.filter(Boolean).join(' ');
     },
     deserialize: (value: any) => {
       return value;
-    }
+    },
   },
   topicSearch: {
     serialize: (value: any, topic: Document) => {
@@ -335,7 +348,7 @@ const filters = {
     },
     deserialize: (value: any) => {
       return value;
-    }
+    },
   },
   messageSearch: {
     serialize: (value: any, message: Document) => {
@@ -360,57 +373,59 @@ const filters = {
     },
     deserialize: (value: any) => {
       return value;
-    }
-  }
+    },
+  },
 };
 
-
-// const formats = {
-//   APP_DATABASE_ATTRIBUTE_EMAIL: {
-//     create: () => new Email(),
-//     type: Database.VAR_STRING
-//   },
-//   APP_DATABASE_ATTRIBUTE_DATETIME: {
-//     create: () => new DatetimeValidator(),
-//     type: Database.VAR_DATETIME
-//   },
-//   APP_DATABASE_ATTRIBUTE_ENUM: {
-//     create: (attribute: any) => {
-//       const elements = attribute.formatOptions.elements;
-//       return new WhiteList(elements, true);
-//     },
-//     type: Database.VAR_STRING
-//   },
-//   APP_DATABASE_ATTRIBUTE_IP: {
-//     create: () => new IP(),
-//     type: Database.VAR_STRING
-//   },
-//   APP_DATABASE_ATTRIBUTE_URL: {
-//     create: () => new URL(),
-//     type: Database.VAR_STRING
-//   },
-//   APP_DATABASE_ATTRIBUTE_INT_RANGE: {
-//     create: (attribute: any) => {
-//       const min = attribute.formatOptions.min ?? -Infinity;
-//       const max = attribute.formatOptions.max ?? Infinity;
-//       return new Range(min, max, Range.TYPE_INTEGER);
-//     },
-//     type: Database.VAR_INTEGER
-//   },
-//   APP_DATABASE_ATTRIBUTE_FLOAT_RANGE: {
-//     create: (attribute: any) => {
-//       const min = attribute.formatOptions.min ?? -Infinity;
-//       const max = attribute.formatOptions.max ?? Infinity;
-//       return new Range(min, max, Range.TYPE_FLOAT);
-//     },
-//     type: Database.VAR_FLOAT
-//   }
-// };
+const formats = {
+  APP_DATABASE_ATTRIBUTE_EMAIL: {
+    create: () => new EmailValidator(),
+    type: Database.VAR_STRING,
+  },
+  // APP_DATABASE_ATTRIBUTE_DATETIME: {
+  //   create: () => new DatetimeValidator(),
+  //   type: Database.VAR_DATETIME
+  // },
+  // APP_DATABASE_ATTRIBUTE_ENUM: {
+  //   create: (attribute: any) => {
+  //     const elements = attribute.formatOptions.elements;
+  //     return new WhiteList(elements, true);
+  //   },
+  //   type: Database.VAR_STRING
+  // },
+  // APP_DATABASE_ATTRIBUTE_IP: {
+  //   create: () => new IP(),
+  //   type: Database.VAR_STRING
+  // },
+  // APP_DATABASE_ATTRIBUTE_URL: {
+  //   create: () => new URL(),
+  //   type: Database.VAR_STRING
+  // },
+  // APP_DATABASE_ATTRIBUTE_INT_RANGE: {
+  //   create: (attribute: any) => {
+  //     const min = attribute.formatOptions.min ?? -Infinity;
+  //     const max = attribute.formatOptions.max ?? Infinity;
+  //     return new Range(min, max, Range.TYPE_INTEGER);
+  //   },
+  //   type: Database.VAR_INTEGER
+  // },
+  // APP_DATABASE_ATTRIBUTE_FLOAT_RANGE: {
+  //   create: (attribute: any) => {
+  //     const min = attribute.formatOptions.min ?? -Infinity;
+  //     const max = attribute.formatOptions.max ?? Infinity;
+  //     return new Range(min, max, Range.TYPE_FLOAT);
+  //   },
+  //   type: Database.VAR_FLOAT
+  // }
+};
 
 // Object.keys(formats).forEach(key => {
 //   Structure.addFormat(key, formats[key].create, formats[key].type);
 // });
 
-Object.keys(filters).forEach(key => {
-  Database.addFilter(key, filters[key].serialize, filters[key].deserialize);
+Object.keys(filters).forEach((key) => {
+  Database.addFilter(key, {
+    encode: filters[key].serialize,
+    decode: filters[key].deserialize,
+  });
 });

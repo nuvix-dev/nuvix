@@ -18,7 +18,8 @@ export const services: Record<string, Service> = {
   account: {
     key: 'account',
     name: 'Account',
-    subtitle: 'The Account service allows you to authenticate and manage a user account.',
+    subtitle:
+      'The Account service allows you to authenticate and manage a user account.',
     description: '/docs/services/account.md',
     controller: 'api/account.php',
     sdk: true,
@@ -31,7 +32,8 @@ export const services: Record<string, Service> = {
   avatars: {
     key: 'avatars',
     name: 'Avatars',
-    subtitle: 'The Avatars service aims to help you complete everyday tasks related to your app image, icons, and avatars.',
+    subtitle:
+      'The Avatars service aims to help you complete everyday tasks related to your app image, icons, and avatars.',
     description: '/docs/services/avatars.md',
     controller: 'api/avatars.php',
     sdk: true,
@@ -44,7 +46,8 @@ export const services: Record<string, Service> = {
   databases: {
     key: 'databases',
     name: 'Databases',
-    subtitle: 'The Databases service allows you to create structured collections of documents, query and filter lists of documents',
+    subtitle:
+      'The Databases service allows you to create structured collections of documents, query and filter lists of documents',
     description: '/docs/services/databases.md',
     controller: 'api/databases.php',
     sdk: true,
@@ -58,7 +61,8 @@ export const services: Record<string, Service> = {
   locale: {
     key: 'locale',
     name: 'Locale',
-    subtitle: 'The Locale service allows you to customize your app based on your users\' location.',
+    subtitle:
+      "The Locale service allows you to customize your app based on your users' location.",
     description: '/docs/services/locale.md',
     controller: 'api/locale.php',
     sdk: true,
@@ -71,7 +75,8 @@ export const services: Record<string, Service> = {
   health: {
     key: 'health',
     name: 'Health',
-    subtitle: 'The Health service allows you to both validate and monitor your Appwrite server\'s health.',
+    subtitle:
+      "The Health service allows you to both validate and monitor your Appwrite server's health.",
     description: '/docs/services/health.md',
     controller: 'api/health.php',
     sdk: true,
@@ -84,7 +89,8 @@ export const services: Record<string, Service> = {
   projects: {
     key: 'projects',
     name: 'Projects',
-    subtitle: 'The Project service allows you to manage all the projects in your Appwrite server.',
+    subtitle:
+      'The Project service allows you to manage all the projects in your Appwrite server.',
     description: '',
     controller: 'api/projects.php',
     sdk: true,
@@ -97,7 +103,8 @@ export const services: Record<string, Service> = {
   project: {
     key: 'project',
     name: 'Project',
-    subtitle: 'The Project service allows you to manage all the projects in your Appwrite server.',
+    subtitle:
+      'The Project service allows you to manage all the projects in your Appwrite server.',
     description: '',
     controller: 'api/project.php',
     sdk: true,
@@ -123,7 +130,8 @@ export const services: Record<string, Service> = {
   teams: {
     key: 'teams',
     name: 'Teams',
-    subtitle: 'The Teams service allows you to group users of your project and to enable them to share read and write access to your project resources',
+    subtitle:
+      'The Teams service allows you to group users of your project and to enable them to share read and write access to your project resources',
     description: '/docs/services/teams.md',
     controller: 'api/teams.php',
     sdk: true,
@@ -149,7 +157,8 @@ export const services: Record<string, Service> = {
   vcs: {
     key: 'vcs',
     name: 'VCS',
-    subtitle: 'The VCS service allows you to interact with providers like GitHub, GitLab etc.',
+    subtitle:
+      'The VCS service allows you to interact with providers like GitHub, GitLab etc.',
     description: '',
     controller: 'api/vcs.php',
     sdk: false,
@@ -162,7 +171,8 @@ export const services: Record<string, Service> = {
   functions: {
     key: 'functions',
     name: 'Functions',
-    subtitle: 'The Functions Service allows you view, create and manage your Cloud Functions.',
+    subtitle:
+      'The Functions Service allows you view, create and manage your Cloud Functions.',
     description: '/docs/services/functions.md',
     controller: 'api/functions.php',
     sdk: true,
@@ -175,7 +185,8 @@ export const services: Record<string, Service> = {
   proxy: {
     key: 'proxy',
     name: 'Proxy',
-    subtitle: 'The Proxy Service allows you to configure actions for your domains beyond DNS configuration.',
+    subtitle:
+      'The Proxy Service allows you to configure actions for your domains beyond DNS configuration.',
     description: '/docs/services/proxy.md',
     controller: 'api/proxy.php',
     sdk: true,
@@ -201,7 +212,8 @@ export const services: Record<string, Service> = {
   graphql: {
     key: 'graphql',
     name: 'GraphQL',
-    subtitle: 'The GraphQL API allows you to query and mutate your Appwrite server using GraphQL.',
+    subtitle:
+      'The GraphQL API allows you to query and mutate your Appwrite server using GraphQL.',
     description: '/docs/services/graphql.md',
     controller: 'api/graphql.php',
     sdk: true,
@@ -214,7 +226,8 @@ export const services: Record<string, Service> = {
   console: {
     key: 'console',
     name: 'Console',
-    subtitle: 'The Console service allows you to interact with console relevant informations.',
+    subtitle:
+      'The Console service allows you to interact with console relevant informations.',
     description: '',
     controller: 'api/console.php',
     sdk: true,
@@ -227,7 +240,8 @@ export const services: Record<string, Service> = {
   migrations: {
     key: 'migrations',
     name: 'Migrations',
-    subtitle: 'The Migrations service allows you to migrate third-party data to your Appwrite project.',
+    subtitle:
+      'The Migrations service allows you to migrate third-party data to your Appwrite project.',
     description: '/docs/services/migrations.md',
     controller: 'api/migrations.php',
     sdk: true,
@@ -240,7 +254,8 @@ export const services: Record<string, Service> = {
   messaging: {
     key: 'messaging',
     name: 'Messaging',
-    subtitle: 'The Messaging service allows you to send messages to any provider type (SMTP, push notification, SMS, etc.).',
+    subtitle:
+      'The Messaging service allows you to send messages to any provider type (SMTP, push notification, SMS, etc.).',
     description: '/docs/services/messaging.md',
     controller: 'api/messaging.php',
     sdk: true,

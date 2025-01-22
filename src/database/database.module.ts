@@ -10,15 +10,14 @@ import { Project, ProjectSchema } from 'src/projects/schemas/project.schema';
   controllers: [DatabaseController],
   providers: [DatabaseService],
   imports: [
-    GlobalMongooseModule.forFeature([
-      { name: Project.name, schema: ProjectSchema }
-    ], 'server')
-  ]
+    GlobalMongooseModule.forFeature(
+      [{ name: Project.name, schema: ProjectSchema }],
+      'server',
+    ),
+  ],
 })
 export class DatabaseModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(ProjectMiddleware)
-      .forRoutes(DatabaseController);
+    consumer.apply(ProjectMiddleware).forRoutes(DatabaseController);
   }
 }
