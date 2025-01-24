@@ -22,7 +22,7 @@ export class ConsoleController {
 
   @Get('plans')
   async getPlans() {
-    let plans = await this.consoleService.getPlans();
+    const plans = await this.consoleService.getPlans();
     return {
       total: plans.length,
       plans: plans,

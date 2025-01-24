@@ -365,7 +365,7 @@ export class Auth {
   private static getBcrypt(): any {
     try {
       // Try to load native bcrypt and check if it is supported
-      let bcrypt = require('bcrypt');
+      const bcrypt = require('bcrypt');
       bcrypt.hashSync('test', 10); // Test if native bcrypt is working
       console.log('Using native bcrypt.');
       return bcrypt;
@@ -377,7 +377,7 @@ export class Auth {
 
   private static getArgon2() {
     try {
-      let argon2 = require('argon2');
+      const argon2 = require('argon2');
       return argon2;
     } catch (e) {
       throw new Exception(

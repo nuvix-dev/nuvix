@@ -80,7 +80,7 @@ export class UsersService {
    * Find a user by id
    */
   async findOne(id: string) {
-    let user = await this.userRepo.findOne({
+    const user = await this.userRepo.findOne({
       where: { $id: id },
       relations: ['targets'],
     });
@@ -94,7 +94,7 @@ export class UsersService {
    * Get user preferences
    */
   async getPrefs(id: string) {
-    let user = await this.userRepo.findOneBy({ $id: id });
+    const user = await this.userRepo.findOneBy({ $id: id });
 
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
@@ -107,7 +107,7 @@ export class UsersService {
    * Update user preferences
    */
   async updatePrefs(id: string, prefs: any) {
-    let user = await this.userRepo.findOneBy({ $id: id });
+    const user = await this.userRepo.findOneBy({ $id: id });
 
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
@@ -122,7 +122,7 @@ export class UsersService {
    * Update user status
    */
   async updateStatus(id: string, input: UpdateUserStatusDto) {
-    let user = await this.userRepo.findOneBy({ $id: id });
+    const user = await this.userRepo.findOneBy({ $id: id });
 
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
@@ -137,7 +137,7 @@ export class UsersService {
    * Update user labels
    */
   async updateLabels(id: string, input: UpdateUserLabelDto) {
-    let user = await this.userRepo.findOneBy({ $id: id });
+    const user = await this.userRepo.findOneBy({ $id: id });
 
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
@@ -152,7 +152,7 @@ export class UsersService {
    * Update user name
    */
   async updateName(id: string, input: UpdateUserNameDto) {
-    let user = await this.userRepo.findOneBy({ $id: id });
+    const user = await this.userRepo.findOneBy({ $id: id });
 
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
@@ -167,7 +167,7 @@ export class UsersService {
    * Update user password
    */
   async updatePassword(id: string, input: UpdateUserPasswordDto) {
-    let Project = this.cls.get<ProjectDocument>(PROJECT);
+    const Project = this.cls.get<ProjectDocument>(PROJECT);
     let user = await this.userRepo.findOneBy({ $id: id });
 
     if (!user) {
@@ -193,12 +193,12 @@ export class UsersService {
       return user;
     }
 
-    let hasPassword = await Auth.passwordHash(
+    const hasPassword = await Auth.passwordHash(
       input.password,
       Auth.DEFAULT_ALGO,
       Auth.DEFAULT_ALGO_OPTIONS,
     );
-    let passwordHistory = Project.auths?.passwordHistory ?? 0;
+    const passwordHistory = Project.auths?.passwordHistory ?? 0;
     if (passwordHistory > 0) {
       const validator = new PasswordHistoryValidator(
         user.passwordHistory,
@@ -226,7 +226,7 @@ export class UsersService {
    * Update user email
    */
   async updateEmail(id: string, email: string) {
-    let user = await this.userRepo.findOneBy({ $id: id });
+    const user = await this.userRepo.findOneBy({ $id: id });
 
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
@@ -304,7 +304,7 @@ export class UsersService {
    * Update user phone
    */
   async updatePhone(id: string, phone: string) {
-    let user = await this.userRepo.findOneBy({ $id: id });
+    const user = await this.userRepo.findOneBy({ $id: id });
 
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
@@ -373,7 +373,7 @@ export class UsersService {
     id: string,
     input: UpdateUserEmailVerificationDto,
   ) {
-    let user = await this.userRepo.findOneBy({ $id: id });
+    const user = await this.userRepo.findOneBy({ $id: id });
 
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
@@ -392,7 +392,7 @@ export class UsersService {
     id: string,
     input: UpdateUserPoneVerificationDto,
   ) {
-    let user = await this.userRepo.findOneBy({ $id: id });
+    const user = await this.userRepo.findOneBy({ $id: id });
 
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
@@ -407,7 +407,7 @@ export class UsersService {
    * Update Mfa Status
    */
   async updateMfaStatus(id: string, mfa: boolean) {
-    let user = await this.userRepo.findOneBy({ $id: id });
+    const user = await this.userRepo.findOneBy({ $id: id });
 
     if (!user) {
       throw new Exception(Exception.USER_NOT_FOUND);
@@ -629,7 +629,7 @@ export class UsersService {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
 
-    let targets = await this.targetRepo.find();
+    const targets = await this.targetRepo.find();
 
     console.log(targets);
 
@@ -746,7 +746,7 @@ export class UsersService {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
 
-    let memberships = await this.memberRepo.find({
+    const memberships = await this.memberRepo.find({
       where: { user: { id: user.id } },
       relations: ['team'],
     });
@@ -853,7 +853,7 @@ export class UsersService {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
 
-    let authenticator = TOTP.getAuthenticatorFromUser(user);
+    const authenticator = TOTP.getAuthenticatorFromUser(user);
 
     if (!authenticator) {
       throw new Exception(Exception.USER_AUTHENTICATOR_NOT_FOUND);
@@ -959,7 +959,7 @@ export class UsersService {
     if (input.sessionId === 'recent') {
       session = user.sessions.length > 0 ? user.sessions.at(-1) : undefined;
     } else {
-      for (let sess of user.sessions) {
+      for (const sess of user.sessions) {
         if (input.sessionId === sess.$id) {
           session = sess;
         }
@@ -1012,7 +1012,7 @@ export class UsersService {
 
     await this.sessionRepo.save(session);
 
-    let countryName = '';
+    const countryName = '';
 
     session.secret = secret;
     session.countryName = countryName;

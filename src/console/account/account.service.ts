@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, UseInterceptors } from '@nestjs/common';
 import {
   Authorization,
   Database,
@@ -17,8 +17,15 @@ import { Auth } from 'src/core/helper/auth.helper';
 import { Detector } from 'src/core/helper/detector.helper';
 import { PersonalDataValidator } from 'src/core/validators/personal-data.validator';
 import { CONSOLE_CONFIG, DB_FOR_CONSOLE } from 'src/Utils/constants';
+import { ResolverInterceptor } from 'src/core/resolver/response.resolver';
+import {
+  UpdateEmailDTO,
+  UpdateNameDTO,
+  UpdatePhoneDTO,
+} from './DTO/account.dto';
 
 @Injectable()
+@UseInterceptors(ResolverInterceptor)
 export class AccountService {
   private readonly geodb: Reader<CountryResponse>;
   constructor(
@@ -29,14 +36,21 @@ export class AccountService {
     @Inject(DB_FOR_CONSOLE) private readonly db: Database,
   ) {
     try {
-      const buffer = fs.readFileSync(process.cwd() + '/assets/dbip/dbip-country-lite-2024-09.mmdb');
+      const buffer = fs.readFileSync(
+        process.cwd() + '/assets/dbip/dbip-country-lite-2024-09.mmdb',
+      );
       this.geodb = new Reader<CountryResponse>(buffer);
     } catch (error) {
-      console.warn('GeoIP database not found, country detection will be disabled');
+      console.warn(
+        'GeoIP database not found, country detection will be disabled',
+      );
       this.geodb = null;
     }
   }
 
+  /**
+   * Create a new account
+   */
   async createAccount(
     userId: string,
     email: string,
@@ -195,6 +209,20 @@ export class AccountService {
 
     return user;
   }
+
+  async updatePrefs(user: Document, prefs: { [key: string]: any }) {
+    user.setAttribute('prefs', prefs);
+
+    user = await this.db.updateDocument('users', user.getId(), user);
+
+    return user.getAttribute('prefs', {});
+  }
+
+  async updateEmail(user: Document, input: UpdateEmailDTO) {}
+
+  async updateName(user: Document, input: UpdateNameDTO) {}
+
+  async updatePhone(user: Document, input: UpdatePhoneDTO) {}
 
   /**
    * Create a new session for the user

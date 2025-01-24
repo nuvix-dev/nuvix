@@ -281,7 +281,9 @@ export class Response {
   public static MODEL_IDENTITY = IdentityModel;
   public static MODEL_TOKEN = TokenModel;
   public static MODEL_JWT = JWTModel;
-  public static MODEL_PREFERENCES = 'preferences';
+  public static MODEL_PREFERENCES = class {
+    [key: string]: any;
+  };
 
   // MFA
   public static MODEL_MFA_TYPE = MFATypeModel;

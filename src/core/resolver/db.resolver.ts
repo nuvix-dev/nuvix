@@ -2,7 +2,7 @@ import { Authorization, Database, Document, Query } from '@nuvix/database';
 import {
   APP_LIMIT_SUBQUERY,
   APP_LIMIT_SUBSCRIBERS_SUBQUERY,
-  APP_OPENSSL_KEY,
+  APP_OPENSSL_KEY_1,
 } from 'src/Utils/constants';
 import crypto from 'crypto';
 import { EmailValidator } from '../validators/email.validator';
@@ -185,7 +185,6 @@ export const filters = {
       return;
     },
     deserialize: async (value: any, document: Document, database: Database) => {
-      console.log(document, document.getInternalId());
       return await Authorization.skip(async () => {
         return await database.find('authenticators', [
           Query.equal('userInternalId', [document.getInternalId()]),
@@ -222,7 +221,7 @@ export const filters = {
 
   encrypt: {
     serialize: (value: any) => {
-      const key = APP_OPENSSL_KEY();
+      const key = APP_OPENSSL_KEY_1;
       const iv = crypto.randomBytes(16);
       const cipher = crypto.createCipheriv('aes-128-gcm', key, iv);
       let encrypted = cipher.update(value, 'utf8', 'hex');
@@ -242,7 +241,13 @@ export const filters = {
         return;
       }
       value = JSON.parse(value);
-      const key = APP_OPENSSL_KEY(value.version);
+      let key: string;
+      switch (value.version) {
+        case '1':
+          key = APP_OPENSSL_KEY_1;
+        default:
+          key = APP_OPENSSL_KEY_1;
+      }
       const iv = Buffer.from(value.iv, 'hex');
       const tag = Buffer.from(value.tag, 'hex');
       const decipher = crypto.createDecipheriv(value.method, key, iv);

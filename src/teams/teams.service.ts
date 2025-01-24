@@ -40,7 +40,7 @@ export class TeamsService {
    * Find all teams
    */
   async findAll() {
-    let data = await this.teamRepo.findAndCount();
+    const data = await this.teamRepo.findAndCount();
     return {
       total: data[1],
       teams: data[0],

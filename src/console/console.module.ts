@@ -10,4 +10,4 @@ import { OrganizationsModule } from './organizations/organizations.module';
   providers: [ConsoleService],
   imports: [AccountModule, UsersModule, OrganizationsModule],
 })
-export class ConsoleModule { }
+export class ConsoleModule {}

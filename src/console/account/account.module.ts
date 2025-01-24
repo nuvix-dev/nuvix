@@ -6,4 +6,4 @@ import { AccountController } from './account.controller';
   controllers: [AccountController],
   providers: [AccountService],
 })
-export class AccountModule { }
+export class AccountModule {}

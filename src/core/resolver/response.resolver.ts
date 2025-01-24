@@ -15,6 +15,7 @@ import { isObject } from '@nestjs/common/utils/shared.utils';
 import { loadPackage } from '@nestjs/common/utils/load-package.util';
 import { ClassTransformOptions } from '@nestjs/common/interfaces/external/class-transform-options.interface';
 import { TransformerPackage } from '@nestjs/common/interfaces/external/transformer-package.interface';
+import { Document } from '@nuvix/database';
 
 export const CLASS_SERIALIZER_OPTIONS = 'CLASS_SERIALIZER_OPTIONS';
 
@@ -81,6 +82,10 @@ export class ResolverInterceptor implements NestInterceptor {
   ): PlainLiteralObject | Array<PlainLiteralObject> {
     if (!isObject(response) || response instanceof StreamableFile) {
       return response;
+    }
+
+    if (response instanceof Document) {
+      response = response.getArrayCopy();
     }
 
     if (options.list) {

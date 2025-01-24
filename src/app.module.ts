@@ -61,7 +61,7 @@ config();
     DbModule,
     BaseModule,
     ConsoleModule,
-    // ProjectModule,
+    ProjectModule,
     // UsersModule,
     // TeamsModule,
     AccountModule,
@@ -75,6 +75,6 @@ config();
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthMiddleware).forRoutes("*");
+    consumer.apply(AuthMiddleware).forRoutes('*');
   }
 }

@@ -1,4 +1,11 @@
-import { FactoryProvider, Global, Injectable, Logger, Module, Scope } from '@nestjs/common';
+import {
+  FactoryProvider,
+  Global,
+  Injectable,
+  Logger,
+  Module,
+  Scope,
+} from '@nestjs/common';
 import { REQUEST } from '@nestjs/core';
 import { Exception } from './extend/exception';
 import { Request } from 'express';
@@ -21,11 +28,12 @@ import { filters } from './resolver/db.resolver';
     {
       provide: DB_FOR_CONSOLE,
       useFactory: async (cls: ClsService) => {
-        let adapter = new MariaDB({
+        const adapter = new MariaDB({
           connection: {
             host: process.env.DATABASE_HOST || 'localhost',
             user: process.env.DATABASE_USER,
             password: process.env.DATABASE_PASSWORD,
+            database: process.env.DATABASE_NAME,
             port: 3306,
           },
           maxVarCharLimit: 5000,
@@ -42,9 +50,8 @@ import { filters } from './resolver/db.resolver';
           });
         });
 
-        let connection = new Database(adapter);
+        const connection = new Database(adapter);
 
-        adapter.setDatabase('test1');
         try {
           await connection.create('test1');
         } catch (e) {
@@ -61,4 +68,4 @@ import { filters } from './resolver/db.resolver';
   ],
   exports: [DB_FOR_CONSOLE],
 })
-export class DbModule { }
+export class DbModule {}

@@ -4,6 +4,8 @@ import {
   Length,
   Matches,
   IsOptional,
+  IsObject,
+  IsNotEmpty,
 } from 'class-validator';
 
 export class CreateAccountDTO {
@@ -25,4 +27,44 @@ export class CreateAccountDTO {
     message: 'User name can have a maximum length of 128 characters.',
   })
   name?: string;
+}
+
+export class UpdatePrefsDTO {
+  @IsObject()
+  prefs: { [key: string]: any };
+}
+
+export class UpdateEmailDTO {
+  @IsEmail()
+  email: string;
+
+  @IsNotEmpty()
+  @IsString()
+  password: string;
+}
+
+export class UpdatePasswordDTO {
+  @IsNotEmpty()
+  @IsString()
+  password: string;
+
+  @IsNotEmpty()
+  @IsString()
+  oldPassword: string;
+}
+
+export class UpdateNameDTO {
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+}
+
+export class UpdatePhoneDTO {
+  @IsNotEmpty()
+  @IsString()
+  phone: string;
+
+  @IsNotEmpty()
+  @IsString()
+  password: string;
 }
