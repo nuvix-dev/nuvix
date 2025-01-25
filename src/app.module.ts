@@ -1,15 +1,10 @@
-import {
-  Logger,
-  MiddlewareConsumer,
-  Module,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Logger, MiddlewareConsumer, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
-import { GraphQLModule } from '@nestjs/graphql';
-import { DirectiveLocation, GraphQLDirective } from 'graphql';
-import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
+// import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+// import { GraphQLModule } from '@nestjs/graphql';
+// import { DirectiveLocation, GraphQLDirective } from 'graphql';
+// import { ApolloServerPluginLandingPageLocalDefault } from '@apollo/server/plugin/landingPage/default';
 import { config } from 'dotenv';
 import { BaseModule } from './base/base.module';
 import { DatabaseModule } from './database/database.module';
@@ -19,11 +14,10 @@ import { UsersModule } from './users/users.module';
 import { AccountModule } from './account/account.module';
 import { TeamsModule } from './teams/teams.module';
 import { RealtimeModule } from './realtime/realtime.module';
-import { ClsModule, ClsService } from 'nestjs-cls';
+import { ClsModule } from 'nestjs-cls';
 import { Request } from 'express';
 import { FunctionsModule } from './functions/functions.module';
 import { AuthMiddleware } from './core/resolver/middlewares/auth.middleware';
-import { DB_FOR_CONSOLE } from './Utils/constants';
 import { CoreModule } from './core/core.module';
 config();
 
@@ -60,8 +54,8 @@ config();
     CoreModule,
     BaseModule,
     ConsoleModule,
-    // UsersModule,
-    // TeamsModule,
+    UsersModule,
+    TeamsModule,
     AccountModule,
     DatabaseModule,
     AvatarsModule,

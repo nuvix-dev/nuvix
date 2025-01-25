@@ -8,6 +8,7 @@ import {
   ExecutionContext,
   ClassSerializerContextOptions,
   SetMetadata,
+  Type,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -175,5 +176,9 @@ export class ResolverInterceptor implements NestInterceptor {
   }
 }
 
-export const ResponseType = (options: ResolverTypeContextOptions) =>
-  SetMetadata(CLASS_SERIALIZER_OPTIONS, options);
+export const ResponseType = (
+  options: ResolverTypeContextOptions | Type<any>,
+) =>
+  typeof options === 'function'
+    ? SetMetadata(CLASS_SERIALIZER_OPTIONS, { type: options })
+    : SetMetadata(CLASS_SERIALIZER_OPTIONS, options);

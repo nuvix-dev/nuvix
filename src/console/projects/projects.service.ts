@@ -667,7 +667,7 @@ export class ProjectService {
    * Create a webhook for a project.
    */
   async createWebhook(id: string, input: CreateWebhookDTO) {
-    let project = await this.db.getDocument('projects', id);
+    const project = await this.db.getDocument('projects', id);
 
     if (project.isEmpty()) {
       throw new Exception(Exception.PROJECT_NOT_FOUND);

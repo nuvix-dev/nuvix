@@ -374,6 +374,9 @@ export class Response {
   public static MODEL_HEALTH_ANTIVIRUS = HealthAntivirusModel;
   public static MODEL_HEALTH_CERTIFICATE = HealthCertificateModel;
 
+  // Organization
+  public static MODEL_ORGANIZATION = class {};
+
   public empty() {
     return Response.MODEL_NONE;
   }

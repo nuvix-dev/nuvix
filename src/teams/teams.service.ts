@@ -16,6 +16,7 @@ import {
 import { DB_FOR_PROJECT } from 'src/Utils/constants';
 import {
   Authorization,
+  AuthorizationException,
   Database,
   Document,
   DuplicateException,
@@ -243,252 +244,385 @@ export class TeamsService {
   /**
    * Add a member to the team
    */
-  // async addMember(id: string, input: CreateMembershipDTO) {
-  //   const team = await this.teamRepo.findOneBy({ $id: id });
-  //   if (!team) {
-  //     throw new Exception(Exception.TEAM_NOT_FOUND);
-  //   }
+  async addMember(id: string, input: CreateMembershipDTO) {
+    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
+    const isAppUser = Auth.isAppUser(Authorization.getRoles());
 
-  //   let invitee: UserEntity | null = null;
+    if (!input.userId && !input.email && !input.phone) {
+      throw new Exception(
+        Exception.GENERAL_ARGUMENT_INVALID,
+        'At least one of userId, email, or phone is required',
+      );
+    }
 
-  //   if (input.userId) {
-  //     invitee = await this.userRepo.findOneBy({ $id: input.userId });
-  //     if (!invitee) {
-  //       throw new Exception(Exception.USER_NOT_FOUND);
-  //     }
-  //     if (input.email && invitee.email !== input.email) {
-  //       throw new Exception(
-  //         Exception.USER_ALREADY_EXISTS,
-  //         "Given userId and email don't match",
-  //         409,
-  //       );
-  //     }
-  //     if (input.phone && invitee.phone !== input.phone) {
-  //       throw new Exception(
-  //         Exception.USER_ALREADY_EXISTS,
-  //         "Given userId and phone don't match",
-  //         409,
-  //       );
-  //     }
-  //   } else if (input.email) {
-  //     invitee = await this.userRepo.findOneBy({ email: input.email });
-  //     if (invitee && input.phone && invitee.phone !== input.phone) {
-  //       throw new Exception(
-  //         Exception.USER_ALREADY_EXISTS,
-  //         "Given email and phone don't match",
-  //         409,
-  //       );
-  //     }
-  //   } else if (input.phone) {
-  //     invitee = await this.userRepo.findOneBy({ phone: input.phone });
-  //     if (invitee && input.email && invitee.email !== input.email) {
-  //       throw new Exception(
-  //         Exception.USER_ALREADY_EXISTS,
-  //         "Given phone and email don't match",
-  //         409,
-  //       );
-  //     }
-  //   }
+    const team = await this.db.getDocument('teams', id);
+    if (team.isEmpty()) {
+      throw new Exception(Exception.TEAM_NOT_FOUND);
+    }
 
-  //   if (!invitee) {
-  //     invitee = this.userRepo.create({
-  //       $id: ID.unique(),
-  //       email: input.email,
-  //       phone: input.phone,
-  //       name: input.email,
-  //       prefs: {},
-  //       labels: [],
-  //       search: [input.email, input.phone].join(' '),
-  //     });
-  //     await this.userRepo.save(invitee);
-  //   }
+    let invitee: Document | null = null;
 
-  //   const membershipId = ID.unique();
-  //   const membership = this.membershipsRepo.create({
-  //     $id: membershipId,
-  //     $permissions: [
-  //       Permission.Read(Role.User(invitee.$id)),
-  //       Permission.Read(Role.Team(team.$id)),
-  //       Permission.Update(Role.User(invitee.$id)),
-  //       Permission.Update(Role.Team(team.$id, 'owner')),
-  //       Permission.Delete(Role.User(invitee.$id)),
-  //       Permission.Delete(Role.Team(team.$id, 'owner')),
-  //     ],
-  //     userId: invitee.$id,
-  //     user: invitee,
-  //     teamId: team.$id,
-  //     team: team,
-  //     roles: input.roles,
-  //     invited: new Date(),
-  //     joined: new Date(),
-  //     confirm: true,
-  //     secret: '',
-  //     search: [membershipId, invitee.$id].join(' '),
-  //   });
+    if (input.userId) {
+      invitee = await this.db.getDocument('users', input.userId);
+      if (invitee.isEmpty()) {
+        throw new Exception(Exception.USER_NOT_FOUND);
+      }
+      if (input.email && invitee.getAttribute('email') !== input.email) {
+        throw new Exception(
+          Exception.USER_ALREADY_EXISTS,
+          'Given userId and email do not match',
+          409,
+        );
+      }
+      if (input.phone && invitee.getAttribute('phone') !== input.phone) {
+        throw new Exception(
+          Exception.USER_ALREADY_EXISTS,
+          'Given userId and phone do not match',
+          409,
+        );
+      }
+    } else if (input.email) {
+      invitee = await this.db.findOne('users', [
+        Query.equal('email', [input.email]),
+      ]);
+      if (
+        invitee &&
+        input.phone &&
+        invitee.getAttribute('phone') !== input.phone
+      ) {
+        throw new Exception(
+          Exception.USER_ALREADY_EXISTS,
+          'Given email and phone do not match',
+          409,
+        );
+      }
+    } else if (input.phone) {
+      invitee = await this.db.findOne('users', [
+        Query.equal('phone', [input.phone]),
+      ]);
+      if (
+        invitee &&
+        input.email &&
+        invitee.getAttribute('email') !== input.email
+      ) {
+        throw new Exception(
+          Exception.USER_ALREADY_EXISTS,
+          'Given phone and email do not match',
+          409,
+        );
+      }
+    }
 
-  //   await this.membershipsRepo.save(membership);
+    if (!invitee) {
+      const userId = ID.unique();
+      invitee = await this.db.createDocument(
+        'users',
+        new Document({
+          $id: userId,
+          $permissions: [
+            Permission.read(Role.any()),
+            Permission.read(Role.user(userId)),
+            Permission.update(Role.user(userId)),
+            Permission.delete(Role.user(userId)),
+          ],
+          email: input.email || null,
+          phone: input.phone || null,
+          emailVerification: false,
+          name: input.name || input.email,
+          prefs: {},
+          search: [userId, input.email, input.phone, input.name]
+            .filter(Boolean)
+            .join(' '),
+        }),
+      );
+    }
 
-  //   team.total += 1;
-  //   await this.teamRepo.save(team);
-  //   // Send invitation email or SMS
-  //   // ...
+    const membershipId = ID.unique();
+    const secret = Auth.tokenGenerator();
 
-  //   return membership;
-  // }
+    const membership = await this.db.createDocument(
+      'memberships',
+      new Document({
+        $id: membershipId,
+        $permissions: [
+          Permission.read(Role.any()),
+          Permission.update(Role.user(invitee.getId())),
+          Permission.update(Role.team(team.getId(), 'owner')),
+          Permission.delete(Role.user(invitee.getId())),
+          Permission.delete(Role.team(team.getId(), 'owner')),
+        ],
+        userId: invitee.getId(),
+        userInternalId: invitee.getInternalId(),
+        teamId: team.getId(),
+        teamInternalId: team.getInternalId(),
+        roles: input.roles,
+        invited: new Date(),
+        joined: isPrivilegedUser || isAppUser ? new Date() : null,
+        confirm: isPrivilegedUser || isAppUser,
+        secret: Auth.hash(secret),
+        search: [membershipId, invitee.getId()].join(' '),
+      }),
+    );
 
-  // /**
-  //  * Get all members of the team
-  //  */
-  // async getMembers(id: string) {
-  //   const team = await this.teamRepo.findOneBy({ $id: id });
-  //   if (!team) {
-  //     throw new Exception(Exception.TEAM_NOT_FOUND);
-  //   }
+    if (isPrivilegedUser || isAppUser) {
+      await this.db.increaseDocumentAttribute(
+        'teams',
+        team.getId(),
+        'total',
+        1,
+      );
+      await this.db.purgeCachedDocument('users', invitee.getId());
+    }
 
-  //   const memberships = await this.membershipsRepo.findAndCount({
-  //     where: { teamId: team.$id },
-  //   });
+    membership
+      .setAttribute('teamName', team.getAttribute('name'))
+      .setAttribute('userName', invitee.getAttribute('name'))
+      .setAttribute('userEmail', invitee.getAttribute('email'));
 
-  //   for (const membership of memberships[0]) {
-  //     const user = await this.userRepo.findOne({
-  //       where: { $id: membership.userId },
-  //       relations: { authenticators: true },
-  //     });
+    return membership;
+  }
 
-  //     let mfa = user.mfa || false;
-  //     if (mfa) {
-  //       const totp = TOTP.getAuthenticatorFromUser(user);
-  //       const totpEnabled = totp && totp.verified;
-  //       const emailEnabled = user.email && user.emailVerification;
-  //       const phoneEnabled = user.phone && user.phoneVerification;
+  /**
+   * Get all members of the team
+   */
+  async getMembers(id: string, queries: Query[], search?: string) {
+    const team = await this.db.getDocument('teams', id);
+    if (team.isEmpty()) {
+      throw new Exception(Exception.TEAM_NOT_FOUND);
+    }
 
-  //       if (!totpEnabled && !emailEnabled && !phoneEnabled) {
-  //         mfa = false;
-  //       }
-  //     }
+    if (search) {
+      queries.push(Query.search('search', search));
+    }
 
-  //     membership.mfa = mfa;
-  //     membership.teamName = team.name;
-  //     membership.userName = user.name;
-  //     membership.userEmail = user.email;
-  //   }
+    // Set internal queries
+    queries.push(Query.equal('teamInternalId', [team.getInternalId()]));
 
-  //   return {
-  //     total: memberships[1],
-  //     memberships: memberships[0],
-  //   };
-  // }
+    // Get cursor document if there was a cursor query
+    const cursor = queries.find((query) =>
+      [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(
+        query.getMethod(),
+      ),
+    );
 
-  // /**
-  //  * Get A member of the team
-  //  */
-  // async getMember(teamId: string, memberId: string) {
-  //   const team = await this.teamRepo.findOneBy({ $id: teamId });
-  //   if (!team) {
-  //     throw new Exception(Exception.TEAM_NOT_FOUND);
-  //   }
+    if (cursor) {
+      const membershipId = cursor.getValue();
+      const cursorDocument = await this.db.getDocument(
+        'memberships',
+        membershipId,
+      );
 
-  //   const membership = await this.membershipsRepo.findOneBy({
-  //     teamId: team.$id,
-  //     $id: memberId,
-  //   });
-  //   if (!membership) {
-  //     throw new Exception(Exception.MEMBERSHIP_NOT_FOUND);
-  //   }
+      if (!cursorDocument) {
+        throw new Exception(
+          Exception.GENERAL_CURSOR_NOT_FOUND,
+          `Membership '${membershipId}' for the 'cursor' value not found.`,
+        );
+      }
 
-  //   const user = await this.userRepo.findOne({
-  //     where: { $id: membership.userId },
-  //     relations: { authenticators: true },
-  //   });
+      cursor.setValue(cursorDocument);
+    }
 
-  //   let mfa = user.mfa || false;
-  //   if (mfa) {
-  //     const totp = TOTP.getAuthenticatorFromUser(user);
-  //     const totpEnabled = totp && totp.verified;
-  //     const emailEnabled = user.email && user.emailVerification;
-  //     const phoneEnabled = user.phone && user.phoneVerification;
+    const filterQueries = Query.groupByType(queries)['filters'];
+    const memberships = await this.db.find('memberships', queries);
+    const total = await this.db.count('memberships', filterQueries);
 
-  //     if (!totpEnabled && !emailEnabled && !phoneEnabled) {
-  //       mfa = false;
-  //     }
-  //   }
+    const validMemberships = memberships
+      .filter((membership) => membership.getAttribute('userId'))
+      .map(async (membership) => {
+        const user = await this.db.getDocument(
+          'users',
+          membership.getAttribute('userId'),
+        );
 
-  //   membership.mfa = mfa;
-  //   membership.teamName = team.name;
-  //   membership.userName = user.name;
-  //   membership.userEmail = user.email;
+        let mfa = user.getAttribute('mfa', false);
+        if (mfa) {
+          const totp = TOTP.getAuthenticatorFromUser(user);
+          const totpEnabled = totp && totp.getAttribute('verified', false);
+          const emailEnabled =
+            user.getAttribute('email') &&
+            user.getAttribute('emailVerification');
+          const phoneEnabled =
+            user.getAttribute('phone') &&
+            user.getAttribute('phoneVerification');
 
-  //   return membership;
-  // }
+          if (!totpEnabled && !emailEnabled && !phoneEnabled) {
+            mfa = false;
+          }
+        }
 
-  // /**
-  //  * Update member of the team
-  //  */
-  // async updateMember(
-  //   teamId: string,
-  //   memberId: string,
-  //   input: UpdateMembershipDTO,
-  // ) {
-  //   const team = await this.teamRepo.findOneBy({ $id: teamId });
-  //   if (!team) {
-  //     throw new Exception(Exception.TEAM_NOT_FOUND);
-  //   }
+        membership
+          .setAttribute('mfa', mfa)
+          .setAttribute('teamName', team.getAttribute('name'))
+          .setAttribute('userName', user.getAttribute('name'))
+          .setAttribute('userEmail', user.getAttribute('email'));
 
-  //   const membership = await this.membershipsRepo.findOne({
-  //     where: { teamId: team.$id, $id: memberId },
-  //     relations: { user: true },
-  //   });
-  //   if (!membership) {
-  //     throw new Exception(Exception.MEMBERSHIP_NOT_FOUND);
-  //   }
+        return membership;
+      });
 
-  //   if (input.roles) {
-  //     membership.roles = input.roles;
-  //   }
+    return {
+      memberships: await Promise.all(validMemberships),
+      total: total,
+    };
+  }
 
-  //   await this.membershipsRepo.save(membership);
+  /**
+   * Get A member of the team
+   */
+  async getMember(teamId: string, memberId: string) {
+    const team = await this.db.getDocument('teams', teamId);
+    if (team.isEmpty()) {
+      throw new Exception(Exception.TEAM_NOT_FOUND);
+    }
 
-  //   membership.teamName = team.name;
-  //   membership.userName = membership.user.name;
-  //   membership.userEmail = membership.user.email;
+    const membership = await this.db.getDocument('memberships', memberId);
+    if (membership.isEmpty() || !membership.getAttribute('userId')) {
+      throw new Exception(Exception.MEMBERSHIP_NOT_FOUND);
+    }
 
-  //   return membership;
-  // }
+    const user = await this.db.getDocument(
+      'users',
+      membership.getAttribute('userId'),
+    );
 
-  // /**
-  //  * Update Membership Status
-  //  */
-  // async updateMemberStatus(
-  //   teamId: string,
-  //   memberId: string,
-  //   input: UpdateMembershipStatusDTO,
-  // ) {
-  //   /**@todo ---- */
-  //   throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED);
-  // }
+    let mfa = user.getAttribute('mfa', false);
+    if (mfa) {
+      const totp = TOTP.getAuthenticatorFromUser(user);
+      const totpEnabled = totp && totp.getAttribute('verified', false);
+      const emailEnabled =
+        user.getAttribute('email') && user.getAttribute('emailVerification');
+      const phoneEnabled =
+        user.getAttribute('phone') && user.getAttribute('phoneVerification');
 
-  // /**
-  //  * Delete member of the team
-  //  */
-  // async deleteMember(teamId: string, memberId: string) {
-  //   const team = await this.teamRepo.findOneBy({ $id: teamId });
-  //   if (!team) {
-  //     throw new Exception(Exception.TEAM_NOT_FOUND);
-  //   }
+      if (!totpEnabled && !emailEnabled && !phoneEnabled) {
+        mfa = false;
+      }
+    }
 
-  //   const membership = await this.membershipsRepo.findOneBy({
-  //     teamId: team.$id,
-  //     $id: memberId,
-  //   });
-  //   if (!membership) {
-  //     throw new Exception(Exception.MEMBERSHIP_NOT_FOUND);
-  //   }
+    membership
+      .setAttribute('mfa', mfa)
+      .setAttribute('teamName', team.getAttribute('name'))
+      .setAttribute('userName', user.getAttribute('name'))
+      .setAttribute('userEmail', user.getAttribute('email'));
 
-  //   await this.membershipsRepo.remove(membership);
+    return membership;
+  }
 
-  //   team.total -= 1;
-  //   await this.teamRepo.save(team);
+  /**
+   * Update member of the team
+   */
+  async updateMember(
+    teamId: string,
+    memberId: string,
+    input: UpdateMembershipDTO,
+  ) {
+    const team = await this.db.getDocument('teams', teamId);
+    if (team.isEmpty()) {
+      throw new Exception(Exception.TEAM_NOT_FOUND);
+    }
 
-  //   return null;
-  // }
+    const membership = await this.db.getDocument('memberships', memberId);
+    if (membership.isEmpty()) {
+      throw new Exception(Exception.MEMBERSHIP_NOT_FOUND);
+    }
+
+    const user = await this.db.getDocument(
+      'users',
+      membership.getAttribute('userId'),
+    );
+    if (user.isEmpty()) {
+      throw new Exception(Exception.USER_NOT_FOUND);
+    }
+
+    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
+    const isAppUser = Auth.isAppUser(Authorization.getRoles());
+    const isOwner = Authorization.isRole(`team:${team.getId()}/owner`);
+
+    if (!isOwner && !isPrivilegedUser && !isAppUser) {
+      throw new Exception(
+        Exception.USER_UNAUTHORIZED,
+        'User is not allowed to modify roles',
+      );
+    }
+
+    membership.setAttribute('roles', input.roles);
+    const updatedMembership = await this.db.updateDocument(
+      'memberships',
+      membership.getId(),
+      membership,
+    );
+
+    await this.db.purgeCachedDocument('users', user.getId());
+
+    updatedMembership
+      .setAttribute('teamName', team.getAttribute('name'))
+      .setAttribute('userName', user.getAttribute('name'))
+      .setAttribute('userEmail', user.getAttribute('email'));
+
+    return updatedMembership;
+  }
+
+  /**
+   * Update Membership Status
+   */
+  async updateMemberStatus(
+    teamId: string,
+    memberId: string,
+    input: UpdateMembershipStatusDTO,
+  ) {
+    /**@todo ---- */
+    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED);
+  }
+
+  /**
+   * Delete member of the team
+   */
+  async deleteMember(teamId: string, memberId: string) {
+    const team = await this.db.getDocument('teams', teamId);
+    if (team.isEmpty()) {
+      throw new Exception(Exception.TEAM_NOT_FOUND);
+    }
+
+    const membership = await this.db.getDocument('memberships', memberId);
+    if (membership.isEmpty()) {
+      throw new Exception(Exception.MEMBERSHIP_NOT_FOUND);
+    }
+
+    const user = await this.db.getDocument(
+      'users',
+      membership.getAttribute('userId'),
+    );
+    if (user.isEmpty()) {
+      throw new Exception(Exception.USER_NOT_FOUND);
+    }
+
+    if (membership.getAttribute('teamInternalId') !== team.getInternalId()) {
+      throw new Exception(Exception.TEAM_MEMBERSHIP_MISMATCH);
+    }
+
+    try {
+      await this.db.deleteDocument('memberships', membership.getId());
+    } catch (error) {
+      if (error instanceof AuthorizationException) {
+        throw new Exception(Exception.USER_UNAUTHORIZED);
+      }
+      throw new Exception(
+        Exception.GENERAL_SERVER_ERROR,
+        'Failed to remove membership from DB',
+      );
+    }
+
+    await this.db.purgeCachedDocument('users', user.getId());
+
+    if (membership.getAttribute('confirm')) {
+      await this.db.decreaseDocumentAttribute(
+        'teams',
+        team.getId(),
+        'total',
+        1,
+        0,
+      );
+    }
+
+    return null;
+  }
 }

@@ -1,10 +1,15 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
+  Param,
   Patch,
   Post,
+  Query,
+  Req,
   Request,
+  Res,
   UseInterceptors,
 } from '@nestjs/common';
 import { AccountService } from './account.service';
@@ -14,15 +19,16 @@ import {
 } from 'src/core/resolver/response.resolver';
 import { Response } from 'src/core/helper/response.helper';
 import { User } from 'src/core/resolver/user.resolver';
-import { Document } from '@nuvix/database';
+import { Document, Query as Queries } from '@nuvix/database';
 import {
   CreateAccountDTO,
   UpdateEmailDTO,
   UpdateNameDTO,
+  UpdatePasswordDTO,
   UpdatePhoneDTO,
   UpdatePrefsDTO,
 } from './DTO/account.dto';
-import { Exception } from 'src/core/extend/exception';
+import { CreateEmailSessionDTO } from './DTO/session.dto';
 
 @Controller({ version: ['1'], path: 'console/account' })
 @UseInterceptors(ResolverInterceptor)
@@ -49,27 +55,18 @@ export class AccountController {
   @Get()
   @ResponseType({ type: Response.MODEL_USER })
   async getAccount(@User() user: Document) {
-    if (user.isEmpty()) {
-      throw new Exception(Exception.USER_NOT_FOUND);
-    }
-
     return user;
   }
 
   @Get('prefs')
   @ResponseType({ type: Response.MODEL_PREFERENCES })
   getPrefs(@User() user: Document) {
-    if (!user || user.isEmpty()) throw new Exception(Exception.USER_NOT_FOUND);
-
     return user.getAttribute('prefs', {});
   }
 
   @Patch('prefs')
   @ResponseType({ type: Response.MODEL_PREFERENCES })
   async updatePrefs(@User() user: Document, @Body() input: UpdatePrefsDTO) {
-    if (!user || user.isEmpty()) {
-      throw new Exception(Exception.USER_NOT_FOUND);
-    }
     return await this.accountService.updatePrefs(user, input.prefs);
   }
 
@@ -79,18 +76,12 @@ export class AccountController {
     @User() user: Document,
     @Body() updateEmailDto: UpdateEmailDTO,
   ) {
-    if (!user || user.isEmpty()) {
-      throw new Exception(Exception.USER_NOT_FOUND);
-    }
     return await this.accountService.updateEmail(user, updateEmailDto);
   }
 
   @Patch('name')
   @ResponseType({ type: Response.MODEL_USER })
   async updateName(@User() user: Document, @Body() input: UpdateNameDTO) {
-    if (!user || user.isEmpty()) {
-      throw new Exception(Exception.USER_NOT_FOUND);
-    }
     return await this.accountService.updateName(user, input);
   }
 
@@ -100,9 +91,82 @@ export class AccountController {
     @User() user: Document,
     @Body() updatePhoneDto: UpdatePhoneDTO,
   ) {
-    if (!user || user.isEmpty()) {
-      throw new Exception(Exception.USER_NOT_FOUND);
-    }
     await this.accountService.updatePhone(user, updatePhoneDto);
+  }
+
+  @Patch('password')
+  @ResponseType({ type: Response.MODEL_USER })
+  async updatePassword(
+    @User() user: Document,
+    @Body() input: UpdatePasswordDTO,
+  ) {
+    return await this.accountService.updatePassword(user, input);
+  }
+
+  @Post(['sessions/email', 'sessions'])
+  @ResponseType(Response.MODEL_SESSION)
+  async createEmailSession(
+    @User() user: Document,
+    @Body() input: CreateEmailSessionDTO,
+    @Req() request: any,
+    @Res({ passthrough: true }) response: any,
+  ) {
+    return await this.accountService.createEmailSession(
+      user,
+      input,
+      request,
+      response,
+    );
+  }
+
+  @Get('sessions')
+  @ResponseType({ type: Response.MODEL_SESSION, list: true })
+  async getSessions(@User() user: Document) {
+    return await this.accountService.getSessions(user);
+  }
+
+  @Delete('sessions')
+  @ResponseType({ type: Response.MODEL_NONE })
+  async deleteSessions(
+    @User() user: Document,
+    @Req() request: any,
+    @Res({ passthrough: true }) response: any,
+  ) {
+    return await this.accountService.deleteSessions(user, request, response);
+  }
+
+  @Get('sessions/:id')
+  @ResponseType(Response.MODEL_SESSION)
+  async getSession(@User() user: Document, @Param('id') sessionId: string) {
+    return await this.accountService.getSession(user, sessionId);
+  }
+
+  @Delete('sessions/:id')
+  @ResponseType(Response.MODEL_NONE)
+  async deleteSession(
+    @User() user: Document,
+    @Param('id') id: string,
+    @Req() request: any,
+    @Res({ passthrough: true }) response: any,
+  ) {
+    return await this.accountService.deleteSession(user, id, request, response);
+  }
+
+  @Patch('sessions/:id')
+  @ResponseType(Response.MODEL_SESSION)
+  async updateSession(@User() user: Document, @Param('id') id: string) {
+    return await this.accountService.updateSession(user, id);
+  }
+
+  @Get('logs')
+  @ResponseType({ type: Response.MODEL_LOG, list: true })
+  async getLogs(@User() user: Document, @Query('queries') queries: Queries[]) {
+    return await this.accountService.getLogs(user, queries);
+  }
+
+  @Get('mfa/factors')
+  @ResponseType(Response.MODEL_MFA_FACTORS)
+  async getMfaFactors(@User() user: Document) {
+    return await this.accountService.getMfaFactors(user);
   }
 }

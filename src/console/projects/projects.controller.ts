@@ -110,7 +110,7 @@ export class ProjectsController {
 
   @Get(':id/platforms')
   async getPlatforms(@Param('id') id: string) {
-    let data = await this.projectService.getPlatforms(id);
+    const data = await this.projectService.getPlatforms(id);
     return data;
   }
 
@@ -149,13 +149,13 @@ export class ProjectsController {
 
   @Get(':id/keys')
   async getKeys(@Param('id') id: string) {
-    let data = await this.projectService.getKeys(id);
+    const data = await this.projectService.getKeys(id);
     return data;
   }
 
   @Post(':id/keys')
   async createKey(@Param('id') id: string, @Body() input: CreateKeyDTO) {
-    let data = await this.projectService.createKey(id, input);
+    const data = await this.projectService.createKey(id, input);
     return data;
   }
 
@@ -183,7 +183,7 @@ export class ProjectsController {
 
   @Get(':id/webhooks')
   async getWebhooks(@Param('id') id: string) {
-    let data = await this.projectService.getWebhooks(id);
+    const data = await this.projectService.getWebhooks(id);
     return data;
   }
 
@@ -192,7 +192,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() input: CreateWebhookDTO,
   ) {
-    let data = await this.projectService.createWebhook(id, input);
+    const data = await this.projectService.createWebhook(id, input);
     return data;
   }
 
