@@ -1,10 +1,13 @@
-import { Body, Controller, Get, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
 import { ConsoleService } from './console.service';
+import { AuthGuard, Public } from 'src/core/resolver/guards/auth.guard';
 
 @Controller({ version: ['1'], path: 'console' })
+@UseGuards(AuthGuard)
 export class ConsoleController {
   constructor(private readonly consoleService: ConsoleService) {}
 
+  @Public()
   @Get('variables')
   async getVariables(@Res() res) {
     return res
@@ -20,6 +23,7 @@ export class ConsoleController {
       .status(200);
   }
 
+  @Public()
   @Get('plans')
   async getPlans() {
     const plans = await this.consoleService.getPlans();
@@ -34,6 +38,7 @@ export class ConsoleController {
     return await this.consoleService.createPlan();
   }
 
+  @Public()
   @Get('regions')
   async getRegions(@Res() res) {
     return res
@@ -115,6 +120,7 @@ export class ConsoleController {
       .status(200);
   }
 
+  @Public()
   @Post('sources')
   async getSources(@Res() res, @Body() input) {
     return res.json({}).status(200);

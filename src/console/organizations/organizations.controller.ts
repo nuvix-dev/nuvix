@@ -7,6 +7,7 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
@@ -19,8 +20,10 @@ import {
 import { Query as Queries } from '@nuvix/database';
 import { User } from 'src/core/resolver/user.resolver';
 import { CreateOrgDTO, UpdateOrgDTO, UpdateTeamPrefsDTO } from './dto/team.dto';
+import { AuthGuard } from 'src/core/resolver/guards/auth.guard';
 
 @Controller({ version: ['1'], path: 'console/organizations' })
+@UseGuards(AuthGuard)
 @UseInterceptors(ResolverInterceptor)
 export class OrganizationsController {
   constructor(private readonly organizationsService: OrganizationsService) {}

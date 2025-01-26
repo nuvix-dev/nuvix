@@ -10,6 +10,7 @@ import {
   Req,
   Request,
   Res,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { AccountService } from './account.service';
@@ -29,12 +30,15 @@ import {
   UpdatePrefsDTO,
 } from './DTO/account.dto';
 import { CreateEmailSessionDTO } from './DTO/session.dto';
+import { AuthGuard, Public } from 'src/core/resolver/guards/auth.guard';
 
 @Controller({ version: ['1'], path: 'console/account' })
+@UseGuards(AuthGuard)
 @UseInterceptors(ResolverInterceptor)
 export class AccountController {
   constructor(private readonly accountService: AccountService) {}
 
+  @Public()
   @Post()
   @ResponseType({ type: Response.MODEL_USER })
   async createAccount(
@@ -103,6 +107,7 @@ export class AccountController {
     return await this.accountService.updatePassword(user, input);
   }
 
+  @Public()
   @Post(['sessions/email', 'sessions'])
   @ResponseType(Response.MODEL_SESSION)
   async createEmailSession(

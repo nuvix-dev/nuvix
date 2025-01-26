@@ -11,6 +11,7 @@ import {
   APP_MAX_COUNT,
   APP_VERSION_STABLE,
   DB_FOR_CONSOLE,
+  DB_FOR_PROJECT,
 } from 'src/Utils/constants';
 import authMethods, {
   AuthMethod,
@@ -46,6 +47,7 @@ import collections from 'src/core/collections';
 export class ProjectService {
   constructor(
     @Inject(DB_FOR_CONSOLE) private readonly db: Database,
+    @Inject(DB_FOR_PROJECT) private readonly dbForProject: Database,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -98,7 +100,7 @@ export class ProjectService {
         }
       });
 
-      let project = new Document({
+      const project = new Document({
         id: projectId,
         $permissions: [
           Permission.read(Role.team(ID.custom(createProjectDTO.teamId))),
@@ -140,8 +142,7 @@ export class ProjectService {
         database: 'undefiend', // Will be updated after database creation
       });
 
-      project = await this.db.createDocument('projects', project);
-      const dbForProject = new Database(this.db.getAdapter());
+      const dbForProject = this.dbForProject;
 
       if (true) {
         dbForProject

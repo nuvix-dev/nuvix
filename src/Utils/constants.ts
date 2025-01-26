@@ -26,6 +26,7 @@ export const USER = Symbol('USER');
 export const DB_FOR_CONSOLE = Symbol('DbForConsole');
 export const DB_FOR_PROJECT = Symbol('DbForProject');
 export const GEO_DB = Symbol('GeoDb');
+export const IS_PUBLIC_KEY = Symbol('isPublic');
 
 export const CONSOLE_CONFIG: any = {
   auths: {},

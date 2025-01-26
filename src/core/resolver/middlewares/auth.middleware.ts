@@ -8,14 +8,13 @@ import { DB_FOR_CONSOLE, USER } from 'src/Utils/constants';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
+  private readonly logger = new Logger(AuthMiddleware.name);
   constructor(
     private readonly store: ClsService,
     @Inject(DB_FOR_CONSOLE) readonly db: Database,
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    const logger = this.store.get('logger') as Logger;
-
     const projectId = (req.projectId =
       (Array.isArray(req.headers['x-nuvix-project'])
         ? req.headers['x-nuvix-project'][0]
@@ -31,11 +30,17 @@ export class AuthMiddleware implements NestMiddleware {
       Auth.setCookieName(`a_session_console`);
     }
 
-    let session = Auth.decodeSession(
-      req.cookies[Auth.cookieName] ||
-        req.cookies[`${Auth.cookieName}_legacy`] ||
-        '',
-    );
+    let session: any = {};
+    try {
+      session = Auth.decodeSession(
+        req.cookies[Auth.cookieName] ||
+          req.cookies[`${Auth.cookieName}_legacy`] ||
+          '',
+      );
+    } catch (error) {
+      this.logger.error('Failed to decode session', error);
+      session = {};
+    }
 
     if (!session.id && !session.secret) {
       const sessionHeader = (req.headers['x-nuvix-session'] as string) || '';
@@ -46,10 +51,14 @@ export class AuthMiddleware implements NestMiddleware {
 
     if (!session.id && !session.secret) {
       res.setHeader('X-Debug-Fallback', 'true');
-      const fallback = JSON.parse(
-        (req.headers['x-fallback-cookies'] as string) || '{}',
-      );
-      session = Auth.decodeSession(fallback[Auth.cookieName] || '');
+      try {
+        const fallback = JSON.parse(
+          (req.headers['x-fallback-cookies'] as string) || '{}',
+        );
+        session = Auth.decodeSession(fallback[Auth.cookieName] || '');
+      } catch (error) {
+        this.logger.error('Failed to parse fallback cookies', error);
+      }
     } else {
       res.setHeader('X-Debug-Fallback', 'false');
     }

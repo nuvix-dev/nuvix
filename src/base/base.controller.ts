@@ -1,6 +1,6 @@
 import { All, Controller, Res } from '@nestjs/common';
 import { Response } from 'express';
-import { Public } from 'src/Utils/decorator';
+import { Public } from 'src/core/resolver/guards/auth.guard';
 
 @Controller({ version: ['1'] })
 export class BaseController {

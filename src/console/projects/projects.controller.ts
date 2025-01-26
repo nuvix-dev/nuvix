@@ -10,6 +10,7 @@ import {
   UseInterceptors,
   Query,
   Put,
+  UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
 import { ClsService } from 'nestjs-cls';
@@ -55,8 +56,10 @@ import {
 import { Response } from 'src/core/helper/response.helper';
 import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
 import type { Query as Queries } from '@nuvix/database';
+import { AuthGuard } from 'src/core/resolver/guards/auth.guard';
 
 @Controller({ version: ['1'], path: 'console/projects' })
+@UseGuards(AuthGuard)
 @UseInterceptors(ResolverInterceptor)
 export class ProjectsController {
   constructor(

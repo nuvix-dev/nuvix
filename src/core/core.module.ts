@@ -4,13 +4,7 @@ import * as fs from 'fs';
 // Services
 import { ClsService } from 'nestjs-cls';
 import { DB_FOR_CONSOLE, DB_FOR_PROJECT, GEO_DB } from 'src/Utils/constants';
-import {
-  Authorization,
-  Database,
-  DuplicateException,
-  MariaDB,
-  Role,
-} from '@nuvix/database';
+import { Database, MariaDB } from '@nuvix/database';
 import { filters } from './resolver/db.resolver';
 import { CountryResponse, Reader } from 'maxmind';
 
@@ -57,7 +51,7 @@ Object.keys(filters).forEach((key) => {
             host: process.env.DATABASE_HOST || 'localhost',
             user: process.env.DATABASE_USER,
             password: process.env.DATABASE_PASSWORD,
-            database: process.env.DATABASE_NAME,
+            database: process.env.DATABASE_NAME2,
             port: 3306,
           },
           maxVarCharLimit: 5000,
