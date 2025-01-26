@@ -1,30 +1,43 @@
-import { Body, Controller, Get, Post, Res, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Post,
+  Res,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ConsoleService } from './console.service';
 import { AuthGuard, Public } from 'src/core/resolver/guards/auth.guard';
+import {
+  ResolverInterceptor,
+  ResponseType,
+} from 'src/core/resolver/response.resolver';
+import { Response } from 'src/core/helper/response.helper';
 
 @Controller({ version: ['1'], path: 'console' })
 @UseGuards(AuthGuard)
+@UseInterceptors(ResolverInterceptor)
 export class ConsoleController {
   constructor(private readonly consoleService: ConsoleService) {}
 
   @Public()
   @Get('variables')
-  async getVariables(@Res() res) {
-    return res
-      .json({
-        _APP_DOMAIN_TARGET: 'nuvix-console.vercel.app',
-        _APP_STORAGE_LIMIT: 5368709120,
-        _APP_FUNCTIONS_SIZE_LIMIT: 30000000,
-        _APP_USAGE_STATS: 'enabled',
-        _APP_VCS_ENABLED: true,
-        _APP_DOMAIN_ENABLED: true,
-        _APP_ASSISTANT_ENABLED: true,
-      })
-      .status(200);
+  async getVariables() {
+    return {
+      _APP_DOMAIN_TARGET: 'nuvix-console.vercel.app',
+      _APP_STORAGE_LIMIT: 5368709120,
+      _APP_FUNCTIONS_SIZE_LIMIT: 30000000,
+      _APP_USAGE_STATS: 'enabled',
+      _APP_VCS_ENABLED: false,
+      _APP_DOMAIN_ENABLED: true,
+      _APP_ASSISTANT_ENABLED: true,
+    };
   }
 
   @Public()
   @Get('plans')
+  @ResponseType({ type: Response.MODEL_BILLING_PLAN, list: true })
   async getPlans() {
     const plans = await this.consoleService.getPlans();
     return {
@@ -33,7 +46,9 @@ export class ConsoleController {
     };
   }
 
+  @Public()
   @Post('plans')
+  @ResponseType(Response.MODEL_BILLING_PLAN)
   async createPlan() {
     return await this.consoleService.createPlan();
   }
@@ -127,6 +142,7 @@ export class ConsoleController {
   }
 
   @Get('init')
+  @Public()
   async init() {
     return await this.consoleService.initConsole();
   }

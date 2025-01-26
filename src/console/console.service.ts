@@ -33,7 +33,7 @@ export class ConsoleService {
         executions: 750000,
         realtime: 250,
         logs: 1,
-        addons: [],
+        addons: {},
         customSmtp: false,
         emailBranding: true,
         requiresPaymentMethod: false,
@@ -206,22 +206,36 @@ export class ConsoleService {
         budgeting: true,
         supportsMockNumbers: true,
         backupsEnabled: true,
-        backupPolicies: 9223372036854775807,
+        backupPolicies: 2147483647,
       },
     ];
 
-    plans = (await this.dbForConsole.createDocuments(
-      'plans',
-      plans.map((p) => new Document(p)),
-    )) as any;
+    for (const plan of plans) {
+      const existingPlan = await this.dbForConsole.findOne('plans', [
+        Query.equal('$id', [plan.$id]),
+      ]);
+
+      if (existingPlan.isEmpty()) {
+        await this.dbForConsole.createDocument(
+          'plans',
+          new Document({
+            ...plan,
+            $permissions: [
+              Permission.read(Role.any()),
+              Permission.create(Role.any()),
+              Permission.update(Role.any()),
+              Permission.delete(Role.any()),
+            ],
+          }),
+        );
+      }
+    }
 
     return plans;
   }
 
   async getPlans() {
-    return await this.dbForConsole.find('plans', [
-      Query.equal('isAvailable', [true]),
-    ]);
+    return await this.dbForConsole.find('plans');
   }
 
   async getPlanById(id: string) {
@@ -231,7 +245,9 @@ export class ConsoleService {
   async initConsole() {
     try {
       const consoleCollections = collections.console;
-      for (const [key, collection] of Object.entries(consoleCollections)) {
+      for (const [key, collection] of Object.entries(
+        consoleCollections,
+      ) as any) {
         if ((collection as any).$collection !== Database.METADATA) {
           continue;
         }

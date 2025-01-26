@@ -95,151 +95,20 @@ import {
   AttributeStringModel,
   AttributeURLModel,
 } from '../models/Attributes.model';
+import { OrganizationModel } from '../models/Organization.model';
+import { BillingAddressModel } from '../models/BillingAddress.model';
+import { InvoiceModel } from '../models/Invoice.model';
+import { PaymentMethodModel } from '../models/PaymentMethod.model';
+import { BillingPlanModel } from '../models/Plan.model';
 
 /**
  * The `Response` class provides a collection of static properties representing various models used in the application.
  * These models are categorized into different sections such as Database, Users, MFA, Storage, Locale, Messaging, Teams, VCS, Functions, Proxy, Migrations, Project, and Health.
  * Each static property holds a reference to a specific model class or a string identifier.
- *
- * ## Models
- *
- * ### General
- * - `MODEL_NONE`: Represents no model.
- * - `MODEL_ANY`: Represents any model.
- * - `MODEL_LOG`: Represents the `LogModel`.
- * - `MODEL_ERROR`: Represents an error model.
- * - `MODEL_METRIC`: Represents the `MetricModel`.
- * - `MODEL_METRIC_BREAKDOWN`: Represents the `MetricBreakdownModel`.
- * - `MODEL_ERROR_DEV`: Represents a development error model.
- * - `MODEL_USAGE_DATABASES`: Represents the `UsageDatabasesModel`.
- * - `MODEL_USAGE_DATABASE`: Represents the `UsageDatabaseModel`.
- * - `MODEL_USAGE_COLLECTION`: Represents the `UsageCollectionModel`.
- * - `MODEL_USAGE_USERS`: Represents the `UsageUsersModel`.
- * - `MODEL_USAGE_BUCKETS`: Represents the `UsageBucketsModel`.
- * - `MODEL_USAGE_STORAGE`: Represents the `UsageStorageModel`.
- * - `MODEL_USAGE_FUNCTIONS`: Represents the `UsageFunctionsModel`.
- * - `MODEL_USAGE_FUNCTION`: Represents the `UsageFunctionModel`.
- * - `MODEL_USAGE_PROJECT`: Represents the `UsageProjectModel`.
- *
- * ### Database
- * - `MODEL_DATABASE`: Represents the `DatabaseModel`.
- * - `MODEL_COLLECTION`: Represents the `CollectionModel`.
- * - `MODEL_INDEX`: Represents the `IndexModel`.
- * - `MODEL_DOCUMENT`: Represents the `DocumentModel`.
- *
- * ### Database Attributes
- * - `MODEL_ATTRIBUTE`: Represents the `AttributeModel`.
- * - `MODEL_ATTRIBUTE_STRING`: Represents the `AttributeStringModel`.
- * - `MODEL_ATTRIBUTE_INTEGER`: Represents the `AttributeIntegerModel`.
- * - `MODEL_ATTRIBUTE_FLOAT`: Represents the `AttributeFloatModel`.
- * - `MODEL_ATTRIBUTE_BOOLEAN`: Represents the `AttributeBooleanModel`.
- * - `MODEL_ATTRIBUTE_EMAIL`: Represents the `AttributeEmailModel`.
- * - `MODEL_ATTRIBUTE_ENUM`: Represents the `AttributeEnumModel`.
- * - `MODEL_ATTRIBUTE_IP`: Represents the `AttributeIPModel`.
- * - `MODEL_ATTRIBUTE_URL`: Represents the `AttributeURLModel`.
- * - `MODEL_ATTRIBUTE_DATETIME`: Represents the `AttributeDatetimeModel`.
- * - `MODEL_ATTRIBUTE_RELATIONSHIP`: Represents the `AttributeRelationshipModel`.
- *
- * ### Users
- * - `MODEL_ACCOUNT`: Represents the `AccountModel`.
- * - `MODEL_USER`: Represents the `UserModel`.
- * - `MODEL_SESSION`: Represents the `SessionModel`.
- * - `MODEL_IDENTITY`: Represents the `IdentityModel`.
- * - `MODEL_TOKEN`: Represents the `TokenModel`.
- * - `MODEL_JWT`: Represents the `JWTModel`.
- * - `MODEL_PREFERENCES`: Represents user preferences.
- *
- * ### MFA (Multi-Factor Authentication)
- * - `MODEL_MFA_TYPE`: Represents the `MFATypeModel`.
- * - `MODEL_MFA_FACTORS`: Represents the `MFAFactorsModel`.
- * - `MODEL_MFA_OTP`: Represents the OTP (One-Time Password) model.
- * - `MODEL_MFA_CHALLENGE`: Represents the `MFAChallengeModel`.
- * - `MODEL_MFA_RECOVERY_CODES`: Represents the `MFARecoveryCodesModel`.
- *
- * ### Users Password Algorithms
- * - `MODEL_ALGO_MD5`: Represents the `AlgoMd5Model`.
- * - `MODEL_ALGO_SHA`: Represents the `AlgoShaModel`.
- * - `MODEL_ALGO_SCRYPT`: Represents the `AlgoScryptModel`.
- * - `MODEL_ALGO_SCRYPT_MODIFIED`: Represents the `AlgoScryptModifiedModel`.
- * - `MODEL_ALGO_BCRYPT`: Represents the `AlgoBcryptModel`.
- * - `MODEL_ALGO_ARGON2`: Represents the `AlgoArgon2Model`.
- * - `MODEL_ALGO_PHPASS`: Represents the `AlgoPhpassModel`.
- *
- * ### Storage
- * - `MODEL_FILE`: Represents the `FileModel`.
- * - `MODEL_BUCKET`: Represents the `BucketModel`.
- *
- * ### Locale
- * - `MODEL_LOCALE`: Represents the `LocaleModel`.
- * - `MODEL_LOCALE_CODE`: Represents the `LocaleCodeModel`.
- * - `MODEL_COUNTRY`: Represents the `CountryModel`.
- * - `MODEL_CONTINENT`: Represents the `ContinentModel`.
- * - `MODEL_CURRENCY`: Represents the `CurrencyModel`.
- * - `MODEL_LANGUAGE`: Represents the `LanguageModel`.
- * - `MODEL_PHONE`: Represents the `PhoneModel`.
- *
- * ### Messaging
- * - `MODEL_PROVIDER`: Represents the `ProviderModel`.
- * - `MODEL_MESSAGE`: Represents the `MessageModel`.
- * - `MODEL_TOPIC`: Represents the `TopicModel`.
- * - `MODEL_SUBSCRIBER`: Represents the `SubscriberModel`.
- * - `MODEL_TARGET`: Represents the `TargetModel`.
- *
- * ### Teams
- * - `MODEL_TEAM`: Represents the `TeamModel`.
- * - `MODEL_MEMBERSHIP`: Represents the `MembershipModel`.
- *
- * ### VCS (Version Control System)
- * - `MODEL_INSTALLATION`: Represents the `InstallationModel`.
- * - `MODEL_PROVIDER_REPOSITORY`: Represents the `ProviderModel`.
- * - `MODEL_BRANCH`: Represents a branch model.
- * - `MODEL_DETECTION`: Represents the `DetectionModel`.
- * - `MODEL_VCS_CONTENT`: Represents the `VcsContentModel`.
- *
- * ### Functions
- * - `MODEL_FUNCTION`: Represents the `FunctionModel`.
- * - `MODEL_RUNTIME`: Represents the `RuntimeModel`.
- * - `MODEL_DEPLOYMENT`: Represents the `DeploymentModel`.
- * - `MODEL_EXECUTION`: Represents the `ExecutionModel`.
- * - `MODEL_BUILD`: Represents the `BuildModel`.
- * - `MODEL_FUNC_PERMISSIONS`: Represents function permissions.
- * - `MODEL_HEADERS`: Represents the `HeadersModel`.
- * - `MODEL_SPECIFICATION`: Represents the `SpecificationModel`.
- * - `MODEL_TEMPLATE_FUNCTION`: Represents the `TemplateFunctionModel`.
- * - `MODEL_TEMPLATE_RUNTIME`: Represents the `TemplateRuntimeModel`.
- * - `MODEL_TEMPLATE_VARIABLE`: Represents the `TemplateRuntimeModel`.
- *
- * ### Proxy
- * - `MODEL_PROXY_RULE`: Represents the `RuleModel`.
- *
- * ### Migrations
- * - `MODEL_MIGRATION`: Represents the `MigrationModel`.
- * - `MODEL_MIGRATION_REPORT`: Represents the `MigrationReportModel`.
- * - `MODEL_MIGRATION_FIREBASE_PROJECT`: Represents the `MigrationFirebaseProjectModel`.
- *
- * ### Project
- * - `MODEL_PROJECT`: Represents a project model.
- * - `MODEL_WEBHOOK`: Represents the `WebhookModel`.
- * - `MODEL_KEY`: Represents a key model.
- * - `MODEL_MOCK_NUMBER`: Represents the `MockNumberModel`.
- * - `MODEL_AUTH_PROVIDER`: Represents the `AuthProviderModel`.
- * - `MODEL_PLATFORM`: Represents the `PlatformModel`.
- * - `MODEL_VARIABLE`: Represents the `VariableModel`.
- * - `MODEL_VCS`: Represents a VCS model.
- * - `MODEL_SMS_TEMPLATE`: Represents the `TemplateSMSModel`.
- * - `MODEL_EMAIL_TEMPLATE`: Represents the `TemplateEmailModel`.
- *
- * ### Health
- * - `MODEL_HEALTH_STATUS`: Represents the `HealthStatusModel`.
- * - `MODEL_HEALTH_VERSION`: Represents the `HealthVersionModel`.
- * - `MODEL_HEALTH_QUEUE`: Represents the `HealthQueueModel`.
- * - `MODEL_HEALTH_TIME`: Represents the `HealthTimeModel`.
- * - `MODEL_HEALTH_ANTIVIRUS`: Represents the `HealthAntivirusModel`.
- * - `MODEL_HEALTH_CERTIFICATE`: Represents the `HealthCertificateModel`.
  */
 export class Response {
   public static MODEL_NONE = class {};
-  public static MODEL_ANY = 'any';
+  public static MODEL_ANY = class {};
   public static MODEL_LOG = LogModel;
   public static MODEL_ERROR = 'error';
   public static MODEL_METRIC = MetricModel;
@@ -375,7 +244,12 @@ export class Response {
   public static MODEL_HEALTH_CERTIFICATE = HealthCertificateModel;
 
   // Organization
-  public static MODEL_ORGANIZATION = class {};
+  public static MODEL_ORGANIZATION = OrganizationModel;
+
+  public static MODEL_BILLING_ADDRESS = BillingAddressModel;
+  public static MODEL_INVOICE = InvoiceModel;
+  public static MODEL_PAYMENT_METHOD = PaymentMethodModel;
+  public static MODEL_BILLING_PLAN = BillingPlanModel;
 
   public empty() {
     return Response.MODEL_NONE;

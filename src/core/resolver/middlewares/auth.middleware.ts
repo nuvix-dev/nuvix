@@ -27,7 +27,7 @@ export class AuthMiddleware implements NestMiddleware {
     Auth.setCookieName(`a_session_${projectId}`);
 
     if (mode === 'admin') {
-      Auth.setCookieName(`a_session_console`);
+      Auth.setCookieName(`a_session`);
     }
 
     let session: any = {};
@@ -113,6 +113,12 @@ export class AuthMiddleware implements NestMiddleware {
     }
 
     req[USER] = user;
+
+    let roles = Auth.getRoles(user);
+
+    for (const role of roles) {
+      Authorization.setRole(role);
+    }
 
     next();
   }

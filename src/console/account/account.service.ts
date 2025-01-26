@@ -924,6 +924,7 @@ export class AccountService {
           expires: expire,
           path: '/',
           secure: protocol === 'https',
+          sameSite: Auth.cookieSamesite as any,
           httpOnly: true,
         },
       )
@@ -931,11 +932,12 @@ export class AccountService {
         expires: expire,
         path: '/',
         secure: protocol === 'https',
+        sameSite: Auth.cookieSamesite as any,
         httpOnly: true,
       })
       .status(201);
 
-    const countryName = ''; // Implement locale.getText equivalent if needed
+    const countryName = 'INDIA'; // Implement locale.getText equivalent if needed
 
     createdSession
       .setAttribute('current', true)

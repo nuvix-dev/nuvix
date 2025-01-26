@@ -38,19 +38,19 @@ export class OrganizationsController {
   }
 
   @Post()
-  @ResponseType({ type: Response.MODEL_TEAM })
+  @ResponseType({ type: Response.MODEL_ORGANIZATION })
   async create(@User() user: any, @Body() input: CreateOrgDTO) {
     return await this.organizationsService.create(user, input);
   }
 
   @Get(':id')
-  @ResponseType({ type: Response.MODEL_TEAM })
+  @ResponseType({ type: Response.MODEL_ORGANIZATION })
   async findOne(@Param('id') id: string) {
     return await this.organizationsService.findOne(id);
   }
 
   @Put(':id')
-  @ResponseType({ type: Response.MODEL_TEAM })
+  @ResponseType({ type: Response.MODEL_ORGANIZATION })
   async update(@Param('id') id: string, @Body() input: UpdateOrgDTO) {
     return await this.organizationsService.update(id, input);
   }

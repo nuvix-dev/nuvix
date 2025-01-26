@@ -18,9 +18,9 @@ export class Detector {
     const os = this.parser.getOS();
 
     return {
-      osCode: os.name?.toLowerCase().replace(/\s+/g, '_') || '',
-      osName: os.name || '',
-      osVersion: os.version || '',
+      osCode: os.name?.toLowerCase().replace(/\s+/g, '_') || '--',
+      osName: os.name || '--',
+      osVersion: os.version || '--',
     };
   }
 
@@ -46,11 +46,11 @@ export class Detector {
 
       client = {
         type: 'browser',
-        short_name: browser.name?.toLowerCase().replace(/\s+/g, '_') || '',
-        name: browser.name || '',
-        version: browser.version || '',
-        engine: engine.name || '',
-        engine_version: engine.version || '',
+        short_name: browser.name?.toLowerCase().replace(/\s+/g, '_') || '--',
+        name: browser.name || '--',
+        version: browser.version || '--',
+        engine: engine.name || '--',
+        engine_version: engine.version || '--',
       };
     }
 
