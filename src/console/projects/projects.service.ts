@@ -49,7 +49,7 @@ export class ProjectService {
     @Inject(DB_FOR_CONSOLE) private readonly db: Database,
     @Inject(DB_FOR_PROJECT) private readonly dbForProject: Database,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   private readonly logger = new Logger(ProjectService.name);
 
@@ -101,7 +101,7 @@ export class ProjectService {
       });
 
       let project = new Document({
-        id: projectId,
+        $id: projectId,
         $permissions: [
           Permission.read(Role.team(ID.custom(createProjectDTO.teamId))),
           Permission.update(
@@ -110,10 +110,10 @@ export class ProjectService {
           Permission.update(
             Role.team(ID.custom(createProjectDTO.teamId), 'developer'),
           ),
-          Permission.update(
+          Permission.delete(
             Role.team(ID.custom(createProjectDTO.teamId), 'owner'),
           ),
-          Permission.update(
+          Permission.delete(
             Role.team(ID.custom(createProjectDTO.teamId), 'developer'),
           ),
         ],
@@ -121,15 +121,15 @@ export class ProjectService {
         teamInternalId: org.getInternalId(),
         name: createProjectDTO.name,
         region: createProjectDTO.region,
-        description: createProjectDTO.description,
-        logo: createProjectDTO.logo,
-        url: createProjectDTO.url,
-        legalName: createProjectDTO.legalName,
-        legalCity: createProjectDTO.legalCity,
-        legalAddress: createProjectDTO.legalAddress,
-        legalCountry: createProjectDTO.legalCountry,
-        legalState: createProjectDTO.legalState,
-        legalTaxId: createProjectDTO.legalTaxId,
+        description: createProjectDTO.description ?? null,
+        logo: createProjectDTO.logo ?? null,
+        url: createProjectDTO.url ?? null,
+        legalName: createProjectDTO.legalName ?? null,
+        legalCity: createProjectDTO.legalCity ?? null,
+        legalAddress: createProjectDTO.legalAddress ?? null,
+        legalCountry: createProjectDTO.legalCountry ?? null,
+        legalState: createProjectDTO.legalState ?? null,
+        legalTaxId: createProjectDTO.legalTaxId ?? null,
         platforms: [],
         oAuthProviders: defaultoAuthProviders,
         webhooks: [],
@@ -149,8 +149,8 @@ export class ProjectService {
       if (true) {
         dbForProject
           .setSharedTables(true)
-          .setTenant(Number(project.getInternalId()));
-        // .setPrefix('');
+          .setTenant(Number(project.getInternalId()))
+          .setPrefix(`_${project.getInternalId()}`);
       } else {
         // dbForProject
         //   .setSharedTables(false)
@@ -1195,19 +1195,19 @@ export class ProjectService {
 
     const smtp = input.enabled
       ? {
-          enabled: input.enabled,
-          senderName: input.senderName,
-          senderEmail: input.senderEmail,
-          replyTo: input.replyTo,
-          host: input.host,
-          port: input.port,
-          username: input.username,
-          password: input.password,
-          secure: input.secure,
-        }
+        enabled: input.enabled,
+        senderName: input.senderName,
+        senderEmail: input.senderEmail,
+        replyTo: input.replyTo,
+        host: input.host,
+        port: input.port,
+        username: input.username,
+        password: input.password,
+        secure: input.secure,
+      }
       : {
-          enabled: false,
-        };
+        enabled: false,
+      };
 
     project = await this.db.updateDocument(
       'projects',

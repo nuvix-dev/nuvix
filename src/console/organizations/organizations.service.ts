@@ -25,7 +25,7 @@ import { CreateOrgDTO, UpdateOrgDTO, UpdateTeamPrefsDTO } from './dto/team.dto';
 export class OrganizationsService {
   private readonly logger = new Logger();
 
-  constructor(@Inject(DB_FOR_CONSOLE) private readonly db: Database) {}
+  constructor(@Inject(DB_FOR_CONSOLE) private readonly db: Database) { }
 
   /**
    * Find all teams
@@ -162,6 +162,11 @@ export class OrganizationsService {
       throw new Exception(Exception.TEAM_NOT_FOUND);
     }
 
+    // TODO: improve the logic || add logic
+    if (team.getAttribute('total') > 1) {
+      throw new Exception(Exception.DELETE_FAILED, "Can't delete team with members");
+    }
+
     const deleted = await this.db.deleteDocument('teams', id);
     if (!deleted) {
       throw new Exception(
@@ -272,7 +277,7 @@ export class OrganizationsService {
         Query.equal('email', [input.email]),
       ]);
       if (
-        invitee &&
+        !invitee.isEmpty() &&
         input.phone &&
         invitee.getAttribute('phone') !== input.phone
       ) {
@@ -287,7 +292,7 @@ export class OrganizationsService {
         Query.equal('phone', [input.phone]),
       ]);
       if (
-        invitee &&
+        !invitee.isEmpty() &&
         input.email &&
         invitee.getAttribute('email') !== input.email
       ) {
@@ -299,7 +304,7 @@ export class OrganizationsService {
       }
     }
 
-    if (!invitee) {
+    if (invitee.isEmpty()) {
       const userId = ID.unique();
       invitee = await this.db.createDocument(
         'users',
@@ -583,6 +588,10 @@ export class OrganizationsService {
 
     if (membership.getAttribute('teamInternalId') !== team.getInternalId()) {
       throw new Exception(Exception.TEAM_MEMBERSHIP_MISMATCH);
+    }
+
+    if (team.getAttribute("total", 0) === 1) {
+      throw new Exception(Exception.DELETE_FAILED, "Organization must have at least one member");
     }
 
     try {

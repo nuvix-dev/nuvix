@@ -100,6 +100,8 @@ import { BillingAddressModel } from '../models/BillingAddress.model';
 import { InvoiceModel } from '../models/Invoice.model';
 import { PaymentMethodModel } from '../models/PaymentMethod.model';
 import { BillingPlanModel } from '../models/Plan.model';
+import { KeyModel } from '../models/Key.model';
+import { ProjectModel } from '../models/Project.model';
 
 /**
  * The `Response` class provides a collection of static properties representing various models used in the application.
@@ -107,8 +109,8 @@ import { BillingPlanModel } from '../models/Plan.model';
  * Each static property holds a reference to a specific model class or a string identifier.
  */
 export class Response {
-  public static MODEL_NONE = class {};
-  public static MODEL_ANY = class {};
+  public static MODEL_NONE = class { };
+  public static MODEL_ANY = class { };
   public static MODEL_LOG = LogModel;
   public static MODEL_ERROR = 'error';
   public static MODEL_METRIC = MetricModel;
@@ -224,9 +226,9 @@ export class Response {
     MigrationFirebaseProjectModel;
 
   // Project
-  public static MODEL_PROJECT = class {}; //'project'
+  public static MODEL_PROJECT = ProjectModel; //'project'
   public static MODEL_WEBHOOK = WebhookModel;
-  public static MODEL_KEY = 'key';
+  public static MODEL_KEY = KeyModel;
   public static MODEL_MOCK_NUMBER = MockNumberModel;
   public static MODEL_AUTH_PROVIDER = AuthProviderModel;
   public static MODEL_PLATFORM = PlatformModel;

@@ -65,7 +65,7 @@ export class ProjectsController {
   constructor(
     private readonly projectService: ProjectService,
     private readonly clsService: ClsService,
-  ) {}
+  ) { }
 
   @Post()
   async create(
@@ -82,7 +82,7 @@ export class ProjectsController {
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    const data = await this.projectService.findAll(queries, search);
+    const data = await this.projectService.findAll(queries, search)
     return data;
   }
 
@@ -347,11 +347,7 @@ export class ProjectsController {
     @Param('method') method: string,
     @Body() input: AuthMethodStatusDTO,
   ) {
-    if (
-      Object.keys(authMethods)
-        .map((m) => m)
-        .indexOf(method) === -1
-    )
+    if (!Object.keys(authMethods).concat("memberships-privacy").includes(method))
       throw new Exception(Exception.INVALID_PARAMS, 'Invalid auth method');
     return await this.projectService.updateAuthMethod(id, method, input.status);
   }

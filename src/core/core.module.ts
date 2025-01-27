@@ -44,7 +44,7 @@ Object.keys(filters).forEach((key) => {
     },
     {
       provide: DB_FOR_PROJECT,
-      scope: Scope.REQUEST,
+      // scope: Scope.REQUEST,
       useFactory: async (cls: ClsService) => {
         const adapter = new MariaDB({
           connection: {
