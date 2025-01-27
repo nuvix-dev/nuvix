@@ -25,7 +25,7 @@ import { CreateOrgDTO, UpdateOrgDTO, UpdateTeamPrefsDTO } from './dto/team.dto';
 export class OrganizationsService {
   private readonly logger = new Logger();
 
-  constructor(@Inject(DB_FOR_CONSOLE) private readonly db: Database) { }
+  constructor(@Inject(DB_FOR_CONSOLE) private readonly db: Database) {}
 
   /**
    * Find all teams
@@ -164,7 +164,10 @@ export class OrganizationsService {
 
     // TODO: improve the logic || add logic
     if (team.getAttribute('total') > 1) {
-      throw new Exception(Exception.DELETE_FAILED, "Can't delete team with members");
+      throw new Exception(
+        Exception.DELETE_FAILED,
+        "Can't delete team with members",
+      );
     }
 
     const deleted = await this.db.deleteDocument('teams', id);
@@ -590,8 +593,11 @@ export class OrganizationsService {
       throw new Exception(Exception.TEAM_MEMBERSHIP_MISMATCH);
     }
 
-    if (team.getAttribute("total", 0) === 1) {
-      throw new Exception(Exception.DELETE_FAILED, "Organization must have at least one member");
+    if (team.getAttribute('total', 0) === 1) {
+      throw new Exception(
+        Exception.DELETE_FAILED,
+        'Organization must have at least one member',
+      );
     }
 
     try {

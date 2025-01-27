@@ -1,18 +1,17 @@
-import { Permission } from "@nuvix/database";
-import { AuthProviderModel } from "./AuthProvider.model";
-import BaseModel from "./base.model";
-import { MockNumberModel } from "./MockNumber.model";
-import { PlatformModel } from "./Platform.model";
-import { WebhookModel } from "./Webhook.model";
-import { Exclude, Expose, Transform } from "class-transformer";
-import { KeyModel } from "./Key.model";
-
+import { Permission } from '@nuvix/database';
+import { AuthProviderModel } from './AuthProvider.model';
+import BaseModel from './base.model';
+import { MockNumberModel } from './MockNumber.model';
+import { PlatformModel } from './Platform.model';
+import { WebhookModel } from './Webhook.model';
+import { Exclude, Expose, Transform } from 'class-transformer';
+import { KeyModel } from './Key.model';
 
 @Exclude()
 export class ProjectModel extends BaseModel {
-  @Expose({ toClassOnly: true }) auths: any
-  @Expose({ toClassOnly: true }) services: any
-  @Expose({ toClassOnly: true }) smtp: any
+  @Expose({ toClassOnly: true }) auths: any;
+  @Expose({ toClassOnly: true }) services: any;
+  @Expose({ toClassOnly: true }) smtp: any;
 
   @Exclude() override $permissions: string[] | Permission[];
   /**

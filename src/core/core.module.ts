@@ -61,6 +61,8 @@ Object.keys(filters).forEach((key) => {
 
         const connection = new Database(adapter);
 
+        connection.setSharedTables(true);
+
         await connection.ping();
 
         return connection;

@@ -19,6 +19,7 @@ import { Request } from 'express';
 import { FunctionsModule } from './functions/functions.module';
 import { AuthMiddleware } from './core/resolver/middlewares/auth.middleware';
 import { CoreModule } from './core/core.module';
+import { ProjectMiddleware } from './core/resolver/middlewares/project.middleware';
 config();
 
 @Module({
@@ -67,6 +68,10 @@ config();
 })
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(AuthMiddleware).forRoutes('*');
+    consumer
+      .apply(AuthMiddleware)
+      .forRoutes('*')
+      .apply(ProjectMiddleware)
+      .forRoutes('*');
   }
 }

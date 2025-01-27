@@ -21,11 +21,11 @@ export const APP_LIMIT_COUNT = 100000000;
 export const API_KEY_STANDARD = 'standard';
 export const API_KEY_DYNAMIC = 'dynamic';
 
-export const PROJECT = Symbol('PROJECT');
-export const USER = Symbol('USER');
-export const DB_FOR_CONSOLE = Symbol('DbForConsole');
-export const DB_FOR_PROJECT = Symbol('DbForProject');
-export const GEO_DB = Symbol('GeoDb');
+export const PROJECT = Symbol('project');
+export const USER = Symbol('user');
+export const DB_FOR_CONSOLE = Symbol('dbForConsole');
+export const DB_FOR_PROJECT = Symbol('dbForProject');
+export const GEO_DB = Symbol('geoDb');
 export const IS_PUBLIC_KEY = Symbol('isPublic');
 
 export const CONSOLE_CONFIG: any = {

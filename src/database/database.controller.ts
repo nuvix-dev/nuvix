@@ -6,12 +6,15 @@ import {
   Patch,
   Param,
   Delete,
+  UseGuards,
 } from '@nestjs/common';
 import { DatabaseService } from './database.service';
 import { CreateDatabaseDto } from './dto/create-database.dto';
 import { UpdateDatabaseDto } from './dto/update-database.dto';
+import { ProjectGuard } from 'src/core/resolver/guards/project.guard';
 
 @Controller({ version: ['1'], path: 'databases' })
+@UseGuards(ProjectGuard)
 export class DatabaseController {
   constructor(private readonly databaseService: DatabaseService) {}
 

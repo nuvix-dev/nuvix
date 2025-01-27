@@ -49,7 +49,7 @@ export class ProjectService {
     @Inject(DB_FOR_CONSOLE) private readonly db: Database,
     @Inject(DB_FOR_PROJECT) private readonly dbForProject: Database,
     private readonly jwtService: JwtService,
-  ) { }
+  ) {}
 
   private readonly logger = new Logger(ProjectService.name);
 
@@ -1195,19 +1195,19 @@ export class ProjectService {
 
     const smtp = input.enabled
       ? {
-        enabled: input.enabled,
-        senderName: input.senderName,
-        senderEmail: input.senderEmail,
-        replyTo: input.replyTo,
-        host: input.host,
-        port: input.port,
-        username: input.username,
-        password: input.password,
-        secure: input.secure,
-      }
+          enabled: input.enabled,
+          senderName: input.senderName,
+          senderEmail: input.senderEmail,
+          replyTo: input.replyTo,
+          host: input.host,
+          port: input.port,
+          username: input.username,
+          password: input.password,
+          secure: input.secure,
+        }
       : {
-        enabled: false,
-      };
+          enabled: false,
+        };
 
     project = await this.db.updateDocument(
       'projects',

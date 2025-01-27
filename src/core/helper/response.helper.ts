@@ -109,8 +109,8 @@ import { ProjectModel } from '../models/Project.model';
  * Each static property holds a reference to a specific model class or a string identifier.
  */
 export class Response {
-  public static MODEL_NONE = class { };
-  public static MODEL_ANY = class { };
+  public static MODEL_NONE = class {};
+  public static MODEL_ANY = class {};
   public static MODEL_LOG = LogModel;
   public static MODEL_ERROR = 'error';
   public static MODEL_METRIC = MetricModel;

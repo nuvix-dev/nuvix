@@ -8,6 +8,7 @@ import {
   Post,
   Put,
   Query,
+  UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
 import { TeamsService } from './teams.service';
@@ -29,8 +30,10 @@ import {
 } from './dto/membership.dto';
 import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
 import { Query as Queries } from '@nuvix/database';
+import { ProjectGuard } from 'src/core/resolver/guards/project.guard';
 
 @Controller({ version: ['1'], path: 'teams' })
+@UseGuards(ProjectGuard)
 @UseInterceptors(ResolverInterceptor)
 export class TeamsController {
   constructor(private readonly teamsService: TeamsService) {}

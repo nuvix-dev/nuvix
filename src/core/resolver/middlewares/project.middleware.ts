@@ -1,38 +1,44 @@
-import {
-  createParamDecorator,
-  Injectable,
-  Logger,
-  NestMiddleware,
-} from '@nestjs/common';
+import { Inject, Injectable, Logger, NestMiddleware } from '@nestjs/common';
+import { Database, Document } from '@nuvix/database';
 import { NextFunction, Request, Response } from 'express';
 import { ClsService } from 'nestjs-cls';
-import { Exception } from 'src/core/extend/exception';
-import { PROJECT } from 'src/Utils/constants';
+import { DB_FOR_CONSOLE, DB_FOR_PROJECT, PROJECT } from 'src/Utils/constants';
 
 @Injectable()
 export class ProjectMiddleware implements NestMiddleware {
-  constructor(private readonly store: ClsService) {}
+  private readonly logger = new Logger(ProjectMiddleware.name);
+  constructor(
+    @Inject(DB_FOR_CONSOLE) private readonly db: Database,
+    @Inject(DB_FOR_PROJECT) private readonly projectDb: Database,
+    private readonly store: ClsService,
+  ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    const logger = this.store.get('logger') as Logger;
+    const projectHeader = req.headers['x-nuvix-project'];
+    const projectQuery = req.query.project;
 
-    const projectId = req.headers['x-nuvix-project']
-      ? req.headers['x-nuvix-project']
-      : req.query?.project
-        ? Array.isArray(req.query.project)
-          ? req.query.project[0]
-          : req.query.project
-        : null;
+    let projectIds: any =
+      projectHeader?.toString() || projectQuery?.toString() || 'console';
 
-    logger.debug(`Project ID: ${projectId}`);
+    projectIds = projectIds.split(',').map((id: any) => id.trim());
 
-    if (!projectId) throw new Exception(Exception.PROJECT_NOT_FOUND);
+    const projectId = [...new Set(projectIds)][0];
 
-    const project = null; //await this.projectModel.finOne({ id: projectId })
+    if (projectId === 'console') {
+      req[PROJECT] = new Document();
+      next();
+      return null;
+    }
 
-    if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND);
+    const project = await this.db.getDocument('projects', projectId as string);
 
-    this.store.set(PROJECT, project);
+    if (!project.isEmpty()) {
+      this.logger.debug(`Project: ${project.getAttribute('name')}`);
+      this.projectDb.setPrefix(`_${project.getInternalId()}`);
+      this.projectDb.setTenant(Number(project.getInternalId()));
+    }
+
+    req[PROJECT] = project;
 
     next();
   }
