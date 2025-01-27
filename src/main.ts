@@ -20,6 +20,12 @@ async function bootstrap() {
   app.useGlobalPipes(
     new ValidationPipe({
       enableDebugMessages: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+        exposeDefaultValues: true,
+        exposeUnsetFields: false,
+      },
     }),
   );
 

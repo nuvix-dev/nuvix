@@ -35,7 +35,7 @@ export class CreateTeamDTO {
     each: true,
     message: 'Each role must be between 1 and 32 characters long.',
   })
-  roles: string[];
+  roles: string[] = [];
 }
 
 export class UpdateTeamDTO extends PartialType(

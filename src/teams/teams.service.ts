@@ -33,7 +33,7 @@ export class TeamsService {
   constructor(
     @Inject(DB_FOR_PROJECT) private readonly db: Database,
     private readonly cls: ClsService,
-  ) {}
+  ) { }
 
   /**
    * Find all teams
@@ -113,7 +113,7 @@ export class TeamsService {
       }
 
       const membershipId = ID.unique();
-      const membership = await this.db.createDocument(
+      await this.db.createDocument(
         'memberships',
         new Document({
           $id: membershipId,

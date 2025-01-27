@@ -11,7 +11,7 @@ export class ProjectMiddleware implements NestMiddleware {
     @Inject(DB_FOR_CONSOLE) private readonly db: Database,
     @Inject(DB_FOR_PROJECT) private readonly projectDb: Database,
     private readonly store: ClsService,
-  ) {}
+  ) { }
 
   async use(req: Request, res: Response, next: NextFunction) {
     const projectHeader = req.headers['x-nuvix-project'];

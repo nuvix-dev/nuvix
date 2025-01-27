@@ -36,7 +36,7 @@ import { ProjectGuard } from 'src/core/resolver/guards/project.guard';
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResolverInterceptor)
 export class TeamsController {
-  constructor(private readonly teamsService: TeamsService) {}
+  constructor(private readonly teamsService: TeamsService) { }
 
   @Get()
   @ResponseType({ type: Response.MODEL_TEAM, list: true })

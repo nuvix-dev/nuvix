@@ -29,7 +29,7 @@ export class CreateMembershipDTO {
   @IsArray()
   @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE)
   @IsString({ each: true })
-  roles: string[];
+  roles: string[] = [];
 
   @IsOptional()
   @IsUrl()

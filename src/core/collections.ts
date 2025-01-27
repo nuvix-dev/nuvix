@@ -5670,7 +5670,7 @@ const consoleCollections = {
         $id: ID.custom('secret'),
         type: Database.VAR_STRING,
         format: '',
-        size: 512, // var_dump of \bin2hex(\random_bytes(128)): string(256) doubling for encryption
+        size: 1600, // var_dump of \bin2hex(\random_bytes(128)): string(256) doubling for encryption
         signed: true,
         required: true,
         default: null,

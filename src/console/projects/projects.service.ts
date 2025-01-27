@@ -399,9 +399,9 @@ export class ProjectService {
       projectId: project.getId(),
       type: input.type,
       name: input.name,
-      key: input.key,
-      store: input.store,
-      hostname: input.hostname,
+      key: input.key ?? null,
+      store: input.store ?? null,
+      hostname: input.hostname ?? null,
     });
 
     const createdPlatform = await this.db.createDocument('platforms', platform);
@@ -535,7 +535,7 @@ export class ProjectService {
       projectId: project.getId(),
       name: input.name,
       scopes: input.scopes,
-      expire: input.expire,
+      expire: input.expire ?? null,
       sdks: [],
       accessedAt: null,
       secret: API_KEY_STANDARD + '_' + randomBytes(128).toString('hex'),
@@ -592,7 +592,7 @@ export class ProjectService {
     key
       .setAttribute('name', input.name)
       .setAttribute('scopes', input.scopes)
-      .setAttribute('expire', input.expire);
+      .setAttribute('expire', input.expire ?? null);
 
     await this.db.updateDocument('keys', key.getId(), key);
     await this.db.purgeCachedDocument('projects', project.getId());
