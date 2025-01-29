@@ -55,7 +55,7 @@ import { CreateIndexDTO } from './DTO/indexes.dto';
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResolverInterceptor)
 export class DatabaseController {
-  constructor(private readonly databaseService: DatabaseService) { }
+  constructor(private readonly databaseService: DatabaseService) {}
 
   @Post()
   @ResponseType(Response.MODEL_DATABASE)
@@ -558,9 +558,14 @@ export class DatabaseController {
     @Param('id') id: string,
     @Param('collectionId') collectionId: string,
     @Body() input: CreateIndexDTO,
-    @Project() project: Document
+    @Project() project: Document,
   ) {
-    return await this.databaseService.createIndex(id, collectionId, input, project);
+    return await this.databaseService.createIndex(
+      id,
+      collectionId,
+      input,
+      project,
+    );
   }
 
   @Get(':id/collections/:collectionId/indexes')

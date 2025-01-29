@@ -1,9 +1,4 @@
-import {
-  IsString,
-  IsIn,
-  IsArray,
-  ArrayMaxSize,
-} from 'class-validator';
+import { IsString, IsIn, IsArray, ArrayMaxSize } from 'class-validator';
 import { APP_LIMIT_ARRAY_PARAMS_SIZE } from 'src/Utils/constants';
 import { Database } from '@nuvix/database';
 

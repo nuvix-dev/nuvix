@@ -1,8 +1,12 @@
+import { Permission } from '@nuvix/database';
 import { Exclude, Expose } from 'class-transformer';
 import BaseModel from 'src/core/models/base.model';
 
 @Exclude()
 export class IndexModel extends BaseModel {
+  @Exclude()
+  override $id: string;
+  @Exclude() $permissions: string[] | Permission[];
   /**
    * Index Key.
    */
