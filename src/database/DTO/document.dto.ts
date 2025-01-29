@@ -1,3 +1,4 @@
+import { OmitType, PartialType } from '@nestjs/mapped-types';
 import { IsString, IsJSON, IsOptional, IsArray } from 'class-validator';
 import { IsUID } from 'src/core/validators/input.validator';
 
@@ -12,3 +13,7 @@ export class CreateDocumentDTO {
   @IsArray()
   permissions: string[];
 }
+
+export class UpdateDocumentDTO extends PartialType(
+  OmitType(CreateDocumentDTO, ['documentId']),
+) {}

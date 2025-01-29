@@ -3,6 +3,8 @@ import BaseModel from 'src/core/models/base.model';
 
 @Exclude()
 export class AttributeModel extends BaseModel {
+  @Exclude() override $id: string;
+  @Exclude() override $permissions: string[] | any[];
   /**
    * Attribute Key.
    */
@@ -42,23 +44,5 @@ export class AttributeModel extends BaseModel {
   constructor(partial: Partial<AttributeModel>) {
     super();
     Object.assign(this, partial);
-  }
-
-  /**
-   * Get Name
-   *
-   * @return string
-   */
-  getName(): string {
-    return 'Attribute';
-  }
-
-  /**
-   * Get Type
-   *
-   * @return string
-   */
-  getType(): string {
-    return 'MODEL_ATTRIBUTE';
   }
 }

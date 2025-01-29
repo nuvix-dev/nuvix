@@ -38,6 +38,7 @@ config();
       connection: {
         path: APP_REDIS_URL,
         port: APP_REDIS_PORT,
+        skipVersionCheck: true,
       },
       defaultJobOptions: {
         removeOnComplete: true,

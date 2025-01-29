@@ -8,6 +8,7 @@ import {
   TextValidator,
 } from '@nuvix/database';
 import {
+  APP_DATABASE_ATTRIBUTE_DATETIME,
   APP_DATABASE_ATTRIBUTE_EMAIL,
   APP_DATABASE_ATTRIBUTE_ENUM,
   APP_DATABASE_ATTRIBUTE_FLOAT_RANGE,
@@ -34,7 +35,7 @@ export const filters = {
       if (value == null || value === undefined) {
         return null;
       }
-      
+
       return JSON.parse(value)?.value;
     },
   },
@@ -402,9 +403,9 @@ export const formats = {
     create: () => new EmailValidator(),
     type: Database.VAR_STRING,
   },
-  'datetime': { // [APP_DATABASE_ATTRIBUTE_DATETIME]
+  [APP_DATABASE_ATTRIBUTE_DATETIME]: {
     create: () => new DatetimeValidator(),
-    type: Database.VAR_DATETIME
+    type: Database.VAR_DATETIME,
   },
   [APP_DATABASE_ATTRIBUTE_ENUM]: {
     create: (attribute: any) => {
@@ -416,17 +417,17 @@ export const formats = {
   },
   [APP_DATABASE_ATTRIBUTE_IP]: {
     create: () => new TextValidator(99),
-    type: Database.VAR_STRING
+    type: Database.VAR_STRING,
   },
   [APP_DATABASE_ATTRIBUTE_URL]: {
     create: () => new TextValidator(1000),
-    type: Database.VAR_STRING
+    type: Database.VAR_STRING,
   },
   [APP_DATABASE_ATTRIBUTE_INT_RANGE]: {
     create: (attribute: any) => {
       const min = attribute.formatOptions.min ?? -Infinity;
       const max = attribute.formatOptions.max ?? Infinity;
-      return new RangeValidator(min, max, `RangeValidator.TYPE_INTEGER`);
+      return new RangeValidator(min, max, `integer`);
     },
     type: Database.VAR_INTEGER,
   },
@@ -434,7 +435,7 @@ export const formats = {
     create: (attribute: any) => {
       const min = attribute.formatOptions.min ?? -Infinity;
       const max = attribute.formatOptions.max ?? Infinity;
-      return new RangeValidator(min, max, `Range.TYPE_FLOAT`);
+      return new RangeValidator(min, max, `float`);
     },
     type: Database.VAR_FLOAT,
   },

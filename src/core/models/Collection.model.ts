@@ -1,5 +1,7 @@
-import { Exclude, Expose } from 'class-transformer';
+import { Exclude, Expose, Type } from 'class-transformer';
 import BaseModel from 'src/core/models/base.model';
+import { AttributeModel } from './Attribute.model';
+import { IndexModel } from './Index.model';
 
 @Exclude()
 export class CollectionModel extends BaseModel {
@@ -28,12 +30,16 @@ export class CollectionModel extends BaseModel {
   /**
    * Collection attributes.
    */
-  @Expose() attributes: Array<string> = [];
+  @Expose()
+  @Type(() => AttributeModel)
+  attributes: AttributeModel[] = [];
 
   /**
    * Collection indexes.
    */
-  @Expose() indexes: Array<string> = [];
+  @Expose()
+  @Type(() => IndexModel)
+  indexes: IndexModel[] = [];
 
   constructor(partial: Partial<CollectionModel>) {
     super();

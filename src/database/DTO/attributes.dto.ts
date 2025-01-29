@@ -1,4 +1,4 @@
-import { OmitType, PartialType } from '@nestjs/mapped-types';
+import { OmitType, PartialType, PickType } from '@nestjs/mapped-types';
 import {
   IsArray,
   IsBoolean,
@@ -48,12 +48,16 @@ export class CreateEmailAttributeDTO extends OmitType(
 export class CreateEnumAttributeDTO extends OmitType(CreateStringAttributeDTO, [
   'encrypt',
   'size',
+  'default',
 ]) {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   @Length(1, 1024, { each: true })
   elements?: string[] = [];
+
+  @IsOptional()
+  default?: string | any = null;
 }
 
 export class CreateIpAttributeDTO extends OmitType(CreateStringAttributeDTO, [
@@ -68,7 +72,7 @@ export class CreateURLAttributeDTO extends OmitType(CreateStringAttributeDTO, [
 
 export class CreateIntegerAttributeDTO extends OmitType(
   CreateStringAttributeDTO,
-  ['size', 'encrypt'],
+  ['size', 'encrypt', 'default'],
 ) {
   @IsOptional()
   @IsInt()
@@ -77,14 +81,22 @@ export class CreateIntegerAttributeDTO extends OmitType(
   @IsOptional()
   @IsInt()
   max?: number = null;
+
+  @IsOptional()
+  @IsInt()
+  default?: number = null;
 }
 
 export class CreateFloatAttributeDTO extends CreateIntegerAttributeDTO {}
 
 export class CreateBooleanAttributeDTO extends OmitType(
   CreateStringAttributeDTO,
-  ['size', 'encrypt'],
-) {}
+  ['size', 'encrypt', 'default'],
+) {
+  @IsOptional()
+  @IsBoolean()
+  default?: boolean = null;
+}
 
 export class CreateDatetimeAttributeDTO extends OmitType(
   CreateStringAttributeDTO,
@@ -125,35 +137,80 @@ export class UpdateStringAttributeDTO extends PartialType(
 ) {
   @IsOptional()
   @IsString()
+  @IsKey()
   newKey?: string = null;
 }
 
 export class UpdateEmailAttributeDTO extends UpdateStringAttributeDTO {}
 
 export class UpdateEnumAttributeDTO extends PartialType(
-  CreateEnumAttributeDTO,
-) {}
+  PickType(CreateEnumAttributeDTO, ['required', 'default', 'elements']),
+) {
+  @IsOptional()
+  @IsString()
+  @IsKey()
+  newKey?: string = null;
+}
 
-export class UpdateIpAttributeDTO extends PartialType(CreateIpAttributeDTO) {}
+export class UpdateIpAttributeDTO extends PartialType(
+  PickType(CreateIpAttributeDTO, ['required', 'default']),
+) {
+  @IsOptional()
+  @IsString()
+  @IsKey()
+  newKey?: string = null;
+}
 
-export class UpdateURLAttributeDTO extends PartialType(CreateURLAttributeDTO) {}
+export class UpdateURLAttributeDTO extends PartialType(
+  PickType(CreateURLAttributeDTO, ['required', 'default']),
+) {
+  @IsOptional()
+  @IsString()
+  @IsKey()
+  newKey?: string = null;
+}
 
 export class UpdateIntegerAttributeDTO extends PartialType(
-  CreateIntegerAttributeDTO,
-) {}
+  PickType(CreateIntegerAttributeDTO, ['required', 'default', 'min', 'max']),
+) {
+  @IsOptional()
+  @IsString()
+  @IsKey()
+  newKey?: string = null;
+}
 
 export class UpdateFloatAttributeDTO extends PartialType(
-  CreateFloatAttributeDTO,
-) {}
+  PickType(CreateFloatAttributeDTO, ['required', 'default', 'min', 'max']),
+) {
+  @IsOptional()
+  @IsString()
+  @IsKey()
+  newKey?: string = null;
+}
 
 export class UpdateBooleanAttributeDTO extends PartialType(
-  CreateBooleanAttributeDTO,
-) {}
+  PickType(CreateBooleanAttributeDTO, ['required', 'default']),
+) {
+  @IsOptional()
+  @IsString()
+  @IsKey()
+  newKey?: string = null;
+}
 
 export class UpdateDatetimeAttributeDTO extends PartialType(
-  CreateDatetimeAttributeDTO,
-) {}
+  PickType(CreateDatetimeAttributeDTO, ['required', 'default']),
+) {
+  @IsOptional()
+  @IsString()
+  @IsKey()
+  newKey?: string = null;
+}
 
 export class UpdateRelationAttributeDTO extends PartialType(
-  CreateRelationAttributeDTO,
-) {}
+  PickType(CreateRelationAttributeDTO, ['onDelete']),
+) {
+  @IsOptional()
+  @IsString()
+  @IsKey()
+  newKey?: string = null;
+}
