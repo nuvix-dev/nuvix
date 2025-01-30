@@ -16,6 +16,7 @@ async function bootstrap() {
     logger: new ConsoleLogger({
       json: true,
       colors: true,
+      prefix: 'Nuvix',
     })
   });
 

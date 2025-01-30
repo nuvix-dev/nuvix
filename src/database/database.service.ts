@@ -69,7 +69,7 @@ export class DatabaseService {
     @Inject(DB_FOR_CONSOLE) private readonly dbConsole: Database,
     @Inject(DB_FOR_PROJECT) private readonly db: Database,
     @Inject(GEO_DB) private readonly geoDb: Reader<CountryResponse>,
-  ) {}
+  ) { }
 
   /**
    * Create a new database.
@@ -1223,10 +1223,10 @@ export class DatabaseService {
       }
 
       if (
-        attribute.getAttribute('options')['twoWayKey'].toLowerCase() ===
-          twoWayKey.toLowerCase() &&
-        attribute.getAttribute('options')['relatedCollection'] ===
-          relatedCollection.getId()
+        attribute.getAttribute('options')?.['twoWayKey']?.toLowerCase() ===
+        twoWayKey.toLowerCase() &&
+        attribute.getAttribute('options')?.['relatedCollection'] ===
+        relatedCollection.getId()
       ) {
         throw new Exception(
           Exception.ATTRIBUTE_ALREADY_EXISTS,
@@ -1237,9 +1237,9 @@ export class DatabaseService {
       if (
         type === Database.RELATION_MANY_TO_MANY &&
         attribute.getAttribute('options')['relationType'] ===
-          Database.RELATION_MANY_TO_MANY &&
+        Database.RELATION_MANY_TO_MANY &&
         attribute.getAttribute('options')['relatedCollection'] ===
-          relatedCollection.getId()
+        relatedCollection.getId()
       ) {
         throw new Exception(
           Exception.ATTRIBUTE_ALREADY_EXISTS,
@@ -1889,7 +1889,7 @@ export class DatabaseService {
 
           const validator =
             attribute.getAttribute('format') ===
-            APP_DATABASE_ATTRIBUTE_INT_RANGE
+              APP_DATABASE_ATTRIBUTE_INT_RANGE
               ? new RangeValidator(min, max, 'integer')
               : new RangeValidator(min, max, 'float');
 
