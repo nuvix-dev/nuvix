@@ -281,7 +281,7 @@ export class AccountService {
 
     try {
       user = await this.db.updateDocument('users', user.getId(), user);
-      const oldTarget = user.find('identifier', oldEmail, 'targets');
+      const oldTarget = user.find<any>('identifier', oldEmail, 'targets');
 
       if (oldTarget && !oldTarget.isEmpty()) {
         await Authorization.skip(
@@ -427,7 +427,7 @@ export class AccountService {
 
     try {
       user = await this.db.updateDocument('users', user.getId(), user);
-      const oldTarget = user.find('identifier', oldPhone, 'targets');
+      const oldTarget = user.find<any>('identifier', oldPhone, 'targets');
 
       if (oldTarget && !oldTarget.isEmpty()) {
         await Authorization.skip(

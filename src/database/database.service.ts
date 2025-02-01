@@ -70,7 +70,6 @@ import {
 import { CreateDocumentDTO, UpdateDocumentDTO } from './DTO/document.dto';
 import { CreateIndexDTO } from './DTO/indexes.dto';
 
-
 @Injectable()
 export class DatabaseService {
   private readonly logger = new Logger(DatabaseService.name);

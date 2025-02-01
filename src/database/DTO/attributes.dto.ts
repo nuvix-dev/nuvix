@@ -29,7 +29,7 @@ export class CreateStringAttributeDTO {
 
   @IsOptional()
   @IsString()
-  default?: string = null;
+  default?: string | null = null;
 
   @IsOptional()
   @IsBoolean()

@@ -919,17 +919,24 @@ export class ProjectService {
     }
 
     const providers = project.getAttribute('oAuthProviders', []);
+    const providerIndex = providers.findIndex(
+      (provider: any) => provider.key === input.provider,
+    );
+
+    if (providerIndex === -1) {
+      throw new Exception(Exception.PROVIDER_NOT_FOUND);
+    }
 
     if (input.appId !== undefined) {
-      providers[input.provider]['appId'] = input.appId;
+      providers[providerIndex].appId = input.appId;
     }
 
     if (input.secret !== undefined) {
-      providers[input.provider]['secret'] = input.secret;
+      providers[providerIndex].secret = input.secret;
     }
 
     if (input.enabled !== undefined) {
-      providers[input.provider]['enabled'] = input.enabled;
+      providers[providerIndex].enabled = input.enabled;
     }
 
     project = await this.db.updateDocument(

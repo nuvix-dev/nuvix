@@ -28,7 +28,7 @@ async function bootstrap() {
     new ValidationPipe({
       enableDebugMessages: true,
       stopAtFirstError: false,
-      transform: true,
+      // transform: true,
       transformOptions: {
         exposeDefaultValues: true,
       },

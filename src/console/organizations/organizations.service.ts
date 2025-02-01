@@ -332,7 +332,7 @@ export class OrganizationsService {
     }
 
     const membershipId = ID.unique();
-    const secret = Auth.tokenGenerator();
+    const secret = Auth.tokenGenerator(128);
 
     const membership = await this.db.createDocument(
       'memberships',

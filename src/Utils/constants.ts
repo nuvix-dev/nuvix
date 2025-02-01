@@ -41,6 +41,7 @@ export const APP_USERAGENT =
 export const APP_MODE_DEFAULT = 'default';
 export const APP_MODE_ADMIN = 'admin';
 export const APP_PAGING_LIMIT = 12;
+export const APP_MAX_COUNT = 1000;
 export const APP_LIMIT_COUNT = 5000;
 export const APP_LIMIT_USERS = 10_000;
 export const APP_LIMIT_USER_PASSWORD_HISTORY = 20;
