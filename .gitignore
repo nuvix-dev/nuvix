@@ -71,3 +71,6 @@ yarn.lock
 *.zip
 *.tar.gz
 *.tgz
+
+# Storage
+storage/uploads/*

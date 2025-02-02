@@ -36,12 +36,6 @@ import { CreateBucketDTO, UpdateBucketDTO } from './DTO/bucket.dto';
 export class StorageController {
   constructor(private readonly storageService: StorageService) {}
 
-  @Get('usage')
-  @ResponseType(Response.MODEL_USAGE_STORAGE)
-  async getUsage(@Query('range') range?: string) {
-    return await this.storageService.getStorageUsage(range);
-  }
-
   @Get('buckets')
   @ResponseType({ type: Response.MODEL_BUCKET, list: true })
   async getBuckets(
@@ -55,15 +49,6 @@ export class StorageController {
   @ResponseType(Response.MODEL_BUCKET)
   async createBucket(@Body() createBucketDto: CreateBucketDTO) {
     return await this.storageService.createBucket(createBucketDto);
-  }
-
-  @Get('buckets/:id/usage')
-  @ResponseType(Response.MODEL_USAGE_BUCKETS)
-  async getBucketUsage(
-    @Param('id') id: string,
-    @Query('range') range?: string,
-  ) {
-    return await this.storageService.getBucketStorageUsage(id, range);
   }
 
   @Get('buckets/:id')
@@ -185,5 +170,20 @@ export class StorageController {
   @ResponseType(Response.MODEL_NONE)
   async deleteFile(@Param('id') id: string, @Param('fileId') fileId: string) {
     return await this.storageService.deleteFile(id, fileId);
+  }
+
+  @Get('usage')
+  @ResponseType(Response.MODEL_USAGE_STORAGE)
+  async getUsage(@Query('range') range?: string) {
+    return await this.storageService.getStorageUsage(range);
+  }
+
+  @Get(':id/usage')
+  @ResponseType(Response.MODEL_USAGE_BUCKETS)
+  async getBucketUsage(
+    @Param('id') id: string,
+    @Query('range') range?: string,
+  ) {
+    return await this.storageService.getBucketStorageUsage(id, range);
   }
 }

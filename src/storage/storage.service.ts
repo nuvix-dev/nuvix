@@ -24,6 +24,7 @@ import { Request, Response } from 'express';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
 import { JwtService } from '@nestjs/jwt';
+import usageConfig from 'src/core/config/usage';
 
 @Injectable()
 export class StorageService {
@@ -410,17 +411,37 @@ export class StorageService {
     let fileId = input.fileId === 'unique()' ? ID.unique() : input.fileId;
     let chunk = 1;
     let chunks = 1;
+    let initialChunkSize = 0;
 
     if (contentRange) {
-      const [start, end, size] = contentRange.split(/[-/]/).map(Number);
-      fileId = (request.headers['x-nuvix-id'] as any) || fileId;
+      const match = /^bytes (\d+)-(\d+)\/(\d+)$/.exec(contentRange);
+      if (!match) {
+        throw new Exception(
+          Exception.STORAGE_INVALID_CONTENT_RANGE,
+          'Invalid Content-Range format.',
+        );
+      }
+
+      const [, start, end, size] = match.map(Number);
+
+      let headerFileId = request.headers['x-nuvix-id'];
+      if (Array.isArray(headerFileId)) {
+        fileId = headerFileId[0];
+      } else if (headerFileId) {
+        fileId = headerFileId as string;
+      }
 
       if (end >= size) {
         throw new Exception(Exception.STORAGE_INVALID_CONTENT_RANGE);
       }
 
-      chunks = Math.ceil(size / (end + 1 - start));
-      chunk = Math.floor(start / (end + 1 - start)) + 1;
+      const chunkSize = end - start + 1;
+      if (initialChunkSize === 0) {
+        initialChunkSize = chunkSize;
+      }
+
+      chunks = Math.ceil(size / initialChunkSize);
+      chunk = Math.floor(start / initialChunkSize) + 1;
     }
 
     const allowedFileExtensions = bucket.getAttribute(
@@ -444,14 +465,10 @@ export class StorageService {
       );
     }
 
-    // TODO: Separate this into a helper class
-    // and add support for cloud providers.
-
     const storagePath = `${APP_STORAGE_UPLOADS}/bucket_${bucket.getInternalId()}`;
     const chunksPath = `${storagePath}/chunks/${fileId}`;
     const finalFilePath = `${storagePath}/${fileId}.${fileName.split('.').pop()}`;
 
-    // Ensure directories exist
     if (!fs.existsSync(storagePath)) {
       fs.mkdirSync(storagePath, { recursive: true });
     }
@@ -472,6 +489,7 @@ export class StorageService {
       const chunksTotal = fileDocument.getAttribute('chunksTotal', 1);
       chunksUploaded = fileDocument.getAttribute('chunksUploaded', 0);
       metadata = fileDocument.getAttribute('metadata', {});
+      chunks = chunksTotal;
 
       if (chunk === -1) chunk = chunksTotal;
       if (chunksUploaded === chunksTotal) {
@@ -485,7 +503,6 @@ export class StorageService {
     chunksUploaded += 1;
 
     if (chunksUploaded === chunks) {
-      // Merge all chunks efficiently using streams
       const writeStream = fs.createWriteStream(finalFilePath);
 
       for (let i = 1; i <= chunks; i++) {
@@ -498,14 +515,15 @@ export class StorageService {
         }
       }
 
-      writeStream.end();
+      await new Promise((resolve, reject) => {
+        writeStream.end((err: any) => {
+          if (err) reject(err);
+          else resolve(undefined);
+        });
+      });
 
-      // Remove the chunks directory after merging
-      fs.rmdirSync(chunksPath, { recursive: true });
+      fs.rmSync(chunksPath, { recursive: true });
 
-      // TODO: antivirus check.
-
-      // Get metadata
       const mimeType = file.mimetype;
       const fileHash = await calculateFileHash(finalFilePath);
       const sizeActual = fs.statSync(finalFilePath).size;
@@ -546,7 +564,7 @@ export class StorageService {
           throw new Exception(Exception.USER_UNAUTHORIZED);
         }
 
-        fileDocument = await Authorization.skip(() =>
+        fileDocument = await Authorization.skip(async () =>
           this.db.updateDocument(
             'bucket_' + bucket.getInternalId(),
             fileId,
@@ -592,7 +610,6 @@ export class StorageService {
 
     return fileDocument;
   }
-
   /**
    * Get a File.
    */
@@ -1041,9 +1058,12 @@ export class StorageService {
       throw new Exception(Exception.USER_UNAUTHORIZED);
     }
 
-    const deviceDeleted = fs.existsSync(file.getAttribute('path'))
-      ? fs.unlinkSync(file.getAttribute('path'))
-      : false;
+    const filePath = file.getAttribute('path');
+    let deviceDeleted = false;
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+      deviceDeleted = true;
+    }
 
     if (deviceDeleted) {
       const deleted =
@@ -1052,11 +1072,12 @@ export class StorageService {
               'bucket_' + bucket.getInternalId(),
               fileId,
             )
-          : await Authorization.skip(() =>
-              this.db.deleteDocument(
-                'bucket_' + bucket.getInternalId(),
-                fileId,
-              ),
+          : await Authorization.skip(
+              async () =>
+                await this.db.deleteDocument(
+                  'bucket_' + bucket.getInternalId(),
+                  fileId,
+                ),
             );
 
       if (!deleted) {
@@ -1079,10 +1100,7 @@ export class StorageService {
    * Get Storage Usage.
    */
   async getStorageUsage(range?: string) {
-    const periods = {
-      '1h': { limit: 24, period: '1h', factor: 3600 },
-      '1d': { limit: 30, period: '1d', factor: 86400 },
-    };
+    const periods = usageConfig;
 
     const stats: any = {};
     const usage: any = {};
@@ -1153,10 +1171,7 @@ export class StorageService {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
     }
 
-    const periods = {
-      '1h': { limit: 24, period: '1h', factor: 3600 },
-      '1d': { limit: 30, period: '1d', factor: 86400 },
-    };
+    const periods = usageConfig;
 
     const stats: any = {};
     const usage: any = {};
