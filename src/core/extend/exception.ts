@@ -117,6 +117,7 @@ export class Exception extends HttpException {
   static readonly STORAGE_INVALID_RANGE = 'storage_invalid_range';
   static readonly STORAGE_INVALID_NUVIX_ID = 'storage_invalid_nuvix_id';
   static readonly STORAGE_FILE_NOT_PUBLIC = 'storage_file_not_public';
+  static readonly STORAGE_FILE_CHUNK_MISSING = 'storage_file_chunk_missing';
 
   /** VCS */
   static readonly INSTALLATION_NOT_FOUND = 'installation_not_found';
@@ -883,7 +884,11 @@ const errorCodes: Record<string, ErrorCode> = {
     description: 'The requested file is not publicly readable.',
     code: 403,
   },
-
+  [Exception.STORAGE_FILE_CHUNK_MISSING]: {
+    name: Exception.STORAGE_FILE_CHUNK_MISSING,
+    description: 'Chunk is Missing.',
+    code: 500,
+  },
   /** VCS */
   [Exception.INSTALLATION_NOT_FOUND]: {
     name: Exception.INSTALLATION_NOT_FOUND,

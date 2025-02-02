@@ -235,3 +235,5 @@ export const METRIC_FUNCTION_ID_EXECUTIONS_MB_SECONDS =
 export const METRIC_NETWORK_REQUESTS = 'network.requests';
 export const METRIC_NETWORK_INBOUND = 'network.inbound';
 export const METRIC_NETWORK_OUTBOUND = 'network.outbound';
+
+export const APP_STORAGE_LIMIT = 100 * 1024 * 1024; // 100MB
