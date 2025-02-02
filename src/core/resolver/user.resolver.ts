@@ -7,7 +7,7 @@ export const User = createParamDecorator<any, Document | null>(
     const request: Request = ctx.switchToHttp().getRequest();
 
     if (data === 'project') {
-      return null;
+      return new Document();
     }
 
     if (!request[USER]) {

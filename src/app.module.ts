@@ -25,9 +25,11 @@ import {
   APP_REDIS_PORT,
   APP_REDIS_SECURE,
   APP_REDIS_USER,
+  JWT_SECRET,
 } from './Utils/constants';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { StorageModule } from './storage/storage.module';
+import { JwtModule } from '@nestjs/jwt';
 config();
 
 @Module({
@@ -60,6 +62,10 @@ config();
       prefix: 'nuvix',
     }),
     EventEmitterModule.forRoot({
+      global: true,
+    }),
+    JwtModule.register({
+      secret: JWT_SECRET,
       global: true,
     }),
     CoreModule,

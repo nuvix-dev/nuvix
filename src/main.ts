@@ -5,7 +5,6 @@ import { config } from 'dotenv';
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 import { NextFunction, Request, Response } from 'express';
 import { ConsoleLogger, ValidationPipe } from '@nestjs/common';
-import { Exception } from './core/extend/exception';
 const cookieParser = require('cookie-parser');
 
 config();
@@ -49,21 +48,25 @@ async function bootstrap() {
     credentials: true,
     allowedHeaders: [
       'Content-Type',
+      'Content-Length',
       'Authorization',
       'X-Requested-With',
       'X-HTTP-Method-Override',
       'Accept',
+      'range',
       'X-Nuvix-Project',
       'X-Nuvix-Key',
       'X-Nuvix-Locale',
       'X-Nuvix-Mode',
       'X-Nuvix-JWT',
+      'X-Nuvix-id',
       'X-Nuvix-Response-Format',
       'X-Nuvix-Timeout',
       'x-sdk-language',
       'x-sdk-name',
       'x-sdk-platform',
       'x-sdk-version',
+      'content-range',
       'x-fallback-cookies',
       'x-nuvix-session',
       ...(process.env.CORS_HEADERS ?? '').split(','),

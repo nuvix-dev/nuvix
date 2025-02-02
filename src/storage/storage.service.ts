@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, Logger, StreamableFile } from '@nestjs/common';
 import {
   Authorization,
   Database,
@@ -19,16 +19,20 @@ import {
 import { CreateBucketDTO, UpdateBucketDTO } from './DTO/bucket.dto';
 import collections from 'src/core/collections';
 import { Auth } from 'src/core/helper/auth.helper';
-import { CreateFileDTO } from './DTO/file.dto';
-import { Request } from 'express';
+import { CreateFileDTO, UpdateFileDTO } from './DTO/file.dto';
+import { Request, Response } from 'express';
 import * as crypto from 'crypto';
 import * as fs from 'fs';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class StorageService {
+  private readonly logger = new Logger(StorageService.name);
+
   constructor(
     @Inject(DB_FOR_CONSOLE) private readonly dbForConsole: Database,
     @Inject(DB_FOR_PROJECT) private readonly db: Database,
+    private readonly jwtSerice: JwtService,
   ) {}
 
   /**
@@ -322,7 +326,7 @@ export class StorageService {
   async createFile(
     bucketId: string,
     input: CreateFileDTO,
-    files: Array<Express.Multer.File>,
+    file: Express.Multer.File | Express.Multer.File[],
     request: Request,
     user: Document,
     mode: string,
@@ -352,19 +356,16 @@ export class StorageService {
       Database.PERMISSION_DELETE,
     ];
 
-    const permissions = Permission.aggregate(
+    let permissions = Permission.aggregate(
       input.permissions,
       allowedPermissions,
     );
-
-    if (!permissions) {
-      if (user.getId()) {
-        allowedPermissions.forEach((permission) => {
-          permissions.push(
+    if (!permissions || permissions.length === 0) {
+      permissions = user.getId()
+        ? allowedPermissions.map((permission) =>
             new Permission(permission, 'user', user.getId()).toString(),
-          );
-        });
-      }
+          )
+        : [];
     }
 
     const roles = Authorization.getRoles();
@@ -388,16 +389,24 @@ export class StorageService {
       );
     }
 
-    const file = files[0];
+    if (Array.isArray(file)) file = file[0];
     if (!file) {
       throw new Exception(Exception.STORAGE_FILE_EMPTY);
     }
 
     const fileName = file.originalname;
-    const fileTmpName = file.path;
+    const fileBuffer = file.buffer;
     const fileSize = file.size;
-
+    const fileExt = fileName.split('.').pop();
     const contentRange = request.headers['content-range'];
+
+    if (!fileBuffer) {
+      throw new Exception(
+        Exception.STORAGE_FILE_EMPTY,
+        'File buffer is missing.',
+      );
+    }
+
     let fileId = input.fileId === 'unique()' ? ID.unique() : input.fileId;
     let chunk = 1;
     let chunks = 1;
@@ -405,16 +414,13 @@ export class StorageService {
     if (contentRange) {
       const [start, end, size] = contentRange.split(/[-/]/).map(Number);
       fileId = (request.headers['x-nuvix-id'] as any) || fileId;
+
       if (end >= size) {
         throw new Exception(Exception.STORAGE_INVALID_CONTENT_RANGE);
       }
 
-      if (end === size - 1) {
-        chunks = chunk = -1;
-      } else {
-        chunks = Math.ceil(size / (end + 1 - start));
-        chunk = Math.floor(start / (end + 1 - start)) + 1;
-      }
+      chunks = Math.ceil(size / (end + 1 - start));
+      chunk = Math.floor(start / (end + 1 - start)) + 1;
     }
 
     const allowedFileExtensions = bucket.getAttribute(
@@ -423,7 +429,7 @@ export class StorageService {
     );
     if (
       allowedFileExtensions.length &&
-      !allowedFileExtensions.includes(fileName.split('.').pop())
+      !allowedFileExtensions.includes(fileExt)
     ) {
       throw new Exception(
         Exception.STORAGE_FILE_TYPE_UNSUPPORTED,
@@ -438,7 +444,22 @@ export class StorageService {
       );
     }
 
-    const uploadPath = `${APP_STORAGE_UPLOADS}/${fileId}.${fileName.split('.').pop()}`;
+    // TODO: Separate this into a helper class
+    // and add support for cloud providers.
+
+    const storagePath = `${APP_STORAGE_UPLOADS}/bucket_${bucket.getInternalId()}`;
+    const chunksPath = `${storagePath}/chunks/${fileId}`;
+    const finalFilePath = `${storagePath}/${fileId}.${fileName.split('.').pop()}`;
+
+    // Ensure directories exist
+    if (!fs.existsSync(storagePath)) {
+      fs.mkdirSync(storagePath, { recursive: true });
+    }
+
+    if (!fs.existsSync(chunksPath)) {
+      fs.mkdirSync(chunksPath, { recursive: true });
+    }
+
     let fileDocument = await this.db.getDocument(
       'bucket_' + bucket.getInternalId(),
       fileId,
@@ -452,25 +473,23 @@ export class StorageService {
       chunksUploaded = fileDocument.getAttribute('chunksUploaded', 0);
       metadata = fileDocument.getAttribute('metadata', {});
 
-      if (chunk === -1) {
-        chunk = chunksTotal;
-      }
+      if (chunk === -1) chunk = chunksTotal;
       if (chunksUploaded === chunksTotal) {
         throw new Exception(Exception.STORAGE_FILE_ALREADY_EXISTS);
       }
     }
 
-    const chunkPath = `${uploadPath}.part_${chunk}`;
-    fs.writeFileSync(chunkPath, fs.readFileSync(fileTmpName));
-    fs.unlinkSync(fileTmpName); // Clean up temp chunk
+    const chunkPath = `${chunksPath}/part_${chunk}`;
+    fs.writeFileSync(chunkPath, fileBuffer);
 
     chunksUploaded += 1;
 
     if (chunksUploaded === chunks) {
-      // Merge all chunks
-      const writeStream = fs.createWriteStream(uploadPath);
+      // Merge all chunks efficiently using streams
+      const writeStream = fs.createWriteStream(finalFilePath);
+
       for (let i = 1; i <= chunks; i++) {
-        const partPath = `${uploadPath}.part_${i}`;
+        const partPath = `${chunksPath}/part_${i}`;
         if (fs.existsSync(partPath)) {
           writeStream.write(fs.readFileSync(partPath));
           fs.unlinkSync(partPath);
@@ -481,41 +500,94 @@ export class StorageService {
 
       writeStream.end();
 
+      // Remove the chunks directory after merging
+      fs.rmdirSync(chunksPath, { recursive: true });
+
+      // TODO: antivirus check.
+
+      // Get metadata
       const mimeType = file.mimetype;
-      const fileHash = await calculateFileHash(uploadPath);
-      const sizeActual = fs.statSync(uploadPath).size;
+      const fileHash = await calculateFileHash(finalFilePath);
+      const sizeActual = fs.statSync(finalFilePath).size;
 
-      const doc = new Document({
-        $id: fileId,
-        $permissions: permissions,
-        bucketId: bucket.getId(),
-        bucketInternalId: bucket.getInternalId(),
-        name: fileName,
-        path: uploadPath,
-        signature: fileHash,
-        mimeType,
-        sizeOriginal: fileSize,
-        sizeActual,
-        chunksTotal: chunks,
-        chunksUploaded,
-        metadata,
-      });
+      if (fileDocument.isEmpty()) {
+        const doc = new Document({
+          $id: fileId,
+          $permissions: permissions,
+          bucketId: bucket.getId(),
+          bucketInternalId: bucket.getInternalId(),
+          name: fileName,
+          path: finalFilePath,
+          signature: fileHash,
+          mimeType,
+          sizeOriginal: fileSize,
+          sizeActual,
+          chunksTotal: chunks,
+          chunksUploaded,
+          search: [fileId, fileName].join(' '),
+          metadata,
+        });
 
-      fileDocument = await this.db.createDocument(
-        'bucket_' + bucket.getInternalId(),
-        doc,
-      );
+        fileDocument = await this.db.createDocument(
+          'bucket_' + bucket.getInternalId(),
+          doc,
+        );
+      } else {
+        fileDocument = fileDocument
+          .setAttribute('$permissions', permissions)
+          .setAttribute('signature', fileHash)
+          .setAttribute('mimeType', mimeType)
+          .setAttribute('sizeActual', sizeActual)
+          .setAttribute('metadata', metadata)
+          .setAttribute('chunksUploaded', chunksUploaded);
+
+        const validator = new Authorization(Database.PERMISSION_CREATE);
+        if (!validator.isValid(bucket.getCreate())) {
+          throw new Exception(Exception.USER_UNAUTHORIZED);
+        }
+
+        fileDocument = await Authorization.skip(() =>
+          this.db.updateDocument(
+            'bucket_' + bucket.getInternalId(),
+            fileId,
+            fileDocument,
+          ),
+        );
+      }
     } else {
-      const updatedDoc = fileDocument
-        .setAttribute('$permissions', permissions)
-        .setAttribute('chunksUploaded', chunksUploaded)
-        .setAttribute('metadata', metadata);
+      if (fileDocument.isEmpty()) {
+        const doc = new Document({
+          $id: fileId,
+          $permissions: permissions,
+          bucketId: bucket.getId(),
+          bucketInternalId: bucket.getInternalId(),
+          name: fileName,
+          path: finalFilePath,
+          signature: '',
+          mimeType: '',
+          sizeOriginal: fileSize,
+          sizeActual: 0,
+          chunksTotal: chunks,
+          chunksUploaded,
+          search: [fileId, fileName].join(' '),
+          metadata,
+        });
 
-      await this.db.updateDocument(
-        'bucket_' + bucket.getInternalId(),
-        fileId,
-        updatedDoc,
-      );
+        fileDocument = await this.db.createDocument(
+          'bucket_' + bucket.getInternalId(),
+          doc,
+        );
+      } else {
+        const updatedDoc = fileDocument
+          .setAttribute('chunksUploaded', chunksUploaded)
+          .setAttribute('metadata', metadata);
+
+        fileDocument = await this.db.updateDocument(
+          'bucket_' + bucket.getInternalId(),
+          fileId,
+          updatedDoc,
+        );
+      }
     }
 
     return fileDocument;
@@ -559,8 +631,597 @@ export class StorageService {
 
     return file;
   }
+
+  /**
+   * Preview a file.
+   * @todo
+   */
+  async previewFile(bucketId: string, fileId: string) {
+    return {};
+  }
+
+  /**
+   * Download a file.
+   */
+  async downloadFile(
+    bucketId: string,
+    fileId: string,
+    response: Response,
+    request: Request,
+  ) {
+    const bucket = await Authorization.skip(() =>
+      this.db.getDocument('buckets', bucketId),
+    );
+
+    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
+    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
+
+    if (
+      bucket.isEmpty() ||
+      (!bucket.getAttribute('enabled') && !isAPIKey && !isPrivilegedUser)
+    ) {
+      throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
+    }
+
+    const fileSecurity = bucket.getAttribute('fileSecurity', false);
+    const validator = new Authorization(Database.PERMISSION_READ);
+    const valid = validator.isValid(bucket.getRead());
+    if (!fileSecurity && !valid) {
+      throw new Exception(Exception.USER_UNAUTHORIZED);
+    }
+
+    const file =
+      fileSecurity && !valid
+        ? await this.db.getDocument('bucket_' + bucket.getInternalId(), fileId)
+        : await Authorization.skip(() =>
+            this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+          );
+
+    if (file.isEmpty()) {
+      throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
+    }
+
+    const path = file.getAttribute('path', '');
+
+    if (!fs.existsSync(path)) {
+      throw new Exception(
+        Exception.STORAGE_FILE_NOT_FOUND,
+        'File not found in ' + path,
+      );
+    }
+
+    const mimeType = file.getAttribute('mimeType');
+    const fileName = file.getAttribute('name', '');
+    const size = file.getAttribute('sizeOriginal', 0);
+
+    const rangeHeader = request.headers['range'];
+    let start = 0;
+    let end = size - 1;
+
+    if (rangeHeader) {
+      const [unit, range] = rangeHeader.split('=');
+      if (unit !== 'bytes') {
+        throw new Exception(Exception.STORAGE_INVALID_RANGE);
+      }
+
+      const [rangeStart, rangeEnd] = range.split('-').map(Number);
+      start = rangeStart;
+      end = rangeEnd || end;
+
+      if (start >= end || end >= size) {
+        throw new Exception(Exception.STORAGE_INVALID_RANGE);
+      }
+
+      response.setHeader('Accept-Ranges', 'bytes');
+      response.setHeader('Content-Range', `bytes ${start}-${end}/${size}`);
+      response.setHeader('Content-Length', end - start + 1);
+      response.status(206);
+    } else {
+      response.setHeader('Content-Length', size);
+    }
+
+    response.setHeader('Content-Type', mimeType);
+    response.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${fileName}"`,
+    );
+    response.setHeader(
+      'Expires',
+      new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toUTCString(),
+    );
+
+    const fileStream = fs.createReadStream(path, { start, end });
+    return new StreamableFile(fileStream);
+  }
+
+  /**
+   * View a file.
+   */
+  async viewFile(
+    bucketId: string,
+    fileId: string,
+    response: Response,
+    request: Request,
+  ) {
+    const bucket = await Authorization.skip(() =>
+      this.db.getDocument('buckets', bucketId),
+    );
+
+    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
+    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
+
+    if (
+      bucket.isEmpty() ||
+      (!bucket.getAttribute('enabled') && !isAPIKey && !isPrivilegedUser)
+    ) {
+      throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
+    }
+
+    const fileSecurity = bucket.getAttribute('fileSecurity', false);
+    const validator = new Authorization(Database.PERMISSION_READ);
+    const valid = validator.isValid(bucket.getRead());
+    if (!fileSecurity && !valid) {
+      throw new Exception(Exception.USER_UNAUTHORIZED);
+    }
+
+    const file =
+      fileSecurity && !valid
+        ? await this.db.getDocument('bucket_' + bucket.getInternalId(), fileId)
+        : await Authorization.skip(() =>
+            this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+          );
+
+    if (file.isEmpty()) {
+      throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
+    }
+
+    const path = file.getAttribute('path', '');
+
+    if (!fs.existsSync(path)) {
+      throw new Exception(
+        Exception.STORAGE_FILE_NOT_FOUND,
+        'File not found in ' + path,
+      );
+    }
+
+    const mimeType = file.getAttribute('mimeType');
+    const fileName = file.getAttribute('name', '');
+    const size = file.getAttribute('sizeOriginal', 0);
+
+    const rangeHeader = request.headers['range'];
+    let start = 0;
+    let end = size - 1;
+
+    if (rangeHeader) {
+      const [unit, range] = rangeHeader.split('=');
+      if (unit !== 'bytes') {
+        throw new Exception(Exception.STORAGE_INVALID_RANGE);
+      }
+
+      const [rangeStart, rangeEnd] = range.split('-').map(Number);
+      start = rangeStart;
+      end = rangeEnd || end;
+
+      if (start >= end || end >= size) {
+        throw new Exception(Exception.STORAGE_INVALID_RANGE);
+      }
+
+      response.setHeader('Accept-Ranges', 'bytes');
+      response.setHeader('Content-Range', `bytes ${start}-${end}/${size}`);
+      response.setHeader('Content-Length', end - start + 1);
+      response.status(206);
+    } else {
+      response.setHeader('Content-Length', size);
+    }
+
+    response.setHeader('Content-Type', mimeType);
+    response.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+    response.setHeader(
+      'Expires',
+      new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toUTCString(),
+    );
+
+    const fileStream = fs.createReadStream(path, { start, end });
+    return new StreamableFile(fileStream);
+  }
+
+  /**
+   * Get file for push notification
+   */
+  async getFileForPushNotification(
+    bucketId: string,
+    fileId: string,
+    jwt: string,
+    request: Request,
+    response: Response,
+  ) {
+    const bucket = await Authorization.skip(() =>
+      this.db.getDocument('buckets', bucketId),
+    );
+
+    let decoded: any;
+    try {
+      decoded = this.jwtSerice.verify(jwt);
+    } catch (error) {
+      throw new Exception(Exception.USER_UNAUTHORIZED);
+    }
+
+    if (
+      decoded.projectId !== bucket.getAttribute('projectId') ||
+      decoded.bucketId !== bucketId ||
+      decoded.fileId !== fileId
+    ) {
+      throw new Exception(Exception.USER_UNAUTHORIZED);
+    }
+
+    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
+    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
+
+    if (
+      bucket.isEmpty() ||
+      (!bucket.getAttribute('enabled') && !isAPIKey && !isPrivilegedUser)
+    ) {
+      throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
+    }
+
+    const file = await Authorization.skip(() =>
+      this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+    );
+
+    if (file.isEmpty()) {
+      throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
+    }
+
+    const path = file.getAttribute('path', '');
+
+    if (!fs.existsSync(path)) {
+      throw new Exception(
+        Exception.STORAGE_FILE_NOT_FOUND,
+        'File not found in ' + path,
+      );
+    }
+
+    const mimeType = file.getAttribute('mimeType', 'text/plain');
+    const fileName = file.getAttribute('name', '');
+    const size = file.getAttribute('sizeOriginal', 0);
+
+    response.setHeader('Content-Type', mimeType);
+    response.setHeader('Content-Disposition', `inline; filename="${fileName}"`);
+    response.setHeader(
+      'Expires',
+      new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toUTCString(),
+    );
+    response.setHeader('X-Peak', process.memoryUsage().heapUsed.toString());
+
+    const rangeHeader = request.headers['range'];
+    if (rangeHeader) {
+      const [unit, range] = rangeHeader.split('=');
+      if (unit !== 'bytes') {
+        throw new Exception(Exception.STORAGE_INVALID_RANGE);
+      }
+
+      const [start, end] = range.split('-').map(Number);
+      const finalEnd = end || size - 1;
+
+      if (start >= finalEnd || finalEnd >= size) {
+        throw new Exception(Exception.STORAGE_INVALID_RANGE);
+      }
+
+      response.setHeader('Accept-Ranges', 'bytes');
+      response.setHeader('Content-Range', `bytes ${start}-${finalEnd}/${size}`);
+      response.setHeader('Content-Length', finalEnd - start + 1);
+      response.status(206);
+
+      const fileStream = fs.createReadStream(path, { start, end: finalEnd });
+      return new StreamableFile(fileStream);
+    }
+
+    response.setHeader('Content-Length', size);
+    const fileStream = fs.createReadStream(path);
+    return new StreamableFile(fileStream);
+  }
+
+  /**
+   * Update a file.
+   */
+  async updateFile(bucketId: string, fileId: string, input: UpdateFileDTO) {
+    const bucket = await Authorization.skip(() =>
+      this.db.getDocument('buckets', bucketId),
+    );
+
+    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
+    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
+
+    if (
+      bucket.isEmpty() ||
+      (!bucket.getAttribute('enabled') && !isAPIKey && !isPrivilegedUser)
+    ) {
+      throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
+    }
+
+    const fileSecurity = bucket.getAttribute('fileSecurity', false);
+    const validator = new Authorization(Database.PERMISSION_UPDATE);
+    const valid = validator.isValid(bucket.getUpdate());
+    if (!fileSecurity && !valid) {
+      throw new Exception(Exception.USER_UNAUTHORIZED);
+    }
+
+    const file = await Authorization.skip(() =>
+      this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+    );
+
+    if (file.isEmpty()) {
+      throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
+    }
+
+    let permissions = Permission.aggregate(input.permissions ?? [], [
+      Database.PERMISSION_READ,
+      Database.PERMISSION_UPDATE,
+      Database.PERMISSION_DELETE,
+    ]);
+
+    const roles = Authorization.getRoles();
+    if (
+      !Auth.isAppUser(roles) &&
+      !Auth.isPrivilegedUser(roles) &&
+      permissions
+    ) {
+      permissions.forEach((permission) => {
+        const parsedPermission = Permission.parse(permission);
+        if (!Authorization.isRole(parsedPermission.toString())) {
+          throw new Exception(
+            Exception.USER_UNAUTHORIZED,
+            `Permissions must be one of: (${roles.join(', ')})`,
+          );
+        }
+      });
+    }
+
+    if (!permissions) {
+      permissions = file.getPermissions() ?? [];
+    }
+
+    file.setAttribute('$permissions', permissions);
+
+    if (input.name) {
+      file.setAttribute('name', input.name);
+    }
+
+    if (fileSecurity && !valid) {
+      return await this.db.updateDocument(
+        'bucket_' + bucket.getInternalId(),
+        fileId,
+        file,
+      );
+    } else {
+      return await Authorization.skip(() =>
+        this.db.updateDocument(
+          'bucket_' + bucket.getInternalId(),
+          fileId,
+          file,
+        ),
+      );
+    }
+  }
+
+  /**
+   * Delete a file.
+   */
+  async deleteFile(bucketId: string, fileId: string) {
+    const bucket = await Authorization.skip(() =>
+      this.db.getDocument('buckets', bucketId),
+    );
+
+    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
+    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
+
+    if (
+      bucket.isEmpty() ||
+      (!bucket.getAttribute('enabled') && !isAPIKey && !isPrivilegedUser)
+    ) {
+      throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
+    }
+
+    const fileSecurity = bucket.getAttribute('fileSecurity', false);
+    const validator = new Authorization(Database.PERMISSION_DELETE);
+    const valid = validator.isValid(bucket.getDelete());
+    if (!fileSecurity && !valid) {
+      throw new Exception(Exception.USER_UNAUTHORIZED);
+    }
+
+    const file = await Authorization.skip(() =>
+      this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+    );
+
+    if (file.isEmpty()) {
+      throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
+    }
+
+    if (fileSecurity && !valid && !validator.isValid(file.getDelete())) {
+      throw new Exception(Exception.USER_UNAUTHORIZED);
+    }
+
+    const deviceDeleted = fs.existsSync(file.getAttribute('path'))
+      ? fs.unlinkSync(file.getAttribute('path'))
+      : false;
+
+    if (deviceDeleted) {
+      const deleted =
+        fileSecurity && !valid
+          ? await this.db.deleteDocument(
+              'bucket_' + bucket.getInternalId(),
+              fileId,
+            )
+          : await Authorization.skip(() =>
+              this.db.deleteDocument(
+                'bucket_' + bucket.getInternalId(),
+                fileId,
+              ),
+            );
+
+      if (!deleted) {
+        throw new Exception(
+          Exception.GENERAL_SERVER_ERROR,
+          'Failed to remove file from DB',
+        );
+      }
+    } else {
+      throw new Exception(
+        Exception.GENERAL_SERVER_ERROR,
+        'Failed to delete file from device',
+      );
+    }
+
+    return {};
+  }
+
+  /**
+   * Get Storage Usage.
+   */
+  async getStorageUsage(range?: string) {
+    const periods = {
+      '1h': { limit: 24, period: '1h', factor: 3600 },
+      '1d': { limit: 30, period: '1d', factor: 86400 },
+    };
+
+    const stats: any = {};
+    const usage: any = {};
+    const days = periods[range];
+    const metrics = ['buckets', 'files', 'filesStorage'];
+
+    await Authorization.skip(async () => {
+      for (const metric of metrics) {
+        const result = await this.db.findOne('stats', [
+          Query.equal('metric', [metric]),
+          Query.equal('period', ['inf']),
+        ]);
+
+        stats[metric] = { total: result.getAttribute('value') ?? 0, data: {} };
+        const results = await this.db.find('stats', [
+          Query.equal('metric', [metric]),
+          Query.equal('period', days.period),
+          Query.limit(days.limit),
+          Query.orderDesc('time'),
+        ]);
+
+        for (const res of results) {
+          stats[metric].data[res.getAttribute('time')] = {
+            value: res.getAttribute('value'),
+          };
+        }
+      }
+    });
+
+    const format =
+      days.period === '1h'
+        ? 'YYYY-MM-DDTHH:00:00.000Z'
+        : 'YYYY-MM-DDT00:00:00.000Z';
+
+    for (const metric of metrics) {
+      usage[metric] = { total: stats[metric].total, data: [] };
+      let leap = Math.floor(Date.now() / 1000) - days.limit * days.factor;
+
+      while (leap < Math.floor(Date.now() / 1000)) {
+        leap += days.factor;
+        const formatDate =
+          new Date(leap * 1000).toISOString().split('.')[0] + 'Z';
+        usage[metric].data.push({
+          value: stats[metric].data[formatDate]?.value ?? 0,
+          date: formatDate,
+        });
+      }
+    }
+
+    return {
+      range,
+      bucketsTotal: usage.buckets?.total,
+      filesTotal: usage.files?.total,
+      filesStorageTotal: usage.filesStorage?.total,
+      buckets: usage.buckets?.data,
+      files: usage.files?.data,
+      storage: usage.filesStorage?.data,
+    };
+  }
+
+  /**
+   * Get Storage Usage of bucket.
+   */
+  async getBucketStorageUsage(bucketId: string, range?: string) {
+    const bucket = await this.db.getDocument('buckets', bucketId);
+
+    if (bucket.isEmpty()) {
+      throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
+    }
+
+    const periods = {
+      '1h': { limit: 24, period: '1h', factor: 3600 },
+      '1d': { limit: 30, period: '1d', factor: 86400 },
+    };
+
+    const stats: any = {};
+    const usage: any = {};
+    const days = periods[range];
+    const metrics = [
+      `bucket_${bucket.getInternalId()}_files`,
+      `bucket_${bucket.getInternalId()}_filesStorage`,
+    ];
+
+    await Authorization.skip(async () => {
+      for (const metric of metrics) {
+        const result = await this.db.findOne('stats', [
+          Query.equal('metric', [metric]),
+          Query.equal('period', ['inf']),
+        ]);
+
+        stats[metric] = { total: result.getAttribute('value') ?? 0, data: {} };
+        const results = await this.db.find('stats', [
+          Query.equal('metric', [metric]),
+          Query.equal('period', days.period),
+          Query.limit(days.limit),
+          Query.orderDesc('time'),
+        ]);
+
+        for (const res of results) {
+          stats[metric].data[res.getAttribute('time')] = {
+            value: res.getAttribute('value'),
+          };
+        }
+      }
+    });
+
+    const format =
+      days.period === '1h'
+        ? 'YYYY-MM-DDTHH:00:00.000Z'
+        : 'YYYY-MM-DDT00:00:00.000Z';
+
+    for (const metric of metrics) {
+      usage[metric] = { total: stats[metric].total, data: [] };
+      let leap = Math.floor(Date.now() / 1000) - days.limit * days.factor;
+
+      while (leap < Math.floor(Date.now() / 1000)) {
+        leap += days.factor;
+        const formatDate =
+          new Date(leap * 1000).toISOString().split('.')[0] + 'Z';
+        usage[metric].data.push({
+          value: stats[metric].data[formatDate]?.value ?? 0,
+          date: formatDate,
+        });
+      }
+    }
+
+    return {
+      range,
+      filesTotal: usage[metrics[0]]?.total,
+      filesStorageTotal: usage[metrics[1]]?.total,
+      files: usage[metrics[0]]?.data,
+      storage: usage[metrics[1]]?.data,
+    };
+  }
 }
 
+/**
+ * Calculate file hash.
+ */
 function calculateFileHash(filePath: string): Promise<string> {
   return new Promise((resolve, reject) => {
     const hash = crypto.createHash('sha256');

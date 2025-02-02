@@ -42,6 +42,7 @@ import { CountryResponse, Reader } from 'maxmind';
 import collections from 'src/core/collections';
 import { Exception } from 'src/core/extend/exception';
 import { Detector } from 'src/core/helper/detector.helper';
+import usageConfig from 'src/core/config/usage';
 
 // DTOs
 import { CreateDatabaseDTO, UpdateDatabaseDTO } from './DTO/database.dto';
@@ -3179,7 +3180,7 @@ export class DatabaseService {
    * Get Usage.
    */
   async getUsage(range?: string) {
-    const periods = []; //Config.getParam('usage', []);
+    const periods = usageConfig;
     const stats: any = {};
     const usage: any = {};
     const days = periods[range];
@@ -3248,7 +3249,7 @@ export class DatabaseService {
       throw new Exception(Exception.DATABASE_NOT_FOUND);
     }
 
-    const periods = []; // Config.getParam('usage', []);
+    const periods = usageConfig;
     const stats: any = {};
     const usage: any = {};
     const days = periods[range];
@@ -3335,7 +3336,7 @@ export class DatabaseService {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     }
 
-    const periods = []; // Config.getParam('usage', []);
+    const periods = usageConfig;
     const stats: any = {};
     const usage: any = {};
     const days = periods[range];
