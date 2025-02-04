@@ -1,4 +1,5 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import {
   Document,
   Database,
@@ -8,62 +9,56 @@ import {
   Role,
   Authorization,
 } from '@nuvix/database';
-import { Request, Response } from 'express';
+import DuplicateException from '@nuvix/database/dist/errors/Duplicate';
 import { Exception } from 'src/core/extend/exception';
 import { Auth } from 'src/core/helper/auth.helper';
+import { LocaleTranslator } from 'src/core/helper/locale.helper';
+import { Response } from 'src/core/helper/response.helper';
 import { PersonalDataValidator } from 'src/core/validators/personal-data.validator';
+import { DB_FOR_PROJECT, EVENT_USER_CREATE, EVENT_USER_DELETE } from 'src/Utils/constants';
 
 @Injectable()
 export class AccountService {
+
+  constructor(
+    @Inject(DB_FOR_PROJECT) private readonly db: Database,
+    private eventEmitter: EventEmitter2
+  ) { }
+
+  /**
+  * Create a new account
+  */
   async createAccount(
     userId: string,
     email: string,
     password: string,
     name: string,
-    request: Request,
-    response: Response,
     user: Document,
-    project: Document,
-    db: Database,
-  ) {
+    project: Document
+  ): Promise<Document> {
     email = email.toLowerCase();
 
-    const whitelistEmails = project.getAttribute('authWhitelistEmails');
-    const whitelistIPs = project.getAttribute('authWhitelistIPs');
+    const auths = project.getAttribute('auths', {})
 
-    if (
-      whitelistEmails &&
-      !whitelistEmails.includes(email) &&
-      !whitelistEmails.includes(email.toUpperCase())
-    ) {
-      throw new Exception(Exception.USER_EMAIL_NOT_WHITELISTED);
-    }
-
-    if (whitelistIPs && !whitelistIPs.includes(request.ip)) {
-      throw new Exception(Exception.USER_IP_NOT_WHITELISTED);
-    }
-
-    const limit = project.getAttribute('auths', []).limit ?? 0;
+    const limit = auths.limit ?? 0;
 
     if (limit !== 0) {
-      const total = await db.count('users', []);
+      const total = await this.db.count('users', []);
 
       if (total >= limit) {
-        if (project.getId() === 'console') {
-          throw new Exception(Exception.USER_CONSOLE_COUNT_EXCEEDED);
-        }
         throw new Exception(Exception.USER_COUNT_EXCEEDED);
       }
     }
 
-    const identityWithMatchingEmail = await db.findOne('identities', [
+    const identityWithMatchingEmail = await this.db.findOne('identities', [
       Query.equal('providerEmail', [email]),
     ]);
+
     if (identityWithMatchingEmail && !identityWithMatchingEmail.isEmpty()) {
       throw new Exception(Exception.GENERAL_BAD_REQUEST);
     }
 
-    if (project.getAttribute('auths', []).personalDataCheck ?? false) {
+    if (auths.personalDataCheck ?? false) {
       const personalDataValidator = new PersonalDataValidator(
         userId,
         email,
@@ -77,9 +72,8 @@ export class AccountService {
 
     // hooks.trigger('passwordValidator', [db, project, password, user, true]);
 
-    const passwordHistory =
-      project.getAttribute('auths', []).passwordHistory ?? 0;
-    const hashedPassword = Auth.passwordHash(
+    const passwordHistory = auths.passwordHistory ?? 0;
+    const hashedPassword = await Auth.passwordHash(
       password,
       Auth.DEFAULT_ALGO,
       Auth.DEFAULT_ALGO_OPTIONS,
@@ -115,53 +109,131 @@ export class AccountService {
         accessedAt: new Date(),
       });
       user.removeAttribute('$internalId');
-      user = await Authorization.skip(() => db.createDocument('users', user));
+      user = await Authorization.skip(
+        async () => await this.db.createDocument('users', user),
+      );
 
       try {
-        const target = await Authorization.skip(() =>
-          db.createDocument(
-            'targets',
-            new Document({
-              $permissions: [
-                Permission.read(Role.user(user.getId())),
-                Permission.update(Role.user(user.getId())),
-                Permission.delete(Role.user(user.getId())),
-              ],
-              userId: user.getId(),
-              userInternalId: user.getInternalId(),
-              providerType: 'email',
-              identifier: email,
-            }),
-          ),
+        const target = await Authorization.skip(
+          async () =>
+            await this.db.createDocument(
+              'targets',
+              new Document({
+                $permissions: [
+                  Permission.read(Role.user(user.getId())),
+                  Permission.update(Role.user(user.getId())),
+                  Permission.delete(Role.user(user.getId())),
+                ],
+                userId: user.getId(),
+                userInternalId: user.getInternalId(),
+                providerType: 'email',
+                identifier: email,
+              }),
+            ),
         );
         user.setAttribute('targets', [
           ...user.getAttribute('targets', []),
           target,
         ]);
       } catch (error) {
-        const existingTarget = await db.findOne('targets', [
-          Query.equal('identifier', [email]),
-        ]);
-        if (existingTarget) {
-          user.setAttribute(
-            'targets',
-            existingTarget,
-            Document.SET_TYPE_APPEND,
-          );
+        if (error instanceof DuplicateException) {
+          const existingTarget = await this.db.findOne('targets', [
+            Query.equal('identifier', [email]),
+          ]);
+          if (existingTarget) {
+            user.setAttribute(
+              'targets',
+              existingTarget,
+              Document.SET_TYPE_APPEND,
+            );
+          }
+        } else {
+          throw error;
         }
       }
 
-      await db.purgeCachedDocument('users', user.getId());
+      await this.db.purgeCachedDocument('users', user.getId());
     } catch (error) {
-      throw new Exception(Exception.USER_ALREADY_EXISTS);
+      console.log(error);
+      if (error instanceof DuplicateException) {
+        throw new Exception(Exception.USER_ALREADY_EXISTS);
+      } else {
+        throw new Exception(
+          Exception.GENERAL_SERVER_ERROR,
+          'Failed saving user to DB',
+        );
+      }
     }
 
     Authorization.unsetRole(Role.guests().toString());
     Authorization.setRole(Role.user(user.getId()).toString());
     Authorization.setRole(Role.users().toString());
 
-    // queueForEvents.setParam('userId', user.getId());
+    await this.eventEmitter.emitAsync(EVENT_USER_CREATE, { userId: user.getId() })
 
     return user;
   }
+
+  async updatePrefs(user: Document, prefs: { [key: string]: any }) {
+    user.setAttribute('prefs', prefs);
+
+    user = await this.db.updateDocument('users', user.getId(), user);
+
+    return user.getAttribute('prefs', {});
+  }
+
+  async deleteAccount(user: Document) {
+    if (user.isEmpty()) {
+      throw new Exception(Exception.USER_NOT_FOUND);
+    }
+
+    await Authorization.skip(
+      async () => await this.db.deleteDocument('users', user.getId()),
+    );
+
+    await this.eventEmitter.emitAsync(EVENT_USER_DELETE, {
+      userId: user.getId(),
+      payload: {
+        data: user,
+        type: Response.MODEL_USER
+      }
+    })
+
+    await this.db.purgeCachedDocument('users', user.getId());
+
+    return user;
+  }
+
+  /**
+  * Get User's Sessions
+  */
+  async getSessions(user: Document, locale: LocaleTranslator) {
+    const roles = Authorization.getRoles();
+    const isPrivilegedUser = Auth.isPrivilegedUser(roles);
+    const isAppUser = Auth.isAppUser(roles);
+
+    const sessions = user.getAttribute('sessions', []);
+    const current = Auth.sessionVerify(sessions, Auth.secret);
+
+    const updatedSessions = sessions.map((session: Document) => {
+      const countryName = locale.getText(session.getAttribute('countryCode', ''), locale.getText('locale.country.unknown'));
+
+      session.setAttribute('countryName', countryName);
+      session.setAttribute('current', current === session.getId());
+      session.setAttribute(
+        'secret',
+        isPrivilegedUser || isAppUser ? session.getAttribute('secret', '') : '',
+      );
+
+      return session;
+    });
+
+    return {
+      sessions: updatedSessions,
+      total: updatedSessions.length,
+    };
+  }
+
+
+
 }

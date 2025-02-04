@@ -27,6 +27,7 @@ export const DB_FOR_CONSOLE = Symbol('dbForConsole');
 export const DB_FOR_PROJECT = Symbol('dbForProject');
 export const GEO_DB = Symbol('geoDb');
 export const IS_PUBLIC_KEY = Symbol('isPublic');
+export const LOCALE = Symbol('locale');
 
 export const CONSOLE_CONFIG: any = {
   auths: {},
@@ -237,3 +238,9 @@ export const METRIC_NETWORK_INBOUND = 'network.inbound';
 export const METRIC_NETWORK_OUTBOUND = 'network.outbound';
 
 export const APP_STORAGE_LIMIT = 100 * 1024 * 1024; // 100MB
+
+
+// Events
+export const EVENT_DELIMITER = '.';
+export const EVENT_USER_CREATE = 'user' + EVENT_DELIMITER + 'create';
+export const EVENT_USER_DELETE = 'user' + EVENT_DELIMITER + 'delete';

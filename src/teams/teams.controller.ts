@@ -22,7 +22,7 @@ import {
   UpdateTeamDTO,
   UpdateTeamPrefsDTO,
 } from './dto/team.dto';
-import { User } from 'src/core/resolver/user.resolver';
+import { User } from 'src/core/resolver/project-user.resolver';
 import {
   CreateMembershipDTO,
   UpdateMembershipDTO,

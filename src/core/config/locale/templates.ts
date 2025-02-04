@@ -1,0 +1,18 @@
+
+export const templates = {
+    'email': [
+        'verification',
+        'magicSession',
+        'recovery',
+        'invitation',
+        'mfaChallenge',
+        'sessionAlert',
+        'otpSession'
+    ],
+    'sms': [
+        'verification',
+        'login',
+        'invitation',
+        'mfaChallenge'
+    ]
+};

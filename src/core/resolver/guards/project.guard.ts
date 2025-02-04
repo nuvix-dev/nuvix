@@ -13,7 +13,7 @@ export class ProjectGuard implements CanActivate {
   constructor(
     private reflector: Reflector,
     private readonly store: ClsService,
-  ) {}
+  ) { }
 
   canActivate(context: ExecutionContext) {
     // const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
@@ -27,7 +27,7 @@ export class ProjectGuard implements CanActivate {
     const request = context.switchToHttp().getRequest();
     const project = request[PROJECT] as Document;
 
-    if (!project.isEmpty()) {
+    if (!project.isEmpty() && project.getId() !== 'console') {
       this.store.set(PROJECT, project);
       return true;
     }

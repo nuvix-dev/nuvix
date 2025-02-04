@@ -197,6 +197,9 @@ export class AccountService {
     return user;
   }
 
+  /**
+   * Update user's prefs
+   */
   async updatePrefs(user: Document, prefs: { [key: string]: any }) {
     user.setAttribute('prefs', prefs);
 
@@ -205,18 +208,21 @@ export class AccountService {
     return user.getAttribute('prefs', {});
   }
 
+  /**
+   * Delete User Account.
+   */
   async deleteAccount(user: Document) {
     if (user.isEmpty()) {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
 
     // Get all memberships and check if user can be deleted
-    // const memberships = user.getAttribute('memberships', []);
-    // for (const membership of memberships) {
-    //   if (membership.getAttribute('confirm', false)) {
-    //     throw new Exception(Exception.USER_DELETION_PROHIBITED);
-    //   }
-    // }
+    const memberships = user.getAttribute('memberships', []);
+    for (const membership of memberships) {
+      if (membership.getAttribute('confirm', false)) {
+        throw new Exception(Exception.USER_DELETION_PROHIBITED);
+      }
+    }
 
     // Delete the user document
     await Authorization.skip(
