@@ -9,22 +9,34 @@ import {
   Role,
   Authorization,
 } from '@nuvix/database';
-import DuplicateException from '@nuvix/database/dist/errors/Duplicate';
+import { DuplicateException } from '@nuvix/database';
+import { Request, Response as ExpressResponse } from 'express';
 import { Exception } from 'src/core/extend/exception';
 import { Auth } from 'src/core/helper/auth.helper';
 import { LocaleTranslator } from 'src/core/helper/locale.helper';
 import { Response } from 'src/core/helper/response.helper';
 import { PersonalDataValidator } from 'src/core/validators/personal-data.validator';
 import {
+  CONSOLE_CONFIG,
   DB_FOR_PROJECT,
+  EVENT_SESSION_CREATE,
+  EVENT_SESSION_DELETE,
+  EVENT_SESSION_UPDATE,
+  EVENT_SESSIONS_DELETE,
   EVENT_USER_CREATE,
   EVENT_USER_DELETE,
+  GEO_DB,
 } from 'src/Utils/constants';
+import { UpdateEmailDTO } from './DTO/account.dto';
+import { CreateEmailSessionDTO } from './DTO/session.dto';
+import { Detector } from 'src/core/helper/detector.helper';
+import { CountryResponse, Reader } from 'maxmind';
 
 @Injectable()
 export class AccountService {
   constructor(
     @Inject(DB_FOR_PROJECT) private readonly db: Database,
+    @Inject(GEO_DB) private readonly geodb: Reader<CountryResponse>,
     private eventEmitter: EventEmitter2,
   ) {}
 
@@ -222,7 +234,7 @@ export class AccountService {
 
     const updatedSessions = sessions.map((session: Document) => {
       const countryName = locale.getText(
-        session.getAttribute('countryCode', ''),
+        'countries' + session.getAttribute('countryCode', '').toLowerCase(),
         locale.getText('locale.country.unknown'),
       );
 
@@ -240,5 +252,505 @@ export class AccountService {
       sessions: updatedSessions,
       total: updatedSessions.length,
     };
+  }
+
+  /**
+   * Delete User's Session
+   */
+  async deleteSessions(
+    user: Document,
+    locale: LocaleTranslator,
+    request: Request,
+    response: ExpressResponse,
+  ) {
+    const protocol = request.protocol;
+    const sessions = user.getAttribute('sessions', []);
+
+    for (const session of sessions) {
+      await this.db.deleteDocument('sessions', session.getId());
+
+      if (!CONSOLE_CONFIG.domainVerification) {
+        response.setHeader('X-Fallback-Cookies', JSON.stringify([]));
+      }
+
+      session.setAttribute('current', false);
+      session.setAttribute(
+        'countryName',
+        locale.getText(
+          'countries' + session.getAttribute('countryCode', '').toLowerCase(),
+          locale.getText('locale.country.unknown'),
+        ),
+      );
+
+      if (session.getAttribute('secret') === Auth.hash(Auth.secret)) {
+        session.setAttribute('current', true);
+
+        // If current session, delete the cookies too
+        response
+          .cookie(`${Auth.cookieName}_legacy`, '', {
+            expires: new Date(0),
+            path: '/',
+            // domain: Config.getParam('cookieDomain'),
+            secure: protocol === 'https',
+            httpOnly: true,
+          })
+          .cookie(Auth.cookieName, '', {
+            expires: new Date(0),
+            path: '/',
+            // domain: Config.getParam('cookieDomain'),
+            secure: protocol === 'https',
+            httpOnly: true,
+            // sameSite: Config.getParam('cookieSamesite'),
+          });
+
+        await this.eventEmitter.emitAsync(EVENT_SESSION_DELETE, {
+          userId: user.getId(),
+          sessionId: session.getId(),
+          payload: {
+            data: session,
+            type: Response.MODEL_SESSION,
+          },
+        });
+
+        // queueForDeletes.setType(DELETE_TYPE_SESSION_TARGETS).setDocument(session).trigger();
+      }
+    }
+
+    await this.db.purgeCachedDocument('users', user.getId());
+
+    await this.eventEmitter.emitAsync(EVENT_SESSIONS_DELETE, {
+      userId: user.getId(),
+    });
+
+    return {};
+  }
+
+  /**
+   * Get a Session
+   */
+  async getSession(
+    user: Document,
+    sessionId: string,
+    locale: LocaleTranslator,
+  ) {
+    const roles = Authorization.getRoles();
+    const isPrivilegedUser = Auth.isPrivilegedUser(roles);
+    const isAppUser = Auth.isAppUser(roles);
+
+    const sessions = user.getAttribute('sessions', []);
+    sessionId =
+      sessionId === 'current'
+        ? (Auth.sessionVerify(
+            user.getAttribute('sessions'),
+            Auth.secret,
+          ) as string)
+        : sessionId;
+
+    for (const session of sessions) {
+      if (sessionId === session.getId()) {
+        const countryName = locale.getText(
+          'countries' + session.getAttribute('countryCode', '').toLowerCase(),
+          locale.getText('locale.country.unknown'),
+        );
+
+        session
+          .setAttribute(
+            'current',
+            session.getAttribute('secret') === Auth.hash(Auth.secret),
+          )
+          .setAttribute('countryName', countryName)
+          .setAttribute(
+            'secret',
+            isPrivilegedUser || isAppUser
+              ? session.getAttribute('secret', '')
+              : '',
+          );
+
+        return session;
+      }
+    }
+
+    throw new Exception(Exception.USER_SESSION_NOT_FOUND);
+  }
+
+  /**
+   * Delete a Session
+   */
+  async deleteSession(
+    user: Document,
+    sessionId: string,
+    request: Request,
+    response: ExpressResponse,
+    locale: LocaleTranslator,
+  ) {
+    const protocol = request.protocol;
+    const sessions = user.getAttribute('sessions', []);
+
+    for (const session of sessions) {
+      if (sessionId !== session.getId()) {
+        continue;
+      }
+
+      await this.db.deleteDocument('sessions', session.getId());
+
+      session.setAttribute('current', false);
+
+      if (session.getAttribute('secret') === Auth.hash(Auth.secret)) {
+        session.setAttribute('current', true);
+        session.setAttribute(
+          'countryName',
+          locale.getText(
+            'countries' + session.getAttribute('countryCode', '').toLowerCase(),
+            locale.getText('locale.country.unknown'),
+          ),
+        );
+
+        response
+          .cookie(`${Auth.cookieName}_legacy`, '', {
+            expires: new Date(0),
+            path: '/',
+            secure: protocol === 'https',
+            httpOnly: true,
+          })
+          .cookie(Auth.cookieName, '', {
+            expires: new Date(0),
+            path: '/',
+            secure: protocol === 'https',
+            httpOnly: true,
+          });
+
+        response.setHeader('X-Fallback-Cookies', JSON.stringify({}));
+      }
+
+      await this.db.purgeCachedDocument('users', user.getId());
+
+      await this.eventEmitter.emitAsync(EVENT_SESSION_DELETE, {
+        userId: user.getId(),
+        sessionId: session.getId(),
+        payload: {
+          data: session,
+          type: Response.MODEL_SESSION,
+        },
+      });
+
+      // queueForDeletes.setType(DELETE_TYPE_SESSION_TARGETS).setDocument(session).trigger();
+
+      return {};
+    }
+
+    throw new Exception(Exception.USER_SESSION_NOT_FOUND);
+  }
+
+  /**
+   * Update a Session
+   */
+  async updateSession(user: Document, sessionId: string, project: Document) {
+    sessionId =
+      sessionId === 'current'
+        ? (Auth.sessionVerify(
+            user.getAttribute('sessions'),
+            Auth.secret,
+          ) as string)
+        : sessionId;
+
+    const sessions = user.getAttribute('sessions', []);
+    let session: Document | null = null;
+
+    for (const value of sessions) {
+      if (sessionId === value.getId()) {
+        session = value;
+        break;
+      }
+    }
+
+    if (session === null) {
+      throw new Exception(Exception.USER_SESSION_NOT_FOUND);
+    }
+
+    const auths = project.getAttribute('auths', {});
+
+    const authDuration = auths.duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG;
+    session.setAttribute('expire', new Date(Date.now() + authDuration * 1000));
+
+    const provider = session.getAttribute('provider', '');
+    const refreshToken = session.getAttribute('providerRefreshToken', '');
+    // TODO: %$$$$$
+    const className = `Appwrite\\Auth\\OAuth2\\${provider.charAt(0).toUpperCase() + provider.slice(1)}`;
+
+    if (provider && className in global) {
+      const appId = CONSOLE_CONFIG.oAuthProviders[`${provider}Appid`] ?? '';
+      const appSecret =
+        CONSOLE_CONFIG.oAuthProviders[`${provider}Secret`] ?? '';
+
+      const oauth2 = new (global as any)[className](
+        appId,
+        appSecret,
+        '',
+        [],
+        [],
+      );
+      await oauth2.refreshTokens(refreshToken);
+
+      session
+        .setAttribute('providerAccessToken', oauth2.getAccessToken(''))
+        .setAttribute('providerRefreshToken', oauth2.getRefreshToken(''))
+        .setAttribute(
+          'providerAccessTokenExpiry',
+          new Date(Date.now() + oauth2.getAccessTokenExpiry('') * 1000),
+        );
+    }
+
+    await this.db.updateDocument('sessions', sessionId, session);
+    await this.db.purgeCachedDocument('users', user.getId());
+
+    await this.eventEmitter.emitAsync(EVENT_SESSION_UPDATE, {
+      userId: user.getId(),
+      sessionId: session.getId(),
+      payload: {
+        data: session,
+        type: Response.MODEL_SESSION,
+      },
+    });
+
+    return session;
+  }
+
+  /**
+   * Update User's Email
+   */
+  async updateEmail(user: Document, input: UpdateEmailDTO) {
+    const passwordUpdate = user.getAttribute('passwordUpdate');
+
+    if (
+      passwordUpdate &&
+      !(await Auth.passwordVerify(
+        input.password,
+        user.getAttribute('password'),
+        user.getAttribute('hash'),
+        user.getAttribute('hashOptions'),
+      ))
+    ) {
+      throw new Exception(Exception.USER_INVALID_CREDENTIALS);
+    }
+
+    const oldEmail = user.getAttribute('email');
+    const email = input.email.toLowerCase();
+
+    const identityWithMatchingEmail = await this.db.findOne('identities', [
+      Query.equal('providerEmail', [email]),
+      Query.notEqual('userInternalId', user.getInternalId()),
+    ]);
+
+    if (identityWithMatchingEmail && !identityWithMatchingEmail.isEmpty()) {
+      throw new Exception(Exception.GENERAL_BAD_REQUEST);
+    }
+
+    user.setAttribute('email', email).setAttribute('emailVerification', false);
+
+    if (!passwordUpdate) {
+      const hashedPassword = await Auth.passwordHash(
+        input.password,
+        Auth.DEFAULT_ALGO,
+        Auth.DEFAULT_ALGO_OPTIONS,
+      );
+      user
+        .setAttribute('password', hashedPassword)
+        .setAttribute('hash', Auth.DEFAULT_ALGO)
+        .setAttribute('hashOptions', Auth.DEFAULT_ALGO_OPTIONS)
+        .setAttribute('passwordUpdate', new Date());
+    }
+
+    const target = await Authorization.skip(
+      async () =>
+        await this.db.findOne('targets', [Query.equal('identifier', [email])]),
+    );
+
+    if (target && !target.isEmpty()) {
+      throw new Exception(Exception.USER_TARGET_ALREADY_EXISTS);
+    }
+
+    try {
+      user = await this.db.updateDocument('users', user.getId(), user);
+      const oldTarget = user.find<any>('identifier', oldEmail, 'targets');
+
+      if (oldTarget && !oldTarget.isEmpty()) {
+        await Authorization.skip(
+          async () =>
+            await this.db.updateDocument(
+              'targets',
+              oldTarget.getId(),
+              oldTarget.setAttribute('identifier', email),
+            ),
+        );
+      }
+      await this.db.purgeCachedDocument('users', user.getId());
+    } catch (error) {
+      if (error instanceof DuplicateException) {
+        throw new Exception(Exception.GENERAL_BAD_REQUEST);
+      } else {
+        throw error;
+      }
+    }
+  }
+
+  /**
+   * Create a new session for the user using Email & Password
+   */
+  async createEmailSession(
+    user: Document,
+    input: CreateEmailSessionDTO,
+    request: Request,
+    response: ExpressResponse,
+    locale: LocaleTranslator,
+    project: Document,
+  ) {
+    const email = input.email.toLowerCase();
+    const protocol = request.protocol;
+
+    const profile = await this.db.findOne('users', [
+      Query.equal('email', [email]),
+    ]);
+
+    if (
+      !profile ||
+      !profile.getAttribute('passwordUpdate') ||
+      !(await Auth.passwordVerify(
+        input.password,
+        profile.getAttribute('password'),
+        profile.getAttribute('hash'),
+        profile.getAttribute('hashOptions'),
+      ))
+    ) {
+      throw new Exception(Exception.USER_INVALID_CREDENTIALS);
+    }
+
+    if (profile.getAttribute('status') === false) {
+      throw new Exception(Exception.USER_BLOCKED);
+    }
+
+    const roles = Authorization.getRoles();
+    const isPrivilegedUser = Auth.isPrivilegedUser(roles);
+    const isAppUser = Auth.isAppUser(roles);
+
+    user.setAttributes(profile.getArrayCopy());
+
+    const auths = project.getAttribute('auths', {});
+    const duration = auths.duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG;
+    const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN');
+    const record = this.geodb.get(request.ip);
+    const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION);
+
+    const session = new Document({
+      $id: ID.unique(),
+      userId: user.getId(),
+      userInternalId: user.getInternalId(),
+      provider: Auth.SESSION_PROVIDER_EMAIL,
+      providerUid: email,
+      secret: Auth.hash(secret),
+      userAgent: request.headers['user-agent'] || 'UNKNOWN',
+      ip: request.ip,
+      factors: ['password'],
+      countryCode: record ? record.country.iso_code.toLowerCase() : '',
+      expire: new Date(Date.now() + duration * 1000),
+      ...detector.getOS(),
+      ...detector.getClient(),
+      ...detector.getDevice(),
+    });
+
+    Authorization.setRole(Role.user(user.getId()).toString());
+
+    if (user.getAttribute('hash') !== Auth.DEFAULT_ALGO) {
+      user
+        .setAttribute(
+          'password',
+          await Auth.passwordHash(
+            input.password,
+            Auth.DEFAULT_ALGO,
+            Auth.DEFAULT_ALGO_OPTIONS,
+          ),
+        )
+        .setAttribute('hash', Auth.DEFAULT_ALGO)
+        .setAttribute('hashOptions', Auth.DEFAULT_ALGO_OPTIONS);
+      await this.db.updateDocument('users', user.getId(), user);
+    }
+
+    await this.db.purgeCachedDocument('users', user.getId());
+
+    const createdSession = await this.db.createDocument(
+      'sessions',
+      session.setAttribute('$permissions', [
+        Permission.read(Role.user(user.getId())),
+        Permission.update(Role.user(user.getId())),
+        Permission.delete(Role.user(user.getId())),
+      ]),
+    );
+
+    if (!CONSOLE_CONFIG.domainVerification) {
+      response.setHeader(
+        'X-Fallback-Cookies',
+        JSON.stringify({
+          [Auth.cookieName]: Auth.encodeSession(user.getId(), secret),
+        }),
+      );
+    }
+
+    const expire = new Date(Date.now() + duration * 1000);
+
+    response
+      .cookie(
+        `${Auth.cookieName}_legacy`,
+        Auth.encodeSession(user.getId(), secret),
+        {
+          expires: expire,
+          path: '/',
+          secure: protocol === 'https',
+          sameSite: Auth.cookieSamesite as any,
+          httpOnly: true,
+        },
+      )
+      .cookie(Auth.cookieName, Auth.encodeSession(user.getId(), secret), {
+        expires: expire,
+        path: '/',
+        secure: protocol === 'https',
+        sameSite: Auth.cookieSamesite as any,
+        httpOnly: true,
+      })
+      .status(201);
+
+    const countryName = locale.getText(
+      'countries' + session.getAttribute('countryCode', '').toLowerCase(),
+      locale.getText('locale.country.unknown'),
+    );
+
+    createdSession
+      .setAttribute('current', true)
+      .setAttribute('countryName', countryName)
+      .setAttribute(
+        'secret',
+        isPrivilegedUser || isAppUser
+          ? Auth.encodeSession(user.getId(), secret)
+          : '',
+      );
+
+    await this.eventEmitter.emitAsync(EVENT_SESSION_CREATE, {
+      userId: user.getId(),
+      sessionId: createdSession.getId(),
+      payload: {
+        data: createdSession,
+        type: Response.MODEL_SESSION,
+      },
+    });
+
+    if (project.getAttribute('auths', {}).sessionAlerts ?? false) {
+      const sessionCount = await this.db.count('sessions', [
+        Query.equal('userId', [user.getId()]),
+      ]);
+
+      if (sessionCount !== 1) {
+        // this.sendSessionAlert(locale, user, project, createdSession);
+      }
+    }
+
+    return createdSession;
   }
 }

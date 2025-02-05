@@ -253,3 +253,9 @@ export const APP_STORAGE_LIMIT = 100 * 1024 * 1024; // 100MB
 export const EVENT_DELIMITER = '.';
 export const EVENT_USER_CREATE = 'user' + EVENT_DELIMITER + 'create';
 export const EVENT_USER_DELETE = 'user' + EVENT_DELIMITER + 'delete';
+export const EVENT_USER_UPDATE = 'user' + EVENT_DELIMITER + 'update';
+
+export const EVENT_SESSION_CREATE = 'session' + EVENT_DELIMITER + 'create';
+export const EVENT_SESSION_DELETE = 'session' + EVENT_DELIMITER + 'delete';
+export const EVENT_SESSIONS_DELETE = 'sessions' + EVENT_DELIMITER + 'delete';
+export const EVENT_SESSION_UPDATE = 'session' + EVENT_DELIMITER + 'update';

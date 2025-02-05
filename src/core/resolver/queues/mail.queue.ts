@@ -14,7 +14,7 @@ import {
 
 @Processor('mails')
 export class MailQueue extends Queue {
-  private readonly transporter = createTransport('smtp', {
+  private readonly transporter = createTransport({
     host: APP_SMTP_HOST,
     port: APP_SMTP_PORT,
     auth: {
