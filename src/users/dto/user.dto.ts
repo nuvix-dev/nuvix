@@ -9,19 +9,18 @@ import {
   Length,
   Matches,
 } from 'class-validator';
+import { IsUID } from 'src/core/validators/input.validator';
 
 export class CreateUserDTO {
-  @IsNotEmpty()
-  @Matches(/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,35}$|^unique\(\)$/, {
-    message:
-      'User ID must be 1-36 characters long, can contain a-z, A-Z, 0-9, period, hyphen, and underscore, and cannot start with a special character.',
-  })
+  @IsOptional()
+  @IsUID()
   userId: string;
 
   @IsEmail()
   @IsNotEmpty()
   email: string;
 
+  @IsOptional()
   @IsPhoneNumber(null)
   @IsNotEmpty()
   phone: string;

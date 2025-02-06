@@ -38,10 +38,11 @@ import { CreateJwtDTO } from './dto/jwt.dto';
 import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
 import type { Query as Queries } from '@nuvix/database';
 import { ProjectGuard } from 'src/core/resolver/guards/project.guard';
+import { ApiInterceptor } from 'src/core/resolver/api.resolver';
 
 @Controller({ version: ['1'], path: 'users' })
 @UseGuards(ProjectGuard)
-@UseInterceptors(ResolverInterceptor)
+@UseInterceptors(ResolverInterceptor, ApiInterceptor)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 

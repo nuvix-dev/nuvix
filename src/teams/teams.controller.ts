@@ -31,11 +31,12 @@ import {
 import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
 import { Query as Queries } from '@nuvix/database';
 import { ProjectGuard } from 'src/core/resolver/guards/project.guard';
-import { Mode } from 'src/core/resolver/model.resolver';
+import { Mode } from 'src/core/resolver/mode.resolver';
+import { ApiInterceptor } from 'src/core/resolver/api.resolver';
 
 @Controller({ version: ['1'], path: 'teams' })
 @UseGuards(ProjectGuard)
-@UseInterceptors(ResolverInterceptor)
+@UseInterceptors(ResolverInterceptor, ApiInterceptor)
 export class TeamsController {
   constructor(private readonly teamsService: TeamsService) {}
 

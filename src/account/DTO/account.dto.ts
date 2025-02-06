@@ -7,12 +7,10 @@ import {
   IsObject,
   IsNotEmpty,
 } from 'class-validator';
+import { IsUID } from 'src/core/validators/input.validator';
 
 export class CreateAccountDTO {
-  @Matches(/^(?:[a-zA-Z0-9][a-zA-Z0-9._-]{0,35}|unique\(\))$/, {
-    message:
-      'User ID must be either "unique()" or alphanumeric and can include period, hyphen, and underscore. Cannot start with a special character. Max length is 36 chars.',
-  })
+  @IsUID()
   userId: string;
 
   @IsEmail({}, { message: 'Invalid email address.' })

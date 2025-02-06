@@ -23,16 +23,17 @@ import { Response } from 'src/core/helper/response.helper';
 import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
 import { User } from 'src/core/resolver/user.resolver';
 import { Document, Query as Queries } from '@nuvix/database';
-import { Mode } from 'src/core/resolver/model.resolver';
+import { Mode } from 'src/core/resolver/mode.resolver';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ProjectGuard } from 'src/core/resolver/guards/project.guard';
 
 import { UpdateFileDTO } from './DTO/file.dto';
 import { CreateBucketDTO, UpdateBucketDTO } from './DTO/bucket.dto';
+import { ApiInterceptor } from 'src/core/resolver/api.resolver';
 
 @Controller({ version: ['1'], path: 'storage' })
 @UseGuards(ProjectGuard)
-@UseInterceptors(ResolverInterceptor)
+@UseInterceptors(ResolverInterceptor, ApiInterceptor)
 export class StorageController {
   constructor(private readonly storageService: StorageService) {}
 

@@ -1,10 +1,19 @@
 import { Injectable, NestMiddleware, Logger, Inject } from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
 import { Authorization, Database, Document } from '@nuvix/database';
 import { Request, Response, NextFunction } from 'express';
 import { ClsService } from 'nestjs-cls';
 import { Exception } from 'src/core/extend/exception';
 import { Auth } from 'src/core/helper/auth.helper';
-import { DB_FOR_CONSOLE, USER } from 'src/Utils/constants';
+import ParamsHelper from 'src/core/helper/params.helper';
+import {
+  APP_MODE_ADMIN,
+  APP_MODE_DEFAULT,
+  DB_FOR_CONSOLE,
+  DB_FOR_PROJECT,
+  PROJECT,
+  USER,
+} from 'src/Utils/constants';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
@@ -12,21 +21,22 @@ export class AuthMiddleware implements NestMiddleware {
   constructor(
     private readonly store: ClsService,
     @Inject(DB_FOR_CONSOLE) readonly db: Database,
+    @Inject(DB_FOR_PROJECT) readonly projectDb: Database,
+    private readonly jwtService: JwtService,
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-    const projectId = (req.projectId =
-      (Array.isArray(req.headers['x-nuvix-project'])
-        ? req.headers['x-nuvix-project'][0]
-        : req.headers['x-nuvix-project']) ?? 'console');
-
-    const mode = (req.headers['x-nuvix-mode'] as string) || 'admin';
+    const params = new ParamsHelper(req);
+    const project: Document = req[PROJECT];
+    const mode =
+      params.getFromHeaders('x-nuvix-mode') ||
+      params.getFromQuery('mode', APP_MODE_DEFAULT);
 
     Authorization.setDefaultStatus(true);
 
-    Auth.setCookieName(`a_session_${projectId}`);
+    Auth.setCookieName(`a_session_${project.getId()}`);
 
-    if (mode === 'admin') {
+    if (mode === APP_MODE_ADMIN) {
       Auth.setCookieName(`a_session`);
     }
 
@@ -43,7 +53,7 @@ export class AuthMiddleware implements NestMiddleware {
     }
 
     if (!session.id && !session.secret) {
-      const sessionHeader = (req.headers['x-nuvix-session'] as string) || '';
+      const sessionHeader = params.getFromHeaders('x-nuvix-session');
       if (sessionHeader) {
         session = Auth.decodeSession(sessionHeader);
       }
@@ -53,7 +63,10 @@ export class AuthMiddleware implements NestMiddleware {
       res.setHeader('X-Debug-Fallback', 'true');
       try {
         const fallback = JSON.parse(
-          (req.headers['x-fallback-cookies'] as string) || '{}',
+          Buffer.from(
+            params.getFromHeaders('x-nuvix-fallback') || '',
+            'base64',
+          ).toString(),
         );
         session = Auth.decodeSession(fallback[Auth.cookieName] || '');
       } catch (error) {
@@ -66,12 +79,18 @@ export class AuthMiddleware implements NestMiddleware {
     Auth.unique = session.id || '';
     Auth.secret = session.secret || '';
 
+    this.logger.debug(`Auth: ${Auth.unique}`);
+
     let user: Document;
-    if (process.env.APP_MODE !== 'admin') {
-      if (projectId === 'console') {
-        user = await this.db.getDocument('users', Auth.unique);
+    if (mode !== APP_MODE_ADMIN) {
+      if (project.isEmpty() || project.getId() === 'console') {
+        user = new Document();
       } else {
-        user = await this.db.getDocument('users', Auth.unique);
+        if (project.getId() === 'console') {
+          user = await this.db.getDocument('users', Auth.unique);
+        } else {
+          user = await this.projectDb.getDocument('users', Auth.unique);
+        }
       }
     } else {
       user = await this.db.getDocument('users', Auth.unique);
@@ -84,41 +103,45 @@ export class AuthMiddleware implements NestMiddleware {
       user = new Document();
     }
 
-    if (mode === 'admin') {
-      // if (user.find('teamInternalId', projectId, 'memberships')) {
-      Authorization.setDefaultStatus(false);
-      // } else {
-      //   user = new Document();
-      // }
+    if (APP_MODE_ADMIN === mode) {
+      if (
+        user.find(
+          'teamInternalId',
+          project.getAttribute('teamInternalId'),
+          'memberships',
+        )
+      ) {
+        Authorization.setDefaultStatus(false);
+      } else {
+        user = new Document();
+      }
     }
 
-    const authJWT = (req.headers['x-appwrite-jwt'] as string) || '';
-    if (authJWT && projectId !== 'console') {
+    const authJWT = params.getFromHeaders('x-nuvix-jwt');
+
+    if (authJWT && !project.isEmpty() && project.getId() !== 'console') {
+      let payload: any;
       try {
-        // const payload = Auth.decodeJWT(authJWT);
-        // const jwtUserId = payload.userId || '';
-        // if (jwtUserId) {
-        //   user = await this.db.findOne('users', jwtUserId);
-        // }
-        // const jwtSessionId = payload.sessionId || '';
-        // if (jwtSessionId && !user.find('$id', jwtSessionId, 'sessions')) {
-        //   user = new Document();
-        // }
-      } catch (error) {
+        payload = await this.jwtService.verifyAsync(authJWT);
+      } catch (e) {
         throw new Exception(
-          'USER_JWT_INVALID',
-          `Failed to verify JWT. ${error.message}`,
+          Exception.USER_JWT_INVALID,
+          `Failed to verify JWT. ${e.message}`,
         );
+      }
+
+      const jwtUserId = payload?.userId || null;
+      if (jwtUserId) {
+        user = await this.projectDb.findOne('users', jwtUserId);
+      }
+
+      const jwtSessionId = payload?.sessionId || null;
+      if (jwtSessionId && !user.find('$id', jwtSessionId, 'sessions')) {
+        user = new Document();
       }
     }
 
     req[USER] = user;
-
-    const roles = Auth.getRoles(user);
-
-    for (const role of roles) {
-      Authorization.setRole(role);
-    }
 
     next();
   }

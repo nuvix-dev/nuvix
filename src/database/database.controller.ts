@@ -20,7 +20,7 @@ import { DatabaseService } from './database.service';
 import { ProjectGuard } from 'src/core/resolver/guards/project.guard';
 import { Response } from 'src/core/helper/response.helper';
 import type { Document, Query as Queries } from '@nuvix/database';
-import { Mode } from 'src/core/resolver/model.resolver';
+import { Mode } from 'src/core/resolver/mode.resolver';
 import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
 import { Project } from 'src/core/resolver/project.resolver';
 
@@ -51,11 +51,11 @@ import {
 } from './DTO/attributes.dto';
 import { CreateDocumentDTO, UpdateDocumentDTO } from './DTO/document.dto';
 import { CreateIndexDTO } from './DTO/indexes.dto';
-import { Request } from 'express';
+import { ApiInterceptor } from 'src/core/resolver/api.resolver';
 
 @Controller({ version: ['1'], path: 'databases' })
 @UseGuards(ProjectGuard)
-@UseInterceptors(ResolverInterceptor)
+@UseInterceptors(ResolverInterceptor, ApiInterceptor)
 export class DatabaseController {
   constructor(private readonly databaseService: DatabaseService) {}
 

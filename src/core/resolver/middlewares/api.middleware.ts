@@ -1,5 +1,5 @@
-import { Inject, Injectable, Logger, NestMiddleware } from "@nestjs/common";
-import { Authorization, Database, Document, Role } from "@nuvix/database";
+import { Inject, Injectable, Logger, NestMiddleware } from '@nestjs/common';
+import { Authorization, Database, Document, Role } from '@nuvix/database';
 import {
   API_KEY_DYNAMIC,
   API_KEY_STANDARD,
@@ -8,15 +8,15 @@ import {
   DB_FOR_PROJECT,
   PROJECT,
   SCOPES,
-  USER
-} from "src/Utils/constants";
-import { NextFunction } from "express";
-import { Exception } from "src/core/extend/exception";
-import { Auth } from "src/core/helper/auth.helper";
-import { roles } from "src/core/config/roles";
-import ParamsHelper from "src/core/helper/params.helper";
-import { JwtService } from "@nestjs/jwt";
-import { APP_PLATFORM_SERVER, platforms } from "src/core/config/platforms";
+  USER,
+} from 'src/Utils/constants';
+import { NextFunction } from 'express';
+import { Exception } from 'src/core/extend/exception';
+import { Auth } from 'src/core/helper/auth.helper';
+import { roles } from 'src/core/config/roles';
+import ParamsHelper from 'src/core/helper/params.helper';
+import { JwtService } from '@nestjs/jwt';
+import { APP_PLATFORM_SERVER, platforms } from 'src/core/config/platforms';
 
 @Injectable()
 export class ApiMiddleware implements NestMiddleware {
@@ -25,8 +25,8 @@ export class ApiMiddleware implements NestMiddleware {
   constructor(
     @Inject(DB_FOR_CONSOLE) private readonly db: Database,
     @Inject(DB_FOR_PROJECT) private readonly projectDb: Database,
-    private readonly jwtService: JwtService
-  ) { }
+    private readonly jwtService: JwtService,
+  ) {}
 
   async use(req: any, res: any, next: NextFunction) {
     const params = new ParamsHelper(req);
@@ -37,10 +37,16 @@ export class ApiMiddleware implements NestMiddleware {
     if (project.isEmpty()) throw new Exception(Exception.PROJECT_NOT_FOUND);
 
     // ACL Check
-    let role = user.isEmpty() ? Role.guests().toString() : Role.users().toString();
+    let role = user.isEmpty()
+      ? Role.guests().toString()
+      : Role.users().toString();
 
     // Add user roles
-    const memberships = user.find<Document>('teamId', project.getAttribute('teamId'), 'memberships');
+    const memberships = user.find<Document>(
+      'teamId',
+      project.getAttribute('teamId'),
+      'memberships',
+    );
 
     if (memberships) {
       memberships.getAttribute('roles', []).forEach((memberRole: string) => {
@@ -68,7 +74,10 @@ export class ApiMiddleware implements NestMiddleware {
       }
 
       if (!apiKey.includes('_')) {
-        throw new Exception(Exception.INVALID_PARAMS, 'Invalid API Key Structure');
+        throw new Exception(
+          Exception.INVALID_PARAMS,
+          'Invalid API Key Structure',
+        );
       }
 
       const [keyType, KeyId] = apiKey.split('_', 2);
@@ -87,29 +96,28 @@ export class ApiMiddleware implements NestMiddleware {
         // JWT includes project ID for better security
         if (projectId === project.getId()) {
           user = new Document({
-            '$id': '',
-            'status': true,
-            'email': `app.${project.getId()}@service.${req.hostname}`,
-            'password': '',
-            'name': project.getAttribute('name', 'Untitled'),
+            $id: '',
+            status: true,
+            email: `app.${project.getId()}@service.${req.hostname}`,
+            password: '',
+            name: project.getAttribute('name', 'Untitled'),
           });
 
           role = Auth.USER_ROLE_APPS;
           scopes = [...roles[role].scopes, ...tokenScopes];
 
           Authorization.setRole(Auth.USER_ROLE_APPS);
-          Authorization.setDefaultStatus(false);  // Cancel security segmentation for API keys.
+          Authorization.setDefaultStatus(false); // Cancel security segmentation for API keys.
         }
-      }
-      else if (keyType === API_KEY_STANDARD) {
+      } else if (keyType === API_KEY_STANDARD) {
         const key = project.find<Document>('secret', apiKey, 'keys');
         if (key) {
           user = new Document({
-            '$id': '',
-            'status': true,
-            'email': `app.${project.getId()}@service.${req.hostname}`,
-            'password': '',
-            'name': project.getAttribute('name', 'Untitled'),
+            $id: '',
+            status: true,
+            email: `app.${project.getId()}@service.${req.hostname}`,
+            password: '',
+            name: project.getAttribute('name', 'Untitled'),
           });
 
           role = Auth.USER_ROLE_APPS;
@@ -124,13 +132,17 @@ export class ApiMiddleware implements NestMiddleware {
           Authorization.setDefaultStatus(false);
 
           const accessedAt = key.getAttribute('accessedAt', '');
-          if (new Date(Date.now() - APP_KEY_ACCESS * 1000) > new Date(accessedAt)) {
+          if (
+            new Date(Date.now() - APP_KEY_ACCESS * 1000) > new Date(accessedAt)
+          ) {
             key.setAttribute('accessedAt', new Date().toISOString());
             await this.db.updateDocument('keys', key.getId(), key);
             await this.db.purgeCachedDocument('projects', project.getId());
           }
 
-          const sdksList = platforms[APP_PLATFORM_SERVER].sdks.map((sdk) => sdk.name);
+          const sdksList = platforms[APP_PLATFORM_SERVER].sdks.map(
+            (sdk) => sdk.name,
+          );
 
           const sdk = params.get('x-sdk-name') || 'UNKNOWN';
           if (sdksList.includes(sdk)) {
@@ -156,6 +168,9 @@ export class ApiMiddleware implements NestMiddleware {
     req[SCOPES] = scopes;
     req[USER] = user;
 
+    this.logger.log(
+      `[${mode}] ${role} ${user.isEmpty() ? 'API' : user.getAttribute('email')}`,
+    );
     next();
   }
 }

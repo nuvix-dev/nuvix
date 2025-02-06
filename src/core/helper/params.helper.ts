@@ -1,6 +1,5 @@
 import { Request } from 'express';
 
-
 /**
  * Helper class to get params from headers or query
  */
@@ -27,6 +26,22 @@ class ParamsHelper {
     }
 
     return defaultValue;
+  }
+
+  getFromHeaders(
+    param: string,
+    defaultValue: any | null = null,
+  ): string | undefined {
+    const value = this.req.headers[param.toLowerCase()];
+    return value ? this.processValue(value) : defaultValue;
+  }
+
+  getFromQuery(
+    param: string,
+    defaultValue: any | null = null,
+  ): string | undefined {
+    const value = this.req.query[param] as string | string[];
+    return value ? this.processValue(value) : defaultValue;
   }
 
   private processValue(value: string | string[]): string {

@@ -6,14 +6,13 @@ export const User = createParamDecorator<any, Document | null>(
   (data: unknown, ctx: ExecutionContext): Document => {
     const request: Request = ctx.switchToHttp().getRequest();
 
-    if (!request[PROJECT]) {
-      return null;
+    const project: Document = request[PROJECT];
+    const user: Document = request[USER];
+
+    if (project.isEmpty() || project.getId() === 'console' || user.isEmpty()) {
+      return new Document();
     }
 
-    if (!request[USER]) {
-      return null;
-    }
-
-    return request[USER];
+    return user;
   },
 );

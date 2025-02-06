@@ -10,7 +10,9 @@ export const ApiKey = createParamDecorator<any, any>(
       return null;
     }
 
-    const apiKeys = Array.isArray(apiKeyHeader) ? apiKeyHeader : apiKeyHeader.split(',');
+    const apiKeys = Array.isArray(apiKeyHeader)
+      ? apiKeyHeader
+      : apiKeyHeader.split(',');
     if (apiKeys.length === 0) {
       return null;
     }
