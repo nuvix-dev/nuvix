@@ -45,6 +45,7 @@ export const CONSOLE_CONFIG: any = {
   auths: {},
 };
 
+// APP
 export const APP_NAME = 'Nuvix';
 export const APP_DOMAIN = 'nuvix.io';
 export const APP_EMAIL_TEAM = 'team@localhost.test'; // Default email address
@@ -96,6 +97,9 @@ export const APP_HOSTNAME_INTERNAL = 'nuvix';
 // const APP_FUNCTION_SPECIFICATION_DEFAULT = Specification::S_05VCPU_512MB;
 export const APP_FUNCTION_CPUS_DEFAULT = 0.5;
 export const APP_FUNCTION_MEMORY_DEFAULT = 512;
+
+// Debug
+export const APP_DEBUG_COLORS = process.env.APP_DEBUG_COLORS === 'true';
 
 // Database Reconnect
 export const DATABASE_RECONNECT_SLEEP = 2;

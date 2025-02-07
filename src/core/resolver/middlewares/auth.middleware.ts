@@ -63,10 +63,7 @@ export class AuthMiddleware implements NestMiddleware {
       res.setHeader('X-Debug-Fallback', 'true');
       try {
         const fallback = JSON.parse(
-          Buffer.from(
-            params.getFromHeaders('x-nuvix-fallback') || '',
-            'base64',
-          ).toString(),
+          params.getFromHeaders('x-nuvix-fallback', ''),
         );
         session = Auth.decodeSession(fallback[Auth.cookieName] || '');
       } catch (error) {

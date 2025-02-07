@@ -4,13 +4,14 @@ import {
   API_KEY_DYNAMIC,
   API_KEY_STANDARD,
   APP_KEY_ACCESS,
+  APP_MODE_DEFAULT,
   DB_FOR_CONSOLE,
   DB_FOR_PROJECT,
   PROJECT,
   SCOPES,
   USER,
 } from 'src/Utils/constants';
-import { NextFunction } from 'express';
+import { NextFunction, Request, Response } from 'express';
 import { Exception } from 'src/core/extend/exception';
 import { Auth } from 'src/core/helper/auth.helper';
 import { roles } from 'src/core/config/roles';
@@ -28,11 +29,13 @@ export class ApiMiddleware implements NestMiddleware {
     private readonly jwtService: JwtService,
   ) {}
 
-  async use(req: any, res: any, next: NextFunction) {
+  async use(req: Request, res: Response, next: NextFunction) {
     const params = new ParamsHelper(req);
     const project: Document = req[PROJECT];
     let user: Document = req[USER];
-    const mode: string = params.get('mode', 'default');
+    const mode: string =
+      params.getFromHeaders('x-nuvix-mode') ||
+      params.getFromQuery('mode', APP_MODE_DEFAULT);
 
     if (project.isEmpty()) throw new Exception(Exception.PROJECT_NOT_FOUND);
 

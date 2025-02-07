@@ -1,3 +1,9 @@
+/**
+ * Nuvix is a Backend as a Service (BaaS) that allows you to create a backend for your application in minutes.
+ * This file is the entry point of the application, where the application is created and started.
+ * @author Ravikant Saini
+ * @version 1.0
+ */
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
@@ -5,6 +11,7 @@ import { config } from 'dotenv';
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 import { NextFunction, Request, Response } from 'express';
 import { ConsoleLogger, ValidationPipe } from '@nestjs/common';
+import { APP_DEBUG_COLORS } from './Utils/constants';
 const cookieParser = require('cookie-parser');
 
 config();
@@ -14,7 +21,7 @@ async function bootstrap() {
     abortOnError: false,
     logger: new ConsoleLogger({
       json: process.env.NODE_ENV === 'production',
-      colors: process.env.NODE_ENV !== 'production',
+      colors: APP_DEBUG_COLORS,
       prefix: 'Nuvix',
     }),
   });
@@ -43,7 +50,11 @@ async function bootstrap() {
   });
 
   app.enableCors({
-    origin: [...(process.env.CORS_ORIGIN ?? '').split(',')],
+    origin: [
+      ...(process.env.CORS_ORIGIN ?? '')
+        .split(',')
+        .map((origin) => origin.trim()),
+    ],
     methods: 'GET,PUT,PATCH,POST,DELETE',
     credentials: true,
     allowedHeaders: [
@@ -69,7 +80,9 @@ async function bootstrap() {
       'content-range',
       'x-fallback-cookies',
       'x-nuvix-session',
-      ...(process.env.CORS_HEADERS ?? '').split(','),
+      ...(process.env.CORS_HEADERS ?? '')
+        .split(',')
+        .map((header) => header.trim()),
     ],
     exposedHeaders: ['X-Nuvix-Session', 'X-Fallback-Cookies'],
   });

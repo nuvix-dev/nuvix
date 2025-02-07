@@ -89,11 +89,7 @@ config();
 export class AppModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(ProjectMiddleware)
-      .forRoutes('*')
-      .apply(AuthMiddleware)
-      .forRoutes('*')
-      .apply(ApiMiddleware)
+      .apply(ProjectMiddleware, AuthMiddleware, ApiMiddleware)
       .forRoutes('*');
   }
 }
