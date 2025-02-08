@@ -80,7 +80,10 @@ Object.keys(formats).forEach((key) => {
         const logger = cls.get<Logger>('logger');
         try {
           const buffer = fs.readFileSync(
-            path.resolve(__dirname, '../../assets/dbip/dbip-country-lite-2024-09.mmdb')
+            path.resolve(
+              __dirname,
+              '../../assets/dbip/dbip-country-lite-2024-09.mmdb',
+            ),
           );
           return new Reader<CountryResponse>(buffer);
         } catch (error) {

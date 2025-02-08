@@ -71,7 +71,7 @@ export class Auth {
   // MFA
   public static readonly MFA_RECENT_DURATION = 1800; // 30 mins
 
-  public static cookieName: string = 'a_session';
+  public static cookieName: string = 'session';
   public static cookieDomain = '';
   public static cookieSamesite = 'none';
   public static unique: string = '';
@@ -106,7 +106,8 @@ export class Auth {
     id: string | null;
     secret: string;
   } {
-    const decoded = JSON.parse(Buffer.from(session, 'base64').toString());
+    const bufferStr = Buffer.from(session, 'base64').toString();
+    const decoded = JSON.parse(bufferStr);
     const defaultSession = { id: null, secret: '' };
 
     if (typeof decoded !== 'object' || decoded === null) {
@@ -221,10 +222,7 @@ export class Auth {
   }
 
   public static passwordGenerator(length: number = 20): string {
-    return crypto
-      .randomBytes(length)
-      .toString('hex')
-      .slice(0, length);
+    return crypto.randomBytes(length).toString('hex').slice(0, length);
   }
 
   public static tokenGenerator(length: number = 256): string {

@@ -39,7 +39,7 @@ import { ApiInterceptor } from 'src/core/resolver/api.resolver';
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResolverInterceptor, ApiInterceptor)
 export class TeamsController {
-  constructor(private readonly teamsService: TeamsService) { }
+  constructor(private readonly teamsService: TeamsService) {}
 
   @Get()
   @ResponseType({ type: Response.MODEL_TEAM, list: true })

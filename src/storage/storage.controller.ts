@@ -38,7 +38,7 @@ import { ParseDuplicatePipe } from 'src/core/pipes/duplicate.pipe';
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResolverInterceptor, ApiInterceptor)
 export class StorageController {
-  constructor(private readonly storageService: StorageService) { }
+  constructor(private readonly storageService: StorageService) {}
 
   @Get('buckets')
   @ResponseType({ type: Response.MODEL_BUCKET, list: true })
@@ -119,35 +119,46 @@ export class StorageController {
     @Param('id') id: string,
     @Param('fileId') fileId: string,
     @Req() req: Request,
-    @Query('width', ParseDuplicatePipe, new ParseIntPipe({optional: true})) width?: string,
-    @Query('height', ParseDuplicatePipe, new ParseIntPipe({optional: true})) height?: string,
+    @Query('width', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
+    width?: string,
+    @Query('height', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
+    height?: string,
     @Query('gravity', ParseDuplicatePipe) gravity?: string,
-    @Query('quality', ParseDuplicatePipe, new ParseIntPipe({optional: true})) quality?: string,
-    @Query('borderWidth', ParseDuplicatePipe, new ParseIntPipe({optional: true})) borderWidth?: string,
+    @Query('quality', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
+    quality?: string,
+    @Query(
+      'borderWidth',
+      ParseDuplicatePipe,
+      new ParseIntPipe({ optional: true }),
+    )
+    borderWidth?: string,
     @Query('borderColor', ParseDuplicatePipe) borderColor?: string,
-    @Query('borderRadius', ParseDuplicatePipe, new ParseIntPipe({optional: true})) borderRadius?: string,
-    @Query('opacity', ParseDuplicatePipe, new ParseIntPipe({optional: true})) opacity?: string,
-    @Query('rotation', ParseDuplicatePipe, new ParseIntPipe({optional: true})) rotation?: string,
+    @Query(
+      'borderRadius',
+      ParseDuplicatePipe,
+      new ParseIntPipe({ optional: true }),
+    )
+    borderRadius?: string,
+    @Query('opacity', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
+    opacity?: string,
+    @Query('rotation', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
+    rotation?: string,
     @Query('background', ParseDuplicatePipe) background?: string,
     @Query('output', ParseDuplicatePipe) output?: string,
   ) {
-    return await this.storageService.previewFile(
-      id,
-      fileId,
-      {
-        width,
-        height,
-        gravity,
-        quality,
-        borderWidth,
-        borderColor,
-        borderRadius,
-        opacity,
-        rotation,
-        background,
-        output,
-      } as any,
-    );
+    return await this.storageService.previewFile(id, fileId, {
+      width,
+      height,
+      gravity,
+      quality,
+      borderWidth,
+      borderColor,
+      borderRadius,
+      opacity,
+      rotation,
+      background,
+      output,
+    } as any);
   }
 
   @Get('buckets/:id/files/:fileId/download')

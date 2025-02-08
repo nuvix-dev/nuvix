@@ -32,6 +32,7 @@ import { StorageModule } from './storage/storage.module';
 import { JwtModule } from '@nestjs/jwt';
 import { MailQueue } from './core/resolver/queues/mail.queue';
 import { ApiMiddleware } from './core/resolver/middlewares/api.middleware';
+import { Authorization, Role } from '@nuvix/database';
 config();
 
 @Module({
@@ -88,6 +89,9 @@ config();
 })
 export class AppModule {
   async configure(consumer: MiddlewareConsumer) {
+    Authorization.cleanRoles();
+    Authorization.setRole(Role.any().toString());
+
     consumer
       .apply(ProjectMiddleware)
       .forRoutes('*')

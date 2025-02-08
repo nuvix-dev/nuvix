@@ -34,40 +34,50 @@ export class AuthMiddleware implements NestMiddleware {
 
     Authorization.setDefaultStatus(true);
 
-    Auth.setCookieName(`a_session_${project.getId()}`);
+    Auth.setCookieName(
+      `session${project.getId() === 'console' ? '' : `_${project.getId()}`}`,
+    );
 
     if (mode === APP_MODE_ADMIN) {
-      Auth.setCookieName(`a_session`);
+      Auth.setCookieName(`session`);
     }
 
     let session: any = {};
     try {
-      session = Auth.decodeSession(
+      const cookie =
         req.cookies[Auth.cookieName] ||
-          req.cookies[`${Auth.cookieName}_legacy`] ||
-          '',
-      );
+        req.cookies[`${Auth.cookieName}_legacy`] ||
+        '';
+      session = Auth.decodeSession(cookie);
     } catch (error) {
-      // this.logger.error('Failed to decode session', error);
+      this.logger.debug('Failed to decode session', error.message);
       session = {};
     }
 
     if (!session.id && !session.secret) {
       const sessionHeader = params.getFromHeaders('x-nuvix-session');
       if (sessionHeader) {
-        session = Auth.decodeSession(sessionHeader);
+        try {
+          session = Auth.decodeSession(sessionHeader);
+        } catch (error) {
+          this.logger.debug(
+            'Failed to decode session from header',
+            error.message,
+          );
+        }
       }
     }
 
     if (!session.id && !session.secret) {
       res.setHeader('X-Debug-Fallback', 'true');
       try {
-        const fallback = JSON.parse(
-          params.getFromHeaders('x-nuvix-fallback', ''),
-        );
-        session = Auth.decodeSession(fallback[Auth.cookieName] || '');
+        const fallbackHeader = params.getFromHeaders('x-nuvix-fallback', '');
+        if (fallbackHeader) {
+          const fallback = JSON.parse(fallbackHeader);
+          session = Auth.decodeSession(fallback[Auth.cookieName] || '');
+        }
       } catch (error) {
-        // this.logger.error('Failed to parse fallback cookies', error);
+        this.logger.debug('Failed to parse fallback cookies', error.message);
       }
     } else {
       res.setHeader('X-Debug-Fallback', 'false');

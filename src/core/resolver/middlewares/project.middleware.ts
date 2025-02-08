@@ -26,8 +26,8 @@ export class ProjectMiddleware implements NestMiddleware {
       return null;
     }
 
-    const project = await Authorization.skip(async () =>
-      await this.db.getDocument('projects', projectId as string),
+    const project = await Authorization.skip(
+      async () => await this.db.getDocument('projects', projectId as string),
     );
 
     if (!project.isEmpty()) {

@@ -7,7 +7,14 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Observable, tap } from 'rxjs';
-import { APP_MODE_ADMIN, APP_MODE_DEFAULT, PROJECT, SCOPES, SESSION, USER } from 'src/Utils/constants';
+import {
+  APP_MODE_ADMIN,
+  APP_MODE_DEFAULT,
+  PROJECT,
+  SCOPES,
+  SESSION,
+  USER,
+} from 'src/Utils/constants';
 import ParamsHelper from '../helper/params.helper';
 import { Authorization, Document } from '@nuvix/database';
 import { Reflector } from '@nestjs/core';
@@ -19,9 +26,7 @@ import { TOTP } from '../validators/MFA.validator';
 
 @Injectable()
 export class ApiInterceptor implements NestInterceptor {
-  constructor(
-    private readonly reflector: Reflector,
-  ) { }
+  constructor(private readonly reflector: Reflector) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const request = context.switchToHttp().getRequest();
@@ -33,8 +38,14 @@ export class ApiInterceptor implements NestInterceptor {
       params.getFromHeaders('x-nuvix-mode') ||
       params.getFromQuery('mode', APP_MODE_DEFAULT);
 
-    const scope = this.reflector.get<LableValue['scope']>('scope', context.getHandler());
-    const namespace = this.reflector.get<LableValue['namespace']>('namespace', context.getHandler());
+    const scope = this.reflector.get<LableValue['scope']>(
+      'scope',
+      context.getHandler(),
+    );
+    const namespace = this.reflector.get<LableValue['namespace']>(
+      'namespace',
+      context.getHandler(),
+    );
 
     if (APP_MODE_ADMIN === mode) {
       if (
@@ -54,24 +65,29 @@ export class ApiInterceptor implements NestInterceptor {
       if (
         namespace in project.getAttribute('services', {}) &&
         !project.getAttribute('services', {})[namespace] &&
-        !(Auth.isPrivilegedUser(Authorization.getRoles()) || Auth.isAppUser(Authorization.getRoles()))
+        !(
+          Auth.isPrivilegedUser(Authorization.getRoles()) ||
+          Auth.isAppUser(Authorization.getRoles())
+        )
       ) {
-        throw new Exception(Exception.GENERAL_SERVICE_DISABLED)
+        throw new Exception(Exception.GENERAL_SERVICE_DISABLED);
       }
     }
 
     if (scope && !scopes.includes(scope)) {
-      if (project.isEmpty()) { // Check if permission is denied because project is missing
+      if (project.isEmpty()) {
+        // Check if permission is denied because project is missing
         throw new Exception(Exception.PROJECT_NOT_FOUND);
       }
 
       throw new Exception(
         Exception.GENERAL_UNAUTHORIZED_SCOPE,
-        `${user.getAttribute('email', 'User')} (role: #) missing scope (${scope})`
+        `${user.getAttribute('email', 'User')} (role: #) missing scope (${scope})`,
       );
     }
 
-    if (user.getAttribute('status') === false) { // Account is blocked
+    if (user.getAttribute('status') === false) {
+      // Account is blocked
       throw new Exception(Exception.USER_BLOCKED);
     }
 
@@ -82,19 +98,24 @@ export class ApiInterceptor implements NestInterceptor {
     const mfaEnabled = user.getAttribute('mfa', false);
     const hasVerifiedEmail = user.getAttribute('emailVerification', false);
     const hasVerifiedPhone = user.getAttribute('phoneVerification', false);
-    const hasVerifiedAuthenticator = TOTP.getAuthenticatorFromUser(user)?.getAttribute('verified') ?? false;
-    const hasMoreFactors = hasVerifiedEmail || hasVerifiedPhone || hasVerifiedAuthenticator;
-    const minimumFactors = (mfaEnabled && hasMoreFactors) ? 2 : 1;
+    const hasVerifiedAuthenticator =
+      TOTP.getAuthenticatorFromUser(user)?.getAttribute('verified') ?? false;
+    const hasMoreFactors =
+      hasVerifiedEmail || hasVerifiedPhone || hasVerifiedAuthenticator;
+    const minimumFactors = mfaEnabled && hasMoreFactors ? 2 : 1;
 
     if (!scopes.includes('mfa')) {
       const session = request[SESSION];
-      if (session && session.getAttribute('factors', []).length < minimumFactors) {
+      if (
+        session &&
+        session.getAttribute('factors', []).length < minimumFactors
+      ) {
         throw new Exception(Exception.USER_MORE_FACTORS_REQUIRED);
       }
     }
 
     request[USER] = user;
 
-    return next.handle()
+    return next.handle();
   }
 }

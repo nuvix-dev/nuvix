@@ -30,7 +30,7 @@ export class ApiMiddleware implements NestMiddleware {
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {
-   const params = new ParamsHelper(req);
+    const params = new ParamsHelper(req);
     const project: Document = req[PROJECT];
     let user: Document = req[USER];
     const mode: string =

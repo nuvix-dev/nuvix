@@ -35,7 +35,7 @@ export class StorageService {
     @Inject(DB_FOR_CONSOLE) private readonly dbForConsole: Database,
     @Inject(DB_FOR_PROJECT) private readonly db: Database,
     private readonly jwtSerice: JwtService,
-  ) { }
+  ) {}
 
   /**
    * Get buckets.
@@ -275,12 +275,12 @@ export class StorageService {
       const cursorDocument =
         fileSecurity && !valid
           ? await this.db.getDocument(
-            'bucket_' + bucket.getInternalId(),
-            fileId,
-          )
+              'bucket_' + bucket.getInternalId(),
+              fileId,
+            )
           : await Authorization.skip(() =>
-            this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
-          );
+              this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+            );
 
       if (cursorDocument.isEmpty()) {
         throw new Exception(
@@ -298,23 +298,23 @@ export class StorageService {
       fileSecurity && !valid
         ? await this.db.find('bucket_' + bucket.getInternalId(), queries)
         : await Authorization.skip(() =>
-          this.db.find('bucket_' + bucket.getInternalId(), queries),
-        );
+            this.db.find('bucket_' + bucket.getInternalId(), queries),
+          );
 
     const total =
       fileSecurity && !valid
         ? await this.db.count(
-          'bucket_' + bucket.getInternalId(),
-          filterQueries,
-          APP_LIMIT_COUNT,
-        )
-        : await Authorization.skip(() =>
-          this.db.count(
             'bucket_' + bucket.getInternalId(),
             filterQueries,
             APP_LIMIT_COUNT,
-          ),
-        );
+          )
+        : await Authorization.skip(() =>
+            this.db.count(
+              'bucket_' + bucket.getInternalId(),
+              filterQueries,
+              APP_LIMIT_COUNT,
+            ),
+          );
 
     return {
       files,
@@ -365,8 +365,8 @@ export class StorageService {
     if (!permissions || permissions.length === 0) {
       permissions = user.getId()
         ? allowedPermissions.map((permission) =>
-          new Permission(permission, 'user', user.getId()).toString(),
-        )
+            new Permission(permission, 'user', user.getId()).toString(),
+          )
         : [];
     }
 
@@ -640,8 +640,8 @@ export class StorageService {
       fileSecurity && !valid
         ? await this.db.getDocument('bucket_' + bucket.getInternalId(), fileId)
         : await Authorization.skip(() =>
-          this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
-        );
+            this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+          );
 
     if (file.isEmpty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -669,8 +669,8 @@ export class StorageService {
       output,
     } = params;
 
-    const bucket = await Authorization.skip(async () =>
-      await this.db.getDocument('buckets', bucketId),
+    const bucket = await Authorization.skip(
+      async () => await this.db.getDocument('buckets', bucketId),
     );
 
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
@@ -693,9 +693,13 @@ export class StorageService {
     const file =
       fileSecurity && !valid
         ? await this.db.getDocument('bucket_' + bucket.getInternalId(), fileId)
-        : await Authorization.skip(async () =>
-         await this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
-        );
+        : await Authorization.skip(
+            async () =>
+              await this.db.getDocument(
+                'bucket_' + bucket.getInternalId(),
+                fileId,
+              ),
+          );
 
     if (file.isEmpty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -717,7 +721,10 @@ export class StorageService {
     let image = sharp(path);
 
     if (width || height) {
-      image = image.resize(width, height, { fit: sharp.fit.cover, position: gravity });
+      image = image.resize(width, height, {
+        fit: sharp.fit.cover,
+        position: gravity,
+      });
     }
 
     if (borderWidth) {
@@ -731,16 +738,25 @@ export class StorageService {
     }
 
     if (borderRadius) {
-      image = image.composite([{
-        input: Buffer.from(
-          `<svg><rect x="0" y="0" width="${width}" height="${height}" rx="${borderRadius}" ry="${borderRadius}"/></svg>`
-        ),
-        blend: 'dest-in'
-      }]);
+      image = image.composite([
+        {
+          input: Buffer.from(
+            `<svg><rect x="0" y="0" width="${width}" height="${height}" rx="${borderRadius}" ry="${borderRadius}"/></svg>`,
+          ),
+          blend: 'dest-in',
+        },
+      ]);
     }
 
     if (opacity !== undefined) {
-      image = image.composite([{ input: Buffer.from(`<svg><rect x="0" y="0" width="${width}" height="${height}" fill="rgba(255, 255, 255, ${opacity})"/></svg>`), blend: 'dest-in' }]);
+      image = image.composite([
+        {
+          input: Buffer.from(
+            `<svg><rect x="0" y="0" width="${width}" height="${height}" fill="rgba(255, 255, 255, ${opacity})"/></svg>`,
+          ),
+          blend: 'dest-in',
+        },
+      ]);
     }
 
     if (rotation) {
@@ -795,8 +811,8 @@ export class StorageService {
       fileSecurity && !valid
         ? await this.db.getDocument('bucket_' + bucket.getInternalId(), fileId)
         : await Authorization.skip(() =>
-          this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
-        );
+            this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+          );
 
     if (file.isEmpty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -889,8 +905,8 @@ export class StorageService {
       fileSecurity && !valid
         ? await this.db.getDocument('bucket_' + bucket.getInternalId(), fileId)
         : await Authorization.skip(() =>
-          this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
-        );
+            this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+          );
 
     if (file.isEmpty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -1173,16 +1189,16 @@ export class StorageService {
       const deleted =
         fileSecurity && !valid
           ? await this.db.deleteDocument(
-            'bucket_' + bucket.getInternalId(),
-            fileId,
-          )
+              'bucket_' + bucket.getInternalId(),
+              fileId,
+            )
           : await Authorization.skip(
-            async () =>
-              await this.db.deleteDocument(
-                'bucket_' + bucket.getInternalId(),
-                fileId,
-              ),
-          );
+              async () =>
+                await this.db.deleteDocument(
+                  'bucket_' + bucket.getInternalId(),
+                  fileId,
+                ),
+            );
 
       if (!deleted) {
         throw new Exception(
@@ -1351,7 +1367,6 @@ function calculateFileHash(filePath: string): Promise<string> {
     stream.on('error', (err) => reject(err));
   });
 }
-
 
 interface PreviewParams {
   width?: number;
