@@ -30,12 +30,15 @@ import {
   UpdateMembershipStatusDTO,
 } from './dto/membership.dto';
 import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
-import { Query as Queries } from '@nuvix/database';
+import { Document, Query as Queries } from '@nuvix/database';
 import { ProjectGuard } from 'src/core/resolver/guards/project.guard';
 import { Mode } from 'src/core/resolver/mode.resolver';
 import { ApiInterceptor } from 'src/core/resolver/api.resolver';
+import { Project } from 'src/core/resolver/project.resolver';
+import { Locale } from 'src/core/resolver/locale.resolver';
+import { LocaleTranslator } from 'src/core/helper/locale.helper';
 
-@Controller({ version: ['1'], path: 'teams', scope: Scope.REQUEST })
+@Controller({ version: ['1'], path: 'teams' })
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResolverInterceptor, ApiInterceptor)
 export class TeamsController {
@@ -99,8 +102,14 @@ export class TeamsController {
 
   @Post(':id/memberships')
   @ResponseType({ type: Response.MODEL_MEMBERSHIP })
-  async addMember(@Param('id') id: string, @Body() input: CreateMembershipDTO) {
-    return await this.teamsService.addMember(id, input);
+  async addMember(
+    @Param('id') id: string,
+    @Body() input: CreateMembershipDTO,
+    @Project() project: Document,
+    @Locale() locale: LocaleTranslator,
+    @User() user: Document,
+  ) {
+    return await this.teamsService.addMember(id, input, project, user, locale);
   }
 
   @Get(':id/memberships')

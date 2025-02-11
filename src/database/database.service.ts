@@ -2386,7 +2386,7 @@ export class DatabaseService {
     );
 
     await this.databaseQueue.add(DATABASE_TYPE_CREATE_INDEX, {
-      database: db,
+      database: db.toObj(),
       collection: collection.toObj(),
       index: index.toObj(),
       project: project.toObj(),
@@ -2543,7 +2543,7 @@ export class DatabaseService {
     );
 
     await this.databaseQueue.add(DATABASE_TYPE_DELETE_INDEX, {
-      database: db,
+      database: db.toObj(),
       collection: collection.toObj(),
       index: index.toObj(),
       project: project.toObj(),

@@ -17,6 +17,10 @@ import { LocaleTranslator } from 'src/core/helper/locale.helper';
 import { Response } from 'src/core/helper/response.helper';
 import { PersonalDataValidator } from 'src/core/validators/personal-data.validator';
 import {
+  APP_EMAIL_TEAM,
+  APP_NAME,
+  APP_SYSTEM_EMAIL_ADDRESS,
+  APP_SYSTEM_EMAIL_NAME,
   CONSOLE_CONFIG,
   DB_FOR_PROJECT,
   EVENT_SESSION_CREATE,
@@ -26,17 +30,24 @@ import {
   EVENT_USER_CREATE,
   EVENT_USER_DELETE,
   GEO_DB,
+  SEND_TYPE_EMAIL,
 } from 'src/Utils/constants';
 import { UpdateEmailDTO } from './DTO/account.dto';
 import { CreateEmailSessionDTO } from './DTO/session.dto';
 import { Detector } from 'src/core/helper/detector.helper';
 import { CountryResponse, Reader } from 'maxmind';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import * as Template from 'handlebars';
+import * as fs from 'fs';
+import { MailQueueOptions } from 'src/core/resolver/queues/mail.queue';
 
 @Injectable()
 export class AccountService {
   constructor(
     @Inject(DB_FOR_PROJECT) private readonly db: Database,
     @Inject(GEO_DB) private readonly geodb: Reader<CountryResponse>,
+    @InjectQueue('mails') private readonly mailQueue: Queue<MailQueueOptions>,
     private eventEmitter: EventEmitter2,
   ) {}
 
@@ -747,10 +758,107 @@ export class AccountService {
       ]);
 
       if (sessionCount !== 1) {
-        // this.sendSessionAlert(locale, user, project, createdSession);
+        await this.sendSessionAlert(locale, user, project, createdSession);
       }
     }
 
     return createdSession;
+  }
+
+  /**
+   * Send Session Alert.
+   */
+  async sendSessionAlert(
+    locale: LocaleTranslator,
+    user: Document,
+    project: Document,
+    session: Document,
+  ) {
+    let subject: string = locale.getText('emails.sessionAlert.subject');
+    const customTemplate =
+      project.getAttribute('templates', {})?.[
+        'email.sessionAlert-' + locale.default
+      ] ?? {};
+    const templatePath =
+      __dirname + '/../core/config/locale/templates/email-session-alert.tpl';
+    const templateSource = fs.readFileSync(templatePath, 'utf8');
+    const template = Template.compile(templateSource);
+
+    const emailData = {
+      hello: locale.getText('emails.sessionAlert.hello'),
+      body: locale.getText('emails.sessionAlert.body'),
+      listDevice: locale.getText('emails.sessionAlert.listDevice'),
+      listIpAddress: locale.getText('emails.sessionAlert.listIpAddress'),
+      listCountry: locale.getText('emails.sessionAlert.listCountry'),
+      footer: locale.getText('emails.sessionAlert.footer'),
+      thanks: locale.getText('emails.sessionAlert.thanks'),
+      signature: locale.getText('emails.sessionAlert.signature'),
+    };
+
+    const emailVariables = {
+      direction: locale.getText('settings.direction'),
+      date: new Date().toLocaleDateString(locale.default, {
+        month: 'long',
+        day: 'numeric',
+      }),
+      year: new Date().getFullYear(),
+      time: new Date().toLocaleTimeString(locale.default),
+      user: user.getAttribute('name'),
+      project: project.getAttribute('name'),
+      device: session.getAttribute('clientName'),
+      ipAddress: session.getAttribute('ip'),
+      country: locale.getText(
+        'countries.' + session.getAttribute('countryCode'),
+        locale.getText('locale.country.unknown'),
+      ),
+    };
+
+    const smtpServer: object = {};
+
+    let body = template(emailData);
+
+    const smtp = project.getAttribute('smtp', {});
+    const smtpEnabled = smtp['enabled'] ?? false;
+
+    let senderEmail = APP_SYSTEM_EMAIL_ADDRESS || APP_EMAIL_TEAM;
+    let senderName = APP_SYSTEM_EMAIL_NAME || APP_NAME + ' Server';
+    let replyTo = '';
+
+    if (smtpEnabled) {
+      if (smtp['senderEmail']) senderEmail = smtp['senderEmail'];
+      if (smtp['senderName']) senderName = smtp['senderName'];
+      if (smtp['replyTo']) replyTo = smtp['replyTo'];
+
+      smtpServer['host'] = smtp['host'] || null;
+      smtpServer['port'] = smtp['port'] || null;
+      smtpServer['username'] = smtp['username'] || null;
+      smtpServer['password'] = smtp['password'] || null;
+      smtpServer['secure'] = smtp['secure'] ?? false;
+
+      if (customTemplate) {
+        if (customTemplate['senderEmail'])
+          senderEmail = customTemplate['senderEmail'];
+        if (customTemplate['senderName'])
+          senderName = customTemplate['senderName'];
+        if (customTemplate['replyTo']) replyTo = customTemplate['replyTo'];
+
+        body = customTemplate['message'] || body;
+        subject = customTemplate['subject'] || subject;
+      }
+
+      smtpServer['replyTo'] = replyTo;
+      smtpServer['senderEmail'] = senderEmail;
+      smtpServer['senderName'] = senderName;
+    }
+
+    const email = user.getAttribute('email');
+
+    await this.mailQueue.add(SEND_TYPE_EMAIL, {
+      email,
+      subject,
+      body,
+      server: smtpServer,
+      variables: emailVariables,
+    });
   }
 }

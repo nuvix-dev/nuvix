@@ -8,6 +8,8 @@ export class LocaleTranslator {
   private locale: string;
   private translations: { [key: string]: string };
 
+  default = 'en';
+
   constructor(locale: string = 'en') {
     this.locale = locale;
     this.translations = this.loadTranslations(locale);
@@ -31,10 +33,7 @@ export class LocaleTranslator {
     this.translations = this.loadTranslations(locale);
   }
 
-  public getText(
-    key: string,
-    defaultValue: string | unknown = null,
-  ): string | unknown {
+  public getText<T = any>(key: string, defaultValue: string | any = null): T {
     return this.translations[key] ?? defaultValue;
   }
 }

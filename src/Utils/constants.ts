@@ -103,6 +103,11 @@ export const APP_FUNCTION_MEMORY_DEFAULT = 512;
 export const APP_DEBUG_COLORS = process.env.APP_DEBUG_COLORS === 'true';
 export const APP_DEBUG_FORMAT = process.env.APP_DEBUG_FORMAT === 'json';
 
+// Mails
+export const APP_SYSTEM_EMAIL_ADDRESS = 'app@nuvix.io';
+export const APP_SYSTEM_EMAIL_NAME = 'Nuvix';
+export const SEND_TYPE_EMAIL = 'sendEmail';
+
 // Database Reconnect
 export const DATABASE_RECONNECT_SLEEP = 2;
 export const DATABASE_RECONNECT_MAX_ATTEMPTS = 10;

@@ -1,10 +1,13 @@
-import { All, Controller, Res } from '@nestjs/common';
+import { InjectQueue } from '@nestjs/bullmq';
+import { All, Controller, Query, Res } from '@nestjs/common';
 import { Response } from 'express';
 import { Public } from 'src/core/resolver/guards/auth.guard';
+import { SEND_TYPE_EMAIL } from 'src/Utils/constants';
+import { Queue } from 'bullmq';
 
 @Controller({ version: ['1'] })
 export class BaseController {
-  constructor() {}
+  constructor(@InjectQueue('mails') private readonly mailQueue: Queue) {}
 
   @All('health/version')
   @Public()
@@ -162,6 +165,29 @@ export class BaseController {
         { code: 'zh-tw', name: 'Chinese (Taiwan)' },
         { code: 'zu', name: 'Zulu' },
       ],
+    };
+  }
+
+  @All('smtp/test')
+  @Public()
+  async testSMTP(@Query('email') email: string) {
+    const emailVariables = {
+      owner: 'Nuvix',
+      user: '`User`',
+      team: '`Team',
+      redirect: 'https://nuvix.io',
+      project: 'Console',
+    };
+
+    await this.mailQueue.add(SEND_TYPE_EMAIL, {
+      email: email,
+      subject: 'Test email from nuvix app',
+      body: 'Yor smtp config is working.',
+      variables: emailVariables,
+    });
+
+    return {
+      success: true,
     };
   }
 }
