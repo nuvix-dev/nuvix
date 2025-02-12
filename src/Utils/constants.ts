@@ -30,6 +30,9 @@ export const APP_SMTP_PASSWORD = process.env.APP_SMTP_PASSWORD;
 export const APP_SMTP_EMAIL_FROM = process.env.APP_SMTP_EMAIL_FROM;
 export const APP_SMTP_SENDER = process.env.APP_SMTP_SENDER;
 export const APP_SMTP_REPLY_TO = process.env.APP_SMTP_REPLY_TO;
+export const APP_SMTP_DKIM_DOMAIN = process.env.APP_SMTP_DKIM_DOMAIN;
+export const APP_SMTP_DKIM_KEY = process.env.APP_SMTP_DKIM_KEY;
+export const APP_SMTP_DKIM_PRIVATE_KEY = process.env.APP_SMTP_DKIM_PRIVATE_KEY;
 
 export const PROJECT = 'project';
 export const USER = 'user';

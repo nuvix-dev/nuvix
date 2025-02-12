@@ -68,9 +68,6 @@
                 border-top: 1px solid #e8e9f0;
             }
         </style>
-    </head>
-
-<head>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link

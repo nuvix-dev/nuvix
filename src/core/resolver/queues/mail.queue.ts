@@ -3,6 +3,9 @@ import { Queue } from './queue';
 import { Job } from 'bullmq';
 import { createTransport, Transporter } from 'nodemailer';
 import {
+  APP_SMTP_DKIM_DOMAIN,
+  APP_SMTP_DKIM_KEY,
+  APP_SMTP_DKIM_PRIVATE_KEY,
   APP_SMTP_EMAIL_FROM,
   APP_SMTP_HOST,
   APP_SMTP_PASSWORD,
@@ -31,6 +34,14 @@ export class MailQueue extends Queue {
         ? {
             user: APP_SMTP_USER,
             pass: APP_SMTP_PASSWORD,
+          }
+        : undefined,
+    dkim:
+      APP_SMTP_DKIM_DOMAIN && APP_SMTP_DKIM_KEY && APP_SMTP_DKIM_PRIVATE_KEY
+        ? {
+            domainName: APP_SMTP_DKIM_DOMAIN,
+            keySelector: APP_SMTP_DKIM_KEY,
+            privateKey: APP_SMTP_DKIM_PRIVATE_KEY,
           }
         : undefined,
     from: {
@@ -91,7 +102,7 @@ export class MailQueue extends Queue {
         if (!job.data.bodyTemplate) {
           job.data.bodyTemplate = path.resolve(
             __dirname,
-            '../../../../src/core/config/locale/templates/email-base.tpl',
+            '../../../../src/core/config/locale/templates/email-base-styled.tpl',
           );
         }
 
@@ -131,10 +142,11 @@ export class MailQueue extends Queue {
     body: string;
   }) {
     const mailOptions = {
+      from: transporter.options.from ?? transporter.options.sender,
       to: email,
       subject,
       html: body,
-      text: body.replace(/<[^>]+>/g, ''), // Strip HTML tags for plain text version
+      text: this.convertHtmlToPlainText(body), // Strip HTML tags for plain text version
     };
 
     try {
@@ -143,6 +155,14 @@ export class MailQueue extends Queue {
       throw new Error(`Error sending mail: ${error.message}`);
     }
   }
+
+  convertHtmlToPlainText = (html: string) => {
+    return html
+      .replace(/<\/p>/g, '\n\n') // Convert paragraphs to double line breaks
+      .replace(/<br\s*\/?>/g, '\n') // Convert <br> to new lines
+      .replace(/<a[^>]*href="([^"]+)"[^>]*>(.*?)<\/a>/g, '$2 ($1)') // Keep links
+      .replace(/<\/?[^>]+(>|$)/g, ''); // Remove other HTML tags
+  };
 
   @OnWorkerEvent('active')
   onActive(job: Job) {

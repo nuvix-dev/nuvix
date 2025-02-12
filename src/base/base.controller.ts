@@ -170,7 +170,11 @@ export class BaseController {
 
   @All('smtp/test')
   @Public()
-  async testSMTP(@Query('email') email: string) {
+  async testSMTP(
+    @Query('email') email: string,
+    @Query('subject') subject: 'Test email from nuvix app',
+    @Query('body') body: 'Yor smtp config is working.',
+  ) {
     const emailVariables = {
       owner: 'Nuvix',
       user: '`User`',
@@ -181,8 +185,8 @@ export class BaseController {
 
     await this.mailQueue.add(SEND_TYPE_EMAIL, {
       email: email,
-      subject: 'Test email from nuvix app',
-      body: 'Yor smtp config is working.',
+      subject: subject,
+      body: body,
       variables: emailVariables,
     });
 

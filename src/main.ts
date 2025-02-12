@@ -12,6 +12,7 @@ import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 import { NextFunction, Request, Response } from 'express';
 import { ConsoleLogger, ValidationPipe } from '@nestjs/common';
 import { APP_DEBUG_COLORS, APP_DEBUG_FORMAT } from './Utils/constants';
+import { join } from 'path';
 const cookieParser = require('cookie-parser');
 
 config();
@@ -48,6 +49,8 @@ async function bootstrap() {
     res.header('Server', 'Nuvix');
     next();
   });
+
+  app.useStaticAssets('public', { index: 'NOT FOUND' });
 
   app.enableCors({
     origin: [

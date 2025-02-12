@@ -126,7 +126,7 @@
                     <td>
                         <img
                             height="32px"
-                            src="https://cloud.appwrite.io/images/mails/logo.png"
+                            src="https://skill.collegejaankaar.in/images/nuvix-logo-light.svg"
                         />
                     </td>
                 </tr>
@@ -164,7 +164,7 @@
                 <tr>
                     <td style="padding-left: 4px; padding-right: 4px">
                         <a
-                            href="https://twitter.com/appwrite"
+                            href="https://twitter.com/nuvix"
                             class="social-icon"
                             title="Twitter"
                         >
@@ -173,7 +173,7 @@
                     </td>
                     <td style="padding-left: 4px; padding-right: 4px">
                         <a
-                            href="https://appwrite.io/discord"
+                            href="https://nuvix.io/discord"
                             class="social-icon"
                         >
                             <img src="https://cloud.appwrite.io/images/mails/discord.png" height="24" width="24" />
@@ -181,7 +181,7 @@
                     </td>
                     <td style="padding-left: 4px; padding-right: 4px">
                         <a
-                            href="https://github.com/appwrite/appwrite"
+                            href="https://github.com/ravikan6/nuvix"
                             class="social-icon"
                         >
                             <img src="https://cloud.appwrite.io/images/mails/github.png" height="24" width="24" />
@@ -191,16 +191,15 @@
             </table>
             <table style="width: auto; margin: 0 auto; margin-top: 60px">
                 <tr>
-                    <td><a href="https://appwrite.io/terms">Terms</a></td>
+                    <td><a href="https://nuvix.io/terms">Terms</a></td>
                     <td style="color: #e8e9f0">
                         <div style="margin: 0 8px">|</div>
                     </td>
-                    <td><a href="https://appwrite.io/privacy">Privacy</a></td>
+                    <td><a href="https://nuvix.io/privacy">Privacy</a></td>
                 </tr>
             </table>
             <p style="text-align: center" align="center">
-                &copy; {{year}} Appwrite | 251 Little Falls Drive, Wilmington 19808,
-                Delaware, United States
+                &copy; {{year}} Nuvix | Somewhere in the world.
             </p>
         </div>
     </body>
