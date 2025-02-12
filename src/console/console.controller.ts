@@ -20,7 +20,7 @@ import { ConsoleInterceptor } from 'src/core/resolver/console.resolver';
 @UseGuards(AuthGuard)
 @UseInterceptors(ResolverInterceptor, ConsoleInterceptor)
 export class ConsoleController {
-  constructor(private readonly consoleService: ConsoleService) { }
+  constructor(private readonly consoleService: ConsoleService) {}
 
   @Public()
   @Get('variables')

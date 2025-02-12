@@ -6,7 +6,7 @@ import {
   Scope,
 } from '@nestjs/common';
 
-@Controller({ version: ['1'], path: 'console/project', scope: Scope.REQUEST })
+@Controller({ version: ['1'], path: 'console/project' })
 @UseInterceptors(ClassSerializerInterceptor)
 export class ProjectController {
   constructor() {}

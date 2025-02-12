@@ -13,9 +13,11 @@ import { NextFunction, Request, Response } from 'express';
 import { ConsoleLogger, ValidationPipe } from '@nestjs/common';
 import { APP_DEBUG_COLORS, APP_DEBUG_FORMAT } from './Utils/constants';
 import { join } from 'path';
+import { Authorization, storage } from '@nuvix/database';
 const cookieParser = require('cookie-parser');
 
 config();
+Authorization.enableStorage();
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -88,6 +90,22 @@ async function bootstrap() {
         .map((header) => header.trim()),
     ],
     exposedHeaders: ['X-Nuvix-Session', 'X-Fallback-Cookies'],
+  });
+
+  app.use((req: Request, res: Response, next: NextFunction) => {
+    if (Authorization['useStorage']) {
+      // Enable storage only if explicitly set
+      storage.run(new Map(), () => {
+        Authorization.setDefaultStatus(true); // Set per-request default status
+        Authorization.cleanRoles(); // Reset roles per request
+        next();
+      });
+    } else {
+      // Fallback to default static behavior
+      Authorization.setDefaultStatus(true);
+      Authorization.cleanRoles();
+      next();
+    }
   });
 
   app.useGlobalFilters(new HttpExceptionFilter());

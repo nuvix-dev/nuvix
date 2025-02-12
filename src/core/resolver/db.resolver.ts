@@ -255,7 +255,7 @@ export const filters = {
       if (value === null) {
         return null;
       }
-      value = typeof value === "string" ? JSON.parse(value) : value;
+      value = typeof value === 'string' ? JSON.parse(value) : value;
       let key: string;
       switch (value.version) {
         case '1':

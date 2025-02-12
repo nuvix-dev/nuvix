@@ -26,7 +26,10 @@ import { AuthGuard } from 'src/core/resolver/guards/auth.guard';
 import { CreateMembershipDTO, UpdateMembershipDTO } from './dto/membership.dto';
 import { ConsoleInterceptor } from 'src/core/resolver/console.resolver';
 
-@Controller({ version: ['1'], path: 'console/organizations', scope: Scope.REQUEST })
+@Controller({
+  version: ['1'],
+  path: 'console/organizations',
+})
 @UseGuards(AuthGuard)
 @UseInterceptors(ResolverInterceptor, ConsoleInterceptor)
 export class OrganizationsController {

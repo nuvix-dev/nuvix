@@ -89,8 +89,6 @@ config();
 })
 export class AppModule {
   async configure(consumer: MiddlewareConsumer) {
-    Authorization.cleanRoles();
-    Authorization.setDefaultStatus(true);
     Authorization.setRole(Role.any().toString());
 
     consumer
