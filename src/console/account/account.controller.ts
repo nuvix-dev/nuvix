@@ -32,10 +32,11 @@ import {
 import { CreateEmailSessionDTO } from './DTO/session.dto';
 import { AuthGuard, Public } from 'src/core/resolver/guards/auth.guard';
 import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
+import { ConsoleInterceptor } from 'src/core/resolver/console.resolver';
 
 @Controller({ version: ['1'], path: 'console/account' })
 @UseGuards(AuthGuard)
-@UseInterceptors(ResolverInterceptor)
+@UseInterceptors(ResolverInterceptor, ConsoleInterceptor)
 export class AccountController {
   constructor(private readonly accountService: AccountService) {}
 

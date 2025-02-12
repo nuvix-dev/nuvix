@@ -57,10 +57,11 @@ import { Response } from 'src/core/helper/response.helper';
 import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
 import type { Query as Queries } from '@nuvix/database';
 import { AuthGuard } from 'src/core/resolver/guards/auth.guard';
+import { ConsoleInterceptor } from 'src/core/resolver/console.resolver';
 
 @Controller({ version: ['1'], path: 'console/projects' })
 @UseGuards(AuthGuard)
-@UseInterceptors(ResolverInterceptor)
+@UseInterceptors(ResolverInterceptor, ConsoleInterceptor)
 export class ProjectsController {
   constructor(
     private readonly projectService: ProjectService,

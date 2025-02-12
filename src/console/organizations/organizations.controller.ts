@@ -8,6 +8,7 @@ import {
   Post,
   Put,
   Query,
+  Scope,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -23,10 +24,11 @@ import { User } from 'src/core/resolver/user.resolver';
 import { CreateOrgDTO, UpdateOrgDTO, UpdateTeamPrefsDTO } from './dto/team.dto';
 import { AuthGuard } from 'src/core/resolver/guards/auth.guard';
 import { CreateMembershipDTO, UpdateMembershipDTO } from './dto/membership.dto';
+import { ConsoleInterceptor } from 'src/core/resolver/console.resolver';
 
-@Controller({ version: ['1'], path: 'console/organizations' })
+@Controller({ version: ['1'], path: 'console/organizations', scope: Scope.REQUEST })
 @UseGuards(AuthGuard)
-@UseInterceptors(ResolverInterceptor)
+@UseInterceptors(ResolverInterceptor, ConsoleInterceptor)
 export class OrganizationsController {
   constructor(private readonly organizationsService: OrganizationsService) {}
 

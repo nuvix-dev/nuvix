@@ -34,7 +34,7 @@ import { CreateBucketDTO, UpdateBucketDTO } from './DTO/bucket.dto';
 import { ApiInterceptor } from 'src/core/resolver/api.resolver';
 import { ParseDuplicatePipe } from 'src/core/pipes/duplicate.pipe';
 
-@Controller({ version: ['1'], path: 'storage', scope: Scope.REQUEST })
+@Controller({ version: ['1'], path: 'storage' })
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResolverInterceptor, ApiInterceptor)
 export class StorageController {

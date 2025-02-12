@@ -3,9 +3,10 @@ import {
   UseInterceptors,
   ClassSerializerInterceptor,
   Get,
+  Scope,
 } from '@nestjs/common';
 
-@Controller({ version: ['1'], path: 'console/project' })
+@Controller({ version: ['1'], path: 'console/project', scope: Scope.REQUEST })
 @UseInterceptors(ClassSerializerInterceptor)
 export class ProjectController {
   constructor() {}
