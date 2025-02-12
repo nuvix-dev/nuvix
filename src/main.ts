@@ -12,8 +12,7 @@ import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 import { NextFunction, Request, Response } from 'express';
 import { ConsoleLogger, ValidationPipe } from '@nestjs/common';
 import { APP_DEBUG_COLORS, APP_DEBUG_FORMAT } from './Utils/constants';
-import { join } from 'path';
-import { Authorization, storage } from '@nuvix/database';
+import { Authorization, Role, storage } from '@nuvix/database';
 const cookieParser = require('cookie-parser');
 
 config();
@@ -98,12 +97,14 @@ async function bootstrap() {
       storage.run(new Map(), () => {
         Authorization.setDefaultStatus(true); // Set per-request default status
         Authorization.cleanRoles(); // Reset roles per request
+        Authorization.setRole(Role.any().toString());
         next();
       });
     } else {
       // Fallback to default static behavior
       Authorization.setDefaultStatus(true);
       Authorization.cleanRoles();
+      Authorization.setRole(Role.any().toString());
       next();
     }
   });

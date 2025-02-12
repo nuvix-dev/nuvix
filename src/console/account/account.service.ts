@@ -15,7 +15,7 @@ import { Exception } from 'src/core/extend/exception';
 import { Auth } from 'src/core/helper/auth.helper';
 import { Detector } from 'src/core/helper/detector.helper';
 import { PersonalDataValidator } from 'src/core/validators/personal-data.validator';
-import { CONSOLE_CONFIG, DB_FOR_CONSOLE, GEO_DB } from 'src/Utils/constants';
+import { CONSOLE_CONFIG, DB_FOR_CONSOLE, GEO_DB, SEND_TYPE_EMAIL, WORKER_TYPE_MAILS } from 'src/Utils/constants';
 import { ResolverInterceptor } from 'src/core/resolver/response.resolver';
 import {
   UpdateEmailDTO,
@@ -26,6 +26,11 @@ import {
 import { PasswordHistoryValidator } from 'src/core/validators/password-history.validator';
 import { MfaType, TOTP } from 'src/core/validators/MFA.validator';
 import { CreateEmailSessionDTO } from './DTO/session.dto';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import * as Template from 'handlebars';
+import * as fs from 'fs';
+import { MailJobs, MailQueueOptions } from 'src/core/resolver/queues/mail.queue';
 
 @Injectable()
 @UseInterceptors(ResolverInterceptor)
@@ -33,7 +38,8 @@ export class AccountService {
   constructor(
     @Inject(GEO_DB) private readonly geodb: Reader<CountryResponse>,
     @Inject(DB_FOR_CONSOLE) private readonly db: Database,
-  ) {}
+    @InjectQueue(WORKER_TYPE_MAILS) private readonly mailQueue: Queue<MailQueueOptions, MailJobs>
+  ) { }
 
   /**
    * Create a new account
@@ -191,6 +197,28 @@ export class AccountService {
     Authorization.unsetRole(Role.guests().toString());
     Authorization.setRole(Role.user(user.getId()).toString());
     Authorization.setRole(Role.users().toString());
+
+    const templatePath =
+      __dirname + '/../../../assets/locale/templates/email-account-create.tpl';
+    const templateSource = fs.readFileSync(templatePath, 'utf8');
+    const template = Template.compile(templateSource);
+
+    const body = template({
+      name: user.getAttribute('name', 'User'),
+      verification_link: '#'
+    })
+
+    const vars = {
+      date: new Date().toDateString(),
+      year: new Date().getFullYear(),
+    }
+
+    await this.mailQueue.add(SEND_TYPE_EMAIL, {
+      subject: 'Account Created! Start Exploring Nuvix Now ⚡',
+      email: user.getAttribute('email'),
+      body: body,
+      variables: vars
+    })
 
     // queueForEvents.setParam('userId', user.getId());
 
@@ -620,9 +648,9 @@ export class AccountService {
     sessionId =
       sessionId === 'current'
         ? (Auth.sessionVerify(
-            user.getAttribute('sessions'),
-            Auth.secret,
-          ) as string)
+          user.getAttribute('sessions'),
+          Auth.secret,
+        ) as string)
         : sessionId;
 
     for (const session of sessions) {
@@ -710,9 +738,9 @@ export class AccountService {
     sessionId =
       sessionId === 'current'
         ? (Auth.sessionVerify(
-            user.getAttribute('sessions'),
-            Auth.secret,
-          ) as string)
+          user.getAttribute('sessions'),
+          Auth.secret,
+        ) as string)
         : sessionId;
 
     const sessions = user.getAttribute('sessions', []);
