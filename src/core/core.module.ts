@@ -1,10 +1,23 @@
 import { Global, Logger, Module, Scope } from '@nestjs/common';
 import * as fs from 'fs';
 import path from 'path';
+import IORedis from 'ioredis';
 
 // Services
 import { ClsService } from 'nestjs-cls';
-import { DB_FOR_CONSOLE, DB_FOR_PROJECT, GEO_DB } from 'src/Utils/constants';
+import {
+  DB_FOR_CONSOLE,
+  DB_FOR_PROJECT,
+  GEO_DB,
+  CACHE_DB,
+  APP_REDIS_PATH,
+  APP_REDIS_PORT,
+  APP_REDIS_HOST,
+  APP_REDIS_USER,
+  APP_REDIS_PASSWORD,
+  APP_REDIS_DB,
+  APP_REDIS_SECURE,
+} from 'src/Utils/constants';
 import { Database, MariaDB, Structure } from '@nuvix/database';
 import { filters, formats } from './resolver/db.resolver';
 import { CountryResponse, Reader } from 'maxmind';
@@ -95,7 +108,24 @@ Object.keys(formats).forEach((key) => {
       },
       inject: [ClsService],
     },
+    {
+      provide: CACHE_DB,
+      useFactory: async () => {
+        const connection = new IORedis({
+          connectionName: CACHE_DB,
+          path: APP_REDIS_PATH,
+          port: APP_REDIS_PORT,
+          host: APP_REDIS_HOST,
+          username: APP_REDIS_USER,
+          password: APP_REDIS_PASSWORD,
+          db: APP_REDIS_DB,
+          tls: APP_REDIS_SECURE ? {} : undefined,
+        });
+        return connection;
+      },
+      inject: [],
+    },
   ],
-  exports: [DB_FOR_CONSOLE, DB_FOR_PROJECT, GEO_DB],
+  exports: [DB_FOR_CONSOLE, DB_FOR_PROJECT, GEO_DB, CACHE_DB],
 })
 export class CoreModule {}

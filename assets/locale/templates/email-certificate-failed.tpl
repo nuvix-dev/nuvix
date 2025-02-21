@@ -16,7 +16,7 @@
     <li>Examine the logs above to try and identify the issue</li>
     <li>Ensure your domain has not expired</li>
     <li>Check your DNS configuration for any unexpected values</li>
-    <li>Manually re-trigger a certificate generation from the Appwrite Console</li>
+    <li>Manually re-trigger a certificate generation from the nuvix Console</li>
 </ol>
 
 <p>The existing certificate will remain valid for 30 days from the initial failure. It is highly recommended to investigate this issue; failing to do so will lead to security vulnerabilities.</p>

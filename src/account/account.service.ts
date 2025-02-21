@@ -486,7 +486,7 @@ export class AccountService {
     const provider = session.getAttribute('provider', '');
     const refreshToken = session.getAttribute('providerRefreshToken', '');
     // TODO: %$$$$$
-    const className = `Appwrite\\Auth\\OAuth2\\${provider.charAt(0).toUpperCase() + provider.slice(1)}`;
+    const className = `nuvix\\Auth\\OAuth2\\${provider.charAt(0).toUpperCase() + provider.slice(1)}`;
 
     if (provider && className in global) {
       const appId = CONSOLE_CONFIG.oAuthProviders[`${provider}Appid`] ?? '';

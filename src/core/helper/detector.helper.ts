@@ -18,9 +18,9 @@ export class Detector {
     const os = this.parser.getOS();
 
     return {
-      osCode: os.name?.toLowerCase().replace(/\s+/g, '_') || '--',
-      osName: os.name || '--',
-      osVersion: os.version || '--',
+      osCode: os.name?.toLowerCase().replace(/\s+/g, '_') || '',
+      osName: os.name || '',
+      osVersion: os.version || '',
     };
   }
 
@@ -46,11 +46,11 @@ export class Detector {
 
       client = {
         type: 'browser',
-        short_name: browser.name?.toLowerCase().replace(/\s+/g, '_') || '--',
-        name: browser.name || '--',
-        version: browser.version || '--',
-        engine: engine.name || '--',
-        engine_version: engine.version || '--',
+        short_name: browser.name?.toLowerCase().replace(/\s+/g, '_') || '',
+        name: browser.name || '',
+        version: browser.version || '',
+        engine: engine.name || '',
+        engine_version: engine.version || '',
       };
     }
 
@@ -77,17 +77,5 @@ export class Detector {
       deviceBrand: device.vendor || null,
       deviceModel: device.model || null,
     };
-  }
-
-  /**
-   * Skip bot detection
-   *
-   * Note: This method is not applicable to UAParser since bot detection is not supported directly.
-   * Included for consistency with the original PHP class.
-   *
-   * @param skip Always true for compatibility.
-   */
-  skipBotDetection(skip = true): void {
-    console.warn('Bot detection skipping is not supported in UAParser.');
   }
 }

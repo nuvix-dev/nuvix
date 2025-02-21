@@ -13,7 +13,7 @@ import { NextFunction, Request, Response } from 'express';
 import { ConsoleLogger, ValidationPipe } from '@nestjs/common';
 import { APP_DEBUG_COLORS, APP_DEBUG_FORMAT } from './Utils/constants';
 import { Authorization, Role, storage } from '@nuvix/database';
-const cookieParser = require('cookie-parser');
+import cookieParser from 'cookie-parser';
 
 config();
 Authorization.enableStorage();
@@ -52,7 +52,7 @@ async function bootstrap() {
     next();
   });
 
-  app.useStaticAssets('public', { index: 'NOT FOUND' });
+  app.useStaticAssets('public');
 
   app.use((req: Request, res: Response, next: NextFunction) => {
     if (Authorization['useStorage']) {

@@ -168,7 +168,7 @@
                             class="social-icon"
                             title="Twitter"
                         >
-                            <img src="https://cloud.appwrite.io/images/mails/x.png" height="24" width="24" />
+                            <img src="https://cloud.nuvix.io/images/mails/x.png" height="24" width="24" />
                         </a>
                     </td>
                     <td style="padding-left: 4px; padding-right: 4px">
@@ -176,7 +176,7 @@
                             href="https://nuvix.io/discord"
                             class="social-icon"
                         >
-                            <img src="https://cloud.appwrite.io/images/mails/discord.png" height="24" width="24" />
+                            <img src="https://cloud.nuvix.io/images/mails/discord.png" height="24" width="24" />
                         </a>
                     </td>
                     <td style="padding-left: 4px; padding-right: 4px">
@@ -184,7 +184,7 @@
                             href="https://github.com/ravikan6/nuvix"
                             class="social-icon"
                         >
-                            <img src="https://cloud.appwrite.io/images/mails/github.png" height="24" width="24" />
+                            <img src="https://cloud.nuvix.io/images/mails/github.png" height="24" width="24" />
                         </a>
                     </td>
                 </tr>

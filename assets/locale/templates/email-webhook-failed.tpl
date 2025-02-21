@@ -4,7 +4,7 @@
 <p>Error: <strong>{{error}}</strong></p>
 <p>To restore your webhook's functionality and reset attempts, we suggest to follow the below steps:</p>
 <ol>
-    <li>Examine the logs of both Appwrite Console and your webhook server to identify the issue.</li>
+    <li>Examine the logs of both nuvix Console and your webhook server to identify the issue.</li>
     <li>Investigate potential network issues and use webhook testing tools to verify expected behaviour.</li>
     <li>Ensure the webhook endpoint is reachable and configured to accept incoming POST requests.</li>
     <li>Confirm that the webhook doesn't return error status codes such as 400 or 500.</li>

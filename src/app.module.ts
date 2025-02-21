@@ -34,6 +34,7 @@ import { MailQueue } from './core/resolver/queues/mail.queue';
 import { ApiMiddleware } from './core/resolver/middlewares/api.middleware';
 import { HostMiddleware } from './core/resolver/middlewares/host.middleware';
 import { CorsMiddleware } from './core/resolver/middlewares/cors.middleware';
+import { BandwidthMiddleware } from './core/resolver/middlewares/bandwidth.middleware';
 config();
 
 @Module({
@@ -96,6 +97,8 @@ export class AppModule {
       .apply(AuthMiddleware)
       .forRoutes('*')
       .apply(ApiMiddleware)
+      .forRoutes('*')
+      .apply(BandwidthMiddleware)
       .forRoutes('*');
   }
 }

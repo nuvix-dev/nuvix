@@ -44,7 +44,7 @@ export class MigrationReportModel extends BaseModel {
   @Expose() size: number = 0; // Default to 0
 
   /**
-   * Version of the Appwrite instance to be migrated.
+   * Version of the nuvix instance to be migrated.
    */
   @Expose() version: string = ''; // Default to empty string
 

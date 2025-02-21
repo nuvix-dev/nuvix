@@ -394,8 +394,8 @@ export const oAuthProviders: Record<string, OAuthProvider> = {
   },
   mock: {
     name: 'Mock',
-    developers: 'https://appwrite.io',
-    icon: 'icon-appwrite',
+    developers: 'https://nuvix.io',
+    icon: 'icon-nuvix',
     enabled: true,
     sandbox: false,
     form: false,

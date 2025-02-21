@@ -40,6 +40,7 @@ export const SESSION = 'session';
 export const DB_FOR_CONSOLE = 'dbForConsole';
 export const DB_FOR_PROJECT = 'dbForProject';
 export const GEO_DB = 'geoDb';
+export const CACHE_DB = 'cacheDb';
 export const IS_PUBLIC_KEY = 'isPublic';
 export const LOCALE = 'locale';
 export const API_KEY = 'apiKey';
@@ -139,7 +140,8 @@ export const APP_STORAGE_CACHE = 'storage/cache';
 export const APP_STORAGE_CERTIFICATES = 'storage/certificates';
 export const APP_STORAGE_CONFIG = 'storage/config';
 export const APP_STORAGE_READ_BUFFER = 20 * (1000 * 1000); //20MB other names `APP_STORAGE_MEMORY_LIMIT`, `APP_STORAGE_MEMORY_BUFFER`, `APP_STORAGE_READ_LIMIT`, `APP_STORAGE_BUFFER_LIMIT`
-export const APP_HOSTNAME_INTERNAL = 'nuvix';
+export const APP_HOSTNAME_INTERNAL =
+  process.env.APP_HOSTNAME_INTERNAL ?? 'localhost';
 // const APP_FUNCTION_SPECIFICATION_DEFAULT = Specification::S_05VCPU_512MB;
 export const APP_FUNCTION_CPUS_DEFAULT = 0.5;
 export const APP_FUNCTION_MEMORY_DEFAULT = 512;
@@ -230,6 +232,8 @@ export const MESSAGE_TYPE_PUSH = 'push';
 // API key types
 export const API_KEY_STANDARD = 'standard';
 export const API_KEY_DYNAMIC = 'dynamic';
+// Worker Types
+export const WORKER_TYPE_USAGE = 'usage';
 // Usage metrics
 export const METRIC_TEAMS = 'teams';
 export const METRIC_USERS = 'users';

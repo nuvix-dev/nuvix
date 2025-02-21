@@ -4,7 +4,7 @@ import BaseModel from 'src/core/models/base.model';
 @Exclude()
 export class ConsoleVariablesModel extends BaseModel {
   /**
-   * CNAME target for your Appwrite custom domains.
+   * CNAME target for your nuvix custom domains.
    */
   @Expose() APP_DOMAIN_TARGET: string = '';
 

@@ -84,7 +84,7 @@ export class BillingPlanModel extends BaseModel {
    */
   @Expose() customSmtp: boolean;
   /**
-   * Appwrite branding in email
+   * nuvix branding in email
    */
   @Expose() emailBranding: boolean;
   /**
