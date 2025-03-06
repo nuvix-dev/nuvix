@@ -26,6 +26,8 @@ import {
   APP_REDIS_SECURE,
   APP_REDIS_USER,
   JWT_SECRET,
+  WORKER_TYPE_MAILS,
+  WORKER_TYPE_USAGE,
 } from './Utils/constants';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { StorageModule } from './storage/storage.module';
@@ -66,7 +68,7 @@ config();
       },
       prefix: 'nuvix',
     }),
-    BullModule.registerQueue({ name: 'mails' }),
+    BullModule.registerQueue({ name: WORKER_TYPE_MAILS }, { name: WORKER_TYPE_USAGE }),
     EventEmitterModule.forRoot({
       global: true,
     }),

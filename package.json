@@ -33,7 +33,7 @@
     "@nestjs/platform-express": "^11.0.8",
     "@nestjs/platform-socket.io": "^11.0.8",
     "@nestjs/websockets": "^11.0.8",
-    "@nuvix/database": "^0.0.8-alpha.1",
+    "@nuvix/database": "^0.0.8-alpha.5",
     "argon2": "^0.41.1",
     "axios": "^1.7.9",
     "bcrypt": "^5.1.1",
