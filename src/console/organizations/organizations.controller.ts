@@ -13,30 +13,28 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { OrganizationsService } from './organizations.service';
-import { Response } from 'src/core/helper/response.helper';
+import { Models } from 'src/core/helper/response.helper';
 import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
-import {
-  ResolverInterceptor,
-  ResponseType,
-} from 'src/core/resolver/response.resolver';
+import { ResponseInterceptor } from 'src/core/resolvers/interceptors/response.interceptor';
 import { Query as Queries } from '@nuvix/database';
-import { User } from 'src/core/resolver/user.resolver';
+import { User } from 'src/core/decorators/user.decorator';
 import { CreateOrgDTO, UpdateOrgDTO, UpdateTeamPrefsDTO } from './dto/team.dto';
-import { AuthGuard } from 'src/core/resolver/guards/auth.guard';
+import { AuthGuard } from 'src/core/resolvers/guards/auth.guard';
 import { CreateMembershipDTO, UpdateMembershipDTO } from './dto/membership.dto';
-import { ConsoleInterceptor } from 'src/core/resolver/console.resolver';
+import { ConsoleInterceptor } from 'src/core/resolvers/interceptors/console.interceptor';
+import { ResModel } from 'src/core/decorators';
 
 @Controller({
   version: ['1'],
   path: 'console/organizations',
 })
 @UseGuards(AuthGuard)
-@UseInterceptors(ResolverInterceptor, ConsoleInterceptor)
+@UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class OrganizationsController {
   constructor(private readonly organizationsService: OrganizationsService) {}
 
   @Get()
-  @ResponseType({ type: Response.MODEL_ORGANIZATION, list: true })
+  @ResModel({ type: Models.ORGANIZATION, list: true })
   async findOrganizations(
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
@@ -45,43 +43,43 @@ export class OrganizationsController {
   }
 
   @Post()
-  @ResponseType(Response.MODEL_ORGANIZATION)
+  @ResModel(Models.ORGANIZATION)
   async create(@User() user: any, @Body() input: CreateOrgDTO) {
     return await this.organizationsService.create(user, input);
   }
 
   @Get(':id')
-  @ResponseType(Response.MODEL_ORGANIZATION)
+  @ResModel(Models.ORGANIZATION)
   async findOne(@Param('id') id: string) {
     return await this.organizationsService.findOne(id);
   }
 
   @Put(':id')
-  @ResponseType(Response.MODEL_ORGANIZATION)
+  @ResModel(Models.ORGANIZATION)
   async update(@Param('id') id: string, @Body() input: UpdateOrgDTO) {
     return await this.organizationsService.update(id, input);
   }
 
   @Delete(':id')
-  @ResponseType({ type: Response.MODEL_NONE })
+  @ResModel({ type: Models.NONE })
   async remove(@Param('id') id: string) {
     return await this.organizationsService.remove(id);
   }
 
   @Get(':id/prefs')
-  @ResponseType(Response.MODEL_PREFERENCES)
+  @ResModel(Models.PREFERENCES)
   async getPrefs(@Param('id') id: string) {
     return await this.organizationsService.getPrefs(id);
   }
 
   @Put(':id/prefs')
-  @ResponseType(Response.MODEL_PREFERENCES)
+  @ResModel(Models.PREFERENCES)
   async setPrefs(@Param('id') id: string, @Body() input: UpdateTeamPrefsDTO) {
     return await this.organizationsService.setPrefs(id, input);
   }
 
   @Get(':id/logs')
-  @ResponseType({ type: Response.MODEL_LOG, list: true })
+  @ResModel({ type: Models.LOG, list: true })
   async teamLogs(@Param('id') id: string) {
     return {
       total: 0,
@@ -98,7 +96,7 @@ export class OrganizationsController {
   }
 
   @Get(':id/memberships')
-  @ResponseType({ type: Response.MODEL_MEMBERSHIP, list: true })
+  @ResModel({ type: Models.MEMBERSHIP, list: true })
   async getMemberships(
     @Param('id') id: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
@@ -108,7 +106,7 @@ export class OrganizationsController {
   }
 
   @Post(':id/memberships')
-  @ResponseType(Response.MODEL_MEMBERSHIP)
+  @ResModel(Models.MEMBERSHIP)
   async addMembership(
     @Param('id') id: string,
     @Body() input: CreateMembershipDTO,
@@ -117,7 +115,7 @@ export class OrganizationsController {
   }
 
   @Get(':id/memberships/:membershipId')
-  @ResponseType(Response.MODEL_MEMBERSHIP)
+  @ResModel(Models.MEMBERSHIP)
   async getMembership(
     @Param('id') id: string,
     @Param('membershipId') membershipId: string,
@@ -126,7 +124,7 @@ export class OrganizationsController {
   }
 
   @Patch(':id/memberships/:membershipId')
-  @ResponseType(Response.MODEL_MEMBERSHIP)
+  @ResModel(Models.MEMBERSHIP)
   async updateMembership(
     @Param('id') id: string,
     @Param('membershipId') membershipId: string,
@@ -140,7 +138,7 @@ export class OrganizationsController {
   }
 
   @Delete(':id/memberships/:membershipId')
-  @ResponseType(Response.MODEL_NONE)
+  @ResModel(Models.NONE)
   async removeMembership(
     @Param('id') id: string,
     @Param('membershipId') membershipId: string,
@@ -236,7 +234,7 @@ export class OrganizationsController {
   }
 
   @Get(':id/plan')
-  @ResponseType(Response.MODEL_BILLING_PLAN)
+  @ResModel(Models.BILLING_PLAN)
   async getPlan(@Param('id') id: string) {
     return await this.organizationsService.billingPlan(id);
   }

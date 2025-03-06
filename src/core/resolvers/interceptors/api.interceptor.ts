@@ -15,14 +15,14 @@ import {
   SESSION,
   USER,
 } from 'src/Utils/constants';
-import ParamsHelper from '../helper/params.helper';
+import ParamsHelper from '../../helper/params.helper';
 import { Authorization, Document } from '@nuvix/database';
 import { Reflector } from '@nestjs/core';
-import { LableKey, LableValue } from './lable.resolver';
-import { Auth } from '../helper/auth.helper';
-import { Exception } from '../extend/exception';
-import { roles } from '../config/roles';
-import { TOTP } from '../validators/MFA.validator';
+import { LableKey, LableValue } from '../../decorators/lable.decorator';
+import { Auth } from '../../helper/auth.helper';
+import { Exception } from '../../extend/exception';
+import { roles } from '../../config/roles';
+import { TOTP } from '../../validators/MFA.validator';
 
 @Injectable()
 export class ApiInterceptor implements NestInterceptor {

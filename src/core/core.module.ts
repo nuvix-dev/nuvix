@@ -19,7 +19,7 @@ import {
   APP_REDIS_SECURE,
 } from 'src/Utils/constants';
 import { Database, MariaDB, Structure } from '@nuvix/database';
-import { filters, formats } from './resolver/db.resolver';
+import { filters, formats } from './resolvers/db.resolver';
 import { CountryResponse, Reader } from 'maxmind';
 
 Object.keys(filters).forEach((key) => {

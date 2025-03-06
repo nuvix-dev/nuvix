@@ -108,152 +108,151 @@ import { ProjectModel } from '../models/Project.model';
  * These models are categorized into different sections such as Database, Users, MFA, Storage, Locale, Messaging, Teams, VCS, Functions, Proxy, Migrations, Project, and Health.
  * Each static property holds a reference to a specific model class or a string identifier.
  */
-export class Response {
-  public static MODEL_NONE = class {};
-  public static MODEL_ANY = class {};
-  public static MODEL_LOG = LogModel;
-  public static MODEL_ERROR = 'error';
-  public static MODEL_METRIC = MetricModel;
-  public static MODEL_METRIC_BREAKDOWN = MetricBreakdownModel;
-  public static MODEL_ERROR_DEV = 'errorDev';
-  public static MODEL_USAGE_DATABASES = UsageDatabasesModel;
-  public static MODEL_USAGE_DATABASE = UsageDatabaseModel;
-  public static MODEL_USAGE_COLLECTION = UsageCollectionModel;
-  public static MODEL_USAGE_USERS = UsageUsersModel;
-  public static MODEL_USAGE_BUCKETS = UsageBucketsModel;
-  public static MODEL_USAGE_STORAGE = UsageStorageModel;
-  public static MODEL_USAGE_FUNCTIONS = UsageFunctionsModel;
-  public static MODEL_USAGE_FUNCTION = UsageFunctionModel;
-  public static MODEL_USAGE_PROJECT = UsageProjectModel;
+export class Models {
+  public static NONE = class {};
+  public static ANY = class {};
+  public static LOG = LogModel;
+  public static ERROR = 'error';
+  public static METRIC = MetricModel;
+  public static METRIC_BREAKDOWN = MetricBreakdownModel;
+  public static ERROR_DEV = 'errorDev';
+  public static USAGE_DATABASES = UsageDatabasesModel;
+  public static USAGE_DATABASE = UsageDatabaseModel;
+  public static USAGE_COLLECTION = UsageCollectionModel;
+  public static USAGE_USERS = UsageUsersModel;
+  public static USAGE_BUCKETS = UsageBucketsModel;
+  public static USAGE_STORAGE = UsageStorageModel;
+  public static USAGE_FUNCTIONS = UsageFunctionsModel;
+  public static USAGE_FUNCTION = UsageFunctionModel;
+  public static USAGE_PROJECT = UsageProjectModel;
 
   // Database
-  public static MODEL_DATABASE = DatabaseModel;
-  public static MODEL_COLLECTION = CollectionModel;
-  public static MODEL_INDEX = IndexModel;
-  public static MODEL_DOCUMENT = DocumentModel;
+  public static DATABASE = DatabaseModel;
+  public static COLLECTION = CollectionModel;
+  public static INDEX = IndexModel;
+  public static DOCUMENT = DocumentModel;
 
   // Database Attributes
-  public static MODEL_ATTRIBUTE = AttributeModel;
-  public static MODEL_ATTRIBUTE_STRING = AttributeStringModel;
-  public static MODEL_ATTRIBUTE_INTEGER = AttributeIntegerModel;
-  public static MODEL_ATTRIBUTE_FLOAT = AttributeFloatModel;
-  public static MODEL_ATTRIBUTE_BOOLEAN = AttributeBooleanModel;
-  public static MODEL_ATTRIBUTE_EMAIL = AttributeEmailModel;
-  public static MODEL_ATTRIBUTE_ENUM = AttributeEnumModel;
-  public static MODEL_ATTRIBUTE_IP = AttributeIPModel;
-  public static MODEL_ATTRIBUTE_URL = AttributeURLModel;
-  public static MODEL_ATTRIBUTE_DATETIME = AttributeDatetimeModel;
-  public static MODEL_ATTRIBUTE_RELATIONSHIP = AttributeRelationshipModel;
+  public static ATTRIBUTE = AttributeModel;
+  public static ATTRIBUTE_STRING = AttributeStringModel;
+  public static ATTRIBUTE_INTEGER = AttributeIntegerModel;
+  public static ATTRIBUTE_FLOAT = AttributeFloatModel;
+  public static ATTRIBUTE_BOOLEAN = AttributeBooleanModel;
+  public static ATTRIBUTE_EMAIL = AttributeEmailModel;
+  public static ATTRIBUTE_ENUM = AttributeEnumModel;
+  public static ATTRIBUTE_IP = AttributeIPModel;
+  public static ATTRIBUTE_URL = AttributeURLModel;
+  public static ATTRIBUTE_DATETIME = AttributeDatetimeModel;
+  public static ATTRIBUTE_RELATIONSHIP = AttributeRelationshipModel;
 
   // Users
-  public static MODEL_ACCOUNT = AccountModel;
-  public static MODEL_USER = UserModel;
-  public static MODEL_SESSION = SessionModel;
-  public static MODEL_IDENTITY = IdentityModel;
-  public static MODEL_TOKEN = TokenModel;
-  public static MODEL_JWT = JWTModel;
-  public static MODEL_PREFERENCES = class {
+  public static ACCOUNT = AccountModel;
+  public static USER = UserModel;
+  public static SESSION = SessionModel;
+  public static IDENTITY = IdentityModel;
+  public static TOKEN = TokenModel;
+  public static JWT = JWTModel;
+  public static PREFERENCES = class {
     [key: string]: any;
   };
 
   // MFA
-  public static MODEL_MFA_TYPE = MFATypeModel;
-  public static MODEL_MFA_FACTORS = MFAFactorsModel;
-  public static MODEL_MFA_OTP = 'mfaTotp';
-  public static MODEL_MFA_CHALLENGE = MFAChallengeModel;
-  public static MODEL_MFA_RECOVERY_CODES = MFARecoveryCodesModel;
+  public static MFA_TYPE = MFATypeModel;
+  public static MFA_FACTORS = MFAFactorsModel;
+  public static MFA_OTP = 'mfaTotp';
+  public static MFA_CHALLENGE = MFAChallengeModel;
+  public static MFA_RECOVERY_CODES = MFARecoveryCodesModel;
 
   // Users password algos
-  public static MODEL_ALGO_MD5 = AlgoMd5Model;
-  public static MODEL_ALGO_SHA = AlgoShaModel;
-  public static MODEL_ALGO_SCRYPT = AlgoScryptModel;
-  public static MODEL_ALGO_SCRYPT_MODIFIED = AlgoScryptModifiedModel;
-  public static MODEL_ALGO_BCRYPT = AlgoBcryptModel;
-  public static MODEL_ALGO_ARGON2 = AlgoArgon2Model;
-  public static MODEL_ALGO_PHPASS = AlgoPhpassModel;
+  public static ALGO_MD5 = AlgoMd5Model;
+  public static ALGO_SHA = AlgoShaModel;
+  public static ALGO_SCRYPT = AlgoScryptModel;
+  public static ALGO_SCRYPT_MODIFIED = AlgoScryptModifiedModel;
+  public static ALGO_BCRYPT = AlgoBcryptModel;
+  public static ALGO_ARGON2 = AlgoArgon2Model;
+  public static ALGO_PHPASS = AlgoPhpassModel;
 
   // Storage
-  public static MODEL_FILE = FileModel;
-  public static MODEL_BUCKET = BucketModel;
+  public static FILE = FileModel;
+  public static BUCKET = BucketModel;
 
   // Locale
-  public static MODEL_LOCALE = LocaleModel;
-  public static MODEL_LOCALE_CODE = LocaleCodeModel;
-  public static MODEL_COUNTRY = CountryModel;
-  public static MODEL_CONTINENT = ContinentModel;
-  public static MODEL_CURRENCY = CurrencyModel;
-  public static MODEL_LANGUAGE = LanguageModel;
-  public static MODEL_PHONE = PhoneModel;
+  public static LOCALE = LocaleModel;
+  public static LOCALE_CODE = LocaleCodeModel;
+  public static COUNTRY = CountryModel;
+  public static CONTINENT = ContinentModel;
+  public static CURRENCY = CurrencyModel;
+  public static LANGUAGE = LanguageModel;
+  public static PHONE = PhoneModel;
 
   // Messaging
-  public static MODEL_PROVIDER = ProviderModel;
-  public static MODEL_MESSAGE = MessageModel;
-  public static MODEL_TOPIC = TopicModel;
-  public static MODEL_SUBSCRIBER = SubscriberModel;
-  public static MODEL_TARGET = TargetModel;
+  public static PROVIDER = ProviderModel;
+  public static MESSAGE = MessageModel;
+  public static TOPIC = TopicModel;
+  public static SUBSCRIBER = SubscriberModel;
+  public static TARGET = TargetModel;
 
   // Teams
-  public static MODEL_TEAM = TeamModel;
-  public static MODEL_MEMBERSHIP = MembershipModel;
+  public static TEAM = TeamModel;
+  public static MEMBERSHIP = MembershipModel;
 
   // VCS
-  public static MODEL_INSTALLATION = InstallationModel;
-  public static MODEL_PROVIDER_REPOSITORY = ProviderModel;
-  public static MODEL_BRANCH = 'branch';
-  public static MODEL_DETECTION = DetectionModel;
-  public static MODEL_VCS_CONTENT = VcsContentModel;
+  public static INSTALLATION = InstallationModel;
+  public static PROVIDER_REPOSITORY = ProviderModel;
+  public static BRANCH = 'branch';
+  public static DETECTION = DetectionModel;
+  public static VCS_CONTENT = VcsContentModel;
 
   // Functions
-  public static MODEL_FUNCTION = FunctionModel;
-  public static MODEL_RUNTIME = RuntimeModel;
-  public static MODEL_DEPLOYMENT = DeploymentModel;
-  public static MODEL_EXECUTION = ExecutionModel;
-  public static MODEL_BUILD = BuildModel; // Not used anywhere yet
-  public static MODEL_FUNC_PERMISSIONS = 'funcPermissions';
-  public static MODEL_HEADERS = HeadersModel;
-  public static MODEL_SPECIFICATION = SpecificationModel;
-  public static MODEL_TEMPLATE_FUNCTION = TemplateFunctionModel;
-  public static MODEL_TEMPLATE_RUNTIME = TemplateRuntimeModel;
-  public static MODEL_TEMPLATE_VARIABLE = TemplateRuntimeModel;
+  public static FUNCTION = FunctionModel;
+  public static RUNTIME = RuntimeModel;
+  public static DEPLOYMENT = DeploymentModel;
+  public static EXECUTION = ExecutionModel;
+  public static BUILD = BuildModel; // Not used anywhere yet
+  public static FUNC_PERMISSIONS = 'funcPermissions';
+  public static HEADERS = HeadersModel;
+  public static SPECIFICATION = SpecificationModel;
+  public static TEMPLATE_FUNCTION = TemplateFunctionModel;
+  public static TEMPLATE_RUNTIME = TemplateRuntimeModel;
+  public static TEMPLATE_VARIABLE = TemplateRuntimeModel;
 
   // Proxy
-  public static MODEL_PROXY_RULE = RuleModel;
+  public static PROXY_RULE = RuleModel;
 
   // Migrations
-  public static MODEL_MIGRATION = MigrationModel;
-  public static MODEL_MIGRATION_REPORT = MigrationReportModel;
-  public static MODEL_MIGRATION_FIREBASE_PROJECT =
-    MigrationFirebaseProjectModel;
+  public static MIGRATION = MigrationModel;
+  public static MIGRATION_REPORT = MigrationReportModel;
+  public static MIGRATION_FIREBASE_PROJECT = MigrationFirebaseProjectModel;
 
   // Project
-  public static MODEL_PROJECT = ProjectModel; //'project'
-  public static MODEL_WEBHOOK = WebhookModel;
-  public static MODEL_KEY = KeyModel;
-  public static MODEL_MOCK_NUMBER = MockNumberModel;
-  public static MODEL_AUTH_PROVIDER = AuthProviderModel;
-  public static MODEL_PLATFORM = PlatformModel;
-  public static MODEL_VARIABLE = VariableModel;
-  public static MODEL_VCS = 'vcs';
-  public static MODEL_SMS_TEMPLATE = TemplateSMSModel;
-  public static MODEL_EMAIL_TEMPLATE = TemplateEmailModel;
+  public static PROJECT = ProjectModel; //'project'
+  public static WEBHOOK = WebhookModel;
+  public static KEY = KeyModel;
+  public static MOCK_NUMBER = MockNumberModel;
+  public static AUTH_PROVIDER = AuthProviderModel;
+  public static PLATFORM = PlatformModel;
+  public static VARIABLE = VariableModel;
+  public static VCS = 'vcs';
+  public static SMS_TEMPLATE = TemplateSMSModel;
+  public static EMAIL_TEMPLATE = TemplateEmailModel;
 
   // Health
-  public static MODEL_HEALTH_STATUS = HealthStatusModel;
-  public static MODEL_HEALTH_VERSION = HealthVersionModel;
-  public static MODEL_HEALTH_QUEUE = HealthQueueModel;
-  public static MODEL_HEALTH_TIME = HealthTimeModel;
-  public static MODEL_HEALTH_ANTIVIRUS = HealthAntivirusModel;
-  public static MODEL_HEALTH_CERTIFICATE = HealthCertificateModel;
+  public static HEALTH_STATUS = HealthStatusModel;
+  public static HEALTH_VERSION = HealthVersionModel;
+  public static HEALTH_QUEUE = HealthQueueModel;
+  public static HEALTH_TIME = HealthTimeModel;
+  public static HEALTH_ANTIVIRUS = HealthAntivirusModel;
+  public static HEALTH_CERTIFICATE = HealthCertificateModel;
 
   // Organization
-  public static MODEL_ORGANIZATION = OrganizationModel;
+  public static ORGANIZATION = OrganizationModel;
 
-  public static MODEL_BILLING_ADDRESS = BillingAddressModel;
-  public static MODEL_INVOICE = InvoiceModel;
-  public static MODEL_PAYMENT_METHOD = PaymentMethodModel;
-  public static MODEL_BILLING_PLAN = BillingPlanModel;
+  public static BILLING_ADDRESS = BillingAddressModel;
+  public static INVOICE = InvoiceModel;
+  public static PAYMENT_METHOD = PaymentMethodModel;
+  public static BILLING_PLAN = BillingPlanModel;
 
   public empty() {
-    return Response.MODEL_NONE;
+    return Models.NONE;
   }
 }

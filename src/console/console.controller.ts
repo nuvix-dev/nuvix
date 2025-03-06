@@ -8,17 +8,15 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { ConsoleService } from './console.service';
-import { AuthGuard, Public } from 'src/core/resolver/guards/auth.guard';
-import {
-  ResolverInterceptor,
-  ResponseType,
-} from 'src/core/resolver/response.resolver';
-import { Response } from 'src/core/helper/response.helper';
-import { ConsoleInterceptor } from 'src/core/resolver/console.resolver';
+import { AuthGuard, Public } from 'src/core/resolvers/guards/auth.guard';
+import { ResponseInterceptor } from 'src/core/resolvers/interceptors/response.interceptor';
+import { Models } from 'src/core/helper/response.helper';
+import { ConsoleInterceptor } from 'src/core/resolvers/interceptors/console.interceptor';
+import { ResModel } from 'src/core/decorators';
 
 @Controller({ version: ['1'], path: 'console' })
 @UseGuards(AuthGuard)
-@UseInterceptors(ResolverInterceptor, ConsoleInterceptor)
+@UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class ConsoleController {
   constructor(private readonly consoleService: ConsoleService) {}
 
@@ -38,7 +36,7 @@ export class ConsoleController {
 
   @Public()
   @Get('plans')
-  @ResponseType({ type: Response.MODEL_BILLING_PLAN, list: true })
+  @ResModel({ type: Models.BILLING_PLAN, list: true })
   async getPlans() {
     const plans = await this.consoleService.getPlans();
     return {
@@ -49,7 +47,7 @@ export class ConsoleController {
 
   @Public()
   @Post('plans')
-  @ResponseType(Response.MODEL_BILLING_PLAN)
+  @ResModel(Models.BILLING_PLAN)
   async createPlan() {
     return await this.consoleService.createPlan();
   }

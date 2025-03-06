@@ -13,9 +13,9 @@ import { RealtimeModule } from './realtime/realtime.module';
 import { ClsModule } from 'nestjs-cls';
 import { Request } from 'express';
 import { FunctionsModule } from './functions/functions.module';
-import { AuthMiddleware } from './core/resolver/middlewares/auth.middleware';
+import { AuthMiddleware } from './core/resolvers/middlewares/auth.middleware';
 import { CoreModule } from './core/core.module';
-import { ProjectMiddleware } from './core/resolver/middlewares/project.middleware';
+import { ProjectMiddleware } from './core/resolvers/middlewares/project.middleware';
 import { BullModule } from '@nestjs/bullmq';
 import {
   APP_REDIS_DB,
@@ -32,11 +32,11 @@ import {
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { StorageModule } from './storage/storage.module';
 import { JwtModule } from '@nestjs/jwt';
-import { MailQueue } from './core/resolver/queues/mail.queue';
-import { ApiMiddleware } from './core/resolver/middlewares/api.middleware';
-import { HostMiddleware } from './core/resolver/middlewares/host.middleware';
-import { CorsMiddleware } from './core/resolver/middlewares/cors.middleware';
-import { BandwidthMiddleware } from './core/resolver/middlewares/bandwidth.middleware';
+import { MailQueue } from './core/resolvers/queues/mail.queue';
+import { ApiMiddleware } from './core/resolvers/middlewares/api.middleware';
+import { HostMiddleware } from './core/resolvers/middlewares/host.middleware';
+import { CorsMiddleware } from './core/resolvers/middlewares/cors.middleware';
+import { BandwidthMiddleware } from './core/resolvers/middlewares/bandwidth.middleware';
 config();
 
 @Module({
@@ -68,7 +68,10 @@ config();
       },
       prefix: 'nuvix',
     }),
-    BullModule.registerQueue({ name: WORKER_TYPE_MAILS }, { name: WORKER_TYPE_USAGE }),
+    BullModule.registerQueue(
+      { name: WORKER_TYPE_MAILS },
+      { name: WORKER_TYPE_USAGE },
+    ),
     EventEmitterModule.forRoot({
       global: true,
     }),

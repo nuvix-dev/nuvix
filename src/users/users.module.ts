@@ -1,7 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
-import { ProjectMiddleware } from 'src/core/resolver/middlewares/project.middleware';
+import { ProjectMiddleware } from 'src/core/resolvers/middlewares/project.middleware';
 import { JwtModule } from '@nestjs/jwt';
 import { JWT_SECRET } from 'src/Utils/constants';
 

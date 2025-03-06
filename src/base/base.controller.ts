@@ -1,7 +1,7 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { All, Controller, Query, Res } from '@nestjs/common';
 import { Response } from 'express';
-import { Public } from 'src/core/resolver/guards/auth.guard';
+import { Public } from 'src/core/resolvers/guards/auth.guard';
 import { SEND_TYPE_EMAIL } from 'src/Utils/constants';
 import { Queue } from 'bullmq';
 

@@ -27,27 +27,25 @@ import {
   UpdateUserStatusDTO,
 } from './dto/user.dto';
 import { CreateTargetDTO, UpdateTargetDTO } from './dto/target.dto';
-import { Response } from 'src/core/helper/response.helper';
-import {
-  ResolverInterceptor,
-  ResponseType,
-} from 'src/core/resolver/response.resolver';
+import { Models } from 'src/core/helper/response.helper';
+import { ResponseInterceptor } from 'src/core/resolvers/interceptors/response.interceptor';
+import { ResModel } from 'src/core/decorators';
 import { Request } from 'express';
 import { CreateTokenDTO } from './dto/token.dto';
 import { CreateJwtDTO } from './dto/jwt.dto';
 import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
 import type { Query as Queries } from '@nuvix/database';
-import { ProjectGuard } from 'src/core/resolver/guards/project.guard';
-import { ApiInterceptor } from 'src/core/resolver/api.resolver';
+import { ProjectGuard } from 'src/core/resolvers/guards/project.guard';
+import { ApiInterceptor } from 'src/core/resolvers/interceptors/api.interceptor';
 
 @Controller({ version: ['1'], path: 'users' })
 @UseGuards(ProjectGuard)
-@UseInterceptors(ResolverInterceptor, ApiInterceptor)
+@UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  @ResponseType({ type: Response.MODEL_USER, list: true })
+  @ResModel({ type: Models.USER, list: true })
   async findAll(
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search: string,
@@ -56,61 +54,61 @@ export class UsersController {
   }
 
   @Post()
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async create(@Body() createUserDTO: CreateUserDTO) {
     return await this.usersService.create(createUserDTO);
   }
 
   @Post('argon2')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async createWithArgon2(@Body() createUserDTO: CreateUserDTO) {
     return await this.usersService.createWithArgon2(createUserDTO);
   }
 
   @Post('bcrypt')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async createWithBcrypt(@Body() createUserDTO: CreateUserDTO) {
     return await this.usersService.createWithBcrypt(createUserDTO);
   }
 
   @Post('md5')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async createWithMd5(@Body() createUserDTO: CreateUserDTO) {
     return await this.usersService.createWithMd5(createUserDTO);
   }
 
   @Post('sha')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async createWithSha(@Body() createUserDTO: CreateUserDTO) {
     return await this.usersService.createWithSha(createUserDTO);
   }
 
   @Post('phpass')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async createWithPhpass(@Body() createUserDTO: CreateUserDTO) {
     return await this.usersService.createWithPhpass(createUserDTO);
   }
 
   @Post('scrypt')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async createWithScrypt(@Body() createUserDTO: CreateUserDTO) {
     return await this.usersService.createWithScrypt(createUserDTO);
   }
 
   @Post('scrypt-modified')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async createWithScryptModified(@Body() createUserDTO: CreateUserDTO) {
     return await this.usersService.createWithScryptMod(createUserDTO);
   }
 
   @Get('usage')
-  @ResponseType({ type: Response.MODEL_USAGE_USERS })
+  @ResModel({ type: Models.USAGE_USERS })
   async getUsage() {
     return await this.usersService.getUsage();
   }
 
   @Get('identities')
-  @ResponseType({ type: Response.MODEL_IDENTITY, list: true })
+  @ResModel({ type: Models.IDENTITY, list: true })
   async getIdentities(
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search: string,
@@ -124,7 +122,7 @@ export class UsersController {
   }
 
   @Get(':id')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async findOne(@Param('id') id: string) {
     return await this.usersService.findOne(id);
   }
@@ -143,7 +141,7 @@ export class UsersController {
   }
 
   @Patch(':id/status')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async updateStatus(
     @Param('id') id: string,
     @Body() status: UpdateUserStatusDTO,
@@ -152,7 +150,7 @@ export class UsersController {
   }
 
   @Put(':id/labels')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async updateLabels(
     @Param('id') id: string,
     @Body() input: UpdateUserLabelDTO,
@@ -161,13 +159,13 @@ export class UsersController {
   }
 
   @Patch(':id/name')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async updateName(@Param('id') id: string, @Body() input: UpdateUserNameDTO) {
     return await this.usersService.updateName(id, input);
   }
 
   @Patch(':id/password')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async updatePassword(
     @Param('id') id: string,
     @Body() input: UpdateUserPasswordDTO,
@@ -176,7 +174,7 @@ export class UsersController {
   }
 
   @Patch(':id/email')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async updateEmail(
     @Param('id') id: string,
     @Body() input: UpdateUserEmailDTO,
@@ -185,7 +183,7 @@ export class UsersController {
   }
 
   @Patch(':id/phone')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async updatePhone(
     @Param('id') id: string,
     @Body() input: UpdateUserPhoneDTO,
@@ -194,13 +192,13 @@ export class UsersController {
   }
 
   @Patch(':id/mfa')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async updateMfa(@Param('id') id: string, @Body() input: UpdateMfaStatusDTO) {
     return await this.usersService.updateMfaStatus(id, input.mfa);
   }
 
   @Post(':id/targets')
-  @ResponseType({ type: Response.MODEL_TARGET })
+  @ResModel({ type: Models.TARGET })
   async addTarget(
     @Param('id') id: string,
     @Body() createTargetDTO: CreateTargetDTO,
@@ -209,13 +207,13 @@ export class UsersController {
   }
 
   @Get(':id/targets')
-  @ResponseType({ type: Response.MODEL_TARGET, list: true })
+  @ResModel({ type: Models.TARGET, list: true })
   async getTargets(@Param('id') id: string): Promise<any> {
     return await this.usersService.getTargets(id);
   }
 
   @Post(':id/jwts')
-  @ResponseType({ type: Response.MODEL_JWT })
+  @ResModel({ type: Models.JWT })
   async createJwt(
     @Param('id') id: string,
     @Body() input: CreateJwtDTO,
@@ -224,13 +222,13 @@ export class UsersController {
   }
 
   @Get(':id/sessions')
-  @ResponseType({ type: Response.MODEL_SESSION, list: true })
+  @ResModel({ type: Models.SESSION, list: true })
   async getSessions(@Param('id') id: string): Promise<any> {
     return await this.usersService.getSessions(id);
   }
 
   @Post(':id/sessions')
-  @ResponseType({ type: Response.MODEL_SESSION })
+  @ResModel({ type: Models.SESSION })
   async createSession(@Param('id') id: string, @Req() req: any): Promise<any> {
     return await this.usersService.createSession(id, req);
   }
@@ -241,13 +239,13 @@ export class UsersController {
   }
 
   @Get(':id/memberships')
-  @ResponseType({ type: Response.MODEL_MEMBERSHIP, list: true })
+  @ResModel({ type: Models.MEMBERSHIP, list: true })
   async getMemberships(@Param('id') id: string): Promise<any> {
     return await this.usersService.getMemberships(id);
   }
 
   @Post(':id/tokens')
-  @ResponseType({ type: Response.MODEL_TOKEN })
+  @ResModel({ type: Models.TOKEN })
   async createToken(
     @Param('id') id: string,
     @Body() input: CreateTokenDTO,
@@ -257,7 +255,7 @@ export class UsersController {
   }
 
   @Get(':id/logs')
-  @ResponseType({ type: Response.MODEL_LOG, list: true })
+  @ResModel({ type: Models.LOG, list: true })
   async getLogs(
     @Param('id') id: string,
     @Query('queries') queries: Queries[],
@@ -266,7 +264,7 @@ export class UsersController {
   }
 
   @Patch(':id/verification')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async verify(
     @Param('id') id: string,
     @Body() input: UpdateUserEmailVerificationDTO,
@@ -275,7 +273,7 @@ export class UsersController {
   }
 
   @Patch(':id/verification/phone')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async verifyPhone(
     @Param('id') id: string,
     @Body() input: UpdateUserPoneVerificationDTO,
@@ -284,7 +282,7 @@ export class UsersController {
   }
 
   @Get(':id/targets/:targetId')
-  @ResponseType({ type: Response.MODEL_TARGET })
+  @ResModel({ type: Models.TARGET })
   async getTarget(
     @Param('id') id: string,
     @Param('targetId') targetId: string,
@@ -293,7 +291,7 @@ export class UsersController {
   }
 
   @Patch(':id/targets/:targetId')
-  @ResponseType({ type: Response.MODEL_TARGET })
+  @ResModel({ type: Models.TARGET })
   async updateTarget(
     @Param('id') id: string,
     @Param('targetId') targetId: string,
@@ -303,25 +301,25 @@ export class UsersController {
   }
 
   @Get(':id/mfa/factors')
-  @ResponseType({ type: Response.MODEL_MFA_FACTORS })
+  @ResModel({ type: Models.MFA_FACTORS })
   async getMfaFactors(@Param('id') id: string) {
     return await this.usersService.getMfaFactors(id);
   }
 
   @Get(':id/mfa/recovery-codes')
-  @ResponseType({ type: Response.MODEL_MFA_RECOVERY_CODES })
+  @ResModel({ type: Models.MFA_RECOVERY_CODES })
   async getMfaRecoveryCodes(@Param('id') id: string) {
     return await this.usersService.getMfaRecoveryCodes(id);
   }
 
   @Patch(':id/mfa/recovery-codes')
-  @ResponseType({ type: Response.MODEL_MFA_RECOVERY_CODES })
+  @ResModel({ type: Models.MFA_RECOVERY_CODES })
   async generateMfaRecoveryCodes(@Param('id') id: string) {
     return await this.usersService.generateMfaRecoveryCodes(id);
   }
 
   @Put(':id/mfa/recovery-codes')
-  @ResponseType({ type: Response.MODEL_MFA_RECOVERY_CODES })
+  @ResModel({ type: Models.MFA_RECOVERY_CODES })
   async regenerateMfaRecoveryCodes(@Param('id') id: string) {
     return await this.usersService.regenerateMfaRecoveryCodes(id);
   }

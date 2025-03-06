@@ -16,32 +16,30 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { Request } from 'express';
-import {
-  ResolverInterceptor,
-  ResponseType,
-} from 'src/core/resolver/response.resolver';
+import { ResponseInterceptor } from 'src/core/resolvers/interceptors/response.interceptor';
 import { StorageService } from './storage.service';
-import { Response } from 'src/core/helper/response.helper';
+import { Models } from 'src/core/helper/response.helper';
 import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
-import { User } from 'src/core/resolver/user.resolver';
+import { User } from 'src/core/decorators/user.decorator';
 import { Document, Query as Queries } from '@nuvix/database';
-import { Mode } from 'src/core/resolver/mode.resolver';
+import { Mode } from 'src/core/decorators/mode.decorator';
 import { FileInterceptor } from '@nestjs/platform-express';
-import { ProjectGuard } from 'src/core/resolver/guards/project.guard';
+import { ProjectGuard } from 'src/core/resolvers/guards/project.guard';
+import { ResModel } from 'src/core/decorators';
 
 import { UpdateFileDTO } from './DTO/file.dto';
 import { CreateBucketDTO, UpdateBucketDTO } from './DTO/bucket.dto';
-import { ApiInterceptor } from 'src/core/resolver/api.resolver';
+import { ApiInterceptor } from 'src/core/resolvers/interceptors/api.interceptor';
 import { ParseDuplicatePipe } from 'src/core/pipes/duplicate.pipe';
 
 @Controller({ version: ['1'], path: 'storage' })
 @UseGuards(ProjectGuard)
-@UseInterceptors(ResolverInterceptor, ApiInterceptor)
+@UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class StorageController {
   constructor(private readonly storageService: StorageService) {}
 
   @Get('buckets')
-  @ResponseType({ type: Response.MODEL_BUCKET, list: true })
+  @ResModel({ type: Models.BUCKET, list: true })
   async getBuckets(
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
@@ -50,19 +48,19 @@ export class StorageController {
   }
 
   @Post('buckets')
-  @ResponseType(Response.MODEL_BUCKET)
+  @ResModel(Models.BUCKET)
   async createBucket(@Body() createBucketDto: CreateBucketDTO) {
     return await this.storageService.createBucket(createBucketDto);
   }
 
   @Get('buckets/:id')
-  @ResponseType(Response.MODEL_BUCKET)
+  @ResModel(Models.BUCKET)
   async getBucket(@Param('id') id: string) {
     return await this.storageService.getBucket(id);
   }
 
   @Put('buckets/:id')
-  @ResponseType(Response.MODEL_BUCKET)
+  @ResModel(Models.BUCKET)
   async updateBucket(
     @Param('id') id: string,
     @Body() createBucketDto: UpdateBucketDTO,
@@ -71,13 +69,13 @@ export class StorageController {
   }
 
   @Delete('buckets/:id')
-  @ResponseType(Response.MODEL_NONE)
+  @ResModel(Models.NONE)
   async deleteBucket(@Param('id') id: string) {
     return await this.storageService.deleteBucket(id);
   }
 
   @Get('buckets/:id/files')
-  @ResponseType({ type: Response.MODEL_FILE, list: true })
+  @ResModel({ type: Models.FILE, list: true })
   async getFiles(
     @Param('id') id: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
@@ -87,7 +85,7 @@ export class StorageController {
   }
 
   @Post('buckets/:id/files')
-  @ResponseType(Response.MODEL_FILE)
+  @ResModel(Models.FILE)
   @UseInterceptors(FileInterceptor('file'))
   async createFile(
     @Param('id') id: string,
@@ -109,7 +107,7 @@ export class StorageController {
   }
 
   @Get('buckets/:id/files/:fileId')
-  @ResponseType(Response.MODEL_FILE)
+  @ResModel(Models.FILE)
   async getFile(@Param('id') id: string, @Param('fileId') fileId: string) {
     return await this.storageService.getFile(id, fileId);
   }
@@ -199,7 +197,7 @@ export class StorageController {
   }
 
   @Put('buckets/:id/files/:fileId')
-  @ResponseType(Response.MODEL_FILE)
+  @ResModel(Models.FILE)
   async updateFile(
     @Param('id') id: string,
     @Param('fileId') fileId: string,
@@ -209,19 +207,19 @@ export class StorageController {
   }
 
   @Delete('buckets/:id/files/:fileId')
-  @ResponseType(Response.MODEL_NONE)
+  @ResModel(Models.NONE)
   async deleteFile(@Param('id') id: string, @Param('fileId') fileId: string) {
     return await this.storageService.deleteFile(id, fileId);
   }
 
   @Get('usage')
-  @ResponseType(Response.MODEL_USAGE_STORAGE)
+  @ResModel(Models.USAGE_STORAGE)
   async getUsage(@Query('range') range?: string) {
     return await this.storageService.getStorageUsage(range);
   }
 
   @Get(':id/usage')
-  @ResponseType(Response.MODEL_USAGE_BUCKETS)
+  @ResModel(Models.USAGE_BUCKETS)
   async getBucketUsage(
     @Param('id') id: string,
     @Query('range') range?: string,

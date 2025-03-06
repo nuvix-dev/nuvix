@@ -1,7 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { TeamsService } from './teams.service';
 import { TeamsController } from './teams.controller';
-import { ProjectMiddleware } from 'src/core/resolver/middlewares/project.middleware';
+import { ProjectMiddleware } from 'src/core/resolvers/middlewares/project.middleware';
 import { BullModule } from '@nestjs/bullmq';
 
 @Module({

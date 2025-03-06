@@ -49,19 +49,17 @@ import {
 } from './dto/project-auth.dto';
 import { CreatePlatformDTO, UpdatePlatformDTO } from './dto/platform.dto';
 import { SmtpTestsDTO, UpdateSmtpDTO } from './dto/smtp.dto';
-import {
-  ResolverInterceptor,
-  ResponseType,
-} from 'src/core/resolver/response.resolver';
-import { Response } from 'src/core/helper/response.helper';
+import { ResponseInterceptor } from 'src/core/resolvers/interceptors/response.interceptor';
+import { Models } from 'src/core/helper/response.helper';
 import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
 import type { Query as Queries } from '@nuvix/database';
-import { AuthGuard } from 'src/core/resolver/guards/auth.guard';
-import { ConsoleInterceptor } from 'src/core/resolver/console.resolver';
+import { AuthGuard } from 'src/core/resolvers/guards/auth.guard';
+import { ConsoleInterceptor } from 'src/core/resolvers/interceptors/console.interceptor';
+import { ResModel } from 'src/core/decorators';
 
 @Controller({ version: ['1'], path: 'console/projects' })
 @UseGuards(AuthGuard)
-@UseInterceptors(ResolverInterceptor, ConsoleInterceptor)
+@UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class ProjectsController {
   constructor(
     private readonly projectService: ProjectService,
@@ -78,7 +76,7 @@ export class ProjectsController {
   }
 
   @Get()
-  @ResponseType({ type: Response.MODEL_PROJECT, list: true })
+  @ResModel({ type: Models.PROJECT, list: true })
   async findAll(
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
@@ -88,7 +86,7 @@ export class ProjectsController {
   }
 
   @Get(':id')
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async findOne(@Param('id') id: string) {
     const project = await this.projectService.findOne(id);
     if (!project) throw new Exception(Exception.PROJECT_NOT_FOUND);
@@ -96,7 +94,7 @@ export class ProjectsController {
   }
 
   @Patch(':id')
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async update(
     @Param('id') id: string,
     @Body() updateProjectDTO: UpdateProjectDTO,
@@ -105,26 +103,26 @@ export class ProjectsController {
   }
 
   @Delete(':id')
-  @ResponseType(Response.MODEL_NONE)
+  @ResModel(Models.NONE)
   remove(@Param('id') id: string) {
     return this.projectService.remove(id);
   }
 
   @Post(':id/jwts')
-  @ResponseType(Response.MODEL_JWT)
+  @ResModel(Models.JWT)
   createJwt(@Param('id') id: string, @Body() input: CreateJwtDTO) {
     return this.projectService.createJwt(id, input);
   }
 
   @Get(':id/platforms')
-  @ResponseType({ type: Response.MODEL_PLATFORM, list: true })
+  @ResModel({ type: Models.PLATFORM, list: true })
   async getPlatforms(@Param('id') id: string) {
     const data = await this.projectService.getPlatforms(id);
     return data;
   }
 
   @Post(':id/platforms')
-  @ResponseType(Response.MODEL_PLATFORM)
+  @ResModel(Models.PLATFORM)
   async createPlatform(
     @Param('id') id: string,
     @Body() input: CreatePlatformDTO,
@@ -133,7 +131,7 @@ export class ProjectsController {
   }
 
   @Get(':id/platforms/:platformId')
-  @ResponseType(Response.MODEL_PLATFORM)
+  @ResModel(Models.PLATFORM)
   async getPlatform(
     @Param('id') id: string,
     @Param('platformId') platformId: string,
@@ -142,7 +140,7 @@ export class ProjectsController {
   }
 
   @Put(':id/platforms/:platformId')
-  @ResponseType(Response.MODEL_PLATFORM)
+  @ResModel(Models.PLATFORM)
   async updatePlatform(
     @Param('id') id: string,
     @Param('platformId') platformId: string,
@@ -152,7 +150,7 @@ export class ProjectsController {
   }
 
   @Delete(':id/platforms/:platformId')
-  @ResponseType(Response.MODEL_NONE)
+  @ResModel(Models.NONE)
   async deletePlatform(
     @Param('id') id: string,
     @Param('platformId') platformId: string,
@@ -161,27 +159,27 @@ export class ProjectsController {
   }
 
   @Get(':id/keys')
-  @ResponseType({ type: Response.MODEL_KEY, list: true })
+  @ResModel({ type: Models.KEY, list: true })
   async getKeys(@Param('id') id: string) {
     const data = await this.projectService.getKeys(id);
     return data;
   }
 
   @Post(':id/keys')
-  @ResponseType(Response.MODEL_KEY)
+  @ResModel(Models.KEY)
   async createKey(@Param('id') id: string, @Body() input: CreateKeyDTO) {
     const data = await this.projectService.createKey(id, input);
     return data;
   }
 
   @Get(':id/keys/:keyId')
-  @ResponseType(Response.MODEL_KEY)
+  @ResModel(Models.KEY)
   async getKey(@Param('id') id: string, @Param('keyId') keyId: string) {
     return await this.projectService.getKey(id, keyId);
   }
 
   @Put(':id/keys/:keyId')
-  @ResponseType(Response.MODEL_KEY)
+  @ResModel(Models.KEY)
   async updateKey(
     @Param('id') id: string,
     @Param('keyId') keyId: string,
@@ -191,7 +189,7 @@ export class ProjectsController {
   }
 
   @Delete(':id/keys/:keyId')
-  @ResponseType(Response.MODEL_NONE)
+  @ResModel(Models.NONE)
   async deleteKey(
     @Param('id') id: string,
     @Param('keyId') keyId: string,
@@ -200,14 +198,14 @@ export class ProjectsController {
   }
 
   @Get(':id/webhooks')
-  @ResponseType({ type: Response.MODEL_WEBHOOK, list: true })
+  @ResModel({ type: Models.WEBHOOK, list: true })
   async getWebhooks(@Param('id') id: string) {
     const data = await this.projectService.getWebhooks(id);
     return data;
   }
 
   @Post(':id/webhooks')
-  @ResponseType(Response.MODEL_WEBHOOK)
+  @ResModel(Models.WEBHOOK)
   async createWebhook(
     @Param('id') id: string,
     @Body() input: CreateWebhookDTO,
@@ -217,7 +215,7 @@ export class ProjectsController {
   }
 
   @Get(':id/webhooks/:webhookId')
-  @ResponseType(Response.MODEL_WEBHOOK)
+  @ResModel(Models.WEBHOOK)
   async getWebhook(
     @Param('id') id: string,
     @Param('webhookId') webhookId: string,
@@ -226,7 +224,7 @@ export class ProjectsController {
   }
 
   @Put(':id/webhooks/:webhookId')
-  @ResponseType(Response.MODEL_WEBHOOK)
+  @ResModel(Models.WEBHOOK)
   async updateWebhook(
     @Param('id') id: string,
     @Param('webhookId') webhookId: string,
@@ -236,7 +234,7 @@ export class ProjectsController {
   }
 
   @Patch(':id/webhooks/:webhookId/signature')
-  @ResponseType(Response.MODEL_WEBHOOK)
+  @ResModel(Models.WEBHOOK)
   async updateWebhookSignature(
     @Param('id') id: string,
     @Param('webhookId') webhookId: string,
@@ -253,7 +251,7 @@ export class ProjectsController {
   }
 
   @Patch([':id/organization', ':id/team'])
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async updateTeam(
     @Param('id') id: string,
     @Body() updateProjectTeamDTO: UpdateProjectTeamDTO,
@@ -265,7 +263,7 @@ export class ProjectsController {
   }
 
   @Patch(':id/service')
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async updateService(
     @Param('id') id: string,
     @Body() input: UpdateProjectServiceDTO,
@@ -274,19 +272,19 @@ export class ProjectsController {
   }
 
   @Patch(':id/api')
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async updateApi(@Param('id') id: string, @Body() input: ProjectApiStatusDTO) {
     return await this.projectService.updateApiStatus(id, input);
   }
 
   @Patch(':id/oauth2')
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async updateOAuth2(@Param('id') id: string, @Body() input: oAuth2DTO) {
     return await this.projectService.updateOAuth2(id, input);
   }
 
   @Patch(':id/service/all')
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async updateServiceAll(
     @Param('id') id: string,
     @Body() input: UpdateProjectAllServiceDTO,
@@ -295,7 +293,7 @@ export class ProjectsController {
   }
 
   @Patch(':id/api/all')
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async updateApiAll(
     @Param('id') id: string,
     @Body() input: ProjectApiStatusAllDTO,
@@ -304,7 +302,7 @@ export class ProjectsController {
   }
 
   @Patch(':id/auth/session-alerts')
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async updateSessionAlerts(
     @Param('id') id: string,
     @Body() input: AuthSessionAlertsDTO,
@@ -313,13 +311,13 @@ export class ProjectsController {
   }
 
   @Patch(':id/auth/limit')
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async updateAuthLimit(@Param('id') id: string, @Body() input: AuthLimitDTO) {
     return await this.projectService.updateAuthLimit(id, input.limit);
   }
 
   @Patch(':id/auth/duration')
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async updateAuthDuration(
     @Param('id') id: string,
     @Body() input: AuthDurationDTO,
@@ -328,7 +326,7 @@ export class ProjectsController {
   }
 
   @Patch(':id/auth/password-history')
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async updatePasswordHistory(
     @Param('id') id: string,
     @Body() input: AuthPasswordHistoryDTO,
@@ -337,7 +335,7 @@ export class ProjectsController {
   }
 
   @Patch(':id/auth/password-dictionary')
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async updatePasswordDictionary(
     @Param('id') id: string,
     @Body() input: AuthPasswordDictionaryDTO,
@@ -349,7 +347,7 @@ export class ProjectsController {
   }
 
   @Patch(':id/auth/personal-data')
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async updatePersonalData(
     @Param('id') id: string,
     @Body() input: AuthPersonalDataDTO,
@@ -358,7 +356,7 @@ export class ProjectsController {
   }
 
   @Patch(':id/auth/max-sessions')
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async updateMaxSessions(
     @Param('id') id: string,
     @Body() input: AuthMaxSessionsDTO,
@@ -367,7 +365,7 @@ export class ProjectsController {
   }
 
   @Patch(':id/auth/mock-numbers')
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async updateMockNumbers(
     @Param('id') id: string,
     @Body() input: AuthMockNumbersDTO,
@@ -376,7 +374,7 @@ export class ProjectsController {
   }
 
   @Patch(':id/auth/:method')
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async updateAuthMethod(
     @Param('id') id: string,
     @Param('method') method: string,
@@ -390,7 +388,7 @@ export class ProjectsController {
   }
 
   @Patch(':id/smtp')
-  @ResponseType(Response.MODEL_PROJECT)
+  @ResModel(Models.PROJECT)
   async updateSMTP(@Param('id') id: string, @Body() input: UpdateSmtpDTO) {
     return await this.projectService.updateSMTP(id, input);
   }

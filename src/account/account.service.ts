@@ -14,7 +14,7 @@ import { Request, Response as ExpressResponse } from 'express';
 import { Exception } from 'src/core/extend/exception';
 import { Auth } from 'src/core/helper/auth.helper';
 import { LocaleTranslator } from 'src/core/helper/locale.helper';
-import { Response } from 'src/core/helper/response.helper';
+import { Models } from 'src/core/helper/response.helper';
 import { PersonalDataValidator } from 'src/core/validators/personal-data.validator';
 import {
   APP_EMAIL_TEAM,
@@ -40,7 +40,7 @@ import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import * as Template from 'handlebars';
 import * as fs from 'fs';
-import { MailQueueOptions } from 'src/core/resolver/queues/mail.queue';
+import { MailQueueOptions } from 'src/core/resolvers/queues/mail.queue';
 
 @Injectable()
 export class AccountService {
@@ -223,7 +223,7 @@ export class AccountService {
       userId: user.getId(),
       payload: {
         data: user,
-        type: Response.MODEL_USER,
+        type: Models.USER,
       },
     });
 
@@ -319,7 +319,7 @@ export class AccountService {
           sessionId: session.getId(),
           payload: {
             data: session,
-            type: Response.MODEL_SESSION,
+            type: Models.SESSION,
           },
         });
 
@@ -440,7 +440,7 @@ export class AccountService {
         sessionId: session.getId(),
         payload: {
           data: session,
-          type: Response.MODEL_SESSION,
+          type: Models.SESSION,
         },
       });
 
@@ -519,7 +519,7 @@ export class AccountService {
       sessionId: session.getId(),
       payload: {
         data: session,
-        type: Response.MODEL_SESSION,
+        type: Models.SESSION,
       },
     });
 
@@ -748,7 +748,7 @@ export class AccountService {
       sessionId: createdSession.getId(),
       payload: {
         data: createdSession,
-        type: Response.MODEL_SESSION,
+        type: Models.SESSION,
       },
     });
 

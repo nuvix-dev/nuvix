@@ -42,7 +42,7 @@ export interface ClassSerializerInterceptorOptions
 }
 
 @Injectable()
-export class ResolverInterceptor implements NestInterceptor {
+export class ResponseInterceptor implements NestInterceptor {
   constructor(
     @Inject(REFLECTOR) protected readonly reflector: any,
     @Optional()
@@ -191,10 +191,3 @@ export class ResolverInterceptor implements NestInterceptor {
     ]);
   }
 }
-
-export const ResponseType = (
-  options: ResolverTypeContextOptions | Type<any>,
-) =>
-  typeof options === 'function'
-    ? SetMetadata(CLASS_SERIALIZER_OPTIONS, { type: options })
-    : SetMetadata(CLASS_SERIALIZER_OPTIONS, options);

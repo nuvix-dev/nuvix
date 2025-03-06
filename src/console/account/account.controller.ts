@@ -14,13 +14,12 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { AccountService } from './account.service';
-import {
-  ResolverInterceptor,
-  ResponseType,
-} from 'src/core/resolver/response.resolver';
-import { Response } from 'src/core/helper/response.helper';
-import { User } from 'src/core/resolver/user.resolver';
+import { ResponseInterceptor } from 'src/core/resolvers/interceptors/response.interceptor';
+import { Models } from 'src/core/helper/response.helper';
+import { User } from 'src/core/decorators/user.decorator';
+import { ResModel } from 'src/core/decorators';
 import { Document, Query as Queries } from '@nuvix/database';
+
 import {
   CreateAccountDTO,
   UpdateEmailDTO,
@@ -30,19 +29,19 @@ import {
   UpdatePrefsDTO,
 } from './DTO/account.dto';
 import { CreateEmailSessionDTO } from './DTO/session.dto';
-import { AuthGuard, Public } from 'src/core/resolver/guards/auth.guard';
+import { AuthGuard, Public } from 'src/core/resolvers/guards/auth.guard';
 import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
-import { ConsoleInterceptor } from 'src/core/resolver/console.resolver';
+import { ConsoleInterceptor } from 'src/core/resolvers/interceptors/console.interceptor';
 
 @Controller({ version: ['1'], path: 'console/account' })
 @UseGuards(AuthGuard)
-@UseInterceptors(ResolverInterceptor, ConsoleInterceptor)
+@UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class AccountController {
   constructor(private readonly accountService: AccountService) {}
 
   @Public()
   @Post()
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async createAccount(
     @Body() input: CreateAccountDTO,
     @User() user: Document,
@@ -59,25 +58,25 @@ export class AccountController {
   }
 
   @Get()
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async getAccount(@User() user: Document) {
     return user;
   }
 
   @Get('prefs')
-  @ResponseType({ type: Response.MODEL_PREFERENCES })
+  @ResModel({ type: Models.PREFERENCES })
   getPrefs(@User() user: Document) {
     return user.getAttribute('prefs', {});
   }
 
   @Patch('prefs')
-  @ResponseType({ type: Response.MODEL_PREFERENCES })
+  @ResModel({ type: Models.PREFERENCES })
   async updatePrefs(@User() user: Document, @Body() input: UpdatePrefsDTO) {
     return await this.accountService.updatePrefs(user, input.prefs);
   }
 
   @Patch('email')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async updateEmail(
     @User() user: Document,
     @Body() updateEmailDto: UpdateEmailDTO,
@@ -86,13 +85,13 @@ export class AccountController {
   }
 
   @Patch('name')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async updateName(@User() user: Document, @Body() input: UpdateNameDTO) {
     return await this.accountService.updateName(user, input);
   }
 
   @Patch('phone')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async updatePhone(
     @User() user: Document,
     @Body() updatePhoneDto: UpdatePhoneDTO,
@@ -101,7 +100,7 @@ export class AccountController {
   }
 
   @Patch('password')
-  @ResponseType({ type: Response.MODEL_USER })
+  @ResModel({ type: Models.USER })
   async updatePassword(
     @User() user: Document,
     @Body() input: UpdatePasswordDTO,
@@ -111,7 +110,7 @@ export class AccountController {
 
   @Public()
   @Post(['sessions/email', 'sessions'])
-  @ResponseType(Response.MODEL_SESSION)
+  @ResModel(Models.SESSION)
   async createEmailSession(
     @User() user: Document,
     @Body() input: CreateEmailSessionDTO,
@@ -127,13 +126,13 @@ export class AccountController {
   }
 
   @Get('sessions')
-  @ResponseType({ type: Response.MODEL_SESSION, list: true })
+  @ResModel({ type: Models.SESSION, list: true })
   async getSessions(@User() user: Document) {
     return await this.accountService.getSessions(user);
   }
 
   @Delete('sessions')
-  @ResponseType({ type: Response.MODEL_NONE })
+  @ResModel({ type: Models.NONE })
   async deleteSessions(
     @User() user: Document,
     @Req() request: any,
@@ -143,13 +142,13 @@ export class AccountController {
   }
 
   @Get('sessions/:id')
-  @ResponseType(Response.MODEL_SESSION)
+  @ResModel(Models.SESSION)
   async getSession(@User() user: Document, @Param('id') sessionId: string) {
     return await this.accountService.getSession(user, sessionId);
   }
 
   @Delete('sessions/:id')
-  @ResponseType(Response.MODEL_NONE)
+  @ResModel(Models.NONE)
   async deleteSession(
     @User() user: Document,
     @Param('id') id: string,
@@ -160,25 +159,25 @@ export class AccountController {
   }
 
   @Patch('sessions/:id')
-  @ResponseType(Response.MODEL_SESSION)
+  @ResModel(Models.SESSION)
   async updateSession(@User() user: Document, @Param('id') id: string) {
     return await this.accountService.updateSession(user, id);
   }
 
   @Get('logs')
-  @ResponseType({ type: Response.MODEL_LOG, list: true })
+  @ResModel({ type: Models.LOG, list: true })
   async getLogs(@User() user: Document, @Query('queries') queries: Queries[]) {
     return await this.accountService.getLogs(user, queries);
   }
 
   @Get('mfa/factors')
-  @ResponseType(Response.MODEL_MFA_FACTORS)
+  @ResModel(Models.MFA_FACTORS)
   async getMfaFactors(@User() user: Document) {
     return await this.accountService.getMfaFactors(user);
   }
 
   @Get('identities')
-  @ResponseType({ type: Response.MODEL_IDENTITY, list: true })
+  @ResModel({ type: Models.IDENTITY, list: true })
   async getIdentities(
     @User() user: Document,
     @Query('queries', ParseQueryPipe) queries: Queries[],
@@ -187,7 +186,7 @@ export class AccountController {
   }
 
   @Get('identities/:id')
-  @ResponseType(Response.MODEL_IDENTITY)
+  @ResModel(Models.IDENTITY)
   async getIdentity(@Param('id') id: string) {
     return await this.accountService.getIdentity(id);
   }

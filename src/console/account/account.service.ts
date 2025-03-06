@@ -22,7 +22,7 @@ import {
   SEND_TYPE_EMAIL,
   WORKER_TYPE_MAILS,
 } from 'src/Utils/constants';
-import { ResolverInterceptor } from 'src/core/resolver/response.resolver';
+import { ResponseInterceptor } from 'src/core/resolvers/interceptors/response.interceptor';
 import {
   UpdateEmailDTO,
   UpdateNameDTO,
@@ -39,10 +39,10 @@ import * as fs from 'fs';
 import {
   MailJobs,
   MailQueueOptions,
-} from 'src/core/resolver/queues/mail.queue';
+} from 'src/core/resolvers/queues/mail.queue';
 
 @Injectable()
-@UseInterceptors(ResolverInterceptor)
+@UseInterceptors(ResponseInterceptor)
 export class AccountService {
   constructor(
     @Inject(GEO_DB) private readonly geodb: Reader<CountryResponse>,
@@ -635,7 +635,7 @@ export class AccountService {
           });
 
         // Use current session for events.
-        // queueForEvents.setPayload(response.output(session, Response.MODEL_SESSION));
+        // queueForEvents.setPayload(response.output(session, Models.SESSION));
 
         // queueForDeletes.setType(DELETE_TYPE_SESSION_TARGETS).setDocument(session).trigger();
       }

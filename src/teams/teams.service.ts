@@ -36,7 +36,7 @@ import type { Queue } from 'bullmq';
 import {
   MailJobs,
   MailQueueOptions,
-} from 'src/core/resolver/queues/mail.queue';
+} from 'src/core/resolvers/queues/mail.queue';
 import { LocaleTranslator } from 'src/core/helper/locale.helper';
 import { sprintf } from 'sprintf-js';
 import * as fs from 'fs';

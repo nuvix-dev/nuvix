@@ -13,17 +13,16 @@ import {
   UseInterceptors,
 } from '@nestjs/common';
 import { TeamsService } from './teams.service';
-import {
-  ResolverInterceptor,
-  ResponseType,
-} from 'src/core/resolver/response.resolver';
-import { Response } from 'src/core/helper/response.helper';
+import { ResponseInterceptor } from 'src/core/resolvers/interceptors/response.interceptor';
+import { ResModel } from 'src/core/decorators';
+
+import { Models } from 'src/core/helper/response.helper';
 import {
   CreateTeamDTO,
   UpdateTeamDTO,
   UpdateTeamPrefsDTO,
 } from './dto/team.dto';
-import { User } from 'src/core/resolver/project-user.resolver';
+import { User } from 'src/core/decorators/project-user.decorator';
 import {
   CreateMembershipDTO,
   UpdateMembershipDTO,
@@ -31,21 +30,21 @@ import {
 } from './dto/membership.dto';
 import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
 import { Document, Query as Queries } from '@nuvix/database';
-import { ProjectGuard } from 'src/core/resolver/guards/project.guard';
-import { Mode } from 'src/core/resolver/mode.resolver';
-import { ApiInterceptor } from 'src/core/resolver/api.resolver';
-import { Project } from 'src/core/resolver/project.resolver';
-import { Locale } from 'src/core/resolver/locale.resolver';
+import { ProjectGuard } from 'src/core/resolvers/guards/project.guard';
+import { Mode } from 'src/core/decorators/mode.decorator';
+import { ApiInterceptor } from 'src/core/resolvers/interceptors/api.interceptor';
+import { Project } from 'src/core/decorators/project.decorator';
+import { Locale } from 'src/core/decorators/locale.decorator';
 import { LocaleTranslator } from 'src/core/helper/locale.helper';
 
 @Controller({ version: ['1'], path: 'teams' })
 @UseGuards(ProjectGuard)
-@UseInterceptors(ResolverInterceptor, ApiInterceptor)
+@UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class TeamsController {
   constructor(private readonly teamsService: TeamsService) {}
 
   @Get()
-  @ResponseType({ type: Response.MODEL_TEAM, list: true })
+  @ResModel({ type: Models.TEAM, list: true })
   async findAll(
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
@@ -54,7 +53,7 @@ export class TeamsController {
   }
 
   @Post()
-  @ResponseType({ type: Response.MODEL_TEAM })
+  @ResModel({ type: Models.TEAM })
   async create(
     @User() user: any,
     @Body() input: CreateTeamDTO,
@@ -64,19 +63,19 @@ export class TeamsController {
   }
 
   @Get(':id')
-  @ResponseType({ type: Response.MODEL_TEAM })
+  @ResModel({ type: Models.TEAM })
   async findOne(@Param('id') id: string) {
     return await this.teamsService.findOne(id);
   }
 
   @Put(':id')
-  @ResponseType({ type: Response.MODEL_TEAM })
+  @ResModel({ type: Models.TEAM })
   async update(@Param('id') id: string, @Body() input: UpdateTeamDTO) {
     return await this.teamsService.update(id, input);
   }
 
   @Delete(':id')
-  @ResponseType({ type: Response.MODEL_NONE })
+  @ResModel({ type: Models.NONE })
   async remove(@Param('id') id: string) {
     return await this.teamsService.remove(id);
   }
@@ -92,7 +91,7 @@ export class TeamsController {
   }
 
   @Get(':id/logs')
-  @ResponseType({ type: Response.MODEL_LOG, list: true })
+  @ResModel({ type: Models.LOG, list: true })
   async teamLogs(@Param('id') id: string) {
     return {
       total: 0,
@@ -101,7 +100,7 @@ export class TeamsController {
   }
 
   @Post(':id/memberships')
-  @ResponseType({ type: Response.MODEL_MEMBERSHIP })
+  @ResModel({ type: Models.MEMBERSHIP })
   async addMember(
     @Param('id') id: string,
     @Body() input: CreateMembershipDTO,
@@ -113,7 +112,7 @@ export class TeamsController {
   }
 
   @Get(':id/memberships')
-  @ResponseType({ type: Response.MODEL_MEMBERSHIP, list: true })
+  @ResModel({ type: Models.MEMBERSHIP, list: true })
   async getMembers(
     @Param('id') id: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
@@ -123,7 +122,7 @@ export class TeamsController {
   }
 
   @Get(':id/memberships/:memberId')
-  @ResponseType({ type: Response.MODEL_MEMBERSHIP })
+  @ResModel({ type: Models.MEMBERSHIP })
   async getMember(
     @Param('id') id: string,
     @Param('memberId') memberId: string,
@@ -132,7 +131,7 @@ export class TeamsController {
   }
 
   @Patch(':id/memberships/:memberId')
-  @ResponseType({ type: Response.MODEL_MEMBERSHIP })
+  @ResModel({ type: Models.MEMBERSHIP })
   async updateMember(
     @Param('id') id: string,
     @Param('memberId') memberId: string,
@@ -142,7 +141,7 @@ export class TeamsController {
   }
 
   @Patch(':id/memberships/:memberId/status')
-  @ResponseType({ type: Response.MODEL_MEMBERSHIP })
+  @ResModel({ type: Models.MEMBERSHIP })
   async updateMemberStatus(
     @Param('id') id: string,
     @Param('memberId') memberId: string,
@@ -152,7 +151,7 @@ export class TeamsController {
   }
 
   @Delete(':id/memberships/:memberId')
-  @ResponseType({ type: Response.MODEL_NONE })
+  @ResModel({ type: Models.NONE })
   async removeMember(
     @Param('id') id: string,
     @Param('memberId') memberId: string,
