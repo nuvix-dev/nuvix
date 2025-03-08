@@ -10,6 +10,7 @@ import {
   DB_FOR_PROJECT,
   GEO_DB,
   CACHE_DB,
+  CACHE,
   APP_REDIS_PATH,
   APP_REDIS_PORT,
   APP_REDIS_HOST,
@@ -56,8 +57,18 @@ Object.keys(formats).forEach((key) => {
       inject: [],
     },
     {
+      provide: CACHE,
+      useFactory: async (redis: IORedis) => {
+        const adpter = new Redis(redis);
+        const cache = new Cache(adpter);
+        await cache.ping();
+        return cache;
+      },
+      inject: [CACHE_DB],
+    },
+    {
       provide: DB_FOR_CONSOLE,
-      useFactory: async (cls: ClsService, redis: IORedis) => {
+      useFactory: async (cls: ClsService, cache: Cache) => {
         const adapter = new MariaDB({
           connection: {
             host: process.env.DATABASE_HOST || 'localhost',
@@ -70,21 +81,17 @@ Object.keys(formats).forEach((key) => {
         });
 
         await adapter.init();
-        const redisCache = new Redis(redis);
-        const telemetry = new Telemetry();
-        const cache = new Cache(redisCache, );
         const connection = new Database(adapter, cache);
         await connection.ping();
 
-
         return connection;
       },
-      inject: [ClsService, CACHE_DB],
+      inject: [ClsService, CACHE],
     },
     {
       provide: DB_FOR_PROJECT,
       // scope: Scope.REQUEST,
-      useFactory: async (cls: ClsService, redis: IORedis) => {
+      useFactory: async (cls: ClsService, cache: Cache) => {
         const adapter = new MariaDB({
           connection: {
             host: process.env.DATABASE_HOST || 'localhost',
@@ -97,9 +104,7 @@ Object.keys(formats).forEach((key) => {
         });
 
         await adapter.init();
-        const redisCache = new Redis(redis);
-        const telemetry = new Telemetry();
-        const cache = new Cache(redisCache, );
+
         const connection = new Database(adapter, cache);
 
         connection.setSharedTables(true);
@@ -108,7 +113,7 @@ Object.keys(formats).forEach((key) => {
 
         return connection;
       },
-      inject: [ClsService],
+      inject: [ClsService, CACHE],
     },
     {
       provide: GEO_DB,
@@ -131,8 +136,7 @@ Object.keys(formats).forEach((key) => {
       },
       inject: [ClsService],
     },
-
   ],
-  exports: [DB_FOR_CONSOLE, DB_FOR_PROJECT, GEO_DB, CACHE_DB],
+  exports: [DB_FOR_CONSOLE, DB_FOR_PROJECT, GEO_DB, CACHE_DB, CACHE],
 })
-export class CoreModule { }
+export class CoreModule {}

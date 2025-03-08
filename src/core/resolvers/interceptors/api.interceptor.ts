@@ -20,7 +20,7 @@ import {
 import ParamsHelper from '../../helper/params.helper';
 import { Authorization, Database, Document } from '@nuvix/database';
 import { Reflector } from '@nestjs/core';
-import { LableKey, LableValue } from '../../decorators/lable.decorator';
+import { LableKey, LableValue } from '../../decorators/label.decorator';
 import { Auth } from '../../helper/auth.helper';
 import { Exception } from '../../extend/exception';
 import { roles } from '../../config/roles';

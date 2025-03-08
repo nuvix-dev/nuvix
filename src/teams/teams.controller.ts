@@ -14,7 +14,7 @@ import {
 } from '@nestjs/common';
 import { TeamsService } from './teams.service';
 import { ResponseInterceptor } from 'src/core/resolvers/interceptors/response.interceptor';
-import { ResModel } from 'src/core/decorators';
+import { Namespace, ResModel } from 'src/core/decorators';
 
 import { Models } from 'src/core/helper/response.helper';
 import {
@@ -39,6 +39,7 @@ import { LocaleTranslator } from 'src/core/helper/locale.helper';
 
 @Controller({ version: ['1'], path: 'teams' })
 @UseGuards(ProjectGuard)
+@Namespace('teams')
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class TeamsController {
   constructor(private readonly teamsService: TeamsService) {}

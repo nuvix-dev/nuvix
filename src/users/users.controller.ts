@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Inject,
   Param,
   Patch,
   Post,
@@ -29,7 +30,7 @@ import {
 import { CreateTargetDTO, UpdateTargetDTO } from './dto/target.dto';
 import { Models } from 'src/core/helper/response.helper';
 import { ResponseInterceptor } from 'src/core/resolvers/interceptors/response.interceptor';
-import { ResModel } from 'src/core/decorators';
+import { Label, Namespace, ResModel, Scope } from 'src/core/decorators';
 import { Request } from 'express';
 import { CreateTokenDTO } from './dto/token.dto';
 import { CreateJwtDTO } from './dto/jwt.dto';
@@ -37,14 +38,23 @@ import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
 import type { Query as Queries } from '@nuvix/database';
 import { ProjectGuard } from 'src/core/resolvers/guards/project.guard';
 import { ApiInterceptor } from 'src/core/resolvers/interceptors/api.interceptor';
+import { CACHE } from 'src/Utils/constants';
+import { Cache } from '@nuvix/cache';
 
 @Controller({ version: ['1'], path: 'users' })
 @UseGuards(ProjectGuard)
+@Namespace('users')
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(
+    private readonly usersService: UsersService,
+    @Inject(CACHE) private readonly cache: Cache,
+  ) {}
 
   @Get()
+  @Scope('users.read')
+  @Label('res.type', 'JSON')
+  @Label('res.status', 'OK')
   @ResModel({ type: Models.USER, list: true })
   async findAll(
     @Query('queries', ParseQueryPipe) queries: Queries[],
@@ -54,48 +64,58 @@ export class UsersController {
   }
 
   @Post()
+  @Scope('users.create')
+  @Label('res.type', 'JSON')
+  @Label('res.status', 'CREATED')
   @ResModel({ type: Models.USER })
   async create(@Body() createUserDTO: CreateUserDTO) {
     return await this.usersService.create(createUserDTO);
   }
 
   @Post('argon2')
+  @Scope('users.create')
   @ResModel({ type: Models.USER })
   async createWithArgon2(@Body() createUserDTO: CreateUserDTO) {
     return await this.usersService.createWithArgon2(createUserDTO);
   }
 
   @Post('bcrypt')
+  @Scope('users.create')
   @ResModel({ type: Models.USER })
   async createWithBcrypt(@Body() createUserDTO: CreateUserDTO) {
     return await this.usersService.createWithBcrypt(createUserDTO);
   }
 
   @Post('md5')
+  @Scope('users.create')
   @ResModel({ type: Models.USER })
   async createWithMd5(@Body() createUserDTO: CreateUserDTO) {
     return await this.usersService.createWithMd5(createUserDTO);
   }
 
   @Post('sha')
+  @Scope('users.create')
   @ResModel({ type: Models.USER })
   async createWithSha(@Body() createUserDTO: CreateUserDTO) {
     return await this.usersService.createWithSha(createUserDTO);
   }
 
   @Post('phpass')
+  @Scope('users.create')
   @ResModel({ type: Models.USER })
   async createWithPhpass(@Body() createUserDTO: CreateUserDTO) {
     return await this.usersService.createWithPhpass(createUserDTO);
   }
 
   @Post('scrypt')
+  @Scope('users.create')
   @ResModel({ type: Models.USER })
   async createWithScrypt(@Body() createUserDTO: CreateUserDTO) {
     return await this.usersService.createWithScrypt(createUserDTO);
   }
 
   @Post('scrypt-modified')
+  @Scope('users.create')
   @ResModel({ type: Models.USER })
   async createWithScryptModified(@Body() createUserDTO: CreateUserDTO) {
     return await this.usersService.createWithScryptMod(createUserDTO);
@@ -108,6 +128,7 @@ export class UsersController {
   }
 
   @Get('identities')
+  @Scope('users.read')
   @ResModel({ type: Models.IDENTITY, list: true })
   async getIdentities(
     @Query('queries', ParseQueryPipe) queries: Queries[],
@@ -117,22 +138,28 @@ export class UsersController {
   }
 
   @Delete('identities/:id')
+  @Scope('users.read')
   async deleteIdentity(@Param('id') id: string) {
     return await this.usersService.deleteIdentity(id);
   }
 
   @Get(':id')
+  @Scope('users.read')
   @ResModel({ type: Models.USER })
   async findOne(@Param('id') id: string) {
     return await this.usersService.findOne(id);
   }
 
   @Get(':id/prefs')
+  @Scope('users.read')
+  @ResModel(Models.PREFERENCES)
   async getPrefs(@Param('id') id: string) {
     return await this.usersService.getPrefs(id);
   }
 
   @Patch(':id/prefs')
+  @Scope('users.update')
+  @ResModel(Models.USER)
   async updatePrefs(
     @Param('id') id: string,
     @Body() input: UpdateUserPrefsDTO,
@@ -141,6 +168,7 @@ export class UsersController {
   }
 
   @Patch(':id/status')
+  @Scope('users.update')
   @ResModel({ type: Models.USER })
   async updateStatus(
     @Param('id') id: string,
@@ -150,6 +178,7 @@ export class UsersController {
   }
 
   @Put(':id/labels')
+  @Scope('users.update')
   @ResModel({ type: Models.USER })
   async updateLabels(
     @Param('id') id: string,
@@ -159,6 +188,7 @@ export class UsersController {
   }
 
   @Patch(':id/name')
+  @Scope('users.update')
   @ResModel({ type: Models.USER })
   async updateName(@Param('id') id: string, @Body() input: UpdateUserNameDTO) {
     return await this.usersService.updateName(id, input);

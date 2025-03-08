@@ -41,6 +41,7 @@ export const DB_FOR_CONSOLE = 'dbForConsole';
 export const DB_FOR_PROJECT = 'dbForProject';
 export const GEO_DB = 'geoDb';
 export const CACHE_DB = 'cacheDb';
+export const CACHE = 'cache';
 export const IS_PUBLIC_KEY = 'isPublic';
 export const LOCALE = 'locale';
 export const API_KEY = 'apiKey';
