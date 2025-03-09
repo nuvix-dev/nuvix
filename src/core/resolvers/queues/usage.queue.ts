@@ -11,15 +11,12 @@ import { Job } from 'bullmq';
 import { Inject, Logger } from '@nestjs/common';
 import { Redis } from 'ioredis';
 import { Document } from '@nuvix/database';
-import { MetricsHelper } from 'src/core/helper/metrics.helper';
 
 @Processor(WORKER_TYPE_USAGE)
 export class UsageQueue extends Queue {
   private readonly logger = new Logger(UsageQueue.name);
-  private metrics: MetricsHelper;
   constructor(@Inject(CACHE_DB) cacheDb: Redis) {
     super();
-    this.metrics = new MetricsHelper(cacheDb);
   }
 
   async process(job: Job<UsageQueueOptions, any, UsageJobs>): Promise<any> {

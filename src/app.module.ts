@@ -37,6 +37,7 @@ import { ApiMiddleware } from './core/resolvers/middlewares/api.middleware';
 import { HostMiddleware } from './core/resolvers/middlewares/host.middleware';
 import { CorsMiddleware } from './core/resolvers/middlewares/cors.middleware';
 import { ProjectUsageMiddleware } from './core/resolvers/middlewares/project-usage.middleware';
+import { ScheduleModule } from '@nestjs/schedule';
 config();
 
 @Module({
@@ -75,6 +76,7 @@ config();
     EventEmitterModule.forRoot({
       global: true,
     }),
+    ScheduleModule.forRoot(),
     JwtModule.register({
       secret: JWT_SECRET,
       global: true,
