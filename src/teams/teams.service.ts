@@ -1,5 +1,4 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { ClsService } from 'nestjs-cls';
 import {
   CreateTeamDTO,
   UpdateTeamDTO,
@@ -50,7 +49,6 @@ export class TeamsService {
     @Inject(DB_FOR_PROJECT) private readonly db: Database,
     @InjectQueue('mails')
     private readonly mailQueue: Queue<MailQueueOptions, any, MailJobs>,
-    private readonly cls: ClsService,
   ) {}
 
   /**

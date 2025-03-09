@@ -2,7 +2,6 @@ import { Injectable, NestMiddleware, Logger, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Authorization, Database, Document } from '@nuvix/database';
 import { Request, Response, NextFunction } from 'express';
-import { ClsService } from 'nestjs-cls';
 import { Exception } from 'src/core/extend/exception';
 import { Auth } from 'src/core/helper/auth.helper';
 import ParamsHelper from 'src/core/helper/params.helper';
@@ -19,7 +18,6 @@ import {
 export class AuthMiddleware implements NestMiddleware {
   private readonly logger = new Logger(AuthMiddleware.name);
   constructor(
-    private readonly store: ClsService,
     @Inject(DB_FOR_CONSOLE) readonly db: Database,
     @Inject(DB_FOR_PROJECT) readonly projectDb: Database,
     private readonly jwtService: JwtService,

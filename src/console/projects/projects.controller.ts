@@ -13,7 +13,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { Request } from 'express';
-import { ClsService } from 'nestjs-cls';
 import authMethods from 'src/core/config/auth';
 import { Exception } from 'src/core/extend/exception';
 import { ProjectService } from './projects.service';
@@ -63,7 +62,6 @@ import { ResModel } from 'src/core/decorators';
 export class ProjectsController {
   constructor(
     private readonly projectService: ProjectService,
-    private readonly clsService: ClsService,
   ) {}
 
   @Post()

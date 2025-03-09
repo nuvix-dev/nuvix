@@ -1,4 +1,4 @@
-import { Logger, MiddlewareConsumer, Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { config } from 'dotenv';
@@ -10,8 +10,6 @@ import { UsersModule } from './users/users.module';
 import { AccountModule } from './account/account.module';
 import { TeamsModule } from './teams/teams.module';
 import { RealtimeModule } from './realtime/realtime.module';
-import { ClsModule } from 'nestjs-cls';
-import { Request } from 'express';
 import { FunctionsModule } from './functions/functions.module';
 import { AuthMiddleware } from './core/resolvers/middlewares/auth.middleware';
 import { CoreModule } from './core/core.module';
@@ -42,17 +40,6 @@ config();
 
 @Module({
   imports: [
-    ClsModule.forRoot({
-      global: true,
-      middleware: {
-        mount: true,
-        setup(cls, req: Request, res) {
-          cls.set('req', req);
-          cls.set('res', res);
-          cls.set('logger', new Logger('NUVIX'));
-        },
-      },
-    }),
     BullModule.forRoot({
       connection: {
         path: APP_REDIS_PATH,

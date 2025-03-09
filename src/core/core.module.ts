@@ -4,7 +4,6 @@ import path from 'path';
 import IORedis from 'ioredis';
 
 // Services
-import { ClsService } from 'nestjs-cls';
 import {
   DB_FOR_CONSOLE,
   DB_FOR_PROJECT,
@@ -69,7 +68,7 @@ Object.keys(formats).forEach((key) => {
     },
     {
       provide: DB_FOR_CONSOLE,
-      useFactory: async (cls: ClsService, cache: Cache) => {
+      useFactory: async ( cache: Cache) => {
         const adapter = new MariaDB({
           connection: {
             host: process.env.DATABASE_HOST || 'localhost',
@@ -87,12 +86,12 @@ Object.keys(formats).forEach((key) => {
 
         return connection;
       },
-      inject: [ClsService, CACHE],
+      inject: [ CACHE],
     },
     {
       provide: DB_FOR_PROJECT,
       // scope: Scope.REQUEST,
-      useFactory: async (cls: ClsService, cache: Cache) => {
+      useFactory: async ( cache: Cache) => {
         const adapter = new MariaDB({
           connection: {
             host: process.env.DATABASE_HOST || 'localhost',
@@ -114,12 +113,12 @@ Object.keys(formats).forEach((key) => {
 
         return connection;
       },
-      inject: [ClsService, CACHE],
+      inject: [CACHE],
     },
     {
       provide: GEO_DB,
-      useFactory: async (cls: ClsService) => {
-        const logger = cls.get<Logger>('logger');
+      useFactory: async () => {
+        const logger = new Logger('GeoIP');
         try {
           const buffer = fs.readFileSync(
             path.resolve(
@@ -135,7 +134,6 @@ Object.keys(formats).forEach((key) => {
           return {}; // TODO: return a dummy reader
         }
       },
-      inject: [ClsService],
     },
     ProjectUsageService,
   ],

@@ -1,7 +1,6 @@
 import { Inject, Injectable, Logger, NestMiddleware } from '@nestjs/common';
 import { Authorization, Database, Document } from '@nuvix/database';
 import { NextFunction, Request, Response } from 'express';
-import { ClsService } from 'nestjs-cls';
 import ParamsHelper from 'src/core/helper/params.helper';
 import { DB_FOR_CONSOLE, DB_FOR_PROJECT, PROJECT } from 'src/Utils/constants';
 
@@ -11,7 +10,6 @@ export class ProjectMiddleware implements NestMiddleware {
   constructor(
     @Inject(DB_FOR_CONSOLE) private readonly db: Database,
     @Inject(DB_FOR_PROJECT) private readonly projectDb: Database,
-    private readonly store: ClsService,
   ) {}
 
   async use(req: Request, res: Response, next: NextFunction) {

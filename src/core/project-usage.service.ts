@@ -33,8 +33,8 @@ export class ProjectUsageService {
 
   constructor(
     @Inject(CACHE_DB) private readonly cacheDb: Redis,
-    @Inject(DB_FOR_PROJECT) private readonly projectDb: Database
-  ) { }
+    @Inject(DB_FOR_PROJECT) private readonly projectDb: Database,
+  ) {}
 
   async addMetric(metric: string, value: number): Promise<this> {
     await this.add(metric, value);
@@ -56,11 +56,8 @@ export class ProjectUsageService {
     if (Object.keys(allMetrics).length > 0) {
       try {
         // const usageDoc = await this.projectDb.createDocument('stats', new Document({
-          
         // }));
-
         // this.logger.log(`Metrics saved with ID: ${usageDoc.getId()}`);
-
         // Reset metrics in Redis (optional)
         // await this.cacheDb.del('project_usage');
       } catch (error) {
@@ -78,7 +75,7 @@ export class ProjectUsageService {
     return await this.cacheDb.hincrby('project_usage', metric, value);
   }
 
-  private async _reduce(document: Document) { }
+  private async _reduce(document: Document) {}
 
   async databaseListener({
     event,

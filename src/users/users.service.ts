@@ -14,7 +14,6 @@ import {
   UpdateUserPoneVerificationDTO,
   UpdateUserStatusDTO,
 } from './dto/user.dto';
-import { ClsService } from 'nestjs-cls';
 import {
   APP_LIMIT_COUNT,
   DB_FOR_PROJECT,
@@ -49,7 +48,6 @@ export class UsersService {
   constructor(
     @Inject(DB_FOR_PROJECT) private readonly db: Database,
     @Inject(GEO_DB) private readonly geoDb: Reader<CountryResponse>,
-    private readonly cls: ClsService,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -188,8 +186,7 @@ export class UsersService {
   /**
    * Update user password
    */
-  async updatePassword(id: string, input: UpdateUserPasswordDTO) {
-    const project = this.cls.get<Document>(PROJECT);
+  async updatePassword(id: string, input: UpdateUserPasswordDTO, project: Document) {
     const user = await this.db.getDocument('users', id);
 
     if (user.isEmpty()) {
@@ -505,7 +502,7 @@ export class UsersService {
   /**
    * Create a new user
    */
-  create(createUserDTO: CreateUserDTO) {
+  create(createUserDTO: CreateUserDTO, project: Document) {
     return this.createUser(
       'plaintext',
       {},
@@ -514,13 +511,14 @@ export class UsersService {
       createUserDTO.password,
       createUserDTO.phone,
       createUserDTO.name,
+      project
     );
   }
 
   /**
    * Create a new user with argon2
    */
-  createWithArgon2(createUserDTO: CreateUserDTO) {
+  createWithArgon2(createUserDTO: CreateUserDTO, project: Document) {
     return this.createUser(
       'argon2',
       {},
@@ -529,13 +527,14 @@ export class UsersService {
       createUserDTO.password,
       createUserDTO.phone,
       createUserDTO.name,
+      project,
     );
   }
 
   /**
    * Create a new user with bcrypt
    */
-  createWithBcrypt(createUserDTO: CreateUserDTO) {
+  createWithBcrypt(createUserDTO: CreateUserDTO, project: Document) {
     return this.createUser(
       'bcrypt',
       {},
@@ -544,13 +543,14 @@ export class UsersService {
       createUserDTO.password,
       createUserDTO.phone,
       createUserDTO.name,
+      project,
     );
   }
 
   /**
    * Create a new user with md5
    */
-  createWithMd5(createUserDTO: CreateUserDTO) {
+  createWithMd5(createUserDTO: CreateUserDTO, project: Document) {
     return this.createUser(
       'md5',
       {},
@@ -559,13 +559,14 @@ export class UsersService {
       createUserDTO.password,
       createUserDTO.phone,
       createUserDTO.name,
+      project,
     );
   }
 
   /**
    * Create a new user with sha
    */
-  createWithSha(createUserDTO: CreateUserWithShaDTO) {
+  createWithSha(createUserDTO: CreateUserWithShaDTO, project: Document) {
     let hashOptions = {};
     if (createUserDTO.passwordVersion) {
       hashOptions = { version: createUserDTO.passwordVersion };
@@ -578,13 +579,14 @@ export class UsersService {
       createUserDTO.password,
       createUserDTO.phone,
       createUserDTO.name,
+      project,
     );
   }
 
   /**
    * Create a new user with phpass
    */
-  createWithPhpass(createUserDTO: CreateUserDTO) {
+  createWithPhpass(createUserDTO: CreateUserDTO, project: Document) {
     return this.createUser(
       'phpass',
       {},
@@ -593,13 +595,14 @@ export class UsersService {
       createUserDTO.password,
       createUserDTO.phone,
       createUserDTO.name,
+      project,
     );
   }
 
   /**
    * Create a new user with scrypt
    */
-  createWithScrypt(createUserDTO: CreateUserWithScryptDTO) {
+  createWithScrypt(createUserDTO: CreateUserWithScryptDTO, project: Document) {
     const hashOptions = {
       salt: createUserDTO.passwordSalt,
       costCpu: createUserDTO.passwordCpu,
@@ -615,13 +618,14 @@ export class UsersService {
       createUserDTO.password,
       createUserDTO.phone,
       createUserDTO.name,
+      project,
     );
   }
 
   /**
    * Create a new user with scryptMod
    */
-  createWithScryptMod(createUserDTO: CreateUserWithScryptModifedDTO) {
+  createWithScryptMod(createUserDTO: CreateUserWithScryptModifedDTO, project: Document) {
     const hashOptions = {
       salt: createUserDTO.passwordSalt,
       saltSeparator: createUserDTO.passwordSaltSeparator,
@@ -635,6 +639,7 @@ export class UsersService {
       createUserDTO.password,
       createUserDTO.phone,
       createUserDTO.name,
+      project,
     );
   }
 
@@ -1270,8 +1275,7 @@ export class UsersService {
   /**
    * Create User Session
    */
-  async createSession(userId: string, req: Request) {
-    const project = this.cls.get<Document>(PROJECT);
+  async createSession(userId: string, req: Request, project: Document) {
     const user = await this.db.getDocument('users', userId);
 
     if (user.isEmpty()) {
@@ -1419,8 +1423,8 @@ export class UsersService {
     password: string | null,
     phone: string | null,
     name: string,
+    project: Document,
   ): Promise<Document> {
-    const project = this.cls.get<Document>(PROJECT);
     const plaintextPassword = password;
     const hashOptionsObject =
       typeof hashOptions === 'string' ? JSON.parse(hashOptions) : hashOptions;

@@ -6,31 +6,37 @@
  */
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-import { NestExpressApplication } from '@nestjs/platform-express';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
+import { FastifyRequest, FastifyReply } from 'fastify';
+import cookieParser from '@fastify/cookie';
 import { config } from 'dotenv';
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
-import { NextFunction, Request, Response } from 'express';
 import { ConsoleLogger, ValidationPipe } from '@nestjs/common';
 import { APP_DEBUG_COLORS, APP_DEBUG_FORMAT } from './Utils/constants';
 import { Authorization, Role, storage } from '@nuvix/database';
-import cookieParser from 'cookie-parser';
 import { ErrorFilter } from './core/filters/globle-error.filter';
 
 config();
 Authorization.enableStorage();
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    abortOnError: false,
-    logger: new ConsoleLogger({
-      json: APP_DEBUG_FORMAT,
-      colors: APP_DEBUG_COLORS,
-      prefix: 'Nuvix',
+  const app = await NestFactory.create<NestFastifyApplication>(
+    AppModule,
+    new FastifyAdapter({
+      trustProxy: true,
     }),
-  });
-
-  app.set('query parser', 'extended');
-  app.set('trust proxy', 'loopback');
+    {
+      // abortOnError: false,
+      logger: new ConsoleLogger({
+        json: APP_DEBUG_FORMAT,
+        colors: APP_DEBUG_COLORS,
+        prefix: 'Nuvix',
+      }),
+    },
+  );
 
   app.enableVersioning();
 
@@ -45,19 +51,20 @@ async function bootstrap() {
     }),
   );
 
-  app.use(cookieParser());
+  app.register(cookieParser);
 
-  app.use((req: Request, res: Response, next: NextFunction) => {
+  app.use((req: FastifyRequest, res: FastifyReply, next: () => void) => {
     res.header('X-Powered-By', 'Nuvix-Server');
     res.header('Server', 'Nuvix');
     next();
   });
 
-  app.useStaticAssets('public', {
+  app.useStaticAssets({
+    root: 'public',
     prefix: '/public/',
   });
 
-  app.use((req: Request, res: Response, next: NextFunction) => {
+  app.use((req: FastifyRequest, res: FastifyReply, next: () => void) => {
     if (Authorization['useStorage']) {
       storage.run(new Map(), () => {
         Authorization.setDefaultStatus(true); // Set per-request default status
