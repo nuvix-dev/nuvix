@@ -45,10 +45,10 @@ export class CorsHook implements BaseHook {
       const validOrigin = this.determineOrigin(origin, isConsoleRequest);
       const options = { ...this.defaultOptions, origin: validOrigin };
 
-      this.addCorsHeaders(req, reply, origin, options);
+      this.addCorsHeaders(reply, origin, options);
       this.handleVaryHeaders(reply, options);
 
-      if (req.method === 'OPTIONS' && options.preflight) {
+      if (req.method.toUpperCase() === 'OPTIONS' && options.preflight) {
         this.handlePreflight(req, reply, options);
       }
     } catch (error) {
@@ -69,7 +69,6 @@ export class CorsHook implements BaseHook {
   }
 
   private addCorsHeaders(
-    req: FastifyRequest,
     reply: FastifyReply,
     origin: string | false,
     options: CorsOptions,

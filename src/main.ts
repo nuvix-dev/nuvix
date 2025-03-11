@@ -40,6 +40,7 @@ async function bootstrap() {
   );
 
   app.enableVersioning();
+  app.register(cookieParser);
 
   app.useGlobalPipes(
     new ValidationPipe({
@@ -51,9 +52,6 @@ async function bootstrap() {
       },
     }),
   );
-
-  app.useBodyParser('application/json');
-  app.register(cookieParser);
 
   const fastify = app.getHttpAdapter().getInstance();
   global['fastifyInstance'] = fastify;
