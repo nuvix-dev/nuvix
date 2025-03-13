@@ -17,6 +17,7 @@ import {
   APP_REDIS_PASSWORD,
   APP_REDIS_DB,
   APP_REDIS_SECURE,
+  GET_PROJECT_DB,
 } from 'src/Utils/constants';
 import { Database, MariaDB, Structure } from '@nuvix/database';
 import { filters, formats } from './resolvers/db.resolver';
@@ -116,6 +117,34 @@ Object.keys(formats).forEach((key) => {
       inject: [CACHE],
     },
     {
+      provide: GET_PROJECT_DB,
+      // scope: Scope.REQUEST,
+      useFactory: async (cache: Cache) => {
+        return async (projectId: string) => {
+          const adapter = new MariaDB({
+            connection: {
+              host: process.env.DATABASE_HOST || 'localhost',
+              user: process.env.DATABASE_USER,
+              password: process.env.DATABASE_PASSWORD,
+              database: process.env.DATABASE_NAME2,
+              port: 3306,
+            },
+            maxVarCharLimit: 5000,
+          });
+
+          await adapter.init();
+
+          const connection = new Database(adapter, cache);
+
+          connection.setSharedTables(true);
+          connection.setPrefix(`_${projectId}`);
+          connection.setTenant(Number(projectId));
+          return connection;
+        };
+      },
+      inject: [CACHE],
+    },
+    {
       provide: GEO_DB,
       useFactory: async () => {
         const logger = new Logger('GeoIP');
@@ -140,6 +169,7 @@ Object.keys(formats).forEach((key) => {
   exports: [
     DB_FOR_CONSOLE,
     DB_FOR_PROJECT,
+    GET_PROJECT_DB,
     GEO_DB,
     CACHE_DB,
     CACHE,

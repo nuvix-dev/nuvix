@@ -21,9 +21,12 @@ export class ProjectUsageHook implements Hook {
       const project: Document = req[PROJECT];
       if (project.isEmpty() || project.getId() === 'console') return;
       const inboundSize = this.calculateInboundSize(req);
-      await this.projectUsage.addMetric(METRIC_NETWORK_REQUESTS, 1);
-      await this.projectUsage.addMetric(METRIC_NETWORK_INBOUND, inboundSize);
-      this.logger.debug(`Project: ${project.getId()}, Inbound: ${inboundSize}`);
+      await this.projectUsage.addMetric(METRIC_NETWORK_REQUESTS, 1, project);
+      await this.projectUsage.addMetric(
+        METRIC_NETWORK_INBOUND,
+        inboundSize,
+        project,
+      );
     } catch (error) {
       this.logger.error(
         `Usage hook failed (onRequest): ${error.message}`,
@@ -37,9 +40,10 @@ export class ProjectUsageHook implements Hook {
       const project: Document = req[PROJECT];
       if (project.isEmpty() || project.getId() === 'console') return;
       const outboundSize = this.calculateOutboundSize(reply);
-      await this.projectUsage.addMetric(METRIC_NETWORK_OUTBOUND, outboundSize);
-      this.logger.debug(
-        `Project: ${project.getId()}, Outbound: ${outboundSize}`,
+      await this.projectUsage.addMetric(
+        METRIC_NETWORK_OUTBOUND,
+        outboundSize,
+        project,
       );
     } catch (error) {
       this.logger.error(

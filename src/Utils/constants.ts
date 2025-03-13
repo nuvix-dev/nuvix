@@ -39,6 +39,7 @@ export const USER = 'user';
 export const SESSION = 'session';
 export const DB_FOR_CONSOLE = 'dbForConsole';
 export const DB_FOR_PROJECT = 'dbForProject';
+export const GET_PROJECT_DB = 'getProjectDb';
 export const GEO_DB = 'geoDb';
 export const CACHE_DB = 'cacheDb';
 export const CACHE = 'cache';
