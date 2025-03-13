@@ -169,6 +169,7 @@ export class ApiHook implements Hook {
     }
 
     req[SCOPES] = scopes;
+    req['role'] = role;
     req[USER] = user;
 
     this.logger.log(

@@ -40,6 +40,7 @@ import {
   Role,
 } from '@nuvix/database';
 import { CountryResponse, Reader } from 'maxmind';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 
 @Injectable()
 export class UsersService {
@@ -49,6 +50,7 @@ export class UsersService {
     @Inject(DB_FOR_PROJECT) private readonly db: Database,
     @Inject(GEO_DB) private readonly geoDb: Reader<CountryResponse>,
     private readonly jwtService: JwtService,
+    private readonly event: EventEmitter2,
   ) {}
 
   /**
@@ -712,6 +714,10 @@ export class UsersService {
       );
 
       await this.db.purgeCachedDocument('users', user.getId());
+      this.event.emit(
+        `user.${user.getId()}.target.${target.getId()}.create`,
+        target,
+      );
 
       return target;
     } catch (error) {
@@ -1583,6 +1589,7 @@ export class UsersService {
       }
 
       await this.db.purgeCachedDocument('users', createdUser.getId());
+      this.event.emit(`user.${createdUser.getId()}.create`, createdUser);
 
       return createdUser;
     } catch (error) {

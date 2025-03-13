@@ -26,6 +26,7 @@ import { TOTP } from '../../validators/MFA.validator';
 import { Redis } from 'ioredis';
 import { ProjectUsageService } from 'src/core/project-usage.service';
 import { Namespace, Scope } from 'src/core/decorators';
+import { FastifyRequest } from 'fastify';
 
 @Injectable()
 export class ApiInterceptor implements NestInterceptor {
@@ -37,7 +38,7 @@ export class ApiInterceptor implements NestInterceptor {
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<FastifyRequest>();
     const params = new ParamsHelper(request);
     const project = request[PROJECT] as Document;
     let user = request[USER] as Document;
@@ -94,7 +95,7 @@ export class ApiInterceptor implements NestInterceptor {
 
         throw new Exception(
           Exception.GENERAL_UNAUTHORIZED_SCOPE,
-          `${user.getAttribute('email', 'User')} (role: #) missing scopes (${missingScopes.join(', ')})`,
+          `${user.getAttribute('email', 'User')} (role: ${request['role'] ?? '#'}) missing scopes (${missingScopes.join(', ')})`,
         );
       }
     }

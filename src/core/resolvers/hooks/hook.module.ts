@@ -12,21 +12,17 @@ import { HOOKS } from 'src/Utils/constants';
   providers: [
     {
       provide: HOOKS,
+      // For less repetition, pass hooks as a rest parameter
       useFactory: (
-        projectHook: ProjectHook,
-        authHook: AuthHook,
-        hostHook: HostHook,
-        apiHook: ApiHook,
-        projectUsageHook: ProjectUsageHook,
-        corsHook: CorsHook,
-      ) => [
-        projectHook,
-        hostHook,
-        corsHook,
-        authHook,
-        apiHook,
-        projectUsageHook,
-      ],
+        ...hooks: [
+          ProjectHook,
+          AuthHook,
+          HostHook,
+          ApiHook,
+          ProjectUsageHook,
+          CorsHook,
+        ]
+      ) => hooks,
       inject: [
         ProjectHook,
         AuthHook,

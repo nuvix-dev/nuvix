@@ -31,11 +31,13 @@ import { CreateTargetDTO, UpdateTargetDTO } from './dto/target.dto';
 import { Models } from 'src/core/helper/response.helper';
 import { ResponseInterceptor } from 'src/core/resolvers/interceptors/response.interceptor';
 import {
+  AuditEvent,
   Label,
   Namespace,
   Project,
   ResModel,
   Scope,
+  AuthType,
 } from 'src/core/decorators';
 import { FastifyRequest } from 'fastify';
 import { CreateTokenDTO } from './dto/token.dto';
@@ -44,12 +46,13 @@ import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
 import type { Document, Query as Queries } from '@nuvix/database';
 import { ProjectGuard } from 'src/core/resolvers/guards/project.guard';
 import { ApiInterceptor } from 'src/core/resolvers/interceptors/api.interceptor';
-import { CACHE } from 'src/Utils/constants';
+import { APP_AUTH_TYPE_KEY, CACHE } from 'src/Utils/constants';
 import { Cache } from '@nuvix/cache';
 
-@Controller({ version: ['1'], path: 'users' })
-@UseGuards(ProjectGuard)
 @Namespace('users')
+@Controller({ version: ['1'], path: 'users' })
+@AuthType(APP_AUTH_TYPE_KEY)
+@UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class UsersController {
   constructor(
@@ -73,7 +76,8 @@ export class UsersController {
   @Scope('users.create')
   @Label('res.type', 'JSON')
   @Label('res.status', 'CREATED')
-  @ResModel({ type: Models.USER })
+  @ResModel(Models.USER)
+  @AuditEvent('user.create', 'user/{res.$id}')
   async create(
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: Document,
@@ -83,7 +87,10 @@ export class UsersController {
 
   @Post('argon2')
   @Scope('users.create')
-  @ResModel({ type: Models.USER })
+  @Label('res.type', 'JSON')
+  @Label('res.status', 'CREATED')
+  @ResModel(Models.USER)
+  @AuditEvent('user.create', 'user/{res.$id}')
   async createWithArgon2(
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: Document,
@@ -93,7 +100,10 @@ export class UsersController {
 
   @Post('bcrypt')
   @Scope('users.create')
-  @ResModel({ type: Models.USER })
+  @Label('res.type', 'JSON')
+  @Label('res.status', 'CREATED')
+  @ResModel(Models.USER)
+  @AuditEvent('user.create', 'user/{res.$id}')
   async createWithBcrypt(
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: Document,
@@ -103,7 +113,10 @@ export class UsersController {
 
   @Post('md5')
   @Scope('users.create')
-  @ResModel({ type: Models.USER })
+  @Label('res.type', 'JSON')
+  @Label('res.status', 'CREATED')
+  @ResModel(Models.USER)
+  @AuditEvent('user.create', 'user/{res.$id}')
   async createWithMd5(
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: Document,
@@ -113,7 +126,10 @@ export class UsersController {
 
   @Post('sha')
   @Scope('users.create')
-  @ResModel({ type: Models.USER })
+  @Label('res.type', 'JSON')
+  @Label('res.status', 'CREATED')
+  @ResModel(Models.USER)
+  @AuditEvent('user.create', 'user/{res.$id}')
   async createWithSha(
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: Document,
@@ -123,7 +139,10 @@ export class UsersController {
 
   @Post('phpass')
   @Scope('users.create')
-  @ResModel({ type: Models.USER })
+  @Label('res.type', 'JSON')
+  @Label('res.status', 'CREATED')
+  @ResModel(Models.USER)
+  @AuditEvent('user.create', 'user/{res.$id}')
   async createWithPhpass(
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: Document,
@@ -133,7 +152,10 @@ export class UsersController {
 
   @Post('scrypt')
   @Scope('users.create')
-  @ResModel({ type: Models.USER })
+  @Label('res.type', 'JSON')
+  @Label('res.status', 'CREATED')
+  @ResModel(Models.USER)
+  @AuditEvent('user.create', 'user/{res.$id}')
   async createWithScrypt(
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: Document,
@@ -143,7 +165,10 @@ export class UsersController {
 
   @Post('scrypt-modified')
   @Scope('users.create')
-  @ResModel({ type: Models.USER })
+  @Label('res.type', 'JSON')
+  @Label('res.status', 'CREATED')
+  @ResModel(Models.USER)
+  @AuditEvent('user.create', 'user/{res.$id}')
   async createWithScryptModified(
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: Document,
@@ -175,7 +200,7 @@ export class UsersController {
 
   @Get(':id')
   @Scope('users.read')
-  @ResModel({ type: Models.USER })
+  @ResModel(Models.USER)
   async findOne(@Param('id') id: string) {
     return await this.usersService.findOne(id);
   }
@@ -259,7 +284,11 @@ export class UsersController {
   }
 
   @Post(':id/targets')
-  @ResModel({ type: Models.TARGET })
+  @Scope('targets.create')
+  @Label('res.type', 'JSON')
+  @Label('res.status', 'CREATED')
+  @ResModel(Models.TARGET)
+  @AuditEvent('target.create', 'target/{res.$id}')
   async addTarget(
     @Param('id') id: string,
     @Body() createTargetDTO: CreateTargetDTO,

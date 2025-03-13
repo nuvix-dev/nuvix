@@ -9,3 +9,4 @@ export * from './user.decorator';
 
 export * from './sdk.decorator';
 export * from './scope.decorator';
+export * from './events.decorator';
