@@ -88,7 +88,7 @@ export class DatabaseQueue extends Queue {
     );
 
     const dbForConsole = this.dbForConsole;
-    const dbForProject = await this.getProjectDb(project.getId());
+    const dbForProject = await this.getProjectDb(project.getInternalId());
 
     if (collection.isEmpty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -102,14 +102,13 @@ export class DatabaseQueue extends Queue {
     // const events = Event.generateEvents('databases.[databaseId].collections.[collectionId].attributes.[attributeId].update', {
     //   databaseId: database.getId(),
     //   collectionId: collection.getId(),
-    //   attributeId: attribute.getAttribute("key") 
+    //   attributeId: attribute.getId()
     // });
 
     await Authorization.skip(async () => {
-      dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
       attribute = await dbForProject.getDocument(
         'attributes',
-        attribute.getAttribute("key") ,
+        attribute.getId(),
       );
 
       if (attribute.isEmpty()) {
@@ -143,42 +142,43 @@ export class DatabaseQueue extends Queue {
             if (relatedCollection.isEmpty()) {
               throw new DatabaseError('Collection not found');
             }
-
-            if (
-              !(await dbForProject.createRelationship(
-                'database_' +
-                  database.getInternalId() +
-                  '_collection_' +
-                  collection.getInternalId(),
-                'database_' +
-                  database.getInternalId() +
-                  '_collection_' +
-                  relatedCollection.getInternalId(),
-                options['relationType'],
-                options['twoWay'],
-                key,
-                options['twoWayKey'],
-                options['onDelete'],
-              ))
-            ) {
-              throw new DatabaseError('Failed to create Attribute');
-            }
-
-            if (options['twoWay']) {
-              relatedAttribute = await dbForProject.getDocument(
-                'attributes',
-                database.getInternalId() +
-                  '_' +
-                  relatedCollection.getInternalId() +
-                  '_' +
+            await Authorization.skip(async () => {
+              if (
+                !(await dbForProject.createRelationship(
+                  'database_' +
+                    database.getInternalId() +
+                    '_collection_' +
+                    collection.getInternalId(),
+                  'database_' +
+                    database.getInternalId() +
+                    '_collection_' +
+                    relatedCollection.getInternalId(),
+                  options['relationType'],
+                  options['twoWay'],
+                  key,
                   options['twoWayKey'],
-              );
-              await dbForProject.updateDocument(
-                'attributes',
-                relatedAttribute.getAttribute("key") ,
-                relatedAttribute.setAttribute('status', 'available'),
-              );
-            }
+                  options['onDelete'],
+                ))
+              ) {
+                throw new DatabaseError('Failed to create Attribute');
+              }
+
+              if (options['twoWay']) {
+                relatedAttribute = await dbForProject.getDocument(
+                  'attributes',
+                  database.getInternalId() +
+                    '_' +
+                    relatedCollection.getInternalId() +
+                    '_' +
+                    options['twoWayKey'],
+                );
+                await dbForProject.updateDocument(
+                  'attributes',
+                  relatedAttribute.getId(),
+                  relatedAttribute.setAttribute('status', 'available'),
+                );
+              }
+            });
             break;
           default:
             if (
@@ -205,7 +205,7 @@ export class DatabaseQueue extends Queue {
 
         await dbForProject.updateDocument(
           'attributes',
-          attribute.getAttribute("key") ,
+          attribute.getId(),
           attribute.setAttribute('status', 'available'),
         );
       } catch (e) {
@@ -220,14 +220,14 @@ export class DatabaseQueue extends Queue {
 
         await dbForProject.updateDocument(
           'attributes',
-          attribute.getAttribute("key") ,
+          attribute.getId(),
           attribute.setAttribute('status', 'failed'),
         );
 
         if (relatedAttribute) {
           await dbForProject.updateDocument(
             'attributes',
-            relatedAttribute.getAttribute("key") ,
+            relatedAttribute.getId(),
             relatedAttribute.setAttribute('status', 'failed'),
           );
         }
@@ -255,7 +255,7 @@ export class DatabaseQueue extends Queue {
     let attribute = new Document(data.attribute);
     const project = new Document(data.project);
     const dbForConsole = this.dbForConsole;
-    const dbForProject = await this.getProjectDb(project.getId());
+    const dbForProject = await this.getProjectDb(project.getInternalId());
 
     if (collection.isEmpty()) {
       throw new Error('Missing collection');
@@ -269,11 +269,10 @@ export class DatabaseQueue extends Queue {
     // const events = Event.generateEvents('databases.[databaseId].collections.[collectionId].attributes.[attributeId].delete', {
     //   databaseId: database.getId(),
     //   collectionId: collection.getId(),
-    //   attributeId: attribute.getAttribute("key") 
+    //   attributeId: attribute.getId()
     // });
 
     await Authorization.skip(async () => {
-      dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
       const collectionId = collection.getId();
       const key = attribute.getAttribute('key', '');
       const status = attribute.getAttribute('status', '');
@@ -315,7 +314,7 @@ export class DatabaseQueue extends Queue {
             ) {
               await dbForProject.updateDocument(
                 'attributes',
-                relatedAttribute.getAttribute("key") ,
+                relatedAttribute.getId(),
                 relatedAttribute.setAttribute('status', 'stuck'),
               );
               throw new DatabaseError('Failed to delete Relationship');
@@ -333,12 +332,12 @@ export class DatabaseQueue extends Queue {
           }
         }
 
-        await dbForProject.deleteDocument('attributes', attribute.getAttribute("key") );
+        await dbForProject.deleteDocument('attributes', attribute.getId());
 
         if (relatedAttribute && !relatedAttribute.isEmpty()) {
           await dbForProject.deleteDocument(
             'attributes',
-            relatedAttribute.getAttribute("key") ,
+            relatedAttribute.getId(),
           );
         }
       } catch (e) {
@@ -352,13 +351,13 @@ export class DatabaseQueue extends Queue {
         }
         await dbForProject.updateDocument(
           'attributes',
-          attribute.getAttribute("key") ,
+          attribute.getId(),
           attribute.setAttribute('status', 'stuck'),
         );
         if (relatedAttribute && !relatedAttribute.isEmpty()) {
           await dbForProject.updateDocument(
             'attributes',
-            relatedAttribute.getAttribute("key") ,
+            relatedAttribute.getId(),
             relatedAttribute.setAttribute('status', 'stuck'),
           );
         }
@@ -461,7 +460,7 @@ export class DatabaseQueue extends Queue {
     let index = new Document(data.index);
     const project = new Document(data.project);
     const dbForConsole = this.dbForConsole;
-    const dbForProject = await this.getProjectDb(project.getId());
+    const dbForProject = await this.getProjectDb(project.getInternalId());
 
     if (collection.isEmpty()) {
       throw new Error('Missing collection');
@@ -479,7 +478,6 @@ export class DatabaseQueue extends Queue {
     // });
 
     await Authorization.skip(async () => {
-      dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
       const collectionId = collection.getId();
       const key = index.getAttribute('key', '');
       const type = index.getAttribute('type', '');
@@ -537,7 +535,7 @@ export class DatabaseQueue extends Queue {
     let index = new Document(data.index);
     const project = new Document(data.project);
     const dbForConsole = this.dbForConsole;
-    const dbForProject = await this.getProjectDb(project.getId());
+    const dbForProject = await this.getProjectDb(project.getInternalId());
 
     if (collection.isEmpty()) {
       throw new Error('Missing collection');
@@ -555,7 +553,6 @@ export class DatabaseQueue extends Queue {
     // });
 
     await Authorization.skip(async () => {
-      dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
       const key = index.getAttribute('key', '');
       const status = index.getAttribute('status', '');
       const projectDoc = await dbForConsole.getDocument('projects', projectId);
@@ -600,12 +597,11 @@ export class DatabaseQueue extends Queue {
   private async deleteDatabase(data: any, token: any): Promise<void> {
     const database = new Document(data.database);
     const project = new Document(data.project);
-    const dbForProject = await this.getProjectDb(project.getId());
+    const dbForProject = await this.getProjectDb(project.getInternalId());
 
     const databaseId = 'database_' + database.getInternalId();
 
     await Authorization.skip(async () => {
-      dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
       await this.deleteByGroup(
         databaseId,
         [],
@@ -637,14 +633,13 @@ export class DatabaseQueue extends Queue {
     const database = new Document(data.database);
     const project = new Document(data.project);
     let collection = new Document(data.collection);
-    const dbForProject = await this.getProjectDb(project.getId());
+    const dbForProject = await this.getProjectDb(project.getInternalId());
 
     if (collection.isEmpty()) {
       throw new Error('Missing collection');
     }
 
     await Authorization.skip(async () => {
-      dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
       const collectionId = collection.getId();
       const collectionInternalId = collection.getInternalId();
       const databaseId = database.getId();
