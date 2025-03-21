@@ -1,4 +1,10 @@
-import { Database, DatabaseError, Document, Query } from '@nuvix/database';
+import {
+  Authorization,
+  Database,
+  DatabaseError,
+  Document,
+  Query,
+} from '@nuvix/database';
 import { Queue } from './queue';
 import { Exception } from 'src/core/extend/exception';
 import { OnWorkerEvent, Processor } from '@nestjs/bullmq';
@@ -11,7 +17,7 @@ import {
   DATABASE_TYPE_DELETE_DATABASE,
   DATABASE_TYPE_DELETE_INDEX,
   DB_FOR_CONSOLE,
-  DB_FOR_PROJECT,
+  GET_PROJECT_DB,
 } from 'src/Utils/constants';
 import { Inject, Logger } from '@nestjs/common';
 
@@ -21,7 +27,8 @@ export class DatabaseQueue extends Queue {
 
   constructor(
     @Inject(DB_FOR_CONSOLE) private readonly dbForConsole: Database,
-    @Inject(DB_FOR_PROJECT) private readonly dbForProject: Database,
+    @Inject(GET_PROJECT_DB)
+    private readonly getProjectDb: (projectId: string) => Promise<Database>,
   ) {
     super();
   }
@@ -81,7 +88,7 @@ export class DatabaseQueue extends Queue {
     );
 
     const dbForConsole = this.dbForConsole;
-    const dbForProject = this.dbForProject;
+    const dbForProject = await this.getProjectDb(project.getId());
 
     if (collection.isEmpty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -98,154 +105,148 @@ export class DatabaseQueue extends Queue {
     //   attributeId: attribute.getId()
     // });
 
-    await dbForProject.withTenant(
-      project.getAttribute('$internalId'),
-      async () => {
-        dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
-        attribute = await dbForProject.getDocument(
+    await Authorization.skip(async () => {
+      dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
+      attribute = await dbForProject.getDocument(
+        'attributes',
+        attribute.getId(),
+      );
+
+      if (attribute.isEmpty()) {
+        return;
+      }
+
+      const collectionId = collection.getId();
+      const key = attribute.getAttribute('key', '');
+      const type = attribute.getAttribute('type', '');
+      const size = attribute.getAttribute('size', 0);
+      const required = attribute.getAttribute('required', false);
+      const defaultValue = attribute.getAttribute('default', null);
+      const signed = attribute.getAttribute('signed', true);
+      const array = attribute.getAttribute('array', false);
+      const format = attribute.getAttribute('format', '');
+      const formatOptions = attribute.getAttribute('formatOptions', {});
+      const filters = attribute.getAttribute('filters', []);
+      const options = attribute.getAttribute('options', {});
+      const projectDoc = await dbForConsole.getDocument('projects', projectId);
+
+      let relatedAttribute: Document;
+      let relatedCollection: Document;
+
+      try {
+        switch (type) {
+          case Database.VAR_RELATIONSHIP:
+            relatedCollection = await dbForProject.getDocument(
+              'database_' + database.getInternalId(),
+              options['relatedCollection'],
+            );
+            if (relatedCollection.isEmpty()) {
+              throw new DatabaseError('Collection not found');
+            }
+
+            if (
+              !(await dbForProject.createRelationship(
+                'database_' +
+                  database.getInternalId() +
+                  '_collection_' +
+                  collection.getInternalId(),
+                'database_' +
+                  database.getInternalId() +
+                  '_collection_' +
+                  relatedCollection.getInternalId(),
+                options['relationType'],
+                options['twoWay'],
+                key,
+                options['twoWayKey'],
+                options['onDelete'],
+              ))
+            ) {
+              throw new DatabaseError('Failed to create Attribute');
+            }
+
+            if (options['twoWay']) {
+              relatedAttribute = await dbForProject.getDocument(
+                'attributes',
+                database.getInternalId() +
+                  '_' +
+                  relatedCollection.getInternalId() +
+                  '_' +
+                  options['twoWayKey'],
+              );
+              await dbForProject.updateDocument(
+                'attributes',
+                relatedAttribute.getId(),
+                relatedAttribute.setAttribute('status', 'available'),
+              );
+            }
+            break;
+          default:
+            if (
+              !(await dbForProject.createAttribute(
+                'database_' +
+                  database.getInternalId() +
+                  '_collection_' +
+                  collection.getInternalId(),
+                key,
+                type,
+                size,
+                required,
+                defaultValue,
+                signed,
+                array,
+                format,
+                formatOptions,
+                filters,
+              ))
+            ) {
+              throw new Error('Failed to create Attribute');
+            }
+        }
+
+        await dbForProject.updateDocument(
           'attributes',
           attribute.getId(),
+          attribute.setAttribute('status', 'available'),
         );
+      } catch (e) {
+        console.error(e.message);
 
-        if (attribute.isEmpty()) {
-          return;
-        }
-
-        const collectionId = collection.getId();
-        const key = attribute.getAttribute('key', '');
-        const type = attribute.getAttribute('type', '');
-        const size = attribute.getAttribute('size', 0);
-        const required = attribute.getAttribute('required', false);
-        const defaultValue = attribute.getAttribute('default', null);
-        const signed = attribute.getAttribute('signed', true);
-        const array = attribute.getAttribute('array', false);
-        const format = attribute.getAttribute('format', '');
-        const formatOptions = attribute.getAttribute('formatOptions', {});
-        const filters = attribute.getAttribute('filters', []);
-        const options = attribute.getAttribute('options', {});
-        const projectDoc = await dbForConsole.getDocument(
-          'projects',
-          projectId,
-        );
-
-        let relatedAttribute: Document;
-        let relatedCollection: Document;
-
-        try {
-          switch (type) {
-            case Database.VAR_RELATIONSHIP:
-              relatedCollection = await dbForProject.getDocument(
-                'database_' + database.getInternalId(),
-                options['relatedCollection'],
-              );
-              if (relatedCollection.isEmpty()) {
-                throw new DatabaseError('Collection not found');
-              }
-
-              if (
-                !(await dbForProject.createRelationship(
-                  'database_' +
-                    database.getInternalId() +
-                    '_collection_' +
-                    collection.getInternalId(),
-                  'database_' +
-                    database.getInternalId() +
-                    '_collection_' +
-                    relatedCollection.getInternalId(),
-                  options['relationType'],
-                  options['twoWay'],
-                  key,
-                  options['twoWayKey'],
-                  options['onDelete'],
-                ))
-              ) {
-                throw new DatabaseError('Failed to create Attribute');
-              }
-
-              if (options['twoWay']) {
-                relatedAttribute = await dbForProject.getDocument(
-                  'attributes',
-                  database.getInternalId() +
-                    '_' +
-                    relatedCollection.getInternalId() +
-                    '_' +
-                    options['twoWayKey'],
-                );
-                await dbForProject.updateDocument(
-                  'attributes',
-                  relatedAttribute.getId(),
-                  relatedAttribute.setAttribute('status', 'available'),
-                );
-              }
-              break;
-            default:
-              if (
-                !(await dbForProject.createAttribute(
-                  'database_' +
-                    database.getInternalId() +
-                    '_collection_' +
-                    collection.getInternalId(),
-                  key,
-                  type,
-                  size,
-                  required,
-                  defaultValue,
-                  signed,
-                  array,
-                  format,
-                  formatOptions,
-                  filters,
-                ))
-              ) {
-                throw new Error('Failed to create Attribute');
-              }
-          }
-
-          await dbForProject.updateDocument(
-            'attributes',
-            attribute.getId(),
-            attribute.setAttribute('status', 'available'),
-          );
-        } catch (e) {
-          console.error(e.message);
-
-          if (e instanceof DatabaseError) {
-            attribute.setAttribute('error', e.message);
-            if (relatedAttribute) {
-              relatedAttribute.setAttribute('error', e.message);
-            }
-          }
-
-          await dbForProject.updateDocument(
-            'attributes',
-            attribute.getId(),
-            attribute.setAttribute('status', 'failed'),
-          );
-
+        if (e instanceof DatabaseError) {
+          attribute.setAttribute('error', e.message);
           if (relatedAttribute) {
-            await dbForProject.updateDocument(
-              'attributes',
-              relatedAttribute.getId(),
-              relatedAttribute.setAttribute('status', 'failed'),
-            );
+            relatedAttribute.setAttribute('error', e.message);
           }
-        } finally {
-          // this.trigger(database, collection, attribute, projectDoc, projectId, events);
         }
 
-        if (type === Database.VAR_RELATIONSHIP && options['twoWay']) {
-          await dbForProject.purgeCachedDocument(
-            'database_' + database.getInternalId(),
-            relatedCollection.getId(),
+        await dbForProject.updateDocument(
+          'attributes',
+          attribute.getId(),
+          attribute.setAttribute('status', 'failed'),
+        );
+
+        if (relatedAttribute) {
+          await dbForProject.updateDocument(
+            'attributes',
+            relatedAttribute.getId(),
+            relatedAttribute.setAttribute('status', 'failed'),
           );
         }
+      } finally {
+        // this.trigger(database, collection, attribute, projectDoc, projectId, events);
+      }
 
+      if (type === Database.VAR_RELATIONSHIP && options['twoWay']) {
         await dbForProject.purgeCachedDocument(
           'database_' + database.getInternalId(),
-          collectionId,
+          relatedCollection.getId(),
         );
-      },
-    );
+      }
+
+      await dbForProject.purgeCachedDocument(
+        'database_' + database.getInternalId(),
+        collectionId,
+      );
+    });
   }
 
   private async deleteAttribute(data: any, token: any): Promise<void> {
@@ -254,7 +255,7 @@ export class DatabaseQueue extends Queue {
     let attribute = new Document(data.attribute);
     const project = new Document(data.project);
     const dbForConsole = this.dbForConsole;
-    const dbForProject = this.dbForProject;
+    const dbForProject = await this.getProjectDb(project.getId());
 
     if (collection.isEmpty()) {
       throw new Error('Missing collection');
@@ -271,61 +272,40 @@ export class DatabaseQueue extends Queue {
     //   attributeId: attribute.getId()
     // });
 
-    await dbForProject.withTenant(
-      project.getAttribute('$internalId'),
-      async () => {
-        dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
-        const collectionId = collection.getId();
-        const key = attribute.getAttribute('key', '');
-        const status = attribute.getAttribute('status', '');
-        const type = attribute.getAttribute('type', '');
-        const projectDoc = await dbForConsole.getDocument(
-          'projects',
-          projectId,
-        );
-        const options = attribute.getAttribute('options', []);
-        let relatedAttribute: Document;
-        let relatedCollection: Document;
+    await Authorization.skip(async () => {
+      dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
+      const collectionId = collection.getId();
+      const key = attribute.getAttribute('key', '');
+      const status = attribute.getAttribute('status', '');
+      const type = attribute.getAttribute('type', '');
+      const projectDoc = await dbForConsole.getDocument('projects', projectId);
+      const options = attribute.getAttribute('options', []);
+      let relatedAttribute: Document;
+      let relatedCollection: Document;
 
-        try {
-          if (status !== 'failed') {
-            if (type === Database.VAR_RELATIONSHIP) {
-              if (options['twoWay']) {
-                relatedCollection = await dbForProject.getDocument(
-                  'database_' + database.getInternalId(),
-                  options['relatedCollection'],
-                );
-                if (relatedCollection.isEmpty()) {
-                  throw new DatabaseError('Collection not found');
-                }
-                relatedAttribute = await dbForProject.getDocument(
-                  'attributes',
-                  database.getInternalId() +
-                    '_' +
-                    relatedCollection.getInternalId() +
-                    '_' +
-                    options['twoWayKey'],
-                );
+      try {
+        if (status !== 'failed') {
+          if (type === Database.VAR_RELATIONSHIP) {
+            if (options['twoWay']) {
+              relatedCollection = await dbForProject.getDocument(
+                'database_' + database.getInternalId(),
+                options['relatedCollection'],
+              );
+              if (relatedCollection.isEmpty()) {
+                throw new DatabaseError('Collection not found');
               }
+              relatedAttribute = await dbForProject.getDocument(
+                'attributes',
+                database.getInternalId() +
+                  '_' +
+                  relatedCollection.getInternalId() +
+                  '_' +
+                  options['twoWayKey'],
+              );
+            }
 
-              if (
-                !(await dbForProject.deleteRelationship(
-                  'database_' +
-                    database.getInternalId() +
-                    '_collection_' +
-                    collection.getInternalId(),
-                  key,
-                ))
-              ) {
-                await dbForProject.updateDocument(
-                  'attributes',
-                  relatedAttribute.getId(),
-                  relatedAttribute.setAttribute('status', 'stuck'),
-                );
-                throw new DatabaseError('Failed to delete Relationship');
-              }
-            } else if (
-              !(await dbForProject.deleteAttribute(
+            if (
+              !(await dbForProject.deleteRelationship(
                 'database_' +
                   database.getInternalId() +
                   '_collection_' +
@@ -333,131 +313,146 @@ export class DatabaseQueue extends Queue {
                 key,
               ))
             ) {
-              throw new DatabaseError('Failed to delete Attribute');
+              await dbForProject.updateDocument(
+                'attributes',
+                relatedAttribute.getId(),
+                relatedAttribute.setAttribute('status', 'stuck'),
+              );
+              throw new DatabaseError('Failed to delete Relationship');
             }
+          } else if (
+            !(await dbForProject.deleteAttribute(
+              'database_' +
+                database.getInternalId() +
+                '_collection_' +
+                collection.getInternalId(),
+              key,
+            ))
+          ) {
+            throw new DatabaseError('Failed to delete Attribute');
           }
+        }
 
-          await dbForProject.deleteDocument('attributes', attribute.getId());
+        await dbForProject.deleteDocument('attributes', attribute.getId());
 
+        if (relatedAttribute && !relatedAttribute.isEmpty()) {
+          await dbForProject.deleteDocument(
+            'attributes',
+            relatedAttribute.getId(),
+          );
+        }
+      } catch (e) {
+        console.error(e.message);
+
+        if (e instanceof DatabaseError) {
+          attribute.setAttribute('error', e.message);
           if (relatedAttribute && !relatedAttribute.isEmpty()) {
-            await dbForProject.deleteDocument(
-              'attributes',
-              relatedAttribute.getId(),
-            );
+            relatedAttribute.setAttribute('error', e.message);
           }
-        } catch (e) {
-          console.error(e.message);
-
-          if (e instanceof DatabaseError) {
-            attribute.setAttribute('error', e.message);
-            if (relatedAttribute && !relatedAttribute.isEmpty()) {
-              relatedAttribute.setAttribute('error', e.message);
-            }
-          }
+        }
+        await dbForProject.updateDocument(
+          'attributes',
+          attribute.getId(),
+          attribute.setAttribute('status', 'stuck'),
+        );
+        if (relatedAttribute && !relatedAttribute.isEmpty()) {
           await dbForProject.updateDocument(
             'attributes',
-            attribute.getId(),
-            attribute.setAttribute('status', 'stuck'),
+            relatedAttribute.getId(),
+            relatedAttribute.setAttribute('status', 'stuck'),
           );
-          if (relatedAttribute && !relatedAttribute.isEmpty()) {
-            await dbForProject.updateDocument(
-              'attributes',
-              relatedAttribute.getId(),
-              relatedAttribute.setAttribute('status', 'stuck'),
-            );
-          }
-        } finally {
-          // this.trigger(database, collection, attribute, projectDoc, projectId, events);
         }
+      } finally {
+        // this.trigger(database, collection, attribute, projectDoc, projectId, events);
+      }
 
-        const indexes = collection.getAttribute('indexes', []);
+      const indexes = collection.getAttribute('indexes', []);
 
-        for (const index of indexes) {
-          const attributes = index.getAttribute('attributes');
-          const lengths = index.getAttribute('lengths');
-          const orders = index.getAttribute('orders');
+      for (const index of indexes) {
+        const attributes = index.getAttribute('attributes');
+        const lengths = index.getAttribute('lengths');
+        const orders = index.getAttribute('orders');
 
-          const found = attributes.indexOf(key);
+        const found = attributes.indexOf(key);
 
-          if (found !== -1) {
-            attributes.splice(found, 1);
-            if (lengths[found]) lengths.splice(found, 1);
-            if (orders[found]) orders.splice(found, 1);
+        if (found !== -1) {
+          attributes.splice(found, 1);
+          if (lengths[found]) lengths.splice(found, 1);
+          if (orders[found]) orders.splice(found, 1);
 
-            if (attributes.length === 0) {
-              await dbForProject.deleteDocument('indexes', index.getId());
-            } else {
-              index.setAttribute('attributes', attributes);
-              index.setAttribute('lengths', lengths);
-              index.setAttribute('orders', orders);
+          if (attributes.length === 0) {
+            await dbForProject.deleteDocument('indexes', index.getId());
+          } else {
+            index.setAttribute('attributes', attributes);
+            index.setAttribute('lengths', lengths);
+            index.setAttribute('orders', orders);
 
-              let exists = false;
-              for (const existing of indexes) {
-                if (
-                  existing.getAttribute('key') !== index.getAttribute('key') &&
-                  existing.getAttribute('attributes').toString() ===
-                    index.getAttribute('attributes').toString() &&
-                  existing.getAttribute('orders').toString() ===
-                    index.getAttribute('orders').toString()
-                ) {
-                  exists = true;
-                  break;
-                }
+            let exists = false;
+            for (const existing of indexes) {
+              if (
+                existing.getAttribute('key') !== index.getAttribute('key') &&
+                existing.getAttribute('attributes').toString() ===
+                  index.getAttribute('attributes').toString() &&
+                existing.getAttribute('orders').toString() ===
+                  index.getAttribute('orders').toString()
+              ) {
+                exists = true;
+                break;
               }
+            }
 
-              if (exists) {
-                await this.deleteIndex(
-                  {
-                    database,
-                    collection,
-                    index,
-                    projectDoc,
-                    dbForConsole,
-                    dbForProject,
-                  },
-                  token,
-                );
-              } else {
-                await dbForProject.updateDocument(
-                  'indexes',
-                  index.getId(),
+            if (exists) {
+              await this.deleteIndex(
+                {
+                  database,
+                  collection,
                   index,
-                );
-              }
+                  projectDoc,
+                  dbForConsole,
+                  dbForProject,
+                },
+                token,
+              );
+            } else {
+              await dbForProject.updateDocument(
+                'indexes',
+                index.getId(),
+                index,
+              );
             }
           }
         }
+      }
 
+      await dbForProject.purgeCachedDocument(
+        'database_' + database.getInternalId(),
+        collectionId,
+      );
+      await dbForProject.purgeCachedCollection(
+        'database_' +
+          database.getInternalId() +
+          '_collection_' +
+          collection.getInternalId(),
+      );
+
+      if (
+        relatedCollection &&
+        !relatedCollection.isEmpty() &&
+        relatedAttribute &&
+        !relatedAttribute.isEmpty()
+      ) {
         await dbForProject.purgeCachedDocument(
           'database_' + database.getInternalId(),
-          collectionId,
+          relatedCollection.getId(),
         );
         await dbForProject.purgeCachedCollection(
           'database_' +
             database.getInternalId() +
             '_collection_' +
-            collection.getInternalId(),
+            relatedCollection.getInternalId(),
         );
-
-        if (
-          relatedCollection &&
-          !relatedCollection.isEmpty() &&
-          relatedAttribute &&
-          !relatedAttribute.isEmpty()
-        ) {
-          await dbForProject.purgeCachedDocument(
-            'database_' + database.getInternalId(),
-            relatedCollection.getId(),
-          );
-          await dbForProject.purgeCachedCollection(
-            'database_' +
-              database.getInternalId() +
-              '_collection_' +
-              relatedCollection.getInternalId(),
-          );
-        }
-      },
-    );
+      }
+    });
   }
 
   private async createIndex(data: any, token: any): Promise<void> {
@@ -466,7 +461,7 @@ export class DatabaseQueue extends Queue {
     let index = new Document(data.index);
     const project = new Document(data.project);
     const dbForConsole = this.dbForConsole;
-    const dbForProject = this.dbForProject;
+    const dbForProject = await this.getProjectDb(project.getId());
 
     if (collection.isEmpty()) {
       throw new Error('Missing collection');
@@ -483,63 +478,57 @@ export class DatabaseQueue extends Queue {
     //   indexId: index.getId()
     // });
 
-    await dbForProject.withTenant(
-      project.getAttribute('$internalId'),
-      async () => {
-        dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
-        const collectionId = collection.getId();
-        const key = index.getAttribute('key', '');
-        const type = index.getAttribute('type', '');
-        const attributes = index.getAttribute('attributes', []);
-        const lengths = index.getAttribute('lengths', []);
-        const orders = index.getAttribute('orders', []);
-        const projectDoc = await dbForConsole.getDocument(
-          'projects',
-          projectId,
-        );
+    await Authorization.skip(async () => {
+      dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
+      const collectionId = collection.getId();
+      const key = index.getAttribute('key', '');
+      const type = index.getAttribute('type', '');
+      const attributes = index.getAttribute('attributes', []);
+      const lengths = index.getAttribute('lengths', []);
+      const orders = index.getAttribute('orders', []);
+      const projectDoc = await dbForConsole.getDocument('projects', projectId);
 
-        try {
-          if (
-            !(await dbForProject.createIndex(
-              'database_' +
-                database.getInternalId() +
-                '_collection_' +
-                collection.getInternalId(),
-              key,
-              type,
-              attributes,
-              lengths,
-              orders,
-            ))
-          ) {
-            throw new DatabaseError('Failed to create Index');
-          }
-          await dbForProject.updateDocument(
-            'indexes',
-            index.getId(),
-            index.setAttribute('status', 'available'),
-          );
-        } catch (e) {
-          console.error(e.message);
-
-          if (e instanceof DatabaseError) {
-            index.setAttribute('error', e.message);
-          }
-          await dbForProject.updateDocument(
-            'indexes',
-            index.getId(),
-            index.setAttribute('status', 'failed'),
-          );
-        } finally {
-          // this.trigger(database, collection, index, projectDoc, projectId, events);
+      try {
+        if (
+          !(await dbForProject.createIndex(
+            'database_' +
+              database.getInternalId() +
+              '_collection_' +
+              collection.getInternalId(),
+            key,
+            type,
+            attributes,
+            lengths,
+            orders,
+          ))
+        ) {
+          throw new DatabaseError('Failed to create Index');
         }
-
-        await dbForProject.purgeCachedDocument(
-          'database_' + database.getInternalId(),
-          collectionId,
+        await dbForProject.updateDocument(
+          'indexes',
+          index.getId(),
+          index.setAttribute('status', 'available'),
         );
-      },
-    );
+      } catch (e) {
+        console.error(e.message);
+
+        if (e instanceof DatabaseError) {
+          index.setAttribute('error', e.message);
+        }
+        await dbForProject.updateDocument(
+          'indexes',
+          index.getId(),
+          index.setAttribute('status', 'failed'),
+        );
+      } finally {
+        // this.trigger(database, collection, index, projectDoc, projectId, events);
+      }
+
+      await dbForProject.purgeCachedDocument(
+        'database_' + database.getInternalId(),
+        collectionId,
+      );
+    });
   }
 
   private async deleteIndex(data: any, token: any): Promise<void> {
@@ -548,7 +537,7 @@ export class DatabaseQueue extends Queue {
     let index = new Document(data.index);
     const project = new Document(data.project);
     const dbForConsole = this.dbForConsole;
-    const dbForProject = this.dbForProject;
+    const dbForProject = await this.getProjectDb(project.getId());
 
     if (collection.isEmpty()) {
       throw new Error('Missing collection');
@@ -565,170 +554,156 @@ export class DatabaseQueue extends Queue {
     //   indexId: index.getId()
     // });
 
-    await dbForProject.withTenant(
-      project.getAttribute('$internalId'),
-      async () => {
-        dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
-        const key = index.getAttribute('key', '');
-        const status = index.getAttribute('status', '');
-        const projectDoc = await dbForConsole.getDocument(
-          'projects',
-          projectId,
-        );
+    await Authorization.skip(async () => {
+      dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
+      const key = index.getAttribute('key', '');
+      const status = index.getAttribute('status', '');
+      const projectDoc = await dbForConsole.getDocument('projects', projectId);
 
-        try {
-          if (
-            status !== 'failed' &&
-            !(await dbForProject.deleteIndex(
-              'database_' +
-                database.getInternalId() +
-                '_collection_' +
-                collection.getInternalId(),
-              key,
-            ))
-          ) {
-            throw new DatabaseError('Failed to delete index');
-          }
-          await dbForProject.deleteDocument('indexes', index.getId());
-          index.setAttribute('status', 'deleted');
-        } catch (e) {
-          console.error(e.message);
-
-          if (e instanceof DatabaseError) {
-            index.setAttribute('error', e.message);
-          }
-          await dbForProject.updateDocument(
-            'indexes',
-            index.getId(),
-            index.setAttribute('status', 'stuck'),
-          );
-        } finally {
-          // this.trigger(database, collection, index, projectDoc, projectId, events);
+      try {
+        if (
+          status !== 'failed' &&
+          !(await dbForProject.deleteIndex(
+            'database_' +
+              database.getInternalId() +
+              '_collection_' +
+              collection.getInternalId(),
+            key,
+          ))
+        ) {
+          throw new DatabaseError('Failed to delete index');
         }
+        await dbForProject.deleteDocument('indexes', index.getId());
+        index.setAttribute('status', 'deleted');
+      } catch (e) {
+        console.error(e.message);
 
-        await dbForProject.purgeCachedDocument(
-          'database_' + database.getInternalId(),
-          collection.getId(),
+        if (e instanceof DatabaseError) {
+          index.setAttribute('error', e.message);
+        }
+        await dbForProject.updateDocument(
+          'indexes',
+          index.getId(),
+          index.setAttribute('status', 'stuck'),
         );
-      },
-    );
+      } finally {
+        // this.trigger(database, collection, index, projectDoc, projectId, events);
+      }
+
+      await dbForProject.purgeCachedDocument(
+        'database_' + database.getInternalId(),
+        collection.getId(),
+      );
+    });
   }
 
   private async deleteDatabase(data: any, token: any): Promise<void> {
     const database = new Document(data.database);
     const project = new Document(data.project);
-    const dbForProject = this.dbForProject;
+    const dbForProject = await this.getProjectDb(project.getId());
 
     const databaseId = 'database_' + database.getInternalId();
 
-    await dbForProject.withTenant(
-      project.getAttribute('$internalId'),
-      async () => {
-        dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
-        await this.deleteByGroup(
-          databaseId,
-          [],
-          dbForProject,
-          async (collection: Document) => {
-            await this.deleteCollection(
-              {
-                database,
-                collection,
-                project,
-                dbForProject,
-              },
-              token,
-            );
-          },
-        );
+    await Authorization.skip(async () => {
+      dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
+      await this.deleteByGroup(
+        databaseId,
+        [],
+        dbForProject,
+        async (collection: Document) => {
+          await this.deleteCollection(
+            {
+              database,
+              collection,
+              project,
+              dbForProject,
+            },
+            token,
+          );
+        },
+      );
 
-        await dbForProject.deleteCollection(databaseId);
+      await dbForProject.deleteCollection(databaseId);
 
-        await this.deleteAuditLogsByResource(
-          'database/' + database.getId(),
-          project,
-          dbForProject,
-        );
-      },
-    );
+      await this.deleteAuditLogsByResource(
+        'database/' + database.getId(),
+        project,
+        dbForProject,
+      );
+    });
   }
 
   private async deleteCollection(data: any, token: any): Promise<void> {
     const database = new Document(data.database);
     const project = new Document(data.project);
     let collection = new Document(data.collection);
-    const dbForProject = this.dbForProject;
+    const dbForProject = await this.getProjectDb(project.getId());
 
     if (collection.isEmpty()) {
       throw new Error('Missing collection');
     }
 
-    await dbForProject.withTenant(
-      project.getAttribute('$internalId'),
-      async () => {
-        dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
-        const collectionId = collection.getId();
-        const collectionInternalId = collection.getInternalId();
-        const databaseId = database.getId();
-        const databaseInternalId = database.getInternalId();
+    await Authorization.skip(async () => {
+      dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
+      const collectionId = collection.getId();
+      const collectionInternalId = collection.getInternalId();
+      const databaseId = database.getId();
+      const databaseInternalId = database.getInternalId();
 
-        await this.deleteByGroup(
-          'attributes',
-          [
-            Query.equal('databaseInternalId', [databaseInternalId]),
-            Query.equal('type', [Database.VAR_RELATIONSHIP]),
-            Query.notEqual('collectionInternalId', collectionInternalId),
-            Query.contains('options', [
-              `"relatedCollection":"${collectionId}"`,
-            ]),
-          ],
-          dbForProject,
-          async (attribute: Document) => {
-            await dbForProject.purgeCachedDocument(
-              'database_' + databaseInternalId,
-              attribute.getAttribute('collectionId'),
-            );
-            await dbForProject.purgeCachedCollection(
-              'database_' +
-                databaseInternalId +
-                '_collection_' +
-                attribute.getAttribute('collectionInternalId'),
-            );
-          },
-        );
+      await this.deleteByGroup(
+        'attributes',
+        [
+          Query.equal('databaseInternalId', [databaseInternalId]),
+          Query.equal('type', [Database.VAR_RELATIONSHIP]),
+          Query.notEqual('collectionInternalId', collectionInternalId),
+          Query.contains('options', [`"relatedCollection":"${collectionId}"`]),
+        ],
+        dbForProject,
+        async (attribute: Document) => {
+          await dbForProject.purgeCachedDocument(
+            'database_' + databaseInternalId,
+            attribute.getAttribute('collectionId'),
+          );
+          await dbForProject.purgeCachedCollection(
+            'database_' +
+              databaseInternalId +
+              '_collection_' +
+              attribute.getAttribute('collectionInternalId'),
+          );
+        },
+      );
 
-        await dbForProject.deleteCollection(
-          'database_' +
-            databaseInternalId +
-            '_collection_' +
-            collectionInternalId,
-        );
+      await dbForProject.deleteCollection(
+        'database_' +
+          databaseInternalId +
+          '_collection_' +
+          collectionInternalId,
+      );
 
-        await this.deleteByGroup(
-          'attributes',
-          [
-            Query.equal('databaseInternalId', [databaseInternalId]),
-            Query.equal('collectionInternalId', [collectionInternalId]),
-          ],
-          dbForProject,
-        );
+      await this.deleteByGroup(
+        'attributes',
+        [
+          Query.equal('databaseInternalId', [databaseInternalId]),
+          Query.equal('collectionInternalId', [collectionInternalId]),
+        ],
+        dbForProject,
+      );
 
-        await this.deleteByGroup(
-          'indexes',
-          [
-            Query.equal('databaseInternalId', [databaseInternalId]),
-            Query.equal('collectionInternalId', [collectionInternalId]),
-          ],
-          dbForProject,
-        );
+      await this.deleteByGroup(
+        'indexes',
+        [
+          Query.equal('databaseInternalId', [databaseInternalId]),
+          Query.equal('collectionInternalId', [collectionInternalId]),
+        ],
+        dbForProject,
+      );
 
-        await this.deleteAuditLogsByResource(
-          'database/' + databaseId + '/collection/' + collectionId,
-          project,
-          dbForProject,
-        );
-      },
-    );
+      await this.deleteAuditLogsByResource(
+        'database/' + databaseId + '/collection/' + collectionId,
+        project,
+        dbForProject,
+      );
+    });
   }
 
   private async deleteAuditLogsByResource(
