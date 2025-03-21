@@ -102,14 +102,14 @@ export class DatabaseQueue extends Queue {
     // const events = Event.generateEvents('databases.[databaseId].collections.[collectionId].attributes.[attributeId].update', {
     //   databaseId: database.getId(),
     //   collectionId: collection.getId(),
-    //   attributeId: attribute.getId()
+    //   attributeId: attribute.getAttribute("key") 
     // });
 
     await Authorization.skip(async () => {
       dbForProject.setPrefix(`_${project.getAttribute('$internalId')}`);
       attribute = await dbForProject.getDocument(
         'attributes',
-        attribute.getId(),
+        attribute.getAttribute("key") ,
       );
 
       if (attribute.isEmpty()) {
@@ -175,7 +175,7 @@ export class DatabaseQueue extends Queue {
               );
               await dbForProject.updateDocument(
                 'attributes',
-                relatedAttribute.getId(),
+                relatedAttribute.getAttribute("key") ,
                 relatedAttribute.setAttribute('status', 'available'),
               );
             }
@@ -205,7 +205,7 @@ export class DatabaseQueue extends Queue {
 
         await dbForProject.updateDocument(
           'attributes',
-          attribute.getId(),
+          attribute.getAttribute("key") ,
           attribute.setAttribute('status', 'available'),
         );
       } catch (e) {
@@ -220,14 +220,14 @@ export class DatabaseQueue extends Queue {
 
         await dbForProject.updateDocument(
           'attributes',
-          attribute.getId(),
+          attribute.getAttribute("key") ,
           attribute.setAttribute('status', 'failed'),
         );
 
         if (relatedAttribute) {
           await dbForProject.updateDocument(
             'attributes',
-            relatedAttribute.getId(),
+            relatedAttribute.getAttribute("key") ,
             relatedAttribute.setAttribute('status', 'failed'),
           );
         }
@@ -269,7 +269,7 @@ export class DatabaseQueue extends Queue {
     // const events = Event.generateEvents('databases.[databaseId].collections.[collectionId].attributes.[attributeId].delete', {
     //   databaseId: database.getId(),
     //   collectionId: collection.getId(),
-    //   attributeId: attribute.getId()
+    //   attributeId: attribute.getAttribute("key") 
     // });
 
     await Authorization.skip(async () => {
@@ -315,7 +315,7 @@ export class DatabaseQueue extends Queue {
             ) {
               await dbForProject.updateDocument(
                 'attributes',
-                relatedAttribute.getId(),
+                relatedAttribute.getAttribute("key") ,
                 relatedAttribute.setAttribute('status', 'stuck'),
               );
               throw new DatabaseError('Failed to delete Relationship');
@@ -333,12 +333,12 @@ export class DatabaseQueue extends Queue {
           }
         }
 
-        await dbForProject.deleteDocument('attributes', attribute.getId());
+        await dbForProject.deleteDocument('attributes', attribute.getAttribute("key") );
 
         if (relatedAttribute && !relatedAttribute.isEmpty()) {
           await dbForProject.deleteDocument(
             'attributes',
-            relatedAttribute.getId(),
+            relatedAttribute.getAttribute("key") ,
           );
         }
       } catch (e) {
@@ -352,13 +352,13 @@ export class DatabaseQueue extends Queue {
         }
         await dbForProject.updateDocument(
           'attributes',
-          attribute.getId(),
+          attribute.getAttribute("key") ,
           attribute.setAttribute('status', 'stuck'),
         );
         if (relatedAttribute && !relatedAttribute.isEmpty()) {
           await dbForProject.updateDocument(
             'attributes',
-            relatedAttribute.getId(),
+            relatedAttribute.getAttribute("key") ,
             relatedAttribute.setAttribute('status', 'stuck'),
           );
         }
