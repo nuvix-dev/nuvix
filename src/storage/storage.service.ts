@@ -26,6 +26,7 @@ import * as fs from 'fs';
 import { JwtService } from '@nestjs/jwt';
 import usageConfig from 'src/core/config/usage';
 import sharp from 'sharp';
+import { MultipartFile } from '@fastify/multipart';
 
 @Injectable()
 export class StorageService {
@@ -34,7 +35,7 @@ export class StorageService {
   constructor(
     @Inject(DB_FOR_CONSOLE) private readonly dbForConsole: Database,
     @Inject(DB_FOR_PROJECT) private readonly db: Database,
-    private readonly jwtSerice: JwtService,
+    private readonly jwtService: JwtService,
   ) {}
 
   /**
@@ -328,7 +329,7 @@ export class StorageService {
   async createFile(
     bucketId: string,
     input: CreateFileDTO,
-    file: Express.Multer.File | Express.Multer.File[],
+    file: MultipartFile,
     request: FastifyRequest,
     user: Document,
     mode: string,
@@ -396,9 +397,9 @@ export class StorageService {
       throw new Exception(Exception.STORAGE_FILE_EMPTY);
     }
 
-    const fileName = file.originalname;
-    const fileBuffer = file.buffer;
-    const fileSize = file.size;
+    const fileName = file.filename;
+    const fileBuffer = await file.toBuffer();
+    const fileSize = fileBuffer.length;
     const fileExt = fileName.split('.').pop();
     const contentRange = request.headers['content-range'];
 
@@ -978,7 +979,7 @@ export class StorageService {
 
     let decoded: any;
     try {
-      decoded = this.jwtSerice.verify(jwt);
+      decoded = this.jwtService.verify(jwt);
     } catch (error) {
       throw new Exception(Exception.USER_UNAUTHORIZED);
     }

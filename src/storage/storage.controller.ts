@@ -11,7 +11,6 @@ import {
   Req,
   Res,
   Scope,
-  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -23,14 +22,14 @@ import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
 import { User } from 'src/core/decorators/user.decorator';
 import { Document, Query as Queries } from '@nuvix/database';
 import { Mode } from 'src/core/decorators/mode.decorator';
-import { FileInterceptor } from '@nestjs/platform-express';
 import { ProjectGuard } from 'src/core/resolvers/guards/project.guard';
-import { ResModel } from 'src/core/decorators';
+import { ResModel, UploadedFile } from 'src/core/decorators';
 
 import { UpdateFileDTO } from './DTO/file.dto';
 import { CreateBucketDTO, UpdateBucketDTO } from './DTO/bucket.dto';
 import { ApiInterceptor } from 'src/core/resolvers/interceptors/api.interceptor';
 import { ParseDuplicatePipe } from 'src/core/pipes/duplicate.pipe';
+import { MultipartFile } from '@fastify/multipart';
 
 @Controller({ version: ['1'], path: 'storage' })
 @UseGuards(ProjectGuard)
@@ -86,12 +85,11 @@ export class StorageController {
 
   @Post('buckets/:id/files')
   @ResModel(Models.FILE)
-  @UseInterceptors(FileInterceptor('file'))
   async createFile(
     @Param('id') id: string,
     @Body('fileId') fileId: string,
     @Body('permissions') permissions: string[] = [],
-    @UploadedFile() file: Express.Multer.File,
+    @UploadedFile() file: MultipartFile,
     @Req() req: FastifyRequest,
     @User('project') user: Document,
     @Mode() mode: string,
