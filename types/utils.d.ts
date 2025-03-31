@@ -8,4 +8,5 @@ declare interface ServerConfig {
   exposedHeaders: string[];
   functionsDomain?: string;
   routerProtection: boolean;
+  maxAge?: number;
 }

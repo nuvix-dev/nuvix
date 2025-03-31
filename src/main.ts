@@ -5,12 +5,9 @@
  * @version 1.0
  * @beta
  */
-import { NestFactory } from '@nestjs/core';
+import { NuvixAdapter, NuvixFactory } from './core/server';
 import { AppModule } from './app.module';
-import {
-  FastifyAdapter,
-  NestFastifyApplication,
-} from '@nestjs/platform-fastify';
+import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { config } from 'dotenv';
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 import { ConsoleLogger, ValidationPipe } from '@nestjs/common';
@@ -24,12 +21,12 @@ config();
 Authorization.enableStorage();
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestFastifyApplication>(
+  const app = await NuvixFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter({
+    new NuvixAdapter({
       trustProxy: true,
       skipMiddie: true,
-      logger: true,
+      logger: false,
     }),
     {
       abortOnError: false,

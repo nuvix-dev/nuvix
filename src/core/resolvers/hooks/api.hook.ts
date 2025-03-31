@@ -17,7 +17,7 @@ import { roles } from 'src/core/config/roles';
 import ParamsHelper from 'src/core/helper/params.helper';
 import { JwtService } from '@nestjs/jwt';
 import { APP_PLATFORM_SERVER, platforms } from 'src/core/config/platforms';
-import { Hook } from './base.hook';
+import { Hook } from '../../server/hooks/interface';
 import { FastifyRequest, FastifyReply } from 'fastify';
 
 @Injectable()

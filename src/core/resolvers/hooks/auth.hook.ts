@@ -12,7 +12,7 @@ import {
   PROJECT,
   USER,
 } from 'src/Utils/constants';
-import { Hook } from './base.hook';
+import { Hook } from '../../server/hooks/interface';
 import { FastifyRequest, FastifyReply } from 'fastify';
 
 @Injectable()

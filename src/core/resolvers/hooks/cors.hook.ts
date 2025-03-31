@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { Document } from '@nuvix/database';
 import { PROJECT, SERVER_CONFIG } from 'src/Utils/constants';
-import { Hook } from './base.hook';
+import { Hook } from '../../server/hooks/interface';
 import {
   addOriginToVaryHeader,
   addAccessControlRequestHeadersToVaryHeader,

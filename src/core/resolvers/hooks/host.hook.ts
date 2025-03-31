@@ -3,7 +3,7 @@ import { Authorization, Database, Document, Query } from '@nuvix/database';
 import { Exception } from 'src/core/extend/exception';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { DB_FOR_CONSOLE, PROJECT, SERVER_CONFIG } from 'src/Utils/constants';
-import { Hook } from './base.hook';
+import { Hook } from '../../server/hooks/interface';
 
 @Injectable()
 export class HostHook implements Hook {

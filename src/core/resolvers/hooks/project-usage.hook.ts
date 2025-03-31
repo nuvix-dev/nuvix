@@ -7,7 +7,7 @@ import {
   PROJECT,
 } from 'src/Utils/constants';
 import { ProjectUsageService } from 'src/core/project-usage.service';
-import { Hook } from './base.hook';
+import { Hook } from '../../server/hooks/interface';
 import { FastifyRequest, FastifyReply } from 'fastify';
 
 @Injectable()

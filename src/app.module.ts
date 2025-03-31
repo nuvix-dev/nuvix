@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { config } from 'dotenv';
@@ -30,7 +30,14 @@ import { StorageModule } from './storage/storage.module';
 import { JwtModule } from '@nestjs/jwt';
 import { MailQueue } from './core/resolvers/queues/mail.queue';
 import { ScheduleModule } from '@nestjs/schedule';
-import { HookModule } from './core/resolvers/hooks/hook.module';
+import {
+  ApiHook,
+  AuthHook,
+  CorsHook,
+  HostHook,
+  ProjectHook,
+  ProjectUsageHook,
+} from './core/resolvers/hooks';
 config();
 
 @Module({
@@ -64,7 +71,7 @@ config();
       global: true,
     }),
     CoreModule,
-    HookModule,
+    // HookModule,
     BaseModule,
     ConsoleModule,
     UsersModule,
@@ -79,4 +86,12 @@ config();
   controllers: [AppController],
   providers: [AppService, MailQueue],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer
+      .apply(ProjectHook, HostHook, CorsHook)
+      .forRoutes('*')
+      .apply(AuthHook, ApiHook, ProjectUsageHook)
+      .forRoutes('*');
+  }
+}

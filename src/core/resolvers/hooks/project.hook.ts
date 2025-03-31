@@ -3,7 +3,7 @@ import { Authorization, Database, Document } from '@nuvix/database';
 import ParamsHelper from 'src/core/helper/params.helper';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { DB_FOR_CONSOLE, DB_FOR_PROJECT, PROJECT } from 'src/Utils/constants';
-import { Hook } from './base.hook';
+import { Hook } from '../../server/hooks/interface';
 
 @Injectable()
 export class ProjectHook implements Hook {
