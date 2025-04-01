@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, StreamableFile } from '@nestjs/common';
+import { Injectable, Logger, StreamableFile } from '@nestjs/common';
 import {
   Authorization,
   Database,
@@ -13,8 +13,6 @@ import {
   APP_LIMIT_COUNT,
   APP_STORAGE_LIMIT,
   APP_STORAGE_UPLOADS,
-  DB_FOR_CONSOLE,
-  DB_FOR_PROJECT,
 } from 'src/Utils/constants';
 import { CreateBucketDTO, UpdateBucketDTO } from './DTO/bucket.dto';
 import collections from 'src/core/collections';
@@ -32,16 +30,12 @@ import { MultipartFile } from '@fastify/multipart';
 export class StorageService {
   private readonly logger = new Logger(StorageService.name);
 
-  constructor(
-    @Inject(DB_FOR_CONSOLE) private readonly dbForConsole: Database,
-    @Inject(DB_FOR_PROJECT) private readonly db: Database,
-    private readonly jwtService: JwtService,
-  ) {}
+  constructor(private readonly jwtService: JwtService) {}
 
   /**
    * Get buckets.
    */
-  async getBuckets(queries: any, search?: string) {
+  async getBuckets(db: Database, queries: any, search?: string) {
     if (search) {
       queries.push(Query.search('search', search));
     }
@@ -54,7 +48,7 @@ export class StorageService {
 
     if (cursor) {
       const bucketId = cursor.getValue();
-      const cursorDocument = await this.db.getDocument('buckets', bucketId);
+      const cursorDocument = await db.getDocument('buckets', bucketId);
 
       if (cursorDocument.isEmpty()) {
         throw new Exception(
@@ -69,15 +63,15 @@ export class StorageService {
     const filterQueries = Query.groupByType(queries).filters;
 
     return {
-      buckets: await this.db.find('buckets', queries),
-      total: await this.db.count('buckets', filterQueries, APP_LIMIT_COUNT),
+      buckets: await db.find('buckets', queries),
+      total: await db.count('buckets', filterQueries, APP_LIMIT_COUNT),
     };
   }
 
   /**
    * Create bucket.
    */
-  async createBucket(input: CreateBucketDTO) {
+  async createBucket(db: Database, input: CreateBucketDTO) {
     const bucketId =
       input.bucketId === 'unique()' ? ID.unique() : input.bucketId;
 
@@ -119,7 +113,7 @@ export class StorageService {
           }),
       );
 
-      await this.db.createDocument(
+      await db.createDocument(
         'buckets',
         new Document({
           $id: bucketId,
@@ -137,9 +131,9 @@ export class StorageService {
         }),
       );
 
-      const bucket = await this.db.getDocument('buckets', bucketId);
+      const bucket = await db.getDocument('buckets', bucketId);
 
-      await this.db.createCollection({
+      await db.createCollection({
         id: 'bucket_' + bucket.getInternalId(),
         attributes,
         indexes,
@@ -159,8 +153,8 @@ export class StorageService {
   /**
    * Get a bucket.
    */
-  async getBucket(id: string) {
-    const bucket = await this.db.getDocument('buckets', id);
+  async getBucket(db: Database, id: string) {
+    const bucket = await db.getDocument('buckets', id);
 
     if (bucket.isEmpty())
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
@@ -171,8 +165,8 @@ export class StorageService {
   /**
    * Update a bucket.
    */
-  async updateBucket(id: string, input: UpdateBucketDTO) {
-    const bucket = await this.db.getDocument('buckets', id);
+  async updateBucket(db: Database, id: string, input: UpdateBucketDTO) {
+    const bucket = await db.getDocument('buckets', id);
 
     if (bucket.isEmpty()) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
@@ -192,7 +186,7 @@ export class StorageService {
       input.encryption ?? bucket.getAttribute('encryption', true);
     const antivirus = input.antivirus ?? bucket.getAttribute('antivirus', true);
 
-    const updatedBucket = await this.db.updateDocument(
+    const updatedBucket = await db.updateDocument(
       'buckets',
       id,
       bucket
@@ -207,7 +201,7 @@ export class StorageService {
         .setAttribute('antivirus', antivirus),
     );
 
-    await this.db.updateCollection(
+    await db.updateCollection(
       'bucket_' + bucket.getInternalId(),
       permissions,
       input.fileSecurity,
@@ -219,29 +213,34 @@ export class StorageService {
   /**
    * Delete a bucket.
    */
-  async deleteBucket(id: string) {
-    const bucket = await this.db.getDocument('buckets', id);
+  async deleteBucket(db: Database, id: string) {
+    const bucket = await db.getDocument('buckets', id);
 
     if (bucket.isEmpty()) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
     }
 
-    if (!(await this.db.deleteDocument('buckets', id))) {
+    if (!(await db.deleteDocument('buckets', id))) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
         'Failed to remove bucket from DB',
       );
     }
 
-    await this.db.deleteCollection('bucket_' + bucket.getInternalId()); // TODO: use queues to delete
+    await db.deleteCollection('bucket_' + bucket.getInternalId()); // TODO: use queues to delete
     return {};
   }
 
   /**
    * Get files.
    */
-  async getFiles(bucketId: string, queries: Query[], search?: string) {
-    const bucket = await this.db.getDocument('buckets', bucketId);
+  async getFiles(
+    db: Database,
+    bucketId: string,
+    queries: Query[],
+    search?: string,
+  ) {
+    const bucket = await db.getDocument('buckets', bucketId);
 
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
     const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
@@ -275,12 +274,9 @@ export class StorageService {
 
       const cursorDocument =
         fileSecurity && !valid
-          ? await this.db.getDocument(
-              'bucket_' + bucket.getInternalId(),
-              fileId,
-            )
+          ? await db.getDocument('bucket_' + bucket.getInternalId(), fileId)
           : await Authorization.skip(() =>
-              this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+              db.getDocument('bucket_' + bucket.getInternalId(), fileId),
             );
 
       if (cursorDocument.isEmpty()) {
@@ -297,20 +293,20 @@ export class StorageService {
 
     const files =
       fileSecurity && !valid
-        ? await this.db.find('bucket_' + bucket.getInternalId(), queries)
+        ? await db.find('bucket_' + bucket.getInternalId(), queries)
         : await Authorization.skip(() =>
-            this.db.find('bucket_' + bucket.getInternalId(), queries),
+            db.find('bucket_' + bucket.getInternalId(), queries),
           );
 
     const total =
       fileSecurity && !valid
-        ? await this.db.count(
+        ? await db.count(
             'bucket_' + bucket.getInternalId(),
             filterQueries,
             APP_LIMIT_COUNT,
           )
         : await Authorization.skip(() =>
-            this.db.count(
+            db.count(
               'bucket_' + bucket.getInternalId(),
               filterQueries,
               APP_LIMIT_COUNT,
@@ -327,6 +323,7 @@ export class StorageService {
    * Create|Upload file.
    */
   async createFile(
+    db: Database,
     bucketId: string,
     input: CreateFileDTO,
     file: MultipartFile,
@@ -335,7 +332,7 @@ export class StorageService {
     mode: string,
   ) {
     const bucket = await Authorization.skip(() =>
-      this.db.getDocument('buckets', bucketId),
+      db.getDocument('buckets', bucketId),
     );
 
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
@@ -479,7 +476,7 @@ export class StorageService {
       fs.mkdirSync(chunksPath, { recursive: true });
     }
 
-    let fileDocument = await this.db.getDocument(
+    let fileDocument = await db.getDocument(
       'bucket_' + bucket.getInternalId(),
       fileId,
     );
@@ -548,7 +545,7 @@ export class StorageService {
           metadata,
         });
 
-        fileDocument = await this.db.createDocument(
+        fileDocument = await db.createDocument(
           'bucket_' + bucket.getInternalId(),
           doc,
         );
@@ -567,7 +564,7 @@ export class StorageService {
         }
 
         fileDocument = await Authorization.skip(async () =>
-          this.db.updateDocument(
+          db.updateDocument(
             'bucket_' + bucket.getInternalId(),
             fileId,
             fileDocument,
@@ -593,7 +590,7 @@ export class StorageService {
           metadata,
         });
 
-        fileDocument = await this.db.createDocument(
+        fileDocument = await db.createDocument(
           'bucket_' + bucket.getInternalId(),
           doc,
         );
@@ -602,7 +599,7 @@ export class StorageService {
           .setAttribute('chunksUploaded', chunksUploaded)
           .setAttribute('metadata', metadata);
 
-        fileDocument = await this.db.updateDocument(
+        fileDocument = await db.updateDocument(
           'bucket_' + bucket.getInternalId(),
           fileId,
           updatedDoc,
@@ -615,9 +612,9 @@ export class StorageService {
   /**
    * Get a File.
    */
-  async getFile(bucketId: string, fileId: string) {
+  async getFile(db: Database, bucketId: string, fileId: string) {
     const bucket = await Authorization.skip(() =>
-      this.db.getDocument('buckets', bucketId),
+      db.getDocument('buckets', bucketId),
     );
 
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
@@ -639,9 +636,9 @@ export class StorageService {
 
     const file =
       fileSecurity && !valid
-        ? await this.db.getDocument('bucket_' + bucket.getInternalId(), fileId)
+        ? await db.getDocument('bucket_' + bucket.getInternalId(), fileId)
         : await Authorization.skip(() =>
-            this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+            db.getDocument('bucket_' + bucket.getInternalId(), fileId),
           );
 
     if (file.isEmpty()) {
@@ -655,7 +652,12 @@ export class StorageService {
    * Preview a file.
    * @todo
    */
-  async previewFile(bucketId: string, fileId: string, params: PreviewParams) {
+  async previewFile(
+    db: Database,
+    bucketId: string,
+    fileId: string,
+    params: PreviewParams,
+  ) {
     const {
       width,
       height,
@@ -671,7 +673,7 @@ export class StorageService {
     } = params;
 
     const bucket = await Authorization.skip(
-      async () => await this.db.getDocument('buckets', bucketId),
+      async () => await db.getDocument('buckets', bucketId),
     );
 
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
@@ -693,13 +695,10 @@ export class StorageService {
 
     const file =
       fileSecurity && !valid
-        ? await this.db.getDocument('bucket_' + bucket.getInternalId(), fileId)
+        ? await db.getDocument('bucket_' + bucket.getInternalId(), fileId)
         : await Authorization.skip(
             async () =>
-              await this.db.getDocument(
-                'bucket_' + bucket.getInternalId(),
-                fileId,
-              ),
+              await db.getDocument('bucket_' + bucket.getInternalId(), fileId),
           );
 
     if (file.isEmpty()) {
@@ -782,13 +781,14 @@ export class StorageService {
    * Download a file.
    */
   async downloadFile(
+    db: Database,
     bucketId: string,
     fileId: string,
     response: FastifyReply,
     request: FastifyRequest,
   ) {
     const bucket = await Authorization.skip(() =>
-      this.db.getDocument('buckets', bucketId),
+      db.getDocument('buckets', bucketId),
     );
 
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
@@ -810,9 +810,9 @@ export class StorageService {
 
     const file =
       fileSecurity && !valid
-        ? await this.db.getDocument('bucket_' + bucket.getInternalId(), fileId)
+        ? await db.getDocument('bucket_' + bucket.getInternalId(), fileId)
         : await Authorization.skip(() =>
-            this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+            db.getDocument('bucket_' + bucket.getInternalId(), fileId),
           );
 
     if (file.isEmpty()) {
@@ -876,13 +876,14 @@ export class StorageService {
    * View a file.
    */
   async viewFile(
+    db: Database,
     bucketId: string,
     fileId: string,
     response: FastifyReply,
     request: FastifyRequest,
   ) {
     const bucket = await Authorization.skip(() =>
-      this.db.getDocument('buckets', bucketId),
+      db.getDocument('buckets', bucketId),
     );
 
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
@@ -904,9 +905,9 @@ export class StorageService {
 
     const file =
       fileSecurity && !valid
-        ? await this.db.getDocument('bucket_' + bucket.getInternalId(), fileId)
+        ? await db.getDocument('bucket_' + bucket.getInternalId(), fileId)
         : await Authorization.skip(() =>
-            this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+            db.getDocument('bucket_' + bucket.getInternalId(), fileId),
           );
 
     if (file.isEmpty()) {
@@ -967,6 +968,7 @@ export class StorageService {
    * Get file for push notification
    */
   async getFileForPushNotification(
+    db: Database,
     bucketId: string,
     fileId: string,
     jwt: string,
@@ -974,7 +976,7 @@ export class StorageService {
     response: FastifyReply,
   ) {
     const bucket = await Authorization.skip(() =>
-      this.db.getDocument('buckets', bucketId),
+      db.getDocument('buckets', bucketId),
     );
 
     let decoded: any;
@@ -1003,7 +1005,7 @@ export class StorageService {
     }
 
     const file = await Authorization.skip(() =>
-      this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+      db.getDocument('bucket_' + bucket.getInternalId(), fileId),
     );
 
     if (file.isEmpty()) {
@@ -1062,9 +1064,14 @@ export class StorageService {
   /**
    * Update a file.
    */
-  async updateFile(bucketId: string, fileId: string, input: UpdateFileDTO) {
+  async updateFile(
+    db: Database,
+    bucketId: string,
+    fileId: string,
+    input: UpdateFileDTO,
+  ) {
     const bucket = await Authorization.skip(() =>
-      this.db.getDocument('buckets', bucketId),
+      db.getDocument('buckets', bucketId),
     );
 
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
@@ -1085,7 +1092,7 @@ export class StorageService {
     }
 
     const file = await Authorization.skip(() =>
-      this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+      db.getDocument('bucket_' + bucket.getInternalId(), fileId),
     );
 
     if (file.isEmpty()) {
@@ -1126,18 +1133,14 @@ export class StorageService {
     }
 
     if (fileSecurity && !valid) {
-      return await this.db.updateDocument(
+      return await db.updateDocument(
         'bucket_' + bucket.getInternalId(),
         fileId,
         file,
       );
     } else {
       return await Authorization.skip(() =>
-        this.db.updateDocument(
-          'bucket_' + bucket.getInternalId(),
-          fileId,
-          file,
-        ),
+        db.updateDocument('bucket_' + bucket.getInternalId(), fileId, file),
       );
     }
   }
@@ -1145,9 +1148,9 @@ export class StorageService {
   /**
    * Delete a file.
    */
-  async deleteFile(bucketId: string, fileId: string) {
+  async deleteFile(db: Database, bucketId: string, fileId: string) {
     const bucket = await Authorization.skip(() =>
-      this.db.getDocument('buckets', bucketId),
+      db.getDocument('buckets', bucketId),
     );
 
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
@@ -1168,7 +1171,7 @@ export class StorageService {
     }
 
     const file = await Authorization.skip(() =>
-      this.db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+      db.getDocument('bucket_' + bucket.getInternalId(), fileId),
     );
 
     if (file.isEmpty()) {
@@ -1189,13 +1192,10 @@ export class StorageService {
     if (deviceDeleted) {
       const deleted =
         fileSecurity && !valid
-          ? await this.db.deleteDocument(
-              'bucket_' + bucket.getInternalId(),
-              fileId,
-            )
+          ? await db.deleteDocument('bucket_' + bucket.getInternalId(), fileId)
           : await Authorization.skip(
               async () =>
-                await this.db.deleteDocument(
+                await db.deleteDocument(
                   'bucket_' + bucket.getInternalId(),
                   fileId,
                 ),
@@ -1220,7 +1220,7 @@ export class StorageService {
   /**
    * Get Storage Usage.
    */
-  async getStorageUsage(range?: string) {
+  async getStorageUsage(db: Database, range?: string) {
     const periods = usageConfig;
 
     const stats: any = {};
@@ -1230,13 +1230,13 @@ export class StorageService {
 
     await Authorization.skip(async () => {
       for (const metric of metrics) {
-        const result = await this.db.findOne('stats', [
+        const result = await db.findOne('stats', [
           Query.equal('metric', [metric]),
           Query.equal('period', ['inf']),
         ]);
 
         stats[metric] = { total: result.getAttribute('value') ?? 0, data: {} };
-        const results = await this.db.find('stats', [
+        const results = await db.find('stats', [
           Query.equal('metric', [metric]),
           Query.equal('period', days.period),
           Query.limit(days.limit),
@@ -1285,8 +1285,8 @@ export class StorageService {
   /**
    * Get Storage Usage of bucket.
    */
-  async getBucketStorageUsage(bucketId: string, range?: string) {
-    const bucket = await this.db.getDocument('buckets', bucketId);
+  async getBucketStorageUsage(db: Database, bucketId: string, range?: string) {
+    const bucket = await db.getDocument('buckets', bucketId);
 
     if (bucket.isEmpty()) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
@@ -1304,13 +1304,13 @@ export class StorageService {
 
     await Authorization.skip(async () => {
       for (const metric of metrics) {
-        const result = await this.db.findOne('stats', [
+        const result = await db.findOne('stats', [
           Query.equal('metric', [metric]),
           Query.equal('period', ['inf']),
         ]);
 
         stats[metric] = { total: result.getAttribute('value') ?? 0, data: {} };
-        const results = await this.db.find('stats', [
+        const results = await db.find('stats', [
           Query.equal('metric', [metric]),
           Query.equal('period', days.period),
           Query.limit(days.limit),

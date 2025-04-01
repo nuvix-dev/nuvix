@@ -20,10 +20,10 @@ import { StorageService } from './storage.service';
 import { Models } from 'src/core/helper/response.helper';
 import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
 import { User } from 'src/core/decorators/user.decorator';
-import { Document, Query as Queries } from '@nuvix/database';
+import { Database, Document, Query as Queries } from '@nuvix/database';
 import { Mode } from 'src/core/decorators/mode.decorator';
 import { ProjectGuard } from 'src/core/resolvers/guards/project.guard';
-import { ResModel, UploadedFile } from 'src/core/decorators';
+import { ResModel, StorageDatabase, UploadedFile } from 'src/core/decorators';
 
 import { UpdateFileDTO } from './DTO/file.dto';
 import { CreateBucketDTO, UpdateBucketDTO } from './DTO/bucket.dto';
@@ -41,52 +41,59 @@ export class StorageController {
   @Get('buckets')
   @ResModel({ type: Models.BUCKET, list: true })
   async getBuckets(
+    @StorageDatabase() db: Database,
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.storageService.getBuckets(queries, search);
+    return await this.storageService.getBuckets(db, queries, search);
   }
 
   @Post('buckets')
   @ResModel(Models.BUCKET)
-  async createBucket(@Body() createBucketDto: CreateBucketDTO) {
-    return await this.storageService.createBucket(createBucketDto);
+  async createBucket(
+    @StorageDatabase() db: Database,
+    @Body() createBucketDto: CreateBucketDTO,
+  ) {
+    return await this.storageService.createBucket(db, createBucketDto);
   }
 
   @Get('buckets/:id')
   @ResModel(Models.BUCKET)
-  async getBucket(@Param('id') id: string) {
-    return await this.storageService.getBucket(id);
+  async getBucket(@StorageDatabase() db: Database, @Param('id') id: string) {
+    return await this.storageService.getBucket(db, id);
   }
 
   @Put('buckets/:id')
   @ResModel(Models.BUCKET)
   async updateBucket(
+    @StorageDatabase() db: Database,
     @Param('id') id: string,
     @Body() createBucketDto: UpdateBucketDTO,
   ) {
-    return await this.storageService.updateBucket(id, createBucketDto);
+    return await this.storageService.updateBucket(db, id, createBucketDto);
   }
 
   @Delete('buckets/:id')
   @ResModel(Models.NONE)
-  async deleteBucket(@Param('id') id: string) {
-    return await this.storageService.deleteBucket(id);
+  async deleteBucket(@StorageDatabase() db: Database, @Param('id') id: string) {
+    return await this.storageService.deleteBucket(db, id);
   }
 
   @Get('buckets/:id/files')
   @ResModel({ type: Models.FILE, list: true })
   async getFiles(
+    @StorageDatabase() db: Database,
     @Param('id') id: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.storageService.getFiles(id, queries, search);
+    return await this.storageService.getFiles(db, id, queries, search);
   }
 
   @Post('buckets/:id/files')
   @ResModel(Models.FILE)
   async createFile(
+    @StorageDatabase() db: Database,
     @Param('id') id: string,
     @Body('fileId') fileId: string,
     @Body('permissions') permissions: string[] = [],
@@ -96,6 +103,7 @@ export class StorageController {
     @Mode() mode: string,
   ) {
     return await this.storageService.createFile(
+      db,
       id,
       { fileId, permissions },
       file,
@@ -107,12 +115,17 @@ export class StorageController {
 
   @Get('buckets/:id/files/:fileId')
   @ResModel(Models.FILE)
-  async getFile(@Param('id') id: string, @Param('fileId') fileId: string) {
-    return await this.storageService.getFile(id, fileId);
+  async getFile(
+    @StorageDatabase() db: Database,
+    @Param('id') id: string,
+    @Param('fileId') fileId: string,
+  ) {
+    return await this.storageService.getFile(db, id, fileId);
   }
 
   @Get('buckets/:id/files/:fileId/preview')
   async previewFile(
+    @StorageDatabase() db: Database,
     @Param('id') id: string,
     @Param('fileId') fileId: string,
     @Req() req: FastifyRequest,
@@ -143,7 +156,7 @@ export class StorageController {
     @Query('background', ParseDuplicatePipe) background?: string,
     @Query('output', ParseDuplicatePipe) output?: string,
   ) {
-    return await this.storageService.previewFile(id, fileId, {
+    return await this.storageService.previewFile(db, id, fileId, {
       width,
       height,
       gravity,
@@ -160,26 +173,29 @@ export class StorageController {
 
   @Get('buckets/:id/files/:fileId/download')
   async downloadFile(
+    @StorageDatabase() db: Database,
     @Param('id') id: string,
     @Param('fileId') fileId: string,
     @Req() req: FastifyRequest,
     @Res({ passthrough: true }) res: any,
   ) {
-    return await this.storageService.downloadFile(id, fileId, res, req);
+    return await this.storageService.downloadFile(db, id, fileId, res, req);
   }
 
   @Get('buckets/:id/files/:fileId/view')
   async viewFile(
+    @StorageDatabase() db: Database,
     @Param('id') id: string,
     @Param('fileId') fileId: string,
     @Req() req: FastifyRequest,
     @Res({ passthrough: true }) res: any,
   ) {
-    return await this.storageService.viewFile(id, fileId, res, req);
+    return await this.storageService.viewFile(db, id, fileId, res, req);
   }
 
   @Get('buckets/:id/files/:fileId/push')
   async getFileForPushNotification(
+    @StorageDatabase() db: Database,
     @Param('id') id: string,
     @Param('fileId') fileId: string,
     @Query('jwt') jwt: string,
@@ -187,6 +203,7 @@ export class StorageController {
     @Res({ passthrough: true }) res: any,
   ) {
     return await this.storageService.getFileForPushNotification(
+      db,
       id,
       fileId,
       jwt,
@@ -198,31 +215,40 @@ export class StorageController {
   @Put('buckets/:id/files/:fileId')
   @ResModel(Models.FILE)
   async updateFile(
+    @StorageDatabase() db: Database,
     @Param('id') id: string,
     @Param('fileId') fileId: string,
     @Body() updateFileDto: UpdateFileDTO,
   ) {
-    return await this.storageService.updateFile(id, fileId, updateFileDto);
+    return await this.storageService.updateFile(db, id, fileId, updateFileDto);
   }
 
   @Delete('buckets/:id/files/:fileId')
   @ResModel(Models.NONE)
-  async deleteFile(@Param('id') id: string, @Param('fileId') fileId: string) {
-    return await this.storageService.deleteFile(id, fileId);
+  async deleteFile(
+    @StorageDatabase() db: Database,
+    @Param('id') id: string,
+    @Param('fileId') fileId: string,
+  ) {
+    return await this.storageService.deleteFile(db, id, fileId);
   }
 
   @Get('usage')
   @ResModel(Models.USAGE_STORAGE)
-  async getUsage(@Query('range') range?: string) {
-    return await this.storageService.getStorageUsage(range);
+  async getUsage(
+    @StorageDatabase() db: Database,
+    @Query('range') range?: string,
+  ) {
+    return await this.storageService.getStorageUsage(db, range);
   }
 
   @Get(':id/usage')
   @ResModel(Models.USAGE_BUCKETS)
   async getBucketUsage(
+    @StorageDatabase() db: Database,
     @Param('id') id: string,
     @Query('range') range?: string,
   ) {
-    return await this.storageService.getBucketStorageUsage(id, range);
+    return await this.storageService.getBucketStorageUsage(db, id, range);
   }
 }
