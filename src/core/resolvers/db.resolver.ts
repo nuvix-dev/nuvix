@@ -319,21 +319,21 @@ export const filters = {
       });
     },
   },
-  subProjectQueryTargets: {
-    serialize: (value: any) => {
-      return null;
-    },
-    deserialize: async (value: any, document: Document, database: Database) => {
-      return await Authorization.skip(async () => {
-        const db = new Database(database.getAdapter(), database.getCache());
-        db.setDatabase('messaging');
-        return await db.find('targets', [
-          Query.equal('userInternalId', [document.getInternalId()]),
-          Query.limit(APP_LIMIT_SUBQUERY),
-        ]);
-      });
-    },
-  },
+  // subProjectQueryTargets: {
+  //   serialize: (value: any) => {
+  //     return null;
+  //   },
+  //   deserialize: async (value: any, document: Document, database: Database) => {
+  //     return await Authorization.skip(async () => {
+  //       const db = new Database(database.getAdapter(), database.getCache());
+  //       db.setDatabase('messaging');
+  //       return await db.find('targets', [
+  //         Query.equal('userInternalId', [document.getInternalId()]),
+  //         Query.limit(APP_LIMIT_SUBQUERY),
+  //       ]);
+  //     });
+  //   },
+  // },
   subQueryTopicTargets: {
     serialize: (value: any) => {
       return null;

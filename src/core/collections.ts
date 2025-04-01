@@ -2,9 +2,6 @@ import { Database, ID } from '@nuvix/database';
 import { Auth } from './helper/auth.helper';
 import { APP_FUNCTION_SPECIFICATION_DEFAULT } from 'src/Utils/constants';
 
-const $providers = []; //Config.getParam('oAuthProviders', []);
-const $auth = []; //Config.getParam('auth', []);
-
 /**
  * $collection: id of the parent collection where this will be inserted
  * $id: id of this collection
@@ -4215,26 +4212,6 @@ const projectCollections = {
   },
 
   ...commonCollections,
-
-  users: {
-    ...commonCollections.users,
-    attributes: [
-      ...commonCollections.users.attributes.filter(
-        a => a.$id !== ID.custom('targets'),
-      ),
-      {
-        $id: ID.custom('targets'),
-        type: Database.VAR_STRING,
-        format: '',
-        size: 16384,
-        signed: true,
-        required: false,
-        default: null,
-        array: false,
-        filters: ['subProjectQueryTargets'],
-      },
-    ],
-  },
 };
 
 const consoleCollections = {
@@ -7340,6 +7317,7 @@ const collections = {
       identities: commonCollections.identities,
       teams: projectCollections.teams,
       memberships: projectCollections.memberships,
+      targets: commonCollections.targets,
     },
     storage: {
       buckets: commonCollections.buckets,
@@ -7349,7 +7327,6 @@ const collections = {
       messages: commonCollections.messages,
       topics: commonCollections.topics,
       subscribers: commonCollections.subscribers,
-      targets: commonCollections.targets,
     },
     functions: {
       functions: projectCollections.functions,

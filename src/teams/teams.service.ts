@@ -16,7 +16,6 @@ import {
   APP_EMAIL_TEAM,
   APP_NAME,
   APP_SMTP_HOST,
-  DB_FOR_PROJECT,
   SEND_TYPE_EMAIL,
 } from 'src/Utils/constants';
 import {
@@ -46,7 +45,6 @@ export class TeamsService {
   private logger: Logger = new Logger(TeamsService.name);
 
   constructor(
-    @Inject(DB_FOR_PROJECT) private readonly db: Database,
     @InjectQueue('mails')
     private readonly mailQueue: Queue<MailQueueOptions, any, MailJobs>,
   ) {}
@@ -54,7 +52,7 @@ export class TeamsService {
   /**
    * Find all teams
    */
-  async findAll(queries: Query[], search?: string) {
+  async findAll(db: Database, queries: Query[], search?: string) {
     if (search) {
       queries.push(Query.search('search', search));
     }
@@ -68,7 +66,7 @@ export class TeamsService {
 
     if (cursor) {
       const teamId = cursor.getValue();
-      const cursorDocument = await this.db.getDocument('teams', teamId);
+      const cursorDocument = await db.getDocument('teams', teamId);
 
       if (!cursorDocument) {
         throw new Exception(
@@ -81,8 +79,8 @@ export class TeamsService {
     }
 
     const filterQueries = Query.groupByType(queries)['filters'];
-    const results = await this.db.find('teams', queries);
-    const total = await this.db.count('teams', filterQueries);
+    const results = await db.find('teams', queries);
+    const total = await db.count('teams', filterQueries);
 
     return {
       teams: results,
@@ -93,13 +91,18 @@ export class TeamsService {
   /**
    * Create a new team
    */
-  async create(user: Document | null, input: CreateTeamDTO, mode: string) {
+  async create(
+    db: Database,
+    user: Document | null,
+    input: CreateTeamDTO,
+    mode: string,
+  ) {
     const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
     const isAppUser = Auth.isAppUser(Authorization.getRoles());
 
     const teamId = input.teamId == 'unique()' ? ID.unique() : input.teamId;
 
-    const team = await this.db
+    const team = await db
       .createDocument(
         'teams',
         new Document({
@@ -129,7 +132,7 @@ export class TeamsService {
       }
 
       const membershipId = ID.unique();
-      await this.db.createDocument(
+      await db.createDocument(
         'memberships',
         new Document({
           $id: membershipId,
@@ -154,7 +157,7 @@ export class TeamsService {
         }),
       );
 
-      await this.db.purgeCachedDocument('users', user.getId());
+      await db.purgeCachedDocument('users', user.getId());
     }
 
     return team;
@@ -163,8 +166,8 @@ export class TeamsService {
   /**
    * Update team
    */
-  async update(id: string, input: UpdateTeamDTO) {
-    const team = await this.db.getDocument('teams', id);
+  async update(db: Database, id: string, input: UpdateTeamDTO) {
+    const team = await db.getDocument('teams', id);
 
     if (team.isEmpty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND);
@@ -173,11 +176,7 @@ export class TeamsService {
     team.setAttribute('name', input.name);
     team.setAttribute('search', [id, input.name].join(' '));
 
-    const updatedTeam = await this.db.updateDocument(
-      'teams',
-      team.getId(),
-      team,
-    );
+    const updatedTeam = await db.updateDocument('teams', team.getId(), team);
 
     return updatedTeam;
   }
@@ -185,14 +184,14 @@ export class TeamsService {
   /**
    * Remove team
    */
-  async remove(id: string) {
-    const team = await this.db.getDocument('teams', id);
+  async remove(db: Database, id: string) {
+    const team = await db.getDocument('teams', id);
 
     if (team.isEmpty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND);
     }
 
-    const deleted = await this.db.deleteDocument('teams', id);
+    const deleted = await db.deleteDocument('teams', id);
     if (!deleted) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
@@ -202,9 +201,9 @@ export class TeamsService {
 
     // Delete all memberships associated with this team
     const membershipQueries = [Query.equal('teamId', [team.getId()])];
-    const memberships = await this.db.find('memberships', membershipQueries);
+    const memberships = await db.find('memberships', membershipQueries);
     for (const membership of memberships) {
-      await this.db.deleteDocument('memberships', membership.getId());
+      await db.deleteDocument('memberships', membership.getId());
     }
 
     // Additional processing like queueing events could go here
@@ -214,8 +213,8 @@ export class TeamsService {
   /**
    * Find a team by id
    */
-  async findOne(id: string) {
-    const team = await this.db.getDocument('teams', id);
+  async findOne(db: Database, id: string) {
+    const team = await db.getDocument('teams', id);
 
     if (!team) {
       throw new Exception(Exception.TEAM_NOT_FOUND);
@@ -227,8 +226,8 @@ export class TeamsService {
   /**
    * Get team preferences
    */
-  async getPrefs(id: string) {
-    const team = await this.db.getDocument('teams', id);
+  async getPrefs(db: Database, id: string) {
+    const team = await db.getDocument('teams', id);
 
     if (!team) {
       throw new Exception(Exception.TEAM_NOT_FOUND);
@@ -240,19 +239,15 @@ export class TeamsService {
   /**
    * Set team preferences
    */
-  async setPrefs(id: string, input: UpdateTeamPrefsDTO) {
-    const team = await this.db.getDocument('teams', id);
+  async setPrefs(db: Database, id: string, input: UpdateTeamPrefsDTO) {
+    const team = await db.getDocument('teams', id);
 
     if (team.isEmpty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND);
     }
 
     team.setAttribute('prefs', input.prefs);
-    const updatedTeam = await this.db.updateDocument(
-      'teams',
-      team.getId(),
-      team,
-    );
+    const updatedTeam = await db.updateDocument('teams', team.getId(), team);
 
     return updatedTeam.getAttribute('prefs');
   }
@@ -261,6 +256,7 @@ export class TeamsService {
    * Add a member to the team
    */
   async addMember(
+    db: Database,
     id: string,
     input: CreateMembershipDTO,
     project: Document,
@@ -293,7 +289,7 @@ export class TeamsService {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED);
     }
 
-    const team = await this.db.getDocument('teams', id);
+    const team = await db.getDocument('teams', id);
     if (team.isEmpty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND);
     }
@@ -303,7 +299,7 @@ export class TeamsService {
     let invitee: Document | null = null;
 
     if (input.userId) {
-      invitee = await this.db.getDocument('users', input.userId);
+      invitee = await db.getDocument('users', input.userId);
       if (invitee.isEmpty()) {
         throw new Exception(Exception.USER_NOT_FOUND);
       }
@@ -325,7 +321,7 @@ export class TeamsService {
       input.phone = invitee.getAttribute('phone', '');
       name = !name ? invitee.getAttribute('name', '') : name;
     } else if (input.email) {
-      invitee = await this.db.findOne('users', [Query.equal('email', [email])]);
+      invitee = await db.findOne('users', [Query.equal('email', [email])]);
       if (
         !invitee.isEmpty() &&
         input.phone &&
@@ -338,7 +334,7 @@ export class TeamsService {
         );
       }
     } else if (input.phone) {
-      invitee = await this.db.findOne('users', [
+      invitee = await db.findOne('users', [
         Query.equal('phone', [input.phone]),
       ]);
       if (
@@ -360,7 +356,7 @@ export class TeamsService {
       // Check user limit if not privileged or app user
       const limit = project.getAttribute('auths', {})['limit'] ?? 0;
       if (!isPrivilegedUser && !isAppUser && limit !== 0) {
-        const total = await this.db.count('users', []);
+        const total = await db.count('users', []);
         if (total >= limit) {
           throw new Exception(
             Exception.USER_COUNT_EXCEEDED,
@@ -370,7 +366,7 @@ export class TeamsService {
       }
 
       // Ensure email is not already used in another identity
-      const identityWithMatchingEmail = await this.db.findOne('identities', [
+      const identityWithMatchingEmail = await db.findOne('identities', [
         Query.equal('providerEmail', [email]),
       ]);
       if (identityWithMatchingEmail && !identityWithMatchingEmail.isEmpty()) {
@@ -378,7 +374,7 @@ export class TeamsService {
       }
 
       try {
-        invitee = await this.db.createDocument(
+        invitee = await db.createDocument(
           'users',
           new Document({
             $id: userId,
@@ -421,7 +417,7 @@ export class TeamsService {
     const membershipId = ID.unique();
     const secret = Auth.tokenGenerator();
 
-    let membership = new Document({
+    let membership = new Document<any>({
       $id: membershipId,
       $permissions: [
         Permission.read(Role.any()),
@@ -445,7 +441,7 @@ export class TeamsService {
     if (isPrivilegedUser || isAppUser) {
       try {
         membership = await Authorization.skip(
-          async () => await this.db.createDocument('memberships', membership),
+          async () => await db.createDocument('memberships', membership),
         );
       } catch (error) {
         if (error instanceof DuplicateException) {
@@ -456,17 +452,12 @@ export class TeamsService {
 
       await Authorization.skip(
         async () =>
-          await this.db.increaseDocumentAttribute(
-            'teams',
-            team.getId(),
-            'total',
-            1,
-          ),
+          await db.increaseDocumentAttribute('teams', team.getId(), 'total', 1),
       );
-      await this.db.purgeCachedDocument('users', invitee.getId());
+      await db.purgeCachedDocument('users', invitee.getId());
     } else {
       try {
-        membership = await this.db.createDocument('memberships', membership);
+        membership = await db.createDocument('memberships', membership);
       } catch (error) {
         if (error instanceof DuplicateException) {
           throw new Exception(Exception.TEAM_INVITE_ALREADY_EXISTS);
@@ -574,8 +565,13 @@ export class TeamsService {
   /**
    * Get all members of the team
    */
-  async getMembers(id: string, queries: Query[], search?: string) {
-    const team = await this.db.getDocument('teams', id);
+  async getMembers(
+    db: Database,
+    id: string,
+    queries: Query[],
+    search?: string,
+  ) {
+    const team = await db.getDocument('teams', id);
     if (team.isEmpty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND);
     }
@@ -596,10 +592,7 @@ export class TeamsService {
 
     if (cursor) {
       const membershipId = cursor.getValue();
-      const cursorDocument = await this.db.getDocument(
-        'memberships',
-        membershipId,
-      );
+      const cursorDocument = await db.getDocument('memberships', membershipId);
 
       if (!cursorDocument) {
         throw new Exception(
@@ -612,13 +605,13 @@ export class TeamsService {
     }
 
     const filterQueries = Query.groupByType(queries)['filters'];
-    const memberships = await this.db.find('memberships', queries);
-    const total = await this.db.count('memberships', filterQueries);
+    const memberships = await db.find('memberships', queries);
+    const total = await db.count('memberships', filterQueries);
 
     const validMemberships = memberships
       .filter(membership => membership.getAttribute('userId'))
       .map(async membership => {
-        const user = await this.db.getDocument(
+        const user = await db.getDocument(
           'users',
           membership.getAttribute('userId'),
         );
@@ -657,18 +650,18 @@ export class TeamsService {
   /**
    * Get A member of the team
    */
-  async getMember(teamId: string, memberId: string) {
-    const team = await this.db.getDocument('teams', teamId);
+  async getMember(db: Database, teamId: string, memberId: string) {
+    const team = await db.getDocument('teams', teamId);
     if (team.isEmpty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND);
     }
 
-    const membership = await this.db.getDocument('memberships', memberId);
+    const membership = await db.getDocument('memberships', memberId);
     if (membership.isEmpty() || !membership.getAttribute('userId')) {
       throw new Exception(Exception.MEMBERSHIP_NOT_FOUND);
     }
 
-    const user = await this.db.getDocument(
+    const user = await db.getDocument(
       'users',
       membership.getAttribute('userId'),
     );
@@ -700,21 +693,22 @@ export class TeamsService {
    * Update member of the team
    */
   async updateMember(
+    db: Database,
     teamId: string,
     memberId: string,
     input: UpdateMembershipDTO,
   ) {
-    const team = await this.db.getDocument('teams', teamId);
+    const team = await db.getDocument('teams', teamId);
     if (team.isEmpty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND);
     }
 
-    const membership = await this.db.getDocument('memberships', memberId);
+    const membership = await db.getDocument('memberships', memberId);
     if (membership.isEmpty()) {
       throw new Exception(Exception.MEMBERSHIP_NOT_FOUND);
     }
 
-    const user = await this.db.getDocument(
+    const user = await db.getDocument(
       'users',
       membership.getAttribute('userId'),
     );
@@ -734,13 +728,13 @@ export class TeamsService {
     }
 
     membership.setAttribute('roles', input.roles);
-    const updatedMembership = await this.db.updateDocument(
+    const updatedMembership = await db.updateDocument(
       'memberships',
       membership.getId(),
       membership,
     );
 
-    await this.db.purgeCachedDocument('users', user.getId());
+    await db.purgeCachedDocument('users', user.getId());
 
     updatedMembership
       .setAttribute('teamName', team.getAttribute('name'))
@@ -754,6 +748,7 @@ export class TeamsService {
    * Update Membership Status
    */
   async updateMemberStatus(
+    db: Database,
     teamId: string,
     memberId: string,
     input: UpdateMembershipStatusDTO,
@@ -765,18 +760,18 @@ export class TeamsService {
   /**
    * Delete member of the team
    */
-  async deleteMember(teamId: string, memberId: string) {
-    const team = await this.db.getDocument('teams', teamId);
+  async deleteMember(db: Database, teamId: string, memberId: string) {
+    const team = await db.getDocument('teams', teamId);
     if (team.isEmpty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND);
     }
 
-    const membership = await this.db.getDocument('memberships', memberId);
+    const membership = await db.getDocument('memberships', memberId);
     if (membership.isEmpty()) {
       throw new Exception(Exception.MEMBERSHIP_NOT_FOUND);
     }
 
-    const user = await this.db.getDocument(
+    const user = await db.getDocument(
       'users',
       membership.getAttribute('userId'),
     );
@@ -789,7 +784,7 @@ export class TeamsService {
     }
 
     try {
-      await this.db.deleteDocument('memberships', membership.getId());
+      await db.deleteDocument('memberships', membership.getId());
     } catch (error) {
       if (error instanceof AuthorizationException) {
         throw new Exception(Exception.USER_UNAUTHORIZED);
@@ -800,16 +795,10 @@ export class TeamsService {
       );
     }
 
-    await this.db.purgeCachedDocument('users', user.getId());
+    await db.purgeCachedDocument('users', user.getId());
 
     if (membership.getAttribute('confirm')) {
-      await this.db.decreaseDocumentAttribute(
-        'teams',
-        team.getId(),
-        'total',
-        1,
-        0,
-      );
+      await db.decreaseDocumentAttribute('teams', team.getId(), 'total', 1, 0);
     }
 
     return null;
