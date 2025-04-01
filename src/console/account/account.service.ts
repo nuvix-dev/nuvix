@@ -908,7 +908,7 @@ export class AccountService {
     const record = this.geodb.get(request.ip);
     const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION);
 
-    const session = new Document({
+    const session = new Document<any>({
       $id: ID.unique(),
       userId: user.getId(),
       userInternalId: user.getInternalId(),
@@ -918,7 +918,7 @@ export class AccountService {
       userAgent: request.headers['user-agent'] || 'UNKNOWN',
       ip: request.ip,
       factors: ['password'],
-      countryCode: record ? record.country.iso_code.toLowerCase() : '--',
+      countryCode: record ? record.country.iso_code.toLowerCase() : '',
       expire: new Date(Date.now() + duration * 1000),
       ...detector.getOS(),
       ...detector.getClient(),
@@ -985,7 +985,7 @@ export class AccountService {
       })
       .status(201);
 
-    const countryName = 'INDIA'; // Implement locale.getText equivalent if needed
+    const countryName = ''; // Implement locale.getText equivalent if needed
 
     createdSession
       .setAttribute('current', true)
@@ -1058,7 +1058,7 @@ export class AccountService {
       }
     })();
 
-    const session = new Document({
+    const session = new Document<any>({
       $id: ID.unique(),
       userId: user.getId(),
       userInternalId: user.getInternalId(),

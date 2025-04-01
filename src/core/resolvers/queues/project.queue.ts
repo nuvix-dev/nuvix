@@ -91,7 +91,7 @@ export class ProjectQueue extends Queue {
         );
 
         try {
-          await db.createCollection(collection.name, attributes, indexes);
+          await db.createCollection(collection.$id, attributes, indexes);
         } catch (error) {
           if (!(error instanceof DuplicateException)) {
             throw error;

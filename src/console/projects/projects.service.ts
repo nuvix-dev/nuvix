@@ -10,6 +10,7 @@ import {
   API_KEY_STANDARD,
   APP_MAX_COUNT,
   APP_VERSION_STABLE,
+  CACHE,
   DB_FOR_CONSOLE,
   DB_FOR_PROJECT,
   GET_PROJECT_DB,
@@ -55,6 +56,7 @@ import {
   ProjectJobs,
   ProjectQueueOptions,
 } from 'src/core/resolvers/queues/project.queue';
+import { Cache } from '@nuvix/cache';
 
 @Injectable()
 export class ProjectService {
@@ -62,6 +64,7 @@ export class ProjectService {
     @Inject(DB_FOR_CONSOLE) private readonly db: Database,
     @Inject(POOLS) private readonly getPool: PoolStoreFn,
     @Inject(GET_PROJECT_PG) private readonly getProjectPg: GetProjectPG,
+    @Inject(CACHE) private readonly cache: Cache,
     @InjectQueue('projects')
     private readonly projectQueue: Queue<ProjectQueueOptions, any, ProjectJobs>,
     private readonly jwtService: JwtService,
@@ -179,6 +182,8 @@ export class ProjectService {
           project.getId(),
           project.setAttribute('database', dbName),
         );
+        await this.db.purgeCachedDocument('projects', project.getId());
+        await this.cache.clear(); // TODO: remove this after lib issue fix
       } catch (error) {
         this.logger.error(
           `Failed to create database: ${error.message}`,
