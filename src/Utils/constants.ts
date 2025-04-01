@@ -39,8 +39,10 @@ export const USER = 'user';
 export const SESSION = 'session';
 export const POOLS = 'pools';
 export const DB_FOR_CONSOLE = 'dbForConsole';
+/**@deprecated use {PROJECT_DB} and upgrade to new setup*/
 export const DB_FOR_PROJECT = 'dbForProject';
 export const GET_PROJECT_DB = 'getProjectDb';
+export const GET_PROJECT_PG = 'getProjectPostgreDb';
 export const PROJECT_DB = Symbol('project-db');
 export const GEO_DB = 'geoDb';
 export const CACHE_DB = 'cacheDb';

@@ -4,14 +4,19 @@ import { ProjectsController } from './projects.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { JWT_SECRET } from 'src/Utils/constants';
 import { ProjectController } from './project.controller';
+import { BullModule } from '@nestjs/bullmq';
+import { ProjectQueue } from 'src/core/resolvers/queues/project.queue';
 
 @Module({
   controllers: [ProjectsController, ProjectController],
-  providers: [ProjectService],
+  providers: [ProjectService, ProjectQueue],
   imports: [
     JwtModule.register({
       secret: JWT_SECRET,
       signOptions: { expiresIn: '15m' },
+    }),
+    BullModule.registerQueue({
+      name: 'projects',
     }),
   ],
 })

@@ -4215,6 +4215,26 @@ const projectCollections = {
   },
 
   ...commonCollections,
+
+  users: {
+    ...commonCollections.users,
+    attributes: [
+      ...commonCollections.users.attributes.filter(
+        a => a.$id !== ID.custom('targets'),
+      ),
+      {
+        $id: ID.custom('targets'),
+        type: Database.VAR_STRING,
+        format: '',
+        size: 16384,
+        signed: true,
+        required: false,
+        default: null,
+        array: false,
+        filters: ['subProjectQueryTargets'],
+      },
+    ],
+  },
 };
 
 const consoleCollections = {
@@ -7310,7 +7330,32 @@ const dbCollections = {
 };
 
 const collections = {
-  projects: projectCollections,
+  projects: {
+    auth: {
+      users: projectCollections.users,
+      tokens: commonCollections.tokens,
+      authenticators: commonCollections.authenticators,
+      challenges: commonCollections.challenges,
+      sessions: commonCollections.sessions,
+      identities: commonCollections.identities,
+      teams: projectCollections.teams,
+      memberships: projectCollections.memberships,
+    },
+    storage: {
+      buckets: commonCollections.buckets,
+    },
+    messaging: {
+      providers: commonCollections.providers,
+      messages: commonCollections.messages,
+      topics: commonCollections.topics,
+      subscribers: commonCollections.subscribers,
+      targets: commonCollections.targets,
+    },
+    functions: {
+      functions: projectCollections.functions,
+      deployments: projectCollections.deployments,
+    },
+  },
   console: consoleCollections,
   buckets: bucketCollections,
   databases: dbCollections,

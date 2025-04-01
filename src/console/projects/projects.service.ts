@@ -12,6 +12,9 @@ import {
   APP_VERSION_STABLE,
   DB_FOR_CONSOLE,
   DB_FOR_PROJECT,
+  GET_PROJECT_DB,
+  GET_PROJECT_PG,
+  POOLS,
 } from 'src/Utils/constants';
 import authMethods, {
   AuthMethod,
@@ -41,13 +44,26 @@ import {
   Query,
   Role,
 } from '@nuvix/database';
-import collections from 'src/core/collections';
+import {
+  GetProjectDbFn,
+  GetProjectPG,
+  PoolStoreFn,
+} from 'src/core/core.module';
+import { InjectQueue } from '@nestjs/bullmq';
+import { Queue } from 'bullmq';
+import {
+  ProjectJobs,
+  ProjectQueueOptions,
+} from 'src/core/resolvers/queues/project.queue';
 
 @Injectable()
 export class ProjectService {
   constructor(
     @Inject(DB_FOR_CONSOLE) private readonly db: Database,
-    @Inject(DB_FOR_PROJECT) private readonly dbForProject: Database,
+    @Inject(POOLS) private readonly getPool: PoolStoreFn,
+    @Inject(GET_PROJECT_PG) private readonly getProjectPg: GetProjectPG,
+    @InjectQueue('projects')
+    private readonly projectQueue: Queue<ProjectQueueOptions, any, ProjectJobs>,
     private readonly jwtService: JwtService,
   ) {}
 
@@ -144,49 +160,57 @@ export class ProjectService {
 
       project = await this.db.createDocument('projects', project);
 
-      const dbForProject = this.dbForProject;
+      const pool = await this.getPool('root', {} as any);
+      const dbName = `project_${project.getInternalId()}`;
 
-      if (true) {
-        dbForProject
-          .setSharedTables(true)
-          .setTenant(Number(project.getInternalId()))
-          .setPrefix(`_${project.getInternalId()}`);
-      } else {
-        // dbForProject
-        //   .setSharedTables(false)
-        //   .setTenant(null)
-        //   .setNamespace('_' + project.getInternalId());
-      }
-
-      dbForProject.create();
-
-      const _collections = Object.entries(collections.projects) ?? [];
-
-      for (const [key, collection] of _collections) {
-        if (collection['$collection'] !== Database.METADATA) {
-          continue;
-        }
-
-        const attributes = collection['attributes'].map(
-          (attribute: any) => new Document(attribute),
+      try {
+        const checkResult = await pool.query(
+          `SELECT 1 FROM pg_database WHERE datname = $1`,
+          [dbName],
         );
 
-        const indexes = collection['indexes'].map(
-          (index: any) => new Document(index),
-        );
-
-        try {
-          await dbForProject.createCollection(
-            collection.name,
-            attributes,
-            indexes,
-          );
-        } catch (error) {
-          if (!(error instanceof DuplicateException)) {
-            throw error;
-          }
+        if (checkResult.rowCount === 0) {
+          await pool.query(`CREATE DATABASE ${dbName}`);
+          this.logger.log(`Created database: ${dbName}`);
         }
+
+        project = await this.db.updateDocument(
+          'projects',
+          project.getId(),
+          project.setAttribute('database', dbName),
+        );
+      } catch (error) {
+        this.logger.error(
+          `Failed to create database: ${error.message}`,
+          error.stack,
+        );
+        throw new Exception(
+          Exception.GENERAL_SERVER_ERROR,
+          'Failed to create project database',
+        );
+      } finally {
+        // Always release the connection
+        // TODO: ----
       }
+
+      const projectPool = await this.getPool(project.getId(), {
+        database: dbName,
+      });
+      const projectPg = this.getProjectPg(projectPool);
+
+      try {
+        await projectPg.init();
+      } catch (e) {
+        this.logger.error(e);
+        throw new Exception(
+          Exception.GENERAL_SERVER_ERROR,
+          `Failed to initialize project database.`,
+        );
+      }
+
+      await this.projectQueue.add('init', {
+        project,
+      });
 
       return project;
     } catch (error) {

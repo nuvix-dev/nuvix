@@ -19,6 +19,7 @@ import {
   APP_REDIS_SECURE,
   GET_PROJECT_DB,
   POOLS,
+  GET_PROJECT_PG,
 } from 'src/Utils/constants';
 import {
   Database,
@@ -29,6 +30,7 @@ import {
   PoolOptions,
   Pool,
 } from '@nuvix/database';
+import { Context, DataSource } from '@nuvix/pg';
 import { filters, formats } from './resolvers/db.resolver';
 import { CountryResponse, Reader } from 'maxmind';
 import { Cache, Redis } from '@nuvix/cache';
@@ -51,7 +53,11 @@ Object.keys(formats).forEach(key => {
 export type PoolStoreFn<T = PgPool> = (
   name: string,
   options: Omit<PoolOptions, 'name'> & { database: string },
-) => Promise<Pool<T>>;
+) => Promise<PgPool>;
+
+export type GetProjectDbFn = (pool: PgPool, projectId: string) => Database;
+
+export type GetProjectPG = (pool: PgPool, context?: Context) => DataSource;
 
 @Global()
 @Module({
@@ -60,7 +66,7 @@ export type PoolStoreFn<T = PgPool> = (
       provide: POOLS,
       useFactory: (): PoolStoreFn<PgPool> => {
         const poolManager = PoolManager.getInstance();
-        return async (
+        return (async (
           name: string,
           options: PoolOptions & { database: string },
         ) => {
@@ -70,7 +76,7 @@ export type PoolStoreFn<T = PgPool> = (
               return new PgPool({
                 host: process.env.APP_POSTGRES_HOST || 'localhost',
                 port: parseInt(process.env.APP_POSTGRES_PORT || '5432'),
-                database: options.database,
+                database: options.database ?? process.env.APP_POSTGRES_DB,
                 user: process.env.APP_POSTGRES_USER,
                 password: process.env.APP_POSTGRES_PASSWORD,
                 ssl:
@@ -82,7 +88,7 @@ export type PoolStoreFn<T = PgPool> = (
             options,
           );
           return pool;
-        };
+        }) as any;
       },
     },
     {
@@ -157,14 +163,29 @@ export type PoolStoreFn<T = PgPool> = (
     },
     {
       provide: GET_PROJECT_DB,
-      useFactory: async (cache: Cache) => {
-        return async (pool: PgPool, projectId: string) => {
+      useFactory: (cache: Cache) => {
+        return (pool: PgPool, projectId: string) => {
           const adapter = new PostgreDB({
             connection: pool,
           });
           adapter.init();
           const connection = new Database(adapter, cache);
           connection.setPrefix(projectId);
+          return connection;
+        };
+      },
+      inject: [CACHE],
+    },
+    {
+      provide: GET_PROJECT_PG,
+      useFactory: (cache: Cache) => {
+        return (pool: PgPool, ctx?: Context) => {
+          ctx = ctx ?? new Context();
+          const connection = new DataSource(
+            pool,
+            {},
+            { context: ctx, listenForUpdates: true },
+          );
           return connection;
         };
       },
@@ -197,6 +218,7 @@ export type PoolStoreFn<T = PgPool> = (
     DB_FOR_CONSOLE,
     DB_FOR_PROJECT,
     GET_PROJECT_DB,
+    GET_PROJECT_PG,
     GEO_DB,
     CACHE_DB,
     CACHE,
