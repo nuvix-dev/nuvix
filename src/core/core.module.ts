@@ -21,12 +21,7 @@ import {
   POOLS,
   GET_PROJECT_PG,
 } from 'src/Utils/constants';
-import {
-  Database,
-  MariaDB,
-  Structure,
-  PostgreDB,
-} from '@nuvix/database';
+import { Database, MariaDB, Structure, PostgreDB } from '@nuvix/database';
 import { Context, DataSource, PoolManager } from '@nuvix/pg';
 import { filters, formats } from './resolvers/db.resolver';
 import { CountryResponse, Reader } from 'maxmind';
@@ -63,24 +58,22 @@ export type GetProjectPG = (pool: PgPool, context?: Context) => DataSource;
       provide: POOLS,
       useFactory: (): PoolStoreFn<PgPool> => {
         const poolManager = PoolManager.getInstance();
-        return (async (
-          name: string,
-          options: { database: string },
-        ) => {
-          const pool = poolManager.getPool(
-            name,
-            {
-              host: process.env.APP_POSTGRES_HOST || 'localhost',
-              port: parseInt(process.env.APP_POSTGRES_PORT || '5432'),
-              database: options.database ?? process.env.APP_POSTGRES_DB,
-              user: process.env.APP_POSTGRES_USER,
-              password: process.env.APP_POSTGRES_PASSWORD,
-              ssl:
-                process.env.APP_POSTGRES_SSL === 'true'
-                  ? { rejectUnauthorized: false }
-                  : undefined,
-            },
-          );
+        return (async (name: string, options: { database: string }) => {
+          const pool = poolManager.getPool(name, {
+            host: process.env.APP_POSTGRES_HOST || 'localhost',
+            port: parseInt(process.env.APP_POSTGRES_PORT || '5432'),
+            database: options.database ?? process.env.APP_POSTGRES_DB,
+            user: process.env.APP_POSTGRES_USER,
+            password: process.env.APP_POSTGRES_PASSWORD,
+            ssl:
+              process.env.APP_POSTGRES_SSL === 'true'
+                ? { rejectUnauthorized: false }
+                : undefined,
+            max: 30,
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 2000,
+            application_name: 'nuvix',
+          });
           return pool;
         }) as any;
       },
@@ -219,4 +212,4 @@ export type GetProjectPG = (pool: PgPool, context?: Context) => DataSource;
     ProjectUsageService,
   ],
 })
-export class CoreModule { }
+export class CoreModule {}
