@@ -25,12 +25,9 @@ import {
   Database,
   MariaDB,
   Structure,
-  PoolManager,
   PostgreDB,
-  PoolOptions,
-  Pool,
 } from '@nuvix/database';
-import { Context, DataSource } from '@nuvix/pg';
+import { Context, DataSource, PoolManager } from '@nuvix/pg';
 import { filters, formats } from './resolvers/db.resolver';
 import { CountryResponse, Reader } from 'maxmind';
 import { Cache, Redis } from '@nuvix/cache';
@@ -52,7 +49,7 @@ Object.keys(formats).forEach(key => {
 
 export type PoolStoreFn<T = PgPool> = (
   name: string,
-  options: Omit<PoolOptions, 'name'> & { database: string },
+  options: Omit<{ database: string }, 'name'> & { database: string },
 ) => Promise<PgPool>;
 
 export type GetProjectDbFn = (pool: PgPool, projectId: string) => Database;
@@ -68,24 +65,21 @@ export type GetProjectPG = (pool: PgPool, context?: Context) => DataSource;
         const poolManager = PoolManager.getInstance();
         return (async (
           name: string,
-          options: PoolOptions & { database: string },
+          options: { database: string },
         ) => {
-          const pool = await poolManager.getPool<PgPool>(
+          const pool = poolManager.getPool(
             name,
-            (async _options => {
-              return new PgPool({
-                host: process.env.APP_POSTGRES_HOST || 'localhost',
-                port: parseInt(process.env.APP_POSTGRES_PORT || '5432'),
-                database: options.database ?? process.env.APP_POSTGRES_DB,
-                user: process.env.APP_POSTGRES_USER,
-                password: process.env.APP_POSTGRES_PASSWORD,
-                ssl:
-                  process.env.APP_POSTGRES_SSL === 'true'
-                    ? { rejectUnauthorized: false }
-                    : undefined,
-              });
-            }) as any,
-            options,
+            {
+              host: process.env.APP_POSTGRES_HOST || 'localhost',
+              port: parseInt(process.env.APP_POSTGRES_PORT || '5432'),
+              database: options.database ?? process.env.APP_POSTGRES_DB,
+              user: process.env.APP_POSTGRES_USER,
+              password: process.env.APP_POSTGRES_PASSWORD,
+              ssl:
+                process.env.APP_POSTGRES_SSL === 'true'
+                  ? { rejectUnauthorized: false }
+                  : undefined,
+            },
           );
           return pool;
         }) as any;
@@ -225,4 +219,4 @@ export type GetProjectPG = (pool: PgPool, context?: Context) => DataSource;
     ProjectUsageService,
   ],
 })
-export class CoreModule {}
+export class CoreModule { }
