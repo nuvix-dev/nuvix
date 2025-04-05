@@ -29,23 +29,17 @@ import {
   DATABASE_TYPE_CREATE_INDEX,
   DATABASE_TYPE_DELETE_ATTRIBUTE,
   DATABASE_TYPE_DELETE_COLLECTION,
-  DATABASE_TYPE_DELETE_DATABASE,
   DATABASE_TYPE_DELETE_INDEX,
-  DB_FOR_CONSOLE,
-  DB_FOR_PROJECT,
   GEO_DB,
 } from 'src/Utils/constants';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import { Auth } from 'src/core/helper/auth.helper';
 import { CountryResponse, Reader } from 'maxmind';
-import collections from 'src/core/collections';
 import { Exception } from 'src/core/extend/exception';
-import { Detector } from 'src/core/helper/detector.helper';
 import usageConfig from 'src/core/config/usage';
 
 // DTOs
-import { CreateDatabaseDTO, UpdateDatabaseDTO } from './DTO/database.dto';
 import { CreateCollectionDTO, UpdateCollectionDTO } from './DTO/collection.dto';
 import {
   CreateBooleanAttributeDTO,
@@ -70,274 +64,266 @@ import {
 } from './DTO/attributes.dto';
 import { CreateDocumentDTO, UpdateDocumentDTO } from './DTO/document.dto';
 import { CreateIndexDTO } from './DTO/indexes.dto';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { DatabaseJobData, DatabaseJobs } from 'src/core/resolvers/queues';
 
 @Injectable()
 export class DatabaseService {
   private readonly logger = new Logger(DatabaseService.name);
 
   constructor(
-    @Inject(DB_FOR_CONSOLE) private readonly dbConsole: Database,
-    @Inject(DB_FOR_PROJECT) private readonly db: Database,
     @Inject(GEO_DB) private readonly geoDb: Reader<CountryResponse>,
-    @InjectQueue('database') private readonly databaseQueue: Queue,
+    @InjectQueue('database')
+    private readonly databaseQueue: Queue<DatabaseJobData, any, DatabaseJobs>,
+    private readonly event: EventEmitter2,
   ) {}
 
   /**
    * Create a new database.
-   */
-  async create(createDatabaseDto: CreateDatabaseDTO) {
-    const { databaseId: id, name, enabled } = createDatabaseDto;
-    const databaseId = id === 'unique()' ? ID.unique() : id;
+  //  */
+  // async create(createDatabaseDto: CreateDatabaseDTO) {
+  //   const { databaseId: id, name, enabled } = createDatabaseDto;
+  //   const databaseId = id === 'unique()' ? ID.unique() : id;
 
-    try {
-      await this.db.createDocument(
-        'databases',
-        new Document({
-          $id: databaseId,
-          name,
-          enabled: enabled ?? true,
-          search: `${databaseId} ${name}`,
-        }),
-      );
+  //   try {
+  //     await db.createDocument(
+  //       'databases',
+  //       new Document({
+  //         $id: databaseId,
+  //         name,
+  //         enabled: enabled ?? true,
+  //         search: `${databaseId} ${name}`,
+  //       }),
+  //     );
 
-      const database = await this.db.getDocument('databases', databaseId);
+  //     const database = await db.getDocument('databases', databaseId);
 
-      const _collections = ((collections['databases'] ?? {})['collections'] ??
-        []) as any[];
-      if (_collections.length === 0) {
-        throw new Exception(
-          Exception.GENERAL_SERVER_ERROR,
-          'The "collections" collection is not configured.',
-        );
-      }
+  //     const _collections = ((collections['databases'] ?? {})['collections'] ??
+  //       []) as any[];
+  //     if (_collections.length === 0) {
+  //       throw new Exception(
+  //         Exception.GENERAL_SERVER_ERROR,
+  //         'The "collections" collection is not configured.',
+  //       );
+  //     }
 
-      const attributes = _collections['attributes'].map(
-        (attribute: any) =>
-          new Document({
-            $id: attribute['$id'],
-            type: attribute['type'],
-            size: attribute['size'],
-            required: attribute['required'],
-            signed: attribute['signed'],
-            array: attribute['array'],
-            filters: attribute['filters'],
-            default: attribute['default'] ?? null,
-            format: attribute['format'] ?? '',
-          }),
-      );
+  //     const attributes = _collections['attributes'].map(
+  //       (attribute: any) =>
+  //         new Document({
+  //           $id: attribute['$id'],
+  //           type: attribute['type'],
+  //           size: attribute['size'],
+  //           required: attribute['required'],
+  //           signed: attribute['signed'],
+  //           array: attribute['array'],
+  //           filters: attribute['filters'],
+  //           default: attribute['default'] ?? null,
+  //           format: attribute['format'] ?? '',
+  //         }),
+  //     );
 
-      const indexes = _collections['indexes'].map(
-        (index: any) =>
-          new Document({
-            $id: index['$id'],
-            type: index['type'],
-            attributes: index['attributes'],
-            lengths: index['lengths'],
-            orders: index['orders'],
-          }),
-      );
+  //     const indexes = _collections['indexes'].map(
+  //       (index: any) =>
+  //         new Document({
+  //           $id: index['$id'],
+  //           type: index['type'],
+  //           attributes: index['attributes'],
+  //           lengths: index['lengths'],
+  //           orders: index['orders'],
+  //         }),
+  //     );
 
-      await this.db.createCollection(
-        `database_${database.getInternalId()}`,
-        attributes,
-        indexes,
-      );
+  //     await db.createCollection(
+  //       `collections`,
+  //       attributes,
+  //       indexes,
+  //     );
 
-      return database;
-    } catch (error) {
-      if (error instanceof DuplicateException) {
-        throw new Exception(Exception.DATABASE_ALREADY_EXISTS);
-      }
-      throw error;
-    }
-  }
+  //     return database;
+  //   } catch (error) {
+  //     if (error instanceof DuplicateException) {
+  //       throw new Exception(Exception.DATABASE_ALREADY_EXISTS);
+  //     }
+  //     throw error;
+  //   }
+  // }
 
-  /**
-   * Find all databases.
-   */
-  async findAll(queries: Query[], search?: string) {
-    if (search) {
-      queries.push(Query.search('search', search));
-    }
+  // /**
+  //  * Find all databases.
+  //  */
+  // async findAll(queries: Query[], search?: string) {
+  //   if (search) {
+  //     queries.push(Query.search('search', search));
+  //   }
 
-    const cursor = queries.find(query =>
-      [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(
-        query.getMethod(),
-      ),
-    );
+  //   const cursor = queries.find(query =>
+  //     [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(
+  //       query.getMethod(),
+  //     ),
+  //   );
 
-    if (cursor) {
-      const databaseId = cursor.getValue();
-      const cursorDocument = await this.db.getDocument('databases', databaseId);
+  //   if (cursor) {
+  //     const databaseId = cursor.getValue();
+  //     const cursorDocument = await db.getDocument('databases', databaseId);
 
-      if (!cursorDocument) {
-        throw new Exception(
-          Exception.GENERAL_CURSOR_NOT_FOUND,
-          `Database '${databaseId}' for the 'cursor' value not found.`,
-        );
-      }
+  //     if (!cursorDocument) {
+  //       throw new Exception(
+  //         Exception.GENERAL_CURSOR_NOT_FOUND,
+  //         `Database '${databaseId}' for the 'cursor' value not found.`,
+  //       );
+  //     }
 
-      cursor.setValue(cursorDocument);
-    }
+  //     cursor.setValue(cursorDocument);
+  //   }
 
-    const filterQueries = Query.groupByType(queries).filters;
+  //   const filterQueries = Query.groupByType(queries).filters;
 
-    const databases = await this.db.find('databases', queries);
-    const total = await this.db.count(
-      'databases',
-      filterQueries,
-      APP_LIMIT_COUNT,
-    );
+  //   const databases = await db.find('databases', queries);
+  //   const total = await db.count(
+  //     'databases',
+  //     filterQueries,
+  //     APP_LIMIT_COUNT,
+  //   );
 
-    return {
-      databases,
-      total,
-    };
-  }
+  //   return {
+  //     databases,
+  //     total,
+  //   };
+  // }
 
-  /**
-   * Find one database.
-   */
-  async findOne(id: string) {
-    const database = await this.db.getDocument('databases', id);
+  // /**
+  //  * Find one database.
+  //  */
+  // async findOne(id: string) {
+  //   const database = await db.getDocument('databases', id);
 
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
+  //   if (database.isEmpty()) {
+  //     throw new Exception(Exception.DATABASE_NOT_FOUND);
+  //   }
 
-    return database;
-  }
+  //   return database;
+  // }
 
-  async update(id: string, updateDatabaseDto: UpdateDatabaseDTO) {
-    const { name, enabled } = updateDatabaseDto;
-    const database = await this.db.getDocument('databases', id);
+  // async update(id: string, updateDatabaseDto: UpdateDatabaseDTO) {
+  //   const { name, enabled } = updateDatabaseDto;
+  //   const database = await db.getDocument('databases', id);
 
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
+  //   if (database.isEmpty()) {
+  //     throw new Exception(Exception.DATABASE_NOT_FOUND);
+  //   }
 
-    const updatedDatabase = await this.db.updateDocument(
-      'databases',
-      id,
-      database
-        .setAttribute('name', name)
-        .setAttribute('enabled', enabled)
-        .setAttribute('search', `${id} ${name}`),
-    );
+  //   const updatedDatabase = await db.updateDocument(
+  //     'databases',
+  //     id,
+  //     database
+  //       .setAttribute('name', name)
+  //       .setAttribute('enabled', enabled)
+  //       .setAttribute('search', `${id} ${name}`),
+  //   );
 
-    // Assuming you have a queue for events
-    // queueForEvents.setParam('databaseId', updatedDatabase.getId());
+  //   // Assuming you have a queue for events
+  //   // queueForEvents.setParam('databaseId', updatedDatabase.getId());
 
-    return updatedDatabase;
-  }
+  //   return updatedDatabase;
+  // }
 
-  async remove(id: string, project: Document) {
-    const database = await this.db.getDocument('databases', id);
+  // async remove(id: string, project: Document) {
+  //   const database = await db.getDocument('databases', id);
 
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
+  //   if (database.isEmpty()) {
+  //     throw new Exception(Exception.DATABASE_NOT_FOUND);
+  //   }
 
-    if (!(await this.db.deleteDocument('databases', id))) {
-      throw new Exception(
-        Exception.GENERAL_SERVER_ERROR,
-        'Failed to remove collection from DB',
-      );
-    }
+  //   if (!(await db.deleteDocument('databases', id))) {
+  //     throw new Exception(
+  //       Exception.GENERAL_SERVER_ERROR,
+  //       'Failed to remove collection from DB',
+  //     );
+  //   }
 
-    this.db.purgeCachedDocument('databases', database.getId());
-    this.db.purgeCachedCollection(`databases_${database.getInternalId()}`);
+  //   db.purgeCachedDocument('databases', database.getId());
+  //   db.purgeCachedCollection(`databases_${database.getInternalId()}`);
 
-    await this.databaseQueue.add(DATABASE_TYPE_DELETE_DATABASE, {
-      database: database.toObj(),
-      project: project.toObj(),
-    });
+  //   await this.databaseQueue.add(DATABASE_TYPE_DELETE_DATABASE, {
+  //     database: database.toObj(),
+  //     project: project.toObj(),
+  //   });
 
-    return null;
-  }
+  //   return null;
+  // }
 
-  /**
-   * Get logs for a database.
-   */
-  async getLogs(databaseId: string, queries: Query[], search?: string) {
-    const database = await this.db.getDocument('databases', databaseId);
+  // /**
+  //  * Get logs for a database.
+  //  */
+  // async getLogs(databaseId: string, queries: Query[], search?: string) {
+  //   const database = await db.getDocument('databases', databaseId);
 
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
+  //   if (database.isEmpty()) {
+  //     throw new Exception(Exception.DATABASE_NOT_FOUND);
+  //   }
 
-    const grouped = Query.groupByType(queries);
-    const limit = grouped.limit ?? APP_LIMIT_COUNT;
-    const offset = grouped.offset ?? 0;
+  //   const grouped = Query.groupByType(queries);
+  //   const limit = grouped.limit ?? APP_LIMIT_COUNT;
+  //   const offset = grouped.offset ?? 0;
 
-    // const audit = new Audit(this.db);
-    const resource = `database/${databaseId}`;
-    const logs = []; //await audit.getLogsByResource(resource, limit, offset);
+  //   // const audit = new Audit(db);
+  //   const resource = `database/${databaseId}`;
+  //   const logs = []; //await audit.getLogsByResource(resource, limit, offset);
 
-    const output = logs.map(log => {
-      const detector = new Detector(log.userAgent || 'UNKNOWN');
-      // detector.skipBotDetection();
+  //   const output = logs.map(log => {
+  //     const detector = new Detector(log.userAgent || 'UNKNOWN');
+  //     // detector.skipBotDetection();
 
-      const os = detector.getOS();
-      const client = detector.getClient();
-      const device = detector.getDevice();
+  //     const os = detector.getOS();
+  //     const client = detector.getClient();
+  //     const device = detector.getDevice();
 
-      return new Document({
-        event: log.event,
-        userId: log.data.userId,
-        userEmail: log.data.userEmail ?? null,
-        userName: log.data.userName ?? null,
-        mode: log.data.mode ?? null,
-        ip: log.ip,
-        time: log.time,
-        osCode: os.osCode,
-        osName: os.osName,
-        osVersion: os.osVersion,
-        clientType: client.clientType,
-        clientCode: client.clientCode,
-        clientName: client.clientName,
-        clientVersion: client.clientVersion,
-        clientEngine: client.clientEngine,
-        clientEngineVersion: client.clientEngineVersion,
-        deviceName: device.deviceName,
-        deviceBrand: device.deviceBrand,
-        deviceModel: device.deviceModel,
-        countryCode: this.geoDb.get(log.ip)?.country?.iso_code ?? '--',
-        countryName: 'Unknown', // Placeholder, replace with actual geolocation logic
-      });
-    });
+  //     return new Document({
+  //       event: log.event,
+  //       userId: log.data.userId,
+  //       userEmail: log.data.userEmail ?? null,
+  //       userName: log.data.userName ?? null,
+  //       mode: log.data.mode ?? null,
+  //       ip: log.ip,
+  //       time: log.time,
+  //       osCode: os.osCode,
+  //       osName: os.osName,
+  //       osVersion: os.osVersion,
+  //       clientType: client.clientType,
+  //       clientCode: client.clientCode,
+  //       clientName: client.clientName,
+  //       clientVersion: client.clientVersion,
+  //       clientEngine: client.clientEngine,
+  //       clientEngineVersion: client.clientEngineVersion,
+  //       deviceName: device.deviceName,
+  //       deviceBrand: device.deviceBrand,
+  //       deviceModel: device.deviceModel,
+  //       countryCode: this.geoDb.get(log.ip)?.country?.iso_code ?? '--',
+  //       countryName: 'Unknown', // Placeholder, replace with actual geolocation logic
+  //     });
+  //   });
 
-    return {
-      total: 0, //await audit.countLogsByResource(resource),
-      logs: output ?? [],
-    };
-  }
+  //   return {
+  //     total: 0, //await audit.countLogsByResource(resource),
+  //     logs: output ?? [],
+  //   };
+  // }
 
   /**
    * Create a new collection.
    */
-  async createCollection(databaseId: string, input: CreateCollectionDTO) {
+  async createCollection(db: Database, input: CreateCollectionDTO) {
     const { name, enabled, documentSecurity } = input;
     let { collectionId, permissions } = input;
-
-    const database = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
 
     permissions = Permission.aggregate(permissions);
     collectionId = collectionId === 'unique()' ? ID.unique() : collectionId;
 
     try {
-      await this.db.createDocument(
-        `database_${database.getInternalId()}`,
+      await db.createDocument(
+        `collections`,
         new Document({
           $id: collectionId,
-          databaseInternalId: database.getInternalId(),
-          databaseId: databaseId,
           $permissions: permissions ?? [],
           documentSecurity: documentSecurity,
           enabled: enabled ?? true,
@@ -346,22 +332,20 @@ export class DatabaseService {
         }),
       );
 
-      const collection = await this.db.getDocument(
-        `database_${database.getInternalId()}`,
-        collectionId,
-      );
+      const collection = await db.getDocument(`collections`, collectionId);
 
-      await this.db.createCollection(
-        `database_${database.getInternalId()}_collection_${collection.getInternalId()}`,
+      await db.createCollection(
+        `collection_${collection.getInternalId()}`,
         [],
         [],
         permissions ?? [],
         documentSecurity,
       );
 
-      // Assuming you have a queue for events
-      // queueForEvents.setContext('database', database).setParam('databaseId', databaseId).setParam('collectionId', collection.getId());
-
+      this.event.emit(
+        `database.${db.getDatabase()}.collection.${collectionId}.created`,
+        collection,
+      );
       return collection;
     } catch (error) {
       if (error instanceof DuplicateException) {
@@ -377,15 +361,7 @@ export class DatabaseService {
   /**
    * Get collections for a database.
    */
-  async getCollections(databaseId: string, queries: Query[], search?: string) {
-    const database = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
+  async getCollections(db: Database, queries: Query[], search?: string) {
     if (search) {
       queries.push(Query.search('search', search));
     }
@@ -398,10 +374,7 @@ export class DatabaseService {
 
     if (cursor) {
       const collectionId = cursor.getValue();
-      const cursorDocument = await this.db.getDocument(
-        `database_${database.getInternalId()}`,
-        collectionId,
-      );
+      const cursorDocument = await db.getDocument(`collections`, collectionId);
 
       if (cursorDocument.isEmpty()) {
         throw new Exception(
@@ -415,15 +388,8 @@ export class DatabaseService {
 
     const filterQueries = Query.groupByType(queries).filters;
 
-    const collections = await this.db.find(
-      `database_${database.getInternalId()}`,
-      queries,
-    );
-    const total = await this.db.count(
-      `database_${database.getInternalId()}`,
-      filterQueries,
-      APP_LIMIT_COUNT,
-    );
+    const collections = await db.find(`collections`, queries);
+    const total = await db.count(`collections`, filterQueries, APP_LIMIT_COUNT);
 
     return {
       collections,
@@ -434,19 +400,8 @@ export class DatabaseService {
   /**
    * Find one collection.
    */
-  async getCollection(databaseId: string, collectionId: string) {
-    const database = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
-    const collection = await this.db.getDocument(
-      `database_${database.getInternalId()}`,
-      collectionId,
-    );
+  async getCollection(db: Database, collectionId: string) {
+    const collection = await db.getDocument(`collections`, collectionId);
 
     if (collection.isEmpty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -459,74 +414,14 @@ export class DatabaseService {
    * Get logs for a collection.
    */
   async getCollectionLogs(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     queries: Query[],
   ) {
-    const database = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
-    const collectionDocument = await this.db.getDocument(
-      `database_${database.getInternalId()}`,
-      collectionId,
-    );
-    const collection = await this.db.getCollection(
-      `database_${database.getInternalId()}_collection_${collectionDocument.getInternalId()}`,
-    );
-
-    if (collection.isEmpty()) {
-      throw new Exception(Exception.COLLECTION_NOT_FOUND);
-    }
-
-    const grouped = Query.groupByType(queries);
-    const limit = grouped.limit ?? APP_LIMIT_COUNT;
-    const offset = grouped.offset ?? 0;
-
-    // const audit = new Audit(this.db);
-    const resource = `database/${databaseId}/collection/${collectionId}`;
-    const logs = []; //await audit.getLogsByResource(resource, limit, offset);
-
-    const output = logs.map(log => {
-      const detector = new Detector(log.userAgent || 'UNKNOWN');
-      // detector.skipBotDetection();
-
-      const os = detector.getOS();
-      const client = detector.getClient();
-      const device = detector.getDevice();
-
-      return new Document({
-        event: log.event,
-        userId: log.data.userId,
-        userEmail: log.data.userEmail ?? null,
-        userName: log.data.userName ?? null,
-        mode: log.data.mode ?? null,
-        ip: log.ip,
-        time: log.time,
-        osCode: os.osCode,
-        osName: os.osName,
-        osVersion: os.osVersion,
-        clientType: client.clientType,
-        clientCode: client.clientCode,
-        clientName: client.clientName,
-        clientVersion: client.clientVersion,
-        clientEngine: client.clientEngine,
-        clientEngineVersion: client.clientEngineVersion,
-        deviceName: device.deviceName,
-        deviceBrand: device.deviceBrand,
-        deviceModel: device.deviceModel,
-        countryCode: this.geoDb.get(log.ip)?.country?.iso_code ?? '--',
-        countryName: 'Unknown', // Placeholder, replace with actual geolocation logic
-      });
-    });
-
+    // TODO: Implement collection logs
     return {
       total: 0, //await audit.countLogsByResource(resource),
-      logs: output ?? [],
+      logs: [],
     };
   }
 
@@ -534,25 +429,14 @@ export class DatabaseService {
    * Update a collection.
    */
   async updateCollection(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     input: UpdateCollectionDTO,
   ) {
     const { name, documentSecurity } = input;
     let { permissions, enabled } = input;
 
-    const database = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
-    const collection = await this.db.getDocument(
-      `database_${database.getInternalId()}`,
-      collectionId,
-    );
+    const collection = await db.getDocument(`collections`, collectionId);
 
     if (collection.isEmpty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -561,8 +445,8 @@ export class DatabaseService {
     permissions = Permission.aggregate(permissions);
     enabled = enabled ?? collection.getAttribute('enabled');
 
-    const updatedCollection = await this.db.updateDocument(
-      `database_${database.getInternalId()}`,
+    const updatedCollection = await db.updateDocument(
+      `collections`,
       collectionId,
       collection
         .setAttribute('name', name)
@@ -572,14 +456,16 @@ export class DatabaseService {
         .setAttribute('search', `${collectionId} ${name}`),
     );
 
-    await this.db.updateCollection(
-      `database_${database.getInternalId()}_collection_${collection.getInternalId()}`,
+    await db.updateCollection(
+      `collection_${collection.getInternalId()}`,
       permissions,
       documentSecurity,
     );
-    // Assuming you have a queue for events
-    // queueForEvents.setContext('database', database).setParam('databaseId', databaseId).setParam('collectionId', collectionId);
 
+    this.event.emit(
+      `database.${db.getDatabase()}.collection.${collectionId}.updated`,
+      updatedCollection,
+    );
     return updatedCollection;
   }
 
@@ -587,33 +473,17 @@ export class DatabaseService {
    * Remove a collection.
    */
   async removeCollection(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     project: Document,
   ) {
-    const database = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
-    const collection = await this.db.getDocument(
-      `database_${database.getInternalId()}`,
-      collectionId,
-    );
+    const collection = await db.getDocument(`collections`, collectionId);
 
     if (collection.isEmpty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     }
 
-    if (
-      !(await this.db.deleteDocument(
-        `database_${database.getInternalId()}`,
-        collectionId,
-      ))
-    ) {
+    if (!(await db.deleteDocument(`collections`, collectionId))) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
         'Failed to remove collection from DB',
@@ -621,14 +491,12 @@ export class DatabaseService {
     }
 
     await this.databaseQueue.add(DATABASE_TYPE_DELETE_COLLECTION, {
-      database: database.toObj(),
-      collection: collection.toObj(),
-      project: project.toObj(),
+      database: db.getDatabase(),
+      collection: collection.toObject(),
+      project: project.toObject(),
     });
 
-    await this.db.purgeCachedCollection(
-      `database_${database.getInternalId()}_collection_${collection.getInternalId()}`,
-    );
+    await db.purgeCachedCollection(`collection_${collection.getInternalId()}`);
 
     return null;
   }
@@ -636,23 +504,8 @@ export class DatabaseService {
   /**
    * Get attributes for a collection.
    */
-  async getAttributes(
-    databaseId: string,
-    collectionId: string,
-    queries: Query[],
-  ) {
-    const database = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
-    const collection = await this.db.getDocument(
-      `database_${database.getInternalId()}`,
-      collectionId,
-    );
+  async getAttributes(db: Database, collectionId: string, queries: Query[]) {
+    const collection = await db.getDocument(`collections`, collectionId);
 
     if (collection.isEmpty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -666,9 +519,8 @@ export class DatabaseService {
 
     if (cursor) {
       const attributeId = cursor.getValue();
-      const cursorDocument = await this.db.find('attributes', [
+      const cursorDocument = await db.find('attributes', [
         Query.equal('collectionInternalId', [collection.getInternalId()]),
-        Query.equal('databaseInternalId', [database.getInternalId()]),
         Query.equal('key', [attributeId]),
         Query.limit(1),
       ]);
@@ -685,17 +537,12 @@ export class DatabaseService {
 
     queries.push(
       Query.equal('collectionInternalId', [collection.getInternalId()]),
-      Query.equal('databaseInternalId', [database.getInternalId()]),
     );
 
     const filterQueries = Query.groupByType(queries).filters;
 
-    const attributes = await this.db.find('attributes', queries);
-    const total = await this.db.count(
-      'attributes',
-      filterQueries,
-      APP_LIMIT_COUNT,
-    );
+    const attributes = await db.find('attributes', queries);
+    const total = await db.count('attributes', filterQueries, APP_LIMIT_COUNT);
 
     return {
       attributes,
@@ -703,33 +550,12 @@ export class DatabaseService {
     };
   }
 
-  async getDocuments(
-    databaseId: string,
-    collectionId: string,
-    queries: Query[],
-  ) {
-    const database = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
+  async getDocuments(db: Database, collectionId: string, queries: Query[]) {
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
     const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
 
-    if (
-      database.isEmpty() ||
-      (!database.getAttribute('enabled', false) &&
-        !isAPIKey &&
-        !isPrivilegedUser)
-    ) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
     const collection = await Authorization.skip(
-      async () =>
-        await this.db.getDocument(
-          `database_${database.getInternalId()}`,
-          collectionId,
-        ),
+      async () => await db.getDocument(`collections`, collectionId),
     );
 
     if (
@@ -751,8 +577,8 @@ export class DatabaseService {
       const documentId = cursor.getValue();
       const cursorDocument = await Authorization.skip(
         async () =>
-          await this.db.getDocument(
-            `database_${database.getInternalId()}_collection_${collection.getInternalId()}`,
+          await db.getDocument(
+            `collection_${collection.getInternalId()}`,
             documentId,
           ),
       );
@@ -769,17 +595,17 @@ export class DatabaseService {
 
     const filterQueries = Query.groupByType(queries).filters;
 
-    const documents = await this.db.find(
-      `database_${database.getInternalId()}_collection_${collection.getInternalId()}`,
+    const documents = await db.find(
+      `collection_${collection.getInternalId()}`,
       queries,
     );
-    const total = await this.db.count(
-      `database_${database.getInternalId()}_collection_${collection.getInternalId()}`,
+    const total = await db.count(
+      `collection_${collection.getInternalId()}`,
       filterQueries,
       APP_LIMIT_COUNT,
     );
 
-    // Add $collectionId and $databaseId for all documents
+    // Add $collectionId for all documents
     const processDocument = async (
       collection: Document,
       document: Document,
@@ -788,7 +614,6 @@ export class DatabaseService {
         return false;
       }
 
-      document.setAttribute('$databaseId', database.getId());
       document.setAttribute('$collectionId', collection.getId());
 
       const relationships = collection
@@ -816,11 +641,7 @@ export class DatabaseService {
         const relatedCollectionId =
           relationship.getAttribute('relatedCollection');
         const relatedCollection = await Authorization.skip(
-          async () =>
-            await this.db.getDocument(
-              `database_${database.getInternalId()}`,
-              relatedCollectionId,
-            ),
+          async () => await db.getDocument(`collections`, relatedCollectionId),
         );
 
         for (let i = 0; i < relations.length; i++) {
@@ -850,14 +671,7 @@ export class DatabaseService {
       query => query.getMethod() === Query.TYPE_SELECT,
     );
 
-    // Check if the SELECT query includes $databaseId and $collectionId
-    const hasDatabaseId =
-      select &&
-      queries.some(
-        query =>
-          query.getMethod() === Query.TYPE_SELECT &&
-          query.getValues().includes('$databaseId'),
-      );
+    // Check if the SELECT query includes $collectionId
     const hasCollectionId =
       select &&
       queries.some(
@@ -868,9 +682,6 @@ export class DatabaseService {
 
     if (select) {
       for (const document of documents) {
-        if (!hasDatabaseId) {
-          document.removeAttribute('$databaseId');
-        }
         if (!hasCollectionId) {
           document.removeAttribute('$collectionId');
         }
@@ -887,7 +698,7 @@ export class DatabaseService {
    * Create string attribute.
    */
   async createStringAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     input: CreateStringAttributeDTO,
     project: Document,
@@ -924,19 +735,14 @@ export class DatabaseService {
       filters,
     });
 
-    return await this.createAttribute(
-      databaseId,
-      collectionId,
-      attribute,
-      project,
-    );
+    return await this.createAttribute(db, collectionId, attribute, project);
   }
 
   /**
    * Create email attribute.
    */
   async createEmailAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     input: CreateEmailAttributeDTO,
     project: Document,
@@ -953,19 +759,14 @@ export class DatabaseService {
       format: APP_DATABASE_ATTRIBUTE_EMAIL,
     });
 
-    return await this.createAttribute(
-      databaseId,
-      collectionId,
-      attribute,
-      project,
-    );
+    return await this.createAttribute(db, collectionId, attribute, project);
   }
 
   /**
    * Create enum attribute.
    */
   async createEnumAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     input: CreateEnumAttributeDTO,
     project: Document,
@@ -990,19 +791,14 @@ export class DatabaseService {
       formatOptions: { elements },
     });
 
-    return await this.createAttribute(
-      databaseId,
-      collectionId,
-      attribute,
-      project,
-    );
+    return await this.createAttribute(db, collectionId, attribute, project);
   }
 
   /**
    * Create IP attribute.
    */
   async createIPAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     input: CreateIpAttributeDTO,
     project: Document,
@@ -1019,19 +815,14 @@ export class DatabaseService {
       format: APP_DATABASE_ATTRIBUTE_IP,
     });
 
-    return await this.createAttribute(
-      databaseId,
-      collectionId,
-      attribute,
-      project,
-    );
+    return await this.createAttribute(db, collectionId, attribute, project);
   }
 
   /**
    * Create URL attribute.
    */
   async createURLAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     input: CreateStringAttributeDTO,
     project: Document,
@@ -1048,19 +839,14 @@ export class DatabaseService {
       format: APP_DATABASE_ATTRIBUTE_URL,
     });
 
-    return await this.createAttribute(
-      databaseId,
-      collectionId,
-      attribute,
-      project,
-    );
+    return await this.createAttribute(db, collectionId, attribute, project);
   }
 
   /**
    * Create integer attribute.
    */
   async createIntegerAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     input: CreateIntegerAttributeDTO,
     project: Document,
@@ -1103,7 +889,7 @@ export class DatabaseService {
     });
 
     attribute = await this.createAttribute(
-      databaseId,
+      db,
       collectionId,
       attribute,
       project,
@@ -1123,7 +909,7 @@ export class DatabaseService {
    * Create a float attribute.
    */
   async createFloatAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     input: CreateFloatAttributeDTO,
     project: Document,
@@ -1164,7 +950,7 @@ export class DatabaseService {
     });
 
     const createdAttribute = await this.createAttribute(
-      databaseId,
+      db,
       collectionId,
       attribute,
       project,
@@ -1184,7 +970,7 @@ export class DatabaseService {
    * Create a boolean attribute.
    */
   async createBooleanAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     input: CreateBooleanAttributeDTO,
     project: Document,
@@ -1200,19 +986,14 @@ export class DatabaseService {
       array,
     });
 
-    return await this.createAttribute(
-      databaseId,
-      collectionId,
-      attribute,
-      project,
-    );
+    return await this.createAttribute(db, collectionId, attribute, project);
   }
 
   /**
    * Create a date attribute.
    */
   async createDateAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     input: CreateDatetimeAttributeDTO,
     project: Document,
@@ -1231,19 +1012,14 @@ export class DatabaseService {
       filters,
     });
 
-    return await this.createAttribute(
-      databaseId,
-      collectionId,
-      attribute,
-      project,
-    );
+    return await this.createAttribute(db, collectionId, attribute, project);
   }
 
   /**
    * Create a relationship attribute.
    */
   async createRelationshipAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     input: CreateRelationAttributeDTO,
     project: Document,
@@ -1251,25 +1027,14 @@ export class DatabaseService {
     const { key, type, twoWay, twoWayKey, onDelete, relatedCollectionId } =
       input;
 
-    const database = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
-    const collection = await this.db.getDocument(
-      `database_${database.getInternalId()}`,
-      collectionId,
-    );
+    const collection = await db.getDocument(`collections`, collectionId);
 
     if (collection.isEmpty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     }
 
-    const relatedCollectionDocument = await this.db.getDocument(
-      `database_${database.getInternalId()}`,
+    const relatedCollectionDocument = await db.getDocument(
+      `collections`,
       relatedCollectionId,
     );
 
@@ -1277,8 +1042,8 @@ export class DatabaseService {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     }
 
-    const relatedCollection = await this.db.getCollection(
-      `database_${database.getInternalId()}_collection_${relatedCollectionDocument.getInternalId()}`,
+    const relatedCollection = await db.getCollection(
+      `collection_${relatedCollectionDocument.getInternalId()}`,
     );
 
     if (relatedCollection.isEmpty()) {
@@ -1338,38 +1103,22 @@ export class DatabaseService {
       },
     });
 
-    return await this.createAttribute(
-      databaseId,
-      collectionId,
-      attribute,
-      project,
-    );
+    return await this.createAttribute(db, collectionId, attribute, project);
   }
 
   /**
    * Get an attribute.
    */
-  async getAttribute(databaseId: string, collectionId: string, key: string) {
-    const database = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
-    const collection = await this.db.getDocument(
-      `database_${database.getInternalId()}`,
-      collectionId,
-    );
+  async getAttribute(db: Database, collectionId: string, key: string) {
+    const collection = await db.getDocument(`collections`, collectionId);
 
     if (collection.isEmpty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     }
 
-    const attribute = await this.db.getDocument(
+    const attribute = await db.getDocument(
       'attributes',
-      `${database.getInternalId()}_${collection.getInternalId()}_${key}`,
+      `${collection.getInternalId()}_${key}`,
     );
 
     if (attribute.isEmpty()) {
@@ -1378,8 +1127,8 @@ export class DatabaseService {
 
     const options = attribute.getAttribute('options', []);
 
-    for (const [key, option] of Object.entries(options)) {
-      attribute.setAttribute(key, option);
+    for (const [optionKey, option] of Object.entries(options)) {
+      attribute.setAttribute(optionKey, option);
     }
 
     return attribute;
@@ -1389,7 +1138,7 @@ export class DatabaseService {
    * Update an string attribute.
    */
   async updateStringAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateStringAttributeDTO,
@@ -1397,7 +1146,7 @@ export class DatabaseService {
     const { size, required, default: defaultValue, newKey } = input;
 
     const attribute = await this.updateAttribute({
-      databaseId,
+      db,
       collectionId,
       key,
       type: Database.VAR_STRING,
@@ -1415,7 +1164,7 @@ export class DatabaseService {
    * Update email attribute.
    */
   async updateEmailAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateEmailAttributeDTO,
@@ -1423,7 +1172,7 @@ export class DatabaseService {
     const { required, default: defaultValue, newKey } = input;
 
     const attribute = await this.updateAttribute({
-      databaseId,
+      db,
       collectionId,
       key,
       type: Database.VAR_STRING,
@@ -1441,7 +1190,7 @@ export class DatabaseService {
    * Update enum attribute.
    */
   async updateEnumAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateEnumAttributeDTO,
@@ -1456,7 +1205,7 @@ export class DatabaseService {
     }
 
     const attribute = await this.updateAttribute({
-      databaseId,
+      db,
       collectionId,
       key,
       type: Database.VAR_STRING,
@@ -1474,7 +1223,7 @@ export class DatabaseService {
    * Update IP attribute.
    */
   async updateIPAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateIpAttributeDTO,
@@ -1482,7 +1231,7 @@ export class DatabaseService {
     const { required, default: defaultValue, newKey } = input;
 
     const attribute = await this.updateAttribute({
-      databaseId,
+      db,
       collectionId,
       key,
       type: Database.VAR_STRING,
@@ -1500,7 +1249,7 @@ export class DatabaseService {
    * Update URL attribute.
    */
   async updateURLAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateURLAttributeDTO,
@@ -1508,7 +1257,7 @@ export class DatabaseService {
     const { required, default: defaultValue, newKey } = input;
 
     const attribute = await this.updateAttribute({
-      databaseId,
+      db,
       collectionId,
       key,
       type: Database.VAR_STRING,
@@ -1526,7 +1275,7 @@ export class DatabaseService {
    * Update integer attribute.
    */
   async updateIntegerAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateIntegerAttributeDTO,
@@ -1534,7 +1283,7 @@ export class DatabaseService {
     const { required, default: defaultValue, newKey, min, max } = input;
 
     const attribute = await this.updateAttribute({
-      databaseId,
+      db,
       collectionId,
       key,
       type: Database.VAR_INTEGER,
@@ -1558,7 +1307,7 @@ export class DatabaseService {
    * Update float attribute.
    */
   async updateFloatAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateFloatAttributeDTO,
@@ -1566,7 +1315,7 @@ export class DatabaseService {
     const { required, default: defaultValue, newKey, min, max } = input;
 
     const attribute = await this.updateAttribute({
-      databaseId,
+      db,
       collectionId,
       key,
       type: Database.VAR_FLOAT,
@@ -1590,7 +1339,7 @@ export class DatabaseService {
    * Update boolean attribute.
    */
   async updateBooleanAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateBooleanAttributeDTO,
@@ -1598,7 +1347,7 @@ export class DatabaseService {
     const { required, default: defaultValue, newKey } = input;
 
     const attribute = await this.updateAttribute({
-      databaseId,
+      db,
       collectionId,
       key,
       type: Database.VAR_BOOLEAN,
@@ -1615,7 +1364,7 @@ export class DatabaseService {
    * Update date attribute.
    */
   async updateDateAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateDatetimeAttributeDTO,
@@ -1623,7 +1372,7 @@ export class DatabaseService {
     const { required, default: defaultValue, newKey } = input;
 
     const attribute = await this.updateAttribute({
-      databaseId,
+      db,
       collectionId,
       key,
       type: Database.VAR_DATETIME,
@@ -1640,7 +1389,7 @@ export class DatabaseService {
    * Update relationship attribute.
    */
   async updateRelationshipAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateRelationAttributeDTO,
@@ -1648,7 +1397,7 @@ export class DatabaseService {
     const { onDelete, newKey } = input;
 
     const attribute = await this.updateAttribute({
-      databaseId,
+      db,
       collectionId,
       key,
       type: Database.VAR_RELATIONSHIP,
@@ -1671,7 +1420,7 @@ export class DatabaseService {
    * Create a new attribute.
    */
   async createAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     attribute: Document,
     project: Document,
@@ -1688,18 +1437,7 @@ export class DatabaseService {
     const defaultValue = attribute.getAttribute('default', null);
     const options = attribute.getAttribute('options', {});
 
-    const db = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
-    if (db.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
-    const collection = await this.db.getDocument(
-      `database_${db.getInternalId()}`,
-      collectionId,
-    );
+    const collection = await db.getDocument(`collections`, collectionId);
 
     if (collection.isEmpty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -1729,8 +1467,8 @@ export class DatabaseService {
     let relatedCollection: Document;
     if (type === Database.VAR_RELATIONSHIP) {
       options['side'] = Database.RELATION_SIDE_PARENT;
-      relatedCollection = await this.db.getDocument(
-        `database_${db.getInternalId()}`,
+      relatedCollection = await db.getDocument(
+        `collections`,
         options['relatedCollection'] ?? '',
       );
       if (relatedCollection.isEmpty()) {
@@ -1743,12 +1481,8 @@ export class DatabaseService {
 
     try {
       const newAttribute = new Document({
-        $id: ID.custom(
-          `${db.getInternalId()}_${collection.getInternalId()}_${key}`,
-        ),
+        $id: ID.custom(`${collection.getInternalId()}_${key}`),
         key,
-        databaseInternalId: db.getInternalId(),
-        databaseId: db.getId(),
         collectionInternalId: collection.getInternalId(),
         collectionId,
         type,
@@ -1764,8 +1498,8 @@ export class DatabaseService {
         options,
       });
 
-      this.db.checkAttribute(collection, newAttribute);
-      attribute = await this.db.createDocument('attributes', newAttribute);
+      db.checkAttribute(collection, newAttribute);
+      attribute = await db.createDocument('attributes', newAttribute);
     } catch (error) {
       if (error instanceof DuplicateException) {
         throw new Exception(Exception.ATTRIBUTE_ALREADY_EXISTS);
@@ -1779,10 +1513,8 @@ export class DatabaseService {
       throw error;
     }
 
-    this.db.purgeCachedDocument(`database_${db.getInternalId()}`, collectionId);
-    this.db.purgeCachedCollection(
-      `database_${db.getInternalId()}_collection_${collection.getInternalId()}`,
-    );
+    db.purgeCachedDocument(`collections`, collectionId);
+    db.purgeCachedCollection(`collection_${collection.getInternalId()}`);
 
     if (type === Database.VAR_RELATIONSHIP && options['twoWay']) {
       const twoWayKey = options['twoWayKey'];
@@ -1793,11 +1525,9 @@ export class DatabaseService {
       try {
         const twoWayAttribute = new Document({
           $id: ID.custom(
-            `${db.getInternalId()}_${relatedCollection.getInternalId()}_${twoWayKey}`,
+            `related_${relatedCollection.getInternalId()}_${twoWayKey}`,
           ),
           key: twoWayKey,
-          databaseInternalId: db.getInternalId(),
-          databaseId: db.getId(),
           collectionInternalId: relatedCollection.getInternalId(),
           collectionId: relatedCollection.getId(),
           type,
@@ -1813,10 +1543,10 @@ export class DatabaseService {
           options,
         });
 
-        this.db.checkAttribute(relatedCollection, twoWayAttribute);
-        await this.db.createDocument('attributes', twoWayAttribute);
+        db.checkAttribute(relatedCollection, twoWayAttribute);
+        await db.createDocument('attributes', twoWayAttribute);
       } catch (error) {
-        await this.db.deleteDocument('attributes', attribute.getId());
+        await db.deleteDocument('attributes', attribute.getId());
         if (error instanceof DuplicateException) {
           throw new Exception(Exception.ATTRIBUTE_ALREADY_EXISTS);
         }
@@ -1829,20 +1559,17 @@ export class DatabaseService {
         throw error;
       }
 
-      this.db.purgeCachedDocument(
-        `database_${db.getInternalId()}`,
-        relatedCollection.getId(),
-      );
-      this.db.purgeCachedCollection(
-        `database_${db.getInternalId()}_collection_${relatedCollection.getInternalId()}`,
+      db.purgeCachedDocument(`collections`, relatedCollection.getId());
+      db.purgeCachedCollection(
+        `collection_${relatedCollection.getInternalId()}`,
       );
     }
 
     await this.databaseQueue.add(DATABASE_TYPE_CREATE_ATTRIBUTE, {
-      database: db.toObj(),
-      collection: collection.toObj(),
-      attribute: attribute.toObj(),
-      project: project.toObj(),
+      database: db.getDatabase(),
+      collection: collection.toObject(),
+      attribute: attribute.toObject(),
+      project: project.toObject(),
     });
 
     return attribute;
@@ -1852,7 +1579,7 @@ export class DatabaseService {
    * Update an attribute.
    */
   async updateAttribute(input: {
-    databaseId: string;
+    db: Database;
     collectionId: string;
     key: string;
     type: string;
@@ -1867,7 +1594,7 @@ export class DatabaseService {
     newKey?: string;
   }) {
     let {
-      databaseId,
+      db,
       collectionId,
       key,
       type,
@@ -1881,27 +1608,15 @@ export class DatabaseService {
       options = {},
       newKey,
     } = input;
-
-    const db = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
-    if (db.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
-    const collection = await this.db.getDocument(
-      `database_${db.getInternalId()}`,
-      collectionId,
-    );
+    const collection = await db.getDocument(`collections`, collectionId);
 
     if (collection.isEmpty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     }
 
-    let attribute = await this.db.getDocument(
+    let attribute = await db.getDocument(
       'attributes',
-      `${db.getInternalId()}_${collection.getInternalId()}_${key}`,
+      `${collection.getInternalId()}_${key}`,
     );
 
     if (attribute.isEmpty()) {
@@ -1942,7 +1657,7 @@ export class DatabaseService {
       );
     }
 
-    const collectionIdWithPrefix = `database_${db.getInternalId()}_collection_${collection.getInternalId()}`;
+    const collectionIdWithPrefix = `collection_${collection.getInternalId()}`;
 
     attribute
       .setAttribute('default', defaultValue)
@@ -1951,8 +1666,6 @@ export class DatabaseService {
     if (size !== undefined && size !== null) {
       attribute.setAttribute('size', size);
     }
-
-    const formatOptions = attribute.getAttribute('formatOptions');
 
     switch (attribute.getAttribute('format')) {
       case APP_DATABASE_ATTRIBUTE_INT_RANGE:
@@ -2021,7 +1734,7 @@ export class DatabaseService {
       };
       attribute.setAttribute('options', primaryDocumentOptions);
 
-      await this.db.updateRelationship(
+      await db.updateRelationship(
         collectionIdWithPrefix,
         key,
         newKey,
@@ -2029,14 +1742,14 @@ export class DatabaseService {
       );
 
       if (primaryDocumentOptions['twoWay']) {
-        const relatedCollection = await this.db.getDocument(
-          `database_${db.getInternalId()}`,
+        const relatedCollection = await db.getDocument(
+          `collections`,
           primaryDocumentOptions['relatedCollection'],
         );
 
-        const relatedAttribute = await this.db.getDocument(
+        const relatedAttribute = await db.getDocument(
           'attributes',
-          `${db.getInternalId()}_${relatedCollection.getInternalId()}_${primaryDocumentOptions['twoWayKey']}`,
+          `related_${relatedCollection.getInternalId()}_${primaryDocumentOptions['twoWayKey']}`,
         );
 
         if (newKey && newKey !== key) {
@@ -2048,20 +1761,17 @@ export class DatabaseService {
           ...options,
         };
         relatedAttribute.setAttribute('options', relatedOptions);
-        await this.db.updateDocument(
+        await db.updateDocument(
           'attributes',
-          `${db.getInternalId()}_${relatedCollection.getInternalId()}_${primaryDocumentOptions['twoWayKey']}`,
+          `related_${relatedCollection.getInternalId()}_${primaryDocumentOptions['twoWayKey']}`,
           relatedAttribute,
         );
 
-        this.db.purgeCachedDocument(
-          `database_${db.getInternalId()}`,
-          relatedCollection.getId(),
-        );
+        db.purgeCachedDocument(`collections`, relatedCollection.getId());
       }
     } else {
       try {
-        await this.db.updateAttribute({
+        await db.updateAttribute({
           collection: collectionIdWithPrefix,
           id: key,
           size,
@@ -2082,39 +1792,31 @@ export class DatabaseService {
     if (newKey && key !== newKey) {
       const original = attribute.clone();
 
-      await this.db.deleteDocument('attributes', attribute.getId());
+      await db.deleteDocument('attributes', attribute.getId());
 
       attribute
-        .setAttribute(
-          '$id',
-          `${db.getInternalId()}_${collection.getInternalId()}_${newKey}`,
-        )
+        .setAttribute('$id', `${collection.getInternalId()}_${newKey}`)
         .setAttribute('key', newKey);
 
       try {
-        attribute = await this.db.createDocument('attributes', attribute);
+        attribute = await db.createDocument('attributes', attribute);
       } catch (error) {
-        attribute = await this.db.createDocument('attributes', original);
+        attribute = await db.createDocument('attributes', original);
       }
     } else {
-      attribute = await this.db.updateDocument(
+      attribute = await db.updateDocument(
         'attributes',
-        `${db.getInternalId()}_${collection.getInternalId()}_${key}`,
+        `${collection.getInternalId()}_${key}`,
         attribute,
       );
     }
 
-    this.db.purgeCachedDocument(
-      `database_${db.getInternalId()}`,
-      collection.getId(),
-    );
+    db.purgeCachedDocument(`collections`, collection.getId());
 
-    // queueForEvents
-    //   .setContext('collection', collection)
-    //   .setContext('database', db)
-    //   .setParam('databaseId', databaseId)
-    //   .setParam('collectionId', collection.getId())
-    //   .setParam('attributeId', attribute.getId());
+    this.event.emit(
+      `database.${db.getDatabase()}.collection.${collectionId}.attribute.${key}.updated`,
+      attribute.toObject(),
+    );
 
     return attribute;
   }
@@ -2123,31 +1825,20 @@ export class DatabaseService {
    * Delete an attribute.
    */
   async deleteAttribute(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     key: string,
     project: Document,
   ) {
-    const db = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
-    if (db.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
-    const collection = await this.db.getDocument(
-      `database_${db.getInternalId()}`,
-      collectionId,
-    );
+    const collection = await db.getDocument(`collections`, collectionId);
 
     if (collection.isEmpty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     }
 
-    const attribute = await this.db.getDocument(
+    const attribute = await db.getDocument(
       'attributes',
-      `${db.getInternalId()}_${collection.getInternalId()}_${key}`,
+      `${collection.getInternalId()}_${key}`,
     );
 
     if (attribute.isEmpty()) {
@@ -2156,23 +1847,21 @@ export class DatabaseService {
 
     // Only update status if removing available attribute
     if (attribute.getAttribute('status') === 'available') {
-      await this.db.updateDocument(
+      await db.updateDocument(
         'attributes',
         attribute.getId(),
         attribute.setAttribute('status', 'deleting'),
       );
     }
 
-    this.db.purgeCachedDocument(`database_${db.getInternalId()}`, collectionId);
-    this.db.purgeCachedCollection(
-      `database_${db.getInternalId()}_collection_${collection.getInternalId()}`,
-    );
+    db.purgeCachedDocument(`collections`, collectionId);
+    db.purgeCachedCollection(`collection_${collection.getInternalId()}`);
 
     if (attribute.getAttribute('type') === Database.VAR_RELATIONSHIP) {
       const options = attribute.getAttribute('options');
       if (options['twoWay']) {
-        const relatedCollection = await this.db.getDocument(
-          `database_${db.getInternalId()}`,
+        const relatedCollection = await db.getDocument(
+          `collections`,
           options['relatedCollection'],
         );
 
@@ -2180,9 +1869,9 @@ export class DatabaseService {
           throw new Exception(Exception.COLLECTION_NOT_FOUND);
         }
 
-        const relatedAttribute = await this.db.getDocument(
+        const relatedAttribute = await db.getDocument(
           'attributes',
-          `${db.getInternalId()}_${relatedCollection.getInternalId()}_${options['twoWayKey']}`,
+          `${relatedCollection.getInternalId()}_${options['twoWayKey']}`,
         );
 
         if (relatedAttribute.isEmpty()) {
@@ -2190,28 +1879,25 @@ export class DatabaseService {
         }
 
         if (relatedAttribute.getAttribute('status') === 'available') {
-          await this.db.updateDocument(
+          await db.updateDocument(
             'attributes',
             relatedAttribute.getId(),
             relatedAttribute.setAttribute('status', 'deleting'),
           );
         }
 
-        this.db.purgeCachedDocument(
-          `database_${db.getInternalId()}`,
-          options['relatedCollection'],
-        );
-        this.db.purgeCachedCollection(
-          `database_${db.getInternalId()}_collection_${relatedCollection.getInternalId()}`,
+        db.purgeCachedDocument(`collections`, options['relatedCollection']);
+        db.purgeCachedCollection(
+          `collection_${relatedCollection.getInternalId()}`,
         );
       }
     }
 
     await this.databaseQueue.add(DATABASE_TYPE_DELETE_ATTRIBUTE, {
-      database: db.toObj(),
-      collection: collection.toObj(),
-      attribute: attribute.toObj(),
-      project: project.toObj(),
+      database: db.getDatabase(),
+      collection: collection.toObject(),
+      attribute: attribute.toObject(),
+      project: project.toObject(),
     });
 
     return null;
@@ -2221,40 +1907,26 @@ export class DatabaseService {
    * Create a Index.
    */
   async createIndex(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     input: CreateIndexDTO,
     project: Document,
   ) {
     const { key, type, attributes, orders } = input;
 
-    const db = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
-    if (db.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
-    const collection = await this.db.getDocument(
-      `database_${db.getInternalId()}`,
-      collectionId,
-    );
+    const collection = await db.getDocument(`collections`, collectionId);
 
     if (collection.isEmpty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     }
 
-    const count = await this.db.count(
+    const count = await db.count(
       'indexes',
-      [
-        Query.equal('collectionInternalId', [collection.getInternalId()]),
-        Query.equal('databaseInternalId', [db.getInternalId()]),
-      ],
+      [Query.equal('collectionInternalId', [collection.getInternalId()])],
       61,
     );
 
-    const limit = this.db.getLimitForIndexes();
+    const limit = db.getLimitForIndexes();
 
     if (count >= limit) {
       throw new Exception(
@@ -2347,13 +2019,9 @@ export class DatabaseService {
     }
 
     let index = new Document({
-      $id: ID.custom(
-        `${db.getInternalId()}_${collection.getInternalId()}_${key}`,
-      ),
+      $id: ID.custom(`${collection.getInternalId()}_${key}`),
       key,
       status: 'processing',
-      databaseInternalId: db.getInternalId(),
-      databaseId,
       collectionInternalId: collection.getInternalId(),
       collectionId,
       type,
@@ -2364,7 +2032,7 @@ export class DatabaseService {
 
     const validator = new IndexValidator(
       collection.getAttribute('attributes'),
-      this.db.getAdapter().getMaxIndexLength(),
+      db.getAdapter().getMaxIndexLength(),
     );
 
     if (!validator.isValid(index)) {
@@ -2372,7 +2040,7 @@ export class DatabaseService {
     }
 
     try {
-      index = await this.db.createDocument('indexes', index);
+      index = await db.createDocument('indexes', index);
     } catch (error) {
       if (error instanceof DuplicateException) {
         throw new Exception(Exception.INDEX_ALREADY_EXISTS);
@@ -2380,37 +2048,23 @@ export class DatabaseService {
       throw error;
     }
 
-    await this.db.purgeCachedDocument(
-      `database_${db.getInternalId()}`,
-      collectionId,
-    );
+    await db.purgeCachedDocument(`collections`, collectionId);
 
     await this.databaseQueue.add(DATABASE_TYPE_CREATE_INDEX, {
-      database: db.toObj(),
-      collection: collection.toObj(),
-      index: index.toObj(),
-      project: project.toObj(),
+      database: db.getDatabase(),
+      collection: collection.toObject(),
+      index: index.toObject(),
+      project: project.toObject(),
     });
 
     return index;
   }
 
   /**
-   * Get all indexex.
+   * Get all indexes.
    */
-  async getIndexes(databaseId: string, collectionId: string, queries: Query[]) {
-    const database = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
-    const collection = await this.db.getDocument(
-      `database_${database.getInternalId()}`,
-      collectionId,
-    );
+  async getIndexes(db: Database, collectionId: string, queries: Query[]) {
+    const collection = await db.getDocument(`collections`, collectionId);
 
     if (collection.isEmpty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -2426,9 +2080,8 @@ export class DatabaseService {
       const indexId = cursor.getValue();
       const cursorDocument = await Authorization.skip(
         async () =>
-          await this.db.find('indexes', [
+          await db.find('indexes', [
             Query.equal('collectionInternalId', [collection.getInternalId()]),
-            Query.equal('databaseInternalId', [database.getInternalId()]),
             Query.equal('key', [indexId]),
             Query.limit(1),
           ]),
@@ -2446,17 +2099,12 @@ export class DatabaseService {
 
     queries.push(
       Query.equal('collectionInternalId', [collection.getInternalId()]),
-      Query.equal('databaseInternalId', [database.getInternalId()]),
     );
 
     const filterQueries = Query.groupByType(queries).filters;
 
-    const indexes = await this.db.find('indexes', queries);
-    const total = await this.db.count(
-      'indexes',
-      filterQueries,
-      APP_LIMIT_COUNT,
-    );
+    const indexes = await db.find('indexes', queries);
+    const total = await db.count('indexes', filterQueries, APP_LIMIT_COUNT);
 
     return {
       indexes,
@@ -2467,19 +2115,8 @@ export class DatabaseService {
   /**
    * Get an index.
    */
-  async getIndex(databaseId: string, collectionId: string, key: string) {
-    const database = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
-    const collection = await this.db.getDocument(
-      `database_${database.getInternalId()}`,
-      collectionId,
-    );
+  async getIndex(db: Database, collectionId: string, key: string) {
+    const collection = await db.getDocument(`collections`, collectionId);
 
     if (collection.isEmpty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -2497,31 +2134,20 @@ export class DatabaseService {
    * Delete an index.
    */
   async deleteIndex(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     key: string,
     project: Document,
   ) {
-    const db = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
-    if (db.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
-    const collection = await this.db.getDocument(
-      `database_${db.getInternalId()}`,
-      collectionId,
-    );
+    const collection = await db.getDocument(`collections`, collectionId);
 
     if (collection.isEmpty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     }
 
-    const index = await this.db.getDocument(
+    const index = await db.getDocument(
       'indexes',
-      `${db.getInternalId()}_${collection.getInternalId()}_${key}`,
+      `${collection.getInternalId()}_${key}`,
     );
 
     if (index.isEmpty()) {
@@ -2530,23 +2156,20 @@ export class DatabaseService {
 
     // Only update status if removing available index
     if (index.getAttribute('status') === 'available') {
-      await this.db.updateDocument(
+      await db.updateDocument(
         'indexes',
         index.getId(),
         index.setAttribute('status', 'deleting'),
       );
     }
 
-    await this.db.purgeCachedDocument(
-      `database_${db.getInternalId()}`,
-      collectionId,
-    );
+    await db.purgeCachedDocument(`collections`, collectionId);
 
     await this.databaseQueue.add(DATABASE_TYPE_DELETE_INDEX, {
-      database: db.toObj(),
-      collection: collection.toObj(),
-      index: index.toObj(),
-      project: project.toObj(),
+      database: db.getDatabase(),
+      collection: collection.toObject(),
+      index: index.toObject(),
+      project: project.toObject(),
     });
 
     return null;
@@ -2556,7 +2179,7 @@ export class DatabaseService {
    * Create a Document.
    */
   async createDocument(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     input: CreateDocumentDTO,
     mode: string,
@@ -2566,28 +2189,11 @@ export class DatabaseService {
     const data =
       typeof input.data === 'string' ? JSON.parse(input.data) : input.data;
 
-    const database = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
     const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
 
-    if (
-      database.isEmpty() ||
-      (!database.getAttribute('enabled', false) &&
-        !isAPIKey &&
-        !isPrivilegedUser)
-    ) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
     const collection = await Authorization.skip(
-      async () =>
-        await this.db.getDocument(
-          `database_${database.getInternalId()}`,
-          collectionId,
-        ),
+      async () => await db.getDocument(`collections`, collectionId),
     );
 
     if (
@@ -2666,19 +2272,15 @@ export class DatabaseService {
         const relatedCollectionId =
           relationship.getAttribute('relatedCollection');
         const relatedCollection = await Authorization.skip(
-          async () =>
-            await this.db.getDocument(
-              `database_${database.getInternalId()}`,
-              relatedCollectionId,
-            ),
+          async () => await db.getDocument(`collections`, relatedCollectionId),
         );
 
         for (let i = 0; i < relations.length; i++) {
           if (relations[i] instanceof Document) {
             const current = await Authorization.skip(
               async () =>
-                await this.db.getDocument(
-                  `database_${database.getInternalId()}_collection_${relatedCollection.getInternalId()}`,
+                await db.getDocument(
+                  `collection_${relatedCollection.getInternalId()}`,
                   relations[i].getId(),
                 ),
             );
@@ -2712,12 +2314,12 @@ export class DatabaseService {
     await checkPermissions(collection, document, Database.PERMISSION_CREATE);
 
     try {
-      const createdDocument = await this.db.createDocument(
-        `database_${database.getInternalId()}_collection_${collection.getInternalId()}`,
+      const createdDocument = await db.createDocument(
+        `collection_${collection.getInternalId()}`,
         document,
       );
 
-      await this.processDocument(database, collection, createdDocument);
+      await this.processDocument(db, collection, createdDocument);
 
       return createdDocument;
     } catch (error) {
@@ -2738,33 +2340,16 @@ export class DatabaseService {
    * Get a document.
    */
   async getDocument(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     documentId: string,
     queries: Query[],
   ) {
-    const database = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
     const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
 
-    if (
-      database.isEmpty() ||
-      (!database.getAttribute('enabled', false) &&
-        !isAPIKey &&
-        !isPrivilegedUser)
-    ) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
     const collection = await Authorization.skip(
-      async () =>
-        await this.db.getDocument(
-          `database_${database.getInternalId()}`,
-          collectionId,
-        ),
+      async () => await db.getDocument(`collections`, collectionId),
     );
 
     if (
@@ -2777,8 +2362,8 @@ export class DatabaseService {
     }
 
     try {
-      const document = await this.db.getDocument(
-        `database_${database.getInternalId()}_collection_${collection.getInternalId()}`,
+      const document = await db.getDocument(
+        `collection_${collection.getInternalId()}`,
         documentId,
         queries,
       );
@@ -2787,7 +2372,7 @@ export class DatabaseService {
         throw new Exception(Exception.DOCUMENT_NOT_FOUND);
       }
 
-      await this.processDocument(database, collection, document);
+      await this.processDocument(db, collection, document);
 
       return document;
     } catch (error) {
@@ -2802,11 +2387,11 @@ export class DatabaseService {
   }
 
   private processDocument = async (
-    database: Document,
+    db: Database,
     collection: Document,
     document: Document,
   ): Promise<void> => {
-    document.setAttribute('$databaseId', database.getId());
+    document.setAttribute('$database', db.getDatabase());
     document.setAttribute('$collectionId', collection.getId());
 
     const relationships = collection
@@ -2834,16 +2419,12 @@ export class DatabaseService {
       const relatedCollectionId =
         relationship.getAttribute('relatedCollection');
       const relatedCollection = await Authorization.skip(
-        async () =>
-          await this.db.getDocument(
-            `database_${database.getInternalId()}`,
-            relatedCollectionId,
-          ),
+        async () => await db.getDocument(`collections`, relatedCollectionId),
       );
 
       for (const relation of relations) {
         if (relation instanceof Document) {
-          await this.processDocument(database, relatedCollection, relation);
+          await this.processDocument(db, relatedCollection, relation);
         }
       }
     }
@@ -2854,81 +2435,15 @@ export class DatabaseService {
    * Get document logs.
    */
   async getDocumentLogs(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     documentId: string,
     queries: Query[],
   ) {
-    const database = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
-    const collection = await this.db.getDocument(
-      `database_${database.getInternalId()}`,
-      collectionId,
-    );
-
-    if (collection.isEmpty()) {
-      throw new Exception(Exception.COLLECTION_NOT_FOUND);
-    }
-
-    const document = await this.db.getDocument(
-      `database_${database.getInternalId()}_collection_${collection.getInternalId()}`,
-      documentId,
-    );
-
-    if (document.isEmpty()) {
-      throw new Exception(Exception.DOCUMENT_NOT_FOUND);
-    }
-
-    const grouped = Query.groupByType(queries);
-    const limit = grouped.limit ?? APP_LIMIT_COUNT;
-    const offset = grouped.offset ?? 0;
-
-    // const audit = new Audit(this.db);
-    const resource = `database/${databaseId}/collection/${collectionId}/document/${document.getId()}`;
-    const logs = []; //await audit.getLogsByResource(resource, limit, offset);
-
-    const output = logs.map(log => {
-      const detector = new Detector(log.userAgent || 'UNKNOWN');
-      // detector.skipBotDetection();
-
-      const os = detector.getOS();
-      const client = detector.getClient();
-      const device = detector.getDevice();
-
-      return new Document({
-        event: log.event,
-        userId: log.data.userId,
-        userEmail: log.data.userEmail ?? null,
-        userName: log.data.userName ?? null,
-        mode: log.data.mode ?? null,
-        ip: log.ip,
-        time: log.time,
-        osCode: os.osCode,
-        osName: os.osName,
-        osVersion: os.osVersion,
-        clientType: client.clientType,
-        clientCode: client.clientCode,
-        clientName: client.clientName,
-        clientVersion: client.clientVersion,
-        clientEngine: client.clientEngine,
-        clientEngineVersion: client.clientEngineVersion,
-        deviceName: device.deviceName,
-        deviceBrand: device.deviceBrand,
-        deviceModel: device.deviceModel,
-        countryCode: this.geoDb.get(log.ip)?.country?.iso_code ?? '--',
-        countryName: 'Unknown', // Placeholder, replace with actual geolocation logic
-      });
-    });
-
+    // TODO: Implement this method
     return {
       total: 0, //await audit.countLogsByResource(resource),
-      logs: output ?? [],
+      logs: [],
     };
   }
 
@@ -2936,7 +2451,7 @@ export class DatabaseService {
    * Update a document.
    */
   async updateDocument(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     documentId: string,
     input: UpdateDocumentDTO,
@@ -2948,28 +2463,11 @@ export class DatabaseService {
       throw new Exception(Exception.DOCUMENT_MISSING_PAYLOAD);
     }
 
-    const database = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
     const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
 
-    if (
-      database.isEmpty() ||
-      (!database.getAttribute('enabled', false) &&
-        !isAPIKey &&
-        !isPrivilegedUser)
-    ) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
     const collection = await Authorization.skip(
-      async () =>
-        await this.db.getDocument(
-          `database_${database.getInternalId()}`,
-          collectionId,
-        ),
+      async () => await db.getDocument(`collections`, collectionId),
     );
 
     if (
@@ -2983,8 +2481,8 @@ export class DatabaseService {
 
     const document = await Authorization.skip(
       async () =>
-        await this.db.getDocument(
-          `database_${database.getInternalId()}_collection_${collection.getInternalId()}`,
+        await db.getDocument(
+          `collection_${collection.getInternalId()}`,
           documentId,
         ),
     );
@@ -3031,19 +2529,15 @@ export class DatabaseService {
         const relatedCollectionId =
           relationship.getAttribute('relatedCollection');
         const relatedCollection = await Authorization.skip(
-          async () =>
-            await this.db.getDocument(
-              `database_${database.getInternalId()}`,
-              relatedCollectionId,
-            ),
+          async () => await db.getDocument(`collections`, relatedCollectionId),
         );
 
         for (let i = 0; i < relations.length; i++) {
           if (relations[i] instanceof Document) {
             const oldDocument = await Authorization.skip(
               async () =>
-                await this.db.getDocument(
-                  `database_${database.getInternalId()}_collection_${relatedCollection.getInternalId()}`,
+                await db.getDocument(
+                  `collection_${relatedCollection.getInternalId()}`,
                   relations[i].getId(),
                 ),
             );
@@ -3052,7 +2546,7 @@ export class DatabaseService {
             relations[i].removeAttribute('$databaseId');
             relations[i].setAttribute(
               '$collection',
-              `database_${database.getInternalId()}_collection_${relatedCollection.getInternalId()}`,
+              `collection_${relatedCollection.getInternalId()}`,
             );
 
             if (oldDocument.isEmpty()) {
@@ -3075,13 +2569,13 @@ export class DatabaseService {
     await setCollection(collection, newDocument);
 
     try {
-      const updatedDocument = await this.db.updateDocument(
-        `database_${database.getInternalId()}_collection_${collection.getInternalId()}`,
+      const updatedDocument = await db.updateDocument(
+        `collection_${collection.getInternalId()}`,
         document.getId(),
         newDocument,
       );
 
-      await this.processDocument(database, collection, updatedDocument);
+      await this.processDocument(db, collection, updatedDocument);
 
       return updatedDocument;
     } catch (error) {
@@ -3105,34 +2599,17 @@ export class DatabaseService {
    * Delete a document.
    */
   async deleteDocument(
-    databaseId: string,
+    db: Database,
     collectionId: string,
     documentId: string,
     mode: string,
     timestamp: Date,
   ) {
-    const database = await Authorization.skip(
-      async () => await this.db.getDocument('databases', databaseId),
-    );
-
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
     const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
 
-    if (
-      database.isEmpty() ||
-      (!database.getAttribute('enabled', false) &&
-        !isAPIKey &&
-        !isPrivilegedUser)
-    ) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
-
     const collection = await Authorization.skip(
-      async () =>
-        await this.db.getDocument(
-          `database_${database.getInternalId()}`,
-          collectionId,
-        ),
+      async () => await db.getDocument(`collections`, collectionId),
     );
 
     if (
@@ -3146,8 +2623,8 @@ export class DatabaseService {
 
     const document = await Authorization.skip(
       async () =>
-        await this.db.getDocument(
-          `database_${database.getInternalId()}_collection_${collection.getInternalId()}`,
+        await db.getDocument(
+          `collection_${collection.getInternalId()}`,
           documentId,
         ),
     );
@@ -3156,15 +2633,16 @@ export class DatabaseService {
       throw new Exception(Exception.DOCUMENT_NOT_FOUND);
     }
 
-    await this.db.withRequestTimestamp(timestamp, async () => {
-      await this.db.deleteDocument(
-        `database_${database.getInternalId()}_collection_${collection.getInternalId()}`,
+    await db.withRequestTimestamp(timestamp, async () => {
+      await db.deleteDocument(
+        `collection_${collection.getInternalId()}`,
         documentId,
       );
     });
 
-    await this.processDocument(database, collection, document);
+    await this.processDocument(db, collection, document);
 
+    // TODO: ----->
     // const relationships = collection
     //   .getAttribute('attributes', [])
     //   .filter(
@@ -3179,7 +2657,7 @@ export class DatabaseService {
   /**
    * Get Usage.
    */
-  async getUsage(range?: string) {
+  async getUsage(db: Database, range?: string) {
     const periods = usageConfig;
     const stats: any = {};
     const usage: any = {};
@@ -3188,7 +2666,7 @@ export class DatabaseService {
 
     await Authorization.skip(async () => {
       for (const metric of metrics) {
-        const result = await this.db.findOne('stats', [
+        const result = await db.findOne('stats', [
           Query.equal('metric', [metric]),
           Query.equal('period', ['inf']),
         ]);
@@ -3196,7 +2674,7 @@ export class DatabaseService {
         stats[metric] = { total: result?.values?.length ?? 0 };
         const limit = days.limit;
         const period = days.period;
-        const results = await this.db.find('stats', [
+        const results = await db.find('stats', [
           Query.equal('metric', [metric]),
           Query.equal('period', [period]),
           Query.limit(limit),
@@ -3242,154 +2720,153 @@ export class DatabaseService {
   /**
    * Get a database Usage.
    */
-  async getDatabaseUsage(databaseId: string, range?: string) {
-    const database = await this.db.getDocument('databases', databaseId);
+  async getDatabaseUsage(db: Database, range?: string) {
+    // const database = await db.getDocument('databases', databaseId);
 
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
+    // if (database.isEmpty()) {
+    //   throw new Exception(Exception.DATABASE_NOT_FOUND);
+    // }
 
-    const periods = usageConfig;
-    const stats: any = {};
-    const usage: any = {};
-    const days = periods[range];
-    const metrics = [
-      `database_${database.getInternalId()}_collections`,
-      `database_${database.getInternalId()}_documents`,
-    ];
+    // const periods = usageConfig;
+    // const stats: any = {};
+    // const usage: any = {};
+    // const days = periods[range];
+    // const metrics = [
+    //   `database_${database.getInternalId()}_collections`,
+    //   `database_${database.getInternalId()}_documents`,
+    // ];
 
-    await Authorization.skip(async () => {
-      for (const metric of metrics) {
-        const result: any = await this.db.findOne('stats', [
-          Query.equal('metric', [metric]),
-          Query.equal('period', ['inf']),
-        ]);
+    // await Authorization.skip(async () => {
+    //   for (const metric of metrics) {
+    //     const result: any = await db.findOne('stats', [
+    //       Query.equal('metric', [metric]),
+    //       Query.equal('period', ['inf']),
+    //     ]);
 
-        stats[metric] = { total: result?.value ?? 0 };
-        const limit = days.limit;
-        const period = days.period;
-        const results = await this.db.find('stats', [
-          Query.equal('metric', [metric]),
-          Query.equal('period', [period]),
-          Query.limit(limit),
-          Query.orderDesc('time'),
-        ]);
+    //     stats[metric] = { total: result?.value ?? 0 };
+    //     const limit = days.limit;
+    //     const period = days.period;
+    //     const results = await db.find('stats', [
+    //       Query.equal('metric', [metric]),
+    //       Query.equal('period', [period]),
+    //       Query.limit(limit),
+    //       Query.orderDesc('time'),
+    //     ]);
 
-        stats[metric].data = {};
-        for (const result of results) {
-          stats[metric].data[result.getAttribute('time')] = {
-            value: result.getAttribute('value'),
-          };
-        }
-      }
-    });
+    //     stats[metric].data = {};
+    //     for (const result of results) {
+    //       stats[metric].data[result.getAttribute('time')] = {
+    //         value: result.getAttribute('value'),
+    //       };
+    //     }
+    //   }
+    // });
 
-    const format =
-      days.period === '1h' ? 'Y-m-d\\TH:00:00.000P' : 'Y-m-d\\T00:00:00.000P';
+    // const format =
+    //   days.period === '1h' ? 'Y-m-d\\TH:00:00.000P' : 'Y-m-d\\T00:00:00.000P';
 
-    for (const metric of metrics) {
-      usage[metric] = { total: stats[metric].total, data: [] };
-      let leap = Date.now() - days.limit * days.factor;
-      while (leap < Date.now()) {
-        leap += days.factor;
-        const formatDate = new Date(leap).toISOString().split('.')[0] + 'P';
-        usage[metric].data.push({
-          value: stats[metric].data[formatDate]?.value ?? 0,
-          date: formatDate,
-        });
-      }
-    }
+    // for (const metric of metrics) {
+    //   usage[metric] = { total: stats[metric].total, data: [] };
+    //   let leap = Date.now() - days.limit * days.factor;
+    //   while (leap < Date.now()) {
+    //     leap += days.factor;
+    //     const formatDate = new Date(leap).toISOString().split('.')[0] + 'P';
+    //     usage[metric].data.push({
+    //       value: stats[metric].data[formatDate]?.value ?? 0,
+    //       date: formatDate,
+    //     });
+    //   }
+    // }
 
-    return new Document({
-      range,
-      collectionsTotal: usage[metrics[0]].total,
-      documentsTotal: usage[metrics[1]].total,
-      collections: usage[metrics[0]].data,
-      documents: usage[metrics[1]].data,
-    });
+    // return new Document({
+    //   range,
+    //   collectionsTotal: usage[metrics[0]].total,
+    //   documentsTotal: usage[metrics[1]].total,
+    //   collections: usage[metrics[0]].data,
+    //   documents: usage[metrics[1]].data,
+    // });
+    return new Document();
   }
 
   /**
    * Get collection Usage.
    */
-  async getCollectionUsage(
-    databaseId: string,
-    collectionId: string,
-    range?: string,
-  ) {
-    const database = await this.db.getDocument('databases', databaseId);
+  async getCollectionUsage(db: Database, collectionId: string, range?: string) {
+    // const database = await db.getDocument('databases', databaseId);
 
-    if (database.isEmpty()) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND);
-    }
+    // if (database.isEmpty()) {
+    //   throw new Exception(Exception.DATABASE_NOT_FOUND);
+    // }
 
-    const collectionDocument = await this.db.getDocument(
-      `database_${database.getInternalId()}`,
-      collectionId,
-    );
+    // const collectionDocument = await db.getDocument(
+    //   `collections`,
+    //   collectionId,
+    // );
 
-    const collection = await this.db.getCollection(
-      `database_${database.getInternalId()}_collection_${collectionDocument.getInternalId()}`,
-    );
+    // const collection = await db.getCollection(
+    //   `database_${database.getInternalId()}_collection_${collectionDocument.getInternalId()}`,
+    // );
 
-    if (collection.isEmpty()) {
-      throw new Exception(Exception.COLLECTION_NOT_FOUND);
-    }
+    // if (collection.isEmpty()) {
+    //   throw new Exception(Exception.COLLECTION_NOT_FOUND);
+    // }
 
-    const periods = usageConfig;
-    const stats: any = {};
-    const usage: any = {};
-    const days = periods[range];
-    const metrics = [
-      `database_${database.getInternalId()}_collection_${collectionDocument.getInternalId()}_documents`,
-    ];
+    // const periods = usageConfig;
+    // const stats: any = {};
+    // const usage: any = {};
+    // const days = periods[range];
+    // const metrics = [
+    //   `database_${database.getInternalId()}_collection_${collectionDocument.getInternalId()}_documents`,
+    // ];
 
-    await Authorization.skip(async () => {
-      for (const metric of metrics) {
-        const result: any = await this.db.findOne('stats', [
-          Query.equal('metric', [metric]),
-          Query.equal('period', ['inf']),
-        ]);
+    // await Authorization.skip(async () => {
+    //   for (const metric of metrics) {
+    //     const result: any = await db.findOne('stats', [
+    //       Query.equal('metric', [metric]),
+    //       Query.equal('period', ['inf']),
+    //     ]);
 
-        stats[metric] = { total: result?.value ?? 0 };
-        const limit = days.limit;
-        const period = days.period;
-        const results = await this.db.find('stats', [
-          Query.equal('metric', [metric]),
-          Query.equal('period', [period]),
-          Query.limit(limit),
-          Query.orderDesc('time'),
-        ]);
+    //     stats[metric] = { total: result?.value ?? 0 };
+    //     const limit = days.limit;
+    //     const period = days.period;
+    //     const results = await db.find('stats', [
+    //       Query.equal('metric', [metric]),
+    //       Query.equal('period', [period]),
+    //       Query.limit(limit),
+    //       Query.orderDesc('time'),
+    //     ]);
 
-        stats[metric].data = {};
-        for (const result of results) {
-          stats[metric].data[result.getAttribute('time')] = {
-            value: result.getAttribute('value'),
-          };
-        }
-      }
-    });
+    //     stats[metric].data = {};
+    //     for (const result of results) {
+    //       stats[metric].data[result.getAttribute('time')] = {
+    //         value: result.getAttribute('value'),
+    //       };
+    //     }
+    //   }
+    // });
 
-    const format =
-      days.period === '1h' ? 'Y-m-d\\TH:00:00.000P' : 'Y-m-d\\T00:00:00.000P';
+    // const format =
+    //   days.period === '1h' ? 'Y-m-d\\TH:00:00.000P' : 'Y-m-d\\T00:00:00.000P';
 
-    for (const metric of metrics) {
-      usage[metric] = { total: stats[metric].total, data: [] };
-      let leap = Date.now() - days.limit * days.factor;
-      while (leap < Date.now()) {
-        leap += days.factor;
-        const formatDate = new Date(leap).toISOString().split('.')[0] + 'P';
-        usage[metric].data.push({
-          value: stats[metric].data[formatDate]?.value ?? 0,
-          date: formatDate,
-        });
-      }
-    }
+    // for (const metric of metrics) {
+    //   usage[metric] = { total: stats[metric].total, data: [] };
+    //   let leap = Date.now() - days.limit * days.factor;
+    //   while (leap < Date.now()) {
+    //     leap += days.factor;
+    //     const formatDate = new Date(leap).toISOString().split('.')[0] + 'P';
+    //     usage[metric].data.push({
+    //       value: stats[metric].data[formatDate]?.value ?? 0,
+    //       date: formatDate,
+    //     });
+    //   }
+    // }
 
-    return new Document({
-      range,
-      documentsTotal: usage[metrics[0]].total,
-      documents: usage[metrics[0]].data,
-    });
+    // return new Document({
+    //   range,
+    //   documentsTotal: usage[metrics[0]].total,
+    //   documents: usage[metrics[0]].data,
+    // });
+
+    return new Document();
   }
 }

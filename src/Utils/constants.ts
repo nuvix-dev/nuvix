@@ -175,12 +175,12 @@ export const DATABASE_RECONNECT_SLEEP = 2;
 export const DATABASE_RECONNECT_MAX_ATTEMPTS = 10;
 
 // Database Worker Types
-export const DATABASE_TYPE_CREATE_ATTRIBUTE = 'createAttribute';
-export const DATABASE_TYPE_CREATE_INDEX = 'createIndex';
-export const DATABASE_TYPE_DELETE_ATTRIBUTE = 'deleteAttribute';
-export const DATABASE_TYPE_DELETE_INDEX = 'deleteIndex';
-export const DATABASE_TYPE_DELETE_COLLECTION = 'deleteCollection';
-export const DATABASE_TYPE_DELETE_DATABASE = 'deleteDatabase';
+export const DATABASE_TYPE_CREATE_ATTRIBUTE = 'createAttribute' as const;
+export const DATABASE_TYPE_CREATE_INDEX = 'createIndex' as const;
+export const DATABASE_TYPE_DELETE_ATTRIBUTE = 'deleteAttribute' as const;
+export const DATABASE_TYPE_DELETE_INDEX = 'deleteIndex' as const;
+export const DATABASE_TYPE_DELETE_COLLECTION = 'deleteCollection' as const;
+export const DATABASE_TYPE_DELETE_DATABASE = 'deleteDatabase' as const;
 
 // Build Worker Types
 export const BUILD_TYPE_DEPLOYMENT = 'deployment';

@@ -88,7 +88,7 @@ export type GetProjectPG = (pool: PgPool, context?: Context) => DataSource;
       provide: CACHE_DB,
       useFactory: async () => {
         const connection = new IORedis({
-          connectionName: CACHE_DB,
+          connectionName: CACHE_DB.toString(),
           path: APP_REDIS_PATH,
           port: APP_REDIS_PORT,
           host: APP_REDIS_HOST,

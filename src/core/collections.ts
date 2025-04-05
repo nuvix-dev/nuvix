@@ -7340,6 +7340,7 @@ const collections = {
   docSchema: {
     collections: {
       ...dbCollections.collections,
+      $collection: ID.custom(Database.METADATA),
       attributes: [
         ...dbCollections.collections.attributes.filter(
           v => !['databaseId', 'databaseInternalId'].includes(v.$id),
@@ -7348,6 +7349,7 @@ const collections = {
     },
     attributes: {
       ...projectCollections.attributes,
+      $collection: ID.custom(Database.METADATA),
       attributes: projectCollections.attributes.attributes.filter(
         v => !['databaseId', 'databaseInternalId'].includes(v.$id),
       ),
@@ -7363,6 +7365,7 @@ const collections = {
     },
     indexes: {
       ...projectCollections.indexes,
+      $collection: ID.custom(Database.METADATA),
       attributes: projectCollections.indexes.attributes.filter(
         v => !['databaseId', 'databaseInternalId'].includes(v.$id),
       ),
