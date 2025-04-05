@@ -1,11 +1,19 @@
 {
   "name": "nuvix",
   "version": "0.0.1",
-  "description": "",
+  "description": "Nuvix backend server - A NestJS application for backend services",
   "author": "Ravikant Saini",
   "private": true,
   "license": "UNLICENSED",
   "type": "commonjs",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nuvix-Tech/nuvix.git"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
   "imports": {
     "#/*": "./src/*",
     "#internal/*": {
@@ -47,7 +55,7 @@
     "@nestjs/platform-socket.io": "^11.0.12",
     "@nestjs/schedule": "^5.0.1",
     "@nestjs/websockets": "^11.0.12",
-    "@nuvix/cache": "^1.0.2-alpha.1",
+    "@nuvix/cache": "^1.0.2-alpha.2",
     "@nuvix/database": "^1.0.2-alpha.1",
     "@nuvix/pg": "^1.0.0",
     "@nuvix/telemetry": "^1.0.0-alpha.1",

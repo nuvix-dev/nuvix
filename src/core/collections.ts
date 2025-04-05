@@ -7307,7 +7307,7 @@ const dbCollections = {
 };
 
 const collections = {
-  projects: {
+  project: {
     auth: {
       users: projectCollections.users,
       tokens: commonCollections.tokens,
@@ -7333,6 +7333,7 @@ const collections = {
       deployments: projectCollections.deployments,
     },
   },
+  projects: projectCollections,
   console: consoleCollections,
   buckets: bucketCollections,
   databases: dbCollections,

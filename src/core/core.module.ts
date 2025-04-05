@@ -107,13 +107,13 @@ export type GetProjectPG = (pool: PgPool, context?: Context) => DataSource;
         const adpter = new RedisAdapter({
           port: APP_REDIS_PORT,
           host: APP_REDIS_HOST,
-          user: APP_REDIS_USER,
+          username: APP_REDIS_USER,
           password: APP_REDIS_PASSWORD,
           db: APP_REDIS_DB,
           tls: APP_REDIS_SECURE,
+          namespace: 'nuvix',
         } as any);
         const cache = new Cache(adpter);
-        await cache.ping();
         return cache;
       },
       inject: [CACHE_DB],
@@ -169,7 +169,7 @@ export type GetProjectPG = (pool: PgPool, context?: Context) => DataSource;
             connection: pool,
           });
           adapter.init();
-          const connection = new Database(adapter, cache);
+          const connection = new Database(adapter, cache, { logger: true });
           connection.setPrefix(projectId);
           return connection;
         };

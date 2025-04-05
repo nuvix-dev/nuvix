@@ -17,6 +17,15 @@ import { ProjectQueue } from 'src/core/resolvers/queues/project.queue';
     }),
     BullModule.registerQueue({
       name: 'projects',
+      defaultJobOptions: {
+        removeOnComplete: true,
+        removeOnFail: true,
+        attempts: 3,
+        backoff: {
+          type: 'exponential',
+          delay: 1000,
+        },
+      },
     }),
   ],
 })

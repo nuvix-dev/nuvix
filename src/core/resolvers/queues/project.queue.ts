@@ -71,9 +71,9 @@ export class ProjectQueue extends Queue {
       throw e;
     }
 
-    const schemas = Object.entries(collections.projects) ?? [];
-    for (const [schema, _collections] of schemas) {
-      const collections = Object.entries(_collections) ?? [];
+    const schemas = Object.entries(collections.project) ?? [];
+    for (const [schema, $collections] of schemas) {
+      const collections = Object.entries($collections) ?? [];
       const db = this.getProjectDb(pool, project.getId());
       db.setDatabase(schema);
       await db.create(schema);

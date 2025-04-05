@@ -218,7 +218,7 @@ export class ConsoleService {
       if (existingPlan.isEmpty()) {
         await this.dbForConsole.createDocument(
           'plans',
-          new Document({
+          new Document<any>({
             ...plan,
             $permissions: [
               Permission.read(Role.any()),
