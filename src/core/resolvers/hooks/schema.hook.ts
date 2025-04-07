@@ -1,7 +1,9 @@
 import { Inject, Injectable } from '@nestjs/common';
+import { Document } from '@nuvix/database';
 import { Context, DataSource } from '@nuvix/pg';
 import { FastifyRequest } from 'fastify';
 import { GetProjectPG } from 'src/core/core.module';
+import { Exception } from 'src/core/extend/exception';
 import { Hook } from 'src/core/server';
 import {
   CURRENT_SCHEMA_DB,
@@ -17,6 +19,11 @@ export class SchemaHook implements Hook {
   ) {}
 
   async preHandler(request: FastifyRequest) {
+    const project = request[PROJECT_PG] as Document;
+    if (project.isEmpty() || project.getId() === 'console') {
+      throw new Exception(Exception.PROJECT_NOT_FOUND);
+    }
+
     const pool = request[PROJECT_POOL];
     const pg = request[PROJECT_PG] as DataSource;
 

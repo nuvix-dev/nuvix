@@ -21,6 +21,10 @@ export class DatabaseHook implements Hook {
 
   async preHandler(request: FastifyRequest) {
     const project = request[PROJECT] as Document;
+    if (project.isEmpty() || project.getId() === 'console') {
+      throw new Exception(Exception.PROJECT_NOT_FOUND);
+    }
+
     const pool = request[PROJECT_POOL];
     const pg = request[PROJECT_PG] as DataSource;
 
@@ -28,7 +32,7 @@ export class DatabaseHook implements Hook {
     if (schemaId === undefined) return;
 
     const schema = await pg.getSchema(schemaId);
-    if (!schema && schema.type !== 'document')
+    if (!schema || schema.type !== 'document')
       throw new Exception(Exception.DATABASE_NOT_FOUND);
 
     const db = this.getProjectDB(pool, project.getId());
