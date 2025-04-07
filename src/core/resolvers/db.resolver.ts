@@ -91,9 +91,6 @@ export const filters = {
     deserialize: async (value: any, document: Document, database: Database) => {
       const attributes = await database.find('attributes', [
         Query.equal('collectionInternalId', [document.getInternalId()]),
-        Query.equal('databaseInternalId', [
-          document.getAttribute('databaseInternalId'),
-        ]),
         Query.limit(database.getLimitForAttributes()),
       ]);
 
@@ -117,9 +114,6 @@ export const filters = {
     deserialize: async (value: any, document: Document, database: Database) => {
       return await database.find('indexes', [
         Query.equal('collectionInternalId', [document.getInternalId()]),
-        Query.equal('databaseInternalId', [
-          document.getAttribute('databaseInternalId'),
-        ]),
         Query.limit(database.getLimitForIndexes()),
       ]);
     },

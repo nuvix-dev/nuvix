@@ -8,6 +8,7 @@ import { Hook } from 'src/core/server';
 import {
   CURRENT_SCHEMA_DB,
   GET_PROJECT_PG,
+  PROJECT,
   PROJECT_PG,
   PROJECT_POOL,
 } from 'src/Utils/constants';
@@ -19,7 +20,7 @@ export class SchemaHook implements Hook {
   ) {}
 
   async preHandler(request: FastifyRequest) {
-    const project = request[PROJECT_PG] as Document;
+    const project = request[PROJECT] as Document;
     if (project.isEmpty() || project.getId() === 'console') {
       throw new Exception(Exception.PROJECT_NOT_FOUND);
     }
