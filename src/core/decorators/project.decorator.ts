@@ -80,8 +80,7 @@ export const CurrentSchema = createParamDecorator<any, DataSource | undefined>(
   (data: unknown, ctx: ExecutionContext) => {
     const request: Request = ctx.switchToHttp().getRequest();
     const database = request[CURRENT_SCHEMA_PG] as DataSource;
-    if (database)
-      throw new Exception(Exception.DATABASE_NOT_FOUND, 'Schema Not Found.'); // TODO: improve error message.
+    if (!database) throw new Exception(Exception.SCHEDULE_NOT_FOUND);
     return database;
   },
 );
@@ -90,6 +89,7 @@ export const ProjectPg = createParamDecorator<any, DataSource | undefined>(
   (data: unknown, ctx: ExecutionContext) => {
     const request: Request = ctx.switchToHttp().getRequest();
     const dataSource = request[PROJECT_PG] as DataSource;
+    if (!dataSource) throw new Exception(Exception.DATABASE_NOT_FOUND);
     return dataSource;
   },
 );

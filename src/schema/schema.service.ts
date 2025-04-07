@@ -66,11 +66,7 @@ export class SchemaService {
    * Get a schema by name
    */
   public async getSchema(pg: DataSource, name: string) {
-    const schema = await pg
-      .table('schemas', { schema: 'metadata' })
-      .select('name', 'description', 'type')
-      .where('name', name)
-      .first();
+    const schema = await pg.getSchema(name);
 
     if (!schema) {
       throw new Exception(Exception.SCHEMA_NOT_FOUND);

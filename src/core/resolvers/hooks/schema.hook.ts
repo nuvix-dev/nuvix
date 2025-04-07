@@ -6,7 +6,7 @@ import { GetProjectPG } from 'src/core/core.module';
 import { Exception } from 'src/core/extend/exception';
 import { Hook } from 'src/core/server';
 import {
-  CURRENT_SCHEMA_DB,
+  CURRENT_SCHEMA_PG,
   GET_PROJECT_PG,
   PROJECT,
   PROJECT_PG,
@@ -28,7 +28,8 @@ export class SchemaHook implements Hook {
     const pool = request[PROJECT_POOL];
     const pg = request[PROJECT_PG] as DataSource;
 
-    const schemaId = (request.params as { schema: string | undefined }).schema;
+    const schemaId = (request.params as { schemaId: string | undefined })
+      .schemaId;
     if (schemaId === undefined) return;
 
     const schema = await pg.getSchema(schemaId);
@@ -39,7 +40,9 @@ export class SchemaHook implements Hook {
           schema: schema.name,
         }),
       );
-      request[CURRENT_SCHEMA_DB] = db;
+      request[CURRENT_SCHEMA_PG] = db;
+    } else {
+      throw new Exception(Exception.SCHEMA_NOT_FOUND);
     }
 
     return null;
