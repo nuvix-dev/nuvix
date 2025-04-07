@@ -26,9 +26,9 @@ import { DataSource } from '@nuvix/pg';
 import { Models } from 'src/core/helper';
 
 // DTO's
-import { CreateDocumentSchema } from './DTO/create-schema.dto';
+import { CreateDocumentSchema, CreateSchema } from './DTO/create-schema.dto';
 
-@Controller({ version: ['1'], path: 'schema' })
+@Controller({ version: ['1'], path: 'schemas' })
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class SchemaController {
@@ -62,6 +62,20 @@ export class SchemaController {
     return schemas;
   }
 
+  @Post()
+  @Scope('schema.create')
+  @Label('res.type', 'JSON')
+  @Label('res.status', 'CREATED')
+  @ResModel(Models.SCHEMA)
+  async createSchema(
+    @ProjectPg() pg: DataSource,
+    @Project() project: Document,
+    @Body() body: CreateSchema,
+  ) {
+    const result = await this.schemaService.createSchema(pg, body);
+    return result;
+  }
+
   @Get(':schemaId')
   @Scope('schema.read')
   @Label('res.type', 'JSON')
@@ -70,5 +84,29 @@ export class SchemaController {
   async getSchema(@ProjectPg() pg: DataSource, @Param('schemaId') id: string) {
     const result = await this.schemaService.getSchema(pg, id);
     return result;
+  }
+
+  @Get(':schemaId/tables')
+  @Scope('schema.read')
+  @Label('res.type', 'JSON')
+  @Label('res.status', 'OK')
+  async getSchemaTables(
+    @Param('schemaId') schema: string,
+    @CurrentSchema() pg: DataSource,
+  ) {
+    const result = await this.schemaService.getTables(pg, schema);
+    return result;
+  }
+
+  @Get(':schemaId/tables/:tableId')
+  @Scope('schema.read')
+  @Label('res.type', 'JSON')
+  @Label('res.status', 'OK')
+  async getSchemaTable(
+    @Param('schemaId') schema: string,
+    @Param('tableId') table: string,
+    @CurrentSchema() pg: DataSource,
+  ) {
+    return await this.schemaService.getTable(pg, schema, table);
   }
 }

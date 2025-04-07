@@ -153,6 +153,13 @@ export class Exception extends HttpException {
   static readonly DATABASE_ALREADY_EXISTS = 'database_already_exists';
   static readonly DATABASE_TIMEOUT = 'database_timeout';
 
+  /** Schema */
+  static readonly SCHEMA_NOT_FOUND = 'schema_not_found';
+  static readonly SCHEMA_ALREADY_EXISTS = 'schema_already_exists';
+  static readonly SCHEMA_INVALID = 'schema_invalid';
+  static readonly SCHEMA_INVALID_NAME = 'schema_invalid_name';
+  static readonly SCHEMA_INVALID_TYPE = 'schema_invalid_type';
+
   /** Collections */
   static readonly COLLECTION_NOT_FOUND = 'collection_not_found';
   static readonly COLLECTION_ALREADY_EXISTS = 'collection_already_exists';
@@ -1493,6 +1500,33 @@ const errorCodes: Record<string, ErrorCode> = {
     name: Exception.DELETE_FAILED,
     description:
       'The delete operation failed. Please verify your input data and ensure you have the necessary permissions to perform this delete.',
+    code: 400,
+  },
+
+  // Schema
+  [Exception.SCHEMA_NOT_FOUND]: {
+    name: Exception.SCHEMA_NOT_FOUND,
+    description: 'Schema with the requested ID could not be found.',
+    code: 404,
+  },
+  [Exception.SCHEMA_ALREADY_EXISTS]: {
+    name: Exception.SCHEMA_ALREADY_EXISTS,
+    description: 'Schema with the requested ID already exists.',
+    code: 409,
+  },
+  [Exception.SCHEMA_INVALID]: {
+    name: Exception.SCHEMA_INVALID,
+    description: 'Schema with the requested ID is invalid.',
+    code: 400,
+  },
+  [Exception.SCHEMA_INVALID_NAME]: {
+    name: Exception.SCHEMA_INVALID_NAME,
+    description: 'Schema with the requested ID has an invalid name.',
+    code: 400,
+  },
+  [Exception.SCHEMA_INVALID_TYPE]: {
+    name: Exception.SCHEMA_INVALID_TYPE,
+    description: 'Schema with the requested ID has an invalid type.',
     code: 400,
   },
 };

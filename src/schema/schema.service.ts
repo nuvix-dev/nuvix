@@ -11,7 +11,7 @@ import {
 import { INTERNAL_SCHEMAS } from 'src/Utils/constants';
 
 // DTO's
-import { CreateDocumentSchema } from './DTO/create-schema.dto';
+import { CreateDocumentSchema, CreateSchema } from './DTO/create-schema.dto';
 
 @Injectable()
 export class SchemaService {
@@ -30,10 +30,7 @@ export class SchemaService {
     const isExists = await db.getSchema(data.name);
 
     if (isExists) {
-      throw new Exception(
-        Exception.DATABASE_ALREADY_EXISTS,
-        'Schema already exists',
-      );
+      throw new Exception(Exception.SCHEMA_ALREADY_EXISTS);
     }
 
     const schema = await db.createSchema(
@@ -76,9 +73,64 @@ export class SchemaService {
       .first();
 
     if (!schema) {
-      throw new Exception(Exception.DATABASE_NOT_FOUND, 'Schema not found');
+      throw new Exception(Exception.SCHEMA_NOT_FOUND);
     }
 
     return schema;
+  }
+
+  /**
+   * Create a schema
+   */
+  public async createSchema(pg: DataSource, data: CreateSchema) {
+    const isExists = await pg.getSchema(data.name);
+
+    if (isExists) {
+      throw new Exception(
+        Exception.SCHEMA_ALREADY_EXISTS,
+        'Schema already exists, please choose another name',
+      );
+    }
+
+    const schema = await pg.createSchema(
+      data.name,
+      data.type,
+      data.description,
+    );
+
+    return schema;
+  }
+
+  /**
+   * Get all tables
+   */
+  public async getTables(pg: DataSource, schema: string) {
+    const isExists = await pg.getSchema(schema);
+    if (!isExists) {
+      throw new Exception(Exception.SCHEMA_NOT_FOUND);
+    }
+    const tables = await pg.getMetadataForSchema(schema);
+
+    return {
+      tables: tables,
+      total: tables.length,
+    };
+  }
+
+  /**
+   * Get a table by name
+   */
+  public async getTable(pg: DataSource, schema: string, name: string) {
+    const isExists = await pg.getSchema(schema);
+    if (!isExists) {
+      throw new Exception(Exception.SCHEMA_NOT_FOUND);
+    }
+    const table = await pg.getMetadata(name, schema);
+
+    if (!table) {
+      throw new Exception(Exception.GENERAL_NOT_FOUND, 'Table not found');
+    }
+
+    return table;
   }
 }
