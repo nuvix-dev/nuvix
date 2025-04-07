@@ -54,6 +54,7 @@
     "@nestjs/platform-fastify": "^11.0.12",
     "@nestjs/platform-socket.io": "^11.0.12",
     "@nestjs/schedule": "^5.0.1",
+    "@nestjs/swagger": "^11.1.1",
     "@nestjs/websockets": "^11.0.12",
     "@nuvix/cache": "^1.0.2-alpha.2",
     "@nuvix/database": "^1.0.2-alpha.1",
@@ -128,6 +129,7 @@
   "trustedDependencies": [
     "@apollo/protobufjs",
     "@nestjs/core",
+    "@scarf/scarf",
     "@swc/core",
     "argon2",
     "bcrypt",

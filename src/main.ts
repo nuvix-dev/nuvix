@@ -20,6 +20,7 @@ import { Authorization, Role, storage } from '@nuvix/database';
 import { ErrorFilter } from './core/filters/globle-error.filter';
 import cookieParser from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
+import { openApiSetup } from './core/helper';
 
 config();
 Authorization.enableStorage();
@@ -101,6 +102,7 @@ async function bootstrap() {
   });
 
   app.useGlobalFilters(new HttpExceptionFilter(), new ErrorFilter());
+  openApiSetup(app);
   await app.listen(process.env.PORT ?? 3000, '127.0.0.1');
 }
 bootstrap();
