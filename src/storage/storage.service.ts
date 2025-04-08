@@ -807,8 +807,317 @@ export class StorageService {
     file: MultipartFile,
     request: FastifyRequest,
     user: Document,
-    mode: string,
-  ) {}
+  ) {
+    const bucket = await Authorization.skip(() =>
+      db.getDocument('buckets', bucketId),
+    );
+
+    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
+    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
+
+    if (
+      bucket.isEmpty() ||
+      (!bucket.getAttribute('enabled') && !isAPIKey && !isPrivilegedUser)
+    ) {
+      throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
+    }
+
+    const validator = new Authorization(Database.PERMISSION_CREATE);
+    if (!validator.isValid(bucket.getCreate())) {
+      throw new Exception(Exception.USER_UNAUTHORIZED);
+    }
+
+    const allowedPermissions = [
+      Database.PERMISSION_READ,
+      Database.PERMISSION_UPDATE,
+      Database.PERMISSION_DELETE,
+    ];
+
+    let permissions = Permission.aggregate(
+      input.permissions,
+      allowedPermissions,
+    );
+    if (!permissions || permissions.length === 0) {
+      permissions = user.getId()
+        ? allowedPermissions.map(permission =>
+            new Permission(permission, 'user', user.getId()).toString(),
+          )
+        : [];
+    }
+
+    const roles = Authorization.getRoles();
+    if (!Auth.isAppUser(roles) && !Auth.isPrivilegedUser(roles)) {
+      permissions.forEach(permission => {
+        const parsedPermission = Permission.parse(permission);
+        if (!Authorization.isRole(parsedPermission.toString())) {
+          throw new Exception(
+            Exception.USER_UNAUTHORIZED,
+            `Permissions must be one of: (${roles.join(', ')})`,
+          );
+        }
+      });
+    }
+
+    const maximumFileSize = bucket.getAttribute('maximumFileSize', 0);
+    if (maximumFileSize > APP_STORAGE_LIMIT) {
+      throw new Exception(
+        Exception.GENERAL_SERVER_ERROR,
+        'Maximum bucket file size is larger than _APP_STORAGE_LIMIT',
+      );
+    }
+
+    if (Array.isArray(file)) file = file[0];
+    if (!file) {
+      throw new Exception(Exception.STORAGE_FILE_EMPTY);
+    }
+
+    const fileName = file.filename;
+    const fileBuffer = await file.toBuffer();
+    const fileSize = fileBuffer.length;
+    const fileExt = fileName.split('.').pop();
+    const contentRange = request.headers['content-range'];
+
+    if (!fileBuffer) {
+      throw new Exception(
+        Exception.STORAGE_FILE_EMPTY,
+        'File buffer is missing.',
+      );
+    }
+
+    let fileId = input.fileId === 'unique()' ? ID.unique() : input.fileId;
+    let chunk = 1;
+    let chunks = 1;
+    let initialChunkSize = 0;
+
+    if (contentRange) {
+      const match = /^bytes (\d+)-(\d+)\/(\d+)$/.exec(contentRange);
+      if (!match) {
+        throw new Exception(
+          Exception.STORAGE_INVALID_CONTENT_RANGE,
+          'Invalid Content-Range format.',
+        );
+      }
+
+      const [, start, end, size] = match.map(Number);
+
+      const headerFileId = request.headers['x-nuvix-id'];
+      if (Array.isArray(headerFileId)) {
+        fileId = headerFileId[0];
+      } else if (headerFileId) {
+        fileId = headerFileId as string;
+      }
+
+      if (end >= size) {
+        throw new Exception(Exception.STORAGE_INVALID_CONTENT_RANGE);
+      }
+
+      const chunkSize = end - start + 1;
+      if (initialChunkSize === 0) {
+        initialChunkSize = chunkSize;
+      }
+
+      chunks = Math.ceil(size / initialChunkSize);
+      chunk = Math.floor(start / initialChunkSize) + 1;
+    }
+
+    const allowedFileExtensions = bucket.getAttribute(
+      'allowedFileExtensions',
+      [],
+    );
+    if (
+      allowedFileExtensions.length &&
+      !allowedFileExtensions.includes(fileExt)
+    ) {
+      throw new Exception(
+        Exception.STORAGE_FILE_TYPE_UNSUPPORTED,
+        'File extension not allowed',
+      );
+    }
+
+    if (fileSize > maximumFileSize) {
+      throw new Exception(
+        Exception.STORAGE_INVALID_FILE_SIZE,
+        'File size not allowed',
+      );
+    }
+
+    const storagePath = `${APP_STORAGE_UPLOADS}/bucket_${bucket.getInternalId()}`;
+    const chunksPath = `${storagePath}/chunks/${fileId}`;
+    const finalFilePath = `${storagePath}/${fileId}.${fileName.split('.').pop()}`;
+
+    if (!fs.existsSync(storagePath)) {
+      fs.mkdirSync(storagePath, { recursive: true });
+    }
+
+    if (!fs.existsSync(chunksPath)) {
+      fs.mkdirSync(chunksPath, { recursive: true });
+    }
+
+    let fileDocument = await db.getDocument<
+      Record<string, any> & {
+        metadata: Storage.ObjectMetadata;
+      }
+    >('bucket_' + bucket.getInternalId(), fileId);
+
+    // if (fileDocument.isEmpty()) {
+    //   fileDocument = await db.findOne(
+    //     'bucket_' + bucket.getInternalId(),
+    //     [Query.equal('name', [name])],
+    //   );
+    // }
+
+    // TODO : Implement file upload logic
+
+    const name = input.name;
+    const tokens = name
+      .split('/')
+      .filter(Boolean)
+      .map((token: string) => {
+        return token.replace(/[^a-zA-Z0-9-_]/g, '');
+      });
+
+    let metadata: Storage.ObjectMetadata = {
+      content_type: file.mimetype,
+      size: fileSize,
+      sizeActual: undefined,
+      last_modified: new Date().toISOString(),
+      etag: '',
+      signature: undefined,
+      mimeType: file.mimetype,
+      chunksTotal: undefined,
+      chunksUploaded: 0,
+    };
+
+    let chunksUploaded = 0;
+
+    if (!fileDocument.isEmpty()) {
+      metadata = fileDocument.getAttribute('metadata', metadata);
+      const chunksTotal = metadata.chunksTotal ?? 1;
+      chunksUploaded = metadata.chunksUploaded;
+      chunks = chunksTotal;
+
+      if (chunk === -1) chunk = chunksTotal;
+      if (chunksUploaded === chunksTotal) {
+        throw new Exception(Exception.STORAGE_FILE_ALREADY_EXISTS);
+      }
+    }
+
+    const chunkPath = `${chunksPath}/part_${chunk}`;
+    fs.writeFileSync(chunkPath, fileBuffer);
+
+    chunksUploaded += 1;
+
+    if (chunksUploaded === chunks) {
+      const writeStream = fs.createWriteStream(finalFilePath);
+
+      for (let i = 1; i <= chunks; i++) {
+        const partPath = `${chunksPath}/part_${i}`;
+        if (fs.existsSync(partPath)) {
+          writeStream.write(fs.readFileSync(partPath));
+          fs.unlinkSync(partPath);
+        } else {
+          throw new Exception(Exception.STORAGE_FILE_CHUNK_MISSING);
+        }
+      }
+
+      await new Promise((resolve, reject) => {
+        writeStream.end((err: any) => {
+          if (err) reject(err);
+          else resolve(undefined);
+        });
+      });
+
+      fs.rmSync(chunksPath, { recursive: true });
+
+      const mimeType = file.mimetype;
+      const fileHash = await calculateFileHash(finalFilePath);
+      const sizeActual = fs.statSync(finalFilePath).size;
+
+      if (fileDocument.isEmpty()) {
+        const doc = new Document({
+          $id: fileId,
+          $permissions: permissions,
+          bucketId: bucket.getId(),
+          bucketInternalId: bucket.getInternalId(),
+          name: name,
+          version: crypto.randomUUID(),
+          user_metadata: input.metadata,
+          tokens: tokens,
+          search: [fileId, fileName].join(' '),
+          metadata,
+        });
+
+        fileDocument = await db.createDocument(
+          'bucket_' + bucket.getInternalId(),
+          doc,
+        );
+      } else {
+        fileDocument = fileDocument
+          .setAttribute('$permissions', permissions)
+          .setAttribute('metadata', {
+            ...metadata,
+            signature: fileHash,
+            sizeActual,
+            chunksUploaded,
+          });
+        const validator = new Authorization(Database.PERMISSION_CREATE);
+        if (!validator.isValid(bucket.getCreate())) {
+          throw new Exception(Exception.USER_UNAUTHORIZED);
+        }
+
+        fileDocument = await Authorization.skip(async () =>
+          db.updateDocument(
+            'bucket_' + bucket.getInternalId(),
+            fileId,
+            fileDocument,
+          ),
+        );
+      }
+    } else {
+      if (fileDocument.isEmpty()) {
+        const doc = new Document({
+          $id: fileId,
+          $permissions: permissions,
+          bucketId: bucket.getId(),
+          bucketInternalId: bucket.getInternalId(),
+          name: name,
+          metadata: {
+            content_type: file.mimetype,
+            size: fileSize,
+            sizeActual: 0,
+            last_modified: new Date().toISOString(),
+            etag: '',
+            signature: undefined,
+            mimeType: file.mimetype,
+            chunksTotal: chunks,
+            chunksUploaded,
+          },
+          tokens: tokens,
+          user_metadata: input.metadata,
+          search: [fileId, fileName].join(' '),
+          version: crypto.randomUUID(),
+        });
+
+        fileDocument = await db.createDocument(
+          'bucket_' + bucket.getInternalId(),
+          doc,
+        );
+      } else {
+        const updatedDoc = fileDocument.setAttribute('metadata', {
+          ...metadata,
+          chunksUploaded,
+        });
+
+        fileDocument = await db.updateDocument(
+          'bucket_' + bucket.getInternalId(),
+          fileId,
+          updatedDoc,
+        );
+      }
+    }
+
+    return fileDocument;
+  }
 
   /**
    * Get a File.

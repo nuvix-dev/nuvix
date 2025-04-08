@@ -139,7 +139,6 @@ export class StorageController {
     @UploadedFile() file: MultipartFile,
     @Req() req: FastifyRequest,
     @User() user: Document,
-    @Mode() mode: string,
   ) {
     return await this.storageService.uploadFile(
       db,
@@ -148,7 +147,6 @@ export class StorageController {
       file,
       req,
       user,
-      mode,
     );
   }
 
