@@ -103,6 +103,7 @@ import { BillingPlanModel } from '../models/Plan.model';
 import { KeyModel } from '../models/Key.model';
 import { ProjectModel } from '../models/Project.model';
 import { SchemaModel } from '../models/Schema.model';
+import { ObjectModel } from '../models/Object.model';
 
 /**
  * The `Response` class provides a collection of static properties representing various models used in the application.
@@ -176,6 +177,7 @@ export class Models {
   // Storage
   public static FILE = FileModel;
   public static BUCKET = BucketModel;
+  public static OBJECT = ObjectModel;
 
   // Locale
   public static LOCALE = LocaleModel;

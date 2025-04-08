@@ -10,7 +10,6 @@ import {
   Query,
   Req,
   Res,
-  Scope,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -19,17 +18,23 @@ import { ResponseInterceptor } from 'src/core/resolvers/interceptors/response.in
 import { StorageService } from './storage.service';
 import { Models } from 'src/core/helper/response.helper';
 import { ParseQueryPipe } from 'src/core/pipes/query.pipe';
-import { User } from 'src/core/decorators/user.decorator';
 import { Database, Document, Query as Queries } from '@nuvix/database';
 import { Mode } from 'src/core/decorators/mode.decorator';
 import { ProjectGuard } from 'src/core/resolvers/guards/project.guard';
-import { ResModel, StorageDatabase, UploadedFile } from 'src/core/decorators';
+import {
+  Label,
+  ResModel,
+  Scope,
+  StorageDatabase,
+  UploadedFile,
+} from 'src/core/decorators';
 
 import { UpdateFileDTO } from './DTO/file.dto';
 import { CreateBucketDTO, UpdateBucketDTO } from './DTO/bucket.dto';
 import { ApiInterceptor } from 'src/core/resolvers/interceptors/api.interceptor';
 import { ParseDuplicatePipe } from 'src/core/pipes/duplicate.pipe';
 import { MultipartFile } from '@fastify/multipart';
+import { User } from 'src/core/decorators/project-user.decorator';
 
 @Controller({ version: ['1'], path: 'storage' })
 @UseGuards(ProjectGuard)
@@ -89,6 +94,64 @@ export class StorageController {
     return await this.storageService.getFiles(db, id, queries, search);
   }
 
+  @Get('buckets/:id/objects')
+  @ResModel(Models.OBJECT, { list: true })
+  async getObjects(
+    @StorageDatabase() db: Database,
+    @Param('id') id: string,
+    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('search') search?: string,
+    @Query('path') path?: string,
+  ) {
+    return await this.storageService.getObjects(db, id, queries, search, path);
+  }
+
+  @Post('buckets/:id/objects')
+  @Scope('files.create')
+  @Label('res.status', 'CREATED')
+  @Label('res.type', 'JSON')
+  @ResModel(Models.OBJECT)
+  async createObject(
+    @StorageDatabase() db: Database,
+    @Param('id') id: string,
+    @Body() createObjectDto: CreateBucketDTO,
+    @User() user: Document,
+  ) {
+    return await this.storageService.createFolder(
+      db,
+      user,
+      id,
+      createObjectDto,
+    );
+  }
+
+  @Post('buckets/:id/upload')
+  @Scope('files.create')
+  @Label('res.status', 'CREATED')
+  @Label('res.type', 'JSON')
+  @ResModel(Models.OBJECT)
+  async uploadFile(
+    @StorageDatabase() db: Database,
+    @Param('id') id: string,
+    @Body('fileId') fileId: string,
+    @Body('name') name: string,
+    @Body('permissions') permissions: string[] = [],
+    @UploadedFile() file: MultipartFile,
+    @Req() req: FastifyRequest,
+    @User() user: Document,
+    @Mode() mode: string,
+  ) {
+    return await this.storageService.uploadFile(
+      db,
+      id,
+      { fileId, permissions, name },
+      file,
+      req,
+      user,
+      mode,
+    );
+  }
+
   @Post('buckets/:id/files')
   @ResModel(Models.FILE)
   async createFile(
@@ -98,7 +161,7 @@ export class StorageController {
     @Body('permissions') permissions: string[] = [],
     @UploadedFile() file: MultipartFile,
     @Req() req: FastifyRequest,
-    @User('project') user: Document,
+    @User() user: Document,
     @Mode() mode: string,
   ) {
     return await this.storageService.createFile(

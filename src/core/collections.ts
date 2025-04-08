@@ -7183,7 +7183,7 @@ const bucketCollections = {
     ],
   },
   objects: {
-    $collection: Database.METADATA,
+    $collection: ID.custom('buckets'),
     $id: ID.custom('objects'),
     $name: 'Objects',
     attributes: [
@@ -7232,7 +7232,7 @@ const bucketCollections = {
         filters: [],
       },
       {
-        $id: ID.custom('path_tokens'),
+        $id: ID.custom('tokens'),
         type: Database.VAR_STRING,
         format: '',
         size: 1000,

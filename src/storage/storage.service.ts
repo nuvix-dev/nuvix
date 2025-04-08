@@ -25,6 +25,7 @@ import { JwtService } from '@nestjs/jwt';
 import usageConfig from 'src/core/config/usage';
 import sharp from 'sharp';
 import { MultipartFile } from '@fastify/multipart';
+import { CreateFolderDTO, UploadFileDTO } from './DTO/object.dto';
 
 @Injectable()
 export class StorageService {
@@ -79,15 +80,15 @@ export class StorageService {
     const permissions = Permission.aggregate(input.permissions ?? []);
 
     try {
-      const files = (collections['buckets'] ?? {})['files'] ?? {};
-      if (!files) {
+      const objects = (collections['buckets'] ?? {})['objects'] ?? {};
+      if (!objects) {
         throw new Exception(
           Exception.GENERAL_SERVER_ERROR,
           'Files collection is not configured.',
         );
       }
 
-      const attributes = files['attributes'].map(
+      const attributes = objects['attributes'].map(
         (attribute: any) =>
           new Document({
             $id: attribute.$id,
@@ -102,7 +103,7 @@ export class StorageService {
           }),
       );
 
-      const indexes = files['indexes'].map(
+      const indexes = objects['indexes'].map(
         (index: any) =>
           new Document({
             $id: index.$id,
@@ -233,6 +234,7 @@ export class StorageService {
 
   /**
    * Get files.
+   * @deprecated use `getObjects` instead
    */
   async getFiles(
     db: Database,
@@ -320,7 +322,192 @@ export class StorageService {
   }
 
   /**
+   * Get Objects
+   */
+  async getObjects(
+    db: Database,
+    bucketId: string,
+    queries: Query[],
+    search?: string,
+    path?: string,
+  ) {
+    const bucket = await db.getDocument('buckets', bucketId);
+
+    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
+    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
+
+    if (
+      bucket.isEmpty() ||
+      (!bucket.getAttribute('enabled') && !isAPIKey && !isPrivilegedUser)
+    ) {
+      throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
+    }
+
+    const fileSecurity = bucket.getAttribute('fileSecurity', false);
+    const validator = new Authorization(Database.PERMISSION_READ);
+    const valid = validator.isValid(bucket.getRead());
+    if (!fileSecurity && !valid) {
+      throw new Exception(Exception.USER_UNAUTHORIZED);
+    }
+
+    if (search) {
+      queries.push(Query.search('search', search));
+    }
+
+    if (path) {
+      queries.push(Query.startsWith('name', path));
+    }
+
+    const cursor = queries.find((query: Query) =>
+      [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(
+        query.getMethod(),
+      ),
+    );
+
+    if (cursor) {
+      const objectId = cursor.getValue();
+
+      const cursorDocument =
+        fileSecurity && !valid
+          ? await db.getDocument('bucket_' + bucket.getInternalId(), objectId)
+          : await Authorization.skip(() =>
+              db.getDocument('bucket_' + bucket.getInternalId(), objectId),
+            );
+
+      if (cursorDocument.isEmpty()) {
+        throw new Exception(
+          Exception.GENERAL_CURSOR_NOT_FOUND,
+          `Object '${objectId}' for the 'cursor' value not found.`,
+        );
+      }
+
+      cursor.setValue(cursorDocument);
+    }
+
+    const filterQueries = Query.groupByType(queries).filters;
+
+    const objects =
+      fileSecurity && !valid
+        ? await db.find('bucket_' + bucket.getInternalId(), queries)
+        : await Authorization.skip(() =>
+            db.find('bucket_' + bucket.getInternalId(), queries),
+          );
+
+    const total =
+      fileSecurity && !valid
+        ? await db.count(
+            'bucket_' + bucket.getInternalId(),
+            filterQueries,
+            APP_LIMIT_COUNT,
+          )
+        : await Authorization.skip(() =>
+            db.count(
+              'bucket_' + bucket.getInternalId(),
+              filterQueries,
+              APP_LIMIT_COUNT,
+            ),
+          );
+
+    return {
+      objects,
+      total,
+    };
+  }
+
+  /**
+   * Create folder.
+   */
+  async createFolder(
+    db: Database,
+    user: Document,
+    bucketId: string,
+    data: CreateFolderDTO,
+  ) {
+    const bucket = await Authorization.skip(() =>
+      db.getDocument('buckets', bucketId),
+    );
+
+    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
+    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
+
+    if (
+      bucket.isEmpty() ||
+      (!bucket.getAttribute('enabled') && !isAPIKey && !isPrivilegedUser)
+    ) {
+      throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
+    }
+
+    const validator = new Authorization(Database.PERMISSION_CREATE);
+    if (!validator.isValid(bucket.getCreate())) {
+      throw new Exception(Exception.USER_UNAUTHORIZED);
+    }
+
+    const allowedPermissions = [
+      Database.PERMISSION_READ,
+      Database.PERMISSION_UPDATE,
+      Database.PERMISSION_DELETE,
+    ];
+
+    let permissions = Permission.aggregate(
+      data.permissions,
+      allowedPermissions,
+    );
+    if (!permissions || permissions.length === 0) {
+      permissions = user.getId()
+        ? allowedPermissions.map(permission =>
+            new Permission(permission, 'user', user.getId()).toString(),
+          )
+        : [];
+    }
+
+    const roles = Authorization.getRoles();
+    if (!Auth.isAppUser(roles) && !Auth.isPrivilegedUser(roles)) {
+      permissions.forEach(permission => {
+        const parsedPermission = Permission.parse(permission);
+        if (!Authorization.isRole(parsedPermission.toString())) {
+          throw new Exception(
+            Exception.USER_UNAUTHORIZED,
+            `Permissions must be one of: (${roles.join(', ')})`,
+          );
+        }
+      });
+    }
+
+    const folderId = ID.unique();
+    const tokens = data.name
+      .split('/')
+      .filter(Boolean)
+      .map((token: string) => {
+        return token.replace(/[^a-zA-Z0-9-_]/g, '');
+      });
+    tokens.push('.empty');
+
+    const folder = await db.createDocument(
+      `bucket_${bucket.getInternalId()}`,
+      new Document({
+        $id: folderId,
+        name: `${data.name}/.empty`,
+        $permissions: permissions,
+        metadata: {
+          content_type: 'application/x-directory',
+          size: 0,
+          sizeActual: 0,
+          signature: '',
+          mimeType: 'application/x-directory',
+          chunksTotal: 0,
+          chunksUploaded: 0,
+        },
+        tokens,
+        version: crypto.randomUUID(),
+        user_metadata: data.metadata,
+      }),
+    );
+    return folder;
+  }
+
+  /**
    * Create|Upload file.
+   * @deprecated use `createObject` instead
    */
   async createFile(
     db: Database,
@@ -609,6 +796,20 @@ export class StorageService {
 
     return fileDocument;
   }
+
+  /**
+   * Upload File
+   */
+  async uploadFile(
+    db: Database,
+    bucketId: string,
+    input: UploadFileDTO,
+    file: MultipartFile,
+    request: FastifyRequest,
+    user: Document,
+    mode: string,
+  ) {}
+
   /**
    * Get a File.
    */
