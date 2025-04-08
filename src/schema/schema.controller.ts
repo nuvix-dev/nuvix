@@ -28,11 +28,13 @@ import { Models } from 'src/core/helper';
 // DTO's
 import { CreateDocumentSchema, CreateSchema } from './DTO/create-schema.dto';
 
+
+// Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
 @Controller({ version: ['1'], path: 'schemas' })
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class SchemaController {
-  constructor(private readonly schemaService: SchemaService) {}
+  constructor(private readonly schemaService: SchemaService) { }
 
   @Post('document')
   @Scope('schema.create')
@@ -69,7 +71,6 @@ export class SchemaController {
   @ResModel(Models.SCHEMA)
   async createSchema(
     @ProjectPg() pg: DataSource,
-    @Project() project: Document,
     @Body() body: CreateSchema,
   ) {
     const result = await this.schemaService.createSchema(pg, body);
@@ -108,5 +109,17 @@ export class SchemaController {
     @CurrentSchema() pg: DataSource,
   ) {
     return await this.schemaService.getTable(pg, schema, table);
+  }
+
+  @Get(':schemaId/tables/:tableId/columns')
+  @Scope('schema.read')
+  @Label('res.type', 'JSON')
+  @Label('res.status', 'OK')
+  async getSchemaTableColumns(
+    @Param('schemaId') schema: string,
+    @Param('tableId') table: string,
+    @CurrentSchema() pg: DataSource,
+  ) {
+    throw new Error('Method not implemented.');
   }
 }
