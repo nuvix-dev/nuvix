@@ -72,7 +72,7 @@ export class CorsHook implements Hook {
     options: CorsOptions,
   ) {
     if (origin) {
-      reply.header('Access-Control-Allow-Origin', origin);
+      reply.raw.setHeader('Access-Control-Allow-Origin', origin);
     } else {
       this.logger.log(
         'CORS: Origin not allowed, skipping Access-Control-Allow-Origin header',
@@ -80,11 +80,11 @@ export class CorsHook implements Hook {
     }
 
     if (options.credentials) {
-      reply.header('Access-Control-Allow-Credentials', 'true');
+      reply.raw.setHeader('Access-Control-Allow-Credentials', 'true');
     }
 
     if (options.exposedHeaders?.length) {
-      reply.header(
+      reply.raw.setHeader(
         'Access-Control-Expose-Headers',
         options.exposedHeaders.join(', '),
       );
@@ -126,17 +126,17 @@ export class CorsHook implements Hook {
       return;
     }
 
-    reply.header('Access-Control-Allow-Methods', options.methods.join(', '));
+    reply.raw.setHeader('Access-Control-Allow-Methods', options.methods.join(', '));
 
     if (options.allowedHeaders?.length) {
-      reply.header(
+      reply.raw.setHeader(
         'Access-Control-Allow-Headers',
         options.allowedHeaders.join(', '),
       );
     }
 
     if (options.maxAge) {
-      reply.header('Access-Control-Max-Age', String(options.maxAge));
+      reply.raw.setHeader('Access-Control-Max-Age', String(options.maxAge));
     }
 
     reply.status(204).header('Content-Length', '0').send();

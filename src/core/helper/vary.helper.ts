@@ -23,12 +23,12 @@ export function createAddFieldnameToVary(fieldname: string) {
 
     if (values.has('*')) return;
     if (fieldLower === '*') {
-      reply.header('Vary', '*');
+      reply.raw.setHeader('Vary', '*');
       return;
     }
 
     values.add(fieldLower);
-    reply.header('Vary', Array.from(values).join(', '));
+    reply.raw.setHeader('Vary', Array.from(values).join(', '));
   };
 }
 
