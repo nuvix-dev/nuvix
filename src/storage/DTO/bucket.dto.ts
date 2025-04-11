@@ -9,7 +9,10 @@ import {
   ArrayMaxSize,
   IsIn,
 } from 'class-validator';
-import { APP_LIMIT_ARRAY_PARAMS_SIZE, APP_STORAGE_MAX_SIZE } from 'src/Utils/constants';
+import {
+  APP_LIMIT_ARRAY_PARAMS_SIZE,
+  APP_STORAGE_MAX_SIZE,
+} from 'src/Utils/constants';
 import { IsUID } from 'src/core/validators/input.validator';
 
 export class CreateBucketDTO {

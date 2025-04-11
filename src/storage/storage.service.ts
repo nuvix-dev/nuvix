@@ -612,7 +612,7 @@ export class StorageService {
       const [, start, end, size] = match.map(Number);
 
       const headerFileId = request.headers['x-nuvix-id'];
-      if (Array.isArray(headerFileId)) {
+      if (Array.isArray(headerFileId) && headerFileId[0]) {
         fileId = headerFileId[0];
       } else if (headerFileId) {
         fileId = headerFileId as string;

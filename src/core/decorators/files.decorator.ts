@@ -9,11 +9,29 @@ export const UploadedFile = createParamDecorator(
       .getRequest<FastifyRequest>();
 
     const file = await request.file();
+    if (!file) {
+      throw new Exception(Exception.STORAGE_INVALID_FILE);
+    }
+    return file;
+  },
+);
+
+export const MultipartParam = createParamDecorator(
+  async (data: string, ctx: ExecutionContext) => {
+    const request: FastifyRequest = ctx
+      .switchToHttp()
+      .getRequest<FastifyRequest>();
+
+    const file = await request.file();
 
     if (!file) {
       throw new Exception(Exception.STORAGE_INVALID_FILE);
     }
 
-    return file;
+    let param = file.fields[data];
+    param = Array.isArray(param)
+      ? (param[0] as any).value
+      : (param as any)?.value;
+    return param;
   },
 );

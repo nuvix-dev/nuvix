@@ -126,7 +126,10 @@ export class CorsHook implements Hook {
       return;
     }
 
-    reply.raw.setHeader('Access-Control-Allow-Methods', options.methods.join(', '));
+    reply.raw.setHeader(
+      'Access-Control-Allow-Methods',
+      options.methods.join(', '),
+    );
 
     if (options.allowedHeaders?.length) {
       reply.raw.setHeader(

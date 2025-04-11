@@ -23,6 +23,7 @@ import { Mode } from 'src/core/decorators/mode.decorator';
 import { ProjectGuard } from 'src/core/resolvers/guards/project.guard';
 import {
   Label,
+  MultipartParam,
   ResModel,
   Scope,
   StorageDatabase,
@@ -155,8 +156,8 @@ export class StorageController {
   async createFile(
     @StorageDatabase() db: Database,
     @Param('id') id: string,
-    @Body('fileId') fileId: string,
-    @Body('permissions') permissions: string[] = [],
+    @MultipartParam('fileId') fileId: string,
+    @MultipartParam('permissions') permissions: string[] = [],
     @UploadedFile() file: MultipartFile,
     @Req() req: FastifyRequest,
     @User() user: Document,
