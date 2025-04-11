@@ -573,7 +573,7 @@ export class StorageService {
     if (maximumFileSize > APP_STORAGE_LIMIT) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
-        'Maximum bucket file size is larger than _APP_STORAGE_LIMIT',
+        'Maximum bucket file size is larger than APP_STORAGE_LIMIT',
       );
     }
 

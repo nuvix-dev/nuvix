@@ -11,7 +11,11 @@ import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { config } from 'dotenv';
 import { HttpExceptionFilter } from './core/filters/http-exception.filter';
 import { ConsoleLogger, ValidationPipe } from '@nestjs/common';
-import { APP_DEBUG_COLORS, APP_DEBUG_FORMAT } from './Utils/constants';
+import {
+  APP_DEBUG_COLORS,
+  APP_DEBUG_FORMAT,
+  SERVER_CONFIG,
+} from './Utils/constants';
 import { Authorization, Role, storage } from '@nuvix/database';
 import { ErrorFilter } from './core/filters/globle-error.filter';
 import cookieParser from '@fastify/cookie';
@@ -77,6 +81,15 @@ async function bootstrap() {
   app.useStaticAssets({
     root: __dirname + '../public',
     prefix: '/public/',
+  });
+
+  app.enableCors({
+    origin: SERVER_CONFIG.allowedOrigins,
+    methods: SERVER_CONFIG.methods,
+    allowedHeaders: SERVER_CONFIG.allowedHeaders,
+    exposedHeaders: SERVER_CONFIG.exposedHeaders,
+    maxAge: SERVER_CONFIG.maxAge,
+    credentials: SERVER_CONFIG.credentials,
   });
 
   fastify.addHook('onRequest', (req, res, done) => {

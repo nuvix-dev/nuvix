@@ -162,7 +162,8 @@ export const APP_STORAGE_CACHE = 'storage/cache';
 export const APP_STORAGE_CERTIFICATES = 'storage/certificates';
 export const APP_STORAGE_CONFIG = 'storage/config';
 export const APP_STORAGE_READ_BUFFER = 20 * (1000 * 1000); //20MB other names `APP_STORAGE_MEMORY_LIMIT`, `APP_STORAGE_MEMORY_BUFFER`, `APP_STORAGE_READ_LIMIT`, `APP_STORAGE_BUFFER_LIMIT`
-export const APP_STORAGE_MAX_SIZE = 5 * (1000 * 1000 * 1000); // 1GB
+export const APP_STORAGE_MAX_SIZE = 5 * (1000 * 1000 * 1000); // 5GB
+export const APP_STORAGE_LIMIT = 10 * (1000 * 1000 * 1000); // 10GB
 export const APP_HOSTNAME_INTERNAL =
   process.env.APP_HOSTNAME_INTERNAL ?? 'localhost';
 // const APP_FUNCTION_SPECIFICATION_DEFAULT = Specification::S_05VCPU_512MB;
@@ -332,8 +333,6 @@ export const METRIC_FUNCTION_ID_EXECUTIONS_MB_SECONDS =
 export const METRIC_NETWORK_REQUESTS = 'network.requests';
 export const METRIC_NETWORK_INBOUND = 'network.inbound';
 export const METRIC_NETWORK_OUTBOUND = 'network.outbound';
-
-export const APP_STORAGE_LIMIT = 100 * 1024 * 1024; // 100MB
 
 // Events
 export const EVENT_DELIMITER = '.';
