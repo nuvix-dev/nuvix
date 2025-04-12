@@ -57,7 +57,7 @@
     "@nestjs/swagger": "^11.1.1",
     "@nestjs/websockets": "^11.0.12",
     "@nuvix/cache": "^1.0.2-alpha.2",
-    "@nuvix/database": "^1.0.2-alpha.2",
+    "@nuvix/database": "^1.0.2-alpha.3",
     "@nuvix/pg": "^1.0.0-alpha.1",
     "@nuvix/telemetry": "^1.0.0-alpha.1",
     "argon2": "^0.41.1",
