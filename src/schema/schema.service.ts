@@ -12,6 +12,7 @@ import { INTERNAL_SCHEMAS } from 'src/Utils/constants';
 
 // DTO's
 import { CreateDocumentSchema, CreateSchema } from './DTO/create-schema.dto';
+import { CreateTableDto } from './DTO/create-table.dto';
 
 @Injectable()
 export class SchemaService {
@@ -136,10 +137,12 @@ export class SchemaService {
   public async createTable(
     pg: DataSource,
     schema: string,
-    data: any,
+    data: CreateTableDto,
   ) {
-    const table = await pg.createTable(data);
-
+    const table = await pg.createTable({
+      ...data,
+      schema: schema,
+    });
     return table;
   }
 }

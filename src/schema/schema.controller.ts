@@ -29,6 +29,7 @@ import { Models } from 'src/core/helper';
 
 // DTO's
 import { CreateDocumentSchema, CreateSchema } from './DTO/create-schema.dto';
+import { CreateTableDto } from './DTO/create-table.dto';
 
 // Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
 @Controller({ version: ['1'], path: 'schemas' })
@@ -106,7 +107,7 @@ export class SchemaController {
   async createSchemaTable(
     @Param('schemaId') schema: string,
     @CurrentSchema() pg: DataSource,
-    @Body() body: any,
+    @Body() body: CreateTableDto,
   ) {
     return await this.schemaService.createTable(pg, schema, body);
   }
