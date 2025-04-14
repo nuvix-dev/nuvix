@@ -269,4 +269,16 @@ export const scopes = {
   'schema.read': {
     description: 'Access to read a schema',
   },
+  'schema.tables.read': {
+    description: 'Access to read a schema tables',
+  },
+  'schema.tables.create': {
+    description: 'Access to create a schema tables',
+  },
+  'schema.tables.update': {
+    description: 'Access to update a schema tables',
+  },
+  'schema.tables.delete': {
+    description: 'Access to delete a schema tables',
+  },
 };

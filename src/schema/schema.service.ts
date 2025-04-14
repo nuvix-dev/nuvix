@@ -20,7 +20,7 @@ export class SchemaService {
   constructor(
     @InjectQueue('schema')
     private readonly schemasQueue: Queue<SchemaQueueOptions, any, SchemaJobs>,
-  ) {}
+  ) { }
 
   public async createDocumentSchema(
     db: DataSource,
@@ -126,6 +126,19 @@ export class SchemaService {
     if (!table) {
       throw new Exception(Exception.GENERAL_NOT_FOUND, 'Table not found');
     }
+
+    return table;
+  }
+
+  /**
+   * Create a table
+   */
+  public async createTable(
+    pg: DataSource,
+    schema: string,
+    data: any,
+  ) {
+    const table = await pg.createTable(data);
 
     return table;
   }

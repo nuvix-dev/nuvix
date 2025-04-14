@@ -33,7 +33,11 @@ async function bootstrap() {
       trustProxy: true,
       skipMiddie: true,
       querystringParser(str) {
-        return QueryString.parse(str);
+        return QueryString.parse(str, {
+          allowDots: true,
+          allowPrototypes: true,
+          comma: true,
+        });
       },
       logger: {
         enabled: true,

@@ -200,7 +200,7 @@ export class StorageService {
         .setAttribute('fileSecurity', input.fileSecurity)
         .setAttribute('enabled', enabled)
         .setAttribute('encryption', encryption)
-        .setAttribute('compression', input.compression)
+        .setAttribute('compression', input.compression ?? bucket.getAttribute("compression", 'none'))
         .setAttribute('antivirus', antivirus),
     );
 

@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Post,
+  Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -16,6 +17,7 @@ import {
 import {
   CurrentSchema,
   Label,
+  Namespace,
   Project,
   ProjectPg,
   ResModel,
@@ -31,9 +33,10 @@ import { CreateDocumentSchema, CreateSchema } from './DTO/create-schema.dto';
 // Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
 @Controller({ version: ['1'], path: 'schemas' })
 @UseGuards(ProjectGuard)
+@Namespace() // TODO: --->
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class SchemaController {
-  constructor(private readonly schemaService: SchemaService) {}
+  constructor(private readonly schemaService: SchemaService) { }
 
   @Post('document')
   @Scope('schema.create')
@@ -95,6 +98,19 @@ export class SchemaController {
     return result;
   }
 
+  @Post(':schemaId/tables')
+  @Scope('schema.tables.create')
+  @Label('res.type', 'JSON')
+  @Label('res.status', 'CREATED')
+  // @ResModel(Models.TABLE)
+  async createSchemaTable(
+    @Param('schemaId') schema: string,
+    @CurrentSchema() pg: DataSource,
+    @Body() body: any,
+  ) {
+    return await this.schemaService.createTable(pg, schema, body);
+  }
+
   @Get(':schemaId/tables/:tableId')
   @Scope('schema.read')
   @Label('res.type', 'JSON')
@@ -118,4 +134,20 @@ export class SchemaController {
   ) {
     throw new Error('Method not implemented.');
   }
+
+  @Get(':schemaId/table/:tableId')
+  @Scope('schema.read')
+  @Label('res.type', 'JSON')
+  @Label('res.status', 'OK')
+  async getRows(
+    @Param('schemaId') schema: string,
+    @Param('tableId') table: string,
+    @CurrentSchema() pg: DataSource,
+    @Query() query: any,
+  ) {
+    // console.log('parsedQuery', parsedQuery);
+    // return await this.schemaService.getRows(pg, schema, table);
+    return query;
+  }
+
 }
