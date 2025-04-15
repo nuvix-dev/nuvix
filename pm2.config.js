@@ -18,7 +18,6 @@ const api = { ...loadEnvFile('.env.api') };
 const console = { ...loadEnvFile('.env.console') };
 
 module.exports = {
-
     apps: [
         {
             name: 'nuvix-api',

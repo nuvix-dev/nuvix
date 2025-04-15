@@ -87,7 +87,7 @@ async function bootstrap() {
   });
 
   app.useStaticAssets({
-    root: PROJECT_ROOT + 'public',
+    root: PROJECT_ROOT + '/public',
     prefix: '/public/',
   });
 
