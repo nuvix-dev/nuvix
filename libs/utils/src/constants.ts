@@ -149,6 +149,7 @@ export const SERVER_CONFIG: ServerConfig = {
   exposedHeaders: ['X-Nuvix-Session', 'X-Fallback-Cookies'],
   functionsDomain: process.env.APP_DOMAIN_FUNCTION,
   routerProtection: (process.env.APP_ROUTER_PROTECTION ?? 'true') === 'true',
+  cookieDomain: process.env.APP_COOKIE_DOMAIN,
 };
 
 // APP

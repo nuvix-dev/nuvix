@@ -1,7 +1,7 @@
 import * as crypto from 'crypto';
 import { createHash, randomBytes, createHmac, scryptSync } from 'crypto';
 import { Exception } from '../extend/exception';
-import { ENCRYPTION_KEY } from '@nuvix/utils/constants';
+import { ENCRYPTION_KEY, SERVER_CONFIG } from '@nuvix/utils/constants';
 import { Authorization, Document, Roles, Role } from '@nuvix/database';
 
 const algorithm = 'aes-256-cbc';
@@ -72,7 +72,7 @@ export class Auth {
   public static readonly MFA_RECENT_DURATION = 1800; // 30 mins
 
   public static cookieName: string = 'session';
-  public static cookieDomain = '';
+  public static cookieDomain = SERVER_CONFIG?.cookieDomain || '';
   public static cookieSamesite = 'none';
   public static unique: string = '';
   public static secret: string = '';

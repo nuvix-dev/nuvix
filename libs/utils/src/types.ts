@@ -8,4 +8,5 @@ export interface ServerConfig {
   functionsDomain?: string;
   routerProtection: boolean;
   maxAge?: number;
+  cookieDomain?: string;
 }
