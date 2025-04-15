@@ -23,7 +23,8 @@ import {
   WORKER_TYPE_MAILS,
   WORKER_TYPE_USAGE,
 } from '@nuvix/utils/constants';
-import { ProjectHook, HostHook, AuthHook } from '@nuvix/core/resolvers/hooks';
+import { HostHook, AuthHook, ApiHook } from '@nuvix/core/resolvers/hooks';
+import { ProjectHook } from './hooks/project.hook';
 
 @Module({
   imports: [
@@ -69,7 +70,7 @@ export class ConsoleModule implements NestModule {
     consumer
       .apply(ProjectHook, HostHook)
       .forRoutes('*')
-      .apply(AuthHook)
+      .apply(AuthHook, ApiHook)
       .forRoutes('*');
   }
 }

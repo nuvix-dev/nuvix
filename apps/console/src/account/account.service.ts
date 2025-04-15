@@ -50,7 +50,7 @@ export class AccountService {
     @Inject(DB_FOR_CONSOLE) private readonly db: Database,
     @InjectQueue(WORKER_TYPE_MAILS)
     private readonly mailQueue: Queue<MailQueueOptions, MailJobs>,
-  ) { }
+  ) {}
 
   /**
    * Create a new account
@@ -663,9 +663,9 @@ export class AccountService {
     sessionId =
       sessionId === 'current'
         ? (Auth.sessionVerify(
-          user.getAttribute('sessions'),
-          Auth.secret,
-        ) as string)
+            user.getAttribute('sessions'),
+            Auth.secret,
+          ) as string)
         : sessionId;
 
     for (const session of sessions) {
@@ -753,9 +753,9 @@ export class AccountService {
     sessionId =
       sessionId === 'current'
         ? (Auth.sessionVerify(
-          user.getAttribute('sessions'),
-          Auth.secret,
-        ) as string)
+            user.getAttribute('sessions'),
+            Auth.secret,
+          ) as string)
         : sessionId;
 
     const sessions = user.getAttribute('sessions', []);

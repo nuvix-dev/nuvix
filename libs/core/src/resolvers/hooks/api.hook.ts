@@ -6,7 +6,6 @@ import {
   APP_KEY_ACCESS,
   APP_MODE_DEFAULT,
   DB_FOR_CONSOLE,
-  DB_FOR_PROJECT,
   PROJECT,
   SCOPES,
   USER,
@@ -25,7 +24,6 @@ export class ApiHook implements Hook {
   private readonly logger = new Logger(ApiHook.name);
   constructor(
     @Inject(DB_FOR_CONSOLE) private readonly db: Database,
-    @Inject(DB_FOR_PROJECT) private readonly projectDb: Database,
     private readonly jwtService: JwtService,
   ) {}
 
