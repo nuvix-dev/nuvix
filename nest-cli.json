@@ -1,9 +1,53 @@
 {
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
-  "sourceRoot": "src",
+  "sourceRoot": "apps/nuvix/src",
   "compilerOptions": {
-    "builder": "swc",
-    "deleteOutDir": true
+    "builder": {
+      "type": "webpack"
+    },
+    "deleteOutDir": true,
+    "typeCheck": false,
+    "tsConfigPath": "apps/nuvix/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/nuvix",
+  "projects": {
+    "console": {
+      "type": "application",
+      "root": "apps/console",
+      "entryFile": "main",
+      "sourceRoot": "apps/console/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/console/tsconfig.app.json"
+      }
+    },
+    "core": {
+      "type": "library",
+      "root": "libs/core",
+      "entryFile": "index",
+      "sourceRoot": "libs/core/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/core/tsconfig.lib.json"
+      }
+    },
+    "nuvix": {
+      "type": "application",
+      "root": "apps/nuvix",
+      "entryFile": "main",
+      "sourceRoot": "apps/nuvix/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/nuvix/tsconfig.app.json"
+      }
+    },
+    "utils": {
+      "type": "library",
+      "root": "libs/utils",
+      "entryFile": "index",
+      "sourceRoot": "libs/utils/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/utils/tsconfig.lib.json"
+      }
+    }
   }
 }
