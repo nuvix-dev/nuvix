@@ -33,7 +33,7 @@ import { createReadStream, createWriteStream } from 'fs';
 export class StorageService {
   private readonly logger = new Logger(StorageService.name);
 
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(private readonly jwtService: JwtService) { }
 
   /**
    * Get buckets.
@@ -282,8 +282,8 @@ export class StorageService {
         fileSecurity && !valid
           ? await db.getDocument('bucket_' + bucket.getInternalId(), fileId)
           : await Authorization.skip(() =>
-              db.getDocument('bucket_' + bucket.getInternalId(), fileId),
-            );
+            db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+          );
 
       if (cursorDocument.isEmpty()) {
         throw new Exception(
@@ -301,23 +301,23 @@ export class StorageService {
       fileSecurity && !valid
         ? await db.find('bucket_' + bucket.getInternalId(), queries)
         : await Authorization.skip(() =>
-            db.find('bucket_' + bucket.getInternalId(), queries),
-          );
+          db.find('bucket_' + bucket.getInternalId(), queries),
+        );
 
     const total =
       fileSecurity && !valid
         ? await db.count(
+          'bucket_' + bucket.getInternalId(),
+          filterQueries,
+          APP_LIMIT_COUNT,
+        )
+        : await Authorization.skip(() =>
+          db.count(
             'bucket_' + bucket.getInternalId(),
             filterQueries,
             APP_LIMIT_COUNT,
-          )
-        : await Authorization.skip(() =>
-            db.count(
-              'bucket_' + bucket.getInternalId(),
-              filterQueries,
-              APP_LIMIT_COUNT,
-            ),
-          );
+          ),
+        );
 
     return {
       files,
@@ -376,8 +376,8 @@ export class StorageService {
         fileSecurity && !valid
           ? await db.getDocument('bucket_' + bucket.getInternalId(), objectId)
           : await Authorization.skip(() =>
-              db.getDocument('bucket_' + bucket.getInternalId(), objectId),
-            );
+            db.getDocument('bucket_' + bucket.getInternalId(), objectId),
+          );
 
       if (cursorDocument.isEmpty()) {
         throw new Exception(
@@ -395,23 +395,23 @@ export class StorageService {
       fileSecurity && !valid
         ? await db.find('bucket_' + bucket.getInternalId(), queries)
         : await Authorization.skip(() =>
-            db.find('bucket_' + bucket.getInternalId(), queries),
-          );
+          db.find('bucket_' + bucket.getInternalId(), queries),
+        );
 
     const total =
       fileSecurity && !valid
         ? await db.count(
+          'bucket_' + bucket.getInternalId(),
+          filterQueries,
+          APP_LIMIT_COUNT,
+        )
+        : await Authorization.skip(() =>
+          db.count(
             'bucket_' + bucket.getInternalId(),
             filterQueries,
             APP_LIMIT_COUNT,
-          )
-        : await Authorization.skip(() =>
-            db.count(
-              'bucket_' + bucket.getInternalId(),
-              filterQueries,
-              APP_LIMIT_COUNT,
-            ),
-          );
+          ),
+        );
 
     return {
       objects,
@@ -461,8 +461,8 @@ export class StorageService {
     if (!permissions || permissions.length === 0) {
       permissions = user.getId()
         ? allowedPermissions.map(permission =>
-            new Permission(permission, 'user', user.getId()).toString(),
-          )
+          new Permission(permission, 'user', user.getId()).toString(),
+        )
         : [];
     }
 
@@ -555,8 +555,8 @@ export class StorageService {
     if (!permissions || permissions.length === 0) {
       permissions = user.getId()
         ? allowedPermissions.map(permission =>
-            new Permission(permission, 'user', user.getId()).toString(),
-          )
+          new Permission(permission, 'user', user.getId()).toString(),
+        )
         : [];
     }
 
@@ -587,15 +587,14 @@ export class StorageService {
     }
 
     const fileName = file.filename;
-    const fileBuffer = await file.toBuffer();
-    const fileSize = fileBuffer.length;
+    const fileSize = file.file.bytesRead || 0;
     const fileExt = fileName.split('.').pop();
     const contentRange = request.headers['content-range'];
 
-    if (!fileBuffer || !fileSize) {
+    if (!fileSize) {
       throw new Exception(
         Exception.STORAGE_FILE_EMPTY,
-        'File buffer is missing or file size is zero.',
+        'File size is zero.',
       );
     }
 
@@ -686,8 +685,8 @@ export class StorageService {
       }
 
       const chunkPath = `${chunksPath}/part_${chunk}`;
-      await fs.writeFile(chunkPath, fileBuffer);
-
+      await fs.writeFile(chunkPath, file.file);
+      await fs.chmod(chunkPath, 0o644);
       chunksUploaded += 1;
 
       if (chunksUploaded === chunks) {
@@ -854,8 +853,8 @@ export class StorageService {
       fileSecurity && !valid
         ? await db.getDocument('bucket_' + bucket.getInternalId(), fileId)
         : await Authorization.skip(() =>
-            db.getDocument('bucket_' + bucket.getInternalId(), fileId),
-          );
+          db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+        );
 
     if (file.isEmpty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -913,9 +912,9 @@ export class StorageService {
       fileSecurity && !valid
         ? await db.getDocument('bucket_' + bucket.getInternalId(), fileId)
         : await Authorization.skip(
-            async () =>
-              await db.getDocument('bucket_' + bucket.getInternalId(), fileId),
-          );
+          async () =>
+            await db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+        );
 
     if (file.isEmpty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -1041,8 +1040,8 @@ export class StorageService {
       fileSecurity && !valid
         ? await db.getDocument('bucket_' + bucket.getInternalId(), fileId)
         : await Authorization.skip(() =>
-            db.getDocument('bucket_' + bucket.getInternalId(), fileId),
-          );
+          db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+        );
 
     if (file.isEmpty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -1145,8 +1144,8 @@ export class StorageService {
       fileSecurity && !valid
         ? await db.getDocument('bucket_' + bucket.getInternalId(), fileId)
         : await Authorization.skip(() =>
-            db.getDocument('bucket_' + bucket.getInternalId(), fileId),
-          );
+          db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+        );
 
     if (file.isEmpty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -1475,12 +1474,12 @@ export class StorageService {
         fileSecurity && !valid
           ? await db.deleteDocument('bucket_' + bucket.getInternalId(), fileId)
           : await Authorization.skip(
-              async () =>
-                await db.deleteDocument(
-                  'bucket_' + bucket.getInternalId(),
-                  fileId,
-                ),
-            );
+            async () =>
+              await db.deleteDocument(
+                'bucket_' + bucket.getInternalId(),
+                fileId,
+              ),
+          );
 
       if (!deleted) {
         throw new Exception(

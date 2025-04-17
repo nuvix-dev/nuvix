@@ -66,7 +66,7 @@ export class AuthHook implements Hook {
     if (!session.id && !session.secret) {
       reply.header('X-Debug-Fallback', 'true');
       try {
-        const fallbackHeader = params.getFromHeaders('x-nuvix-fallback', '');
+        const fallbackHeader = params.getFromHeaders('x-fallback-cookies', '');
         if (fallbackHeader) {
           const fallback = JSON.parse(fallbackHeader);
           session = Auth.decodeSession(fallback[Auth.cookieName] || '');

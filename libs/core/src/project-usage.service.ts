@@ -34,7 +34,6 @@ export class ProjectUsageService {
 
   constructor(
     @Inject(CACHE_DB) private readonly cacheDb: Redis,
-    @Inject(DB_FOR_PROJECT) private readonly projectDb: Database,
     @Inject(GET_PROJECT_DB)
     private readonly getProjectDb: (projectId: string) => Promise<Database>,
   ) {}

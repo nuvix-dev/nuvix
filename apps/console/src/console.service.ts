@@ -244,6 +244,7 @@ export class ConsoleService {
 
   async initConsole() {
     try {
+      await this.dbForConsole.create();
       const consoleCollections = collections.console;
       for (const [key, collection] of Object.entries(
         consoleCollections,
