@@ -27,13 +27,14 @@ import sharp from 'sharp';
 import { MultipartFile } from '@fastify/multipart';
 import { CreateFolderDTO } from './DTO/object.dto';
 import { logos } from '@nuvix/core/config/storage/logos';
-import { createReadStream, createWriteStream } from 'fs';
+import { createReadStream, createWriteStream, WriteStream } from 'fs';
+import { pipeline } from 'stream/promises';
 
 @Injectable()
 export class StorageService {
   private readonly logger = new Logger(StorageService.name);
 
-  constructor(private readonly jwtService: JwtService) { }
+  constructor(private readonly jwtService: JwtService) {}
 
   /**
    * Get buckets.
@@ -282,8 +283,8 @@ export class StorageService {
         fileSecurity && !valid
           ? await db.getDocument('bucket_' + bucket.getInternalId(), fileId)
           : await Authorization.skip(() =>
-            db.getDocument('bucket_' + bucket.getInternalId(), fileId),
-          );
+              db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+            );
 
       if (cursorDocument.isEmpty()) {
         throw new Exception(
@@ -301,23 +302,23 @@ export class StorageService {
       fileSecurity && !valid
         ? await db.find('bucket_' + bucket.getInternalId(), queries)
         : await Authorization.skip(() =>
-          db.find('bucket_' + bucket.getInternalId(), queries),
-        );
+            db.find('bucket_' + bucket.getInternalId(), queries),
+          );
 
     const total =
       fileSecurity && !valid
         ? await db.count(
-          'bucket_' + bucket.getInternalId(),
-          filterQueries,
-          APP_LIMIT_COUNT,
-        )
-        : await Authorization.skip(() =>
-          db.count(
             'bucket_' + bucket.getInternalId(),
             filterQueries,
             APP_LIMIT_COUNT,
-          ),
-        );
+          )
+        : await Authorization.skip(() =>
+            db.count(
+              'bucket_' + bucket.getInternalId(),
+              filterQueries,
+              APP_LIMIT_COUNT,
+            ),
+          );
 
     return {
       files,
@@ -376,8 +377,8 @@ export class StorageService {
         fileSecurity && !valid
           ? await db.getDocument('bucket_' + bucket.getInternalId(), objectId)
           : await Authorization.skip(() =>
-            db.getDocument('bucket_' + bucket.getInternalId(), objectId),
-          );
+              db.getDocument('bucket_' + bucket.getInternalId(), objectId),
+            );
 
       if (cursorDocument.isEmpty()) {
         throw new Exception(
@@ -395,23 +396,23 @@ export class StorageService {
       fileSecurity && !valid
         ? await db.find('bucket_' + bucket.getInternalId(), queries)
         : await Authorization.skip(() =>
-          db.find('bucket_' + bucket.getInternalId(), queries),
-        );
+            db.find('bucket_' + bucket.getInternalId(), queries),
+          );
 
     const total =
       fileSecurity && !valid
         ? await db.count(
-          'bucket_' + bucket.getInternalId(),
-          filterQueries,
-          APP_LIMIT_COUNT,
-        )
-        : await Authorization.skip(() =>
-          db.count(
             'bucket_' + bucket.getInternalId(),
             filterQueries,
             APP_LIMIT_COUNT,
-          ),
-        );
+          )
+        : await Authorization.skip(() =>
+            db.count(
+              'bucket_' + bucket.getInternalId(),
+              filterQueries,
+              APP_LIMIT_COUNT,
+            ),
+          );
 
     return {
       objects,
@@ -461,8 +462,8 @@ export class StorageService {
     if (!permissions || permissions.length === 0) {
       permissions = user.getId()
         ? allowedPermissions.map(permission =>
-          new Permission(permission, 'user', user.getId()).toString(),
-        )
+            new Permission(permission, 'user', user.getId()).toString(),
+          )
         : [];
     }
 
@@ -555,8 +556,8 @@ export class StorageService {
     if (!permissions || permissions.length === 0) {
       permissions = user.getId()
         ? allowedPermissions.map(permission =>
-          new Permission(permission, 'user', user.getId()).toString(),
-        )
+            new Permission(permission, 'user', user.getId()).toString(),
+          )
         : [];
     }
 
@@ -588,14 +589,11 @@ export class StorageService {
 
     const fileName = file.filename;
     const fileSize = file.file.bytesRead || 0;
-    const fileExt = fileName.split('.').pop();
+    const fileExt = fileName.split('.').pop()?.toLowerCase() ?? '';
     const contentRange = request.headers['content-range'];
 
     if (!fileSize) {
-      throw new Exception(
-        Exception.STORAGE_FILE_EMPTY,
-        'File size is zero.',
-      );
+      throw new Exception(Exception.STORAGE_FILE_EMPTY, 'File size is zero.');
     }
 
     let fileId = input.fileId === 'unique()' ? ID.unique() : input.fileId;
@@ -615,14 +613,26 @@ export class StorageService {
       const [, start, end, size] = match.map(Number);
 
       const headerFileId = request.headers['x-nuvix-id'];
-      if (Array.isArray(headerFileId) && headerFileId[0]) {
-        fileId = headerFileId[0];
-      } else if (headerFileId) {
-        fileId = headerFileId as string;
+      if (headerFileId) {
+        if (Array.isArray(headerFileId)) {
+          fileId = headerFileId[0];
+        } else {
+          fileId = headerFileId as string;
+        }
+
+        if (!/^(?:[a-zA-Z0-9][a-zA-Z0-9._-]{0,35})$/.test(fileId)) {
+          throw new Exception(
+            Exception.INVALID_PARAMS,
+            'Invalid file ID format',
+          );
+        }
       }
 
-      if (end >= size) {
-        throw new Exception(Exception.STORAGE_INVALID_CONTENT_RANGE);
+      if (start > end || end >= size || start < 0) {
+        throw new Exception(
+          Exception.STORAGE_INVALID_CONTENT_RANGE,
+          'Invalid range values',
+        );
       }
 
       const chunkSize = end - start + 1;
@@ -690,43 +700,93 @@ export class StorageService {
       chunksUploaded += 1;
 
       if (chunksUploaded === chunks) {
-        const writeStream = createWriteStream(finalFilePath);
-
-        // Process chunks sequentially to avoid stream concurrency issues
+        let writeStream: WriteStream | null = null;
         try {
+          // Validate chunks existence with minimal memory usage
           for (let i = 1; i <= chunks; i++) {
             const partPath = `${chunksPath}/part_${i}`;
             const exists = await fs
               .access(partPath)
               .then(() => true)
               .catch(() => false);
-
-            if (exists) {
-              const chunkBuffer = await fs.readFile(partPath);
-              writeStream.write(chunkBuffer);
-              await fs.unlink(partPath);
-            } else {
-              writeStream.end();
-              throw new Exception(Exception.STORAGE_FILE_CHUNK_MISSING);
+            if (!exists) {
+              throw new Exception(
+                Exception.STORAGE_FILE_CHUNK_MISSING,
+                `Missing chunk ${i}`,
+              );
             }
           }
 
-          // End the stream properly
+          // Create the final file
+          writeStream = createWriteStream(finalFilePath, { flags: 'w' });
+
+          // Process chunks one at a time with smaller buffer sizes
+          for (let i = 1; i <= chunks; i++) {
+            const partPath = `${chunksPath}/part_${i}`;
+
+            // Use pipeline with highWaterMark option to control buffer size
+            await pipeline(
+              createReadStream(partPath, { highWaterMark: 16 * 1024 }), // 16KB buffer size
+              writeStream,
+              { end: false },
+            );
+
+            // Delete chunk immediately to free up disk space
+            try {
+              await fs.unlink(partPath);
+              this.logger.debug(`Deleted chunk ${i} at ${partPath}`);
+            } catch (err) {
+              this.logger.warn(
+                `Failed to delete chunk ${i}, will retry later`,
+                err,
+              );
+              // Continue processing - we'll try to clean up at the end
+            }
+          }
+
+          // Properly close the write stream
           await new Promise<void>((resolve, reject) => {
-            writeStream.end((err: any) => {
-              if (err) reject(err);
-              else resolve();
-            });
+            if (!writeStream) {
+              return reject(new Error('Write stream not initialized'));
+            }
+
+            writeStream
+              .on('error', err => {
+                this.logger.error('Write stream error', err);
+                reject(err);
+              })
+              .on('finish', () => {
+                this.logger.debug('Write stream finished');
+                resolve();
+              })
+              .end();
           });
 
-          // Clean up chunks directory
-          await fs.rm(chunksPath, { recursive: true });
+          // Try to clean up chunks directory regardless of individual chunk deletion status
+          fs.rm(chunksPath, { recursive: true, force: true }).catch(err =>
+            this.logger.warn('Failed to delete chunks directory', err),
+          );
 
-          const mimeType = file.mimetype;
+          // Calculate hash with streaming approach to reduce memory usage
+          this.logger.debug('Calculating file hash');
           const fileHash = await calculateFileHash(finalFilePath);
+
+          // Get file stats
+          this.logger.debug('Retrieving file stats');
           const stats = await fs.stat(finalFilePath);
           const sizeActual = stats.size;
+          const mimeType = file.mimetype;
 
+          // Validate file size if needed
+          if (contentRange && sizeActual !== fileSize) {
+            await fs.unlink(finalFilePath).catch(() => {});
+            throw new Exception(
+              Exception.STORAGE_INVALID_FILE_SIZE,
+              `Combined file size ${sizeActual} does not match expected size ${fileSize}`,
+            );
+          }
+
+          // Create or update file document
           if (fileDocument.isEmpty()) {
             const doc = new Document({
               $id: fileId,
@@ -750,6 +810,7 @@ export class StorageService {
               doc,
             )) as any;
           } else {
+            // Update existing document
             fileDocument = fileDocument
               .setAttribute('$permissions', permissions)
               .setAttribute('signature', fileHash)
@@ -758,12 +819,12 @@ export class StorageService {
               .setAttribute('metadata', metadata)
               .setAttribute('chunksUploaded', chunksUploaded);
 
-            const validator = new Authorization(Database.PERMISSION_CREATE);
-            if (!validator.isValid(bucket.getCreate())) {
+            const validator = new Authorization(Database.PERMISSION_UPDATE);
+            if (!validator.isValid(bucket.getUpdate())) {
               throw new Exception(Exception.USER_UNAUTHORIZED);
             }
 
-            fileDocument = await Authorization.skip(async () =>
+            fileDocument = await Authorization.skip(() =>
               db.updateDocument(
                 'bucket_' + bucket.getInternalId(),
                 fileId,
@@ -772,8 +833,19 @@ export class StorageService {
             );
           }
         } catch (error) {
-          // Close the stream if open
-          writeStream.end();
+          // Clean up on error
+          this.logger.error('Error during chunk combining', error);
+          try {
+            if (writeStream) {
+              writeStream.destroy();
+            }
+            await fs.unlink(finalFilePath).catch(() => {});
+            await fs
+              .rm(chunksPath, { recursive: true, force: true })
+              .catch(() => {});
+          } catch (cleanupError) {
+            this.logger.error('Failed to clean up after error', cleanupError);
+          }
           throw error;
         }
       } else {
@@ -853,8 +925,8 @@ export class StorageService {
       fileSecurity && !valid
         ? await db.getDocument('bucket_' + bucket.getInternalId(), fileId)
         : await Authorization.skip(() =>
-          db.getDocument('bucket_' + bucket.getInternalId(), fileId),
-        );
+            db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+          );
 
     if (file.isEmpty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -912,9 +984,9 @@ export class StorageService {
       fileSecurity && !valid
         ? await db.getDocument('bucket_' + bucket.getInternalId(), fileId)
         : await Authorization.skip(
-          async () =>
-            await db.getDocument('bucket_' + bucket.getInternalId(), fileId),
-        );
+            async () =>
+              await db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+          );
 
     if (file.isEmpty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -1040,8 +1112,8 @@ export class StorageService {
       fileSecurity && !valid
         ? await db.getDocument('bucket_' + bucket.getInternalId(), fileId)
         : await Authorization.skip(() =>
-          db.getDocument('bucket_' + bucket.getInternalId(), fileId),
-        );
+            db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+          );
 
     if (file.isEmpty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -1144,8 +1216,8 @@ export class StorageService {
       fileSecurity && !valid
         ? await db.getDocument('bucket_' + bucket.getInternalId(), fileId)
         : await Authorization.skip(() =>
-          db.getDocument('bucket_' + bucket.getInternalId(), fileId),
-        );
+            db.getDocument('bucket_' + bucket.getInternalId(), fileId),
+          );
 
     if (file.isEmpty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -1474,12 +1546,12 @@ export class StorageService {
         fileSecurity && !valid
           ? await db.deleteDocument('bucket_' + bucket.getInternalId(), fileId)
           : await Authorization.skip(
-            async () =>
-              await db.deleteDocument(
-                'bucket_' + bucket.getInternalId(),
-                fileId,
-              ),
-          );
+              async () =>
+                await db.deleteDocument(
+                  'bucket_' + bucket.getInternalId(),
+                  fileId,
+                ),
+            );
 
       if (!deleted) {
         throw new Exception(
