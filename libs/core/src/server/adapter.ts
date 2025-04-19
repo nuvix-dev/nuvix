@@ -65,7 +65,7 @@ export class NuvixAdapter extends FastifyAdapter {
     normalizedPath: string,
   ) {
     // Register a hook for the specific lifecycle hook
-    this.instance.addHook(hookName, async (...args) => {
+    this.instance.addHook(hookName, async (...args: any[]) => {
       const request = args[0];
       const reply = args[1];
 
@@ -77,7 +77,7 @@ export class NuvixAdapter extends FastifyAdapter {
 
       const nextFn =
         typeof args[args.length - 1] === 'function'
-          ? args[2]
+          ? args[args.length - 1]
           : (e: Error) => {
               if (e) throw e;
             };
@@ -88,15 +88,26 @@ export class NuvixAdapter extends FastifyAdapter {
       }
 
       // Map arguments based on hook type
-      switch (hookName) {
-        case 'preSerialization':
-        case 'onSend':
-        case 'onError':
-          // These hooks have (request, reply, payload, done) signature
-          return await callback(request, reply, nextFn, ...extra);
-        default:
-          // Most hooks have (request, reply, done) signature
-          return await callback(request, reply, nextFn);
+      try {
+        switch (hookName) {
+          case 'preSerialization':
+          case 'onSend':
+          case 'onError':
+            // These hooks have (request, reply, payload, done) signature
+            return await callback(request, reply, nextFn, ...extra);
+          default:
+            // Most hooks have (request, reply, done) signature
+            return await callback(request, reply, nextFn);
+        }
+      } catch (e) {
+        // Handle errors in the hook callback
+        if (e instanceof Error) {
+          // If the error is an instance of Error, pass it to the next function
+          return nextFn(e);
+        } else {
+          // If the error is not an instance of Error, throw it
+          throw e;
+        }
       }
     });
   }

@@ -25,18 +25,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
       HttpExceptionFilter.name,
     );
 
-    response.statusCode = status;
-    response.header('Content-Type', 'application/json');
-    response.raw.end(
-      JSON.stringify({
-        code: status,
-        message: exception.message,
-        type:
-          exception instanceof Exception
-            ? exception.getType()
-            : 'general_server_error',
-        version: '1.0.0',
-      }),
-    );
+    response.status(status).send({
+      code: status,
+      message: exception.message,
+      type:
+        exception instanceof Exception
+          ? exception.getType()
+          : 'general_server_error',
+      version: '1.0.0',
+    });
   }
 }

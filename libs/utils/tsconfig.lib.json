@@ -4,14 +4,6 @@
     "declaration": true,
     "outDir": "../../dist/libs/utils"
   },
-  "include": [
-    "src/**/*",
-    "../../types/**/*.d.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "test",
-    "**/*spec.ts"
-  ]
+  "include": ["src/**/*", "../../types/**/*.d.ts"],
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }

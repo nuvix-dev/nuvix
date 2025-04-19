@@ -10,7 +10,7 @@ import { AppModule } from './app.module';
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { config } from 'dotenv';
 import { HttpExceptionFilter } from '@nuvix/core/filters/http-exception.filter';
-import { ConsoleLogger, ValidationPipe } from '@nestjs/common';
+import { ConsoleLogger, Logger, ValidationPipe } from '@nestjs/common';
 import {
   APP_DEBUG_COLORS,
   APP_DEBUG_FORMAT,
@@ -64,7 +64,7 @@ async function bootstrap() {
   // @ts-ignore
   app.register(fastifyMultipart, {
     limits: {
-      fileSize: 1024 * 1024 * 1024, // 1 GB
+      fileSize: 10 * 1024 * 1024, // 10MB
     },
   });
 
@@ -118,12 +118,12 @@ async function bootstrap() {
   });
 
   process.on('SIGINT', async () => {
-    console.log('SIGINT received, shutting down gracefully...');
+    Logger.log('SIGINT received, shutting down gracefully...');
     await app.close();
     process.exit(0);
   });
   process.on('SIGTERM', async () => {
-    console.log('SIGTERM received, shutting down gracefully...');
+    Logger.log('SIGTERM received, shutting down gracefully...');
     await app.close();
     process.exit(0);
   });

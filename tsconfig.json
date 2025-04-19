@@ -18,18 +18,10 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@nuvix/utils": [
-        "libs/utils/src"
-      ],
-      "@nuvix/utils/*": [
-        "libs/utils/src/*"
-      ],
-      "@nuvix/core": [
-        "libs/core/src"
-      ],
-      "@nuvix/core/*": [
-        "libs/core/src/*"
-      ]
+      "@nuvix/utils": ["libs/utils/src"],
+      "@nuvix/utils/*": ["libs/utils/src/*"],
+      "@nuvix/core": ["libs/core/src"],
+      "@nuvix/core/*": ["libs/core/src/*"]
     }
   }
 }

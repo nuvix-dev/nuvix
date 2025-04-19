@@ -1,4 +1,5 @@
 import { Auth } from '../helper/auth.helper';
+import { scopes } from './scopes';
 
 const member = [
   'global',
@@ -138,6 +139,7 @@ const admins = [
   'schema.create',
   'schema.update',
   'schema.delete',
+  ...Object.keys(scopes),
 ];
 
 export const roles = {

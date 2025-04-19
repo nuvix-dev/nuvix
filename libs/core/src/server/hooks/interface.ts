@@ -3,14 +3,14 @@ import { LifecycleHook } from 'fastify/types/hooks';
 
 export type Hooks = LifecycleHook;
 
-export type AsyncHook<T = void> = (
+export type AsyncHook<T extends any[] = []> = (
   req: FastifyRequest,
   reply: FastifyReply,
   next: (err?: Error) => void,
-  ...args: T[]
-) => Promise<void>;
+  ...args: T
+) => Promise<unknown>;
 
-export type LifecycleHookMethods = {
+export interface LifecycleHookMethods {
   /**
    * Triggered before the request is processed.
    * Useful for tasks like authentication or logging.
@@ -21,7 +21,7 @@ export type LifecycleHookMethods = {
    * Triggered before the request body is parsed.
    * Useful for modifying or validating raw payload data.
    */
-  preParsing: AsyncHook<{ payload: any }>;
+  preParsing: AsyncHook<[payload: unknown]>;
 
   /**
    * Triggered before the request is validated.
@@ -39,13 +39,13 @@ export type LifecycleHookMethods = {
    * Triggered before the response is serialized.
    * Useful for modifying the response payload before sending it.
    */
-  preSerialization: AsyncHook<{ payload: any }>;
+  preSerialization: AsyncHook<[payload: unknown]>;
 
   /**
    * Triggered before the response is sent to the client.
    * Useful for adding headers or modifying the response.
    */
-  onSend: AsyncHook<{ payload: any }>;
+  onSend: AsyncHook<[payload: unknown]>;
 
   /**
    * Triggered after the response is sent to the client.
@@ -57,14 +57,22 @@ export type LifecycleHookMethods = {
    * Triggered when an error occurs during request processing.
    * Useful for custom error handling or logging.
    */
-  onError: AsyncHook<{ error: Error }>;
+  onError: AsyncHook<[error: Error]>;
 
   /**
    * Triggered when a request times out.
    * Useful for handling timeout-specific logic.
    */
   onTimeout: AsyncHook;
-};
+
+  /**
+   * Triggered when a request is aborted by the client.
+   * Useful for cleanup or logging aborted requests.
+   */
+  onRequestAbort: AsyncHook;
+}
+
+export type HookMethod = keyof LifecycleHookMethods;
 
 export interface Hook extends Partial<LifecycleHookMethods> {}
 
