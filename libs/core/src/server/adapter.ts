@@ -79,8 +79,8 @@ export class NuvixAdapter extends FastifyAdapter {
         typeof args[args.length - 1] === 'function'
           ? args[args.length - 1]
           : (e: Error) => {
-              if (e) throw e;
-            };
+            if (e) throw e;
+          };
       const extra = args.slice(2, -1);
 
       if (!regexp.exec(pathname + '/') && normalizedPath) {
@@ -88,26 +88,15 @@ export class NuvixAdapter extends FastifyAdapter {
       }
 
       // Map arguments based on hook type
-      try {
-        switch (hookName) {
-          case 'preSerialization':
-          case 'onSend':
-          case 'onError':
-            // These hooks have (request, reply, payload, done) signature
-            return await callback(request, reply, nextFn, ...extra);
-          default:
-            // Most hooks have (request, reply, done) signature
-            return await callback(request, reply, nextFn);
-        }
-      } catch (e) {
-        // Handle errors in the hook callback
-        if (e instanceof Error) {
-          // If the error is an instance of Error, pass it to the next function
-          return nextFn(e);
-        } else {
-          // If the error is not an instance of Error, throw it
-          throw e;
-        }
+      switch (hookName) {
+        case 'preSerialization':
+        case 'onSend':
+        case 'onError':
+          // These hooks have (request, reply, payload, done) signature
+          return await callback(request, reply, nextFn, ...extra);
+        default:
+          // Most hooks have (request, reply, done) signature
+          return await callback(request, reply, nextFn);
       }
     });
   }

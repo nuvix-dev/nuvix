@@ -31,7 +31,7 @@ export class SchemaHook implements Hook {
     const schemaId = (request.params as { schemaId: string | undefined })
       .schemaId;
     if (schemaId === undefined) return;
-
+console.log('Schema ID:', schemaId);
     const schema = await pg.getSchema(schemaId);
     if (schema) {
       const db = this.getProjectPG(
