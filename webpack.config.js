@@ -10,9 +10,12 @@ module.exports = {
         exclude: /node_modules/,
         use: {
           loader: 'swc-loader',
-          options: swcDefaultConfig,
+          options: {
+            ...swcDefaultConfig,
+            sourceMaps: true,
+          },
         },
       },
     ],
-  },
+  }
 };

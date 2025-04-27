@@ -22,6 +22,7 @@ import {
 } from '@nuvix/core/core.module';
 import { Exception } from '@nuvix/core/extend/exception';
 import { Cache } from '@nuvix/cache';
+import { PoolClient } from 'pg';
 
 @Injectable()
 export class ProjectHook implements Hook {
@@ -32,7 +33,7 @@ export class ProjectHook implements Hook {
     @Inject(GET_PROJECT_PG) private readonly gerProjectPg: GetProjectPG,
     @Inject(GET_PROJECT_DB)
     private readonly getProjectDb: GetProjectDbFn,
-  ) {}
+  ) { }
 
   async onRequest(req: FastifyRequest, reply: FastifyReply) {
     const params = new ParamsHelper(req);
@@ -58,18 +59,28 @@ export class ProjectHook implements Hook {
         });
         req[PROJECT_POOL] = pool;
         req[PROJECT_DB] = this.getProjectDb(pool, project.getId());
-        req[PROJECT_PG] = this.gerProjectPg(pool);
+        req[PROJECT_PG] = this.gerProjectPg(await pool.connect());
         const authDB = this.getProjectDb(pool, project.getId());
         authDB.setDatabase('auth');
         authDB.setPrefix(project.getId());
         req[AUTH_SCHEMA_DB] = authDB;
       } catch (e) {
-        this.logger.error('Something wen wrong while connecting database.', e);
+        this.logger.error('Something went wrong while connecting database.', e);
         throw new Exception(Exception.GENERAL_SERVER_ERROR);
       }
     }
 
     req[PROJECT] = project;
     return null;
+  }
+
+  async onResponse(req: FastifyRequest) {
+    const client: PoolClient | undefined = req[PROJECT_PG];
+    if (client) {
+      try {
+        client.release();
+        this.logger.debug(`Pool client released`)
+      } catch {/** noop */ }
+    }
   }
 }

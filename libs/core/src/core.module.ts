@@ -30,7 +30,7 @@ import { Cache, RedisAdapter } from '@nuvix/cache';
 import { Telemetry } from '@nuvix/telemetry';
 import { ProjectUsageService } from './project-usage.service';
 import { Adapter } from '@nuvix/database/dist/adapter/base';
-import { Pool as PgPool } from 'pg';
+import { Pool as PgPool, PoolClient } from 'pg';
 
 Object.keys(filters).forEach(key => {
   Database.addFilter(key, {
@@ -50,7 +50,7 @@ export type PoolStoreFn<T = PgPool> = (
 
 export type GetProjectDbFn = (pool: PgPool, projectId: string) => Database;
 
-export type GetProjectPG = (pool: PgPool, context?: Context) => DataSource;
+export type GetProjectPG = (client: PoolClient, context?: Context) => DataSource;
 
 @Global()
 @Module({
@@ -181,10 +181,10 @@ export type GetProjectPG = (pool: PgPool, context?: Context) => DataSource;
     {
       provide: GET_PROJECT_PG,
       useFactory: (cache: Cache) => {
-        return (pool: PgPool, ctx?: Context) => {
+        return (client: PoolClient, ctx?: Context) => {
           ctx = ctx ?? new Context();
           const connection = new DataSource(
-            pool,
+            client,
             {},
             { context: ctx, listenForUpdates: true },
           );

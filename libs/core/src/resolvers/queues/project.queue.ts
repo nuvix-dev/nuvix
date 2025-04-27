@@ -40,7 +40,7 @@ export class ProjectQueue extends Queue {
     const pool = await this.getPool(project.getId(), {
       database: project.getAttribute('database'),
     });
-    const postgreDb = this.getProjectPg(pool);
+    const postgreDb = this.getProjectPg(await pool.connect());
 
     try {
       await postgreDb.createSchema(
