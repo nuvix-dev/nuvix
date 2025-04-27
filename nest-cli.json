@@ -8,7 +8,8 @@
     },
     "deleteOutDir": true,
     "typeCheck": false,
-    "tsConfigPath": "apps/nuvix/tsconfig.app.json"
+    "tsConfigPath": "apps/nuvix/tsconfig.app.json",
+    "webpack": true
   },
   "monorepo": true,
   "root": "apps/nuvix",
@@ -38,6 +39,15 @@
       "sourceRoot": "apps/nuvix/src",
       "compilerOptions": {
         "tsConfigPath": "apps/nuvix/tsconfig.app.json"
+      }
+    },
+    "pg-meta": {
+      "type": "library",
+      "root": "libs/pg-meta",
+      "entryFile": "index",
+      "sourceRoot": "libs/pg-meta/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/pg-meta/tsconfig.lib.json"
       }
     },
     "utils": {

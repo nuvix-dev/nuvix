@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "commonjs",
+    "module": "CommonJS",
     "declaration": true,
     "removeComments": true,
     "emitDecoratorMetadata": true,
@@ -18,10 +18,24 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@nuvix/utils": ["libs/utils/src"],
-      "@nuvix/utils/*": ["libs/utils/src/*"],
-      "@nuvix/core": ["libs/core/src"],
-      "@nuvix/core/*": ["libs/core/src/*"]
+      "@nuvix/core": [
+        "libs/core/src"
+      ],
+      "@nuvix/core/*": [
+        "libs/core/src/*"
+      ],
+      "@nuvix/pg-meta": [
+        "libs/pg-meta/src"
+      ],
+      "@nuvix/pg-meta/*": [
+        "libs/pg-meta/src/*"
+      ],
+      "@nuvix/utils": [
+        "libs/utils/src"
+      ],
+      "@nuvix/utils/*": [
+        "libs/utils/src/*"
+      ]
     }
   }
 }
