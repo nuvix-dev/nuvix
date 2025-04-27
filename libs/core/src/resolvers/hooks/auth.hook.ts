@@ -54,7 +54,7 @@ export class AuthHook implements Hook {
       if (sessionHeader) {
         try {
           session = Auth.decodeSession(sessionHeader);
-        } catch (error) {
+        } catch (error: any) {
           this.logger.debug(
             'Failed to decode session from header',
             error.message,
@@ -125,7 +125,7 @@ export class AuthHook implements Hook {
       let payload: any;
       try {
         payload = await this.jwtService.verifyAsync(authJWT);
-      } catch (e) {
+      } catch (e: any) {
         throw new Exception(
           Exception.USER_JWT_INVALID,
           `Failed to verify JWT. ${e.message}`,

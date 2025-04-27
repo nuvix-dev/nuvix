@@ -6,21 +6,39 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "nx:run-commands",
+      "executor": "@nx/rollup:rollup",
+      "outputs": [
+        "{options.outputPath}"
+      ],
+      "defaultConfiguration": "production",
       "options": {
-        "command": "webpack-cli build",
-        "args": ["node-env=production"]
+        "main": "apps/nuvix/src/main.ts",
+        "outputPath": "dist/apps/nuvix",
+        "outputFileName": "main.js",
+        "tsConfig": "apps/nuvix/tsconfig.app.json",
+        "rollupConfig": "apps/nuvix/rollup.config.ts",
+        "platform": "node",
+        "compiler": "swc",
+        "format": [
+          "esm"
+        ],
+        "assets": []
       },
       "configurations": {
         "development": {
-          "args": ["node-env=development"]
+          "minify": false
+        },
+        "production": {
+          "minify": true
         }
       }
     },
     "serve": {
       "executor": "@nx/js:node",
       "defaultConfiguration": "development",
-      "dependsOn": ["build"],
+      "dependsOn": [
+        "build"
+      ],
       "options": {
         "buildTarget": "nuvix:build",
         "runBuildTargetDependencies": false

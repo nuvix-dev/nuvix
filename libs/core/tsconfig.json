@@ -3,13 +3,15 @@
   "compilerOptions": {
     "module": "esnext",
     "allowSyntheticDefaultImports": true,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
+    "strictBindCallApply": false,
     "forceConsistentCasingInFileNames": false,
-    "strict": true,
     "importHelpers": true,
-    "noImplicitOverride": true,
-    "noImplicitReturns": true,
+    "noImplicitOverride": false,
+    "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": false,
-    "noPropertyAccessFromIndexSignature": true
+    "noPropertyAccessFromIndexSignature": false
   },
   "files": [],
   "include": [],

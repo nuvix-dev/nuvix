@@ -1,7 +1,7 @@
 import { RequestMethod } from '@nestjs/common';
 import { FastifyAdapter } from '@nestjs/platform-fastify';
 import { pathToRegexp } from 'path-to-regexp';
-import { LegacyRouteConverter } from '@nestjs/core/router/legacy-route-converter';
+import { LegacyRouteConverter } from '@nestjs/core/router/legacy-route-converter.js';
 import { HookMethods } from './hooks/interface';
 
 export class NuvixAdapter extends FastifyAdapter {

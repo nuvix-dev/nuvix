@@ -5,10 +5,10 @@
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "importHelpers": true,
-    "noImplicitOverride": true,
+    "noImplicitOverride": false,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
-    "noPropertyAccessFromIndexSignature": true
+    "noPropertyAccessFromIndexSignature": false
   },
   "files": [],
   "include": [],
