@@ -5,8 +5,8 @@ import BaseModel from '@nuvix/core/models/base.model';
 @Exclude()
 export class IndexModel extends BaseModel {
   @Exclude()
-  override $id: string;
-  @Exclude() $permissions: string[] | Permission[];
+  declare $id: string;
+  @Exclude() declare $permissions: string[] | Permission[];
   /**
    * Index Key.
    */

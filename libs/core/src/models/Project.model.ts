@@ -4,7 +4,7 @@ import BaseModel from './base.model';
 import { MockNumberModel } from './MockNumber.model';
 import { PlatformModel } from './Platform.model';
 import { WebhookModel } from './Webhook.model';
-import { Exclude, Expose, Transform } from 'class-transformer';
+import { Exclude, Expose } from 'class-transformer';
 import { KeyModel } from './Key.model';
 
 @Exclude()
@@ -13,7 +13,7 @@ export class ProjectModel extends BaseModel {
   @Expose({ toClassOnly: true }) services: any;
   @Expose({ toClassOnly: true }) smtp: any;
 
-  @Exclude() override $permissions: string[] | Permission[];
+  @Exclude() declare $permissions: string[] | Permission[];
   /**
    * Project name.
    */

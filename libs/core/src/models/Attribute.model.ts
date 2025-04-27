@@ -3,8 +3,8 @@ import BaseModel from '@nuvix/core/models/base.model';
 
 @Exclude()
 export class AttributeModel extends BaseModel {
-  @Exclude() override $id: string;
-  @Exclude() override $permissions: string[] | any[];
+  @Exclude() declare $id: string;
+  @Exclude() declare $permissions: string[] | any[];
   /**
    * Attribute Key.
    */

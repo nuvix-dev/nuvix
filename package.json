@@ -1,11 +1,10 @@
 {
-  "name": "nuvix",
-  "version": "1.0.0",
+  "name": "@nuvix/source",
+  "version": "0.0.0",
   "description": "Nuvix is a Backend as a Service (BaaS) platform that provides a set of tools and services to help developers build and deploy applications quickly and efficiently.",
   "author": "Ravikant Saini",
   "private": true,
   "license": "UNLICENSED",
-  "type": "commonjs",
   "repository": {
     "type": "git",
     "url": "https://github.com/Nuvix-Tech/nuvix.git"
@@ -76,9 +75,25 @@
     "ua-parser-js": "^2.0.3"
   },
   "devDependencies": {
+    "@eslint/js": "^9.8.0",
+    "@nx/eslint": "20.8.1",
+    "@nx/eslint-plugin": "20.8.1",
+    "@nx/jest": "20.8.1",
+    "@nx/js": "20.8.1",
+    "@nx/node": "20.8.1",
+    "@nx/web": "20.8.1",
+    "@nx/webpack": "20.8.1",
+    "@swc-node/register": "~1.9.1",
+    "@swc/helpers": "~0.5.11",
+    "jest-environment-node": "^29.7.0",
+    "tslib": "^2.3.0",
+    "typescript-eslint": "^8.19.0",
+    "webpack-cli": "^5.1.4",
     "@nestjs/cli": "^11.0.6",
     "@nestjs/schematics": "^11.0.5",
     "@nestjs/testing": "^11.0.20",
+    "@nx/nest": "20.8.1",
+    "@nx/workspace": "^20.8.1",
     "@swc/cli": "^0.6.0",
     "@swc/core": "^1.11.21",
     "@types/bcryptjs": "^2.4.6",
@@ -96,6 +111,7 @@
     "eslint-plugin-prettier": "^5.2.6",
     "fastify": "^5.3.2",
     "jest": "^29.7.0",
+    "nx": "^20.8.1",
     "prettier": "^3.5.3",
     "source-map-support": "^0.5.21",
     "supertest": "^7.1.0",
@@ -105,32 +121,6 @@
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.8.3"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": ".",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "./coverage",
-    "testEnvironment": "node",
-    "roots": [
-      "<rootDir>/apps/",
-      "<rootDir>/libs/"
-    ],
-    "moduleNameMapper": {
-      "^@nuvix/core(|/.*)$": "<rootDir>/libs/core/src/$1",
-      "^@nuvix/pg-meta(|/.*)$": "<rootDir>/libs/pg-meta/src/$1",
-      "^@nuvix/utils(|/.*)$": "<rootDir>/libs/utils/src/$1"
-    }
   },
   "trustedDependencies": [
     "@apollo/protobufjs",

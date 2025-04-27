@@ -301,7 +301,7 @@ export class Exception extends HttpException {
     const messages = Object.values(error.errors)
       .map((val: any) => val.message)
       .join(', ');
-    return new Exception(null, `Validation failed: ${messages}`);
+    return new Exception(undefined, `Validation failed: ${messages}`);
   }
 
   protected type: string = '';
@@ -320,7 +320,7 @@ export class Exception extends HttpException {
         : errorCode;
     const finalCode = parsedCode ?? 500;
 
-    super(message, finalCode as number);
+    super(message as string, finalCode as number);
 
     this.type = type;
     this.name = this.constructor.name;

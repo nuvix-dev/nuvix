@@ -1,10 +1,11 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { API_KEY } from '@nuvix/utils/constants';
+import { FastifyReply } from 'fastify';
 
 export const ApiKey = createParamDecorator<any, any>(
   (data: unknown, ctx: ExecutionContext): any => {
-    const request: Request = ctx.switchToHttp().getRequest();
-    const apiKeyHeader = request.headers['x-nuvix-api'];
+    const request: FastifyReply = ctx.switchToHttp().getRequest();
+    const apiKeyHeader = request.getHeader('x-nuvix-api') as string;
 
     if (!apiKeyHeader) {
       return null;
@@ -17,7 +18,7 @@ export const ApiKey = createParamDecorator<any, any>(
       return null;
     }
 
-    request[API_KEY] = apiKeys[0];
+    (request as any)[API_KEY] = apiKeys[0];
     return apiKeys[0];
   },
 );

@@ -76,3 +76,5 @@ yarn.lock
 
 # Storage
 storage/uploads/*
+.nx/cache
+.nx/workspace-data
