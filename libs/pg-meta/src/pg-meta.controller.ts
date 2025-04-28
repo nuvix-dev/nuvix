@@ -62,6 +62,11 @@ import { PublicationUpdateDto } from './DTO/publication-update.dto';
 import { TablePrivilegeQueryDto } from './DTO/table-privilege.dto';
 import { TablePrivilegeGrantDto } from './DTO/table-privilege-grant.dto';
 import { TablePrivilegeRevokeDto } from './DTO/table-privilege-revoke.dto';
+import { TriggerQueryDto } from './DTO/trigger.dto';
+import { TriggerIdParamDto } from './DTO/trigger-id.dto';
+import { TriggerCreateDto } from './DTO/trigger-create.dto';
+import { TriggerUpdateDto } from './DTO/trigger-update.dto';
+import { TriggerDeleteQueryDto } from './DTO/trigger-delete.dto';
 
 @Controller({ path: 'meta', version: ['1'] })
 export class PgMetaController {
@@ -704,10 +709,7 @@ export class PgMetaController {
   }
 
   @Delete('policies/:id')
-  async deletePolicy(
-    @Param("id") id: number,
-    @Client() client: PostgresMeta,
-  ) {
+  async deletePolicy(@Param('id') id: number, @Client() client: PostgresMeta) {
     const { data } = await client.policies.remove(id);
     return data;
   }
@@ -800,6 +802,69 @@ export class PgMetaController {
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.tablePrivileges.revoke(body);
+    return data;
+  }
+
+  /*************************** Triggers *********************************/
+
+  @Get('triggers')
+  async getTriggers(
+    @Query() query: TriggerQueryDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const {
+      includeSystemSchemas,
+      includedSchemas,
+      excludedSchemas,
+      limit,
+      offset,
+    } = query;
+    const { data } = await client.triggers.list({
+      includeSystemSchemas,
+      includedSchemas: includedSchemas?.split(','),
+      excludedSchemas: excludedSchemas?.split(','),
+      limit,
+      offset,
+    });
+    return data ?? [];
+  }
+
+  @Get('triggers/:id')
+  async getTriggerById(
+    @Param('id') id: number,
+    @Client() client: PostgresMeta,
+  ) {
+    const { data } = await client.triggers.retrieve({ id });
+    return data;
+  }
+
+  @Post('triggers')
+  async createTrigger(
+    @Body() body: TriggerCreateDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const { data } = await client.triggers.create(body);
+    return data;
+  }
+
+  @Patch('triggers/:id')
+  async updateTrigger(
+    @Param('id') id: number,
+    @Body() body: TriggerUpdateDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const { data } = await client.triggers.update(id, body);
+    return data;
+  }
+
+  @Delete('triggers/:id')
+  async deleteTrigger(
+    @Param('id') id: number,
+    @Query() query: TriggerDeleteQueryDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const { cascade } = query;
+    const { data } = await client.triggers.remove(id, { cascade });
     return data;
   }
 }
