@@ -1,14 +1,14 @@
-import { ident, literal } from 'pg-format'
-import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js'
-import { filterByList } from './helpers.js'
-import { triggersSql } from './sql/index.js'
-import { PostgresMetaResult, PostgresTrigger } from './types.js'
+import { ident, literal } from 'pg-format';
+import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
+import { filterByList } from './helpers.js';
+import { triggersSql } from './sql/index.js';
+import { PostgresMetaResult, PostgresTrigger } from './types.js';
 
 export default class PostgresMetaTriggers {
-  query: (sql: string) => Promise<PostgresMetaResult<any>>
+  query: (sql: string) => Promise<PostgresMetaResult<any>>;
 
   constructor(query: (sql: string) => Promise<PostgresMetaResult<any>>) {
-    this.query = query
+    this.query = query;
   }
 
   async list({
@@ -18,84 +18,91 @@ export default class PostgresMetaTriggers {
     limit,
     offset,
   }: {
-    includeSystemSchemas?: boolean
-    includedSchemas?: string[]
-    excludedSchemas?: string[]
-    limit?: number
-    offset?: number
+    includeSystemSchemas?: boolean;
+    includedSchemas?: string[];
+    excludedSchemas?: string[];
+    limit?: number;
+    offset?: number;
   } = {}): Promise<PostgresMetaResult<PostgresTrigger[]>> {
-    let sql = enrichedTriggersSql
+    let sql = enrichedTriggersSql;
     const filter = filterByList(
       includedSchemas,
       excludedSchemas,
-      !includeSystemSchemas ? DEFAULT_SYSTEM_SCHEMAS : undefined
-    )
+      !includeSystemSchemas ? DEFAULT_SYSTEM_SCHEMAS : undefined,
+    );
     if (filter) {
-      sql += ` WHERE schema ${filter}`
+      sql += ` WHERE schema ${filter}`;
     }
     if (limit) {
-      sql = `${sql} LIMIT ${limit}`
+      sql = `${sql} LIMIT ${limit}`;
     }
     if (offset) {
-      sql = `${sql} OFFSET ${offset}`
+      sql = `${sql} OFFSET ${offset}`;
     }
-    return await this.query(sql)
+    return await this.query(sql);
   }
 
-  async retrieve({ id }: { id: number }): Promise<PostgresMetaResult<PostgresTrigger>>
+  async retrieve({
+    id,
+  }: {
+    id: number;
+  }): Promise<PostgresMetaResult<PostgresTrigger>>;
   async retrieve({
     name,
     table,
     schema,
   }: {
-    name: string
-    table: string
-    schema?: string
-  }): Promise<PostgresMetaResult<PostgresTrigger>>
+    name: string;
+    table: string;
+    schema?: string;
+  }): Promise<PostgresMetaResult<PostgresTrigger>>;
   async retrieve({
     id,
     name,
     schema = 'public',
     table,
   }: {
-    id?: number
-    name?: string
-    schema?: string
-    table?: string
+    id?: number;
+    name?: string;
+    schema?: string;
+    table?: string;
   }): Promise<PostgresMetaResult<PostgresTrigger>> {
     if (id) {
-      const sql = `${enrichedTriggersSql} WHERE id = ${literal(id)};`
+      const sql = `${enrichedTriggersSql} WHERE id = ${literal(id)};`;
 
-      const { data, error } = await this.query(sql)
+      const { data, error } = await this.query(sql);
 
       if (error) {
-        return { data: null, error }
+        return { data: null, error };
       }
 
-      const triggerRecord = data && data[0]
+      const triggerRecord = data && data[0];
 
       if (triggerRecord) {
-        return { data: triggerRecord, error: null }
+        return { data: triggerRecord, error: null };
       }
 
-      return { data: null, error: { message: `Cannot find a trigger with ID ${id}` } }
+      return {
+        data: null,
+        error: { message: `Cannot find a trigger with ID ${id}` },
+      };
     }
 
     if (name && schema && table) {
       const sql = `${enrichedTriggersSql} WHERE name = ${literal(name)} AND schema = ${literal(
-        schema
-      )} AND triggers.table = ${literal(table)};`
+        schema,
+      )} AND triggers.table = ${literal(table)};`;
 
-      const { data, error } = await this.query(sql)
+      const { data, error } = await this.query(sql);
 
       if (error) {
-        return { data: null, error }
+        return { data: null, error };
       }
 
-      const triggerRecord = data && data[0]
+      const triggerRecord = data && data[0];
 
       if (triggerRecord) {
-        return { data: triggerRecord, error: null }
+        return { data: triggerRecord, error: null };
       }
 
       return {
@@ -103,10 +110,13 @@ export default class PostgresMetaTriggers {
         error: {
           message: `Cannot find a trigger with name ${name} on table "${schema}"."${table}"`,
         },
-      }
+      };
     }
 
-    return { data: null, error: { message: 'Invalid parameters on trigger retrieve' } }
+    return {
+      data: null,
+      error: { message: 'Invalid parameters on trigger retrieve' },
+    };
   }
 
   /**
@@ -141,39 +151,39 @@ export default class PostgresMetaTriggers {
     orientation,
     condition,
   }: {
-    name: string
-    table: string
-    function_name: string
-    activation: string
-    events: string[]
-    function_schema?: string
-    schema?: string
-    orientation?: string
-    condition?: string
-    function_args?: string[]
+    name: string;
+    table: string;
+    function_name: string;
+    activation: string;
+    events: string[];
+    function_schema?: string;
+    schema?: string;
+    orientation?: string;
+    condition?: string;
+    function_args?: string[];
   }): Promise<PostgresMetaResult<PostgresTrigger>> {
-    const qualifiedTableName = `${ident(schema)}.${ident(table)}`
-    const qualifiedFunctionName = `${ident(function_schema)}.${ident(function_name)}`
-    const triggerEvents = events.join(' OR ')
-    const triggerOrientation = orientation ? `FOR EACH ${orientation}` : ''
-    const triggerCondition = condition ? `WHEN (${condition})` : ''
-    const functionArgs = `${function_args?.map(literal).join(',') ?? ''}`
+    const qualifiedTableName = `${ident(schema)}.${ident(table)}`;
+    const qualifiedFunctionName = `${ident(function_schema)}.${ident(function_name)}`;
+    const triggerEvents = events.join(' OR ');
+    const triggerOrientation = orientation ? `FOR EACH ${orientation}` : '';
+    const triggerCondition = condition ? `WHEN (${condition})` : '';
+    const functionArgs = `${function_args?.map(literal).join(',') ?? ''}`;
 
     const sql = `CREATE TRIGGER ${ident(
-      name
-    )} ${activation} ${triggerEvents} ON ${qualifiedTableName} ${triggerOrientation} ${triggerCondition} EXECUTE FUNCTION ${qualifiedFunctionName}(${functionArgs});`
+      name,
+    )} ${activation} ${triggerEvents} ON ${qualifiedTableName} ${triggerOrientation} ${triggerCondition} EXECUTE FUNCTION ${qualifiedFunctionName}(${functionArgs});`;
 
-    const { error } = await this.query(sql)
+    const { error } = await this.query(sql);
 
     if (error) {
-      return { data: null, error }
+      return { data: null, error };
     }
 
     return await this.retrieve({
       name,
       table,
       schema,
-    })
+    });
   }
 
   async update(
@@ -182,76 +192,79 @@ export default class PostgresMetaTriggers {
       name,
       enabled_mode,
     }: {
-      name?: string
-      enabled_mode?: 'ORIGIN' | 'REPLICA' | 'ALWAYS' | 'DISABLED'
-    }
+      name?: string;
+      enabled_mode?: 'ORIGIN' | 'REPLICA' | 'ALWAYS' | 'DISABLED';
+    },
   ): Promise<PostgresMetaResult<PostgresTrigger>> {
-    const { data: old, error } = await this.retrieve({ id })
+    const { data: old, error } = await this.retrieve({ id });
     if (error) {
-      return { data: null, error }
+      return { data: null, error };
     }
 
-    let enabledModeSql = ''
+    let enabledModeSql = '';
     switch (enabled_mode) {
       case 'ORIGIN':
         enabledModeSql = `ALTER TABLE ${ident(old!.schema)}.${ident(
-          old!.table
-        )} ENABLE TRIGGER ${ident(old!.name)};`
-        break
+          old!.table,
+        )} ENABLE TRIGGER ${ident(old!.name)};`;
+        break;
       case 'DISABLED':
         enabledModeSql = `ALTER TABLE ${ident(old!.schema)}.${ident(
-          old!.table
-        )} DISABLE TRIGGER ${ident(old!.name)};`
-        break
+          old!.table,
+        )} DISABLE TRIGGER ${ident(old!.name)};`;
+        break;
       case 'REPLICA':
       case 'ALWAYS':
         enabledModeSql = `ALTER TABLE ${ident(old!.schema)}.${ident(
-          old!.table
-        )} ENABLE ${enabled_mode} TRIGGER ${ident(old!.name)};`
-        break
+          old!.table,
+        )} ENABLE ${enabled_mode} TRIGGER ${ident(old!.name)};`;
+        break;
       default:
-        break
+        break;
     }
     const nameSql =
       name && name !== old!.name
         ? `ALTER TRIGGER ${ident(old!.name)} ON ${ident(old!.schema)}.${ident(
-            old!.table
+            old!.table,
           )} RENAME TO ${ident(name)};`
-        : ''
+        : '';
 
     // updateNameSql must be last
-    const sql = `BEGIN; ${enabledModeSql}; ${nameSql}; COMMIT;`
+    const sql = `BEGIN; ${enabledModeSql}; ${nameSql}; COMMIT;`;
     {
-      const { error } = await this.query(sql)
+      const { error } = await this.query(sql);
 
       if (error) {
-        return { data: null, error }
+        return { data: null, error };
       }
     }
-    return await this.retrieve({ id })
+    return await this.retrieve({ id });
   }
 
-  async remove(id: number, { cascade = false } = {}): Promise<PostgresMetaResult<PostgresTrigger>> {
-    const { data: triggerRecord, error } = await this.retrieve({ id })
+  async remove(
+    id: number,
+    { cascade = false } = {},
+  ): Promise<PostgresMetaResult<PostgresTrigger>> {
+    const { data: triggerRecord, error } = await this.retrieve({ id });
 
     if (error) {
-      return { data: null, error }
+      return { data: null, error };
     }
 
-    const { name, schema, table } = triggerRecord!
+    const { name, schema, table } = triggerRecord!;
     const sql = `DROP TRIGGER ${ident(name)} ON ${ident(schema)}.${ident(table)} ${
       cascade ? 'CASCADE' : ''
-    };`
+    };`;
 
     {
-      const { error } = await this.query(sql)
+      const { error } = await this.query(sql);
 
       if (error) {
-        return { data: null, error }
+        return { data: null, error };
       }
     }
 
-    return { data: triggerRecord!, error: null }
+    return { data: triggerRecord!, error: null };
   }
 }
 
@@ -262,4 +275,4 @@ const enrichedTriggersSql = `
   SELECT
     *
   FROM triggers
-`
+`;

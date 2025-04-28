@@ -1,7 +1,7 @@
-import prettier from 'prettier/standalone.js'
-import SqlFormatter from 'prettier-plugin-sql'
-import { parse, deparse } from 'pgsql-parser'
-import { FormatterOptions } from './types.js'
+import prettier from 'prettier/standalone.js';
+import SqlFormatter from 'prettier-plugin-sql';
+import { parse, deparse } from 'pgsql-parser';
+import { FormatterOptions } from './types.js';
 
 const DEFAULT_FORMATTER_OPTIONS = {
   plugins: [SqlFormatter],
@@ -9,23 +9,23 @@ const DEFAULT_FORMATTER_OPTIONS = {
   language: 'postgresql',
   database: 'postgresql',
   parser: 'sql',
-}
+};
 
 /**
  * Parses a SQL string into an AST.
  */
 export function Parse(sql: string): ParseReturnValues {
   try {
-    const data = parse(sql)
+    const data = parse(sql);
 
-    return { data, error: null }
+    return { data, error: null };
   } catch (error) {
-    return { data: null, error: error as Error }
+    return { data: null, error: error as Error };
   }
 }
 interface ParseReturnValues {
-  data: object | null
-  error: null | Error
+  data: object | null;
+  error: null | Error;
 }
 
 /**
@@ -33,15 +33,15 @@ interface ParseReturnValues {
  */
 export function Deparse(parsedSql: object): DeparseReturnValues {
   try {
-    const data = deparse(parsedSql, {})
-    return { data, error: null }
+    const data = deparse(parsedSql, {});
+    return { data, error: null };
   } catch (error) {
-    return { data: null, error: error as Error }
+    return { data: null, error: error as Error };
   }
 }
 interface DeparseReturnValues {
-  data: string | null
-  error: null | Error
+  data: string | null;
+  error: null | Error;
 }
 
 /**
@@ -49,20 +49,20 @@ interface DeparseReturnValues {
  */
 export async function Format(
   sql: string,
-  options: FormatterOptions = {}
+  options: FormatterOptions = {},
 ): Promise<FormatReturnValues> {
   try {
     const formatted = await prettier.format(sql, {
       ...DEFAULT_FORMATTER_OPTIONS,
       ...options,
-    })
+    });
 
-    return { data: formatted, error: null }
+    return { data: formatted, error: null };
   } catch (error) {
-    return { data: null, error: error as Error }
+    return { data: null, error: error as Error };
   }
 }
 interface FormatReturnValues {
-  data: string | null
-  error: null | Error
+  data: string | null;
+  error: null | Error;
 }

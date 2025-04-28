@@ -1,21 +1,21 @@
-import { Static, Type } from '@sinclair/typebox'
-import { DatabaseError } from 'pg-protocol'
-import type { Options as PrettierOptions } from 'prettier'
-import { PoolConfig as PgPoolConfig } from 'pg'
+import { Static, Type } from '@sinclair/typebox';
+import { DatabaseError } from 'pg-protocol';
+import type { Options as PrettierOptions } from 'prettier';
+import { PoolConfig as PgPoolConfig } from 'pg';
 
 export interface FormatterOptions extends PrettierOptions {}
 
 export interface PostgresMetaOk<T> {
-  data: T
-  error: null
+  data: T;
+  error: null;
 }
 
 export interface PostgresMetaErr {
-  data: null
-  error: Partial<DatabaseError> & { message: string; formattedError?: string }
+  data: null;
+  error: Partial<DatabaseError> & { message: string; formattedError?: string };
 }
 
-export type PostgresMetaResult<T> = PostgresMetaOk<T> | PostgresMetaErr
+export type PostgresMetaResult<T> = PostgresMetaOk<T> | PostgresMetaErr;
 
 export const postgresColumnSchema = Type.Object({
   table_id: Type.Integer(),
@@ -40,8 +40,8 @@ export const postgresColumnSchema = Type.Object({
   enums: Type.Array(Type.String()),
   check: Type.Union([Type.String(), Type.Null()]),
   comment: Type.Union([Type.String(), Type.Null()]),
-})
-export type PostgresColumn = Static<typeof postgresColumnSchema>
+});
+export type PostgresColumn = Static<typeof postgresColumnSchema>;
 
 export const postgresColumnCreateSchema = Type.Object({
   table_id: Type.Integer(),
@@ -49,19 +49,19 @@ export const postgresColumnCreateSchema = Type.Object({
   type: Type.String(),
   default_value: Type.Optional(Type.Unknown()),
   default_value_format: Type.Optional(
-    Type.Union([Type.Literal('expression'), Type.Literal('literal')])
+    Type.Union([Type.Literal('expression'), Type.Literal('literal')]),
   ),
   is_identity: Type.Optional(Type.Boolean()),
   identity_generation: Type.Optional(
-    Type.Union([Type.Literal('BY DEFAULT'), Type.Literal('ALWAYS')])
+    Type.Union([Type.Literal('BY DEFAULT'), Type.Literal('ALWAYS')]),
   ),
   is_nullable: Type.Optional(Type.Boolean()),
   is_primary_key: Type.Optional(Type.Boolean()),
   is_unique: Type.Optional(Type.Boolean()),
   comment: Type.Optional(Type.String()),
   check: Type.Optional(Type.String()),
-})
-export type PostgresColumnCreate = Static<typeof postgresColumnCreateSchema>
+});
+export type PostgresColumnCreate = Static<typeof postgresColumnCreateSchema>;
 
 export const postgresColumnUpdateSchema = Type.Object({
   name: Type.Optional(Type.String()),
@@ -69,11 +69,11 @@ export const postgresColumnUpdateSchema = Type.Object({
   drop_default: Type.Optional(Type.Boolean()),
   default_value: Type.Optional(Type.Unknown()),
   default_value_format: Type.Optional(
-    Type.Union([Type.Literal('expression'), Type.Literal('literal')])
+    Type.Union([Type.Literal('expression'), Type.Literal('literal')]),
   ),
   is_identity: Type.Optional(Type.Boolean()),
   identity_generation: Type.Optional(
-    Type.Union([Type.Literal('BY DEFAULT'), Type.Literal('ALWAYS')])
+    Type.Union([Type.Literal('BY DEFAULT'), Type.Literal('ALWAYS')]),
   ),
   is_nullable: Type.Optional(Type.Boolean()),
   is_unique: Type.Optional(Type.Boolean()),
@@ -81,11 +81,11 @@ export const postgresColumnUpdateSchema = Type.Object({
   check: Type.Optional(
     Type.Union(
       // Type.Null() must go first: https://github.com/sinclairzx81/typebox/issues/546
-      [Type.Null(), Type.String()]
-    )
+      [Type.Null(), Type.String()],
+    ),
   ),
-})
-export type PostgresColumnUpdate = Static<typeof postgresColumnUpdateSchema>
+});
+export type PostgresColumnUpdate = Static<typeof postgresColumnUpdateSchema>;
 
 // TODO Rethink config.sql
 export const postgresConfigSchema = Type.Object({
@@ -108,8 +108,8 @@ export const postgresConfigSchema = Type.Object({
   sourcefile: Type.Unknown(),
   sourceline: Type.Unknown(),
   pending_restart: Type.Unknown(),
-})
-export type PostgresConfig = Static<typeof postgresConfigSchema>
+});
+export type PostgresConfig = Static<typeof postgresConfigSchema>;
 
 export const postgresExtensionSchema = Type.Object({
   name: Type.String(),
@@ -117,8 +117,8 @@ export const postgresExtensionSchema = Type.Object({
   default_version: Type.String(),
   installed_version: Type.Union([Type.String(), Type.Null()]),
   comment: Type.Union([Type.String(), Type.Null()]),
-})
-export type PostgresExtension = Static<typeof postgresExtensionSchema>
+});
+export type PostgresExtension = Static<typeof postgresExtensionSchema>;
 
 export const postgresForeignTableSchema = Type.Object({
   id: Type.Integer(),
@@ -126,8 +126,8 @@ export const postgresForeignTableSchema = Type.Object({
   name: Type.String(),
   comment: Type.Union([Type.String(), Type.Null()]),
   columns: Type.Optional(Type.Array(postgresColumnSchema)),
-})
-export type PostgresForeignTable = Static<typeof postgresForeignTableSchema>
+});
+export type PostgresForeignTable = Static<typeof postgresForeignTableSchema>;
 
 const postgresFunctionSchema = Type.Object({
   id: Type.Integer(),
@@ -148,7 +148,7 @@ const postgresFunctionSchema = Type.Object({
       name: Type.String(),
       type_id: Type.Number(),
       has_default: Type.Boolean(),
-    })
+    }),
   ),
   argument_types: Type.String(),
   identity_argument_types: Type.String(),
@@ -162,24 +162,33 @@ const postgresFunctionSchema = Type.Object({
     Type.Literal('VOLATILE'),
   ]),
   security_definer: Type.Boolean(),
-  config_params: Type.Union([Type.Record(Type.String(), Type.String()), Type.Null()]),
-})
-export type PostgresFunction = Static<typeof postgresFunctionSchema>
+  config_params: Type.Union([
+    Type.Record(Type.String(), Type.String()),
+    Type.Null(),
+  ]),
+});
+export type PostgresFunction = Static<typeof postgresFunctionSchema>;
 
 export const postgresFunctionCreateFunction = Type.Object({
   name: Type.String(),
   definition: Type.String(),
   args: Type.Optional(Type.Array(Type.String())),
   behavior: Type.Optional(
-    Type.Union([Type.Literal('IMMUTABLE'), Type.Literal('STABLE'), Type.Literal('VOLATILE')])
+    Type.Union([
+      Type.Literal('IMMUTABLE'),
+      Type.Literal('STABLE'),
+      Type.Literal('VOLATILE'),
+    ]),
   ),
   config_params: Type.Optional(Type.Record(Type.String(), Type.String())),
   schema: Type.Optional(Type.String()),
   language: Type.Optional(Type.String()),
   return_type: Type.Optional(Type.String()),
   security_definer: Type.Optional(Type.Boolean()),
-})
-export type PostgresFunctionCreate = Static<typeof postgresFunctionCreateFunction>
+});
+export type PostgresFunctionCreate = Static<
+  typeof postgresFunctionCreateFunction
+>;
 
 const postgresIndexSchema = Type.Object({
   id: Type.Integer(),
@@ -210,10 +219,10 @@ const postgresIndexSchema = Type.Object({
       attribute_number: Type.Number(),
       attribute_name: Type.String(),
       data_type: Type.String(),
-    })
+    }),
   ),
-})
-export type PostgresIndex = Static<typeof postgresIndexSchema>
+});
+export type PostgresIndex = Static<typeof postgresIndexSchema>;
 
 export const postgresPolicySchema = Type.Object({
   id: Type.Integer(),
@@ -232,16 +241,16 @@ export const postgresPolicySchema = Type.Object({
   ]),
   definition: Type.Union([Type.String(), Type.Null()]),
   check: Type.Union([Type.String(), Type.Null()]),
-})
-export type PostgresPolicy = Static<typeof postgresPolicySchema>
+});
+export type PostgresPolicy = Static<typeof postgresPolicySchema>;
 
 export const postgresPrimaryKeySchema = Type.Object({
   schema: Type.String(),
   table_name: Type.String(),
   name: Type.String(),
   table_id: Type.Integer(),
-})
-export type PostgresPrimaryKey = Static<typeof postgresPrimaryKeySchema>
+});
+export type PostgresPrimaryKey = Static<typeof postgresPrimaryKeySchema>;
 
 export const postgresPublicationSchema = Type.Object({
   id: Type.Integer(),
@@ -252,11 +261,17 @@ export const postgresPublicationSchema = Type.Object({
   publish_delete: Type.Boolean(),
   publish_truncate: Type.Boolean(),
   tables: Type.Union([
-    Type.Array(Type.Object({ id: Type.Integer(), name: Type.String(), schema: Type.String() })),
+    Type.Array(
+      Type.Object({
+        id: Type.Integer(),
+        name: Type.String(),
+        schema: Type.String(),
+      }),
+    ),
     Type.Null(),
   ]),
-})
-export type PostgresPublication = Static<typeof postgresPublicationSchema>
+});
+export type PostgresPublication = Static<typeof postgresPublicationSchema>;
 
 export const postgresRelationshipOldSchema = Type.Object({
   id: Type.Integer(),
@@ -267,7 +282,7 @@ export const postgresRelationshipOldSchema = Type.Object({
   target_table_schema: Type.String(),
   target_table_name: Type.String(),
   target_column_name: Type.String(),
-})
+});
 export const postgresRelationshipSchema = Type.Object({
   foreign_key_name: Type.String(),
   schema: Type.String(),
@@ -277,15 +292,21 @@ export const postgresRelationshipSchema = Type.Object({
   referenced_schema: Type.String(),
   referenced_relation: Type.String(),
   referenced_columns: Type.Array(Type.String()),
-})
-export type PostgresRelationship = Static<typeof postgresRelationshipSchema>
+});
+export type PostgresRelationship = Static<typeof postgresRelationshipSchema>;
 
 export const PostgresMetaRoleConfigSchema = Type.Object({
-  op: Type.Union([Type.Literal('remove'), Type.Literal('add'), Type.Literal('replace')]),
+  op: Type.Union([
+    Type.Literal('remove'),
+    Type.Literal('add'),
+    Type.Literal('replace'),
+  ]),
   path: Type.String(),
   value: Type.Optional(Type.String()),
-})
-export type PostgresMetaRoleConfig = Static<typeof PostgresMetaRoleConfigSchema>
+});
+export type PostgresMetaRoleConfig = Static<
+  typeof PostgresMetaRoleConfigSchema
+>;
 
 export const postgresRoleSchema = Type.Object({
   id: Type.Integer(),
@@ -301,9 +322,13 @@ export const postgresRoleSchema = Type.Object({
   connection_limit: Type.Integer(),
   password: Type.String(),
   valid_until: Type.Union([Type.String(), Type.Null()]),
-  config: Type.Union([Type.String(), Type.Null(), Type.Record(Type.String(), Type.String())]),
-})
-export type PostgresRole = Static<typeof postgresRoleSchema>
+  config: Type.Union([
+    Type.String(),
+    Type.Null(),
+    Type.Record(Type.String(), Type.String()),
+  ]),
+});
+export type PostgresRole = Static<typeof postgresRoleSchema>;
 
 export const postgresRoleCreateSchema = Type.Object({
   name: Type.String(),
@@ -321,8 +346,8 @@ export const postgresRoleCreateSchema = Type.Object({
   admins: Type.Optional(Type.Array(Type.String())),
   valid_until: Type.Optional(Type.String()),
   config: Type.Optional(Type.Record(Type.String(), Type.String())),
-})
-export type PostgresRoleCreate = Static<typeof postgresRoleCreateSchema>
+});
+export type PostgresRoleCreate = Static<typeof postgresRoleCreateSchema>;
 
 export const postgresRoleUpdateSchema = Type.Object({
   name: Type.Optional(Type.String()),
@@ -337,27 +362,27 @@ export const postgresRoleUpdateSchema = Type.Object({
   connection_limit: Type.Optional(Type.Integer()),
   valid_until: Type.Optional(Type.String()),
   config: Type.Optional(Type.Array(PostgresMetaRoleConfigSchema)),
-})
-export type PostgresRoleUpdate = Static<typeof postgresRoleUpdateSchema>
+});
+export type PostgresRoleUpdate = Static<typeof postgresRoleUpdateSchema>;
 
 export const postgresSchemaSchema = Type.Object({
   id: Type.Integer(),
   name: Type.String(),
   owner: Type.String(),
-})
-export type PostgresSchema = Static<typeof postgresSchemaSchema>
+});
+export type PostgresSchema = Static<typeof postgresSchemaSchema>;
 
 export const postgresSchemaCreateSchema = Type.Object({
   name: Type.String(),
   owner: Type.Optional(Type.String()),
-})
-export type PostgresSchemaCreate = Static<typeof postgresSchemaCreateSchema>
+});
+export type PostgresSchemaCreate = Static<typeof postgresSchemaCreateSchema>;
 
 export const postgresSchemaUpdateSchema = Type.Object({
   name: Type.Optional(Type.String()),
   owner: Type.Optional(Type.String()),
-})
-export type PostgresSchemaUpdate = Static<typeof postgresSchemaUpdateSchema>
+});
+export type PostgresSchemaUpdate = Static<typeof postgresSchemaUpdateSchema>;
 
 export const postgresTableSchema = Type.Object({
   id: Type.Integer(),
@@ -379,15 +404,15 @@ export const postgresTableSchema = Type.Object({
   columns: Type.Optional(Type.Array(postgresColumnSchema)),
   primary_keys: Type.Array(postgresPrimaryKeySchema),
   relationships: Type.Array(postgresRelationshipOldSchema),
-})
-export type PostgresTable = Static<typeof postgresTableSchema>
+});
+export type PostgresTable = Static<typeof postgresTableSchema>;
 
 export const postgresTableCreateSchema = Type.Object({
   name: Type.String(),
   schema: Type.Optional(Type.String()),
   comment: Type.Optional(Type.String()),
-})
-export type PostgresTableCreate = Static<typeof postgresTableCreateSchema>
+});
+export type PostgresTableCreate = Static<typeof postgresTableCreateSchema>;
 
 export const postgresTableUpdateSchema = Type.Object({
   name: Type.Optional(Type.String()),
@@ -400,13 +425,13 @@ export const postgresTableUpdateSchema = Type.Object({
       Type.Literal('INDEX'),
       Type.Literal('FULL'),
       Type.Literal('NOTHING'),
-    ])
+    ]),
   ),
   replica_identity_index: Type.Optional(Type.String()),
   primary_keys: Type.Optional(Type.Array(Type.Object({ name: Type.String() }))),
   comment: Type.Optional(Type.String()),
-})
-export type PostgresTableUpdate = Static<typeof postgresTableUpdateSchema>
+});
+export type PostgresTableUpdate = Static<typeof postgresTableUpdateSchema>;
 
 export const postgresTriggerSchema = Type.Object({
   id: Type.Integer(),
@@ -431,8 +456,8 @@ export const postgresTriggerSchema = Type.Object({
   function_schema: Type.String(),
   function_name: Type.String(),
   function_args: Type.Array(Type.String()),
-})
-export type PostgresTrigger = Static<typeof postgresTriggerSchema>
+});
+export type PostgresTrigger = Static<typeof postgresTriggerSchema>;
 
 export const postgresTypeSchema = Type.Object({
   id: Type.Integer(),
@@ -440,18 +465,20 @@ export const postgresTypeSchema = Type.Object({
   schema: Type.String(),
   format: Type.String(),
   enums: Type.Array(Type.String()),
-  attributes: Type.Array(Type.Object({ name: Type.String(), type_id: Type.Integer() })),
+  attributes: Type.Array(
+    Type.Object({ name: Type.String(), type_id: Type.Integer() }),
+  ),
   comment: Type.Union([Type.String(), Type.Null()]),
-})
-export type PostgresType = Static<typeof postgresTypeSchema>
+});
+export type PostgresType = Static<typeof postgresTypeSchema>;
 
 export const postgresVersionSchema = Type.Object({
   version: Type.String(),
   version_number: Type.Integer(),
   active_connections: Type.Integer(),
   max_connections: Type.Integer(),
-})
-export type PostgresVersion = Static<typeof postgresVersionSchema>
+});
+export type PostgresVersion = Static<typeof postgresVersionSchema>;
 
 export const postgresViewSchema = Type.Object({
   id: Type.Integer(),
@@ -460,8 +487,8 @@ export const postgresViewSchema = Type.Object({
   is_updatable: Type.Boolean(),
   comment: Type.Union([Type.String(), Type.Null()]),
   columns: Type.Optional(Type.Array(postgresColumnSchema)),
-})
-export type PostgresView = Static<typeof postgresViewSchema>
+});
+export type PostgresView = Static<typeof postgresViewSchema>;
 
 export const postgresMaterializedViewSchema = Type.Object({
   id: Type.Integer(),
@@ -470,8 +497,10 @@ export const postgresMaterializedViewSchema = Type.Object({
   is_populated: Type.Boolean(),
   comment: Type.Union([Type.String(), Type.Null()]),
   columns: Type.Optional(Type.Array(postgresColumnSchema)),
-})
-export type PostgresMaterializedView = Static<typeof postgresMaterializedViewSchema>
+});
+export type PostgresMaterializedView = Static<
+  typeof postgresMaterializedViewSchema
+>;
 
 export const postgresTablePrivilegesSchema = Type.Object({
   relation_id: Type.Integer(),
@@ -499,10 +528,12 @@ export const postgresTablePrivilegesSchema = Type.Object({
         Type.Literal('MAINTAIN'),
       ]),
       is_grantable: Type.Boolean(),
-    })
+    }),
   ),
-})
-export type PostgresTablePrivileges = Static<typeof postgresTablePrivilegesSchema>
+});
+export type PostgresTablePrivileges = Static<
+  typeof postgresTablePrivilegesSchema
+>;
 
 export const postgresTablePrivilegesGrantSchema = Type.Object({
   relation_id: Type.Integer(),
@@ -519,8 +550,10 @@ export const postgresTablePrivilegesGrantSchema = Type.Object({
     Type.Literal('MAINTAIN'),
   ]),
   is_grantable: Type.Optional(Type.Boolean()),
-})
-export type PostgresTablePrivilegesGrant = Static<typeof postgresTablePrivilegesGrantSchema>
+});
+export type PostgresTablePrivilegesGrant = Static<
+  typeof postgresTablePrivilegesGrantSchema
+>;
 
 export const postgresTablePrivilegesRevokeSchema = Type.Object({
   relation_id: Type.Integer(),
@@ -536,8 +569,10 @@ export const postgresTablePrivilegesRevokeSchema = Type.Object({
     Type.Literal('TRIGGER'),
     Type.Literal('MAINTAIN'),
   ]),
-})
-export type PostgresTablePrivilegesRevoke = Static<typeof postgresTablePrivilegesRevokeSchema>
+});
+export type PostgresTablePrivilegesRevoke = Static<
+  typeof postgresTablePrivilegesRevokeSchema
+>;
 
 export const postgresColumnPrivilegesSchema = Type.Object({
   column_id: Type.RegEx(/^(\d+)\.(\d+)$/),
@@ -555,10 +590,12 @@ export const postgresColumnPrivilegesSchema = Type.Object({
         Type.Literal('REFERENCES'),
       ]),
       is_grantable: Type.Boolean(),
-    })
+    }),
   ),
-})
-export type PostgresColumnPrivileges = Static<typeof postgresColumnPrivilegesSchema>
+});
+export type PostgresColumnPrivileges = Static<
+  typeof postgresColumnPrivilegesSchema
+>;
 
 export const postgresColumnPrivilegesGrantSchema = Type.Object({
   column_id: Type.RegEx(/^(\d+)\.(\d+)$/),
@@ -571,8 +608,10 @@ export const postgresColumnPrivilegesGrantSchema = Type.Object({
     Type.Literal('REFERENCES'),
   ]),
   is_grantable: Type.Optional(Type.Boolean()),
-})
-export type PostgresColumnPrivilegesGrant = Static<typeof postgresColumnPrivilegesGrantSchema>
+});
+export type PostgresColumnPrivilegesGrant = Static<
+  typeof postgresColumnPrivilegesGrantSchema
+>;
 
 export const postgresColumnPrivilegesRevokeSchema = Type.Object({
   column_id: Type.RegEx(/^(\d+)\.(\d+)$/),
@@ -584,9 +623,11 @@ export const postgresColumnPrivilegesRevokeSchema = Type.Object({
     Type.Literal('UPDATE'),
     Type.Literal('REFERENCES'),
   ]),
-})
-export type PostgresColumnPrivilegesRevoke = Static<typeof postgresColumnPrivilegesRevokeSchema>
+});
+export type PostgresColumnPrivilegesRevoke = Static<
+  typeof postgresColumnPrivilegesRevokeSchema
+>;
 
 export interface PoolConfig extends PgPoolConfig {
-  maxResultSize?: number
+  maxResultSize?: number;
 }

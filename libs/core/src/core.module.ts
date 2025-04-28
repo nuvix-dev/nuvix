@@ -50,7 +50,10 @@ export type PoolStoreFn<T = PgPool> = (
 
 export type GetProjectDbFn = (pool: PgPool, projectId: string) => Database;
 
-export type GetProjectPG = (client: PoolClient, context?: Context) => DataSource;
+export type GetProjectPG = (
+  client: PoolClient,
+  context?: Context,
+) => DataSource;
 
 @Global()
 @Module({

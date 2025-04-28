@@ -1,26 +1,26 @@
-import { ident, literal } from 'pg-format'
-import { rolesSql } from './sql/index.js'
+import { ident, literal } from 'pg-format';
+import { rolesSql } from './sql/index.js';
 import {
   PostgresMetaResult,
   PostgresRole,
   PostgresRoleCreate,
   PostgresRoleUpdate,
-} from './types.js'
+} from './types.js';
 export function changeRoleConfig2Object(config: string[]) {
   if (!config) {
-    return null
+    return null;
   }
   return config.reduce((acc: any, cur) => {
-    const [key, value] = cur.split('=')
-    acc[key] = value
-    return acc
-  }, {})
+    const [key, value] = cur.split('=');
+    acc[key] = value;
+    return acc;
+  }, {});
 }
 export default class PostgresMetaRoles {
-  query: (sql: string) => Promise<PostgresMetaResult<any>>
+  query: (sql: string) => Promise<PostgresMetaResult<any>>;
 
   constructor(query: (sql: string) => Promise<PostgresMetaResult<any>>) {
-    this.query = query
+    this.query = query;
   }
 
   async list({
@@ -28,9 +28,9 @@ export default class PostgresMetaRoles {
     limit,
     offset,
   }: {
-    includeDefaultRoles?: boolean
-    limit?: number
-    offset?: number
+    includeDefaultRoles?: boolean;
+    limit?: number;
+    offset?: number;
   } = {}): Promise<PostgresMetaResult<PostgresRole[]>> {
     let sql = `
 WITH
@@ -40,7 +40,7 @@ SELECT
 FROM
   roles
 WHERE
-  true`
+  true`;
     if (!includeDefaultRoles) {
       // All default/predefined roles start with pg_: https://www.postgresql.org/docs/15/predefined-roles.html
       // The pg_ prefix is also reserved:
@@ -50,58 +50,75 @@ WHERE
       // ERROR:  role name "pg_mytmp" is reserved
       // DETAIL:  Role names starting with "pg_" are reserved.
       // ```
-      sql += ` AND NOT pg_catalog.starts_with(name, 'pg_')`
+      sql += ` AND NOT pg_catalog.starts_with(name, 'pg_')`;
     }
     if (limit) {
-      sql += ` LIMIT ${limit}`
+      sql += ` LIMIT ${limit}`;
     }
     if (offset) {
-      sql += ` OFFSET ${offset}`
+      sql += ` OFFSET ${offset}`;
     }
-    const result = await this.query(sql)
+    const result = await this.query(sql);
     if (result.data) {
       result.data = result.data.map((role: any) => {
-        role.config = changeRoleConfig2Object(role.config)
-        return role
-      })
+        role.config = changeRoleConfig2Object(role.config);
+        return role;
+      });
     }
-    return result
+    return result;
   }
 
-  async retrieve({ id }: { id: number }): Promise<PostgresMetaResult<PostgresRole>>
-  async retrieve({ name }: { name: string }): Promise<PostgresMetaResult<PostgresRole>>
+  async retrieve({
+    id,
+  }: {
+    id: number;
+  }): Promise<PostgresMetaResult<PostgresRole>>;
+  async retrieve({
+    name,
+  }: {
+    name: string;
+  }): Promise<PostgresMetaResult<PostgresRole>>;
   async retrieve({
     id,
     name,
   }: {
-    id?: number
-    name?: string
+    id?: number;
+    name?: string;
   }): Promise<PostgresMetaResult<PostgresRole>> {
     if (id) {
-      const sql = `${rolesSql} WHERE oid = ${literal(id)};`
-      const { data, error } = await this.query(sql)
+      const sql = `${rolesSql} WHERE oid = ${literal(id)};`;
+      const { data, error } = await this.query(sql);
 
       if (error) {
-        return { data, error }
+        return { data, error };
       } else if (data.length === 0) {
-        return { data: null, error: { message: `Cannot find a role with ID ${id}` } }
+        return {
+          data: null,
+          error: { message: `Cannot find a role with ID ${id}` },
+        };
       } else {
-        data[0].config = changeRoleConfig2Object(data[0].config)
-        return { data: data[0], error }
+        data[0].config = changeRoleConfig2Object(data[0].config);
+        return { data: data[0], error };
       }
     } else if (name) {
-      const sql = `${rolesSql} WHERE rolname = ${literal(name)};`
-      const { data, error } = await this.query(sql)
+      const sql = `${rolesSql} WHERE rolname = ${literal(name)};`;
+      const { data, error } = await this.query(sql);
       if (error) {
-        return { data, error }
+        return { data, error };
       } else if (data.length === 0) {
-        return { data: null, error: { message: `Cannot find a role named ${name}` } }
+        return {
+          data: null,
+          error: { message: `Cannot find a role named ${name}` },
+        };
       } else {
-        data[0].config = changeRoleConfig2Object(data[0].config)
-        return { data: data[0], error }
+        data[0].config = changeRoleConfig2Object(data[0].config);
+        return { data: data[0], error };
       }
     } else {
-      return { data: null, error: { message: 'Invalid parameters on role retrieve' } }
+      return {
+        data: null,
+        error: { message: 'Invalid parameters on role retrieve' },
+      };
     }
   }
 
@@ -122,30 +139,37 @@ WHERE
     admins,
     config,
   }: PostgresRoleCreate): Promise<PostgresMetaResult<PostgresRole>> {
-    const isSuperuserClause = is_superuser ? 'SUPERUSER' : 'NOSUPERUSER'
-    const canCreateDbClause = can_create_db ? 'CREATEDB' : 'NOCREATEDB'
-    const canCreateRoleClause = can_create_role ? 'CREATEROLE' : 'NOCREATEROLE'
-    const inheritRoleClause = inherit_role ? 'INHERIT' : 'NOINHERIT'
-    const canLoginClause = can_login ? 'LOGIN' : 'NOLOGIN'
-    const isReplicationRoleClause = is_replication_role ? 'REPLICATION' : 'NOREPLICATION'
-    const canBypassRlsClause = can_bypass_rls ? 'BYPASSRLS' : 'NOBYPASSRLS'
-    const connectionLimitClause = `CONNECTION LIMIT ${connection_limit}`
-    const passwordClause = password === undefined ? '' : `PASSWORD ${literal(password)}`
-    const validUntilClause = valid_until === undefined ? '' : `VALID UNTIL ${literal(valid_until)}`
-    const memberOfClause = member_of === undefined ? '' : `IN ROLE ${member_of.join(',')}`
-    const membersClause = members === undefined ? '' : `ROLE ${members.join(',')}`
-    const adminsClause = admins === undefined ? '' : `ADMIN ${admins.join(',')}`
-    let configClause = ''
+    const isSuperuserClause = is_superuser ? 'SUPERUSER' : 'NOSUPERUSER';
+    const canCreateDbClause = can_create_db ? 'CREATEDB' : 'NOCREATEDB';
+    const canCreateRoleClause = can_create_role ? 'CREATEROLE' : 'NOCREATEROLE';
+    const inheritRoleClause = inherit_role ? 'INHERIT' : 'NOINHERIT';
+    const canLoginClause = can_login ? 'LOGIN' : 'NOLOGIN';
+    const isReplicationRoleClause = is_replication_role
+      ? 'REPLICATION'
+      : 'NOREPLICATION';
+    const canBypassRlsClause = can_bypass_rls ? 'BYPASSRLS' : 'NOBYPASSRLS';
+    const connectionLimitClause = `CONNECTION LIMIT ${connection_limit}`;
+    const passwordClause =
+      password === undefined ? '' : `PASSWORD ${literal(password)}`;
+    const validUntilClause =
+      valid_until === undefined ? '' : `VALID UNTIL ${literal(valid_until)}`;
+    const memberOfClause =
+      member_of === undefined ? '' : `IN ROLE ${member_of.join(',')}`;
+    const membersClause =
+      members === undefined ? '' : `ROLE ${members.join(',')}`;
+    const adminsClause =
+      admins === undefined ? '' : `ADMIN ${admins.join(',')}`;
+    let configClause = '';
     if (config !== undefined) {
       configClause = Object.keys(config)
-        .map((k) => {
-          const v = config[k]
+        .map(k => {
+          const v = config[k];
           if (!k || !v) {
-            return ''
+            return '';
           }
-          return `ALTER ROLE ${name} SET ${k} = ${v};`
+          return `ALTER ROLE ${name} SET ${k} = ${v};`;
         })
-        .join('\n')
+        .join('\n');
     }
     const sql = `
 BEGIN;
@@ -165,12 +189,12 @@ WITH
   ${membersClause}
   ${adminsClause};
 ${configClause ? configClause : ''}
-COMMIT;`
-    const { error } = await this.query(sql)
+COMMIT;`;
+    const { error } = await this.query(sql);
     if (error) {
-      return { data: null, error }
+      return { data: null, error };
     }
-    return await this.retrieve({ name })
+    return await this.retrieve({ name });
   }
 
   async update(
@@ -188,67 +212,75 @@ COMMIT;`
       password,
       valid_until,
       config,
-    }: PostgresRoleUpdate
+    }: PostgresRoleUpdate,
   ): Promise<PostgresMetaResult<PostgresRole>> {
-    const { data: old, error } = await this.retrieve({ id })
+    const { data: old, error } = await this.retrieve({ id });
     if (error) {
-      return { data: null, error }
+      return { data: null, error };
     }
 
     const nameSql =
-      name === undefined ? '' : `ALTER ROLE ${ident(old!.name)} RENAME TO ${ident(name)};`
-    let isSuperuserClause = ''
+      name === undefined
+        ? ''
+        : `ALTER ROLE ${ident(old!.name)} RENAME TO ${ident(name)};`;
+    let isSuperuserClause = '';
     if (is_superuser !== undefined) {
-      isSuperuserClause = is_superuser ? 'SUPERUSER' : 'NOSUPERUSER'
+      isSuperuserClause = is_superuser ? 'SUPERUSER' : 'NOSUPERUSER';
     }
-    let canCreateDbClause = ''
+    let canCreateDbClause = '';
     if (can_create_db !== undefined) {
-      canCreateDbClause = can_create_db ? 'CREATEDB' : 'NOCREATEDB'
+      canCreateDbClause = can_create_db ? 'CREATEDB' : 'NOCREATEDB';
     }
-    let canCreateRoleClause = ''
+    let canCreateRoleClause = '';
     if (can_create_role !== undefined) {
-      canCreateRoleClause = can_create_role ? 'CREATEROLE' : 'NOCREATEROLE'
+      canCreateRoleClause = can_create_role ? 'CREATEROLE' : 'NOCREATEROLE';
     }
-    let inheritRoleClause = ''
+    let inheritRoleClause = '';
     if (inherit_role !== undefined) {
-      inheritRoleClause = inherit_role ? 'INHERIT' : 'NOINHERIT'
+      inheritRoleClause = inherit_role ? 'INHERIT' : 'NOINHERIT';
     }
-    let canLoginClause = ''
+    let canLoginClause = '';
     if (can_login !== undefined) {
-      canLoginClause = can_login ? 'LOGIN' : 'NOLOGIN'
+      canLoginClause = can_login ? 'LOGIN' : 'NOLOGIN';
     }
-    let isReplicationRoleClause = ''
+    let isReplicationRoleClause = '';
     if (is_replication_role !== undefined) {
-      isReplicationRoleClause = is_replication_role ? 'REPLICATION' : 'NOREPLICATION'
+      isReplicationRoleClause = is_replication_role
+        ? 'REPLICATION'
+        : 'NOREPLICATION';
     }
-    let canBypassRlsClause = ''
+    let canBypassRlsClause = '';
     if (can_bypass_rls !== undefined) {
-      canBypassRlsClause = can_bypass_rls ? 'BYPASSRLS' : 'NOBYPASSRLS'
+      canBypassRlsClause = can_bypass_rls ? 'BYPASSRLS' : 'NOBYPASSRLS';
     }
     const connectionLimitClause =
-      connection_limit === undefined ? '' : `CONNECTION LIMIT ${connection_limit}`
-    const passwordClause = password === undefined ? '' : `PASSWORD ${literal(password)}`
-    const validUntilClause = valid_until === undefined ? '' : `VALID UNTIL ${literal(valid_until)}`
-    let configClause = ''
+      connection_limit === undefined
+        ? ''
+        : `CONNECTION LIMIT ${connection_limit}`;
+    const passwordClause =
+      password === undefined ? '' : `PASSWORD ${literal(password)}`;
+    const validUntilClause =
+      valid_until === undefined ? '' : `VALID UNTIL ${literal(valid_until)}`;
+    let configClause = '';
     if (config !== undefined) {
-      const configSql = config.map((c) => {
-        const { op, path, value } = c
-        const k = path
-        const v = value || null
+      const configSql = config.map(c => {
+        const { op, path, value } = c;
+        const k = path;
+        const v = value || null;
         if (!k) {
-          throw new Error(`Invalid config value ${value}`)
+          throw new Error(`Invalid config value ${value}`);
         }
         switch (op) {
           case 'add':
           case 'replace':
-            return `ALTER ROLE ${ident(old!.name)} SET ${ident(k)} = ${literal(v)};`
+            return `ALTER ROLE ${ident(old!.name)} SET ${ident(k)} = ${literal(v)};`;
           case 'remove':
-            return `ALTER ROLE ${ident(old!.name)} RESET ${ident(k)};`
+            return `ALTER ROLE ${ident(old!.name)} RESET ${ident(k)};`;
           default:
-            throw new Error(`Invalid config op ${op}`)
+            throw new Error(`Invalid config op ${op}`);
         }
-      })
-      configClause = configSql.filter(Boolean).join('')
+      });
+      configClause = configSql.filter(Boolean).join('');
     }
     // nameSql must be last
     const sql = `
@@ -266,28 +298,28 @@ BEGIN;
     ${validUntilClause};
   ${configClause ? configClause : ''}
   ${nameSql}
-COMMIT;`
+COMMIT;`;
     {
-      const { error } = await this.query(sql)
+      const { error } = await this.query(sql);
       if (error) {
-        return { data: null, error }
+        return { data: null, error };
       }
     }
-    return await this.retrieve({ id })
+    return await this.retrieve({ id });
   }
 
   async remove(id: number): Promise<PostgresMetaResult<PostgresRole>> {
-    const { data: role, error } = await this.retrieve({ id })
+    const { data: role, error } = await this.retrieve({ id });
     if (error) {
-      return { data: null, error }
+      return { data: null, error };
     }
-    const sql = `DROP ROLE ${ident(role!.name)};`
+    const sql = `DROP ROLE ${ident(role!.name)};`;
     {
-      const { error } = await this.query(sql)
+      const { error } = await this.query(sql);
       if (error) {
-        return { data: null, error }
+        return { data: null, error };
       }
     }
-    return { data: role!, error: null }
+    return { data: role!, error: null };
   }
 }

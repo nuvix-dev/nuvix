@@ -1,14 +1,18 @@
-import { ident, literal } from 'pg-format'
-import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js'
-import { filterByList } from './helpers.js'
-import { functionsSql } from './sql/index.js'
-import { PostgresMetaResult, PostgresFunction, PostgresFunctionCreate } from './types.js'
+import { ident, literal } from 'pg-format';
+import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
+import { filterByList } from './helpers.js';
+import { functionsSql } from './sql/index.js';
+import {
+  PostgresMetaResult,
+  PostgresFunction,
+  PostgresFunctionCreate,
+} from './types.js';
 
 export default class PostgresMetaFunctions {
-  query: (sql: string) => Promise<PostgresMetaResult<any>>
+  query: (sql: string) => Promise<PostgresMetaResult<any>>;
 
   constructor(query: (sql: string) => Promise<PostgresMetaResult<any>>) {
-    this.query = query
+    this.query = query;
   }
 
   async list({
@@ -18,78 +22,88 @@ export default class PostgresMetaFunctions {
     limit,
     offset,
   }: {
-    includeSystemSchemas?: boolean
-    includedSchemas?: string[]
-    excludedSchemas?: string[]
-    limit?: number
-    offset?: number
+    includeSystemSchemas?: boolean;
+    includedSchemas?: string[];
+    excludedSchemas?: string[];
+    limit?: number;
+    offset?: number;
   } = {}): Promise<PostgresMetaResult<PostgresFunction[]>> {
-    let sql = enrichedFunctionsSql
+    let sql = enrichedFunctionsSql;
     const filter = filterByList(
       includedSchemas,
       excludedSchemas,
-      !includeSystemSchemas ? DEFAULT_SYSTEM_SCHEMAS : undefined
-    )
+      !includeSystemSchemas ? DEFAULT_SYSTEM_SCHEMAS : undefined,
+    );
     if (filter) {
-      sql += ` WHERE schema ${filter}`
+      sql += ` WHERE schema ${filter}`;
     }
     if (limit) {
-      sql = `${sql} LIMIT ${limit}`
+      sql = `${sql} LIMIT ${limit}`;
     }
     if (offset) {
-      sql = `${sql} OFFSET ${offset}`
+      sql = `${sql} OFFSET ${offset}`;
     }
-    return await this.query(sql)
+    return await this.query(sql);
   }
 
-  async retrieve({ id }: { id: number }): Promise<PostgresMetaResult<PostgresFunction>>
+  async retrieve({
+    id,
+  }: {
+    id: number;
+  }): Promise<PostgresMetaResult<PostgresFunction>>;
   async retrieve({
     name,
     schema,
     args,
   }: {
-    name: string
-    schema: string
-    args: string[]
-  }): Promise<PostgresMetaResult<PostgresFunction>>
+    name: string;
+    schema: string;
+    args: string[];
+  }): Promise<PostgresMetaResult<PostgresFunction>>;
   async retrieve({
     id,
     name,
     schema = 'public',
     args = [],
   }: {
-    id?: number
-    name?: string
-    schema?: string
-    args?: string[]
+    id?: number;
+    name?: string;
+    schema?: string;
+    args?: string[];
   }): Promise<PostgresMetaResult<PostgresFunction>> {
     if (id) {
-      const sql = `${enrichedFunctionsSql} WHERE id = ${literal(id)};`
-      const { data, error } = await this.query(sql)
+      const sql = `${enrichedFunctionsSql} WHERE id = ${literal(id)};`;
+      const { data, error } = await this.query(sql);
       if (error) {
-        return { data, error }
+        return { data, error };
       } else if (data.length === 0) {
-        return { data: null, error: { message: `Cannot find a function with ID ${id}` } }
+        return {
+          data: null,
+          error: { message: `Cannot find a function with ID ${id}` },
+        };
       } else {
-        return { data: data[0], error }
+        return { data: data[0], error };
       }
     } else if (name && schema && args) {
-      const sql = this.generateRetrieveFunctionSql({ name, schema, args })
-      const { data, error } = await this.query(sql)
+      const sql = this.generateRetrieveFunctionSql({ name, schema, args });
+      const { data, error } = await this.query(sql);
       if (error) {
-        return { data, error }
+        return { data, error };
       } else if (data.length === 0) {
         return {
           data: null,
           error: {
             message: `Cannot find function "${schema}"."${name}"(${args.join(', ')})`,
           },
-        }
+        };
       } else {
-        return { data: data[0], error }
+        return { data: data[0], error };
       }
     } else {
-      return { data: null, error: { message: 'Invalid parameters on function retrieve' } }
+      return {
+        data: null,
+        error: { message: 'Invalid parameters on function retrieve' },
+      };
     }
   }
 
@@ -114,12 +128,12 @@ export default class PostgresMetaFunctions {
       behavior,
       security_definer,
       config_params,
-    })
-    const { error } = await this.query(sql)
+    });
+    const { error } = await this.query(sql);
     if (error) {
-      return { data: null, error }
+      return { data: null, error };
     }
-    return await this.retrieve({ name, schema, args })
+    return await this.retrieve({ name, schema, args });
   }
 
   async update(
@@ -129,18 +143,18 @@ export default class PostgresMetaFunctions {
       schema,
       definition,
     }: {
-      name?: string
-      schema?: string
-      definition?: string
-    }
+      name?: string;
+      schema?: string;
+      definition?: string;
+    },
   ): Promise<PostgresMetaResult<PostgresFunction>> {
-    const { data: currentFunc, error } = await this.retrieve({ id })
+    const { data: currentFunc, error } = await this.retrieve({ id });
     if (error) {
-      return { data: null, error }
+      return { data: null, error };
     }
 
-    const args = currentFunc!.argument_types.split(', ')
-    const identityArgs = currentFunc!.identity_argument_types
+    const args = currentFunc!.argument_types.split(', ');
+    const identityArgs = currentFunc!.identity_argument_types;
 
     const updateDefinitionSql =
       typeof definition === 'string'
@@ -151,23 +165,23 @@ export default class PostgresMetaFunctions {
               args,
               config_params: currentFunc!.config_params ?? {},
             },
-            { replace: true }
+            { replace: true },
           )
-        : ''
+        : '';
 
     const updateNameSql =
       name && name !== currentFunc!.name
         ? `ALTER FUNCTION ${ident(currentFunc!.schema)}.${ident(
-            currentFunc!.name
+            currentFunc!.name,
           )}(${identityArgs}) RENAME TO ${ident(name)};`
-        : ''
+        : '';
 
     const updateSchemaSql =
       schema && schema !== currentFunc!.schema
         ? `ALTER FUNCTION ${ident(currentFunc!.schema)}.${ident(
-            name || currentFunc!.name
+            name || currentFunc!.name,
           )}(${identityArgs})  SET SCHEMA ${ident(schema)};`
-        : ''
+        : '';
 
     const sql = `
       DO LANGUAGE plpgsql $$
@@ -193,37 +207,37 @@ export default class PostgresMetaFunctions {
         ${updateSchemaSql}
       END;
       $$;
-    `
+    `;
 
     {
-      const { error } = await this.query(sql)
+      const { error } = await this.query(sql);
 
       if (error) {
-        return { data: null, error }
+        return { data: null, error };
       }
     }
 
-    return await this.retrieve({ id })
+    return await this.retrieve({ id });
   }
 
   async remove(
     id: number,
-    { cascade = false } = {}
+    { cascade = false } = {},
   ): Promise<PostgresMetaResult<PostgresFunction>> {
-    const { data: func, error } = await this.retrieve({ id })
+    const { data: func, error } = await this.retrieve({ id });
     if (error) {
-      return { data: null, error }
+      return { data: null, error };
     }
     const sql = `DROP FUNCTION ${ident(func!.schema)}.${ident(func!.name)}
     (${func!.identity_argument_types})
-    ${cascade ? 'CASCADE' : 'RESTRICT'};`
+    ${cascade ? 'CASCADE' : 'RESTRICT'};`;
     {
-      const { error } = await this.query(sql)
+      const { error } = await this.query(sql);
       if (error) {
-        return { data: null, error }
+        return { data: null, error };
       }
     }
-    return { data: func!, error: null }
+    return { data: func!, error: null };
   }
 
   private generateCreateFunctionSql(
@@ -238,7 +252,7 @@ export default class PostgresMetaFunctions {
       security_definer,
       config_params,
     }: PostgresFunctionCreate,
-    { replace = false } = {}
+    { replace = false } = {},
   ): string {
     return `
       CREATE ${replace ? 'OR REPLACE' : ''} FUNCTION ${ident(schema!)}.${ident(name!)}(${
@@ -255,12 +269,12 @@ export default class PostgresMetaFunctions {
           ? Object.entries(config_params)
               .map(
                 ([param, value]: string[]) =>
-                  `SET ${param} ${value[0] === 'FROM CURRENT' ? 'FROM CURRENT' : 'TO ' + value}`
+                  `SET ${param} ${value[0] === 'FROM CURRENT' ? 'FROM CURRENT' : 'TO ' + value}`,
               )
               .join('\n')
           : ''
       };
-    `
+    `;
   }
 
   private generateRetrieveFunctionSql({
@@ -268,12 +282,12 @@ export default class PostgresMetaFunctions {
     name,
     args,
   }: {
-    schema: string
-    name: string
-    args: string[]
+    schema: string;
+    name: string;
+    args: string[];
   }): string {
     return `${enrichedFunctionsSql} JOIN pg_proc AS p ON id = p.oid WHERE schema = ${literal(
-      schema
+      schema,
     )} AND name = ${literal(name)} AND p.proargtypes::text = ${
       args.length
         ? `(
@@ -296,7 +310,7 @@ export default class PostgresMetaFunctions {
           ) args
     )`
         : literal('')
-    }`
+    }`;
   }
 }
 
@@ -307,4 +321,4 @@ const enrichedFunctionsSql = `
   SELECT
     f.*
   FROM f
-`
+`;

@@ -1,19 +1,19 @@
-import { ident, literal } from 'pg-format'
-import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js'
-import { filterByList } from './helpers.js'
-import { columnPrivilegesSql } from './sql/index.js'
+import { ident, literal } from 'pg-format';
+import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
+import { filterByList } from './helpers.js';
+import { columnPrivilegesSql } from './sql/index.js';
 import {
   PostgresMetaResult,
   PostgresColumnPrivileges,
   PostgresColumnPrivilegesGrant,
   PostgresColumnPrivilegesRevoke,
-} from './types.js'
+} from './types.js';
 
 export default class PostgresMetaColumnPrivileges {
-  query: (sql: string) => Promise<PostgresMetaResult<any>>
+  query: (sql: string) => Promise<PostgresMetaResult<any>>;
 
   constructor(query: (sql: string) => Promise<PostgresMetaResult<any>>) {
-    this.query = query
+    this.query = query;
   }
 
   async list({
@@ -23,36 +23,36 @@ export default class PostgresMetaColumnPrivileges {
     limit,
     offset,
   }: {
-    includeSystemSchemas?: boolean
-    includedSchemas?: string[]
-    excludedSchemas?: string[]
-    limit?: number
-    offset?: number
+    includeSystemSchemas?: boolean;
+    includedSchemas?: string[];
+    excludedSchemas?: string[];
+    limit?: number;
+    offset?: number;
   } = {}): Promise<PostgresMetaResult<PostgresColumnPrivileges[]>> {
     let sql = `
 with column_privileges as (${columnPrivilegesSql})
 select *
 from column_privileges
-`
+`;
     const filter = filterByList(
       includedSchemas,
       excludedSchemas,
-      !includeSystemSchemas ? DEFAULT_SYSTEM_SCHEMAS : undefined
-    )
+      !includeSystemSchemas ? DEFAULT_SYSTEM_SCHEMAS : undefined,
+    );
     if (filter) {
-      sql += ` where relation_schema ${filter}`
+      sql += ` where relation_schema ${filter}`;
     }
     if (limit) {
-      sql += ` limit ${limit}`
+      sql += ` limit ${limit}`;
     }
     if (offset) {
-      sql += ` offset ${offset}`
+      sql += ` offset ${offset}`;
     }
-    return await this.query(sql)
+    return await this.query(sql);
   }
 
   async grant(
-    grants: PostgresColumnPrivilegesGrant[]
+    grants: PostgresColumnPrivilegesGrant[],
   ): Promise<PostgresMetaResult<PostgresColumnPrivileges[]>> {
     let sql = `
 do $$
@@ -61,7 +61,7 @@ declare
 begin
 ${grants
   .map(({ privilege_type, column_id, grantee, is_grantable }) => {
-    const [relationId, columnNumber] = column_id.split('.')
+    const [relationId, columnNumber] = column_id.split('.');
     return `
 select *
 from pg_attribute a
@@ -74,29 +74,29 @@ execute format(
   } ${is_grantable ? 'with grant option' : ''}',
   col.attname,
   col.attrelid::regclass
-);`
+);`;
   })
   .join('\n')}
 end $$;
-`
-    const { data, error } = await this.query(sql)
+`;
+    const { data, error } = await this.query(sql);
     if (error) {
-      return { data, error }
+      return { data, error };
     }
 
     // Return the updated column privileges for modified columns.
-    const columnIds = [...new Set(grants.map(({ column_id }) => column_id))]
+    const columnIds = [...new Set(grants.map(({ column_id }) => column_id))];
     sql = `
 with column_privileges as (${columnPrivilegesSql})
 select *
 from column_privileges
 where column_id in (${columnIds.map(literal).join(',')})
-`
-    return await this.query(sql)
+`;
+    return await this.query(sql);
   }
 
   async revoke(
-    revokes: PostgresColumnPrivilegesRevoke[]
+    revokes: PostgresColumnPrivilegesRevoke[],
   ): Promise<PostgresMetaResult<PostgresColumnPrivileges[]>> {
     let sql = `
 do $$
@@ -105,7 +105,7 @@ declare
 begin
 ${revokes
   .map(({ privilege_type, column_id, grantee }) => {
-    const [relationId, columnNumber] = column_id.split('.')
+    const [relationId, columnNumber] = column_id.split('.');
     return `
 select *
 from pg_attribute a
@@ -118,24 +118,24 @@ execute format(
   }',
   col.attname,
   col.attrelid::regclass
-);`
+);`;
   })
   .join('\n')}
 end $$;
-`
-    const { data, error } = await this.query(sql)
+`;
+    const { data, error } = await this.query(sql);
     if (error) {
-      return { data, error }
+      return { data, error };
     }
 
     // Return the updated column privileges for modified columns.
-    const columnIds = [...new Set(revokes.map(({ column_id }) => column_id))]
+    const columnIds = [...new Set(revokes.map(({ column_id }) => column_id))];
     sql = `
 with column_privileges as (${columnPrivilegesSql})
 select *
 from column_privileges
 where column_id in (${columnIds.map(literal).join(',')})
-`
-    return await this.query(sql)
+`;
+    return await this.query(sql);
   }
 }

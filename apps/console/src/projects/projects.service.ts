@@ -68,7 +68,7 @@ export class ProjectService {
     @InjectQueue('projects')
     private readonly projectQueue: Queue<ProjectQueueOptions, any, ProjectJobs>,
     private readonly jwtService: JwtService,
-  ) { }
+  ) {}
 
   private readonly logger = new Logger(ProjectService.name);
 
@@ -214,8 +214,10 @@ export class ProjectService {
       }
 
       try {
-        client.release()
-      } catch { /** noop */ }
+        client.release();
+      } catch {
+        /** noop */
+      }
 
       await this.projectQueue.add('init', {
         project,
@@ -1235,19 +1237,19 @@ export class ProjectService {
 
     const smtp = input.enabled
       ? {
-        enabled: input.enabled,
-        senderName: input.senderName,
-        senderEmail: input.senderEmail,
-        replyTo: input.replyTo,
-        host: input.host,
-        port: input.port,
-        username: input.username,
-        password: input.password,
-        secure: input.secure,
-      }
+          enabled: input.enabled,
+          senderName: input.senderName,
+          senderEmail: input.senderEmail,
+          replyTo: input.replyTo,
+          host: input.host,
+          port: input.port,
+          username: input.username,
+          password: input.password,
+          secure: input.secure,
+        }
       : {
-        enabled: false,
-      };
+          enabled: false,
+        };
 
     project = await this.db.updateDocument(
       'projects',

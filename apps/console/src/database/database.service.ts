@@ -21,7 +21,7 @@ export class DatabaseService {
   constructor(
     @InjectQueue('schema')
     private readonly schemasQueue: Queue<SchemaQueueOptions, any, SchemaJobs>,
-  ) { }
+  ) {}
 
   public async createDocumentSchema(
     db: DataSource,
@@ -146,10 +146,7 @@ export class DatabaseService {
     return table;
   }
 
-  public async executeQuery(
-    pg: DataSource,
-    sql: string,
-  ) {
-    return await pg.execute(sql)
+  public async executeQuery(pg: DataSource, sql: string) {
+    return await pg.execute(sql);
   }
 }

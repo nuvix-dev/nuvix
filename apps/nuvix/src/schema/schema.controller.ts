@@ -35,7 +35,7 @@ import { DataSource } from '@nuvix/pg';
 @Namespace() // TODO: --->
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class SchemaController {
-  constructor(private readonly schemaService: SchemaService) { }
+  constructor(private readonly schemaService: SchemaService) {}
 
   @Get(':schemaId/table/:tableId')
   @Scope('schema.read')

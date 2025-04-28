@@ -1,13 +1,13 @@
-import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js'
-import { filterByList } from './helpers.js'
-import { typesSql } from './sql/index.js'
-import { PostgresMetaResult, PostgresType } from './types.js'
+import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
+import { filterByList } from './helpers.js';
+import { typesSql } from './sql/index.js';
+import { PostgresMetaResult, PostgresType } from './types.js';
 
 export default class PostgresMetaTypes {
-  query: (sql: string) => Promise<PostgresMetaResult<any>>
+  query: (sql: string) => Promise<PostgresMetaResult<any>>;
 
   constructor(query: (sql: string) => Promise<PostgresMetaResult<any>>) {
-    this.query = query
+    this.query = query;
   }
 
   async list({
@@ -19,13 +19,13 @@ export default class PostgresMetaTypes {
     limit,
     offset,
   }: {
-    includeTableTypes?: boolean
-    includeArrayTypes?: boolean
-    includeSystemSchemas?: boolean
-    includedSchemas?: string[]
-    excludedSchemas?: string[]
-    limit?: number
-    offset?: number
+    includeTableTypes?: boolean;
+    includeArrayTypes?: boolean;
+    includeSystemSchemas?: boolean;
+    includedSchemas?: string[];
+    excludedSchemas?: string[];
+    limit?: number;
+    offset?: number;
   } = {}): Promise<PostgresMetaResult<PostgresType[]>> {
     let sql = `${typesSql}
     where
@@ -40,7 +40,7 @@ export default class PostgresMetaTypes {
             c.oid = t.typrelid
         )
       )
-    `
+    `;
     if (!includeArrayTypes) {
       sql += ` and not exists (
                  select
@@ -49,22 +49,22 @@ export default class PostgresMetaTypes {
                  where
                    el.oid = t.typelem
                    and el.typarray = t.oid
-               )`
+               )`;
     }
     const filter = filterByList(
       includedSchemas,
       excludedSchemas,
-      !includeSystemSchemas ? DEFAULT_SYSTEM_SCHEMAS : undefined
-    )
+      !includeSystemSchemas ? DEFAULT_SYSTEM_SCHEMAS : undefined,
+    );
     if (filter) {
-      sql += ` and n.nspname ${filter}`
+      sql += ` and n.nspname ${filter}`;
     }
     if (limit) {
-      sql += ` limit ${limit}`
+      sql += ` limit ${limit}`;
     }
     if (offset) {
-      sql += ` offset ${offset}`
+      sql += ` offset ${offset}`;
     }
-    return await this.query(sql)
+    return await this.query(sql);
   }
 }

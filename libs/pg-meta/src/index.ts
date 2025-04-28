@@ -1,4 +1,4 @@
-export { default as PostgresMeta } from './PostgresMeta.js'
+export { default as PostgresMeta } from './PostgresMeta.js';
 export {
   PostgresMetaOk,
   PostgresMetaErr,
@@ -23,4 +23,4 @@ export {
   PostgresType,
   PostgresVersion,
   PostgresView,
-} from './types.js'
+} from './types.js';

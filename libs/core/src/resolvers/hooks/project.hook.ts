@@ -33,7 +33,7 @@ export class ProjectHook implements Hook {
     @Inject(GET_PROJECT_PG) private readonly gerProjectPg: GetProjectPG,
     @Inject(GET_PROJECT_DB)
     private readonly getProjectDb: GetProjectDbFn,
-  ) { }
+  ) {}
 
   async onRequest(req: FastifyRequest, reply: FastifyReply) {
     const params = new ParamsHelper(req);
@@ -79,8 +79,10 @@ export class ProjectHook implements Hook {
     if (client) {
       try {
         client.release();
-        this.logger.debug(`Pool client released`)
-      } catch {/** noop */ }
+        this.logger.debug(`Pool client released`);
+      } catch {
+        /** noop */
+      }
     }
   }
 }
