@@ -22,6 +22,12 @@ import { TableIdParamDto } from './DTO/table-id.dto';
 import { TableCreateDto } from './DTO/table-create.dto';
 import { TableUpdateDto } from './DTO/table-update.dto';
 import { TableDeleteQueryDto } from './DTO/table-delete.dto';
+import { ColumnQueryDto } from './DTO/column.dto';
+import { ColumnTableParams } from './DTO/column-table.dto';
+import { ColumnCreateDto } from './DTO/column-create.dto';
+import { ColumnUpdateDto } from './DTO/column-update.dto';
+import { ColumnIdParamDto } from './DTO/column-id.dto';
+import { ColumnDeleteQueryDto } from './DTO/column-delete.dto';
 
 @Controller({ path: 'meta', version: ['1'] })
 export class PgMetaController {
@@ -172,6 +178,92 @@ export class PgMetaController {
     const { id } = params;
     const { cascade } = query;
     const { data } = await client.tables.remove(id, { cascade });
+    return data;
+  }
+
+  /*************************** Columns *********************************/
+
+  @Get('columns')
+  async getColumns(
+    @Query() query: ColumnQueryDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const {
+      includeSystemSchemas,
+      includedSchemas,
+      excludedSchemas,
+      limit,
+      offset,
+    } = query;
+    const { data } = await client.columns.list({
+      includeSystemSchemas,
+      includedSchemas: includedSchemas?.split(','),
+      excludedSchemas: excludedSchemas?.split(','),
+      limit,
+      offset,
+    });
+    return data ?? [];
+  }
+
+  @Get('columns/:tableId:ordinalPosition')
+  async getColumnsByTable(
+    @Param() params: ColumnTableParams,
+    @Query() query: ColumnQueryDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const { tableId, ordinalPosition } = params;
+    const { includeSystemSchemas, limit, offset } = query;
+
+    if (!ordinalPosition) {
+      // Get all columns for the table
+      const { data } = await client.columns.list({
+        tableId,
+        includeSystemSchemas,
+        limit,
+        offset,
+      });
+      return data?.[0] ?? null;
+    } else if (
+      ordinalPosition.startsWith('.') &&
+      /^\.\d+$/.test(ordinalPosition)
+    ) {
+      // Get specific column by tableId.ordinalPosition
+      const position = ordinalPosition.slice(1);
+      const id = `${tableId}.${position}`;
+      const { data } = await client.columns.retrieve({ id });
+      return data;
+    }
+  }
+
+  @Post('columns')
+  async createColumn(
+    @Body() body: ColumnCreateDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const { data } = await client.columns.create(body);
+    return data;
+  }
+
+  @Patch('columns/:id')
+  async updateColumn(
+    @Param() params: ColumnIdParamDto,
+    @Body() body: ColumnUpdateDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const { id } = params;
+    const { data } = await client.columns.update(id, body);
+    return data;
+  }
+
+  @Delete('columns/:id')
+  async deleteColumn(
+    @Param() params: ColumnIdParamDto,
+    @Query() query: ColumnDeleteQueryDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const { id } = params;
+    const { cascade } = query;
+    const { data } = await client.columns.remove(id, { cascade });
     return data;
   }
 }
