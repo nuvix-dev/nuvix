@@ -60,6 +60,9 @@ import { PolicyUpdateDto } from './DTO/policy-update.dto';
 import { PublicationQueryDto } from './DTO/publication.dto';
 import { PublicationCreateDto } from './DTO/publication-create.dto';
 import { PublicationUpdateDto } from './DTO/publication-update.dto';
+import { TablePrivilegeQueryDto } from './DTO/table-privilege.dto';
+import { TablePrivilegeGrantDto } from './DTO/table-privilege-grant.dto';
+import { TablePrivilegeRevokeDto } from './DTO/table-privilege-revoke.dto';
 
 @Controller({ path: 'meta', version: ['1'] })
 export class PgMetaController {
@@ -757,6 +760,48 @@ export class PgMetaController {
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.publications.remove(id);
+    return data;
+  }
+
+  /*************************** Table Privileges *********************************/
+
+  @Get('table-privileges')
+  async getTablePrivileges(
+    @Query() query: TablePrivilegeQueryDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const {
+      includeSystemSchemas,
+      includedSchemas,
+      excludedSchemas,
+      limit,
+      offset,
+    } = query;
+    const { data } = await client.tablePrivileges.list({
+      includeSystemSchemas,
+      includedSchemas: includedSchemas?.split(','),
+      excludedSchemas: excludedSchemas?.split(','),
+      limit,
+      offset,
+    });
+    return data ?? [];
+  }
+
+  @Post('table-privileges')
+  async grantTablePrivileges(
+    @Body() body: TablePrivilegeGrantDto[],
+    @Client() client: PostgresMeta,
+  ) {
+    const { data } = await client.tablePrivileges.grant(body);
+    return data;
+  }
+
+  @Delete('table-privileges')
+  async revokeTablePrivileges(
+    @Body() body: TablePrivilegeRevokeDto[],
+    @Client() client: PostgresMeta,
+  ) {
+    const { data } = await client.tablePrivileges.revoke(body);
     return data;
   }
 }
