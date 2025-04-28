@@ -52,6 +52,7 @@ import { ColumnPrivilegeGrantDto } from './DTO/column-privilege-grant.dto';
 import { ColumnPrivilegeRevokeDto } from './DTO/column-privilege-revoke.dto';
 import { MaterializedViewQueryDto } from './DTO/materialized-view.dto';
 import { MaterializedViewIdParamDto } from './DTO/materialized-view-id.dto';
+import { ConfigQueryDto } from './DTO/config.dto';
 
 @Controller({ path: 'meta', version: ['1'] })
 export class PgMetaController {
@@ -623,6 +624,24 @@ export class PgMetaController {
   ) {
     const { id } = params;
     const { data } = await client.materializedViews.retrieve({ id });
+    return data;
+  }
+
+  /*************************** Config *********************************/
+
+  @Get('config')
+  async getConfig(
+    @Query() query: ConfigQueryDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const { limit, offset } = query;
+    const { data } = await client.config.list({ limit, offset });
+    return data ?? [];
+  }
+
+  @Get('config/version')
+  async getVersion(@Client() client: PostgresMeta) {
+    const { data } = await client.version.retrieve();
     return data;
   }
 }
