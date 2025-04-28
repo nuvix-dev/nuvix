@@ -2,6 +2,7 @@ import pg from 'pg';
 // import * as Sentry from '@sentry/node'
 import { parse as parseArray } from 'postgres-array';
 import { PostgresMetaResult, PoolConfig } from './types.js';
+import { PgMetaException } from '../extra/execption.js';
 
 pg.types.setTypeParser(pg.types.builtins.INT8, x => {
   const asNumber = Number(x);
@@ -186,34 +187,29 @@ export const init: (config: PoolConfig) => {
             }
           }
 
-          return {
-            data: null,
-            error: {
-              ...error,
-              // error.message is non-enumerable
-              message: error.message,
-              formattedError,
-            },
-          };
+          throw new PgMetaException(error.message, {
+            ...error,
+            formattedError,
+          });
         }
         try {
           // Handle stream errors and result size exceeded errors
           if (error.code === 'RESULT_SIZE_EXCEEDED') {
             // Force kill the connection without waiting for graceful shutdown
-            return {
-              data: null,
-              error: {
-                message: `Query result size (${error.resultSize} bytes) exceeded the configured limit (${error.maxResultSize} bytes)`,
-                code: error.code,
+            throw new PgMetaException(
+              `Query result size (${error.resultSize} bytes) exceeded the configured limit (${error.maxResultSize} bytes)`,
+              {
+                ...error,
+                formattedError: error.message,
                 resultSize: error.resultSize,
                 maxResultSize: error.maxResultSize,
               },
-            };
+            );
           }
-          return {
-            data: null,
-            error: { code: error.code, message: error.message },
-          };
+          throw new PgMetaException(error.message, {
+            ...error,
+            formattedError: error.message,
+          });
         } finally {
           try {
             // If the error isn't a "DatabaseError" assume it's a connection related we kill the connection

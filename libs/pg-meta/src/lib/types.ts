@@ -15,7 +15,7 @@ export interface PostgresMetaErr {
   error: Partial<DatabaseError> & { message: string; formattedError?: string };
 }
 
-export type PostgresMetaResult<T> = PostgresMetaOk<T> | PostgresMetaErr;
+export type PostgresMetaResult<T> = PostgresMetaOk<T>;
 
 export const postgresColumnSchema = Type.Object({
   table_id: Type.Integer(),

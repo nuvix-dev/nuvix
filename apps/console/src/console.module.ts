@@ -28,6 +28,7 @@ import { ProjectHook } from './hooks/project.hook';
 import { ProjectHook as RequestProjectHook } from '@nuvix/core/resolvers/hooks';
 import { DatabaseModule } from './database/database.module';
 import { DatabaseController } from './database/database.controller';
+import { PgMetaModule } from '@nuvix/pg-meta';
 
 @Module({
   imports: [
@@ -65,6 +66,7 @@ import { DatabaseController } from './database/database.controller';
     OrganizationsModule,
     ProjectModule,
     DatabaseModule,
+    PgMetaModule,
   ],
   controllers: [ConsoleController],
   providers: [ConsoleService, MailQueue],
