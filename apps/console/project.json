@@ -6,25 +6,14 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "@nx/rollup:rollup",
-      "outputs": ["{options.outputPath}"],
-      "defaultConfiguration": "production",
+      "executor": "nx:run-commands",
       "options": {
-        "main": "apps/console/src/main.ts",
-        "outputPath": "dist/apps/console",
-        "outputFileName": "main.js",
-        "tsConfig": "apps/console/tsconfig.app.json",
-        "rollupConfig": "apps/console/rollup.config.ts",
-        "platform": "node",
-        "format": ["esm"],
-        "assets": []
+        "command": "webpack-cli build",
+        "args": ["node-env=production"]
       },
       "configurations": {
         "development": {
-          "minify": false
-        },
-        "production": {
-          "minify": true
+          "args": ["node-env=development"]
         }
       }
     },

@@ -4,30 +4,6 @@
   "sourceRoot": "libs/utils/src",
   "projectType": "library",
   "tags": [],
-  "targets": {
-    "build": {
-      "executor": "@nx/rollup:rollup",
-      "outputs": ["{options.outputPath}"],
-      "defaultConfiguration": "production",
-      "options": {
-        "main": "libs/utils/src/index.ts",
-        "outputPath": "dist/libs/utils",
-        "tsConfig": "libs/utils/tsconfig.lib.json",
-        "rollupConfig": "libs/utils/rollup.config.ts",
-        "platform": "node",
-        "format": ["esm"],
-        "assets": [],
-        "generateExportsField": true,
-        "compiler": "tsc"
-      },
-      "configurations": {
-        "development": {
-          "minify": false
-        },
-        "production": {
-          "minify": true
-        }
-      }
-    }
-  }
+  "// targets": "to see all targets run: nx show project utils --web",
+  "targets": {}
 }
