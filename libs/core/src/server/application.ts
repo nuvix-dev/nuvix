@@ -9,10 +9,14 @@ import { HooksModule } from './hooks/module';
 import { HooksContainer } from './hooks/container';
 import { optionalRequire } from '@nestjs/core/helpers/optional-require';
 
-const { MicroservicesModule } = optionalRequire(
-  '@nestjs/microservices/microservices-module',
-  () => require('@nestjs/microservices/microservices-module'),
-);
+// Properly handle optional microservices module
+let MicroservicesModule: any = null;
+try {
+  // Attempt to load the module if available
+  MicroservicesModule = optionalRequire('@nestjs/microservices/microservices-module');
+} catch (e) {
+  // Module not available, that's fine as it's optional
+}
 
 // @ts-ignore
 export class NuvixApplication extends NestApplication {

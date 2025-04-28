@@ -16,7 +16,6 @@ module.exports = (env) => {
                 compiler: 'swc',
                 main: './src/main.ts',
                 tsConfig: './tsconfig.app.json',
-                assets: ['./src/assets'],
                 optimization: false,
                 outputHashing: 'none',
                 additionalOptions: {

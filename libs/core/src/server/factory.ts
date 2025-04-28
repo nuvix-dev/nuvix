@@ -131,11 +131,16 @@ export class NuvixFactoryStatic {
     moduleCls: IEntryNestModule,
     options?: NestMicroserviceOptions & T,
   ): Promise<INestMicroservice> {
-    const { NestMicroservice } = loadPackage(
-      '@nestjs/microservices',
-      'NestFactory',
-      () => require('@nestjs/microservices'),
-    );
+    let NestMicroservice: any = null;
+    try {
+      // Attempt to load the module if available
+      const microservicesPackage = await import('@nestjs/microservices');
+      NestMicroservice = microservicesPackage.NestMicroservice;
+    } catch (e) {
+      throw new Error(
+        `The "@nestjs/microservices" package is not installed. Please, install this package to use microservices.`,
+      );
+    }
     const applicationConfig = new ApplicationConfig();
     const container = new NestContainer(applicationConfig, options);
     const graphInspector = this.createGraphInspector(options!, container);

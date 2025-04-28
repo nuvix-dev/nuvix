@@ -6,14 +6,26 @@
   "tags": [],
   "targets": {
     "build": {
-      "executor": "nx:run-commands",
+      "executor": "@nx/webpack:webpack",
+      "outputs": ["{options.outputPath}"],
       "options": {
-        "command": "webpack-cli build",
-        "args": ["node-env=production"]
+        "target": "node",
+        "compiler": "swc",
+        "outputPath": "dist/apps/nuvix",
+        "main": "apps/nuvix/src/main.ts",
+        "tsConfig": "apps/nuvix/tsconfig.app.json",
+        "webpackConfig": "apps/nuvix/webpack.config.js"
       },
       "configurations": {
         "development": {
-          "args": ["node-env=development"]
+          "optimization": false,
+          "extractLicenses": false,
+          "inspect": false
+        },
+        "production": {
+          "optimization": true,
+          "extractLicenses": true,
+          "inspect": false
         }
       }
     },

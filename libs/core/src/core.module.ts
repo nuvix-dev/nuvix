@@ -42,12 +42,12 @@ Object.keys(formats).forEach(key => {
   Structure.addFormat(key, formats[key].create, formats[key].type);
 });
 
-export type PoolStoreFn<T = PgPool> = (
+type PoolStoreFn<T = PgPool> = (
   name: string,
   options: Omit<{ database: string }, 'name'> & { database: string },
 ) => Promise<PgPool>;
 
-export type GetProjectDbFn = (pool: PgPool, projectId: string) => Database;
+type GetProjectDbFn = (pool: PgPool, projectId: string) => Database;
 
 export type GetProjectPG = (client: PoolClient, context?: Context) => DataSource;
 
@@ -226,4 +226,6 @@ export type GetProjectPG = (client: PoolClient, context?: Context) => DataSource
     ProjectUsageService,
   ],
 })
-export class CoreModule {}
+export class CoreModule { }
+
+export { PoolStoreFn, GetProjectDbFn };
