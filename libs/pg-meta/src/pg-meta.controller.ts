@@ -53,6 +53,13 @@ import { ColumnPrivilegeRevokeDto } from './DTO/column-privilege-revoke.dto';
 import { MaterializedViewQueryDto } from './DTO/materialized-view.dto';
 import { MaterializedViewIdParamDto } from './DTO/materialized-view-id.dto';
 import { ConfigQueryDto } from './DTO/config.dto';
+import { PolicyQueryDto } from './DTO/policy.dto';
+import { PolicyIdParamDto } from './DTO/policy-id.dto';
+import { PolicyCreateDto } from './DTO/policy-create.dto';
+import { PolicyUpdateDto } from './DTO/policy-update.dto';
+import { PublicationQueryDto } from './DTO/publication.dto';
+import { PublicationCreateDto } from './DTO/publication-create.dto';
+import { PublicationUpdateDto } from './DTO/publication-update.dto';
 
 @Controller({ path: 'meta', version: ['1'] })
 export class PgMetaController {
@@ -642,6 +649,114 @@ export class PgMetaController {
   @Get('config/version')
   async getVersion(@Client() client: PostgresMeta) {
     const { data } = await client.version.retrieve();
+    return data;
+  }
+
+  /*************************** Policies *********************************/
+
+  @Get('policies')
+  async getPolicies(
+    @Query() query: PolicyQueryDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const {
+      includeSystemSchemas,
+      includedSchemas,
+      excludedSchemas,
+      limit,
+      offset,
+    } = query;
+    const { data } = await client.policies.list({
+      includeSystemSchemas,
+      includedSchemas: includedSchemas?.split(','),
+      excludedSchemas: excludedSchemas?.split(','),
+      limit,
+      offset,
+    });
+    return data ?? [];
+  }
+
+  @Get('policies/:id')
+  async getPolicyById(@Param('id') id: number, @Client() client: PostgresMeta) {
+    const { data } = await client.policies.retrieve({ id });
+    return data;
+  }
+
+  @Post('policies')
+  async createPolicy(
+    @Body() body: PolicyCreateDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const { data } = await client.policies.create(body);
+    return data;
+  }
+
+  @Patch('policies/:id')
+  async updatePolicy(
+    @Param('id') id: number,
+    @Body() body: PolicyUpdateDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const { data } = await client.policies.update(id, body);
+    return data;
+  }
+
+  @Delete('policies/:id')
+  async deletePolicy(
+    @Param() params: PolicyIdParamDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const { id } = params;
+    const { data } = await client.policies.remove(id);
+    return data;
+  }
+
+  /*************************** Publications *********************************/
+
+  @Get('publications')
+  async getPublications(
+    @Query() query: PublicationQueryDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const { limit, offset } = query;
+    const { data } = await client.publications.list({ limit, offset });
+    return data ?? [];
+  }
+
+  @Get('publications/:id')
+  async getPublicationById(
+    @Param('id') id: number,
+    @Client() client: PostgresMeta,
+  ) {
+    const { data } = await client.publications.retrieve({ id });
+    return data;
+  }
+
+  @Post('publications')
+  async createPublication(
+    @Body() body: PublicationCreateDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const { data } = await client.publications.create(body);
+    return data;
+  }
+
+  @Patch('publications/:id')
+  async updatePublication(
+    @Param('id') id: number,
+    @Body() body: PublicationUpdateDto,
+    @Client() client: PostgresMeta,
+  ) {
+    const { data } = await client.publications.update(id, body);
+    return data;
+  }
+
+  @Delete('publications/:id')
+  async deletePublication(
+    @Param('id') id: number,
+    @Client() client: PostgresMeta,
+  ) {
+    const { data } = await client.publications.remove(id);
     return data;
   }
 }

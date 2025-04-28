@@ -1,8 +1,10 @@
-import { IsBoolean, IsInt, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class PolicyQueryDto {
   @IsOptional()
   @IsBoolean()
+  @Type(() => Boolean)
   includeSystemSchemas?: boolean;
 
   @IsOptional()
@@ -14,10 +16,12 @@ export class PolicyQueryDto {
   excludedSchemas?: string;
 
   @IsOptional()
-  @IsInt()
+  @IsNumber()
+  @Type(() => Number)
   limit?: number;
 
   @IsOptional()
-  @IsInt()
+  @IsNumber()
+  @Type(() => Number)
   offset?: number;
 }
