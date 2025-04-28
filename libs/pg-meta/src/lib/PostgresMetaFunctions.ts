@@ -2,11 +2,8 @@ import { ident, literal } from 'pg-format';
 import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
 import { filterByList } from './helpers.js';
 import { functionsSql } from './sql/index.js';
-import {
-  PostgresMetaResult,
-  PostgresFunction,
-  PostgresFunctionCreate,
-} from './types.js';
+import { PostgresMetaResult, PostgresFunction } from './types.js';
+import { FunctionCreateDto } from '../DTO/function-create.dto.js';
 
 export default class PostgresMetaFunctions {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -117,7 +114,7 @@ export default class PostgresMetaFunctions {
     behavior = 'VOLATILE',
     security_definer = false,
     config_params = {},
-  }: PostgresFunctionCreate): Promise<PostgresMetaResult<PostgresFunction>> {
+  }: FunctionCreateDto): Promise<PostgresMetaResult<PostgresFunction>> {
     const sql = this.generateCreateFunctionSql({
       name,
       schema,
@@ -251,7 +248,7 @@ export default class PostgresMetaFunctions {
       behavior,
       security_definer,
       config_params,
-    }: PostgresFunctionCreate,
+    }: FunctionCreateDto,
     { replace = false } = {},
   ): string {
     return `

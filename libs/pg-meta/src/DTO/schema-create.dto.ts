@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsObject } from 'class-validator';
+import { IsString, IsOptional } from 'class-validator';
 
 export class SchemaCreateDto {
   @IsString()
@@ -7,8 +7,4 @@ export class SchemaCreateDto {
   @IsOptional()
   @IsString()
   owner?: string;
-
-  @IsOptional()
-  @IsObject()
-  comment?: { [key: string]: any };
 }

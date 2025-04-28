@@ -2,12 +2,9 @@ import { ident, literal } from 'pg-format';
 import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
 import { filterByList } from './helpers.js';
 import { columnPrivilegesSql } from './sql/index.js';
-import {
-  PostgresMetaResult,
-  PostgresColumnPrivileges,
-  PostgresColumnPrivilegesGrant,
-  PostgresColumnPrivilegesRevoke,
-} from './types.js';
+import { PostgresMetaResult, PostgresColumnPrivileges } from './types.js';
+import { ColumnPrivilegeGrantDto } from '../DTO/column-privilege-grant.dto.js';
+import { ColumnPrivilegeRevokeDto } from '../DTO/column-privilege-revoke.dto.js';
 
 export default class PostgresMetaColumnPrivileges {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -52,7 +49,7 @@ from column_privileges
   }
 
   async grant(
-    grants: PostgresColumnPrivilegesGrant[],
+    grants: ColumnPrivilegeGrantDto[],
   ): Promise<PostgresMetaResult<PostgresColumnPrivileges[]>> {
     let sql = `
 do $$
@@ -96,7 +93,7 @@ where column_id in (${columnIds.map(literal).join(',')})
   }
 
   async revoke(
-    revokes: PostgresColumnPrivilegesRevoke[],
+    revokes: ColumnPrivilegeRevokeDto[],
   ): Promise<PostgresMetaResult<PostgresColumnPrivileges[]>> {
     let sql = `
 do $$

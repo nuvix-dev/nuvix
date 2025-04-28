@@ -10,6 +10,10 @@ export class ColumnUpdateDto {
   type?: string;
 
   @IsOptional()
+  @IsBoolean()
+  drop_default?: boolean;
+
+  @IsOptional()
   default_value?: any;
 
   @IsOptional()
@@ -35,4 +39,8 @@ export class ColumnUpdateDto {
   @IsOptional()
   @IsString()
   comment?: string;
+
+  @IsOptional()
+  @IsString()
+  check?: string;
 }

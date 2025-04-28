@@ -1,4 +1,10 @@
-import { ArrayNotEmpty, IsArray, IsOptional, IsString } from 'class-validator';
+import {
+  ArrayNotEmpty,
+  IsArray,
+  IsEnum,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class PolicyUpdateDto {
   @IsString()
@@ -11,6 +17,14 @@ export class PolicyUpdateDto {
   @IsOptional()
   @IsString()
   check?: string;
+
+  @IsOptional()
+  @IsEnum(['PERMISSIVE', 'RESTRICTIVE'])
+  action?: 'PERMISSIVE' | 'RESTRICTIVE';
+
+  @IsOptional()
+  @IsEnum(['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'ALL'])
+  command?: 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE' | 'ALL';
 
   @IsOptional()
   @IsArray()

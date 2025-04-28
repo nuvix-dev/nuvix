@@ -1,12 +1,9 @@
 import { ident, literal } from 'pg-format';
 import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
 import { schemasSql } from './sql/index.js';
-import {
-  PostgresMetaResult,
-  PostgresSchema,
-  PostgresSchemaCreate,
-  PostgresSchemaUpdate,
-} from './types.js';
+import { PostgresMetaResult, PostgresSchema } from './types.js';
+import { SchemaCreateDto } from '../DTO/schema-create.dto.js';
+import { SchemaUpdateDto } from '../DTO/schema-update.dto.js';
 
 export default class PostgresMetaSchemas {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -91,7 +88,7 @@ export default class PostgresMetaSchemas {
   async create({
     name,
     owner = 'postgres',
-  }: PostgresSchemaCreate): Promise<PostgresMetaResult<PostgresSchema>> {
+  }: SchemaCreateDto): Promise<PostgresMetaResult<PostgresSchema>> {
     const sql = `CREATE SCHEMA ${ident(name)} AUTHORIZATION ${ident(owner)};`;
     const { error } = await this.query(sql);
     if (error) {
@@ -102,7 +99,7 @@ export default class PostgresMetaSchemas {
 
   async update(
     id: number,
-    { name, owner }: PostgresSchemaUpdate,
+    { name, owner }: SchemaUpdateDto,
   ): Promise<PostgresMetaResult<PostgresSchema>> {
     const { data: old, error } = await this.retrieve({ id });
     if (error) {

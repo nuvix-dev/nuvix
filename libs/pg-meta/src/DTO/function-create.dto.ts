@@ -12,10 +12,11 @@ export class FunctionCreateDto {
   name: string;
 
   @IsString()
-  schema: string;
-
-  @IsString()
   definition: string;
+
+  @IsOptional()
+  @IsString()
+  schema?: string;
 
   @IsOptional()
   @IsString()
@@ -23,7 +24,8 @@ export class FunctionCreateDto {
 
   @IsOptional()
   @IsArray()
-  arguments?: any[];
+  @IsString({ each: true })
+  args?: string[];
 
   @IsOptional()
   @IsString()
@@ -36,6 +38,10 @@ export class FunctionCreateDto {
   @IsOptional()
   @IsBoolean()
   security_definer?: boolean;
+
+  @IsOptional()
+  @IsObject()
+  config_params?: Record<string, string>;
 
   @IsOptional()
   @IsString()

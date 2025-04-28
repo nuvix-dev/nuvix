@@ -49,10 +49,19 @@ export class TriggerCreateDto {
 
   @IsOptional()
   @IsString()
+  @IsNotEmpty()
   condition?: string;
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   function_args?: string[];
+
+  @IsOptional()
+  @IsString()
+  comment?: string;
+
+  @IsOptional()
+  @IsIn(['ORIGIN', 'REPLICA', 'ALWAYS', 'DISABLED'])
+  enabled_mode?: 'ORIGIN' | 'REPLICA' | 'ALWAYS' | 'DISABLED';
 }

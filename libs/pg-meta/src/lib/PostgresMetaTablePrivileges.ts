@@ -2,12 +2,9 @@ import { ident, literal } from 'pg-format';
 import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
 import { filterByList } from './helpers.js';
 import { tablePrivilegesSql } from './sql/index.js';
-import {
-  PostgresMetaResult,
-  PostgresTablePrivileges,
-  PostgresTablePrivilegesGrant,
-  PostgresTablePrivilegesRevoke,
-} from './types.js';
+import { PostgresMetaResult, PostgresTablePrivileges } from './types.js';
+import { TablePrivilegeGrantDto } from '../DTO/table-privilege-grant.dto.js';
+import { TablePrivilegeRevokeDto } from '../DTO/table-privilege-revoke.dto.js';
 
 export default class PostgresMetaTablePrivileges {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -119,7 +116,7 @@ where table_privileges.schema = ${literal(schema)}
   }
 
   async grant(
-    grants: PostgresTablePrivilegesGrant[],
+    grants: TablePrivilegeGrantDto[],
   ): Promise<PostgresMetaResult<PostgresTablePrivileges[]>> {
     let sql = `
 do $$
@@ -153,7 +150,7 @@ where relation_id in (${relationIds.map(literal).join(',')})
   }
 
   async revoke(
-    revokes: PostgresTablePrivilegesRevoke[],
+    revokes: TablePrivilegeRevokeDto[],
   ): Promise<PostgresMetaResult<PostgresTablePrivileges[]>> {
     let sql = `
 do $$

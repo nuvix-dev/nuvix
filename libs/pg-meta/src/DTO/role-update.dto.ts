@@ -1,4 +1,11 @@
-import { IsBoolean, IsInt, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class RoleUpdateDto {
   @IsOptional()
@@ -46,14 +53,10 @@ export class RoleUpdateDto {
   valid_until?: string;
 
   @IsOptional()
-  @IsString()
-  member_of?: string;
-
-  @IsOptional()
-  @IsString()
-  members?: string;
-
-  @IsOptional()
-  @IsString()
-  admins?: string;
+  @IsArray()
+  config?: Array<{
+    op: 'remove' | 'add' | 'replace';
+    path: string;
+    value?: string;
+  }>;
 }

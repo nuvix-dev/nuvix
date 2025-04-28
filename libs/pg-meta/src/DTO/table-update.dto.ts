@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsBoolean,
   IsEnum,
   IsObject,
@@ -30,4 +31,12 @@ export class TableUpdateDto {
   @IsOptional()
   @IsEnum(['DEFAULT', 'INDEX', 'FULL', 'NOTHING'])
   replica_identity?: 'DEFAULT' | 'INDEX' | 'FULL' | 'NOTHING';
+
+  @IsOptional()
+  @IsString()
+  replica_identity_index?: string;
+
+  @IsOptional()
+  @IsArray()
+  primary_keys?: { name: string }[];
 }

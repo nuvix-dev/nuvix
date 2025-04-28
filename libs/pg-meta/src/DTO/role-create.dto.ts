@@ -1,4 +1,11 @@
-import { IsBoolean, IsInt, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class RoleCreateDto {
   @IsString()
@@ -45,14 +52,21 @@ export class RoleCreateDto {
   valid_until?: string;
 
   @IsOptional()
+  @IsArray()
   @IsString({ each: true })
   member_of?: string[];
 
   @IsOptional()
+  @IsArray()
   @IsString({ each: true })
   members?: string[];
 
   @IsOptional()
+  @IsArray()
   @IsString({ each: true })
   admins?: string[];
+
+  @IsOptional()
+  @IsObject()
+  config?: Record<string, string>;
 }

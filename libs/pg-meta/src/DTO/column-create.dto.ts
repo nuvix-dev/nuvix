@@ -31,6 +31,10 @@ export class ColumnCreateDto {
 
   @IsOptional()
   @IsBoolean()
+  is_primary_key?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
   is_unique?: boolean;
 
   @IsOptional()

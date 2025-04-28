@@ -2,6 +2,7 @@ import {
   IsArray,
   IsBoolean,
   IsEnum,
+  IsObject,
   IsOptional,
   IsString,
 } from 'class-validator';
@@ -25,7 +26,8 @@ export class FunctionUpdateDto {
 
   @IsOptional()
   @IsArray()
-  arguments?: any[];
+  @IsString({ each: true })
+  args?: string[];
 
   @IsOptional()
   @IsString()
@@ -38,6 +40,10 @@ export class FunctionUpdateDto {
   @IsOptional()
   @IsBoolean()
   security_definer?: boolean;
+
+  @IsOptional()
+  @IsObject()
+  config_params?: Record<string, string>;
 
   @IsOptional()
   @IsString()

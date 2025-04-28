@@ -2,12 +2,9 @@ import { ident, literal } from 'pg-format';
 import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
 import { coalesceRowsToArray, filterByList } from './helpers.js';
 import { columnsSql, tablesSql } from './sql/index.js';
-import {
-  PostgresMetaResult,
-  PostgresTable,
-  PostgresTableCreate,
-  PostgresTableUpdate,
-} from './types.js';
+import { PostgresMetaResult, PostgresTable } from './types.js';
+import { TableCreateDto } from '../DTO/table-create.dto.js';
+import { TableUpdateDto } from '../DTO/table-update.dto.js';
 
 export default class PostgresMetaTables {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -130,7 +127,7 @@ export default class PostgresMetaTables {
     name,
     schema = 'public',
     comment,
-  }: PostgresTableCreate): Promise<PostgresMetaResult<PostgresTable>> {
+  }: TableCreateDto): Promise<PostgresMetaResult<PostgresTable>> {
     const tableSql = `CREATE TABLE ${ident(schema)}.${ident(name)} ();`;
     const commentSql =
       comment === undefined
@@ -155,7 +152,7 @@ export default class PostgresMetaTables {
       replica_identity_index,
       primary_keys,
       comment,
-    }: PostgresTableUpdate,
+    }: TableUpdateDto,
   ): Promise<PostgresMetaResult<PostgresTable>> {
     const { data: old, error } = await this.retrieve({ id });
     if (error) {
