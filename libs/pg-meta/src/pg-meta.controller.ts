@@ -54,7 +54,6 @@ import { MaterializedViewQueryDto } from './DTO/materialized-view.dto';
 import { MaterializedViewIdParamDto } from './DTO/materialized-view-id.dto';
 import { ConfigQueryDto } from './DTO/config.dto';
 import { PolicyQueryDto } from './DTO/policy.dto';
-import { PolicyIdParamDto } from './DTO/policy-id.dto';
 import { PolicyCreateDto } from './DTO/policy-create.dto';
 import { PolicyUpdateDto } from './DTO/policy-update.dto';
 import { PublicationQueryDto } from './DTO/publication.dto';
@@ -706,10 +705,9 @@ export class PgMetaController {
 
   @Delete('policies/:id')
   async deletePolicy(
-    @Param() params: PolicyIdParamDto,
+    @Param("id") id: number,
     @Client() client: PostgresMeta,
   ) {
-    const { id } = params;
     const { data } = await client.policies.remove(id);
     return data;
   }
