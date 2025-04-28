@@ -1,27 +1,27 @@
-import { IsBoolean, IsInt, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsInt, IsOptional, IsString } from 'class-validator';
 
 export class TableQueryDto {
-    @IsOptional()
-    @IsBoolean()
-    includeSystemSchemas?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  includeSystemSchemas?: boolean;
 
-    @IsOptional()
-    @IsString()
-    includedSchemas?: string;
+  @IsOptional()
+  @IsString()
+  includedSchemas?: string;
 
-    @IsOptional()
-    @IsString()
-    excludedSchemas?: string;
+  @IsOptional()
+  @IsString()
+  excludedSchemas?: string;
 
-    @IsOptional()
-    @IsInt()
-    limit?: number;
+  @IsOptional()
+  @IsInt()
+  limit?: number;
 
-    @IsOptional()
-    @IsInt()
-    offset?: number;
+  @IsOptional()
+  @IsInt()
+  offset?: number;
 
-    @IsOptional()
-    @IsBoolean()
-    includeColumns?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  includeColumns?: boolean;
 }

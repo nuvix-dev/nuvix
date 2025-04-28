@@ -1,15 +1,15 @@
-import { IsString, IsOptional, IsObject } from "class-validator";
+import { IsString, IsOptional, IsObject } from 'class-validator';
 
 export class SchemaUpdateDto {
-    @IsOptional()
-    @IsString()
-    name?: string;
+  @IsOptional()
+  @IsString()
+  name?: string;
 
-    @IsOptional()
-    @IsString()
-    owner?: string;
+  @IsOptional()
+  @IsString()
+  owner?: string;
 
-    @IsOptional()
-    @IsObject()
-    comment?: { [key: string]: any };
+  @IsOptional()
+  @IsObject()
+  comment?: { [key: string]: any };
 }

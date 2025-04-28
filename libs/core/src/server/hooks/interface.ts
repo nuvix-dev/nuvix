@@ -76,16 +76,60 @@ export type HookMethod = keyof LifecycleHookMethods;
 
 export interface Hook extends Partial<LifecycleHookMethods> {
   // Explicitly define method signatures for better IDE autocompletion
-  onRequest?: (req: FastifyRequest, reply: FastifyReply, next: (err?: Error) => void) => Promise<unknown>;
-  preParsing?: (req: FastifyRequest, reply: FastifyReply, next: (err?: Error) => void, payload: unknown) => Promise<unknown>;
-  preValidation?: (req: FastifyRequest, reply: FastifyReply, next: (err?: Error) => void) => Promise<unknown>;
-  preHandler?: (req: FastifyRequest, reply: FastifyReply, next: (err?: Error) => void) => Promise<unknown>;
-  preSerialization?: (req: FastifyRequest, reply: FastifyReply, next: (err?: Error) => void, payload: unknown) => Promise<unknown>;
-  onSend?: (req: FastifyRequest, reply: FastifyReply, next: (err?: Error) => void, payload: unknown) => Promise<unknown>;
-  onResponse?: (req: FastifyRequest, reply: FastifyReply, next: (err?: Error) => void) => Promise<unknown>;
-  onError?: (req: FastifyRequest, reply: FastifyReply, next: (err?: Error) => void, error: Error) => Promise<unknown>;
-  onTimeout?: (req: FastifyRequest, reply: FastifyReply, next: (err?: Error) => void) => Promise<unknown>;
-  onRequestAbort?: (req: FastifyRequest, reply: FastifyReply, next: (err?: Error) => void) => Promise<unknown>;
+  onRequest?: (
+    req: FastifyRequest,
+    reply: FastifyReply,
+    next: (err?: Error) => void,
+  ) => Promise<unknown>;
+  preParsing?: (
+    req: FastifyRequest,
+    reply: FastifyReply,
+    next: (err?: Error) => void,
+    payload: unknown,
+  ) => Promise<unknown>;
+  preValidation?: (
+    req: FastifyRequest,
+    reply: FastifyReply,
+    next: (err?: Error) => void,
+  ) => Promise<unknown>;
+  preHandler?: (
+    req: FastifyRequest,
+    reply: FastifyReply,
+    next: (err?: Error) => void,
+  ) => Promise<unknown>;
+  preSerialization?: (
+    req: FastifyRequest,
+    reply: FastifyReply,
+    next: (err?: Error) => void,
+    payload: unknown,
+  ) => Promise<unknown>;
+  onSend?: (
+    req: FastifyRequest,
+    reply: FastifyReply,
+    next: (err?: Error) => void,
+    payload: unknown,
+  ) => Promise<unknown>;
+  onResponse?: (
+    req: FastifyRequest,
+    reply: FastifyReply,
+    next: (err?: Error) => void,
+  ) => Promise<unknown>;
+  onError?: (
+    req: FastifyRequest,
+    reply: FastifyReply,
+    next: (err?: Error) => void,
+    error: Error,
+  ) => Promise<unknown>;
+  onTimeout?: (
+    req: FastifyRequest,
+    reply: FastifyReply,
+    next: (err?: Error) => void,
+  ) => Promise<unknown>;
+  onRequestAbort?: (
+    req: FastifyRequest,
+    reply: FastifyReply,
+    next: (err?: Error) => void,
+  ) => Promise<unknown>;
 }
 
 export const HookMethods = [
