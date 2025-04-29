@@ -6,7 +6,7 @@ export class BillingPlanModel extends BaseModel {
   /**
    * Plan ID.
    */
-  @Expose() $id: string;
+  @Expose() declare $id: string;
   /**
    * Plan name
    */

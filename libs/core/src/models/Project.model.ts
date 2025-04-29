@@ -13,7 +13,7 @@ export class ProjectModel extends BaseModel {
   @Expose({ toClassOnly: true }) services: any;
   @Expose({ toClassOnly: true }) smtp: any;
 
-  @Exclude() override $permissions: string[] | Permission[];
+  @Exclude() declare $permissions: string[] | Permission[];
   /**
    * Project name.
    */

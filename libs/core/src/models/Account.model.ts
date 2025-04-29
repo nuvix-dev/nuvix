@@ -6,15 +6,15 @@ export class AccountModel extends UserModel {
   /**
    * Hashed user password.
    */
-  override password?: string;
+  declare password?: string;
   /**
    * Password hashing algorithm.
    */
-  override hash?: string;
+  declare hash?: string;
   /**
    * Password hashing algorithm configuration.
    */
-  override hashOptions?: object;
+  declare hashOptions?: object;
 
   mfaRecoveryCodes: string[];
 

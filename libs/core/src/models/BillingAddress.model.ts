@@ -6,7 +6,7 @@ export class BillingAddressModel extends BaseModel {
   /**
    * Region ID
    */
-  @Expose() $id: string;
+  @Expose() declare $id: string;
   /**
    * Street address
    */
