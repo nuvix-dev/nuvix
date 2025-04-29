@@ -1,7 +1,8 @@
 import { literal } from 'pg-format';
-import { coalesceRowsToArray, filterByList } from './helpers.js';
-import { columnsSql, foreignTablesSql } from './sql/index.js';
-import { PostgresMetaResult, PostgresForeignTable } from './types.js';
+import { coalesceRowsToArray, filterByList } from './helpers';
+import { columnsSql, foreignTablesSql } from './sql/index';
+import { PostgresMetaResult, PostgresForeignTable } from './types';
+import { PgMetaException } from '../extra/execption';
 
 export default class PostgresMetaForeignTables {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -84,10 +85,7 @@ export default class PostgresMetaForeignTables {
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: { message: `Cannot find a foreign table with ID ${id}` },
-        };
+        throw new PgMetaException(`Cannot find a foreign table with ID ${id}`);
       } else {
         return { data: data[0], error };
       }
@@ -101,20 +99,14 @@ export default class PostgresMetaForeignTables {
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: {
-            message: `Cannot find a foreign table named ${name} in schema ${schema}`,
-          },
-        };
+        throw new PgMetaException(
+          `Cannot find a foreign table named ${name} in schema ${schema}`,
+        );
       } else {
         return { data: data[0], error };
       }
     } else {
-      return {
-        data: null,
-        error: { message: 'Invalid parameters on foreign table retrieve' },
-      };
+      throw new PgMetaException('Invalid parameters on foreign table retrieve');
     }
   }
 }

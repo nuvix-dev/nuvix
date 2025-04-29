@@ -1,7 +1,7 @@
 import { literal } from 'pg-format';
-import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
-import { tableRelationshipsSql, viewsKeyDependenciesSql } from './sql/index.js';
-import { PostgresMetaResult, PostgresRelationship } from './types.js';
+import { DEFAULT_SYSTEM_SCHEMAS } from './constants';
+import { tableRelationshipsSql, viewsKeyDependenciesSql } from './sql/index';
+import { PostgresMetaResult, PostgresRelationship } from './types';
 
 /*
  * Only used for generating types at the moment. Will need some cleanups before

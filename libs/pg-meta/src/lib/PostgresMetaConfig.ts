@@ -1,5 +1,5 @@
-import { configSql } from './sql/index.js';
-import { PostgresMetaResult, PostgresConfig } from './types.js';
+import { configSql } from './sql/index';
+import { PostgresMetaResult, PostgresConfig } from './types';
 
 export default class PostgresMetaConfig {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;

@@ -1,25 +1,25 @@
-import * as Parser from './Parser.js';
-import PostgresMetaColumnPrivileges from './PostgresMetaColumnPrivileges.js';
-import PostgresMetaColumns from './PostgresMetaColumns.js';
-import PostgresMetaConfig from './PostgresMetaConfig.js';
-import PostgresMetaExtensions from './PostgresMetaExtensions.js';
-import PostgresMetaForeignTables from './PostgresMetaForeignTables.js';
-import PostgresMetaFunctions from './PostgresMetaFunctions.js';
-import PostgresMetaIndexes from './PostgresMetaIndexes.js';
-import PostgresMetaMaterializedViews from './PostgresMetaMaterializedViews.js';
-import PostgresMetaPolicies from './PostgresMetaPolicies.js';
-import PostgresMetaPublications from './PostgresMetaPublications.js';
-import PostgresMetaRelationships from './PostgresMetaRelationships.js';
-import PostgresMetaRoles from './PostgresMetaRoles.js';
-import PostgresMetaSchemas from './PostgresMetaSchemas.js';
-import PostgresMetaTablePrivileges from './PostgresMetaTablePrivileges.js';
-import PostgresMetaTables from './PostgresMetaTables.js';
-import PostgresMetaTriggers from './PostgresMetaTriggers.js';
-import PostgresMetaTypes from './PostgresMetaTypes.js';
-import PostgresMetaVersion from './PostgresMetaVersion.js';
-import PostgresMetaViews from './PostgresMetaViews.js';
-import { init } from './db.js';
-import { PostgresMetaResult, PoolConfig } from './types.js';
+import * as Parser from './Parser';
+import PostgresMetaColumnPrivileges from './PostgresMetaColumnPrivileges';
+import PostgresMetaColumns from './PostgresMetaColumns';
+import PostgresMetaConfig from './PostgresMetaConfig';
+import PostgresMetaExtensions from './PostgresMetaExtensions';
+import PostgresMetaForeignTables from './PostgresMetaForeignTables';
+import PostgresMetaFunctions from './PostgresMetaFunctions';
+import PostgresMetaIndexes from './PostgresMetaIndexes';
+import PostgresMetaMaterializedViews from './PostgresMetaMaterializedViews';
+import PostgresMetaPolicies from './PostgresMetaPolicies';
+import PostgresMetaPublications from './PostgresMetaPublications';
+import PostgresMetaRelationships from './PostgresMetaRelationships';
+import PostgresMetaRoles from './PostgresMetaRoles';
+import PostgresMetaSchemas from './PostgresMetaSchemas';
+import PostgresMetaTablePrivileges from './PostgresMetaTablePrivileges';
+import PostgresMetaTables from './PostgresMetaTables';
+import PostgresMetaTriggers from './PostgresMetaTriggers';
+import PostgresMetaTypes from './PostgresMetaTypes';
+import PostgresMetaVersion from './PostgresMetaVersion';
+import PostgresMetaViews from './PostgresMetaViews';
+import { init } from './db';
+import { PostgresMetaResult, PoolConfig } from './types';
 
 export default class PostgresMeta {
   query: (

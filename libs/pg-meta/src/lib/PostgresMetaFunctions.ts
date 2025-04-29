@@ -1,9 +1,10 @@
 import { ident, literal } from 'pg-format';
-import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
-import { filterByList } from './helpers.js';
-import { functionsSql } from './sql/index.js';
-import { PostgresMetaResult, PostgresFunction } from './types.js';
-import { FunctionCreateDto } from '../DTO/function-create.dto.js';
+import { DEFAULT_SYSTEM_SCHEMAS } from './constants';
+import { filterByList } from './helpers';
+import { functionsSql } from './sql/index';
+import { PostgresMetaResult, PostgresFunction } from './types';
+import { FunctionCreateDto } from '../DTO/function-create.dto';
+import { PgMetaException } from '../extra/execption';
 
 export default class PostgresMetaFunctions {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -74,10 +75,7 @@ export default class PostgresMetaFunctions {
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: { message: `Cannot find a function with ID ${id}` },
-        };
+        throw new PgMetaException(`Cannot find a function with ID ${id}`);
       } else {
         return { data: data[0], error };
       }
@@ -87,20 +85,14 @@ export default class PostgresMetaFunctions {
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: {
-            message: `Cannot find function "${schema}"."${name}"(${args.join(', ')})`,
-          },
-        };
+        throw new PgMetaException(
+          `Cannot find function "${schema}"."${name}"(${args.join(', ')})`,
+        );
       } else {
         return { data: data[0], error };
       }
     } else {
-      return {
-        data: null,
-        error: { message: 'Invalid parameters on function retrieve' },
-      };
+      throw new PgMetaException('Invalid parameters on function retrieve');
     }
   }
 

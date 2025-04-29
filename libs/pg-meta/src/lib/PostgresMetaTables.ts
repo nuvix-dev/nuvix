@@ -1,10 +1,11 @@
 import { ident, literal } from 'pg-format';
-import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
-import { coalesceRowsToArray, filterByList } from './helpers.js';
-import { columnsSql, tablesSql } from './sql/index.js';
-import { PostgresMetaResult, PostgresTable } from './types.js';
-import { TableCreateDto } from '../DTO/table-create.dto.js';
-import { TableUpdateDto } from '../DTO/table-update.dto.js';
+import { DEFAULT_SYSTEM_SCHEMAS } from './constants';
+import { coalesceRowsToArray, filterByList } from './helpers';
+import { columnsSql, tablesSql } from './sql/index';
+import { PostgresMetaResult, PostgresTable } from './types';
+import { TableCreateDto } from '../DTO/table-create.dto';
+import { TableUpdateDto } from '../DTO/table-update.dto';
+import { PgMetaException } from '../extra/execption';
 
 export default class PostgresMetaTables {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -91,10 +92,7 @@ export default class PostgresMetaTables {
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: { message: `Cannot find a table with ID ${id}` },
-        };
+        throw new PgMetaException(`Cannot find a table with ID ${id}`);
       } else {
         return { data: data[0], error };
       }
@@ -106,20 +104,14 @@ export default class PostgresMetaTables {
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: {
-            message: `Cannot find a table named ${name} in schema ${schema}`,
-          },
-        };
+        throw new PgMetaException(
+          `Cannot find a table named ${name} in schema ${schema}`,
+        );
       } else {
         return { data: data[0], error };
       }
     } else {
-      return {
-        data: null,
-        error: { message: 'Invalid parameters on table retrieve' },
-      };
+      throw new PgMetaException('Invalid parameters on table retrieve');
     }
   }
 

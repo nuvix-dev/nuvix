@@ -5,8 +5,8 @@ import type {
   PostgresTable,
   PostgresType,
   PostgresView,
-} from '../lib/index.js';
-import type { GeneratorMetadata } from '../lib/generators.js';
+} from '../lib/index';
+import type { GeneratorMetadata } from '../lib/generators';
 
 type Operation = 'Select' | 'Insert' | 'Update';
 

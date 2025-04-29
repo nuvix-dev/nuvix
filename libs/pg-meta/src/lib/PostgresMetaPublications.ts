@@ -1,10 +1,11 @@
 import { ident, literal } from 'pg-format';
-import { publicationsSql } from './sql/index.js';
+import { publicationsSql } from './sql/index';
 import {
   PostgresMetaResult,
   PostgresPublication,
   PostgresTable,
-} from './types.js';
+} from './types';
+import { PgMetaException } from '../extra/execption';
 
 export default class PostgresMetaPublications {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -53,10 +54,7 @@ export default class PostgresMetaPublications {
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: { message: `Cannot find a publication with ID ${id}` },
-        };
+        throw new PgMetaException(`Cannot find a publication with ID ${id}`);
       } else {
         return { data: data[0], error };
       }
@@ -66,18 +64,12 @@ export default class PostgresMetaPublications {
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: { message: `Cannot find a publication named ${name}` },
-        };
+        throw new PgMetaException(`Cannot find a publication named ${name}`);
       } else {
         return { data: data[0], error };
       }
     } else {
-      return {
-        data: null,
-        error: { message: 'Invalid parameters on publication retrieve' },
-      };
+      throw new PgMetaException('Invalid parameters on publication retrieve');
     }
   }
 

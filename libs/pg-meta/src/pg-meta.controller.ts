@@ -11,7 +11,7 @@ import {
 import { Client } from './decorators';
 import { PostgresMeta } from './lib';
 import { DeparseDto, QueryDto } from './DTO/query.dto';
-import * as Parser from './lib/Parser.js';
+import * as Parser from './lib/Parser';
 import { SchemaQueryDto } from './DTO/schema.dto';
 import { SchemaIdParamDto } from './DTO/schema-id.dto';
 import { SchemaCreateDto } from './DTO/schema-create.dto';

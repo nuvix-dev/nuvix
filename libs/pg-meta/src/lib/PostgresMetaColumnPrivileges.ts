@@ -1,10 +1,10 @@
 import { ident, literal } from 'pg-format';
-import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
-import { filterByList } from './helpers.js';
-import { columnPrivilegesSql } from './sql/index.js';
-import { PostgresMetaResult, PostgresColumnPrivileges } from './types.js';
-import { ColumnPrivilegeGrantDto } from '../DTO/column-privilege-grant.dto.js';
-import { ColumnPrivilegeRevokeDto } from '../DTO/column-privilege-revoke.dto.js';
+import { DEFAULT_SYSTEM_SCHEMAS } from './constants';
+import { filterByList } from './helpers';
+import { columnPrivilegesSql } from './sql/index';
+import { PostgresMetaResult, PostgresColumnPrivileges } from './types';
+import { ColumnPrivilegeGrantDto } from '../DTO/column-privilege-grant.dto';
+import { ColumnPrivilegeRevokeDto } from '../DTO/column-privilege-revoke.dto';
 
 export default class PostgresMetaColumnPrivileges {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;

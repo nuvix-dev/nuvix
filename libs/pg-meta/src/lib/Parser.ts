@@ -1,7 +1,8 @@
-import prettier from 'prettier/standalone.js';
+import prettier from 'prettier/standalone';
 import SqlFormatter from 'prettier-plugin-sql';
 import { parse, deparse } from 'pgsql-parser';
-import { FormatterOptions } from './types.js';
+import { FormatterOptions } from './types';
+import { PgMetaException } from '../extra/execption';
 
 const DEFAULT_FORMATTER_OPTIONS = {
   plugins: [SqlFormatter],
@@ -19,8 +20,8 @@ export function Parse(sql: string): ParseReturnValues {
     const data = parse(sql);
 
     return { data, error: null };
-  } catch (error) {
-    return { data: null, error: error as Error };
+  } catch (error: any) {
+    throw new PgMetaException(error.message);
   }
 }
 interface ParseReturnValues {
@@ -35,8 +36,8 @@ export function Deparse(parsedSql: object): DeparseReturnValues {
   try {
     const data = deparse(parsedSql, {});
     return { data, error: null };
-  } catch (error) {
-    return { data: null, error: error as Error };
+  } catch (error: any) {
+    throw new PgMetaException(error.message);
   }
 }
 interface DeparseReturnValues {
@@ -58,8 +59,8 @@ export async function Format(
     });
 
     return { data: formatted, error: null };
-  } catch (error) {
-    return { data: null, error: error as Error };
+  } catch (error: any) {
+    throw new PgMetaException(error.message);
   }
 }
 interface FormatReturnValues {

@@ -1,8 +1,9 @@
 import { ident, literal } from 'pg-format';
-import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
-import { filterByList } from './helpers.js';
-import { triggersSql } from './sql/index.js';
-import { PostgresMetaResult, PostgresTrigger } from './types.js';
+import { DEFAULT_SYSTEM_SCHEMAS } from './constants';
+import { filterByList } from './helpers';
+import { triggersSql } from './sql/index';
+import { PostgresMetaResult, PostgresTrigger } from './types';
+import { PgMetaException } from '../extra/execption';
 
 export default class PostgresMetaTriggers {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -82,10 +83,7 @@ export default class PostgresMetaTriggers {
         return { data: triggerRecord, error: null };
       }
 
-      return {
-        data: null,
-        error: { message: `Cannot find a trigger with ID ${id}` },
-      };
+      throw new PgMetaException(`Cannot find a trigger with ID ${id}`);
     }
 
     if (name && schema && table) {
@@ -105,18 +103,12 @@ export default class PostgresMetaTriggers {
         return { data: triggerRecord, error: null };
       }
 
-      return {
-        data: null,
-        error: {
-          message: `Cannot find a trigger with name ${name} on table "${schema}"."${table}"`,
-        },
-      };
+      throw new PgMetaException(
+        `Cannot find a trigger with name ${name} on table "${schema}"."${table}"`,
+      );
     }
 
-    return {
-      data: null,
-      error: { message: 'Invalid parameters on trigger retrieve' },
-    };
+    throw new PgMetaException('Invalid parameters on trigger retrieve');
   }
 
   /**

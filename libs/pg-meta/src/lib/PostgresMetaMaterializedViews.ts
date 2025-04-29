@@ -1,7 +1,8 @@
 import { literal } from 'pg-format';
-import { coalesceRowsToArray, filterByList } from './helpers.js';
-import { columnsSql, materializedViewsSql } from './sql/index.js';
-import { PostgresMetaResult, PostgresMaterializedView } from './types.js';
+import { coalesceRowsToArray, filterByList } from './helpers';
+import { columnsSql, materializedViewsSql } from './sql/index';
+import { PostgresMetaResult, PostgresMaterializedView } from './types';
+import { PgMetaException } from '../extra/execption';
 
 export default class PostgresMetaMaterializedViews {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -84,10 +85,9 @@ export default class PostgresMetaMaterializedViews {
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: { message: `Cannot find a materialized view with ID ${id}` },
-        };
+        throw new PgMetaException(
+          `Cannot find a materialized view with ID ${id}`,
+        );
       } else {
         return { data: data[0], error };
       }
@@ -101,20 +101,16 @@ export default class PostgresMetaMaterializedViews {
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: {
-            message: `Cannot find a materialized view named ${name} in schema ${schema}`,
-          },
-        };
+        throw new PgMetaException(
+          `Cannot find a materialized view named ${name} in schema ${schema}`,
+        );
       } else {
         return { data: data[0], error };
       }
     } else {
-      return {
-        data: null,
-        error: { message: 'Invalid parameters on materialized view retrieve' },
-      };
+      throw new PgMetaException(
+        'Invalid parameters on materialized view retrieve',
+      );
     }
   }
 }

@@ -1,8 +1,8 @@
 import pg from 'pg';
 // import * as Sentry from '@sentry/node'
 import { parse as parseArray } from 'postgres-array';
-import { PostgresMetaResult, PoolConfig } from './types.js';
-import { PgMetaException } from '../extra/execption.js';
+import { PostgresMetaResult, PoolConfig } from './types';
+import { PgMetaException } from '../extra/execption';
 
 pg.types.setTypeParser(pg.types.builtins.INT8, x => {
   const asNumber = Number(x);
@@ -139,7 +139,7 @@ export const init: (config: PoolConfig) => {
         if (error.constructor.name === 'DatabaseError') {
           // Roughly based on:
           // - https://github.com/postgres/postgres/blob/fc4089f3c65a5f1b413a3299ba02b66a8e5e37d0/src/interfaces/libpq/fe-protocol3.c#L1018
-          // - https://github.com/brianc/node-postgres/blob/b1a8947738ce0af004cb926f79829bb2abc64aa6/packages/pg/lib/native/query.js#L33
+          // - https://github.com/brianc/node-postgres/blob/b1a8947738ce0af004cb926f79829bb2abc64aa6/packages/pg/lib/native/query#L33
           let formattedError = '';
           {
             if (error.severity) {

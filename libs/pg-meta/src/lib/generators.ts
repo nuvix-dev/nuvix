@@ -1,4 +1,4 @@
-import PostgresMeta from './PostgresMeta.js';
+import PostgresMeta from './PostgresMeta';
 import {
   PostgresColumn,
   PostgresForeignTable,
@@ -10,7 +10,7 @@ import {
   PostgresTable,
   PostgresType,
   PostgresView,
-} from './types.js';
+} from './types';
 
 export type GeneratorMetadata = {
   schemas: PostgresSchema[];

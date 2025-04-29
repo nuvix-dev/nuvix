@@ -1,6 +1,7 @@
 import { ident, literal } from 'pg-format';
-import { extensionsSql } from './sql/index.js';
-import { PostgresMetaResult, PostgresExtension } from './types.js';
+import { extensionsSql } from './sql/index';
+import { PostgresMetaResult, PostgresExtension } from './types';
+import { PgMetaException } from '../extra/execption';
 
 export default class PostgresMetaExtensions {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -36,10 +37,7 @@ export default class PostgresMetaExtensions {
     if (error) {
       return { data, error };
     } else if (data.length === 0) {
-      return {
-        data: null,
-        error: { message: `Cannot find an extension named ${name}` },
-      };
+      throw new PgMetaException(`Cannot find an extension named ${name}`);
     } else {
       return { data: data[0], error };
     }

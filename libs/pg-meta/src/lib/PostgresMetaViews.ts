@@ -1,8 +1,9 @@
 import { literal } from 'pg-format';
-import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
-import { coalesceRowsToArray, filterByList } from './helpers.js';
-import { columnsSql, viewsSql } from './sql/index.js';
-import { PostgresMetaResult, PostgresView } from './types.js';
+import { DEFAULT_SYSTEM_SCHEMAS } from './constants';
+import { coalesceRowsToArray, filterByList } from './helpers';
+import { columnsSql, viewsSql } from './sql/index';
+import { PostgresMetaResult, PostgresView } from './types';
+import { PgMetaException } from '../extra/execption';
 
 export default class PostgresMetaViews {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -89,12 +90,9 @@ export default class PostgresMetaViews {
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: { message: `Cannot find a view with ID ${id}` },
-        };
+        throw new PgMetaException(`Cannot find a view with ID ${id}`);
       } else {
-        return { data: data[0], error };
+        return { data: data[0], error: null };
       }
     } else if (name) {
       const sql = `${generateEnrichedViewsSql({
@@ -104,20 +102,14 @@ export default class PostgresMetaViews {
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: {
-            message: `Cannot find a view named ${name} in schema ${schema}`,
-          },
-        };
+        throw new PgMetaException(
+          `Cannot find a view named ${name} in schema ${schema}`,
+        );
       } else {
-        return { data: data[0], error };
+        return { data: data[0], error: null };
       }
     } else {
-      return {
-        data: null,
-        error: { message: 'Invalid parameters on view retrieve' },
-      };
+      throw new PgMetaException('Invalid parameters on view retrieve');
     }
   }
 }

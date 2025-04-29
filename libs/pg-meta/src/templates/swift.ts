@@ -7,9 +7,9 @@ import type {
   PostgresTable,
   PostgresType,
   PostgresView,
-} from '../lib/index.js';
-import type { GeneratorMetadata } from '../lib/generators.js';
-import { PostgresForeignTable } from '../lib/types.js';
+} from '../lib/index';
+import type { GeneratorMetadata } from '../lib/generators';
+import { PostgresForeignTable } from '../lib/types';
 
 type Operation = 'Select' | 'Insert' | 'Update';
 export type AccessControl = 'internal' | 'public' | 'private' | 'package';

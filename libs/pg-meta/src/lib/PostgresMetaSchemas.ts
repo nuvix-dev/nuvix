@@ -1,9 +1,10 @@
 import { ident, literal } from 'pg-format';
-import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
-import { schemasSql } from './sql/index.js';
-import { PostgresMetaResult, PostgresSchema } from './types.js';
-import { SchemaCreateDto } from '../DTO/schema-create.dto.js';
-import { SchemaUpdateDto } from '../DTO/schema-update.dto.js';
+import { DEFAULT_SYSTEM_SCHEMAS } from './constants';
+import { schemasSql } from './sql/index';
+import { PostgresMetaResult, PostgresSchema } from './types';
+import { SchemaCreateDto } from '../DTO/schema-create.dto';
+import { SchemaUpdateDto } from '../DTO/schema-update.dto';
+import { PgMetaException } from '../extra/execption';
 
 export default class PostgresMetaSchemas {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -57,10 +58,7 @@ export default class PostgresMetaSchemas {
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: { message: `Cannot find a schema with ID ${id}` },
-        };
+        throw new PgMetaException(`Cannot find a schema with ID ${id}`);
       } else {
         return { data: data[0], error };
       }
@@ -70,18 +68,12 @@ export default class PostgresMetaSchemas {
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: { message: `Cannot find a schema named ${name}` },
-        };
+        throw new PgMetaException(`Cannot find a schema named ${name}`);
       } else {
         return { data: data[0], error };
       }
     } else {
-      return {
-        data: null,
-        error: { message: 'Invalid parameters on schema retrieve' },
-      };
+      throw new PgMetaException('Invalid parameters on schema retrieve');
     }
   }
 

@@ -1,9 +1,10 @@
 import { ident, literal } from 'pg-format';
-import PostgresMetaTables from './PostgresMetaTables.js';
-import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
-import { columnsSql } from './sql/index.js';
-import { PostgresMetaResult, PostgresColumn } from './types.js';
-import { filterByList } from './helpers.js';
+import PostgresMetaTables from './PostgresMetaTables';
+import { DEFAULT_SYSTEM_SCHEMAS } from './constants';
+import { columnsSql } from './sql/index';
+import { PostgresMetaResult, PostgresColumn } from './types';
+import { filterByList } from './helpers';
+import { PgMetaException } from '../extra/execption';
 
 export default class PostgresMetaColumns {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -86,10 +87,7 @@ WHERE
     if (id) {
       const regexp = /^(\d+)\.(\d+)$/;
       if (!regexp.test(id)) {
-        return {
-          data: null,
-          error: { message: 'Invalid format for column ID' },
-        };
+        throw new PgMetaException('Invalid format for column ID');
       }
       const matches = id.match(regexp) as RegExpMatchArray;
       const [tableId, ordinalPos] = matches.slice(1).map(Number);
@@ -98,10 +96,7 @@ WHERE
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: { message: `Cannot find a column with ID ${id}` },
-        };
+        throw new PgMetaException(`Cannot find a column with ID ${id}`);
       } else {
         return { data: data[0], error };
       }
@@ -113,20 +108,14 @@ WHERE
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: {
-            message: `Cannot find a column named ${name} in table ${schema}.${table}`,
-          },
-        };
+        throw new PgMetaException(
+          `Cannot find a column named ${name} in table ${schema}.${table}`,
+        );
       } else {
         return { data: data[0], error };
       }
     } else {
-      return {
-        data: null,
-        error: { message: 'Invalid parameters on column retrieve' },
-      };
+      throw new PgMetaException('Invalid parameters on column retrieve');
     }
   }
 
@@ -167,12 +156,9 @@ WHERE
     let defaultValueClause = '';
     if (is_identity) {
       if (default_value !== undefined) {
-        return {
-          data: null,
-          error: {
-            message: 'Columns cannot both be identity and have a default value',
-          },
-        };
+        throw new PgMetaException(
+          'Columns cannot both be identity and have a default value',
+        );
       }
 
       defaultValueClause = `GENERATED ${identity_generation} AS IDENTITY`;

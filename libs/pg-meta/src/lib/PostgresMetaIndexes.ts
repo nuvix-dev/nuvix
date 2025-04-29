@@ -1,8 +1,9 @@
 import { ident, literal } from 'pg-format';
-import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
-import { filterByList } from './helpers.js';
-import { indexesSql } from './sql/index.js';
-import { PostgresMetaResult, PostgresIndex } from './types.js';
+import { DEFAULT_SYSTEM_SCHEMAS } from './constants';
+import { filterByList } from './helpers';
+import { indexesSql } from './sql/index';
+import { PostgresMetaResult, PostgresIndex } from './types';
+import { PgMetaException } from '../extra/execption';
 
 export default class PostgresMetaFunctions {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -69,18 +70,12 @@ export default class PostgresMetaFunctions {
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: { message: `Cannot find a index with ID ${id}` },
-        };
+        throw new PgMetaException(`Cannot find a index with ID ${id}`);
       } else {
         return { data: data[0], error };
       }
     } else {
-      return {
-        data: null,
-        error: { message: 'Invalid parameters on function retrieve' },
-      };
+      throw new PgMetaException('Invalid parameters on function retrieve');
     }
   }
 }

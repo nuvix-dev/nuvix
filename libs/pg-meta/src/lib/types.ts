@@ -7,7 +7,7 @@ export interface FormatterOptions extends PrettierOptions {}
 
 export interface PostgresMetaOk<T> {
   data: T;
-  error: null;
+  error?: null;
 }
 
 export interface PostgresMetaErr {

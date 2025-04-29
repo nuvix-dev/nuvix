@@ -1,10 +1,11 @@
 import { ident, literal } from 'pg-format';
-import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
-import { filterByList } from './helpers.js';
-import { tablePrivilegesSql } from './sql/index.js';
-import { PostgresMetaResult, PostgresTablePrivileges } from './types.js';
-import { TablePrivilegeGrantDto } from '../DTO/table-privilege-grant.dto.js';
-import { TablePrivilegeRevokeDto } from '../DTO/table-privilege-revoke.dto.js';
+import { DEFAULT_SYSTEM_SCHEMAS } from './constants';
+import { filterByList } from './helpers';
+import { tablePrivilegesSql } from './sql/index';
+import { PostgresMetaResult, PostgresTablePrivileges } from './types';
+import { TablePrivilegeGrantDto } from '../DTO/table-privilege-grant.dto';
+import { TablePrivilegeRevokeDto } from '../DTO/table-privilege-revoke.dto';
+import { PgMetaException } from '../extra/execption';
 
 export default class PostgresMetaTablePrivileges {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -79,10 +80,7 @@ where table_privileges.relation_id = ${literal(id)};`;
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: { message: `Cannot find a relation with ID ${id}` },
-        };
+        throw new PgMetaException(`Cannot find a relation with ID ${id}`);
       } else {
         return { data: data[0], error };
       }
@@ -98,20 +96,16 @@ where table_privileges.schema = ${literal(schema)}
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: {
-            message: `Cannot find a relation named ${name} in schema ${schema}`,
-          },
-        };
+        throw new PgMetaException(
+          `Cannot find a relation named ${name} in schema ${schema}`,
+        );
       } else {
         return { data: data[0], error };
       }
     } else {
-      return {
-        data: null,
-        error: { message: 'Invalid parameters on retrieving table privileges' },
-      };
+      throw new PgMetaException(
+        'Invalid parameters on retrieving table privileges',
+      );
     }
   }
 

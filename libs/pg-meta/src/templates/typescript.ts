@@ -6,9 +6,9 @@ import type {
   PostgresTable,
   PostgresType,
   PostgresView,
-} from '../lib/index.js';
-import type { GeneratorMetadata } from '../lib/generators.js';
-import { GENERATE_TYPES_DEFAULT_SCHEMA } from '../constants.js';
+} from '../lib/index';
+import type { GeneratorMetadata } from '../lib/generators';
+import { GENERATE_TYPES_DEFAULT_SCHEMA } from '../constants';
 
 export const apply = async ({
   schemas,

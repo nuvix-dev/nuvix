@@ -1,8 +1,9 @@
 import { ident, literal } from 'pg-format';
-import { DEFAULT_SYSTEM_SCHEMAS } from './constants.js';
-import { filterByList } from './helpers.js';
-import { policiesSql } from './sql/index.js';
-import { PostgresMetaResult, PostgresPolicy } from './types.js';
+import { DEFAULT_SYSTEM_SCHEMAS } from './constants';
+import { filterByList } from './helpers';
+import { policiesSql } from './sql/index';
+import { PostgresMetaResult, PostgresPolicy } from './types';
+import { PgMetaException } from '../extra/execption';
 
 export default class PostgresMetaPolicies {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -73,10 +74,7 @@ export default class PostgresMetaPolicies {
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: { message: `Cannot find a policy with ID ${id}` },
-        };
+        throw new PgMetaException(`Cannot find a policy with ID ${id}`);
       } else {
         return { data: data[0], error };
       }
@@ -88,20 +86,14 @@ export default class PostgresMetaPolicies {
       if (error) {
         return { data, error };
       } else if (data.length === 0) {
-        return {
-          data: null,
-          error: {
-            message: `Cannot find a policy named ${name} for table ${schema}.${table}`,
-          },
-        };
+        throw new PgMetaException(
+          `Cannot find a policy named ${name} for table ${schema}.${table}`,
+        );
       } else {
         return { data: data[0], error };
       }
     } else {
-      return {
-        data: null,
-        error: { message: 'Invalid parameters on policy retrieve' },
-      };
+      throw new PgMetaException('Invalid parameters on policy retrieve');
     }
   }
 
