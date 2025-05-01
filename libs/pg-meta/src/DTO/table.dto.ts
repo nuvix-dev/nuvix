@@ -3,15 +3,15 @@ import { IsBoolean, IsInt, IsOptional, IsString } from 'class-validator';
 export class TableQueryDto {
   @IsOptional()
   @IsBoolean()
-  includeSystemSchemas?: boolean;
+  include_system_schemas?: boolean;
 
   @IsOptional()
   @IsString()
-  includedSchemas?: string;
+  included_schemas?: string;
 
   @IsOptional()
   @IsString()
-  excludedSchemas?: string;
+  excluded_schemas?: string;
 
   @IsOptional()
   @IsInt()
@@ -23,5 +23,5 @@ export class TableQueryDto {
 
   @IsOptional()
   @IsBoolean()
-  includeColumns?: boolean;
+  include_columns?: boolean;
 }

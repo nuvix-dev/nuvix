@@ -1,7 +1,7 @@
 export interface ServerConfig {
   host: string;
   methods: string[];
-  allowedOrigins: string[];
+  allowedOrigins: (string | RegExp)[];
   allowedHeaders: string[];
   credentials: boolean;
   exposedHeaders: string[];

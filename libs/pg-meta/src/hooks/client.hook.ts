@@ -15,19 +15,4 @@ export class ResolveClient implements Hook {
     req[CLIENT] = new PostgresMeta(pool);
     return;
   }
-
-  async onResponse(req: FastifyRequest) {
-    this.logger.verbose('trying to close pgMeta connection');
-    const pgMeta = req[CLIENT] as PostgresMeta;
-    if (!pgMeta) {
-      this.logger.verbose('pgMeta connection already closed');
-      return;
-    }
-    try {
-      await pgMeta.end();
-      this.logger.verbose('pgMeta connection closed successfully');
-    } catch (e: any) {
-      this.logger.error(`Error closing pgMeta connection: ${e.message}`);
-    }
-  }
 }

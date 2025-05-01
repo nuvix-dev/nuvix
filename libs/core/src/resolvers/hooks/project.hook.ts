@@ -23,6 +23,7 @@ import {
 import { Exception } from '@nuvix/core/extend/exception';
 import { Cache } from '@nuvix/cache';
 import { PoolClient } from 'pg';
+import { DataSource } from '@nuvix/pg';
 
 @Injectable()
 export class ProjectHook implements Hook {
@@ -75,13 +76,21 @@ export class ProjectHook implements Hook {
   }
 
   async onResponse(req: FastifyRequest) {
-    const client: PoolClient | undefined = req[PROJECT_PG];
-    if (client) {
+    const dataSource: DataSource | undefined = req[PROJECT_PG];
+    if (dataSource && dataSource instanceof DataSource) {
       try {
-        client.release();
-        this.logger.debug(`Pool client released`);
-      } catch {
-        /** noop */
+        const client: PoolClient | undefined = dataSource.getClient();
+        if (client) {
+          await client.release();
+          this.logger.debug(`Pool client released successfully`);
+        } else {
+          this.logger.debug(`No pool client to release`);
+        }
+
+        // Clear the reference to prevent potential memory leaks
+        req[PROJECT_PG] = undefined;
+      } catch (error) {
+        this.logger.error('Error releasing pool client', error);
       }
     }
   }

@@ -138,9 +138,14 @@ export const CONSOLE_CONFIG: any = {
 export const SERVER_CONFIG: ServerConfig = {
   host: process.env.APP_HOSTNAME ?? 'localhost',
   methods: ['GET', 'PUT', 'PATCH', 'POST', 'DELETE'],
-  allowedOrigins: (process.env.CORS_ORIGIN ?? '')
-    .split(',')
-    .map(origin => origin.trim()),
+  allowedOrigins: (process.env.CORS_ORIGIN ?? '').split(',').map(origin => {
+    origin = origin.trim();
+    // Convert wildcard subdomains to regex patterns
+    if (origin.includes('*')) {
+      return new RegExp('^' + origin.replace(/\*/g, '.*') + '$');
+    }
+    return origin;
+  }),
   allowedHeaders: [
     ...allowedHeaders,
     ...(process.env.CORS_HEADERS ?? '').split(',').map(header => header.trim()),
@@ -151,6 +156,20 @@ export const SERVER_CONFIG: ServerConfig = {
   routerProtection: (process.env.APP_ROUTER_PROTECTION ?? 'true') === 'true',
   cookieDomain: process.env.APP_COOKIE_DOMAIN,
 };
+
+export const LOG_LEVELS: { [key: string]: boolean } = (
+  process.env.APP_LOG_LEVELS ?? ''
+)
+  .split(',')
+  .map(level => level.trim())
+  .filter(level => level)
+  .reduce(
+    (acc, level) => {
+      acc[level.toLowerCase()] = true;
+      return acc;
+    },
+    {} as { [key: string]: boolean },
+  );
 
 // APP
 export const APP_NAME = 'Nuvix';

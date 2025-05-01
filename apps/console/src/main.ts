@@ -9,10 +9,16 @@ import { ConsoleModule } from './console.module';
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { config } from 'dotenv';
 import { HttpExceptionFilter } from '@nuvix/core/filters/http-exception.filter';
-import { ConsoleLogger, Logger, ValidationPipe } from '@nestjs/common';
+import {
+  ConsoleLogger,
+  Logger,
+  LogLevel,
+  ValidationPipe,
+} from '@nestjs/common';
 import {
   APP_DEBUG_COLORS,
   APP_DEBUG_FORMAT,
+  LOG_LEVELS,
   PROJECT_ROOT,
   SERVER_CONFIG,
 } from '@nuvix/utils/constants';
@@ -40,6 +46,7 @@ async function bootstrap() {
       edgeLimit: 100,
       msgPrefix: '[Nuvix-Console] ',
       safe: true,
+      level: 'error',
     },
   });
 
@@ -71,6 +78,7 @@ async function bootstrap() {
         json: APP_DEBUG_FORMAT,
         colors: APP_DEBUG_COLORS,
         prefix: 'Nuvix-Console',
+        logLevels: Object.keys(LOG_LEVELS) as LogLevel[],
       }),
       autoFlushLogs: true,
     },

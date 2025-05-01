@@ -21,6 +21,7 @@ import {
   POOLS,
   GET_PROJECT_PG,
   PROJECT_ROOT,
+  LOG_LEVELS,
 } from '@nuvix/utils/constants';
 import { Database, MariaDB, Structure, PostgreDB } from '@nuvix/database';
 import { Context, DataSource, PoolManager } from '@nuvix/pg';
@@ -61,10 +62,25 @@ export type GetProjectPG = (
     {
       provide: POOLS,
       useFactory: (): PoolStoreFn<PgPool> => {
-        const poolManager = PoolManager.getInstance();
+        // const poolManager = PoolManager.getInstance();
+        // Create a cache to store pool instances
+        const poolCache: Map<string, PgPool> = new Map();
+
         return (async (name: string, options: { database: string }) => {
-          // const pool = poolManager.getPool(name,
-          return new PgPool({
+          // Create a cache key combining project name and database name
+          const cacheKey = `${name}-${options.database}`;
+
+          // Check if we already have a pool for this key
+          if (poolCache.has(cacheKey)) {
+            const existingPool = poolCache.get(cacheKey);
+            // Check if the pool is still valid and connected
+            if (existingPool && !existingPool.ended) {
+              return existingPool;
+            }
+          }
+
+          // Create a new pool if needed
+          const newPool = new PgPool({
             host: process.env.APP_POSTGRES_HOST || 'localhost',
             port: parseInt(process.env.APP_POSTGRES_PORT || '5432'),
             database: options.database ?? process.env.APP_POSTGRES_DB,
@@ -74,18 +90,31 @@ export type GetProjectPG = (
               process.env.APP_POSTGRES_SSL === 'true'
                 ? { rejectUnauthorized: false }
                 : undefined,
-            // max: 10, // Maximum number of clients
-            // idleTimeoutMillis: 30000, // 30 seconds
-            // connectionTimeoutMillis: 5000, // 5 seconds
-            // statement_timeout: 30000, // 30 seconds
-            // query_timeout: 30000, // 30 seconds
-            // application_name: 'nuvix',
-            // // Add these additional settings
-            // keepAlive: true,
-            // keepAliveInitialDelayMillis: 10000, // 10 seconds
-            // allowExitOnIdle: false,
+            max: 40, // Maximum number of clients
+            idleTimeoutMillis: 30000, // 30 seconds
+            statement_timeout: 30000, // 30 seconds
+            query_timeout: 30000, // 30 seconds
+            application_name: 'nuvix',
+            // Add these additional settings
+            keepAlive: true,
+            keepAliveInitialDelayMillis: 10000, // 10 seconds
+            allowExitOnIdle: false,
           });
-          //   return pool;
+
+          // Store the new pool in cache
+          poolCache.set(cacheKey, newPool);
+
+          // Add event listeners to handle pool errors
+          newPool.on('error', err => {
+            const logger = new Logger('PoolManager');
+            logger.error(`Pool error for ${cacheKey}:`, err);
+            // Remove from cache if there's a fatal error
+            if (err.name === 'ECONNREFUSED') {
+              poolCache.delete(cacheKey);
+            }
+          });
+
+          return newPool;
         }) as any;
       },
     },
@@ -138,7 +167,9 @@ export type GetProjectPG = (
         });
 
         adapter.init();
-        const connection = new Database(adapter, cache);
+        const connection = new Database(adapter, cache, {
+          logger: LOG_LEVELS,
+        });
         return connection;
       },
       inject: [CACHE],
@@ -174,7 +205,9 @@ export type GetProjectPG = (
             connection: pool,
           });
           adapter.init();
-          const connection = new Database(adapter, cache, { logger: true });
+          const connection = new Database(adapter, cache, {
+            logger: LOG_LEVELS,
+          });
           connection.setPrefix(projectId);
           return connection;
         };

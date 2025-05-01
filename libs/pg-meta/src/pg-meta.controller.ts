@@ -8,6 +8,8 @@ import {
   Patch,
   Delete,
   UseFilters,
+  ParseBoolPipe,
+  ParseIntPipe,
 } from '@nestjs/common';
 import { Client } from './decorators';
 import { PostgresMeta } from './lib';
@@ -164,24 +166,21 @@ export class PgMetaController {
 
   @Get('tables')
   async getTables(
-    @Query() query: TableQueryDto,
     @Client() client: PostgresMeta,
+    @Query('include_system_schemas') includeSystemSchemas: boolean = false,
+    @Query('limit') limit: number = 0,
+    @Query('offset') offset: number = 0,
+    @Query('include_columns') includeColumns: boolean = false,
+    @Query('included_schemas') includedSchemas?: string,
+    @Query('excluded_schemas') excludedSchemas?: string,
   ) {
-    const {
-      includeSystemSchemas,
-      includedSchemas,
-      excludedSchemas,
-      limit,
-      offset,
-      includeColumns,
-    } = query;
     const { data } = await client.tables.list({
       includeSystemSchemas,
       includedSchemas: includedSchemas?.split(','),
       excludedSchemas: excludedSchemas?.split(','),
       limit,
       offset,
-      includeColumns,
+      includeColumns: includeColumns,
     });
     return data ?? [];
   }
