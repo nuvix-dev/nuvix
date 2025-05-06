@@ -1,27 +1,33 @@
+import { TransformStringToBoolean } from '@nuvix/core/validators';
+import { Type } from 'class-transformer';
 import { IsBoolean, IsInt, IsOptional, IsString } from 'class-validator';
 
 export class ViewQueryDto {
   @IsOptional()
+  @TransformStringToBoolean()
   @IsBoolean()
-  includeSystemSchemas?: boolean;
+  include_system_schemas?: boolean;
 
   @IsOptional()
   @IsString()
-  includedSchemas?: string;
+  included_schemas?: string;
 
   @IsOptional()
   @IsString()
-  excludedSchemas?: string;
+  excluded_schemas?: string;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   limit?: number;
 
   @IsOptional()
+  @Type(() => Number)
   @IsInt()
   offset?: number;
 
   @IsOptional()
+  @TransformStringToBoolean()
   @IsBoolean()
-  includeColumns?: boolean;
+  include_columns?: boolean;
 }

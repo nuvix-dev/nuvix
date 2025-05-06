@@ -526,12 +526,12 @@ export class PgMetaController {
   @Get('views')
   async getViews(@Query() query: ViewQueryDto, @Client() client: PostgresMeta) {
     const {
-      includeSystemSchemas,
-      includedSchemas,
-      excludedSchemas,
+      include_system_schemas: includeSystemSchemas,
+      included_schemas: includedSchemas,
+      excluded_schemas: excludedSchemas,
       limit,
       offset,
-      includeColumns,
+      include_columns: includeColumns,
     } = query;
     const { data } = await client.views.list({
       includeSystemSchemas,
@@ -561,7 +561,7 @@ export class PgMetaController {
     @Query() query: ForeignTableQueryDto,
     @Client() client: PostgresMeta,
   ) {
-    const { limit, offset, includeColumns } = query;
+    const { limit, offset, include_columns: includeColumns } = query;
     const { data } = await client.foreignTables.list({
       limit,
       offset,
