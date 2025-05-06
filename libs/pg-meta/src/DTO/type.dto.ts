@@ -6,26 +6,27 @@ import {
   Min,
   Max,
 } from 'class-validator';
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
+import { TransformStringToBoolean } from '@nuvix/core/validators';
 
 export class TypeQueryDto {
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
-  includeArrayTypes?: boolean;
+  @TransformStringToBoolean()
+  include_array_types?: boolean;
 
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
-  includeSystemSchemas?: boolean;
+  @TransformStringToBoolean()
+  include_system_schemas?: boolean;
 
   @IsOptional()
   @IsString()
-  includedSchemas?: string;
+  included_schemas?: string;
 
   @IsOptional()
   @IsString()
-  excludedSchemas?: string;
+  excluded_schemas?: string;
 
   @IsOptional()
   @IsNumber()

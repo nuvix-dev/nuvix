@@ -113,7 +113,11 @@ export class PgMetaController {
     @Query() query: SchemaQueryDto,
     @Client() client: PostgresMeta,
   ) {
-    const { includeSystemSchemas, limit, offset } = query;
+    const {
+      include_system_schemas: includeSystemSchemas,
+      limit,
+      offset,
+    } = query;
     const { data } = await client.schemas.list({
       includeSystemSchemas,
       limit,
@@ -629,8 +633,13 @@ export class PgMetaController {
     @Query() query: MaterializedViewQueryDto,
     @Client() client: PostgresMeta,
   ) {
-    const { included_schemas: includedSchemas, excluded_schemas: excludedSchemas, limit, offset, include_columns: includeColumns } =
-      query;
+    const {
+      included_schemas: includedSchemas,
+      excluded_schemas: excludedSchemas,
+      limit,
+      offset,
+      include_columns: includeColumns,
+    } = query;
     const { data } = await client.materializedViews.list({
       includedSchemas: includedSchemas?.split(','),
       excludedSchemas: excludedSchemas?.split(','),
@@ -677,9 +686,9 @@ export class PgMetaController {
     @Client() client: PostgresMeta,
   ) {
     const {
-      includeSystemSchemas,
-      includedSchemas,
-      excludedSchemas,
+      include_system_schemas: includeSystemSchemas,
+      included_schemas: includedSchemas,
+      excluded_schemas: excludedSchemas,
       limit,
       offset,
     } = query;
@@ -781,9 +790,9 @@ export class PgMetaController {
     @Client() client: PostgresMeta,
   ) {
     const {
-      includeSystemSchemas,
-      includedSchemas,
-      excludedSchemas,
+      include_system_schemas: includeSystemSchemas,
+      included_schemas: includedSchemas,
+      excluded_schemas: excludedSchemas,
       limit,
       offset,
     } = query;
@@ -823,9 +832,9 @@ export class PgMetaController {
     @Client() client: PostgresMeta,
   ) {
     const {
-      includeSystemSchemas,
-      includedSchemas,
-      excludedSchemas,
+      include_system_schemas: includeSystemSchemas,
+      included_schemas: includedSchemas,
+      excluded_schemas: excludedSchemas,
       limit,
       offset,
     } = query;
@@ -883,10 +892,10 @@ export class PgMetaController {
   @Get('types')
   async getTypes(@Query() query: TypeQueryDto, @Client() client: PostgresMeta) {
     const {
-      includeArrayTypes,
-      includeSystemSchemas,
-      includedSchemas,
-      excludedSchemas,
+      include_array_types: includeArrayTypes,
+      include_system_schemas: includeSystemSchemas,
+      included_schemas: includedSchemas,
+      excluded_schemas: excludedSchemas,
       limit,
       offset,
     } = query;
@@ -908,11 +917,18 @@ export class PgMetaController {
     @Query() query: GeneratorQueryDto,
     @Client() client: PostgresMeta,
   ) {
-    const { includedSchemas, excludedSchemas, detectOneToOneRelationships } =
-      query;
+    const {
+      included_schemas,
+      excluded_schemas,
+      detect_one_to_one_relationships: detectOneToOneRelationships,
+    } = query;
     const { data } = await getGeneratorMetadata(client, {
-      includedSchemas: includedSchemas?.split(',').map(schema => schema.trim()),
-      excludedSchemas: excludedSchemas?.split(',').map(schema => schema.trim()),
+      includedSchemas: included_schemas
+        ?.split(',')
+        .map(schema => schema.trim()),
+      excludedSchemas: excluded_schemas
+        ?.split(',')
+        .map(schema => schema.trim()),
     });
 
     return applyTypescriptTemplate({
@@ -926,10 +942,14 @@ export class PgMetaController {
     @Query() query: GeneratorQueryDto,
     @Client() client: PostgresMeta,
   ) {
-    const { includedSchemas, excludedSchemas } = query;
+    const { included_schemas, excluded_schemas } = query;
     const { data } = await getGeneratorMetadata(client, {
-      includedSchemas: includedSchemas?.split(',').map(schema => schema.trim()),
-      excludedSchemas: excludedSchemas?.split(',').map(schema => schema.trim()),
+      includedSchemas: included_schemas
+        ?.split(',')
+        .map(schema => schema.trim()),
+      excludedSchemas: excluded_schemas
+        ?.split(',')
+        .map(schema => schema.trim()),
     });
     return applyGoTemplate(data);
   }
@@ -939,10 +959,14 @@ export class PgMetaController {
     @Query() query: GeneratorQueryDto,
     @Client() client: PostgresMeta,
   ) {
-    const { includedSchemas, excludedSchemas, access_control } = query;
+    const { included_schemas, excluded_schemas, access_control } = query;
     const { data } = await getGeneratorMetadata(client, {
-      includedSchemas: includedSchemas?.split(',').map(schema => schema.trim()),
-      excludedSchemas: excludedSchemas?.split(',').map(schema => schema.trim()),
+      includedSchemas: included_schemas
+        ?.split(',')
+        .map(schema => schema.trim()),
+      excludedSchemas: excluded_schemas
+        ?.split(',')
+        .map(schema => schema.trim()),
     });
     return applySwiftTemplate({
       ...data,

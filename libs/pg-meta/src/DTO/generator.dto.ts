@@ -1,19 +1,19 @@
 import { IsBoolean, IsIn, IsOptional, IsString } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { TransformStringToBoolean } from '@nuvix/core/validators';
 
 export class GeneratorQueryDto {
   @IsOptional()
   @IsString()
-  excludedSchemas?: string;
+  excluded_schemas?: string;
 
   @IsOptional()
   @IsString()
-  includedSchemas?: string;
+  included_schemas?: string;
 
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
-  detectOneToOneRelationships?: boolean;
+  @TransformStringToBoolean()
+  detect_one_to_one_relationships?: boolean;
 
   @IsOptional()
   @IsString()

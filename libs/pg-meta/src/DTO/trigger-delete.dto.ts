@@ -1,9 +1,9 @@
 import { IsBoolean, IsOptional } from 'class-validator';
-import { Transform } from 'class-transformer';
+import { TransformStringToBoolean } from '@nuvix/core/validators';
 
 export class TriggerDeleteQueryDto {
   @IsOptional()
   @IsBoolean()
-  @Transform(({ value }) => value === 'true')
+  @TransformStringToBoolean()
   cascade?: boolean;
 }
