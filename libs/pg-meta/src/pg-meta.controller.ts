@@ -588,9 +588,9 @@ export class PgMetaController {
     @Client() client: PostgresMeta,
   ) {
     const {
-      includeSystemSchemas,
-      includedSchemas,
-      excludedSchemas,
+      include_system_schemas: includeSystemSchemas,
+      included_schemas: includedSchemas,
+      excluded_schemas: excludedSchemas,
       limit,
       offset,
     } = query;
@@ -629,7 +629,7 @@ export class PgMetaController {
     @Query() query: MaterializedViewQueryDto,
     @Client() client: PostgresMeta,
   ) {
-    const { includedSchemas, excludedSchemas, limit, offset, includeColumns } =
+    const { included_schemas: includedSchemas, excluded_schemas: excludedSchemas, limit, offset, include_columns: includeColumns } =
       query;
     const { data } = await client.materializedViews.list({
       includedSchemas: includedSchemas?.split(','),
