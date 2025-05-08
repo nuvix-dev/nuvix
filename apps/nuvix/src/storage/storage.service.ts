@@ -604,6 +604,7 @@ export class StorageService {
     let chunk = 1;
     let chunks = 1;
     let initialChunkSize = 0;
+    let finalFileSize = fileSize;
 
     if (contentRange) {
       const match = /^bytes (\d+)-(\d+)\/(\d+)$/.exec(contentRange);
@@ -637,6 +638,7 @@ export class StorageService {
       initialChunkSize = initialChunkSize || chunkSize;
       chunks = Math.ceil(size / initialChunkSize);
       chunk = Math.floor(start / initialChunkSize) + 1;
+      finalFileSize = size;
     }
 
     const allowedFileExtensions = bucket.getAttribute(
@@ -653,7 +655,7 @@ export class StorageService {
       );
     }
 
-    if (fileSize > maximumFileSize) {
+    if (finalFileSize > maximumFileSize) {
       throw new Exception(
         Exception.STORAGE_INVALID_FILE_SIZE,
         'File size exceeds bucket limit',
@@ -694,25 +696,11 @@ export class StorageService {
       }
 
       const chunkPath = `${chunksPath}/part_${chunk}`;
-      this.logger.debug(
-        'Stream not readable, using file buffer for small file',
-      );
       const buffer = await file.toBuffer();
       await fs.writeFile(chunkPath, buffer);
       this.logger.debug(`Buffer written to file, size: ${buffer.length} bytes`);
 
-      const chunkStats = await fs.stat(chunkPath);
-      if (chunkStats.size !== fileSize) {
-        throw new Exception(
-          Exception.STORAGE_INVALID_FILE_SIZE,
-          `Chunk size ${chunkStats.size} does not match expected ${fileSize}`,
-        );
-      }
       chunksUploaded += 1;
-
-      this.logger.debug(
-        `Chunk ${chunk} uploaded to ${chunkPath} (${chunkStats.size} bytes)`,
-      );
 
       // Combine chunks if all are uploaded
       if (chunksUploaded === chunks) {
@@ -736,60 +724,21 @@ export class StorageService {
 
           // Create final file
           writeStream = createWriteStream(finalFilePath, { flags: 'w' });
-          let bytesWritten = 0;
 
-          // Handle single chunk case
-          if (chunks === 1) {
-            this.logger.debug('Processing single chunk');
-            const readStream = createReadStream(chunkPath, {
-              highWaterMark: 128 * 1024,
-            });
-            readStream.on('data', chunk => {
-              bytesWritten += chunk.length;
-              this.logger.debug(`Read ${chunk.length} bytes from chunk`);
-            });
-            readStream.on('end', () => {
-              this.logger.debug('Read stream ended');
+          for (let i = 1; i <= chunks; i++) {
+            const partPath = `${chunksPath}/part_${i}`;
+            const readStream = createReadStream(partPath, {
+              highWaterMark: 16 * 1024,
             });
             readStream.on('error', err => {
-              this.logger.error('Read stream error', err);
+              this.logger.error(`Read stream error for chunk ${i}`, err);
               throw err;
             });
-            writeStream.on('error', err => {
-              this.logger.error('Write stream error', err);
-              throw err;
-            });
-            await pipeline(readStream, writeStream);
-            await finished(writeStream);
-            this.logger.debug(
-              `Wrote ${bytesWritten} bytes to ${finalFilePath}`,
-            );
-          } else {
-            // Process multiple chunks
-            for (let i = 1; i <= chunks; i++) {
-              const partPath = `${chunksPath}/part_${i}`;
-              const readStream = createReadStream(partPath, {
-                highWaterMark: 16 * 1024,
-              });
-              readStream.on('data', chunk => {
-                bytesWritten += chunk.length;
-                this.logger.debug(`Read ${chunk.length} bytes from chunk ${i}`);
-              });
-              readStream.on('end', () => {
-                this.logger.debug(`Read stream ended for chunk ${i}`);
-              });
-              readStream.on('error', err => {
-                this.logger.error(`Read stream error for chunk ${i}`, err);
-                throw err;
-              });
-              await pipeline(readStream, writeStream, { end: false });
-              this.logger.debug(
-                `Wrote chunk ${i}, total bytes: ${bytesWritten}`,
-              );
-            }
-            writeStream.end();
-            await finished(writeStream);
+            await pipeline(readStream, writeStream, { end: false });
           }
+
+          writeStream.end();
+          await finished(writeStream);
 
           // Delete chunks with retries
           for (let i = 1; i <= chunks; i++) {
@@ -797,10 +746,9 @@ export class StorageService {
             await retry(
               async () => {
                 await fs.unlink(partPath);
-                this.logger.debug(`Deleted chunk ${i} at ${partPath}`);
               },
               { retries: 3, minTimeout: 100 },
-            ).catch(err => {
+            ).catch((err: unknown) => {
               this.logger.warn(
                 `Failed to delete chunk ${i} after retries`,
                 err,
@@ -812,7 +760,7 @@ export class StorageService {
           await retry(
             () => fs.rm(chunksPath, { recursive: true, force: true }),
             { retries: 3, minTimeout: 100 },
-          ).catch(err => {
+          ).catch((err: unknown) => {
             this.logger.warn('Failed to delete chunks directory', err);
           });
 
@@ -822,11 +770,11 @@ export class StorageService {
           const fileHash = await calculateFileHash(finalFilePath);
           const mimeType = file.mimetype;
 
-          if (sizeActual !== fileSize) {
+          if (sizeActual !== finalFileSize) {
             await fs.unlink(finalFilePath).catch(() => {});
             throw new Exception(
               Exception.STORAGE_INVALID_FILE_SIZE,
-              `Combined file size ${sizeActual} does not match expected size ${fileSize}`,
+              `Combined file size ${sizeActual} does not match expected size ${finalFileSize}`,
             );
           }
 
@@ -843,7 +791,7 @@ export class StorageService {
                 path: finalFilePath,
                 signature: fileHash,
                 mimeType,
-                sizeOriginal: fileSize,
+                sizeOriginal: finalFileSize,
                 sizeActual,
                 chunksTotal: chunks,
                 chunksUploaded,
@@ -901,7 +849,7 @@ export class StorageService {
               path: finalFilePath,
               signature: '',
               mimeType: '',
-              sizeOriginal: fileSize,
+              sizeOriginal: finalFileSize,
               sizeActual: 0,
               chunksTotal: chunks,
               chunksUploaded,
