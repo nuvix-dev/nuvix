@@ -33,6 +33,7 @@ import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.intercept
 import { ResModel } from '@nuvix/core/decorators/res-model.decorator';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards';
 import { AuditEvent, Label, Scope } from '@nuvix/core/decorators';
+import { Exception } from '@nuvix/core/extend/exception';
 
 @Controller({ version: ['1'], path: 'account' })
 @UseGuards(ProjectGuard)
@@ -65,10 +66,124 @@ export class AccountController {
   }
 
   @Get()
+  @Scope('account')
+  @Label('res.status', 'OK')
+  @Label('res.type', 'JSON')
   @ResModel(Models.USER)
   async getAccount(@User() user: Document) {
+    if (user.isEmpty()) {
+      throw new Exception(Exception.USER_NOT_FOUND)
+    }
     return user;
   }
+
+  @Delete()
+  @Scope('account')
+  @Label('res.status', 'NO_CONTENT')
+  @Label('res.type', 'JSON')
+  @ResModel(Models.NONE)
+  @AuditEvent('user.delete', 'user/{res.$id}')
+  async deleteAccount(
+    @AuthDatabase() authDatabase: Database,
+    @User() user: Document,
+  ) {
+    return await this.accountService.deleteAccount(
+      authDatabase,
+      user,
+    );
+  }
+
+  @Get('sessions')
+  @Scope('account')
+  @Label('res.status', 'OK')
+  @Label('res.type', 'JSON')
+  @ResModel(Models.SESSION, { list: true })
+  async getSessions(
+    @User() user: Document,
+    @Locale() locale: LocaleTranslator,
+  ) {
+    return await this.accountService.getSessions(user, locale);
+  }
+
+  @Delete('sessions')
+  @Scope('account')
+  @Label('res.status', 'NO_CONTENT')
+  @Label('res.type', 'JSON')
+  @ResModel(Models.NONE)
+  @AuditEvent('session.delete', 'user/{user.$id}')
+  async deleteSessions(
+    @AuthDatabase() authDatabase: Database,
+    @User() user: Document,
+    @Req() request: any,
+    @Res({ passthrough: true }) response: any,
+    @Locale() locale: LocaleTranslator,
+  ) {
+    return await this.accountService.deleteSessions(
+      authDatabase,
+      user,
+      locale,
+      request,
+      response,
+    );
+  }
+
+  @Get('sessions/:id')
+  @Scope('account')
+  @Label('res.status', 'OK')
+  @Label('res.type', 'JSON')
+  @ResModel(Models.SESSION)
+  async getSession(
+    @User() user: Document,
+    @Param('id') sessionId: string,
+    @Locale() locale: LocaleTranslator,
+  ) {
+    return await this.accountService.getSession(user, sessionId, locale);
+  }
+
+  @Delete('sessions/:id')
+  @Scope('account')
+  @Label('res.status', 'NO_CONTENT')
+  @Label('res.type', 'JSON')
+  @ResModel(Models.NONE)
+  @AuditEvent('session.delete', 'user/{user.$id}')
+  async deleteSession(
+    @AuthDatabase() authDatabase: Database,
+    @User() user: Document,
+    @Param('id') id: string,
+    @Req() request: any,
+    @Res({ passthrough: true }) response: any,
+    @Locale() locale: LocaleTranslator,
+  ) {
+    return await this.accountService.deleteSession(
+      authDatabase,
+      user,
+      id,
+      request,
+      response,
+      locale,
+    );
+  }
+
+  @Patch('sessions/:id')
+  @Scope('account')
+  @Label('res.status', 'OK')
+  @Label('res.type', 'JSON')
+  @ResModel(Models.SESSION)
+  @AuditEvent('session.update', 'user/{res.userId}')
+  async updateSession(
+    @AuthDatabase() authDatabase: Database,
+    @User() user: Document,
+    @Param('id') id: string,
+    @Project() project: Document,
+  ) {
+    return await this.accountService.updateSession(
+      authDatabase,
+      user,
+      id,
+      project,
+    );
+  }
+
 
   @Get('prefs')
   @ResModel(Models.PREFERENCES)
@@ -127,76 +242,5 @@ export class AccountController {
     );
   }
 
-  @Get('sessions')
-  @ResModel({ type: Models.SESSION, list: true })
-  async getSessions(
-    @User() user: Document,
-    @Locale() locale: LocaleTranslator,
-  ) {
-    return await this.accountService.getSessions(user, locale);
-  }
 
-  @Delete('sessions')
-  @ResModel(Models.NONE)
-  async deleteSessions(
-    @AuthDatabase() authDatabase: Database,
-    @User() user: Document,
-    @Req() request: any,
-    @Res({ passthrough: true }) response: any,
-    @Locale() locale: LocaleTranslator,
-  ) {
-    return await this.accountService.deleteSessions(
-      authDatabase,
-      user,
-      locale,
-      request,
-      response,
-    );
-  }
-
-  @Get('sessions/:id')
-  @ResModel(Models.SESSION)
-  async getSession(
-    @User() user: Document,
-    @Param('id') sessionId: string,
-    @Locale() locale: LocaleTranslator,
-  ) {
-    return await this.accountService.getSession(user, sessionId, locale);
-  }
-
-  @Delete('sessions/:id')
-  @ResModel(Models.NONE)
-  async deleteSession(
-    @AuthDatabase() authDatabase: Database,
-    @User() user: Document,
-    @Param('id') id: string,
-    @Req() request: any,
-    @Res({ passthrough: true }) response: any,
-    @Locale() locale: LocaleTranslator,
-  ) {
-    return await this.accountService.deleteSession(
-      authDatabase,
-      user,
-      id,
-      request,
-      response,
-      locale,
-    );
-  }
-
-  @Patch('sessions/:id')
-  @ResModel(Models.SESSION)
-  async updateSession(
-    @AuthDatabase() authDatabase: Database,
-    @User() user: Document,
-    @Param('id') id: string,
-    @Project() project: Document,
-  ) {
-    return await this.accountService.updateSession(
-      authDatabase,
-      user,
-      id,
-      project,
-    );
-  }
 }

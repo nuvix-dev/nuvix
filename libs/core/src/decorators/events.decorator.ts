@@ -1,13 +1,17 @@
 import { SetMetadata } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 
+type EventActions = 'create' | 'update' | 'delete';
+
+const event = <T extends string>(name: T): readonly `${T}.${EventActions}`[] =>
+  [`${name}.create`, `${name}.update`, `${name}.delete`] as const;
+
+type EventCategory = 'user' | 'target' | 'session';
+
 const auditEvents = [
-  'user.create',
-  'user.update',
-  'user.delete',
-  'target.create',
-  'target.update',
-  'target.delete',
+  ...event<EventCategory>('user'),
+  ...event<EventCategory>('target'),
+  ...event<EventCategory>('session'),
 ] as const;
 
 type AuditEventKey = (typeof auditEvents)[number];

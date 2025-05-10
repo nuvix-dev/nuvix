@@ -1,5 +1,8 @@
 export const scopes = {
   // List of publicly visible scopes
+  'account': {
+    description: 'Access to your account',
+  },
   'sessions.create': {
     description: 'Access to create user sessions',
   },

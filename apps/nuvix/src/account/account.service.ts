@@ -99,7 +99,7 @@ export class AccountService {
 
     // hooks.trigger('passwordValidator', [db, project, password, user, true]);
 
-    const passwordHistory = auths.passwordHistory ?? 0;
+    const passwordHistory = auths['passwordHistory'] ?? 0;
     const hashedPassword = await Auth.passwordHash(
       password,
       Auth.DEFAULT_ALGO,
@@ -181,24 +181,15 @@ export class AccountService {
 
       await db.purgeCachedDocument('users', user.getId());
     } catch (error) {
-      console.log(error);
       if (error instanceof DuplicateException) {
         throw new Exception(Exception.USER_ALREADY_EXISTS);
-      } else {
-        throw new Exception(
-          Exception.GENERAL_SERVER_ERROR,
-          'Failed saving user to DB',
-        );
       }
+      throw error;
     }
 
     Authorization.unsetRole(Role.guests().toString());
     Authorization.setRole(Role.user(user.getId()).toString());
     Authorization.setRole(Role.users().toString());
-
-    await this.eventEmitter.emitAsync(EVENT_USER_CREATE, {
-      userId: user.getId(),
-    });
 
     return user;
   }
@@ -220,20 +211,11 @@ export class AccountService {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
 
-    await Authorization.skip(
-      async () => await db.deleteDocument('users', user.getId()),
-    );
+    if (user.getAttribute('status') === false) {
+      throw new Exception(Exception.USER_BLOCKED);
+    }
 
-    await this.eventEmitter.emitAsync(EVENT_USER_DELETE, {
-      userId: user.getId(),
-      payload: {
-        data: user,
-        type: Models.USER,
-      },
-    });
-
-    await db.purgeCachedDocument('users', user.getId());
-
+    await db.deleteDocument('users', user.getId());
     return user;
   }
 
@@ -241,10 +223,6 @@ export class AccountService {
    * Get User's Sessions
    */
   async getSessions(user: Document, locale: LocaleTranslator) {
-    const roles = Authorization.getRoles();
-    const isPrivilegedUser = Auth.isPrivilegedUser(roles);
-    const isAppUser = Auth.isAppUser(roles);
-
     const sessions = user.getAttribute('sessions', []);
     const current = Auth.sessionVerify(sessions, Auth.secret);
 
@@ -258,7 +236,7 @@ export class AccountService {
       session.setAttribute('current', current === session.getId());
       session.setAttribute(
         'secret',
-        isPrivilegedUser || isAppUser ? session.getAttribute('secret', '') : '',
+        session.getAttribute('secret', ''),
       );
 
       return session;
@@ -304,30 +282,14 @@ export class AccountService {
 
         // If current session, delete the cookies too
         response
-          .cookie(`${Auth.cookieName}_legacy`, '', {
-            expires: new Date(0),
-            path: '/',
-            // domain: Config.getParam('cookieDomain'),
-            secure: protocol === 'https',
-            httpOnly: true,
-          })
           .cookie(Auth.cookieName, '', {
             expires: new Date(0),
             path: '/',
-            // domain: Config.getParam('cookieDomain'),
+            domain: Auth.cookieDomain,
             secure: protocol === 'https',
             httpOnly: true,
-            // sameSite: Config.getParam('cookieSamesite'),
+            sameSite: Auth.cookieSamesite,
           });
-
-        await this.eventEmitter.emitAsync(EVENT_SESSION_DELETE, {
-          userId: user.getId(),
-          sessionId: session.getId(),
-          payload: {
-            data: session,
-            type: Models.SESSION,
-          },
-        });
 
         // queueForDeletes.setType(DELETE_TYPE_SESSION_TARGETS).setDocument(session).trigger();
       }
@@ -350,10 +312,6 @@ export class AccountService {
     sessionId: string,
     locale: LocaleTranslator,
   ) {
-    const roles = Authorization.getRoles();
-    const isPrivilegedUser = Auth.isPrivilegedUser(roles);
-    const isAppUser = Auth.isAppUser(roles);
-
     const sessions = user.getAttribute('sessions', []);
     sessionId =
       sessionId === 'current'
@@ -378,9 +336,7 @@ export class AccountService {
           .setAttribute('countryName', countryName)
           .setAttribute(
             'secret',
-            isPrivilegedUser || isAppUser
-              ? session.getAttribute('secret', '')
-              : '',
+            session.getAttribute('secret', '')
           );
 
         return session;
@@ -424,17 +380,13 @@ export class AccountService {
         );
 
         response
-          .cookie(`${Auth.cookieName}_legacy`, '', {
-            expires: new Date(0),
-            path: '/',
-            secure: protocol === 'https',
-            httpOnly: true,
-          })
           .cookie(Auth.cookieName, '', {
             expires: new Date(0),
             path: '/',
+            domain: Auth.cookieDomain,
             secure: protocol === 'https',
             httpOnly: true,
+            sameSite: Auth.cookieSamesite,
           });
 
         response.header('X-Fallback-Cookies', JSON.stringify({}));
@@ -442,14 +394,15 @@ export class AccountService {
 
       await db.purgeCachedDocument('users', user.getId());
 
-      await this.eventEmitter.emitAsync(EVENT_SESSION_DELETE, {
-        userId: user.getId(),
-        sessionId: session.getId(),
-        payload: {
-          data: session,
-          type: Models.SESSION,
-        },
-      });
+      // TODO: Handle Queues
+      // await this.eventEmitter.emitAsync(EVENT_SESSION_DELETE, {
+      //   userId: user.getId(),
+      //   sessionId: session.getId(),
+      //   payload: {
+      //     data: session,
+      //     type: Models.SESSION,
+      //   },
+      // });
 
       // queueForDeletes.setType(DELETE_TYPE_SESSION_TARGETS).setDocument(session).trigger();
 
@@ -497,15 +450,16 @@ export class AccountService {
 
     const provider = session.getAttribute('provider', '');
     const refreshToken = session.getAttribute('providerRefreshToken', '');
-    // TODO: %$$$$$
-    const className = `nuvix\\Auth\\OAuth2\\${provider.charAt(0).toUpperCase() + provider.slice(1)}`;
 
-    if (provider && className in global) {
+    // TODO: Implement & fix after creating OAuthProviders
+    const authClass = await import(`./path/to/OAuthProviders/${provider}`);
+    const className = `${provider.charAt(0).toUpperCase() + provider.slice(1)}`;
+
+    if (provider && className in authClass) {
       const appId = CONSOLE_CONFIG.oAuthProviders[`${provider}Appid`] ?? '';
-      const appSecret =
-        CONSOLE_CONFIG.oAuthProviders[`${provider}Secret`] ?? '';
+      const appSecret = CONSOLE_CONFIG.oAuthProviders[`${provider}Secret`] ?? '';
 
-      const oauth2 = new (global as any)[className](
+      const oauth2 = new authClass[className](
         appId,
         appSecret,
         '',
@@ -526,14 +480,15 @@ export class AccountService {
     await db.updateDocument('sessions', sessionId, session);
     await db.purgeCachedDocument('users', user.getId());
 
-    await this.eventEmitter.emitAsync(EVENT_SESSION_UPDATE, {
-      userId: user.getId(),
-      sessionId: session.getId(),
-      payload: {
-        data: session,
-        type: Models.SESSION,
-      },
-    });
+    // TODO: Handle Events
+    // await this.eventEmitter.emitAsync(EVENT_SESSION_UPDATE, {
+    //   userId: user.getId(),
+    //   sessionId: session.getId(),
+    //   payload: {
+    //     data: session,
+    //     type: Models.SESSION,
+    //   },
+    // });
 
     return session;
   }
