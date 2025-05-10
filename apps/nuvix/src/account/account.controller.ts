@@ -32,16 +32,21 @@ import { LocaleTranslator } from '@nuvix/core/helper/locale.helper';
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor';
 import { ResModel } from '@nuvix/core/decorators/res-model.decorator';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards';
+import { AuditEvent, Label, Scope } from '@nuvix/core/decorators';
 
 @Controller({ version: ['1'], path: 'account' })
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class AccountController {
-  constructor(private readonly accountService: AccountService) {}
+  constructor(private readonly accountService: AccountService) { }
 
   @Public()
   @Post()
+  @Scope('sessions.create')
+  @Label('res.status', 'CREATED')
+  @Label('res.type', 'JSON')
   @ResModel(Models.USER)
+  @AuditEvent('user.create', { resource: 'user/{res.$id}', userId: 'res.$id' })
   async createAccount(
     @AuthDatabase() authDatabase: Database,
     @Body() input: CreateAccountDTO,

@@ -13,9 +13,13 @@ const auditEvents = [
 type AuditEventKey = (typeof auditEvents)[number];
 
 type ResourceType = `${string}{${'res' | 'req' | 'user'}.${string}}`;
+type AuditEvent = {
+  resource: ResourceType;
+  userId?: `${'res' | 'req' | 'user'}.${string}`;
+}
 
-export const AuditEvent = (key: AuditEventKey, resource: ResourceType) =>
-  SetMetadata('audit-event', { key, resource });
+export const AuditEvent = (key: AuditEventKey, meta: AuditEvent | ResourceType) =>
+  SetMetadata('audit-event', { key, meta: typeof meta === 'string' ? { resource: meta } : meta });
 
 const events = ['user.{userId}.create'] as const;
 

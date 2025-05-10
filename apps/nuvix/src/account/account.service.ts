@@ -18,6 +18,7 @@ import { Models } from '@nuvix/core/helper/response.helper';
 import { PersonalDataValidator } from '@nuvix/core/validators/personal-data.validator';
 import {
   APP_EMAIL_TEAM,
+  APP_LIMIT_USERS,
   APP_NAME,
   APP_SYSTEM_EMAIL_ADDRESS,
   APP_SYSTEM_EMAIL_NAME,
@@ -48,7 +49,7 @@ export class AccountService {
     @Inject(GEO_DB) private readonly geodb: Reader<CountryResponse>,
     @InjectQueue('mails') private readonly mailQueue: Queue<MailQueueOptions>,
     private eventEmitter: EventEmitter2,
-  ) {}
+  ) { }
 
   /**
    * Create a new account
@@ -65,26 +66,26 @@ export class AccountService {
     email = email.toLowerCase();
 
     const auths = project.getAttribute('auths', {});
-
     const limit = auths.limit ?? 0;
 
     if (limit !== 0) {
-      const total = await db.count('users', []);
+      const total = await db.count('users', [], APP_LIMIT_USERS);
 
       if (total >= limit) {
         throw new Exception(Exception.USER_COUNT_EXCEEDED);
       }
     }
 
+    // Makes sure this email is not already used in another identity
     const identityWithMatchingEmail = await db.findOne('identities', [
       Query.equal('providerEmail', [email]),
     ]);
 
     if (identityWithMatchingEmail && !identityWithMatchingEmail.isEmpty()) {
-      throw new Exception(Exception.GENERAL_BAD_REQUEST);
+      throw new Exception(Exception.GENERAL_BAD_REQUEST); // Return a generic bad request to prevent exposing existing accounts
     }
 
-    if (auths.personalDataCheck ?? false) {
+    if (auths['personalDataCheck'] ?? false) {
       const personalDataValidator = new PersonalDataValidator(
         userId,
         email,
@@ -357,9 +358,9 @@ export class AccountService {
     sessionId =
       sessionId === 'current'
         ? (Auth.sessionVerify(
-            user.getAttribute('sessions'),
-            Auth.secret,
-          ) as string)
+          user.getAttribute('sessions'),
+          Auth.secret,
+        ) as string)
         : sessionId;
 
     for (const session of sessions) {
@@ -470,9 +471,9 @@ export class AccountService {
     sessionId =
       sessionId === 'current'
         ? (Auth.sessionVerify(
-            user.getAttribute('sessions'),
-            Auth.secret,
-          ) as string)
+          user.getAttribute('sessions'),
+          Auth.secret,
+        ) as string)
         : sessionId;
 
     const sessions = user.getAttribute('sessions', []);
@@ -787,7 +788,7 @@ export class AccountService {
     let subject: string = locale.getText('emails.sessionAlert.subject');
     const customTemplate =
       project.getAttribute('templates', {})?.[
-        'email.sessionAlert-' + locale.default
+      'email.sessionAlert-' + locale.default
       ] ?? {};
     const templatePath =
       PROJECT_ROOT + 'assets/locale/templates/email-session-alert.tpl';
