@@ -19,7 +19,10 @@ module.exports = {
             minify: true,
           },
         },
+        resolve: {
+          fullySpecified: false,
+        },
       },
     ],
-  }
+  },
 };
