@@ -15,10 +15,13 @@ module.exports = {
           loader: 'swc-loader',
           options: {
             ...swcDefaultConfig,
-            sourceMaps: true,
+            sourceMaps: false,
           },
+        },
+        resolve: {
+          fullySpecified: false,
         },
       },
     ],
-  }
+  },
 };

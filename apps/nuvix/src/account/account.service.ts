@@ -42,6 +42,7 @@ import { Queue } from 'bullmq';
 import * as Template from 'handlebars';
 import * as fs from 'fs';
 import { MailQueueOptions } from '@nuvix/core/resolvers/queues/mail.queue';
+import { OAuth2 } from '@nuvix/core/OAuth2';
 
 @Injectable()
 export class AccountService {
@@ -440,27 +441,37 @@ export class AccountService {
     const authDuration = auths.duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG;
     session.setAttribute('expire', new Date(Date.now() + authDuration * 1000));
 
-    const provider = session.getAttribute('provider', '');
+    const provider: string = session.getAttribute('provider', '');
     const refreshToken = session.getAttribute('providerRefreshToken', '');
 
-    // TODO: Implement & fix after creating OAuthProviders
-    const authClass = await import(`./path/to/OAuthProviders/${provider}`);
-    const className = `${provider.charAt(0).toUpperCase() + provider.slice(1)}`;
+    const authClass = await import(
+      `@nuvix/core/OAuth2/${provider.toLowerCase()}`
+    );
+    const className = `${provider.charAt(0).toUpperCase() + provider.slice(1)}OAuth2`;
 
     if (provider && className in authClass) {
-      const appId = CONSOLE_CONFIG.oAuthProviders[`${provider}Appid`] ?? '';
-      const appSecret =
-        CONSOLE_CONFIG.oAuthProviders[`${provider}Secret`] ?? '';
+      const providers = project.getAttribute('oAuthProviders', []);
+      const providerInfo = providers.map((p: any) => p.key === provider);
 
-      const oauth2 = new authClass[className](appId, appSecret, '', [], []);
+      const appId = providerInfo['appId'];
+      const appSecret = providerInfo['secret'];
+
+      const oauth2: OAuth2 = new authClass[className](
+        appId,
+        appSecret,
+        '',
+        [],
+        [],
+      );
       await oauth2.refreshTokens(refreshToken);
+      const accessToken = await oauth2.getAccessToken('');
 
       session
-        .setAttribute('providerAccessToken', oauth2.getAccessToken(''))
-        .setAttribute('providerRefreshToken', oauth2.getRefreshToken(''))
+        .setAttribute('providerAccessToken', accessToken)
+        .setAttribute('providerRefreshToken', accessToken)
         .setAttribute(
           'providerAccessTokenExpiry',
-          new Date(Date.now() + oauth2.getAccessTokenExpiry('') * 1000),
+          new Date(Date.now() + (await oauth2.getAccessTokenExpiry('')) * 1000),
         );
     }
 
