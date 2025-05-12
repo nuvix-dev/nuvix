@@ -45,7 +45,7 @@ import {
   Query,
   Role,
 } from '@nuvix/database';
-import {
+import type {
   GetProjectDbFn,
   GetProjectPG,
   PoolStoreFn,

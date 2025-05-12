@@ -15,7 +15,7 @@ import {
   PROJECT_POOL,
 } from '@nuvix/utils/constants';
 import { Hook } from '../../server/hooks/interface';
-import {
+import type {
   GetProjectDbFn,
   GetProjectPG,
   PoolStoreFn,

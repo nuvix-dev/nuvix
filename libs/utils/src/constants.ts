@@ -2,26 +2,50 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { ServerConfig } from './types';
 import { config } from 'dotenv';
+import { fileURLToPath } from 'url';
 if (process.env.NODE_ENV !== 'production') {
   // Load environment variables from .env file in development mode
   config();
 }
 
 // Find project root directory (where package.json is located)
+/**
+ * Finds the project root directory by traversing up the directory tree
+ * until a package.json file is found
+ * @returns Absolute path to the project root directory
+ * @throws Error if project root directory cannot be found
+ */
 function findProjectRoot(): string {
-  let currentDir = __dirname;
+  try {
+    // Start from current file's directory
+    let currentDir = __dirname;
+    const maxDepth = 10; // Prevent infinite loops
+    let depth = 0;
 
-  while (currentDir !== '/') {
-    const packageJsonPath = path.join(currentDir, 'package.json');
+    while (currentDir !== '/' && depth < maxDepth) {
+      const packageJsonPath = path.join(currentDir, 'package.json');
 
-    if (fs.existsSync(packageJsonPath)) {
-      return currentDir;
+      if (fs.existsSync(packageJsonPath)) {
+        return currentDir;
+      }
+
+      const parentDir = path.dirname(currentDir);
+      // Check if we've reached the top (when dirname doesn't change the path anymore)
+      if (parentDir === currentDir) {
+        break;
+      }
+
+      currentDir = parentDir;
+      depth++;
     }
 
-    currentDir = path.dirname(currentDir);
+    // Fallback to current working directory if not found
+    console.warn('Could not find package.json, falling back to process.cwd()');
+    return process.cwd();
+  } catch (error) {
+    console.error('Error finding project root:', error);
+    throw new Error('Failed to determine project root directory');
   }
-
-  throw new Error('Could not find project root directory');
 }
 
 export const PROJECT_ROOT = findProjectRoot();

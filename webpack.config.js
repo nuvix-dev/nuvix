@@ -16,6 +16,7 @@ module.exports = {
           options: {
             ...swcDefaultConfig,
             sourceMaps: true,
+            minify: true,
           },
         },
       },
