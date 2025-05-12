@@ -3,6 +3,7 @@
 /node_modules
 /build
 schema.gql
+.rollup.cache
 
 # Logs
 logs

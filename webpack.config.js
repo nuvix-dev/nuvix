@@ -15,7 +15,8 @@ module.exports = {
           loader: 'swc-loader',
           options: {
             ...swcDefaultConfig,
-            sourceMaps: false,
+            sourceMaps: true,
+            minify: true,
           },
         },
         resolve: {

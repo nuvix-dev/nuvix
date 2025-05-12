@@ -4,7 +4,7 @@ import { Job } from 'bullmq';
 
 import { Inject, Logger } from '@nestjs/common';
 import { Database, Document, DuplicateException } from '@nuvix/database';
-import {
+import type {
   PoolStoreFn,
   GetProjectPG,
   GetProjectDbFn,

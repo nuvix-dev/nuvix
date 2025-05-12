@@ -30,8 +30,10 @@ import { CountryResponse, Reader } from 'maxmind';
 import { Cache, RedisAdapter } from '@nuvix/cache';
 import { Telemetry } from '@nuvix/telemetry';
 import { ProjectUsageService } from './project-usage.service';
-import { Adapter } from '@nuvix/database/dist/adapter/base';
+// import { Adapter } from '@nuvix/database/dist/adapter/base'; // TODO: fix after updating lib
 import { Pool as PgPool, PoolClient } from 'pg';
+
+type Adapter = any;
 
 Object.keys(filters).forEach(key => {
   Database.addFilter(key, {

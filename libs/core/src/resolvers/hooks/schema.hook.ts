@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { Document } from '@nuvix/database';
 import { Context, DataSource } from '@nuvix/pg';
 
-import { GetProjectPG } from '@nuvix/core/core.module';
+import type { GetProjectPG } from '@nuvix/core/core.module';
 import { Exception } from '@nuvix/core/extend/exception';
 import { Hook } from '@nuvix/core/server';
 import {

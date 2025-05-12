@@ -21,7 +21,7 @@ import {
   POOLS,
 } from '@nuvix/utils/constants';
 import { Inject, Logger } from '@nestjs/common';
-import { GetProjectDbFn, PoolStoreFn } from '@nuvix/core/core.module';
+import type { GetProjectDbFn, PoolStoreFn } from '@nuvix/core/core.module';
 
 @Processor('database')
 export class DatabaseQueue extends Queue {
