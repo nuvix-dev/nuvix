@@ -18,7 +18,12 @@ if (process.env.NODE_ENV !== 'production') {
 function findProjectRoot(): string {
   try {
     // Start from current file's directory
-    let currentDir = __dirname;
+    let currentDir: string;
+    if (import.meta.url) {
+      currentDir = path.dirname(fileURLToPath(import.meta.url));
+    } else {
+      currentDir = __dirname;
+    }
     const maxDepth = 10; // Prevent infinite loops
     let depth = 0;
 

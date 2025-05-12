@@ -445,6 +445,8 @@ export class AccountService {
     const refreshToken = session.getAttribute('providerRefreshToken', '');
 
     const authClass = await import(
+      /* webpackChunkName: "OAuth2" */
+      /* webpackInclude: /\.js$/ */
       `@nuvix/core/OAuth2/${provider.toLowerCase()}`
     );
     const className = `${provider.charAt(0).toUpperCase() + provider.slice(1)}OAuth2`;

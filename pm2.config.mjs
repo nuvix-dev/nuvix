@@ -26,7 +26,7 @@ const consoleEnv = loadEnvFile('.env.console');
 export const apps = [
   {
     name: 'nuvix-api',
-    script: 'dist/apps/nuvix/main.js',
+    script: 'dist/apps/nuvix/main.mjs',
     watch: false,
     instances: 2, // `max` Scale to use all available CPUs
     exec_mode: 'cluster',
@@ -43,7 +43,7 @@ export const apps = [
   },
   {
     name: 'nuvix-console',
-    script: 'dist/apps/console/main.js',
+    script: 'dist/apps/console/main.mjs',
     watch: false,
     instances: 1,
     exec_mode: 'fork',

@@ -9,7 +9,7 @@
     "deleteOutDir": true,
     "typeCheck": false,
     "tsConfigPath": "apps/nuvix/tsconfig.app.json",
-    "webpack": true
+    "webpackConfigPath": "webpack.config.js"
   },
   "monorepo": true,
   "root": "apps/nuvix",

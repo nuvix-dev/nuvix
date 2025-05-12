@@ -84,6 +84,7 @@
     "@nestjs/testing": "^11.0.20",
     "@swc/cli": "^0.6.0",
     "@swc/core": "^1.11.21",
+    "@swc/helpers": "^0.5.17",
     "@types/bcryptjs": "^2.4.6",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.14.1",
