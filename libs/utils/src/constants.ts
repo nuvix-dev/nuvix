@@ -100,6 +100,32 @@ export const APP_SMTP_DKIM_DOMAIN = process.env.APP_SMTP_DKIM_DOMAIN;
 export const APP_SMTP_DKIM_KEY = process.env.APP_SMTP_DKIM_KEY;
 export const APP_SMTP_DKIM_PRIVATE_KEY = process.env.APP_SMTP_DKIM_PRIVATE_KEY;
 
+// Database Config
+// PostgreSQL
+export const APP_POSTGRES_HOST = process.env.APP_POSTGRES_HOST ?? 'localhost';
+export const APP_POSTGRES_PORT = parseInt(
+  process.env.APP_POSTGRES_PORT ?? '5432',
+  10,
+);
+export const APP_POSTGRES_USER = process.env.APP_POSTGRES_USER;
+export const APP_POSTGRES_PASSWORD = process.env.APP_POSTGRES_PASSWORD;
+export const APP_POSTGRES_DB = process.env.APP_POSTGRES_DB;
+export const APP_POSTGRES_SSL = process.env.APP_POSTGRES_SSL === 'true';
+export const APP_POSTGRES_MAX_CONNECTIONS = parseInt(
+  process.env.APP_POSTGRES_MAX_CONNECTIONS ?? '100',
+  10,
+);
+export const APP_SHARED_CLUSTER = true; // Multi-cluster mode not supported yet!
+// Console DB
+export const APP_DATABASE_HOST = process.env.APP_DATABASE_HOST ?? 'localhost';
+export const APP_DATABASE_USER = process.env.APP_DATABASE_USER;
+export const APP_DATABASE_PASSWORD = process.env.APP_DATABASE_PASSWORD;
+export const APP_DATABASE_NAME = process.env.APP_DATABASE_NAME;
+export const APP_DATABASE_PORT = parseInt(
+  process.env.APP_DATABASE_PORT ?? '3306',
+  10,
+);
+
 export const PROJECT = 'project';
 export const USER = 'user';
 export const SESSION = 'session';

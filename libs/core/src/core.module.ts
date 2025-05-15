@@ -1,4 +1,4 @@
-import { Global, Logger, Module, Scope } from '@nestjs/common';
+import { Global, Logger, Module } from '@nestjs/common';
 import * as fs from 'fs';
 import path from 'path';
 import IORedis from 'ioredis';
@@ -22,16 +22,27 @@ import {
   GET_PROJECT_PG,
   PROJECT_ROOT,
   LOG_LEVELS,
+  APP_DATABASE_HOST,
+  APP_DATABASE_USER,
+  APP_DATABASE_PASSWORD,
+  APP_DATABASE_NAME,
+  APP_DATABASE_PORT,
+  APP_POSTGRES_HOST,
+  APP_POSTGRES_PORT,
+  APP_POSTGRES_DB,
+  APP_POSTGRES_USER,
+  APP_POSTGRES_PASSWORD,
+  APP_POSTGRES_SSL,
 } from '@nuvix/utils/constants';
 import { Database, MariaDB, Structure, PostgreDB } from '@nuvix/database';
-import { Context, DataSource, PoolManager } from '@nuvix/pg';
+import { Context, DataSource } from '@nuvix/pg';
 import { filters, formats } from './resolvers/db.resolver';
 import { CountryResponse, Reader } from 'maxmind';
 import { Cache, RedisAdapter } from '@nuvix/cache';
-import { Telemetry } from '@nuvix/telemetry';
 import { ProjectUsageService } from './project-usage.service';
 // import { Adapter } from '@nuvix/database/dist/adapter/base'; // TODO: fix after updating lib
 import { Pool as PgPool, PoolClient } from 'pg';
+import { createHash } from 'crypto';
 
 type Adapter = any;
 
@@ -46,10 +57,18 @@ Object.keys(formats).forEach(key => {
   Structure.addFormat(key, formats[key].create, formats[key].type);
 });
 
-export type PoolStoreFn<T = PgPool> = (
-  name: string,
-  options: Omit<{ database: string }, 'name'> & { database: string },
-) => Promise<PgPool>;
+interface PoolOptions {
+  database: string;
+  user: string;
+  password: string;
+  host: string;
+  port?: number;
+  max?: number;
+}
+export interface PoolStoreFn {
+  (name: string, options: Partial<PoolOptions>): Promise<PgPool>;
+  (name: 'root', options?: PoolOptions): Promise<PgPool>;
+}
 
 export type GetProjectDbFn = (pool: PgPool, projectId: string) => Database;
 
@@ -63,16 +82,15 @@ export type GetProjectPG = (
   providers: [
     {
       provide: POOLS,
-      useFactory: (): PoolStoreFn<PgPool> => {
-        // const poolManager = PoolManager.getInstance();
-        // Create a cache to store pool instances
+      useFactory: (): PoolStoreFn => {
         const poolCache: Map<string, PgPool> = new Map();
 
-        return (async (name: string, options: { database: string }) => {
-          // Create a cache key combining project name and database name
-          const cacheKey = `${name}-${options.database}`;
+        return async (name: string | 'root', options: PoolOptions) => {
+          const cacheHash = createHash('sha256');
+          cacheHash.update(JSON.stringify(options));
+          const hash = cacheHash.digest('hex');
+          const cacheKey = `${name}-${hash}`;
 
-          // Check if we already have a pool for this key
           if (poolCache.has(cacheKey)) {
             const existingPool = poolCache.get(cacheKey);
             // Check if the pool is still valid and connected
@@ -81,43 +99,52 @@ export type GetProjectPG = (
             }
           }
 
-          // Create a new pool if needed
+          let databaseOptions = {};
+          if (name === 'root') {
+            databaseOptions = {
+              host: APP_POSTGRES_HOST,
+              port: APP_POSTGRES_PORT,
+              database: APP_POSTGRES_DB,
+              user: APP_POSTGRES_USER,
+              password: APP_POSTGRES_PASSWORD,
+              ssl: APP_POSTGRES_SSL ? { rejectUnauthorized: false } : undefined,
+            };
+          } else {
+            databaseOptions = {
+              host: options.host,
+              port: parseInt(options.port.toString() || '5432'),
+              database: options.database,
+              user: options.user,
+              password: options.password,
+              // TODO: Check later
+              ssl: APP_POSTGRES_SSL ? { rejectUnauthorized: false } : undefined,
+            };
+          }
+
           const newPool = new PgPool({
-            host: process.env.APP_POSTGRES_HOST || 'localhost',
-            port: parseInt(process.env.APP_POSTGRES_PORT || '5432'),
-            database: options.database ?? process.env.APP_POSTGRES_DB,
-            user: process.env.APP_POSTGRES_USER,
-            password: process.env.APP_POSTGRES_PASSWORD,
-            ssl:
-              process.env.APP_POSTGRES_SSL === 'true'
-                ? { rejectUnauthorized: false }
-                : undefined,
-            max: 40, // Maximum number of clients
+            ...databaseOptions,
+            max: options.max ?? 40,
             idleTimeoutMillis: 30000, // 30 seconds
             statement_timeout: 30000, // 30 seconds
             query_timeout: 30000, // 30 seconds
-            application_name: 'nuvix',
-            // Add these additional settings
+            application_name: name === 'root' ? 'nuvix' : `nuvix-${name}`,
             keepAlive: true,
             keepAliveInitialDelayMillis: 10000, // 10 seconds
             allowExitOnIdle: false,
           });
 
-          // Store the new pool in cache
           poolCache.set(cacheKey, newPool);
 
-          // Add event listeners to handle pool errors
           newPool.on('error', err => {
             const logger = new Logger('PoolManager');
             logger.error(`Pool error for ${cacheKey}:`, err);
-            // Remove from cache if there's a fatal error
             if (err.name === 'ECONNREFUSED') {
               poolCache.delete(cacheKey);
             }
           });
 
           return newPool;
-        }) as any;
+        };
       },
     },
     {
@@ -159,11 +186,11 @@ export type GetProjectPG = (
       useFactory: async (cache: Cache) => {
         const adapter = new MariaDB({
           connection: {
-            host: process.env.APP_DB_HOST || 'localhost',
-            user: process.env.APP_DB_USER,
-            password: process.env.APP_DB_PASSWORD,
-            database: process.env.APP_DB_NAME,
-            port: 3306,
+            host: APP_DATABASE_HOST,
+            user: APP_DATABASE_USER,
+            password: APP_DATABASE_PASSWORD,
+            database: APP_DATABASE_NAME,
+            port: APP_DATABASE_PORT,
           },
           maxVarCharLimit: 5000,
         });
@@ -180,14 +207,15 @@ export type GetProjectPG = (
       // TODO: This is a temporary solution, we need to find a better way to handle this (request scope or hook)
       provide: DB_FOR_PROJECT,
       // scope: Scope.REQUEST,
+      /**@deprecated */
       useFactory: async (cache: Cache, _pools: Map<string, Adapter>) => {
         // const adapter = new MariaDB({
         //   connection: {
-        //     host: process.env.DATABASE_HOST || 'localhost',
-        //     user: process.env.DATABASE_USER,
-        //     password: process.env.DATABASE_PASSWORD,
-        //     database: process.env.DATABASE_NAME2,
-        //     port: 3306,
+        //     host: APP_DATABASE_HOST,
+        //     user: APP_DATABASE_USER,
+        //     password: APP_DATABASE_PASSWORD,
+        //     database: APP_DATABASE_NAME,
+        //     port: APP_DATABASE_PORT,
         //   },
         //   maxVarCharLimit: 5000,
         // });
@@ -207,10 +235,10 @@ export type GetProjectPG = (
             connection: pool,
           });
           adapter.init();
+          adapter.setMetadata('projectId', projectId);
           const connection = new Database(adapter, cache, {
             logger: LOG_LEVELS,
           });
-          connection.setPrefix(projectId);
           return connection;
         };
       },
@@ -218,7 +246,7 @@ export type GetProjectPG = (
     },
     {
       provide: GET_PROJECT_PG,
-      useFactory: (cache: Cache) => {
+      useFactory: () => {
         return (client: PoolClient, ctx?: Context) => {
           ctx = ctx ?? new Context();
           const connection = new DataSource(
@@ -229,7 +257,6 @@ export type GetProjectPG = (
           return connection;
         };
       },
-      inject: [CACHE],
     },
     {
       provide: GEO_DB,

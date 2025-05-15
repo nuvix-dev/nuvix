@@ -68,7 +68,7 @@ export class ProjectService {
     @InjectQueue('projects')
     private readonly projectQueue: Queue<ProjectQueueOptions, any, ProjectJobs>,
     private readonly jwtService: JwtService,
-  ) { }
+  ) {}
 
   private readonly logger = new Logger(ProjectService.name);
 
@@ -77,12 +77,21 @@ export class ProjectService {
    */
   async create(data: CreateProjectDTO): Promise<Document> {
     const projectId =
-      data.projectId === 'unique()'
-        ? ID.unique()
-        : ID.custom(data.projectId);
+      data.projectId === 'unique()' ? ID.unique() : ID.custom(data.projectId);
     const {
-      teamId, password, name, description, logo, region,
-      url, legalAddress, legalCity, legalCountry, legalName, legalState, legalTaxId
+      teamId,
+      password,
+      name,
+      description,
+      logo,
+      region,
+      url,
+      legalAddress,
+      legalCity,
+      legalCountry,
+      legalName,
+      legalState,
+      legalTaxId,
     } = data;
 
     try {
@@ -128,18 +137,10 @@ export class ProjectService {
         $id: projectId,
         $permissions: [
           Permission.read(Role.team(ID.custom(teamId))),
-          Permission.update(
-            Role.team(ID.custom(teamId), 'owner'),
-          ),
-          Permission.update(
-            Role.team(ID.custom(teamId), 'developer'),
-          ),
-          Permission.delete(
-            Role.team(ID.custom(teamId), 'owner'),
-          ),
-          Permission.delete(
-            Role.team(ID.custom(teamId), 'developer'),
-          ),
+          Permission.update(Role.team(ID.custom(teamId), 'owner')),
+          Permission.update(Role.team(ID.custom(teamId), 'developer')),
+          Permission.delete(Role.team(ID.custom(teamId), 'owner')),
+          Permission.delete(Role.team(ID.custom(teamId), 'developer')),
         ],
         teamId: org.getId(),
         teamInternalId: org.getInternalId(),
@@ -163,66 +164,17 @@ export class ProjectService {
         services: defaultServices,
         accessedAt: new Date(),
         version: APP_VERSION_STABLE,
-        database: 'undefiend', // Will be updated after database creation
+        database: {
+          password,
+          // Will be set in the project queue
+          // name
+          // host, port,
+        },
+        enabled: true,
+        status: 'pending',
       });
 
       project = await this.db.createDocument('projects', project);
-
-      const pool = await this.getPool('root', {} as any);
-      const dbName = `project_${project.getInternalId()}`;
-
-      try {
-        const checkResult = await pool.query(
-          `SELECT 1 FROM pg_database WHERE datname = $1`,
-          [dbName],
-        );
-
-        if (checkResult.rowCount === 0) {
-          await pool.query(`CREATE DATABASE ${dbName}`);
-          this.logger.log(`Created database: ${dbName}`);
-        }
-
-        project = await this.db.updateDocument(
-          'projects',
-          project.getId(),
-          project.setAttribute('database', dbName),
-        );
-        await this.db.purgeCachedDocument('projects', project.getId());
-      } catch (error) {
-        this.logger.error(
-          `Failed to create database: ${error.message}`,
-          error.stack,
-        );
-        throw new Exception(
-          Exception.GENERAL_SERVER_ERROR,
-          'Failed to create project database',
-        );
-      } finally {
-        // Always release the connection
-        // TODO: ----
-      }
-
-      const projectPool = await this.getPool(project.getId(), {
-        database: dbName,
-      });
-      const client = await projectPool.connect();
-      const projectPg = this.getProjectPg(client);
-
-      try {
-        await projectPg.init();
-      } catch (e) {
-        this.logger.error(e);
-        throw new Exception(
-          Exception.GENERAL_SERVER_ERROR,
-          `Failed to initialize project database.`,
-        );
-      }
-
-      try {
-        client.release();
-      } catch {
-        /** noop */
-      }
 
       await this.projectQueue.add('init', {
         project,
@@ -1242,19 +1194,19 @@ export class ProjectService {
 
     const smtp = input.enabled
       ? {
-        enabled: input.enabled,
-        senderName: input.senderName,
-        senderEmail: input.senderEmail,
-        replyTo: input.replyTo,
-        host: input.host,
-        port: input.port,
-        username: input.username,
-        password: input.password,
-        secure: input.secure,
-      }
+          enabled: input.enabled,
+          senderName: input.senderName,
+          senderEmail: input.senderEmail,
+          replyTo: input.replyTo,
+          host: input.host,
+          port: input.port,
+          username: input.username,
+          password: input.password,
+          secure: input.secure,
+        }
       : {
-        enabled: false,
-      };
+          enabled: false,
+        };
 
     project = await this.db.updateDocument(
       'projects',

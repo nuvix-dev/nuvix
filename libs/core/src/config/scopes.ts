@@ -22,8 +22,8 @@ const consoleScopes = {
   },
   'organization.delete': {
     description: 'Access to delete organization',
-  }
-}
+  },
+};
 
 export const scopes = {
   // List of publicly visible scopes
@@ -312,4 +312,4 @@ export const scopes = {
     description: 'Access to delete a schema tables',
   },
   ...consoleScopes,
-}
+};

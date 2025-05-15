@@ -1,9 +1,4 @@
-import {
-  IsString,
-  IsNotEmpty,
-  IsOptional,
-  Length,
-} from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, Length } from 'class-validator';
 
 export class CreateProjectDTO {
   @IsString()
@@ -21,7 +16,7 @@ export class CreateProjectDTO {
   @IsString()
   @IsNotEmpty()
   @Length(6)
-  password: string
+  password: string;
 
   @IsString()
   @IsNotEmpty()

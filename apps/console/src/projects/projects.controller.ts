@@ -60,14 +60,12 @@ import { ResModel, Scope } from '@nuvix/core/decorators';
 @UseGuards(AuthGuard)
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class ProjectsController {
-  constructor(private readonly projectService: ProjectService) { }
+  constructor(private readonly projectService: ProjectService) {}
 
   @Post()
   @Scope('project.create')
   @ResModel(Models.PROJECT)
-  async create(
-    @Body() createProjectDTO: CreateProjectDTO,
-  ) {
+  async create(@Body() createProjectDTO: CreateProjectDTO) {
     const project = await this.projectService.create(createProjectDTO);
     return project;
   }

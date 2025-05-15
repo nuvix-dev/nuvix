@@ -1,1 +1,1 @@
-export * from "@nuvix/utils/collections";
+export { default } from '@nuvix/utils/collections';
