@@ -54,25 +54,27 @@ import { ParseQueryPipe } from '@nuvix/core/pipes/query.pipe';
 import type { Query as Queries } from '@nuvix/database';
 import { AuthGuard } from '@nuvix/core/resolvers/guards/auth.guard';
 import { ConsoleInterceptor } from '@nuvix/core/resolvers/interceptors/console.interceptor';
-import { ResModel } from '@nuvix/core/decorators';
+import { ResModel, Scope } from '@nuvix/core/decorators';
 
 @Controller({ version: ['1'], path: 'projects' })
 @UseGuards(AuthGuard)
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class ProjectsController {
-  constructor(private readonly projectService: ProjectService) {}
+  constructor(private readonly projectService: ProjectService) { }
 
   @Post()
+  @Scope('project.create')
+  @ResModel(Models.PROJECT)
   async create(
     @Body() createProjectDTO: CreateProjectDTO,
-    @Req() req: NuvixRequest,
   ) {
     const project = await this.projectService.create(createProjectDTO);
     return project;
   }
 
   @Get()
-  @ResModel({ type: Models.PROJECT, list: true })
+  @Scope('project.read')
+  @ResModel(Models.PROJECT, { list: true })
   async findAll(
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
@@ -82,6 +84,7 @@ export class ProjectsController {
   }
 
   @Get(':id')
+  @Scope('project.read')
   @ResModel(Models.PROJECT)
   async findOne(@Param('id') id: string) {
     const project = await this.projectService.findOne(id);
@@ -90,6 +93,7 @@ export class ProjectsController {
   }
 
   @Patch(':id')
+  @Scope('project.update')
   @ResModel(Models.PROJECT)
   async update(
     @Param('id') id: string,
@@ -99,6 +103,7 @@ export class ProjectsController {
   }
 
   @Delete(':id')
+  @Scope('project.delete')
   @ResModel(Models.NONE)
   remove(@Param('id') id: string) {
     return this.projectService.remove(id);

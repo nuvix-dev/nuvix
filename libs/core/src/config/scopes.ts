@@ -1,3 +1,30 @@
+const consoleScopes = {
+  'project.create': {
+    description: 'Access to create project',
+  },
+  'project.read': {
+    description: 'Access to read project details',
+  },
+  'project.update': {
+    description: 'Access to update project settings',
+  },
+  'project.delete': {
+    description: 'Access to delete project',
+  },
+  'organization.create': {
+    description: 'Access to create organization',
+  },
+  'organization.read': {
+    description: 'Access to read organization details',
+  },
+  'organization.update': {
+    description: 'Access to update organization settings',
+  },
+  'organization.delete': {
+    description: 'Access to delete organization',
+  }
+}
+
 export const scopes = {
   // List of publicly visible scopes
   account: {
@@ -284,4 +311,5 @@ export const scopes = {
   'schema.tables.delete': {
     description: 'Access to delete a schema tables',
   },
-};
+  ...consoleScopes,
+}

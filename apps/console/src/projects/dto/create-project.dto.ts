@@ -1,13 +1,9 @@
 import {
   IsString,
   IsNotEmpty,
-  IsArray,
-  ValidateNested,
-  ArrayMinSize,
-  IsEmpty,
   IsOptional,
+  Length,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 
 export class CreateProjectDTO {
   @IsString()
@@ -24,41 +20,46 @@ export class CreateProjectDTO {
 
   @IsString()
   @IsNotEmpty()
+  @Length(6)
+  password: string
+
+  @IsString()
+  @IsNotEmpty()
   region: string;
 
   @IsOptional()
   @IsString()
-  description: string;
+  description?: string;
 
   @IsOptional()
   @IsString()
-  logo: string;
+  logo?: string;
 
   @IsOptional()
   @IsString()
-  url: string;
+  url?: string;
 
   @IsOptional()
   @IsString()
-  legalName: string;
+  legalName?: string;
 
   @IsOptional()
   @IsString()
-  legalCountry: string;
+  legalCountry?: string;
 
   @IsOptional()
   @IsString()
-  legalState: string;
+  legalState?: string;
 
   @IsOptional()
   @IsString()
-  legalCity: string;
+  legalCity?: string;
 
   @IsOptional()
   @IsString()
-  legalAddress: string;
+  legalAddress?: string;
 
   @IsOptional()
   @IsString()
-  legalTaxId: string;
+  legalTaxId?: string;
 }

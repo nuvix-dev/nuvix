@@ -68,20 +68,25 @@ export class ProjectService {
     @InjectQueue('projects')
     private readonly projectQueue: Queue<ProjectQueueOptions, any, ProjectJobs>,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   private readonly logger = new Logger(ProjectService.name);
 
   /**
    * Create a new project.
    */
-  async create(createProjectDTO: CreateProjectDTO): Promise<Document> {
+  async create(data: CreateProjectDTO): Promise<Document> {
     const projectId =
-      createProjectDTO.projectId === 'unique()'
+      data.projectId === 'unique()'
         ? ID.unique()
-        : ID.custom(createProjectDTO.projectId);
+        : ID.custom(data.projectId);
+    const {
+      teamId, password, name, description, logo, region,
+      url, legalAddress, legalCity, legalCountry, legalName, legalState, legalTaxId
+    } = data;
+
     try {
-      const org = await this.db.getDocument('teams', createProjectDTO.teamId);
+      const org = await this.db.getDocument('teams', teamId);
 
       if (!org || org.isEmpty())
         throw new Exception(
@@ -122,33 +127,33 @@ export class ProjectService {
       let project = new Document({
         $id: projectId,
         $permissions: [
-          Permission.read(Role.team(ID.custom(createProjectDTO.teamId))),
+          Permission.read(Role.team(ID.custom(teamId))),
           Permission.update(
-            Role.team(ID.custom(createProjectDTO.teamId), 'owner'),
+            Role.team(ID.custom(teamId), 'owner'),
           ),
           Permission.update(
-            Role.team(ID.custom(createProjectDTO.teamId), 'developer'),
+            Role.team(ID.custom(teamId), 'developer'),
           ),
           Permission.delete(
-            Role.team(ID.custom(createProjectDTO.teamId), 'owner'),
+            Role.team(ID.custom(teamId), 'owner'),
           ),
           Permission.delete(
-            Role.team(ID.custom(createProjectDTO.teamId), 'developer'),
+            Role.team(ID.custom(teamId), 'developer'),
           ),
         ],
         teamId: org.getId(),
         teamInternalId: org.getInternalId(),
-        name: createProjectDTO.name,
-        region: createProjectDTO.region,
-        description: createProjectDTO.description ?? null,
-        logo: createProjectDTO.logo ?? null,
-        url: createProjectDTO.url ?? null,
-        legalName: createProjectDTO.legalName ?? null,
-        legalCity: createProjectDTO.legalCity ?? null,
-        legalAddress: createProjectDTO.legalAddress ?? null,
-        legalCountry: createProjectDTO.legalCountry ?? null,
-        legalState: createProjectDTO.legalState ?? null,
-        legalTaxId: createProjectDTO.legalTaxId ?? null,
+        name: name,
+        region: region,
+        description: description ?? null,
+        logo: logo ?? null,
+        url: url ?? null,
+        legalName: legalName ?? null,
+        legalCity: legalCity ?? null,
+        legalAddress: legalAddress ?? null,
+        legalCountry: legalCountry ?? null,
+        legalState: legalState ?? null,
+        legalTaxId: legalTaxId ?? null,
         platforms: [],
         oAuthProviders: defaultoAuthProviders,
         webhooks: [],
@@ -1237,19 +1242,19 @@ export class ProjectService {
 
     const smtp = input.enabled
       ? {
-          enabled: input.enabled,
-          senderName: input.senderName,
-          senderEmail: input.senderEmail,
-          replyTo: input.replyTo,
-          host: input.host,
-          port: input.port,
-          username: input.username,
-          password: input.password,
-          secure: input.secure,
-        }
+        enabled: input.enabled,
+        senderName: input.senderName,
+        senderEmail: input.senderEmail,
+        replyTo: input.replyTo,
+        host: input.host,
+        port: input.port,
+        username: input.username,
+        password: input.password,
+        secure: input.secure,
+      }
       : {
-          enabled: false,
-        };
+        enabled: false,
+      };
 
     project = await this.db.updateDocument(
       'projects',
