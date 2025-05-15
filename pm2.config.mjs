@@ -31,6 +31,7 @@ export const apps = [
     instances: 2, // `max` Scale to use all available CPUs
     exec_mode: 'cluster',
     autorestart: true,
+interpreter: "bun",
     max_memory_restart: '1G', // Restart if memory exceeds 1GB
     env: {
       ...shared,
@@ -47,6 +48,7 @@ export const apps = [
     watch: false,
     instances: 1,
     exec_mode: 'fork',
+interpreter: "bun",
     autorestart: true,
     max_memory_restart: '500M', // Restart if memory exceeds 500MB
     env: {
