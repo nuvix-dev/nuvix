@@ -70,6 +70,14 @@ export class ProjectsController {
     return project;
   }
 
+  @Post('retry')
+  @Scope('project.create')
+  @ResModel(Models.PROJECT)
+  async retry(@Body() data: any) {
+    const project = await this.projectService.retry(data);
+    return project;
+  }
+
   @Get()
   @Scope('project.read')
   @ResModel(Models.PROJECT, { list: true })

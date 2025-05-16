@@ -20,7 +20,7 @@ import { HttpModule } from '@nestjs/axios';
       defaultJobOptions: {
         removeOnComplete: true,
         removeOnFail: true,
-        attempts: 3,
+        attempts: 1,
         backoff: {
           type: 'exponential',
           delay: 1000,

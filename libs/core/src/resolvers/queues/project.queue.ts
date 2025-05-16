@@ -67,26 +67,28 @@ export class ProjectQueue extends Queue {
       );
 
       if (checkResult.rowCount === 0) {
-        await client.query(`CREATE DATABASE ${projectDatabase}`);
+        await client.query(`CREATE DATABASE "${projectDatabase}"`);
         this.logger.log(`Created database: ${projectDatabase}`);
       }
 
-      // Create admin role with full privileges
+      // 2. Create admin role with full privileges
+      this.logger.debug('NOW CREATING ADMIN ROLE')
       await client.query(
-        `CREATE ROLE "${projectAdmin}" WITH LOGIN PASSWORD $1 CREATEROLE NOCREATEDB`,
-        [APP_POSTGRES_PASSWORD],
+        `CREATE ROLE "${projectAdmin}" WITH LOGIN PASSWORD '${APP_POSTGRES_PASSWORD}' CREATEROLE NOCREATEDB`,
       );
+      this.logger.debug('ASSIGINING OWNERSHIP')
       await client.query(
-        `ALTER DATABASE ${projectDatabase} OWNER TO ${projectAdmin};`,
+        `ALTER DATABASE "${projectDatabase}" OWNER TO "${projectAdmin}"`,
       );
 
-      // Create user role with limited privileges
+      // 3. Create user role with limited privileges
+      this.logger.debug('SECOND USER')
       await client.query(
-        `CREATE ROLE "${projectUser}" WITH LOGIN PASSWORD $1 NOCREATEDB NOCREATEROLE NOREPLICATION`,
-        [projectPassword],
+        `CREATE ROLE "${projectUser}" WITH LOGIN PASSWORD '${projectPassword}' NOCREATEDB NOCREATEROLE NOREPLICATION`,
       );
+      this.logger.debug('GRANTING...')
       await client.query(
-        `GRANT CONNECT ON DATABASE ${projectDatabase} TO ${projectUser};`,
+        `GRANT CONNECT ON DATABASE "${projectDatabase}" TO "${projectUser}"`,
       );
 
       try {
@@ -97,6 +99,36 @@ export class ProjectQueue extends Queue {
         }
       } catch (e) {
         this.logger.error(e);
+      }
+
+      const requestBody = {
+        dbName: projectDatabase,
+        options: {
+          users: [
+            { username: projectAdmin, password: APP_POSTGRES_PASSWORD },
+            { username: projectUser, password: projectPassword },
+          ],
+          shard: {
+            servers: [[projectHost, parseInt(process.env.APP_CLUSTER_PORT, 10), 'primary']],
+            database: projectDatabase,
+          },
+        },
+      }
+      console.log(requestBody)
+      // Create the database in the pool
+      // [noop] not a good solution but it works for now!
+      const res = await this.httpService.axiosRef.post(
+        `${APP_INTERNAL_POOL_API}/config/add-db`,
+        requestBody,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (res.status > 300) {
+        throw new Error('Failed to add database to the pool');
       }
 
       // Init the database
@@ -146,7 +178,7 @@ export class ProjectQueue extends Queue {
         await dataSource.execute(`
           -- Grant read-only access to internal schemas
           ${INTERNAL_SCHEMAS.map(
-            schema => `
+          schema => `
             GRANT USAGE ON SCHEMA ${schema} TO "${projectUser}";
             GRANT SELECT ON ALL TABLES IN SCHEMA ${schema} TO "${projectUser}";
             GRANT SELECT ON ALL SEQUENCES IN SCHEMA ${schema} TO "${projectUser}";
@@ -160,7 +192,7 @@ export class ProjectQueue extends Queue {
             ALTER DEFAULT PRIVILEGES FOR ROLE "${projectAdmin}" IN SCHEMA ${schema}
             GRANT EXECUTE ON FUNCTIONS TO "${projectUser}";
           `,
-          ).join('\n')}
+        ).join('\n')}
           
           -- Grant full access to public schema only
           GRANT USAGE ON SCHEMA public TO "${projectUser}";
@@ -190,36 +222,8 @@ export class ProjectQueue extends Queue {
           try {
             dataSource.getClient().release();
             projectPool.end();
-          } catch {}
+          } catch { }
         }
-      }
-
-      // Create the database in the pool
-      // [noop] not a good solution but it works for now!
-      const res = await this.httpService.axiosRef.post(
-        `${APP_INTERNAL_POOL_API}/config/add-db`,
-        {
-          dbName: projectDatabase,
-          options: {
-            users: [
-              { username: projectAdmin, password: APP_POSTGRES_PASSWORD },
-              { username: projectUser, password: projectPassword },
-            ],
-            shard: {
-              servers: [[projectHost, projectPort, 'primary']],
-              database: projectDatabase,
-            },
-          },
-        },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-
-      if (res.status > 300) {
-        throw new Error('Failed to add database to the pool');
       }
 
       project = await this.db.updateDocument(
@@ -277,7 +281,7 @@ export class ProjectQueue extends Queue {
 
       try {
         await adminPool.end();
-      } catch {}
+      } catch { }
     } catch (error) {
       this.logger.error(
         `Failed to create database: ${error.message}`,
@@ -305,7 +309,7 @@ export class ProjectQueue extends Queue {
       if (client) {
         try {
           client.release();
-        } catch {}
+        } catch { }
       }
     }
     this.logger.log(`Project ${project.getId()} successfully initialized.`);
@@ -319,7 +323,7 @@ export class ProjectQueue extends Queue {
   @OnWorkerEvent('failed')
   onFailed(job: Job, err: any) {
     this.logger.error(
-      `Job ${job.id} of type ${job.name} failed with error: ${err.message}`,
+      `Job ${job.id} of type ${job.name} failed with error: ${JSON.stringify(err)}`,
     );
   }
 }
