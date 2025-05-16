@@ -51,7 +51,7 @@ export class AccountService {
     @Inject(DB_FOR_CONSOLE) private readonly db: Database,
     @InjectQueue(WORKER_TYPE_MAILS)
     private readonly mailQueue: Queue<MailQueueOptions, MailJobs>,
-  ) { }
+  ) {}
 
   /**
    * Create a new account
@@ -210,8 +210,9 @@ export class AccountService {
     Authorization.setRole(Role.user(user.getId()).toString());
     Authorization.setRole(Role.users().toString());
 
-    const templatePath =
-      path.join(PROJECT_ROOT + 'assets/locale/templates/email-account-create.tpl');
+    const templatePath = path.join(
+      PROJECT_ROOT + 'assets/locale/templates/email-account-create.tpl',
+    );
     const templateSource = fs.readFileSync(templatePath, 'utf8');
     const template = Template.compile(templateSource);
 
@@ -664,9 +665,9 @@ export class AccountService {
     sessionId =
       sessionId === 'current'
         ? (Auth.sessionVerify(
-          user.getAttribute('sessions'),
-          Auth.secret,
-        ) as string)
+            user.getAttribute('sessions'),
+            Auth.secret,
+          ) as string)
         : sessionId;
 
     for (const session of sessions) {
@@ -754,9 +755,9 @@ export class AccountService {
     sessionId =
       sessionId === 'current'
         ? (Auth.sessionVerify(
-          user.getAttribute('sessions'),
-          Auth.secret,
-        ) as string)
+            user.getAttribute('sessions'),
+            Auth.secret,
+          ) as string)
         : sessionId;
 
     const sessions = user.getAttribute('sessions', []);

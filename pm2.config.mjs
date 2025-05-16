@@ -2,7 +2,6 @@ import { parse } from 'dotenv';
 import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 
-// Enhanced environment variable loading with better error handling
 const loadEnvFile = (envPath) => {
   const fullPath = resolve(process.cwd(), envPath);
   try {
@@ -18,7 +17,6 @@ const loadEnvFile = (envPath) => {
   }
 };
 
-// Load configurations with fallbacks
 const shared = loadEnvFile('.env');
 const api = loadEnvFile('.env.api');
 const consoleEnv = loadEnvFile('.env.console');
