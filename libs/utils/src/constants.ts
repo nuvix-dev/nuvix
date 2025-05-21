@@ -3,12 +3,10 @@ import * as fs from 'fs';
 import { ServerConfig } from './types';
 import { config } from 'dotenv';
 import { fileURLToPath } from 'url';
-if (process.env.NODE_ENV !== 'production') {
-  // Load environment variables from .env file in development mode
-  config();
-}
+import { Logger } from '@nestjs/common';
 
-// Find project root directory (where package.json is located)
+config();
+
 /**
  * Finds the project root directory by traversing up the directory tree
  * until a package.json file is found
@@ -60,7 +58,7 @@ export const ASSETS = {
   ROOT: path.join(PROJECT_ROOT, process.env.ASSETS_ROOT || 'assets'),
   IMAGES: path.join(PROJECT_ROOT, process.env.ASSETS_IMAGES || 'assets/images'),
   FONTS: path.join(PROJECT_ROOT, process.env.ASSETS_FONTS || 'assets/fonts'),
-  TEMPLATES: path.join(PROJECT_ROOT, 'assets/templates'),
+  TEMPLATES: path.join(PROJECT_ROOT, 'assets/locale/templates'),
   PUBLIC: path.join(PROJECT_ROOT, process.env.ASSETS_PUBLIC || 'public'),
   get: (relativePath: string) => path.join(PROJECT_ROOT, relativePath),
 };
@@ -73,7 +71,6 @@ export const APP_VERSION_STABLE = '1.0.0';
 export const APP_FUNCTION_SPECIFICATION_DEFAULT = 'default';
 export const APP_OPENSSL_KEY_1 = 'acd3462d9128abcd'; // 16-byte key for AES-128-GCM
 
-export const APP_REDIS_PATH = process.env.APP_REDIS_PATH;
 export const APP_REDIS_PORT = parseInt(
   process.env.APP_REDIS_PORT ?? '6379',
   10,

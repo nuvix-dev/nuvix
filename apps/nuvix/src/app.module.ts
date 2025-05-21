@@ -7,7 +7,6 @@ import {
   APP_REDIS_DB,
   APP_REDIS_HOST,
   APP_REDIS_PASSWORD,
-  APP_REDIS_PATH,
   APP_REDIS_PORT,
   APP_REDIS_SECURE,
   APP_REDIS_USER,
@@ -55,7 +54,6 @@ import { StorageController } from './storage/storage.controller';
   imports: [
     BullModule.forRoot({
       connection: {
-        path: APP_REDIS_PATH,
         port: APP_REDIS_PORT,
         host: APP_REDIS_HOST,
         username: APP_REDIS_USER,

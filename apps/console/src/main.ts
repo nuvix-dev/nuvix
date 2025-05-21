@@ -27,11 +27,15 @@ import { ErrorFilter } from '@nuvix/core/filters/globle-error.filter';
 import cookieParser from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
 import QueryString from 'qs';
+import path from 'path';
 
-if (process.env.NODE_ENV !== 'production') {
-  // Load environment variables from .env file in development mode
-  config();
-}
+config({
+  path: [
+    path.resolve(process.cwd(), '.env'),
+    path.resolve(process.cwd(), '.env.console'),
+  ],
+});
+
 Authorization.enableStorage();
 
 async function bootstrap() {
@@ -138,6 +142,14 @@ async function bootstrap() {
   });
 
   app.useGlobalFilters(new HttpExceptionFilter(), new ErrorFilter());
-  await app.listen(process.env.APP_CONSOLE_PORT ?? 4100, '127.0.0.1');
+
+  const port = parseInt(process.env.APP_CONSOLE_PORT, 10) || 4100;
+  const host = '0.0.0.0';
+  await app.listen(port, host);
+
+  Logger.log(
+    `🚀 Console API application is running on: http://${host}:${port}`,
+    'Bootstrap',
+  );
 }
 bootstrap();

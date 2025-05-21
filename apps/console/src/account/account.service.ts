@@ -16,10 +16,10 @@ import { Auth } from '@nuvix/core/helper/auth.helper';
 import { Detector } from '@nuvix/core/helper/detector.helper';
 import { PersonalDataValidator } from '@nuvix/core/validators/personal-data.validator';
 import {
+  ASSETS,
   CONSOLE_CONFIG,
   DB_FOR_CONSOLE,
   GEO_DB,
-  PROJECT_ROOT,
   SEND_TYPE_EMAIL,
   WORKER_TYPE_MAILS,
 } from '@nuvix/utils/constants';
@@ -36,7 +36,7 @@ import { CreateEmailSessionDTO } from './DTO/session.dto';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import * as Template from 'handlebars';
-import * as fs from 'fs';
+import * as fs from 'fs/promises';
 import {
   MailJobs,
   MailQueueOptions,
@@ -211,9 +211,10 @@ export class AccountService {
     Authorization.setRole(Role.users().toString());
 
     const templatePath = path.join(
-      PROJECT_ROOT + 'assets/locale/templates/email-account-create.tpl',
+      ASSETS.TEMPLATES,
+      'email-account-create.tpl',
     );
-    const templateSource = fs.readFileSync(templatePath, 'utf8');
+    const templateSource = await fs.readFile(templatePath, 'utf8');
     const template = Template.compile(templateSource);
 
     const body = template({

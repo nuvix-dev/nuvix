@@ -10,7 +10,6 @@ import {
   GEO_DB,
   CACHE_DB,
   CACHE,
-  APP_REDIS_PATH,
   APP_REDIS_PORT,
   APP_REDIS_HOST,
   APP_REDIS_USER,
@@ -152,7 +151,6 @@ export type GetProjectPG = (
       useFactory: async () => {
         const connection = new IORedis({
           connectionName: CACHE_DB.toString(),
-          path: APP_REDIS_PATH,
           port: APP_REDIS_PORT,
           host: APP_REDIS_HOST,
           username: APP_REDIS_USER,

@@ -31,7 +31,7 @@ export const apps = [
     exec_mode: 'cluster',
     autorestart: true,
     interpreter: "bun",
-    max_memory_restart: '1G', // Restart if memory exceeds 1GB
+    max_memory_restart: '2G', // Restart if memory exceeds 2GB
     env: {
       ...extra,
       ...shared,
@@ -50,7 +50,7 @@ export const apps = [
     exec_mode: 'fork',
     interpreter: "bun",
     autorestart: true,
-    max_memory_restart: '500M', // Restart if memory exceeds 500MB
+    max_memory_restart: '1G', // Restart if memory exceeds 1GB
     env: {
       ...extra,
       ...shared,

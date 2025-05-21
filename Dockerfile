@@ -33,7 +33,4 @@ CMD ["bun", "--bun", "run", "start:dev", "console"]
 FROM base AS production
 WORKDIR /app
 
-RUN bun run build nuvix console
-RUN bun add --global pm2
-
-CMD ["pm2-runtime", "pm2.config.mjs"]
+RUN bun --bun run build nuvix console
