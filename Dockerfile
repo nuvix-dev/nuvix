@@ -26,9 +26,6 @@ WORKDIR /app
 EXPOSE 4000
 EXPOSE 4100
 
-CMD ["bun", "--bun", "run", "start:dev"]
-CMD ["bun", "--bun", "run", "start:dev", "console"]
-
 # -------- Stage 4: Production Stage --------
 FROM base AS production
 WORKDIR /app

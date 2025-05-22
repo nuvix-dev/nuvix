@@ -1,7 +1,15 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Database, Document, Permission, Query, Role } from '@nuvix/database';
 import collections from '@nuvix/core/collections';
-import { DB_FOR_CONSOLE } from '@nuvix/utils/constants';
+import {
+  DB_FOR_CONSOLE,
+  APP_DATABASE_HOST,
+  APP_DATABASE_USER,
+  APP_DATABASE_PASSWORD,
+  APP_DATABASE_NAME,
+  APP_DATABASE_PORT,
+} from '@nuvix/utils/constants';
+import { createPool } from 'mysql2/promise';
 
 @Injectable()
 export class ConsoleService {
@@ -244,7 +252,22 @@ export class ConsoleService {
 
   async initConsole() {
     try {
-      await this.dbForConsole.create();
+      try {
+        const pool = createPool({
+          host: APP_DATABASE_HOST,
+          user: APP_DATABASE_USER,
+          password: APP_DATABASE_PASSWORD,
+          port: APP_DATABASE_PORT,
+        });
+        await pool.query(
+          `CREATE DATABASE IF NOT EXISTS \`${this.dbForConsole.getDatabase()}\`;`,
+        );
+        await this.dbForConsole.create();
+        await pool.end();
+      } catch (e) {
+        this.logger.error(e);
+      }
+      this.logger.log(`[Setup] - Starting...`);
       const consoleCollections = collections.console;
       for (const [key, collection] of Object.entries(
         consoleCollections,
@@ -376,5 +399,9 @@ export class ConsoleService {
     }
 
     return true;
+  }
+
+  async resetConsole() {
+    return await this.dbForConsole.delete();
   }
 }

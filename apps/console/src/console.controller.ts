@@ -154,4 +154,10 @@ export class ConsoleController {
   async init() {
     return await this.consoleService.initConsole();
   }
+
+  @Get('reset')
+  @Public()
+  async reset() {
+    return await this.consoleService.resetConsole();
+  }
 }

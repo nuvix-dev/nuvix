@@ -1,0 +1,52 @@
+services:
+  nuvix-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: nuvix-api-dev
+    command: ["bun", "--bun", "run", "start:dev","nuvix"]
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "4000:4000"
+    environment:
+      - NODE_ENV=development
+      - APP_DATABASE_HOST=mariadb
+      - APP_REDIS_HOST=valkey
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    networks:
+      - nuvix
+      - caddy
+    restart: unless-stopped # Or 'no' for dev if you prefer manual restarts
+
+  console-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development 
+    container_name: console-api-dev
+    command: ["bun", "--bun", "run", "start:dev", "console"]
+    volumes:
+      - .:/app
+      - /app/node_modules
+    ports:
+      - "4100:4100"
+    environment:
+      - NODE_ENV=development
+      - APP_DATABASE_HOST=mariadb
+      - APP_REDIS_HOST=valkey
+    depends_on:
+      mariadb:
+        condition: service_healthy
+      valkey:
+        condition: service_healthy
+    networks:
+      - nuvix
+      - caddy
+    restart: unless-stopped
