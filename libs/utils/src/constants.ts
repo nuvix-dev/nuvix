@@ -456,4 +456,4 @@ export const EVENT_SESSIONS_DELETE = 'sessions' + EVENT_DELIMITER + 'delete';
 export const EVENT_SESSION_UPDATE = 'session' + EVENT_DELIMITER + 'update';
 
 // CLOUD
-GOOGLE_CLOUD_API = process.env.GOOGLE_CLOUD_API;
+export const GOOGLE_CLOUD_API = process.env.GOOGLE_CLOUD_API;

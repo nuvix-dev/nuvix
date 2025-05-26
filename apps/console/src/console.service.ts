@@ -8,8 +8,17 @@ import {
   APP_DATABASE_PASSWORD,
   APP_DATABASE_NAME,
   APP_DATABASE_PORT,
+  WORKER_TYPE_MAILS,
+  ASSETS,
+  SEND_TYPE_EMAIL,
 } from '@nuvix/utils/constants';
 import { createPool } from 'mysql2/promise';
+import { MailQueueOptions, MailJobs } from '@nuvix/core/resolvers/queues';
+import { Queue } from 'bullmq';
+import path from 'path';
+import * as Template from 'handlebars';
+import * as fs from 'fs/promises';
+import { InjectQueue } from '@nestjs/bullmq';
 
 @Injectable()
 export class ConsoleService {
@@ -17,7 +26,8 @@ export class ConsoleService {
 
   constructor(
     @Inject(DB_FOR_CONSOLE) private readonly dbForConsole: Database,
-  ) {}
+    @InjectQueue(WORKER_TYPE_MAILS) private readonly mailQueue: Queue<MailQueueOptions, MailJobs>,
+  ) { }
 
   async createPlan() {
     const plans = [
@@ -403,5 +413,32 @@ export class ConsoleService {
 
   async resetConsole() {
     return await this.dbForConsole.delete();
+  }
+
+  async testSmtp() {
+    const templatePath = path.join(
+      ASSETS.TEMPLATES,
+      'email-account-create.tpl',
+    );
+    const templateSource = await fs.readFile(templatePath, 'utf8');
+    const template = Template.compile(templateSource);
+
+    const body = template({
+      name: 'User',
+      verification_link: '#',
+    });
+
+    const vars = {
+      date: new Date().toDateString(),
+      year: new Date().getFullYear(),
+    };
+
+    await this.mailQueue.add(SEND_TYPE_EMAIL, {
+      subject: 'Account Created! Start Exploring Nuvix Now ⚡',
+      email: 'ravikantsaini047@gmail.com',
+      body: body,
+      variables: vars,
+    });
+
   }
 }

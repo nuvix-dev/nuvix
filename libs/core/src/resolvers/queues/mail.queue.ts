@@ -89,13 +89,14 @@ export class MailQueue extends Queue {
         }
 
         const protocol =
-          process.env._APP_OPTIONS_FORCE_HTTPS === 'disabled'
+          process.env.APP_OPTIONS_FORCE_HTTPS === 'disabled'
             ? 'http'
             : 'https';
-        const hostname = process.env._APP_DOMAIN;
+        const hostname = process.env.APP_DOMAIN;
         const templateVariables = {
           ...variables,
           host: `${protocol}://${hostname}`,
+          img_host: hostname,
           subject,
           year: new Date().getFullYear(),
         };

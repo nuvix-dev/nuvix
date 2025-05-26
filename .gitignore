@@ -47,6 +47,8 @@ lerna-debug.log*
 .env.production.local
 .env.local
 
+google-access-key.json
+
 # temp directory
 .temp
 .tmp
