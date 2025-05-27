@@ -17,7 +17,7 @@ import { ResModel } from '@nuvix/core/decorators';
 @UseGuards(AuthGuard)
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class ConsoleController {
-  constructor(private readonly consoleService: ConsoleService) { }
+  constructor(private readonly consoleService: ConsoleService) {}
 
   @Get()
   @Public()
@@ -164,6 +164,6 @@ export class ConsoleController {
   @Get('smtp')
   @Public()
   async getSmtp() {
-    return await this.consoleService.testSmtp()
+    return await this.consoleService.testSmtp();
   }
 }

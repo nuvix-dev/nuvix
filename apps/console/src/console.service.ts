@@ -26,8 +26,9 @@ export class ConsoleService {
 
   constructor(
     @Inject(DB_FOR_CONSOLE) private readonly dbForConsole: Database,
-    @InjectQueue(WORKER_TYPE_MAILS) private readonly mailQueue: Queue<MailQueueOptions, MailJobs>,
-  ) { }
+    @InjectQueue(WORKER_TYPE_MAILS)
+    private readonly mailQueue: Queue<MailQueueOptions, MailJobs>,
+  ) {}
 
   async createPlan() {
     const plans = [
@@ -439,6 +440,5 @@ export class ConsoleService {
       body: body,
       variables: vars,
     });
-
   }
 }

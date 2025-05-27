@@ -89,9 +89,7 @@ export class MailQueue extends Queue {
         }
 
         const protocol =
-          process.env.APP_OPTIONS_FORCE_HTTPS === 'disabled'
-            ? 'http'
-            : 'https';
+          process.env.APP_OPTIONS_FORCE_HTTPS === 'disabled' ? 'http' : 'https';
         const hostname = process.env.APP_DOMAIN;
         const templateVariables = {
           ...variables,
