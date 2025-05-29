@@ -40,7 +40,7 @@ export class ProjectQueue extends Queue {
     switch (job.name) {
       case 'init':
         const project = new Document(job.data.project as object);
-        return await this.initProject(project);
+        await this.initProject(project);
       default: // noop
     }
   }
@@ -48,7 +48,7 @@ export class ProjectQueue extends Queue {
   // Temp Setup (until infrastructure setup)
   private async initProject(project: Document): Promise<void> {
     const dbName = 'postgres';
-    const pool = await this.getPool('root', { max: 2 });
+    const pool = await this.getPool('root', { max: 10 });
     const client = await pool.connect();
 
     const projectHost = APP_POSTGRES_HOST;
@@ -77,7 +77,7 @@ export class ProjectQueue extends Queue {
         await dataSource.init();
       } catch (e) {
         this.logger.error(e);
-        throw new Error('Failed to initialize data source');
+        // throw new Error('Failed to initialize data source');
       }
 
       try {
@@ -115,6 +115,7 @@ export class ProjectQueue extends Queue {
         const db = this.getProjectDb(pool, project.getId());
         db.setDatabase(schema);
         await db.create(schema);
+        this.logger.log(`Created schema: ${schema}`);
         for (const [key, collection] of collections) {
           if (collection['$collection'] !== Database.METADATA) {
             continue;
@@ -129,8 +130,14 @@ export class ProjectQueue extends Queue {
           );
 
           try {
+            this.logger.log(
+              `Creating collection ${collection.$id} in schema ${schema} for project ${project.getId()}`,
+            );
             await db.createCollection(collection.$id, attributes, indexes);
           } catch (error) {
+            this.logger.error(
+              `Failed to create collection ${collection.$id} in schema ${schema} for project ${project.getId()}: ${error.message}`,
+            );
             if (!(error instanceof DuplicateException)) {
               throw error;
             }

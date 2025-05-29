@@ -66,6 +66,7 @@ export const ASSETS = {
 export const JWT_SECRET = process.env.JWT_SECRET;
 export const PYTHON_API_URL = process.env.PYTHON_API_URL;
 export const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+export const IS_PRODUCTION = process.env.NODE_ENV === 'production';
 
 export const APP_VERSION_STABLE = '1.0.0';
 export const APP_FUNCTION_SPECIFICATION_DEFAULT = 'default';

@@ -18,6 +18,7 @@ import {
 import {
   APP_DEBUG_COLORS,
   APP_DEBUG_FORMAT,
+  IS_PRODUCTION,
   LOG_LEVELS,
   PROJECT_ROOT,
   SERVER_CONFIG,
@@ -82,7 +83,9 @@ async function bootstrap() {
         json: APP_DEBUG_FORMAT,
         colors: APP_DEBUG_COLORS,
         prefix: 'Nuvix-Console',
-        logLevels: Object.keys(LOG_LEVELS) as LogLevel[],
+        logLevels: IS_PRODUCTION
+          ? (Object.keys(LOG_LEVELS) as LogLevel[])
+          : undefined,
       }),
       autoFlushLogs: true,
     },
