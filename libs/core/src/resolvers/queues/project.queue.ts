@@ -20,7 +20,6 @@ import {
 import collections from '@nuvix/core/collections';
 import { DataSource } from '@nuvix/pg';
 import { Exception } from '@nuvix/core/extend/exception';
-import { HttpService } from '@nestjs/axios';
 
 @Processor('projects')
 export class ProjectQueue extends Queue {
@@ -30,7 +29,6 @@ export class ProjectQueue extends Queue {
     @Inject(POOLS) private readonly getPool: PoolStoreFn,
     @Inject(GET_PROJECT_DB) private readonly getProjectDb: GetProjectDbFn,
     @Inject(DB_FOR_CONSOLE) private readonly db: Database,
-    private readonly httpService: HttpService,
   ) {
     super();
   }
@@ -47,111 +45,34 @@ export class ProjectQueue extends Queue {
     }
   }
 
+  // Temp Setup (until infrastructure setup)
   private async initProject(project: Document): Promise<void> {
-    const dbName = `project_${project.getInternalId()}`;
+    const dbName = 'postgres';
     const pool = await this.getPool('root', { max: 2 });
-    const roleSuffix = `${project.getInternalId()}_project`;
     const client = await pool.connect();
 
-    const projectAdmin = `nuvix_${roleSuffix}`;
-    const projectUser = `role_${roleSuffix}`;
-    const projectPassword = project.getAttribute('database').password;
     const projectHost = APP_POSTGRES_HOST;
     const projectPort = APP_POSTGRES_PORT;
     const projectDatabase = dbName;
 
     try {
-      const checkResult = await client.query(
-        `SELECT 1 FROM pg_database WHERE datname = $1`,
-        [projectDatabase],
+      project = await this.db.updateDocument(
+        'projects',
+        project.getId(),
+        project
+          .setAttribute('database', {
+            ...project.getAttribute('database'),
+            password: APP_POSTGRES_PASSWORD,
+            name: dbName,
+            host: APP_POSTGRES_HOST,
+            port: APP_POSTGRES_PORT,
+            adminRole: 'nuvix_admin',
+            userRole: 'postgres',
+          })
+          .setAttribute('status', 'active'),
       );
 
-      if (checkResult.rowCount === 0) {
-        await client.query(`CREATE DATABASE "${projectDatabase}"`);
-        this.logger.log(`Created database: ${projectDatabase}`);
-      }
-
-      // 2. Create admin role with full privileges
-      this.logger.debug('NOW CREATING ADMIN ROLE');
-      await client.query(`
-       DO $$
-       BEGIN
-         IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${projectAdmin}') THEN
-           CREATE ROLE "${projectAdmin}" WITH LOGIN PASSWORD '${APP_POSTGRES_PASSWORD}' NOCREATEDB CREATEROLE;
-         END IF;
-       END
-       $$;
-     `);
-
-      this.logger.debug('ASSIGNING OWNERSHIP');
-      await client.query(
-        `ALTER DATABASE "${projectDatabase}" OWNER TO "${projectAdmin}";`,
-      );
-
-      // 3. Create user role with limited privileges
-      this.logger.debug('SECOND USER');
-      await client.query(`
-        DO $$
-        BEGIN
-          IF NOT EXISTS (SELECT FROM pg_roles WHERE rolname = '${projectUser}') THEN
-            CREATE ROLE "${projectUser}" WITH LOGIN PASSWORD '${projectPassword}' NOCREATEDB NOCREATEROLE NOREPLICATION;
-          END IF;
-        END
-        $$;
-      `);
-
-      this.logger.debug('GRANTING...');
-      await client.query(
-        `GRANT CONNECT ON DATABASE "${projectDatabase}" TO "${projectUser}";`,
-      );
-
-      const requestBody = {
-        dbName: projectDatabase,
-        options: {
-          users: [
-            { username: projectAdmin, password: APP_POSTGRES_PASSWORD },
-            { username: projectUser, password: projectPassword },
-          ],
-          shard: {
-            servers: [
-              [
-                projectHost,
-                parseInt(process.env.APP_CLUSTER_PORT, 10),
-                'primary',
-              ],
-            ],
-            database: projectDatabase,
-          },
-        },
-      };
-      console.log(requestBody);
-      // Create the database in the pool
-      // [noop] not a good solution but it works for now!
-      const res = await this.httpService.axiosRef.post(
-        `${APP_INTERNAL_POOL_API}/config/add-db`,
-        requestBody,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        },
-      );
-      this.logger.debug('DONE REQUEST');
-      if (res.status > 300) {
-        throw new Error('Failed to add database to the pool');
-      }
-
-      // Init the database
-      const projectPool = await this.getPoolWithRetries(project, {
-        database: projectDatabase,
-        user: APP_POSTGRES_USER,
-        password: APP_POSTGRES_PASSWORD,
-        host: projectHost,
-        port: projectPort,
-        max: 2,
-      });
-
-      const dataSource = new DataSource(await projectPool.connect());
+      const dataSource = new DataSource(client);
       try {
         await dataSource.init();
       } catch (e) {
@@ -183,87 +104,15 @@ export class ProjectQueue extends Queue {
           'document',
           'This schema is used to store and manage messaging and notification data.',
         );
-
-        // Set up permissions for projectUser on public schema
-        await dataSource.execute(`
-          -- Grant read-only access to internal schemas
-          ${INTERNAL_SCHEMAS.map(
-            schema => `
-            GRANT USAGE ON SCHEMA ${schema} TO "${projectUser}";
-            GRANT SELECT ON ALL TABLES IN SCHEMA ${schema} TO "${projectUser}";
-            GRANT SELECT ON ALL SEQUENCES IN SCHEMA ${schema} TO "${projectUser}";
-            GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA ${schema} TO "${projectUser}";
-            
-            -- Set default privileges for future objects in internal schemas (read-only)
-            ALTER DEFAULT PRIVILEGES FOR ROLE "${projectAdmin}" IN SCHEMA ${schema}
-            GRANT SELECT ON TABLES TO "${projectUser}";
-            ALTER DEFAULT PRIVILEGES FOR ROLE "${projectAdmin}" IN SCHEMA ${schema}
-            GRANT SELECT ON SEQUENCES TO "${projectUser}";
-            ALTER DEFAULT PRIVILEGES FOR ROLE "${projectAdmin}" IN SCHEMA ${schema}
-            GRANT EXECUTE ON FUNCTIONS TO "${projectUser}";
-          `,
-          ).join('\n')}
-          
-          -- Grant full access to public schema only
-          GRANT USAGE ON SCHEMA public TO "${projectUser}";
-          GRANT ALL PRIVILEGES ON ALL TABLES IN SCHEMA public TO "${projectUser}";
-          GRANT ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA public TO "${projectUser}";
-          GRANT ALL PRIVILEGES ON ALL FUNCTIONS IN SCHEMA public TO "${projectUser}";
-
-          -- Set default privileges for future objects in public schema
-          ALTER DEFAULT PRIVILEGES FOR ROLE "${projectAdmin}" IN SCHEMA public
-          GRANT ALL PRIVILEGES ON TABLES TO "${projectUser}";
-          ALTER DEFAULT PRIVILEGES FOR ROLE "${projectAdmin}" IN SCHEMA public
-          GRANT ALL PRIVILEGES ON SEQUENCES TO "${projectUser}";
-          ALTER DEFAULT PRIVILEGES FOR ROLE "${projectAdmin}" IN SCHEMA public
-          GRANT ALL PRIVILEGES ON FUNCTIONS TO "${projectUser}";
-          
-          -- Revoke schema creation permission from projectUser
-          REVOKE CREATE ON DATABASE ${projectDatabase} FROM "${projectUser}";
-
-          -- Revoke all privileges on the system schema
-          REVOKE ALL PRIVILEGES ON SCHEMA ${SYSTEM_SCHEMA} FROM "${projectUser}";
-        `);
       } catch (e) {
         this.logger.error(e);
         throw new Error('Failed to create schemas and set permissions');
-      } finally {
-        if (projectPool) {
-          try {
-            dataSource.getClient().release();
-            projectPool.end();
-          } catch {}
-        }
       }
-
-      project = await this.db.updateDocument(
-        'projects',
-        project.getId(),
-        project
-          .setAttribute('database', {
-            ...project.getAttribute('database'),
-            name: dbName,
-            host: APP_POSTGRES_HOST,
-            port: APP_POSTGRES_PORT,
-            adminRole: projectAdmin,
-            userRole: projectUser,
-          })
-          .setAttribute('status', 'active'),
-      );
-
-      const adminPool = await this.getPool(project.getId(), {
-        database: projectDatabase,
-        user: projectAdmin,
-        password: APP_POSTGRES_PASSWORD,
-        host: projectHost,
-        port: projectPort,
-        max: 2,
-      });
 
       const schemas = Object.entries(collections.project) ?? [];
       for (const [schema, $collections] of schemas) {
         const collections = Object.entries($collections) ?? [];
-        const db = this.getProjectDb(adminPool, project.getId());
+        const db = this.getProjectDb(pool, project.getId());
         db.setDatabase(schema);
         await db.create(schema);
         for (const [key, collection] of collections) {
@@ -288,28 +137,10 @@ export class ProjectQueue extends Queue {
           }
         }
       }
-
-      try {
-        await adminPool.end();
-      } catch {}
     } catch (error) {
       this.logger.error(
         `Failed to create database: ${error.message}`,
         error.stack,
-      );
-      try {
-        await client.query(
-          `DROP DATABASE IF EXISTS ${projectDatabase} WITH (FORCE);`,
-        );
-        await client.query(`DROP ROLE IF EXISTS "${projectAdmin}";`);
-        await client.query(`DROP ROLE IF EXISTS "${projectUser}";`);
-      } catch (e) {
-        this.logger.error(`Failed to drop database: ${e.message}`, e.stack);
-      }
-      await this.db.updateDocument(
-        'projects',
-        project.getId(),
-        project.setAttribute('status', 'failed'),
       );
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,

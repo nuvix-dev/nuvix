@@ -52,6 +52,17 @@ export class ProjectHook implements Hook {
     );
 
     if (!project.isEmpty()) {
+      // For testing & demo purpose (until infra. setup)
+      project.setAttribute('database', {
+        ...project.getAttribute('database'),
+        name: 'postgres',
+        host: '35.244.24.126',
+        port: 6432,
+        adminRole: 'nuvix_admin',
+        password: APP_POSTGRES_PASSWORD,
+        userRole: 'postgres',
+        userPassword: 'testpassword',
+      });
       try {
         const dbOptions = project.getAttribute('database');
         const pool = await this.getPool(project.getId(), {
