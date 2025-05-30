@@ -25,6 +25,7 @@ import { TOTP } from '../../validators/MFA.validator';
 import { Redis } from 'ioredis';
 import { ProjectUsageService } from '@nuvix/core/project-usage.service';
 import { Namespace, Scope } from '@nuvix/core/decorators';
+import { Scopes } from '@nuvix/core/config/roles';
 
 @Injectable()
 export class ApiInterceptor implements NestInterceptor {
@@ -39,7 +40,7 @@ export class ApiInterceptor implements NestInterceptor {
     const params = new ParamsHelper(request);
     const project = request[PROJECT] as Document;
     let user = request[USER] as Document;
-    const scopes: string[] = request[SCOPES];
+    const scopes: Scopes[] = request[SCOPES];
     const mode =
       params.getFromHeaders('x-nuvix-mode') ||
       params.getFromQuery('mode', APP_MODE_DEFAULT);
@@ -115,7 +116,7 @@ export class ApiInterceptor implements NestInterceptor {
       hasVerifiedEmail || hasVerifiedPhone || hasVerifiedAuthenticator;
     const minimumFactors = mfaEnabled && hasMoreFactors ? 2 : 1;
 
-    if (!scopes.includes('mfa')) {
+    if (!scopes.includes('mfa' as any)) {
       const session = request[SESSION];
       if (
         session &&
