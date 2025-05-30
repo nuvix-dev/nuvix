@@ -31,7 +31,6 @@ export const AuthDatabase = createParamDecorator<any, Database>(
     const request: Request = ctx.switchToHttp().getRequest();
     const project = request[PROJECT] as Document;
     const database = request[AUTH_SCHEMA_DB] as Database;
-    database.setPrefix(project.getId());
     return database;
   },
 );
@@ -41,7 +40,6 @@ export const StorageDatabase = createParamDecorator<any, Database>(
     const request: Request = ctx.switchToHttp().getRequest();
     const project = request[PROJECT] as Document;
     const database = request[STORAGE_SCHEMA_DB] as Database;
-    database.setPrefix(project.getId());
     return database;
   },
 );
@@ -51,7 +49,6 @@ export const FunctionsDatabase = createParamDecorator<any, Database>(
     const request: Request = ctx.switchToHttp().getRequest();
     const project = request[PROJECT] as Document;
     const database = request[FUNCTIONS_SCHEMA_DB] as Database;
-    database.setPrefix(project.getId());
     return database;
   },
 );
@@ -61,7 +58,6 @@ export const MessagingDatabase = createParamDecorator<any, Database>(
     const request: Request = ctx.switchToHttp().getRequest();
     const project = request[PROJECT] as Document;
     const database = request[MESSAGING_SCHEMA_DB] as Database;
-    database.setPrefix(project.getId());
     return database;
   },
 );
@@ -71,7 +67,6 @@ export const CurrentDatabase = createParamDecorator<any, Database>(
     const request: Request = ctx.switchToHttp().getRequest();
     const project = request[PROJECT] as Document;
     const database = request[CURRENT_SCHEMA_DB] as Database;
-    database.setPrefix(project.getId());
     return database;
   },
 );
