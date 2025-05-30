@@ -188,13 +188,6 @@ export class ProjectService {
     }
   }
 
-  async retry(data: any) {
-    const project = await this.db.getDocument('projects', data.id);
-    await this.projectQueue.add('init', {
-      project,
-    });
-  }
-
   async findAll(queries: Query[], search?: string) {
     if (search) {
       queries.push(Query.search('search', search));
@@ -930,6 +923,7 @@ export class ProjectService {
       providers[providerIndex].appId = input.appId;
     }
 
+    // TODO: Encrypt the secret
     if (input.secret !== undefined) {
       providers[providerIndex].secret = input.secret;
     }

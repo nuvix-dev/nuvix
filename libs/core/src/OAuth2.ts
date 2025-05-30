@@ -1,3 +1,4 @@
+import { oAuthProvidersList } from './config/authProviders';
 import { Exception } from './extend/exception';
 
 /**
@@ -199,3 +200,37 @@ export class OAuth2Error extends Exception {
     }
   }
 }
+
+export const getOAuth2Class = async <T extends OAuth2>(
+  provider: string,
+): Promise<new (...args: any[]) => T> => {
+  try {
+    // Dynamic import of OAuth2 provider class
+    const authModule = await import(
+      /* webpackChunkName: "OAuth2" */
+      `@nuvix/core/OAuth2/${provider.toLowerCase()}`
+    );
+
+    const className = `${provider.charAt(0).toUpperCase() + provider.slice(1)}OAuth2`;
+
+    if (!(className in authModule)) {
+      throw new Exception(`OAuth2 provider class '${className}' not found`);
+    }
+
+    const AuthClass = authModule[className];
+
+    // Validate that the class extends OAuth2
+    if (!AuthClass.prototype || !(AuthClass.prototype instanceof OAuth2)) {
+      throw new Exception(`Class '${className}' does not extend OAuth2`);
+    }
+
+    return AuthClass;
+  } catch (error) {
+    if (error instanceof Exception) {
+      throw error;
+    }
+    throw new Exception(
+      `Failed to load OAuth2 provider '${provider}': ${error}`,
+    );
+  }
+};

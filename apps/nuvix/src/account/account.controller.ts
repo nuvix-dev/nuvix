@@ -37,6 +37,7 @@ import {
   CreateEmailSessionDTO,
   CreateOAuth2SessionDTO,
   CreateSessionDTO,
+  OAuth2CallbackDTO,
 } from './DTO/session.dto';
 import { AccountService } from './account.service';
 
@@ -277,24 +278,101 @@ export class AccountController {
   }
 
   @Public()
-  @Post('sessions/oauth2/:provider')
+  @Get('sessions/oauth2/:provider')
   @Scope('sessions.create')
-  @AuditEvent('session.create', {
-    resource: 'user/{res.userId}',
-    userId: 'res.userId',
-  })
   @Sdk({
     name: 'createOAuth2Session',
   })
   async createOAuth2Session(
-    @AuthDatabase() authDatabase: Database,
-    @User() user: Document,
-    @Body() input: CreateOAuth2SessionDTO,
+    @Query() input: CreateOAuth2SessionDTO,
     @Req() request: NuvixRequest,
-    @Res({ passthrough: true }) response: NuvixRes,
+    @Res() response: NuvixRes,
     @Project() project: Document,
   ) {
-    // TODO: ...
+    return await this.accountService.createOAuth2Session({
+      input,
+      request,
+      response,
+      project,
+    });
+  }
+
+  @Public()
+  @Get('sessions/oauth2/callback/:provider/:projectId')
+  @Scope('public')
+  async OAuth2Callback(
+    @Query() input: OAuth2CallbackDTO,
+    @Req() request: NuvixRequest,
+    @Res() response: NuvixRes,
+    @Param('provider') provider: string,
+    @Param('projectId') projectId: string,
+  ) {
+    const domain = request.hostname;
+    const protocol = request.protocol;
+
+    const params = { ...input };
+    params['provider'] = provider;
+    params['project'] = projectId;
+
+    response
+      .header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+      .header('Pragma', 'no-cache')
+      .redirect(
+        `${protocol}://${domain}/v1/account/sessions/oauth2/${provider}/redirect?${new URLSearchParams(params).toString()}`,
+      );
+  }
+
+  @Public()
+  @Post('sessions/oauth2/callback/:provider/:projectId')
+  @Scope('public')
+  async OAuth2CallbackWithProject(
+    @Body() input: OAuth2CallbackDTO,
+    @Req() request: NuvixRequest,
+    @Res() response: NuvixRes,
+    @Param('provider') provider: string,
+    @Param('projectId') projectId: string,
+  ) {
+    const domain = request.hostname;
+    const protocol = request.protocol;
+
+    const params = { ...input };
+    params['provider'] = provider;
+    params['project'] = projectId;
+
+    response
+      .header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+      .header('Pragma', 'no-cache')
+      .redirect(
+        `${protocol}://${domain}/v1/account/sessions/oauth2/${provider}/redirect?${new URLSearchParams(params).toString()}`,
+      );
+  }
+
+  @Public()
+  @Get('sessions/oauth2/:provider/redirect')
+  @Scope('public')
+  @ResModel(Models.SESSION)
+  @AuditEvent('session.update', {
+    resource: 'user/{res.userId}',
+    userId: 'res.userId',
+  })
+  async OAuth2Redirect(
+    @AuthDatabase() authDatabase: Database,
+    @User() user: Document,
+    @Query() input: OAuth2CallbackDTO,
+    @Req() request: NuvixRequest,
+    @Res() response: NuvixRes,
+    @Project() project: Document,
+    @Param('provider') provider: string,
+  ) {
+    return this.accountService.oAuth2Redirect({
+      db: authDatabase,
+      user,
+      input,
+      provider,
+      request,
+      response,
+      project,
+    });
   }
 
   @Get('prefs')

@@ -39,6 +39,7 @@ import {
   CreateEmailSessionDTO,
   CreateOAuth2SessionDTO,
   CreateSessionDTO,
+  OAuth2CallbackDTO,
 } from './DTO/session.dto';
 import { Detector } from '@nuvix/core/helper/detector.helper';
 import { CountryResponse, Reader } from 'maxmind';
@@ -47,8 +48,9 @@ import { Queue } from 'bullmq';
 import * as Template from 'handlebars';
 import * as fs from 'fs/promises';
 import { MailQueueOptions } from '@nuvix/core/resolvers/queues/mail.queue';
-import { OAuth2 } from '@nuvix/core/OAuth2';
+import { getOAuth2Class, OAuth2 } from '@nuvix/core/OAuth2';
 import path from 'path';
+import { URLValidator } from '@nuvix/core/validators/url.validator';
 
 @Injectable()
 export class AccountService {
@@ -57,6 +59,9 @@ export class AccountService {
     @InjectQueue('mails') private readonly mailQueue: Queue<MailQueueOptions>,
     private eventEmitter: EventEmitter2,
   ) {}
+
+  private readonly oauthDefaultSuccess = '/auth/oauth2/success';
+  private readonly oauthDefaultFailure = '/auth/oauth2/failure';
 
   /**
    * Create a new account
@@ -855,21 +860,21 @@ export class AccountService {
     return createdSession;
   }
 
+  /**
+   * Create OAuth2 Session.
+   */
   async createOAuth2Session({
     input,
     request,
     response,
     project,
-    oauthDefaultSuccess,
-    oauthDefaultFailure,
   }: {
     input: CreateOAuth2SessionDTO;
     request: NuvixRequest;
     response: NuvixRes;
     project: Document;
-    oauthDefaultSuccess: string;
-    oauthDefaultFailure: string;
   }) {
+    // TODO: Handle Error Response in HTML format.
     const protocol = request.protocol;
     const provider = input.provider;
     const success = input.success || '';
@@ -890,12 +895,8 @@ export class AccountService {
     const appId = oAuthProviders[provider]?.appId ?? '';
     let appSecret = oAuthProviders[provider]?.secret ?? '{}';
 
-    // Handle encrypted app secret
     if (appSecret && typeof appSecret === 'object' && appSecret.version) {
-      // Note: You'll need to implement OpenSSL decryption equivalent in TypeScript
-      // const key = process.env[`_APP_OPENSSL_KEY_V${appSecret.version}`];
-      // appSecret = await OpenSSL.decrypt(appSecret.data, appSecret.method, key, 0,
-      //   Buffer.from(appSecret.iv, 'hex'), Buffer.from(appSecret.tag, 'hex'));
+      // TODO: Handle encrypted app secret
     }
 
     if (!appId || !appSecret) {
@@ -905,25 +906,17 @@ export class AccountService {
       );
     }
 
-    // Dynamic import of OAuth2 provider class
-    const authClass = await import(
-      /* webpackChunkName: "OAuth2" */
-      /* webpackInclude: /\.js$/ */
-      `@nuvix/core/OAuth2/${provider.toLowerCase()}`
-    );
-
-    const className = `${provider.charAt(0).toUpperCase() + provider.slice(1)}OAuth2`;
-
-    if (!(className in authClass)) {
-      throw new Exception(Exception.PROJECT_PROVIDER_UNSUPPORTED);
-    }
-
+    const AuthClass = await getOAuth2Class(provider);
+    const consoleDomain =
+      request.hostname.split('.').length === 3
+        ? `console.${request.hostname.split('.', 2)[1]}`
+        : request.hostname;
     const finalSuccess =
-      success || `${protocol}://${request.hostname}${oauthDefaultSuccess}`;
+      success || `${protocol}://${consoleDomain}${this.oauthDefaultSuccess}`;
     const finalFailure =
-      failure || `${protocol}://${request.hostname}${oauthDefaultFailure}`;
+      failure || `${protocol}://${consoleDomain}${this.oauthDefaultFailure}`;
 
-    const oauth2: OAuth2 = new authClass[className](
+    const oauth2 = new AuthClass(
       appId,
       appSecret,
       callback,
@@ -939,6 +932,496 @@ export class AccountService {
       .header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
       .header('Pragma', 'no-cache')
       .redirect(oauth2.getLoginURL());
+  }
+
+  /**
+   * Handle OAuth2 Redirect.
+   */
+  async oAuth2Redirect({
+    db,
+    user,
+    input,
+    provider,
+    request,
+    response,
+    project,
+  }: {
+    db: Database;
+    user: Document;
+    input: OAuth2CallbackDTO;
+    provider: string;
+    request: NuvixRequest;
+    response: NuvixRes;
+    project: Document;
+  }) {
+    const protocol = request.protocol;
+    const callback = `${protocol}://${request.hostname}/v1/account/sessions/oauth2/callback/${provider}/${project.getId()}`;
+    const defaultState = {
+      success: project.getAttribute('url', ''),
+      failure: '',
+    };
+    const validateURL = new URLValidator();
+    const oAuthProviders = project.getAttribute('oAuthProviders', {});
+    const appId = oAuthProviders[provider]?.appId ?? '';
+    let appSecret = oAuthProviders[provider]?.secret ?? '{}';
+    const providerEnabled = oAuthProviders[provider]?.enabled ?? false;
+
+    const AuthClass = await getOAuth2Class(provider);
+    const oauth2 = new AuthClass(appId, appSecret, callback);
+
+    let state = defaultState;
+    if (input.state) {
+      try {
+        state = { ...defaultState, ...oauth2.parseState(input.state) };
+      } catch (error) {
+        throw new Exception(
+          Exception.GENERAL_SERVER_ERROR,
+          'Failed to parse login state params as passed from OAuth2 provider',
+        );
+      }
+    }
+
+    if (!validateURL.isValid(state['success'])) {
+      throw new Exception(Exception.PROJECT_INVALID_SUCCESS_URL);
+    }
+
+    if (state['failure'] && !validateURL.isValid(state['failure'])) {
+      throw new Exception(Exception.PROJECT_INVALID_FAILURE_URL);
+    }
+
+    const failureRedirect = (type: string, message?: string, code?: number) => {
+      const exception = new Exception(type, message, code);
+      if (state.failure) {
+        // Handle failure redirect with error params
+        const failureUrl = new URL(state.failure);
+        failureUrl.searchParams.set(
+          'error',
+          JSON.stringify({
+            message: exception.message,
+            type: exception.getType(),
+            code: code ?? exception.getStatus(),
+          }),
+        );
+        response.redirect(failureUrl.toString());
+        return;
+      }
+      throw exception;
+    };
+
+    if (!providerEnabled) {
+      failureRedirect(
+        Exception.PROJECT_PROVIDER_DISABLED,
+        `This provider is disabled. Please enable the provider from your ${APP_NAME} console to continue.`,
+      );
+    }
+
+    if (input.error) {
+      let message = `The ${provider} OAuth2 provider returned an error: ${input.error}`;
+      if (input.error_description) {
+        message += `: ${input.error_description}`;
+      }
+      failureRedirect(Exception.USER_OAUTH2_PROVIDER_ERROR, message);
+    }
+
+    if (!input.code) {
+      failureRedirect(
+        Exception.USER_OAUTH2_PROVIDER_ERROR,
+        'Missing OAuth2 code. Please contact the team for additional support.',
+      );
+    }
+
+    if (appSecret && typeof appSecret === 'object' && appSecret.version) {
+      // TODO: Handle encrypted app secret decryption
+    }
+
+    let accessToken = '';
+    let refreshToken = '';
+    let accessTokenExpiry = 0;
+
+    try {
+      accessToken = await oauth2.getAccessToken(input.code);
+      refreshToken = await oauth2.getRefreshToken(input.code);
+      accessTokenExpiry = await oauth2.getAccessTokenExpiry(input.code);
+    } catch (error) {
+      failureRedirect(
+        Exception.USER_OAUTH2_PROVIDER_ERROR,
+        `Failed to obtain access token. The ${provider} OAuth2 provider returned an error: ${error.message}`,
+        error.code,
+      );
+    }
+
+    const oauth2ID = await oauth2.getUserID(accessToken);
+    if (!oauth2ID) {
+      failureRedirect(Exception.USER_MISSING_ID);
+    }
+
+    let name = '';
+    const nameOAuth = await oauth2.getUserName(accessToken);
+    const userParam = JSON.parse((request.query['user'] as string) || '{}');
+    if (nameOAuth) {
+      name = nameOAuth;
+    } else if (Array.isArray(userParam) || typeof userParam === 'object') {
+      const nameParam = userParam['name'];
+      if (
+        typeof nameParam === 'object' &&
+        nameParam['firstName'] &&
+        nameParam['lastName']
+      ) {
+        name = nameParam['firstName'] + ' ' + nameParam['lastName'];
+      }
+    }
+
+    const email = await oauth2.getUserEmail(accessToken);
+
+    // Check if this identity is connected to a different user
+    let sessionUpgrade = false;
+    if (!user.isEmpty()) {
+      const userId = user.getId();
+
+      const identityWithMatchingEmail = await db.findOne('identities', [
+        Query.equal('providerEmail', [email]),
+        Query.notEqual('userInternalId', user.getInternalId()),
+      ]);
+      if (!identityWithMatchingEmail.isEmpty()) {
+        failureRedirect(Exception.USER_ALREADY_EXISTS);
+      }
+
+      const userWithMatchingEmail = await db.find('users', [
+        Query.equal('email', [email]),
+        Query.notEqual('$id', [userId]),
+      ]);
+      if (userWithMatchingEmail.length > 0) {
+        failureRedirect(Exception.USER_ALREADY_EXISTS);
+      }
+
+      sessionUpgrade = true;
+    }
+
+    const sessions = user.getAttribute('sessions', []);
+    const current = Auth.sessionVerify(sessions, Auth.secret);
+
+    if (current) {
+      const currentDocument = await db.getDocument('sessions', current);
+      if (!currentDocument.isEmpty()) {
+        await db.deleteDocument('sessions', currentDocument.getId());
+        await db.purgeCachedDocument('users', user.getId());
+      }
+    }
+
+    if (user.isEmpty()) {
+      const session = await db.findOne('sessions', [
+        Query.equal('provider', [provider]),
+        Query.equal('providerUid', [oauth2ID]),
+      ]);
+      if (!session.isEmpty()) {
+        const foundUser = await db.getDocument(
+          'users',
+          session.getAttribute('userId'),
+        );
+        user.setAttributes(foundUser.toObject());
+      }
+    }
+
+    if (user.isEmpty()) {
+      if (!email) {
+        failureRedirect(
+          Exception.USER_UNAUTHORIZED,
+          'OAuth provider failed to return email.',
+        );
+      }
+
+      const userWithEmail = await db.findOne('users', [
+        Query.equal('email', [email]),
+      ]);
+      if (!userWithEmail.isEmpty()) {
+        user.setAttributes(userWithEmail.toObject());
+      }
+
+      if (user.isEmpty()) {
+        const identity = await db.findOne('identities', [
+          Query.equal('provider', [provider]),
+          Query.equal('providerUid', [oauth2ID]),
+        ]);
+
+        if (!identity.isEmpty()) {
+          const foundUser = await db.getDocument(
+            'users',
+            identity.getAttribute('userId'),
+          );
+          user.setAttributes(foundUser.toObject());
+        }
+      }
+
+      if (user.isEmpty()) {
+        const limit = project.getAttribute('auths', {})['limit'] ?? 0;
+
+        if (limit !== 0) {
+          const total = await db.count('users', [], APP_LIMIT_USERS);
+          if (total >= limit) {
+            failureRedirect(Exception.USER_COUNT_EXCEEDED);
+          }
+        }
+
+        const identityWithMatchingEmail = await db.findOne('identities', [
+          Query.equal('providerEmail', [email]),
+        ]);
+        if (!identityWithMatchingEmail.isEmpty()) {
+          failureRedirect(Exception.GENERAL_BAD_REQUEST);
+        }
+
+        try {
+          const userId = ID.unique();
+          user.setAttributes({
+            $id: userId,
+            $permissions: [
+              Permission.read(Role.any()),
+              Permission.update(Role.user(userId)),
+              Permission.delete(Role.user(userId)),
+            ],
+            email: email,
+            emailVerification: true,
+            status: true,
+            password: null,
+            hash: Auth.DEFAULT_ALGO,
+            hashOptions: Auth.DEFAULT_ALGO_OPTIONS,
+            passwordUpdate: null,
+            registration: new Date(),
+            reset: false,
+            name: name,
+            mfa: false,
+            prefs: {},
+            sessions: null,
+            tokens: null,
+            memberships: null,
+            authenticators: null,
+            search: `${userId} ${email} ${name}`,
+            accessedAt: new Date(),
+          });
+          user.removeAttribute('$internalId');
+
+          const userDoc = await Authorization.skip(
+            async () => await db.createDocument('users', user),
+          );
+
+          await db.createDocument(
+            'targets',
+            new Document({
+              $permissions: [
+                Permission.read(Role.user(user.getId())),
+                Permission.update(Role.user(user.getId())),
+                Permission.delete(Role.user(user.getId())),
+              ],
+              userId: userDoc.getId(),
+              userInternalId: userDoc.getInternalId(),
+              providerType: 'email',
+              identifier: email,
+            }),
+          );
+        } catch (error) {
+          if (error instanceof DuplicateException) {
+            failureRedirect(Exception.USER_ALREADY_EXISTS);
+          }
+          throw error;
+        }
+      }
+    }
+
+    Authorization.setRole(Role.user(user.getId()).toString());
+    Authorization.setRole(Role.users().toString());
+
+    if (user.getAttribute('status') === false) {
+      failureRedirect(Exception.USER_BLOCKED);
+    }
+
+    let identity = await db.findOne('identities', [
+      Query.equal('userInternalId', [user.getInternalId()]),
+      Query.equal('provider', [provider]),
+      Query.equal('providerUid', [oauth2ID]),
+    ]);
+
+    if (identity.isEmpty()) {
+      const identitiesWithMatchingEmail = await db.find('identities', [
+        Query.equal('providerEmail', [email]),
+        Query.notEqual('userInternalId', [user.getInternalId()]),
+      ]);
+      if (identitiesWithMatchingEmail.length > 0) {
+        failureRedirect(Exception.GENERAL_BAD_REQUEST);
+      }
+
+      identity = (await db.createDocument(
+        'identities',
+        new Document({
+          $id: ID.unique(),
+          $permissions: [
+            Permission.read(Role.any()),
+            Permission.update(Role.user(user.getId())),
+            Permission.delete(Role.user(user.getId())),
+          ],
+          userInternalId: user.getInternalId(),
+          userId: user.getId(),
+          provider: provider,
+          providerUid: oauth2ID,
+          providerEmail: email,
+          providerAccessToken: accessToken,
+          providerRefreshToken: refreshToken,
+          providerAccessTokenExpiry: new Date(
+            Date.now() + accessTokenExpiry * 1000,
+          ),
+        }),
+      )) as any;
+    } else {
+      identity
+        .setAttribute('providerAccessToken', accessToken)
+        .setAttribute('providerRefreshToken', refreshToken)
+        .setAttribute(
+          'providerAccessTokenExpiry',
+          new Date(Date.now() + accessTokenExpiry * 1000),
+        );
+      await db.updateDocument('identities', identity.getId(), identity);
+    }
+
+    if (!user.getAttribute('email')) {
+      user.setAttribute('email', email);
+    }
+
+    if (!user.getAttribute('name')) {
+      user.setAttribute('name', name);
+    }
+
+    user.setAttribute('status', true);
+    await db.updateDocument('users', user.getId(), user);
+
+    const duration =
+      project.getAttribute('auths', {})['duration'] ??
+      Auth.TOKEN_EXPIRATION_LOGIN_LONG;
+    const expire = new Date(Date.now() + duration * 1000);
+
+    const parsedState = new URL(state.success);
+    const query = new URLSearchParams(parsedState.search);
+
+    // If token param is set, return token in query string
+    if ((state as any).token) {
+      const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_OAUTH2);
+      const token = new Document({
+        $id: ID.unique(),
+        userId: user.getId(),
+        userInternalId: user.getInternalId(),
+        type: Auth.TOKEN_TYPE_OAUTH2,
+        secret: Auth.hash(secret),
+        expire: expire,
+        userAgent: request.headers['user-agent'] || 'UNKNOWN',
+        ip: request.ip,
+      });
+
+      const createdToken = await db.createDocument(
+        'tokens',
+        token.setAttribute('$permissions', [
+          Permission.read(Role.user(user.getId())),
+          Permission.update(Role.user(user.getId())),
+          Permission.delete(Role.user(user.getId())),
+        ]),
+      );
+
+      query.set('secret', secret);
+      query.set('userId', user.getId());
+    } else {
+      // Create session
+      const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN');
+      const record = this.geodb.get(request.ip);
+      const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION);
+
+      const session = new Document({
+        $id: ID.unique(),
+        userId: user.getId(),
+        userInternalId: user.getInternalId(),
+        provider: provider,
+        providerUid: oauth2ID,
+        providerAccessToken: accessToken,
+        providerRefreshToken: refreshToken,
+        providerAccessTokenExpiry: new Date(
+          Date.now() + accessTokenExpiry * 1000,
+        ),
+        secret: Auth.hash(secret),
+        userAgent: request.headers['user-agent'] || 'UNKNOWN',
+        ip: request.ip,
+        factors: ['email', 'oauth2'],
+        countryCode: record ? record.country.iso_code.toLowerCase() : '--',
+        expire: expire,
+        ...detector.getOS(),
+        ...detector.getClient(),
+        ...detector.getDevice(),
+      });
+
+      const createdSession = await db.createDocument(
+        'sessions',
+        session.setAttribute('$permissions', [
+          Permission.read(Role.user(user.getId())),
+          Permission.update(Role.user(user.getId())),
+          Permission.delete(Role.user(user.getId())),
+        ]),
+      );
+
+      if (!CONSOLE_CONFIG.domainVerification) {
+        response.header(
+          'X-Fallback-Cookies',
+          JSON.stringify({
+            [Auth.cookieName]: Auth.encodeSession(user.getId(), secret),
+          }),
+        );
+      }
+
+      if (parsedState.pathname === this.oauthDefaultSuccess) {
+        query.set('project', project.getId());
+        query.set('domain', Auth.cookieDomain);
+        query.set('key', Auth.cookieName);
+        query.set('secret', Auth.encodeSession(user.getId(), secret));
+      }
+
+      response.cookie(
+        Auth.cookieName,
+        Auth.encodeSession(user.getId(), secret),
+        {
+          expires: expire,
+          path: '/',
+          domain: Auth.cookieDomain,
+          secure: protocol === 'https',
+          httpOnly: true,
+          sameSite: Auth.cookieSamesite,
+        },
+      );
+
+      if (sessionUpgrade) {
+        const targets = user.getAttribute('targets', []);
+        for (const target of targets) {
+          if (target.getAttribute('providerType') !== 'push') {
+            continue;
+          }
+          target
+            .setAttribute('sessionId', createdSession.getId())
+            .setAttribute('sessionInternalId', createdSession.getInternalId());
+          await db.updateDocument('targets', target.getId(), target);
+        }
+      }
+
+      await this.eventEmitter.emitAsync(EVENT_SESSION_CREATE, {
+        userId: user.getId(),
+        sessionId: createdSession.getId(),
+        payload: {
+          data: createdSession,
+          type: Models.SESSION,
+        },
+      });
+    }
+
+    await db.purgeCachedDocument('users', user.getId());
+
+    parsedState.search = query.toString();
+    const finalSuccessUrl = parsedState.toString();
+
+    response
+      .header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+      .header('Pragma', 'no-cache')
+      .redirect(finalSuccessUrl);
   }
 
   /**

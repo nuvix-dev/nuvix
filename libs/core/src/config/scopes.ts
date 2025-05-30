@@ -312,4 +312,4 @@ export const scopes = {
     description: 'Access to delete a schema tables',
   },
   ...consoleScopes,
-};
+} as const;

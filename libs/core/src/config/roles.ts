@@ -42,9 +42,9 @@ const member = [
   'subscribers.delete',
   'subscribers.read',
   'assistant.read',
-];
+] as const;
 
-const admins = [
+const _admins = [
   'global',
   'graphql',
   'sessions.create',
@@ -139,8 +139,9 @@ const admins = [
   'schema.create',
   'schema.update',
   'schema.delete',
-  ...Object.keys(scopes),
-];
+] as const;
+
+const admins = [..._admins, ...Object.keys(scopes)];
 
 export const roles = {
   [Auth.USER_ROLE_GUESTS]: {
@@ -190,3 +191,7 @@ export const roles = {
     scopes: ['global', 'health.read', 'graphql'],
   },
 };
+
+const _owner = [...member, _admins] as const;
+
+export type Scopes = (typeof _owner)[number] | keyof typeof scopes;
