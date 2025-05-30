@@ -38,8 +38,11 @@ import {
   CreateOAuth2SessionDTO,
   CreateSessionDTO,
   OAuth2CallbackDTO,
+  ProviderParamDTO,
 } from './DTO/session.dto';
 import { AccountService } from './account.service';
+import { CreateMagicURLTokenDTO, CreateOAuth2TokenDTO } from './DTO/token.dto';
+import { OAuthProviders } from '@nuvix/core/config/authProviders';
 
 @Controller({ version: ['1'], path: 'account' })
 @UseGuards(ProjectGuard)
@@ -287,12 +290,14 @@ export class AccountController {
     @Query() input: CreateOAuth2SessionDTO,
     @Req() request: NuvixRequest,
     @Res() response: NuvixRes,
+    @Param() { provider }: ProviderParamDTO,
     @Project() project: Document,
   ) {
     return await this.accountService.createOAuth2Session({
       input,
       request,
       response,
+      provider,
       project,
     });
   }
@@ -304,8 +309,8 @@ export class AccountController {
     @Query() input: OAuth2CallbackDTO,
     @Req() request: NuvixRequest,
     @Res() response: NuvixRes,
-    @Param('provider') provider: string,
     @Param('projectId') projectId: string,
+    @Param() { provider }: ProviderParamDTO,
   ) {
     const domain = request.hostname;
     const protocol = request.protocol;
@@ -329,8 +334,8 @@ export class AccountController {
     @Body() input: OAuth2CallbackDTO,
     @Req() request: NuvixRequest,
     @Res() response: NuvixRes,
-    @Param('provider') provider: string,
     @Param('projectId') projectId: string,
+    @Param() { provider }: ProviderParamDTO,
   ) {
     const domain = request.hostname;
     const protocol = request.protocol;
@@ -350,8 +355,7 @@ export class AccountController {
   @Public()
   @Get('sessions/oauth2/:provider/redirect')
   @Scope('public')
-  @ResModel(Models.SESSION)
-  @AuditEvent('session.update', {
+  @AuditEvent('session.create', {
     resource: 'user/{res.userId}',
     userId: 'res.userId',
   })
@@ -362,7 +366,7 @@ export class AccountController {
     @Req() request: NuvixRequest,
     @Res() response: NuvixRes,
     @Project() project: Document,
-    @Param('provider') provider: string,
+    @Param() { provider }: ProviderParamDTO,
   ) {
     return this.accountService.oAuth2Redirect({
       db: authDatabase,
@@ -371,6 +375,58 @@ export class AccountController {
       provider,
       request,
       response,
+      project,
+    });
+  }
+
+  @Public()
+  @Get('tokens/oauth2/:provider')
+  @Scope('sessions.create')
+  @Sdk({
+    name: 'createOAuth2Token',
+  })
+  async createOAuth2Token(
+    @Query() input: CreateOAuth2TokenDTO,
+    @Req() request: NuvixRequest,
+    @Res() response: NuvixRes,
+    @Param() { provider }: ProviderParamDTO,
+    @Project() project: Document,
+  ) {
+    return await this.accountService.createOAuth2Token({
+      input,
+      request,
+      response,
+      provider,
+      project,
+    });
+  }
+
+  @Public()
+  @Get('tokens/magic-url')
+  @ResModel(Models.TOKEN)
+  @AuditEvent('session.create', {
+    resource: 'user/{res.userId}',
+    userId: 'res.userId',
+  })
+  @Sdk({
+    name: 'createMagicURLToken',
+  })
+  async createMagicURLToken(
+    @AuthDatabase() authDatabase: Database,
+    @User() user: Document,
+    @Body() input: CreateMagicURLTokenDTO,
+    @Req() request: NuvixRequest,
+    @Res({ passthrough: true }) response: NuvixRes,
+    @Locale() locale: LocaleTranslator,
+    @Project() project: Document,
+  ) {
+    return await this.accountService.createMagicURLToken({
+      db: authDatabase,
+      user,
+      input,
+      request,
+      response,
+      locale,
       project,
     });
   }

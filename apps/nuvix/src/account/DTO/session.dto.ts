@@ -1,4 +1,7 @@
-import { oAuthProvidersList } from '@nuvix/core/config/authProviders';
+import {
+  OAuthProviders,
+  oAuthProvidersList,
+} from '@nuvix/core/config/authProviders';
 import {
   APP_LIMIT_ARRAY_ELEMENT_SIZE,
   APP_LIMIT_ARRAY_PARAMS_SIZE,
@@ -37,22 +40,20 @@ export class CreateSessionDTO {
 }
 
 export class CreateOAuth2SessionDTO {
-  @IsString()
-  @IsIn(oAuthProvidersList)
-  provider: (typeof oAuthProvidersList)[0];
-
+  @IsOptional()
   @IsUrl()
-  success: string;
+  success?: string;
 
+  @IsOptional()
   @IsUrl()
-  failure: string;
+  failure?: string;
 
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   @MaxLength(APP_LIMIT_ARRAY_ELEMENT_SIZE, { each: true })
   @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE)
-  scopes: string[];
+  scopes: string[] = [];
 }
 
 @Expose()
@@ -76,4 +77,10 @@ export class OAuth2CallbackDTO {
   @IsString()
   @MaxLength(2048)
   error_description?: string;
+}
+
+export class ProviderParamDTO {
+  @IsString()
+  @IsIn(oAuthProvidersList)
+  provider: OAuthProviders;
 }

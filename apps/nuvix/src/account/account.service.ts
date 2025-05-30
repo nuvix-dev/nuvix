@@ -20,6 +20,7 @@ import {
   APP_EMAIL_TEAM,
   APP_LIMIT_USERS,
   APP_NAME,
+  APP_SMTP_HOST,
   APP_SYSTEM_EMAIL_ADDRESS,
   APP_SYSTEM_EMAIL_NAME,
   ASSETS,
@@ -51,6 +52,12 @@ import { MailQueueOptions } from '@nuvix/core/resolvers/queues/mail.queue';
 import { getOAuth2Class, OAuth2 } from '@nuvix/core/OAuth2';
 import path from 'path';
 import { URLValidator } from '@nuvix/core/validators/url.validator';
+import {
+  OAuthProviders,
+  oAuthProvidersList,
+} from '@nuvix/core/config/authProviders';
+import { CreateMagicURLTokenDTO, CreateOAuth2TokenDTO } from './DTO/token.dto';
+import { PhraseGenerator } from '@nuvix/utils/auth/pharse';
 
 @Injectable()
 export class AccountService {
@@ -867,16 +874,17 @@ export class AccountService {
     input,
     request,
     response,
+    provider,
     project,
   }: {
     input: CreateOAuth2SessionDTO;
     request: NuvixRequest;
     response: NuvixRes;
     project: Document;
+    provider: OAuthProviders;
   }) {
     // TODO: Handle Error Response in HTML format.
     const protocol = request.protocol;
-    const provider = input.provider;
     const success = input.success || '';
     const failure = input.failure || '';
     const scopes = input.scopes || [];
@@ -1422,6 +1430,311 @@ export class AccountService {
       .header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
       .header('Pragma', 'no-cache')
       .redirect(finalSuccessUrl);
+  }
+
+  /**
+   * Create oAuth2 Token.
+   */
+  async createOAuth2Token({
+    input,
+    request,
+    response,
+    provider,
+    project,
+  }: {
+    input: CreateOAuth2TokenDTO;
+    request: NuvixRequest;
+    response: NuvixRes;
+    provider: OAuthProviders;
+    project: Document;
+  }) {
+    const protocol = request.protocol;
+    const success = input.success || '';
+    const failure = input.failure || '';
+    const scopes = input.scopes || [];
+
+    const callback = `${protocol}://${request.hostname}/v1/account/sessions/oauth2/callback/${provider}/${project.getId()}`;
+    const oAuthProviders = project.getAttribute('oAuthProviders', {});
+    const providerEnabled = oAuthProviders[provider]?.enabled ?? false;
+
+    if (!providerEnabled) {
+      throw new Exception(
+        Exception.PROJECT_PROVIDER_DISABLED,
+        `This provider is disabled. Please enable the provider from your ${APP_NAME} console to continue.`,
+      );
+    }
+
+    const appId = oAuthProviders[provider]?.appId ?? '';
+    let appSecret = oAuthProviders[provider]?.secret ?? '{}';
+
+    if (appSecret && typeof appSecret === 'object' && appSecret.version) {
+      // TODO: Handle encrypted app secret decryption
+    }
+
+    if (!appId || !appSecret) {
+      throw new Exception(
+        Exception.PROJECT_PROVIDER_DISABLED,
+        `This provider is disabled. Please configure the provider app ID and app secret key from your ${APP_NAME} console to continue.`,
+      );
+    }
+
+    const AuthClass = await getOAuth2Class(provider);
+    if (!AuthClass) {
+      throw new Exception(Exception.PROJECT_PROVIDER_UNSUPPORTED);
+    }
+
+    const consoleDomain =
+      request.hostname.split('.').length === 3
+        ? `console.${request.hostname.split('.', 2)[1]}`
+        : request.hostname;
+    const finalSuccess =
+      success || `${protocol}://${consoleDomain}${this.oauthDefaultSuccess}`;
+    const finalFailure =
+      failure || `${protocol}://${consoleDomain}${this.oauthDefaultFailure}`;
+
+    const oauth2 = new AuthClass(
+      appId,
+      appSecret,
+      callback,
+      {
+        success: finalSuccess,
+        failure: finalFailure,
+        token: true,
+      },
+      scopes,
+    );
+
+    response
+      .header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+      .header('Pragma', 'no-cache')
+      .redirect(oauth2.getLoginURL());
+  }
+
+  /**
+   * Create Magic-URL Token.
+   */
+  async createMagicURLToken({
+    db,
+    user,
+    input,
+    request,
+    response,
+    locale,
+    project,
+  }: {
+    db: Database;
+    user: Document;
+    input: CreateMagicURLTokenDTO;
+    request: NuvixRequest;
+    response: NuvixRes;
+    locale: LocaleTranslator;
+    project: Document;
+  }) {
+    if (!APP_SMTP_HOST) {
+      throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP disabled');
+    }
+
+    const {
+      userId,
+      email,
+      url: inputUrl = '',
+      phrase: inputPhrase = false,
+    } = input;
+    let url = inputUrl;
+    let phrase: string;
+
+    if (inputPhrase === true) {
+      phrase = PhraseGenerator.generate();
+    }
+
+    const result = await db.findOne('users', [Query.equal('email', [email])]);
+    if (!result.isEmpty()) {
+      user.setAttributes(result.toObject());
+    } else {
+      const limit = project.getAttribute('auths', {})['limit'] ?? 0;
+
+      if (limit !== 0) {
+        const total = await db.count('users', [], APP_LIMIT_USERS);
+
+        if (total >= limit) {
+          throw new Exception(Exception.USER_COUNT_EXCEEDED);
+        }
+      }
+
+      // Makes sure this email is not already used in another identity
+      const identityWithMatchingEmail = await db.findOne('identities', [
+        Query.equal('providerEmail', [email]),
+      ]);
+      if (!identityWithMatchingEmail.isEmpty()) {
+        throw new Exception(Exception.USER_EMAIL_ALREADY_EXISTS);
+      }
+
+      const finalUserId = userId === 'unique()' ? ID.unique() : userId;
+
+      user.setAttributes({
+        $id: finalUserId,
+        $permissions: [
+          Permission.read(Role.any()),
+          Permission.update(Role.user(finalUserId)),
+          Permission.delete(Role.user(finalUserId)),
+        ],
+        email: email,
+        emailVerification: false,
+        status: true,
+        password: null,
+        hash: Auth.DEFAULT_ALGO,
+        hashOptions: Auth.DEFAULT_ALGO_OPTIONS,
+        passwordUpdate: null,
+        registration: new Date(),
+        reset: false,
+        mfa: false,
+        prefs: {},
+        sessions: null,
+        tokens: null,
+        memberships: null,
+        authenticators: null,
+        search: [finalUserId, email].join(' '),
+        accessedAt: new Date(),
+      });
+
+      user.removeAttribute('$internalId');
+      await Authorization.skip(
+        async () => await db.createDocument('users', user),
+      );
+    }
+
+    const tokenSecret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_MAGIC_URL);
+    const expire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_CONFIRM * 1000);
+
+    const token = new Document({
+      $id: ID.unique(),
+      userId: user.getId(),
+      userInternalId: user.getInternalId(),
+      type: Auth.TOKEN_TYPE_MAGIC_URL,
+      secret: Auth.hash(tokenSecret), // One way hash encryption to protect DB leak
+      expire: expire,
+      userAgent: request.headers['user-agent'] || 'UNKNOWN',
+      ip: request.ip,
+    });
+
+    Authorization.setRole(Role.user(user.getId()).toString());
+
+    const createdToken = await db.createDocument(
+      'tokens',
+      token.setAttribute('$permissions', [
+        Permission.read(Role.user(user.getId())),
+        Permission.update(Role.user(user.getId())),
+        Permission.delete(Role.user(user.getId())),
+      ]),
+    );
+
+    await db.purgeCachedDocument('users', user.getId());
+
+    if (!url) {
+      url = `${request.protocol}://${request.hostname}/console/auth/magic-url`;
+    }
+
+    // Parse and merge URL query parameters
+    const urlObj = new URL(url);
+    urlObj.searchParams.set('userId', user.getId());
+    urlObj.searchParams.set('secret', tokenSecret);
+    urlObj.searchParams.set('expire', expire.toISOString());
+    urlObj.searchParams.set('project', project.getId());
+    url = urlObj.toString();
+
+    let subject = locale.getText('emails.magicSession.subject');
+    const customTemplate =
+      project.getAttribute('templates', {})[
+        `email.magicSession-${locale.default}`
+      ] ?? {};
+
+    const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN');
+    const agentOs = detector.getOS();
+    const agentClient = detector.getClient();
+    const agentDevice = detector.getDevice();
+
+    const templatePath = path.join(ASSETS.TEMPLATES, 'email-magic-url.tpl');
+    const templateSource = await fs.readFile(templatePath, 'utf8');
+    const template = Template.compile(templateSource);
+
+    const emailData = {
+      hello: locale.getText('emails.magicSession.hello'),
+      optionButton: locale.getText('emails.magicSession.optionButton'),
+      buttonText: locale.getText('emails.magicSession.buttonText'),
+      optionUrl: locale.getText('emails.magicSession.optionUrl'),
+      clientInfo: locale.getText('emails.magicSession.clientInfo'),
+      thanks: locale.getText('emails.magicSession.thanks'),
+      signature: locale.getText('emails.magicSession.signature'),
+      securityPhrase: phrase
+        ? locale.getText('emails.magicSession.securityPhrase')
+        : '',
+    };
+
+    let body = template(emailData);
+
+    const smtp = project.getAttribute('smtp', {});
+    const smtpEnabled = smtp['enabled'] ?? false;
+
+    let senderEmail = APP_SYSTEM_EMAIL_ADDRESS || APP_EMAIL_TEAM;
+    let senderName = APP_SYSTEM_EMAIL_NAME || APP_NAME + ' Server';
+    let replyTo = '';
+
+    const smtpServer: any = {};
+
+    if (smtpEnabled) {
+      if (smtp['senderEmail']) senderEmail = smtp['senderEmail'];
+      if (smtp['senderName']) senderName = smtp['senderName'];
+      if (smtp['replyTo']) replyTo = smtp['replyTo'];
+
+      smtpServer['host'] = smtp['host'] || '';
+      smtpServer['port'] = smtp['port'] || '';
+      smtpServer['username'] = smtp['username'] || '';
+      smtpServer['password'] = smtp['password'] || '';
+      smtpServer['secure'] = smtp['secure'] ?? false;
+
+      if (customTemplate) {
+        if (customTemplate['senderEmail'])
+          senderEmail = customTemplate['senderEmail'];
+        if (customTemplate['senderName'])
+          senderName = customTemplate['senderName'];
+        if (customTemplate['replyTo']) replyTo = customTemplate['replyTo'];
+
+        body = customTemplate['message'] || body;
+        subject = customTemplate['subject'] || subject;
+      }
+
+      smtpServer['replyTo'] = replyTo;
+      smtpServer['senderEmail'] = senderEmail;
+      smtpServer['senderName'] = senderName;
+    }
+
+    const emailVariables = {
+      direction: locale.getText('settings.direction'),
+      user: user.getAttribute('name'),
+      project: project.getAttribute('name'),
+      redirect: url,
+      agentDevice: agentDevice['deviceBrand'] || 'UNKNOWN',
+      agentClient: agentClient['clientName'] || 'UNKNOWN',
+      agentOs: agentOs['osName'] || 'UNKNOWN',
+      phrase: phrase || '',
+    };
+
+    await this.mailQueue.add(SEND_TYPE_EMAIL, {
+      email,
+      subject,
+      body,
+      server: smtpServer,
+      variables: emailVariables,
+    });
+
+    createdToken.setAttribute('secret', tokenSecret);
+
+    if (phrase) {
+      createdToken.setAttribute('phrase', phrase);
+    }
+
+    response.status(201);
+    return createdToken;
   }
 
   /**

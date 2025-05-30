@@ -412,3 +412,5 @@ export const oAuthProviders: Record<
 export const oAuthProvidersList = Object.entries(oAuthProviders)
   .filter(([_, provider]) => provider.enabled)
   .map(([name]) => name) as (keyof typeof oAuthProviders)[];
+
+export type OAuthProviders = (typeof oAuthProvidersList)[number];
