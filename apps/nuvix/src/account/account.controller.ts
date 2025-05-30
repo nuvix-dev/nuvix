@@ -41,14 +41,14 @@ import {
   ProviderParamDTO,
 } from './DTO/session.dto';
 import { AccountService } from './account.service';
-import { CreateMagicURLTokenDTO, CreateOAuth2TokenDTO } from './DTO/token.dto';
+import { CreateEmailTokenDTO, CreateMagicURLTokenDTO, CreateOAuth2TokenDTO } from './DTO/token.dto';
 import { OAuthProviders } from '@nuvix/core/config/authProviders';
 
 @Controller({ version: ['1'], path: 'account' })
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class AccountController {
-  constructor(private readonly accountService: AccountService) {}
+  constructor(private readonly accountService: AccountService) { }
 
   @Public()
   @Post()
@@ -402,7 +402,7 @@ export class AccountController {
   }
 
   @Public()
-  @Get('tokens/magic-url')
+  @Post('tokens/magic-url')
   @ResModel(Models.TOKEN)
   @AuditEvent('session.create', {
     resource: 'user/{res.userId}',
@@ -428,6 +428,37 @@ export class AccountController {
       response,
       locale,
       project,
+    });
+  }
+
+  @Public()
+  @Post('tokens/email')
+  @Scope('sessions.create')
+  @ResModel(Models.TOKEN)
+  @AuditEvent('session.create', {
+    resource: 'user/{res.userId}',
+    userId: 'res.userId',
+  })
+  @Sdk({
+    name: 'createEmailToken',
+  })
+  async createEmailToken(
+    @Body() input: CreateEmailTokenDTO,
+    @Req() request: NuvixRequest,
+    @Res() response: NuvixRes,
+    @Project() project: Document,
+    @User() user: Document,
+    @AuthDatabase() authDatabase: Database,
+    @Locale() locale: LocaleTranslator
+  ) {
+    return await this.accountService.createEmailToken({
+      input,
+      request,
+      response,
+      project,
+      user,
+      db: authDatabase,
+      locale
     });
   }
 

@@ -48,3 +48,17 @@ export class CreateMagicURLTokenDTO {
   @IsBoolean()
   phrase?: boolean = false;
 }
+
+export class CreateEmailTokenDTO {
+  @IsString()
+  @MaxLength(36)
+  userId: string;
+
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+
+  @IsOptional()
+  @IsBoolean()
+  phrase?: boolean = false;
+}

@@ -56,7 +56,7 @@ import {
   OAuthProviders,
   oAuthProvidersList,
 } from '@nuvix/core/config/authProviders';
-import { CreateMagicURLTokenDTO, CreateOAuth2TokenDTO } from './DTO/token.dto';
+import { CreateEmailTokenDTO, CreateMagicURLTokenDTO, CreateOAuth2TokenDTO } from './DTO/token.dto';
 import { PhraseGenerator } from '@nuvix/utils/auth/pharse';
 
 @Injectable()
@@ -65,7 +65,7 @@ export class AccountService {
     @Inject(GEO_DB) private readonly geodb: Reader<CountryResponse>,
     @InjectQueue('mails') private readonly mailQueue: Queue<MailQueueOptions>,
     private eventEmitter: EventEmitter2,
-  ) {}
+  ) { }
 
   private readonly oauthDefaultSuccess = '/auth/oauth2/success';
   private readonly oauthDefaultFailure = '/auth/oauth2/failure';
@@ -331,9 +331,9 @@ export class AccountService {
     sessionId =
       sessionId === 'current'
         ? (Auth.sessionVerify(
-            user.getAttribute('sessions'),
-            Auth.secret,
-          ) as string)
+          user.getAttribute('sessions'),
+          Auth.secret,
+        ) as string)
         : sessionId;
 
     for (const session of sessions) {
@@ -435,9 +435,9 @@ export class AccountService {
     sessionId =
       sessionId === 'current'
         ? (Auth.sessionVerify(
-            user.getAttribute('sessions'),
-            Auth.secret,
-          ) as string)
+          user.getAttribute('sessions'),
+          Auth.secret,
+        ) as string)
         : sessionId;
 
     const sessions = user.getAttribute('sessions', []);
@@ -855,7 +855,7 @@ export class AccountService {
 
     const countryName = locale.getText(
       'countries.' +
-        createdSession.getAttribute('countryCode', '').toLowerCase(),
+      createdSession.getAttribute('countryCode', '').toLowerCase(),
       locale.getText('locale.country.unknown'),
     );
 
@@ -1645,7 +1645,7 @@ export class AccountService {
     let subject = locale.getText('emails.magicSession.subject');
     const customTemplate =
       project.getAttribute('templates', {})[
-        `email.magicSession-${locale.default}`
+      `email.magicSession-${locale.default}`
       ] ?? {};
 
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN');
@@ -1738,6 +1738,215 @@ export class AccountService {
   }
 
   /**
+   * Create Email Token.
+   */
+  async createEmailToken({
+    db,
+    user,
+    input,
+    request,
+    response,
+    locale,
+    project,
+  }: {
+    db: Database;
+    user: Document;
+    input: CreateEmailTokenDTO;
+    request: NuvixRequest;
+    response: NuvixRes;
+    locale: LocaleTranslator;
+    project: Document;
+  }) {
+    if (!APP_SMTP_HOST) {
+      throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP disabled');
+    }
+
+    const {
+      userId,
+      email,
+      phrase: inputPhrase = false,
+    } = input;
+    let phrase: string;
+
+    if (inputPhrase === true) {
+      phrase = PhraseGenerator.generate();
+    }
+
+    const result = await db.findOne('users', [Query.equal('email', [email])]);
+    if (!result.isEmpty()) {
+      user.setAttributes(result.toObject());
+    } else {
+      const limit = project.getAttribute('auths', {})['limit'] ?? 0;
+
+      if (limit !== 0) {
+        const total = await db.count('users', [], APP_LIMIT_USERS);
+
+        if (total >= limit) {
+          throw new Exception(Exception.USER_COUNT_EXCEEDED);
+        }
+      }
+
+      // Makes sure this email is not already used in another identity
+      const identityWithMatchingEmail = await db.findOne('identities', [
+        Query.equal('providerEmail', [email]),
+      ]);
+      if (!identityWithMatchingEmail.isEmpty()) {
+        throw new Exception(Exception.GENERAL_BAD_REQUEST); // Return a generic bad request to prevent exposing existing accounts
+      }
+
+      const finalUserId = userId === 'unique()' ? ID.unique() : userId;
+
+      user.setAttributes({
+        $id: finalUserId,
+        $permissions: [
+          Permission.read(Role.any()),
+          Permission.update(Role.user(finalUserId)),
+          Permission.delete(Role.user(finalUserId)),
+        ],
+        email: email,
+        emailVerification: false,
+        status: true,
+        password: null,
+        hash: Auth.DEFAULT_ALGO,
+        hashOptions: Auth.DEFAULT_ALGO_OPTIONS,
+        passwordUpdate: null,
+        registration: new Date(),
+        reset: false,
+        prefs: {},
+        sessions: null,
+        tokens: null,
+        memberships: null,
+        search: [finalUserId, email].join(' '),
+        accessedAt: new Date(),
+      });
+
+      user.removeAttribute('$internalId');
+      await Authorization.skip(
+        async () => await db.createDocument('users', user),
+      );
+    }
+
+    const tokenSecret = Auth.codeGenerator(6);
+    const expire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_OTP * 1000);
+
+    const token = new Document({
+      $id: ID.unique(),
+      userId: user.getId(),
+      userInternalId: user.getInternalId(),
+      type: Auth.TOKEN_TYPE_EMAIL,
+      secret: Auth.hash(tokenSecret), // One way hash encryption to protect DB leak
+      expire: expire,
+      userAgent: request.headers['user-agent'] || 'UNKNOWN',
+      ip: request.ip,
+    });
+
+    Authorization.setRole(Role.user(user.getId()).toString());
+
+    const createdToken = await db.createDocument(
+      'tokens',
+      token.setAttribute('$permissions', [
+        Permission.read(Role.user(user.getId())),
+        Permission.update(Role.user(user.getId())),
+        Permission.delete(Role.user(user.getId())),
+      ]),
+    );
+
+    await db.purgeCachedDocument('users', user.getId());
+
+    let subject = locale.getText('emails.otpSession.subject');
+    const customTemplate =
+      project.getAttribute('templates', {})[
+      `email.otpSession-${locale.default}`
+      ] ?? {};
+
+    const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN');
+    const agentOs = detector.getOS();
+    const agentClient = detector.getClient();
+    const agentDevice = detector.getDevice();
+
+    const templatePath = path.join(ASSETS.TEMPLATES, 'email-otp.tpl');
+    const templateSource = await fs.readFile(templatePath, 'utf8');
+    const template = Template.compile(templateSource);
+
+    const emailData = {
+      hello: locale.getText('emails.otpSession.hello'),
+      description: locale.getText('emails.otpSession.description'),
+      clientInfo: locale.getText('emails.otpSession.clientInfo'),
+      thanks: locale.getText('emails.otpSession.thanks'),
+      signature: locale.getText('emails.otpSession.signature'),
+      securityPhrase: phrase
+        ? locale.getText('emails.otpSession.securityPhrase')
+        : '',
+    };
+
+    let body = template(emailData);
+
+    const smtp = project.getAttribute('smtp', {});
+    const smtpEnabled = smtp['enabled'] ?? false;
+
+    let senderEmail = APP_SYSTEM_EMAIL_ADDRESS || APP_EMAIL_TEAM;
+    let senderName = APP_SYSTEM_EMAIL_NAME || APP_NAME + ' Server';
+    let replyTo = '';
+
+    const smtpServer: any = {};
+
+    if (smtpEnabled) {
+      if (smtp['senderEmail']) senderEmail = smtp['senderEmail'];
+      if (smtp['senderName']) senderName = smtp['senderName'];
+      if (smtp['replyTo']) replyTo = smtp['replyTo'];
+
+      smtpServer['host'] = smtp['host'] || '';
+      smtpServer['port'] = smtp['port'] || '';
+      smtpServer['username'] = smtp['username'] || '';
+      smtpServer['password'] = smtp['password'] || '';
+      smtpServer['secure'] = smtp['secure'] ?? false;
+
+      if (customTemplate) {
+        if (customTemplate['senderEmail'])
+          senderEmail = customTemplate['senderEmail'];
+        if (customTemplate['senderName'])
+          senderName = customTemplate['senderName'];
+        if (customTemplate['replyTo']) replyTo = customTemplate['replyTo'];
+
+        body = customTemplate['message'] || body;
+        subject = customTemplate['subject'] || subject;
+      }
+
+      smtpServer['replyTo'] = replyTo;
+      smtpServer['senderEmail'] = senderEmail;
+      smtpServer['senderName'] = senderName;
+    }
+
+    const emailVariables = {
+      direction: locale.getText('settings.direction'),
+      user: user.getAttribute('name'),
+      project: project.getAttribute('name'),
+      otp: tokenSecret,
+      agentDevice: agentDevice['deviceBrand'] || 'UNKNOWN',
+      agentClient: agentClient['clientName'] || 'UNKNOWN',
+      agentOs: agentOs['osName'] || 'UNKNOWN',
+      phrase: phrase || '',
+    };
+
+    await this.mailQueue.add(SEND_TYPE_EMAIL, {
+      email,
+      subject,
+      body,
+      server: smtpServer,
+      variables: emailVariables,
+    });
+
+    createdToken.setAttribute('secret', tokenSecret);
+
+    if (phrase) {
+      createdToken.setAttribute('phrase', phrase);
+    }
+
+    response.status(201);
+    return createdToken;
+  }
+
+  /**
    * Send Session Alert.
    */
   async sendSessionAlert(
@@ -1749,7 +1958,7 @@ export class AccountService {
     let subject: string = locale.getText('emails.sessionAlert.subject');
     const customTemplate =
       project.getAttribute('templates', {})?.[
-        'email.sessionAlert-' + locale.default
+      'email.sessionAlert-' + locale.default
       ] ?? {};
     const templatePath = path.join(ASSETS.TEMPLATES, 'email-session-alert.tpl');
     const templateSource = await fs.readFile(templatePath, 'utf8');
@@ -2014,7 +2223,7 @@ export class AccountService {
 
     const countryName = locale.getText(
       'countries.' +
-        createdSession.getAttribute('countryCode', '').toLowerCase(),
+      createdSession.getAttribute('countryCode', '').toLowerCase(),
       locale.getText('locale.country.unknown'),
     );
 
