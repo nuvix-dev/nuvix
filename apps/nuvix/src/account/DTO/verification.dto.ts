@@ -16,6 +16,4 @@ export class UpdateEmailVerificationDTO {
   secret: string;
 }
 
-export class CreatePhoneVerificationDTO {}
-
 export class UpdatePhoneVerificationDTO extends UpdateEmailVerificationDTO {}

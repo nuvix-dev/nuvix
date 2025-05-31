@@ -21,7 +21,11 @@ type AuditEventKey = (typeof auditEvents)[number];
 
 type ParameterKey = 'user' | 'req' | 'res' | 'params' | 'body' | 'query';
 type ResourceSegment = string | `{${ParameterKey}.${string}}`;
-type ResourcePath = `${ResourceSegment}/${ResourceSegment}` | `${ResourceSegment}/${ResourceSegment}/${ResourceSegment}` | `${ResourceSegment}/${ResourceSegment}/${ResourceSegment}/${ResourceSegment}` | ResourceSegment;
+type ResourcePath =
+  | `${ResourceSegment}/${ResourceSegment}`
+  | `${ResourceSegment}/${ResourceSegment}/${ResourceSegment}`
+  | `${ResourceSegment}/${ResourceSegment}/${ResourceSegment}/${ResourceSegment}`
+  | ResourceSegment;
 
 type AuditEvent = {
   resource: ResourcePath;

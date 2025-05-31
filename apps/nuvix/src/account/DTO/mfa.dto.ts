@@ -1,5 +1,11 @@
 import { IsUID, TOTP } from '@nuvix/core/validators';
-import { IsBoolean, IsNotEmpty, IsString, IsIn, IsOptional } from 'class-validator';
+import {
+  IsBoolean,
+  IsNotEmpty,
+  IsString,
+  IsIn,
+  IsOptional,
+} from 'class-validator';
 
 export class UpdateAccountMfaDTO {
   @IsBoolean()
@@ -10,7 +16,7 @@ export class UpdateAccountMfaDTO {
 export class MfaAuthenticatorTypeParamDTO {
   @IsString()
   @IsNotEmpty()
-  @IsIn([TOTP.TOTP]) // TODO: Add other supported types 
+  @IsIn([TOTP.TOTP]) // TODO: Add other supported types
   type: string;
 }
 
@@ -31,7 +37,6 @@ export class CreateMfaChallengeDTO {
   @IsUID()
   userId?: string;
 }
-
 
 export class VerifyMfaChallengeDTO {
   @IsString()

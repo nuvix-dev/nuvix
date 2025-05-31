@@ -1,5 +1,14 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { InjectQueue } from '@nestjs/bullmq';
+import { JwtService } from '@nestjs/jwt';
+
+import { Queue } from 'bullmq';
+import { CountryResponse, Reader } from 'maxmind';
+import * as Template from 'handlebars';
+import * as fs from 'fs/promises';
+import path from 'path';
+
 import {
   Document,
   Database,
@@ -8,14 +17,27 @@ import {
   Permission,
   Role,
   Authorization,
+  DuplicateException,
 } from '@nuvix/database';
-import { DuplicateException } from '@nuvix/database';
 
+// Nuvix core
 import { Exception } from '@nuvix/core/extend/exception';
 import { Auth } from '@nuvix/core/helper/auth.helper';
 import { LocaleTranslator } from '@nuvix/core/helper/locale.helper';
 import { Models } from '@nuvix/core/helper/response.helper';
+import { Detector } from '@nuvix/core/helper/detector.helper';
 import { PersonalDataValidator } from '@nuvix/core/validators/personal-data.validator';
+import { URLValidator } from '@nuvix/core/validators/url.validator';
+import {
+  MfaType,
+  PasswordHistoryValidator,
+  TOTP,
+} from '@nuvix/core/validators';
+import { MailQueueOptions } from '@nuvix/core/resolvers/queues/mail.queue';
+import { getOAuth2Class, OAuth2 } from '@nuvix/core/OAuth2';
+import { OAuthProviders } from '@nuvix/core/config/authProviders';
+
+// Nuvix utils
 import {
   APP_EMAIL_TEAM,
   APP_LIMIT_COUNT,
@@ -27,49 +49,34 @@ import {
   ASSETS,
   CONSOLE_CONFIG,
   EVENT_SESSION_CREATE,
-  EVENT_SESSION_DELETE,
-  EVENT_SESSION_UPDATE,
   EVENT_SESSIONS_DELETE,
   EVENT_USER_CREATE,
-  EVENT_USER_DELETE,
   GEO_DB,
   MESSAGE_TYPE_PUSH,
-  PROJECT_ROOT,
   SEND_TYPE_EMAIL,
 } from '@nuvix/utils/constants';
+import { PhraseGenerator } from '@nuvix/utils/auth/pharse';
+import { TOTP as TOTPChallenge } from '@nuvix/utils/auth/mfa/challenge/totp';
+import { Email as EmailChallenge } from '@nuvix/utils/auth/mfa/challenge/email';
+import { Phone as PhoneChallenge } from '@nuvix/utils/auth/mfa/challenge/phone';
+
+// Local DTOs
 import { UpdateEmailDTO } from './DTO/account.dto';
+import { CreateRecoveryDTO, UpdateRecoveryDTO } from './DTO/recovery.dto';
+import { CreateMfaChallengeDTO, VerifyMfaChallengeDTO } from './DTO/mfa.dto';
+import { CreatePushTargetDTO, UpdatePushTargetDTO } from './DTO/target.dto';
 import {
   CreateEmailSessionDTO,
   CreateOAuth2SessionDTO,
   CreateSessionDTO,
   OAuth2CallbackDTO,
 } from './DTO/session.dto';
-import { Detector } from '@nuvix/core/helper/detector.helper';
-import { CountryResponse, Reader } from 'maxmind';
-import { InjectQueue } from '@nestjs/bullmq';
-import { Queue } from 'bullmq';
-import * as Template from 'handlebars';
-import * as fs from 'fs/promises';
-import { MailQueueOptions } from '@nuvix/core/resolvers/queues/mail.queue';
-import { getOAuth2Class, OAuth2 } from '@nuvix/core/OAuth2';
-import path from 'path';
-import { URLValidator } from '@nuvix/core/validators/url.validator';
-import { OAuthProviders } from '@nuvix/core/config/authProviders';
 import {
   CreateEmailTokenDTO,
   CreateMagicURLTokenDTO,
   CreateOAuth2TokenDTO,
   CreatePhoneTokenDTO,
 } from './DTO/token.dto';
-import { PhraseGenerator } from '@nuvix/utils/auth/pharse';
-import { JwtService } from '@nestjs/jwt';
-import { MfaType, PasswordHistoryValidator, TOTP } from '@nuvix/core/validators';
-import { CreateRecoveryDTO, UpdateRecoveryDTO } from './DTO/recovery.dto';
-import { TOTP as TOTPChallenge } from '@nuvix/utils/auth/mfa/challenge/totp';
-import { Email as EmailChallenge } from '@nuvix/utils/auth/mfa/challenge/email';
-import { Phone as PhoneChallenge } from '@nuvix/utils/auth/mfa/challenge/phone';
-import { CreateMfaChallengeDTO, VerifyMfaChallengeDTO } from './DTO/mfa.dto';
-import { CreatePushTargetDTO, UpdatePushTargetDTO } from './DTO/target.dto';
 
 @Injectable()
 export class AccountService {
@@ -78,7 +85,7 @@ export class AccountService {
     @InjectQueue('mails') private readonly mailQueue: Queue<MailQueueOptions>,
     private eventEmitter: EventEmitter2,
     private readonly jwtService: JwtService,
-  ) { }
+  ) {}
 
   private readonly oauthDefaultSuccess = '/auth/oauth2/success';
   private readonly oauthDefaultFailure = '/auth/oauth2/failure';
@@ -344,9 +351,9 @@ export class AccountService {
     sessionId =
       sessionId === 'current'
         ? (Auth.sessionVerify(
-          user.getAttribute('sessions'),
-          Auth.secret,
-        ) as string)
+            user.getAttribute('sessions'),
+            Auth.secret,
+          ) as string)
         : sessionId;
 
     for (const session of sessions) {
@@ -448,9 +455,9 @@ export class AccountService {
     sessionId =
       sessionId === 'current'
         ? (Auth.sessionVerify(
-          user.getAttribute('sessions'),
-          Auth.secret,
-        ) as string)
+            user.getAttribute('sessions'),
+            Auth.secret,
+          ) as string)
         : sessionId;
 
     const sessions = user.getAttribute('sessions', []);
@@ -868,7 +875,7 @@ export class AccountService {
 
     const countryName = locale.getText(
       'countries.' +
-      createdSession.getAttribute('countryCode', '').toLowerCase(),
+        createdSession.getAttribute('countryCode', '').toLowerCase(),
       locale.getText('locale.country.unknown'),
     );
 
@@ -1658,7 +1665,7 @@ export class AccountService {
     let subject = locale.getText('emails.magicSession.subject');
     const customTemplate =
       project.getAttribute('templates', {})[
-      `email.magicSession-${locale.default}`
+        `email.magicSession-${locale.default}`
       ] ?? {};
 
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN');
@@ -1865,7 +1872,7 @@ export class AccountService {
     let subject = locale.getText('emails.otpSession.subject');
     const customTemplate =
       project.getAttribute('templates', {})[
-      `email.otpSession-${locale.default}`
+        `email.otpSession-${locale.default}`
       ] ?? {};
 
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN');
@@ -2147,7 +2154,7 @@ export class AccountService {
     let subject: string = locale.getText('emails.sessionAlert.subject');
     const customTemplate =
       project.getAttribute('templates', {})?.[
-      'email.sessionAlert-' + locale.default
+        'email.sessionAlert-' + locale.default
       ] ?? {};
     const templatePath = path.join(ASSETS.TEMPLATES, 'email-session-alert.tpl');
     const templateSource = await fs.readFile(templatePath, 'utf8');
@@ -2665,7 +2672,7 @@ export class AccountService {
 
     const countryName = locale.getText(
       'countries.' +
-      createdSession.getAttribute('countryCode', '').toLowerCase(),
+        createdSession.getAttribute('countryCode', '').toLowerCase(),
       locale.getText('locale.country.unknown'),
     );
 
@@ -2752,7 +2759,7 @@ export class AccountService {
     let subject = locale.getText('emails.recovery.subject');
     const customTemplate =
       project.getAttribute('templates', {})[
-      `email.recovery-${locale.default}`
+        `email.recovery-${locale.default}`
       ] ?? {};
 
     const templatePath = path.join(ASSETS.TEMPLATES, 'email-inner-base.tpl');
@@ -2938,9 +2945,7 @@ export class AccountService {
     locale,
     project,
     url,
-  }: WithDB<
-    WithReqRes<WithUser<WithProject<WithLocale<{ url: string }>>>>
-  >) {
+  }: WithDB<WithReqRes<WithUser<WithProject<WithLocale<{ url: string }>>>>>) {
     if (!APP_SMTP_HOST) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP Disabled');
     }
@@ -2949,7 +2954,9 @@ export class AccountService {
       throw new Exception(Exception.USER_EMAIL_ALREADY_VERIFIED);
     }
 
-    const verificationSecret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_VERIFICATION);
+    const verificationSecret = Auth.tokenGenerator(
+      Auth.TOKEN_LENGTH_VERIFICATION,
+    );
     const expire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_CONFIRM * 1000);
 
     const verification = new Document({
@@ -2983,10 +2990,15 @@ export class AccountService {
     urlObj.searchParams.set('expire', expire.toISOString());
     const finalUrl = urlObj.toString();
 
-    const projectName = project.isEmpty() ? 'Console' : project.getAttribute('name', '[APP-NAME]');
+    const projectName = project.isEmpty()
+      ? 'Console'
+      : project.getAttribute('name', '[APP-NAME]');
     let body = locale.getText('emails.verification.body');
     let subject = locale.getText('emails.verification.subject');
-    const customTemplate = project.getAttribute('templates', {})[`email.verification-${locale.default}`] ?? {};
+    const customTemplate =
+      project.getAttribute('templates', {})[
+        `email.verification-${locale.default}`
+      ] ?? {};
 
     const templatePath = path.join(ASSETS.TEMPLATES, 'email-inner-base.tpl');
     const templateSource = await fs.readFile(templatePath, 'utf8');
@@ -3023,8 +3035,10 @@ export class AccountService {
       smtpServer['secure'] = smtp['secure'] ?? false;
 
       if (customTemplate) {
-        if (customTemplate['senderEmail']) senderEmail = customTemplate['senderEmail'];
-        if (customTemplate['senderName']) senderName = customTemplate['senderName'];
+        if (customTemplate['senderEmail'])
+          senderEmail = customTemplate['senderEmail'];
+        if (customTemplate['senderName'])
+          senderName = customTemplate['senderName'];
         if (customTemplate['replyTo']) replyTo = customTemplate['replyTo'];
 
         body = customTemplate['message'] || body;
@@ -3075,7 +3089,7 @@ export class AccountService {
     secret,
   }: WithDB<WithUser<{ response: NuvixRes; userId: string; secret: string }>>) {
     const profile = await Authorization.skip(
-      async () => await db.getDocument('users', userId)
+      async () => await db.getDocument('users', userId),
     );
 
     if (profile.isEmpty()) {
@@ -3086,7 +3100,7 @@ export class AccountService {
     const verifiedToken = Auth.tokenVerify(
       tokens,
       Auth.TOKEN_TYPE_VERIFICATION,
-      secret
+      secret,
     );
 
     if (!verifiedToken) {
@@ -3098,7 +3112,7 @@ export class AccountService {
     const updatedProfile = await db.updateDocument(
       'users',
       profile.getId(),
-      profile.setAttribute('emailVerification', true)
+      profile.setAttribute('emailVerification', true),
     );
 
     user.setAttributes(updatedProfile.toObject());
@@ -3131,9 +3145,7 @@ export class AccountService {
     response,
     locale,
     project,
-  }: WithDB<
-    WithReqRes<WithUser<WithProject<WithLocale<{}>>>>
-  >) {
+  }: WithDB<WithReqRes<WithUser<WithProject<WithLocale<{}>>>>>) {
     // Check if SMS provider is configured
     if (!process.env._APP_SMS_PROVIDER) {
       throw new Exception(
@@ -3192,8 +3204,9 @@ export class AccountService {
 
     if (sendSMS) {
       const customTemplate =
-        project.getAttribute('templates', {})[`sms.verification-${locale.default}`] ??
-        {};
+        project.getAttribute('templates', {})[
+          `sms.verification-${locale.default}`
+        ] ?? {};
 
       let message = locale.getText('sms.verification.body');
       if (customTemplate && customTemplate['message']) {
@@ -3233,7 +3246,7 @@ export class AccountService {
     secret,
   }: WithDB<WithUser<{ userId: string; secret: string }>>) {
     const profile = await Authorization.skip(
-      async () => await db.getDocument('users', userId)
+      async () => await db.getDocument('users', userId),
     );
 
     if (profile.isEmpty()) {
@@ -3244,7 +3257,7 @@ export class AccountService {
     const verifiedToken = Auth.tokenVerify(
       tokens,
       Auth.TOKEN_TYPE_PHONE,
-      secret
+      secret,
     );
 
     if (!verifiedToken) {
@@ -3256,12 +3269,15 @@ export class AccountService {
     const updatedProfile = await db.updateDocument(
       'users',
       profile.getId(),
-      profile.setAttribute('phoneVerification', true)
+      profile.setAttribute('phoneVerification', true),
     );
 
     user.setAttributes(updatedProfile.toObject());
 
-    const verificationDocument = await db.getDocument('tokens', verifiedToken.getId());
+    const verificationDocument = await db.getDocument(
+      'tokens',
+      verifiedToken.getId(),
+    );
 
     /**
      * We act like we're updating and validating the verification token but actually we don't need it anymore.
@@ -3299,11 +3315,17 @@ export class AccountService {
         factors.push('totp');
       }
 
-      if (user.getAttribute('email', false) && user.getAttribute('emailVerification', false)) {
+      if (
+        user.getAttribute('email', false) &&
+        user.getAttribute('emailVerification', false)
+      ) {
         factors.push('email');
       }
 
-      if (user.getAttribute('phone', false) && user.getAttribute('phoneVerification', false)) {
+      if (
+        user.getAttribute('phone', false) &&
+        user.getAttribute('phoneVerification', false)
+      ) {
         factors.push('phone');
       }
 
@@ -3324,22 +3346,27 @@ export class AccountService {
    */
   async getMfaFactors(user: Document) {
     const mfaRecoveryCodes = user.getAttribute('mfaRecoveryCodes', []);
-    const recoveryCodeEnabled = Array.isArray(mfaRecoveryCodes) && mfaRecoveryCodes.length > 0;
+    const recoveryCodeEnabled =
+      Array.isArray(mfaRecoveryCodes) && mfaRecoveryCodes.length > 0;
 
     const totp = TOTP.getAuthenticatorFromUser(user);
 
     const factors = new Document({
       totp: totp !== null && totp.getAttribute('verified', false),
-      email: user.getAttribute('email', false) && user.getAttribute('emailVerification', false),
-      phone: user.getAttribute('phone', false) && user.getAttribute('phoneVerification', false),
-      recoveryCode: recoveryCodeEnabled
+      email:
+        user.getAttribute('email', false) &&
+        user.getAttribute('emailVerification', false),
+      phone:
+        user.getAttribute('phone', false) &&
+        user.getAttribute('phoneVerification', false),
+      recoveryCode: recoveryCodeEnabled,
     });
 
     return factors;
   }
 
   /**
-   * Create authenticator 
+   * Create authenticator
    */
   async createMfaAuthenticator({
     db,
@@ -3354,7 +3381,10 @@ export class AccountService {
         otp = new TOTP();
         break;
       default:
-        throw new Exception(Exception.GENERAL_ARGUMENT_INVALID, 'Unknown type.');
+        throw new Exception(
+          Exception.GENERAL_ARGUMENT_INVALID,
+          'Unknown type.',
+        );
     }
 
     otp.setLabel(user.getAttribute('email'));
@@ -3382,12 +3412,12 @@ export class AccountService {
         Permission.read(Role.user(user.getId())),
         Permission.update(Role.user(user.getId())),
         Permission.delete(Role.user(user.getId())),
-      ]
+      ],
     });
 
     const model = new Document({
       secret: otp.getSecret(),
-      uri: otp.getProvisioningUri()
+      uri: otp.getProvisioningUri(),
     });
 
     await db.createDocument('authenticators', newAuthenticator);
@@ -3408,7 +3438,7 @@ export class AccountService {
     user,
     session,
     db,
-  }: WithDB<WithUser<{ session: Document, otp: string, type: string }>>) {
+  }: WithDB<WithUser<{ session: Document; otp: string; type: string }>>) {
     let authenticator: Document | null = null;
 
     switch (type) {
@@ -3442,7 +3472,11 @@ export class AccountService {
 
     authenticator.setAttribute('verified', true);
 
-    await db.updateDocument('authenticators', authenticator.getId(), authenticator);
+    await db.updateDocument(
+      'authenticators',
+      authenticator.getId(),
+      authenticator,
+    );
     await db.purgeCachedDocument('users', user.getId());
 
     const factors = session.getAttribute('factors', []);
@@ -3476,7 +3510,7 @@ export class AccountService {
     // queueForEvents.setParam('userId', user.getId());
 
     const document = new Document({
-      recoveryCodes: newRecoveryCodes
+      recoveryCodes: newRecoveryCodes,
     });
 
     return document;
@@ -3500,7 +3534,7 @@ export class AccountService {
     // queueForEvents.setParam('userId', user.getId());
 
     const document = new Document({
-      recoveryCodes: newMfaRecoveryCodes
+      recoveryCodes: newMfaRecoveryCodes,
     });
 
     return document;
@@ -3509,7 +3543,11 @@ export class AccountService {
   /**
    * Delete Authenticator
    */
-  async deleteMfaAuthenticator({ user, db, type }: WithDB<WithUser<{ type: string }>>) {
+  async deleteMfaAuthenticator({
+    user,
+    db,
+    type,
+  }: WithDB<WithUser<{ type: string }>>) {
     const authenticator = (() => {
       switch (type) {
         case MfaType.TOTP:
@@ -3544,7 +3582,9 @@ export class AccountService {
     project,
     userId,
     factor,
-  }: WithDB<WithUser<WithProject<WithReqRes<WithLocale<CreateMfaChallengeDTO>>>>>) {
+  }: WithDB<
+    WithUser<WithProject<WithReqRes<WithLocale<CreateMfaChallengeDTO>>>>
+  >) {
     const expire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_CONFIRM * 1000);
     const code = Auth.codeGenerator(6);
 
@@ -3568,7 +3608,10 @@ export class AccountService {
     switch (factor) {
       case TOTP.PHONE:
         if (!process.env._APP_SMS_PROVIDER) {
-          throw new Exception(Exception.GENERAL_PHONE_DISABLED, 'Phone provider not configured');
+          throw new Exception(
+            Exception.GENERAL_PHONE_DISABLED,
+            'Phone provider not configured',
+          );
         }
         if (!user.getAttribute('phone')) {
           throw new Exception(Exception.USER_PHONE_NOT_FOUND);
@@ -3577,7 +3620,10 @@ export class AccountService {
           throw new Exception(Exception.USER_PHONE_NOT_VERIFIED);
         }
 
-        const customSmsTemplate = project.getAttribute('templates', {})[`sms.mfaChallenge-${locale.default}`] ?? {};
+        const customSmsTemplate =
+          project.getAttribute('templates', {})[
+            `sms.mfaChallenge-${locale.default}`
+          ] ?? {};
 
         let smsMessage = locale.getText('sms.verification.body');
         if (customSmsTemplate && customSmsTemplate['message']) {
@@ -3608,14 +3654,22 @@ export class AccountService {
         }
 
         let subject = locale.getText('emails.mfaChallenge.subject');
-        const customEmailTemplate = project.getAttribute('templates', {})[`email.mfaChallenge-${locale.default}`] ?? {};
+        const customEmailTemplate =
+          project.getAttribute('templates', {})[
+            `email.mfaChallenge-${locale.default}`
+          ] ?? {};
 
-        const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN');
+        const detector = new Detector(
+          request.headers['user-agent'] || 'UNKNOWN',
+        );
         const agentOs = detector.getOS();
         const agentClient = detector.getClient();
         const agentDevice = detector.getDevice();
 
-        const templatePath = path.join(ASSETS.TEMPLATES, 'email-mfa-challenge.tpl');
+        const templatePath = path.join(
+          ASSETS.TEMPLATES,
+          'email-mfa-challenge.tpl',
+        );
         const templateSource = await fs.readFile(templatePath, 'utf8');
         const template = Template.compile(templateSource);
 
@@ -3650,9 +3704,12 @@ export class AccountService {
           smtpServer['secure'] = smtp['secure'] ?? false;
 
           if (customEmailTemplate) {
-            if (customEmailTemplate['senderEmail']) senderEmail = customEmailTemplate['senderEmail'];
-            if (customEmailTemplate['senderName']) senderName = customEmailTemplate['senderName'];
-            if (customEmailTemplate['replyTo']) replyTo = customEmailTemplate['replyTo'];
+            if (customEmailTemplate['senderEmail'])
+              senderEmail = customEmailTemplate['senderEmail'];
+            if (customEmailTemplate['senderName'])
+              senderName = customEmailTemplate['senderName'];
+            if (customEmailTemplate['replyTo'])
+              replyTo = customEmailTemplate['replyTo'];
 
             body = customEmailTemplate['message'] || body;
             subject = customEmailTemplate['subject'] || subject;
@@ -3697,10 +3754,12 @@ export class AccountService {
    * Update MFA Challenge
    */
   async updateMfaChallenge({
-    db, user, session, otp, challengeId
-  }:
-    WithDB<WithUser<VerifyMfaChallengeDTO & { session: Document; }>>) {
-
+    db,
+    user,
+    session,
+    otp,
+    challengeId,
+  }: WithDB<WithUser<VerifyMfaChallengeDTO & { session: Document }>>) {
     const challenge = await db.getDocument('challenges', challengeId);
 
     if (challenge.isEmpty()) {
@@ -3709,11 +3768,20 @@ export class AccountService {
 
     const type = challenge.getAttribute('type');
 
-    const recoveryCodeChallenge = async (challenge: Document, user: Document, otp: string): Promise<boolean> => {
-      if (challenge.isSet('type') && challenge.getAttribute('type') === MfaType.RECOVERY_CODE.toLowerCase()) {
+    const recoveryCodeChallenge = async (
+      challenge: Document,
+      user: Document,
+      otp: string,
+    ): Promise<boolean> => {
+      if (
+        challenge.isSet('type') &&
+        challenge.getAttribute('type') === MfaType.RECOVERY_CODE.toLowerCase()
+      ) {
         let mfaRecoveryCodes = user.getAttribute('mfaRecoveryCodes', []);
         if (mfaRecoveryCodes.includes(otp)) {
-          mfaRecoveryCodes = mfaRecoveryCodes.filter((code: string) => code !== otp);
+          mfaRecoveryCodes = mfaRecoveryCodes.filter(
+            (code: string) => code !== otp,
+          );
           user.setAttribute('mfaRecoveryCodes', mfaRecoveryCodes);
           await db.updateDocument('users', user.getId(), user);
           return true;
@@ -3730,11 +3798,15 @@ export class AccountService {
         break;
       case MfaType.PHONE:
         success = PhoneChallenge.challenge(challenge, user, otp);
-        success = challenge.getAttribute('code') === otp && new Date() < challenge.getAttribute('expire');
+        success =
+          challenge.getAttribute('code') === otp &&
+          new Date() < challenge.getAttribute('expire');
         break;
       case MfaType.EMAIL:
         success = EmailChallenge.challenge(challenge, user, otp);
-        success = challenge.getAttribute('code') === otp && new Date() < challenge.getAttribute('expire');
+        success =
+          challenge.getAttribute('code') === otp &&
+          new Date() < challenge.getAttribute('expire');
         break;
       case MfaType.RECOVERY_CODE.toLowerCase():
         success = await recoveryCodeChallenge(challenge, user, otp);
@@ -3778,16 +3850,16 @@ export class AccountService {
     request,
     targetId,
     providerId,
-    identifier
+    identifier,
   }: WithDB<WithUser<CreatePushTargetDTO & { request: NuvixRequest }>>) {
     const finalTargetId = targetId === 'unique()' ? ID.unique() : targetId;
 
     const provider = await Authorization.skip(
-      async () => await db.getDocument('providers', providerId)
+      async () => await db.getDocument('providers', providerId),
     );
 
     const target = await Authorization.skip(
-      async () => await db.getDocument('targets', finalTargetId)
+      async () => await db.getDocument('targets', finalTargetId),
     );
 
     if (!target.isEmpty()) {
@@ -3797,27 +3869,33 @@ export class AccountService {
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN');
     const device = detector.getDevice();
 
-    const sessionId = Auth.sessionVerify(user.getAttribute('sessions', []), Auth.secret);
+    const sessionId = Auth.sessionVerify(
+      user.getAttribute('sessions', []),
+      Auth.secret,
+    );
     const session = await db.getDocument('sessions', sessionId.toString());
 
     try {
-      const createdTarget = await db.createDocument('targets', new Document({
-        $id: finalTargetId,
-        $permissions: [
-          Permission.read(Role.user(user.getId())),
-          Permission.update(Role.user(user.getId())),
-          Permission.delete(Role.user(user.getId())),
-        ],
-        providerId: providerId || null,
-        providerInternalId: providerId ? provider.getInternalId() : null,
-        providerType: MESSAGE_TYPE_PUSH,
-        userId: user.getId(),
-        userInternalId: user.getInternalId(),
-        sessionId: session.getId(),
-        sessionInternalId: session.getInternalId(),
-        identifier: identifier,
-        name: `${device['deviceBrand']} ${device['deviceModel']}`
-      }));
+      const createdTarget = await db.createDocument(
+        'targets',
+        new Document({
+          $id: finalTargetId,
+          $permissions: [
+            Permission.read(Role.user(user.getId())),
+            Permission.update(Role.user(user.getId())),
+            Permission.delete(Role.user(user.getId())),
+          ],
+          providerId: providerId || null,
+          providerInternalId: providerId ? provider.getInternalId() : null,
+          providerType: MESSAGE_TYPE_PUSH,
+          userId: user.getId(),
+          userInternalId: user.getInternalId(),
+          sessionId: session.getId(),
+          sessionInternalId: session.getInternalId(),
+          identifier: identifier,
+          name: `${device['deviceBrand']} ${device['deviceModel']}`,
+        }),
+      );
 
       await db.purgeCachedDocument('users', user.getId());
 
@@ -3827,7 +3905,6 @@ export class AccountService {
       //   .setParam('targetId', createdTarget.getId());
 
       return createdTarget;
-
     } catch (error) {
       if (error instanceof DuplicateException) {
         throw new Exception(Exception.USER_TARGET_ALREADY_EXISTS);
@@ -3845,9 +3922,11 @@ export class AccountService {
     request,
     targetId,
     identifier,
-  }: WithDB<WithUser<UpdatePushTargetDTO & { request: NuvixRequest; targetId: string }>>) {
+  }: WithDB<
+    WithUser<UpdatePushTargetDTO & { request: NuvixRequest; targetId: string }>
+  >) {
     const target = await Authorization.skip(
-      async () => await db.getDocument('targets', targetId)
+      async () => await db.getDocument('targets', targetId),
     );
 
     if (target.isEmpty()) {
@@ -3867,9 +3946,16 @@ export class AccountService {
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN');
     const device = detector.getDevice();
 
-    target.setAttribute('name', `${device['deviceBrand']} ${device['deviceModel']}`);
+    target.setAttribute(
+      'name',
+      `${device['deviceBrand']} ${device['deviceModel']}`,
+    );
 
-    const updatedTarget = await db.updateDocument('targets', target.getId(), target);
+    const updatedTarget = await db.updateDocument(
+      'targets',
+      target.getId(),
+      target,
+    );
 
     await db.purgeCachedDocument('users', user.getId());
 
@@ -3890,7 +3976,7 @@ export class AccountService {
     targetId,
   }: WithDB<WithUser<{ targetId: string }>>) {
     const target = await Authorization.skip(
-      async () => await db.getDocument('targets', targetId)
+      async () => await db.getDocument('targets', targetId),
     );
 
     if (target.isEmpty()) {
@@ -3933,7 +4019,9 @@ export class AccountService {
      * Get cursor document if there was a cursor query, we use array_filter and reset for reference cursor to queries
      */
     const cursor = queries.find(query =>
-      [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(query.getMethod())
+      [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(
+        query.getMethod(),
+      ),
     );
 
     if (cursor) {
@@ -3954,7 +4042,11 @@ export class AccountService {
     const filterQueries = Query.groupByType(queries)['filters'];
     try {
       const results = await db.find('identities', queries);
-      const total = await db.count('identities', filterQueries, APP_LIMIT_COUNT);
+      const total = await db.count(
+        'identities',
+        filterQueries,
+        APP_LIMIT_COUNT,
+      );
 
       return new Document({
         identities: results,
@@ -3962,7 +4054,10 @@ export class AccountService {
       });
     } catch (error) {
       if (error.name === 'OrderException') {
-        throw new Exception(Exception.DATABASE_QUERY_ORDER_NULL, `The order attribute '${error.getAttribute()}' had a null value. Cursor pagination requires all documents order attribute values are non-null.`);
+        throw new Exception(
+          Exception.DATABASE_QUERY_ORDER_NULL,
+          `The order attribute '${error.getAttribute()}' had a null value. Cursor pagination requires all documents order attribute values are non-null.`,
+        );
       }
       throw error;
     }
@@ -3971,10 +4066,7 @@ export class AccountService {
   /**
    * Delete Identity
    */
-  async deleteIdentity({
-    db,
-    identityId,
-  }: WithDB<{ identityId: string }>) {
+  async deleteIdentity({ db, identityId }: WithDB<{ identityId: string }>) {
     const identity = await db.getDocument('identities', identityId);
 
     if (identity.isEmpty()) {
@@ -3991,12 +4083,13 @@ export class AccountService {
 
     return {};
   }
-
 }
 
-
 type WithDB<T = unknown> = { db: Database } & T;
-type WithReqRes<T = unknown> = { request: NuvixRequest; response: NuvixRes } & T;
+type WithReqRes<T = unknown> = {
+  request: NuvixRequest;
+  response: NuvixRes;
+} & T;
 type WithUser<T = unknown> = { user: Document } & T;
 type WithProject<T = unknown> = { project: Document } & T;
 type WithLocale<T = unknown> = { locale: LocaleTranslator } & T;

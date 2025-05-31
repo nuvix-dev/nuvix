@@ -18,7 +18,9 @@ export class CreatePushTargetDTO {
   providerId?: string;
 }
 
-export class UpdatePushTargetDTO extends OmitType(CreatePushTargetDTO, ['targetId']) { }
+export class UpdatePushTargetDTO extends OmitType(CreatePushTargetDTO, [
+  'targetId',
+]) {}
 
 export class TargetIdParamDTO {
   @IsString()

@@ -16,6 +16,10 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
+
+import { Database, Document } from '@nuvix/database';
+import { Query as Queries } from '@nuvix/database';
+
 import {
   AuditEvent,
   AuthType,
@@ -30,23 +34,35 @@ import {
   Project,
 } from '@nuvix/core/decorators/project.decorator';
 import { User } from '@nuvix/core/decorators/project-user.decorator';
+
 import { Exception } from '@nuvix/core/extend/exception';
 import { LocaleTranslator } from '@nuvix/core/helper/locale.helper';
 import { Models } from '@nuvix/core/helper/response.helper';
+import { ParseQueryPipe } from '@nuvix/core/pipes';
+
 import { Public } from '@nuvix/core/resolvers/guards/auth.guard';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards';
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor';
 import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor';
-import { Database, Document } from '@nuvix/database';
+
+import { AccountService } from './account.service';
 import {
   CreateAccountDTO,
-  UpdateAccountStatusDTO,
   UpdateEmailDTO,
   UpdateNameDTO,
   UpdatePasswordDTO,
   UpdatePhoneDTO,
   UpdatePrefsDTO,
 } from './DTO/account.dto';
+import { IdentityIdParamDTO } from './DTO/identity.dto';
+import {
+  CreateMfaChallengeDTO,
+  MfaAuthenticatorTypeParamDTO,
+  UpdateAccountMfaDTO,
+  VerifyMfaChallengeDTO,
+  VerifyMfaAuthenticatorDTO,
+} from './DTO/mfa.dto';
+import { CreateRecoveryDTO, UpdateRecoveryDTO } from './DTO/recovery.dto';
 import {
   CreateEmailSessionDTO,
   CreateOAuth2SessionDTO,
@@ -54,44 +70,28 @@ import {
   OAuth2CallbackDTO,
   ProviderParamDTO,
 } from './DTO/session.dto';
-import { AccountService } from './account.service';
+import {
+  CreatePushTargetDTO,
+  TargetIdParamDTO,
+  UpdatePushTargetDTO,
+} from './DTO/target.dto';
 import {
   CreateEmailTokenDTO,
   CreateMagicURLTokenDTO,
   CreateOAuth2TokenDTO,
   CreatePhoneTokenDTO,
 } from './DTO/token.dto';
-import { OAuthProviders } from '@nuvix/core/config/authProviders';
-import { UpdateMfaStatusDTO } from '../users/dto/user.dto';
-import { DocumentNode } from 'graphql';
-import { CreateRecoveryDTO, UpdateRecoveryDTO } from './DTO/recovery.dto';
 import {
   CreateEmailVerificationDTO,
   UpdateEmailVerificationDTO,
-  CreatePhoneVerificationDTO,
   UpdatePhoneVerificationDTO,
 } from './DTO/verification.dto';
-import {
-  UpdateAccountMfaDTO,
-  MfaAuthenticatorTypeParamDTO,
-  VerifyMfaAuthenticatorDTO,
-  CreateMfaChallengeDTO,
-  VerifyMfaChallengeDTO,
-} from './DTO/mfa.dto';
-import {
-  CreatePushTargetDTO,
-  TargetIdParamDTO,
-  UpdatePushTargetDTO,
-} from './DTO/target.dto';
-import { IdentityIdParamDTO } from './DTO/identity.dto';
-import { Query as Queries } from '@nuvix/database';
-import { ParseQueryPipe } from '@nuvix/core/pipes';
 
 @Controller({ version: ['1'], path: 'account' })
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class AccountController {
-  constructor(private readonly accountService: AccountService) { }
+  constructor(private readonly accountService: AccountService) {}
 
   @Public()
   @Post()
@@ -99,7 +99,10 @@ export class AccountController {
   @Label('res.status', 'CREATED')
   @Label('res.type', 'JSON')
   @ResModel(Models.USER)
-  @AuditEvent('user.create', { resource: 'user/{res.$id}', userId: '{res.$id}' })
+  @AuditEvent('user.create', {
+    resource: 'user/{res.$id}',
+    userId: '{res.$id}',
+  })
   async createAccount(
     @AuthDatabase() authDatabase: Database,
     @Body() input: CreateAccountDTO,
@@ -790,7 +793,10 @@ export class AccountController {
 
   @Post('verification')
   @Scope('account')
-  @AuditEvent('verification.create', { resource: 'user/{res.userId}', userId: '{res.userId}' })
+  @AuditEvent('verification.create', {
+    resource: 'user/{res.userId}',
+    userId: '{res.userId}',
+  })
   @ResModel(Models.TOKEN)
   @Sdk({
     name: 'createVerification',
@@ -818,7 +824,10 @@ export class AccountController {
   @Public()
   @Put('verification')
   @Scope('public')
-  @AuditEvent('verification.update', { resource: 'user/{res.userId}', userId: '{res.userId}' })
+  @AuditEvent('verification.update', {
+    resource: 'user/{res.userId}',
+    userId: '{res.userId}',
+  })
   @ResModel(Models.TOKEN)
   @Sdk({
     name: 'updateEmailVerification',
@@ -840,7 +849,10 @@ export class AccountController {
 
   @Post('verification/phone')
   @Scope('account')
-  @AuditEvent('verification.create', { resource: 'user/{res.userId}', userId: '{res.userId}' })
+  @AuditEvent('verification.create', {
+    resource: 'user/{res.userId}',
+    userId: '{res.userId}',
+  })
   @ResModel(Models.TOKEN)
   @Sdk({
     name: 'createPhoneVerification',
@@ -866,7 +878,10 @@ export class AccountController {
   @Public()
   @Put('verification/phone')
   @Scope('public')
-  @AuditEvent('verification.update', { resource: 'user/{res.userId}', userId: '{res.userId}' })
+  @AuditEvent('verification.update', {
+    resource: 'user/{res.userId}',
+    userId: '{res.userId}',
+  })
   @ResModel(Models.TOKEN)
   @Sdk({
     name: 'updatePhoneVerification',
@@ -886,7 +901,10 @@ export class AccountController {
 
   @Patch('mfa')
   @Scope('account')
-  @AuditEvent('user.update', { resource: 'user/{res.$id}', userId: '{res.$id}' })
+  @AuditEvent('user.update', {
+    resource: 'user/{res.$id}',
+    userId: '{res.$id}',
+  })
   @ResModel(Models.ACCOUNT)
   @Sdk({
     name: 'updateMfa',
@@ -909,17 +927,18 @@ export class AccountController {
   @Scope('account')
   @ResModel(Models.MFA_FACTORS)
   @Sdk({
-    name: 'listMfaFactors'
+    name: 'listMfaFactors',
   })
-  async getMfaFactors(
-    @User() user: Document,
-  ) {
+  async getMfaFactors(@User() user: Document) {
     return this.accountService.getMfaFactors(user);
   }
 
   @Post('mfa/authenticators/:type')
   @Scope('account')
-  @AuditEvent('user.update', { resource: 'user/{res.$id}', userId: '{res.$id}' })
+  @AuditEvent('user.update', {
+    resource: 'user/{res.$id}',
+    userId: '{res.$id}',
+  })
   @ResModel(Models.MFA_TYPE)
   @Sdk({
     name: 'createMfaAuthenticator',
@@ -940,10 +959,13 @@ export class AccountController {
 
   @Put('mfa/authenticators/:type')
   @Scope('account')
-  @AuditEvent('user.update', { resource: 'user/{res.$id}', userId: '{res.$id}' })
+  @AuditEvent('user.update', {
+    resource: 'user/{res.$id}',
+    userId: '{res.$id}',
+  })
   @ResModel(Models.USER)
   @Sdk({
-    name: 'updateMfaAuthenticator'
+    name: 'updateMfaAuthenticator',
   })
   async verifyMfaAuthenticator(
     @Param() { type }: MfaAuthenticatorTypeParamDTO,
@@ -963,10 +985,13 @@ export class AccountController {
 
   @Post('mfa/recovery-codes')
   @Scope('account')
-  @AuditEvent('user.update', { resource: 'user/{res.$id}', userId: '{res.$id}' })
+  @AuditEvent('user.update', {
+    resource: 'user/{res.$id}',
+    userId: '{res.$id}',
+  })
   @ResModel(Models.MFA_RECOVERY_CODES)
   @Sdk({
-    name: 'createMfaRecoveryCodes'
+    name: 'createMfaRecoveryCodes',
   })
   async createMfaRecoveryCodes(
     @User() user: Document,
@@ -977,10 +1002,13 @@ export class AccountController {
 
   @Patch('mfa/recovery-codes')
   @Scope('account')
-  @AuditEvent('user.update', { resource: 'user/{res.$id}', userId: '{res.$id}' })
+  @AuditEvent('user.update', {
+    resource: 'user/{res.$id}',
+    userId: '{res.$id}',
+  })
   @ResModel(Models.MFA_RECOVERY_CODES)
   @Sdk({
-    name: 'updateMfaRecoveryCodes'
+    name: 'updateMfaRecoveryCodes',
   })
   async updateMfaRecoveryCodes(
     @AuthDatabase() db: Database,
@@ -993,11 +1021,9 @@ export class AccountController {
   @Scope('account')
   @ResModel(Models.MFA_RECOVERY_CODES)
   @Sdk({
-    name: 'getMfaRecoveryCodes'
+    name: 'getMfaRecoveryCodes',
   })
-  async getMfaRecoveryCodes(
-    @User() user: Document,
-  ) {
+  async getMfaRecoveryCodes(@User() user: Document) {
     const mfaRecoveryCodes = user.getAttribute('mfaRecoveryCodes', []);
 
     if (!mfaRecoveryCodes || mfaRecoveryCodes.length === 0) {
@@ -1005,17 +1031,20 @@ export class AccountController {
     }
 
     return {
-      recoveryCodes: mfaRecoveryCodes
+      recoveryCodes: mfaRecoveryCodes,
     };
   }
 
   @Delete('mfa/authenticators/:type')
   @Scope('account')
-  @AuditEvent('user.update', { resource: 'user/{res.$id}', userId: '{res.$id}' })
+  @AuditEvent('user.update', {
+    resource: 'user/{res.$id}',
+    userId: '{res.$id}',
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ResModel(Models.NONE)
   @Sdk({
-    name: 'deleteMfaAuthenticator'
+    name: 'deleteMfaAuthenticator',
   })
   async deleteMfaAuthenticator(
     @Param() { type }: MfaAuthenticatorTypeParamDTO,
@@ -1059,7 +1088,7 @@ export class AccountController {
   @Scope('account')
   @ResModel(Models.SESSION)
   @Sdk({
-    name: 'updateMfaChallenge'
+    name: 'updateMfaChallenge',
   })
   async updateMfaChallenge(
     @Body() input: VerifyMfaChallengeDTO,
@@ -1071,13 +1100,16 @@ export class AccountController {
       ...input,
       user,
       db,
-      session
+      session,
     });
   }
 
   @Post('targets/push')
   @Scope('account')
-  @AuditEvent('target.create', { resource: 'user/{user.$id}/target/{res.$id}', userId: '{user.$id}' })
+  @AuditEvent('target.create', {
+    resource: 'user/{user.$id}/target/{res.$id}',
+    userId: '{user.$id}',
+  })
   @ResModel(Models.TARGET)
   @Sdk({
     name: 'createPushTarget',
@@ -1098,7 +1130,10 @@ export class AccountController {
 
   @Put('targets/:targetId/push')
   @Scope('account')
-  @AuditEvent('target.update', { resource: 'user/{user.$id}/target/{params.targetId}', userId: '{user.$id}' })
+  @AuditEvent('target.update', {
+    resource: 'user/{user.$id}/target/{params.targetId}',
+    userId: '{user.$id}',
+  })
   @ResModel(Models.TARGET)
   @Sdk({
     name: 'updatePushTarget',
@@ -1121,7 +1156,10 @@ export class AccountController {
 
   @Delete('targets/:targetId/push')
   @Scope('account')
-  @AuditEvent('target.delete', { resource: 'user/{user.$id}/target/{params.targetId}', userId: '{user.$id}' })
+  @AuditEvent('target.delete', {
+    resource: 'user/{user.$id}/target/{params.targetId}',
+    userId: '{user.$id}',
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ResModel(Models.NONE)
   @Sdk({
@@ -1155,7 +1193,10 @@ export class AccountController {
 
   @Delete('identities/:identityId')
   @Scope('account')
-  @AuditEvent('user.update', { resource: 'user/{user.$id}/identity/{params.identityId}', userId: '{user.$id}' }) // TODO: #AI Revisit AuditEvent type, 'identity.delete' was not recognized. 'user.update' used as placeholder.
+  @AuditEvent('user.update', {
+    resource: 'user/{user.$id}/identity/{params.identityId}',
+    userId: '{user.$id}',
+  }) // TODO: #AI Revisit AuditEvent type, 'identity.delete' was not recognized. 'user.update' used as placeholder.
   @HttpCode(HttpStatus.NO_CONTENT)
   @ResModel(Models.NONE)
   @Sdk({
