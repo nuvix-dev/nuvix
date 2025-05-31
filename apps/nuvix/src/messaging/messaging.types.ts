@@ -1,5 +1,5 @@
 import { LocaleTranslator } from '@nuvix/core/helper';
-import { Database } from '@nuvix/database';
+import { Database, Query } from '@nuvix/database';
 import { CreateMailgunProviderDTO } from './DTO/mailgun.dto';
 import { CreateSendgridProviderDTO } from './DTO/sendgrid.dto';
 import { CreateTwilioProviderDTO } from './DTO/twilio.dto';
@@ -30,6 +30,11 @@ interface Project {
 
 interface Locale {
   locale: LocaleTranslator;
+}
+
+interface QandS {
+  queries: Query[];
+  search?: string;
 }
 
 interface CreateProviderBase<T> extends DB {
@@ -70,3 +75,5 @@ export type CreateProviderInput =
   | CreateApnsProviderDTO;
 
 export type CreateAnyProvider = CreateProviderBase<CreateProviderInput>;
+
+export interface ListProviders extends DB, QandS {}

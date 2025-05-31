@@ -10,6 +10,7 @@ import {
   CreateTextmagicProvider,
   CreateTwilioProvider,
   CreateVonageProvider,
+  ListProviders,
 } from './messaging.types';
 import { Database, Document, DuplicateException, ID } from '@nuvix/database';
 import { Exception } from '@nuvix/core/extend/exception';
@@ -331,5 +332,12 @@ export class MessagingService {
         credentials.hasOwnProperty('teamId') &&
         credentials.hasOwnProperty('bundleId'),
     });
+  }
+
+  /**
+   * Lists all providers.
+   */
+  async listProviders({ db, queries, search }: ListProviders) {
+    // TODO: Implement search and queries logic
   }
 }

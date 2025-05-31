@@ -4,6 +4,7 @@ import {
   Get,
   HttpStatus,
   Post,
+  Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -23,7 +24,7 @@ import { Models } from '@nuvix/core/helper';
 import { User } from '@nuvix/core/decorators/project-user.decorator';
 
 import { CreateMailgunProviderDTO } from './DTO/mailgun.dto';
-import { Database } from '@nuvix/database';
+import { Database, Query as Queries } from '@nuvix/database';
 import { CreateSendgridProviderDTO } from './DTO/sendgrid.dto';
 import { CreateSMTPProviderDTO } from './DTO/smtp.dto';
 import { CreateMsg91ProviderDTO } from './DTO/msg91.dto';
@@ -33,6 +34,7 @@ import { CreateTextmagicProviderDTO } from './DTO/textmagic.dto';
 import { CreateVonageProviderDTO } from './DTO/vonage.dto';
 import { CreateFcmProviderDTO } from './DTO/fcm.dto';
 import { CreateApnsProviderDTO } from './DTO/apns.dto';
+import { ParseQueryPipe } from '@nuvix/core/pipes';
 
 @Controller({ path: 'messaging', version: ['1'] })
 @UseGuards(ProjectGuard)
@@ -237,6 +239,27 @@ export class MessagingController {
     return await this.messagingService.createApnsProvider({
       db,
       input,
+    });
+  }
+
+  @Get('providers')
+  @Scope('providers.read')
+  @ResModel(Models.PROVIDER, { list: true })
+  @Sdk({
+    name: 'listProviders',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.OK,
+    description: 'List all providers',
+  })
+  async listProviders(
+    @MessagingDatabase() db: Database,
+    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('search') search?: string,
+  ) {
+    return await this.messagingService.listProviders({
+      db,
+      queries,
+      search,
     });
   }
 }
