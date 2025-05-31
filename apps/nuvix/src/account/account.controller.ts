@@ -605,7 +605,7 @@ export class AccountController {
   @ResModel(Models.JWT)
   @Sdk({
     name: 'createJWT',
-    auth: AuthType.JWT
+    auth: AuthType.JWT,
   })
   async createJWT(
     @User() user: Document,

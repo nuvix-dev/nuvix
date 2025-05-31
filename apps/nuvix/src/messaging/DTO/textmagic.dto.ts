@@ -1,28 +1,34 @@
 import { IsUID } from '@nuvix/core/validators';
-import { IsString, IsPhoneNumber, IsBoolean, IsOptional, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsPhoneNumber,
+  IsBoolean,
+  IsOptional,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateTextmagicProviderDTO {
-    @IsString()
-    @IsUID()
-    providerId: string;
+  @IsString()
+  @IsUID()
+  providerId: string;
 
-    @IsString()
-    @MaxLength(128)
-    name: string;
+  @IsString()
+  @MaxLength(128)
+  name: string;
 
-    @IsPhoneNumber()
-    @IsOptional()
-    from?: string;
+  @IsPhoneNumber()
+  @IsOptional()
+  from?: string;
 
-    @IsString()
-    @IsOptional()
-    username?: string;
+  @IsString()
+  @IsOptional()
+  username?: string;
 
-    @IsString()
-    @IsOptional()
-    apiKey?: string;
+  @IsString()
+  @IsOptional()
+  apiKey?: string;
 
-    @IsBoolean()
-    @IsOptional()
-    enabled?: boolean;
+  @IsBoolean()
+  @IsOptional()
+  enabled?: boolean;
 }

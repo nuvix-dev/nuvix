@@ -1,27 +1,33 @@
 import { IsUID } from '@nuvix/core/validators';
-import { IsBoolean, IsOptional, IsPhoneNumber, IsString, MaxLength } from 'class-validator';
+import {
+  IsBoolean,
+  IsOptional,
+  IsPhoneNumber,
+  IsString,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateVonageProviderDTO {
-    @IsUID()
-    providerId: string;
+  @IsUID()
+  providerId: string;
 
-    @IsString()
-    @MaxLength(128)
-    name: string;
+  @IsString()
+  @MaxLength(128)
+  name: string;
 
-    @IsOptional()
-    @IsPhoneNumber()
-    from?: string;
+  @IsOptional()
+  @IsPhoneNumber()
+  from?: string;
 
-    @IsOptional()
-    @IsString()
-    apiKey?: string;
+  @IsOptional()
+  @IsString()
+  apiKey?: string;
 
-    @IsOptional()
-    @IsString()
-    apiSecret?: string;
+  @IsOptional()
+  @IsString()
+  apiSecret?: string;
 
-    @IsOptional()
-    @IsBoolean()
-    enabled?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  enabled?: boolean;
 }

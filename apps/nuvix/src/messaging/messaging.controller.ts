@@ -1,8 +1,24 @@
-import { Body, Controller, Get, HttpStatus, Post, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpStatus,
+  Post,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { MessagingService } from './messaging.service';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards';
 import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors';
-import { AuditEvent, AuthType, MessagingDatabase, Project, ResModel, Scope, Sdk } from '@nuvix/core/decorators';
+import {
+  AuditEvent,
+  AuthType,
+  MessagingDatabase,
+  Project,
+  ResModel,
+  Scope,
+  Sdk,
+} from '@nuvix/core/decorators';
 import { Models } from '@nuvix/core/helper';
 import { User } from '@nuvix/core/decorators/project-user.decorator';
 
@@ -18,12 +34,11 @@ import { CreateVonageProviderDTO } from './DTO/vonage.dto';
 import { CreateFcmProviderDTO } from './DTO/fcm.dto';
 import { CreateApnsProviderDTO } from './DTO/apns.dto';
 
-
 @Controller({ path: 'messaging', version: ['1'] })
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor)
 export class MessagingController {
-  constructor(private readonly messagingService: MessagingService) { }
+  constructor(private readonly messagingService: MessagingService) {}
 
   @Post('providers/mailgun')
   @Scope('providers.create')
@@ -77,7 +92,7 @@ export class MessagingController {
   })
   async createSMTPProvider(
     @MessagingDatabase() db: Database,
-    @Body() input: CreateSMTPProviderDTO
+    @Body() input: CreateSMTPProviderDTO,
   ) {
     return await this.messagingService.createSmtpProvider({
       db,
@@ -97,7 +112,7 @@ export class MessagingController {
   })
   async createMsg91Provider(
     @MessagingDatabase() db: Database,
-    @Body() input: CreateMsg91ProviderDTO
+    @Body() input: CreateMsg91ProviderDTO,
   ) {
     return await this.messagingService.createMsg91Provider({
       db,
@@ -117,7 +132,7 @@ export class MessagingController {
   })
   async createTelesignProvider(
     @MessagingDatabase() db: Database,
-    @Body() input: CreateTelesignProviderDTO
+    @Body() input: CreateTelesignProviderDTO,
   ) {
     return await this.messagingService.createTelesignProvider({
       db,
@@ -137,7 +152,7 @@ export class MessagingController {
   })
   async createTextmagicProvider(
     @MessagingDatabase() db: Database,
-    @Body() input: CreateTextmagicProviderDTO
+    @Body() input: CreateTextmagicProviderDTO,
   ) {
     return await this.messagingService.createTextMagicProvider({
       db,
@@ -157,7 +172,7 @@ export class MessagingController {
   })
   async createTwilioProvider(
     @MessagingDatabase() db: Database,
-    @Body() input: CreateTwilioProviderDTO
+    @Body() input: CreateTwilioProviderDTO,
   ) {
     return await this.messagingService.createTwilioProvider({
       db,
@@ -177,7 +192,7 @@ export class MessagingController {
   })
   async createVonageProvider(
     @MessagingDatabase() db: Database,
-    @Body() input: CreateVonageProviderDTO
+    @Body() input: CreateVonageProviderDTO,
   ) {
     return await this.messagingService.createVonageProvider({
       db,
@@ -197,7 +212,7 @@ export class MessagingController {
   })
   async createFcmProvider(
     @MessagingDatabase() db: Database,
-    @Body() input: CreateFcmProviderDTO
+    @Body() input: CreateFcmProviderDTO,
   ) {
     return await this.messagingService.createFcmProvider({
       db,
@@ -217,12 +232,11 @@ export class MessagingController {
   })
   async createApnsProvider(
     @MessagingDatabase() db: Database,
-    @Body() input: CreateApnsProviderDTO
+    @Body() input: CreateApnsProviderDTO,
   ) {
     return await this.messagingService.createApnsProvider({
       db,
       input,
     });
   }
-
 }

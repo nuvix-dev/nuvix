@@ -1,318 +1,335 @@
 import { Injectable } from '@nestjs/common';
-import { CreateApnsProvider, CreateFcmProvider, CreateMailgunProvider, CreateMsg91Provider, CreateSendgridProvider, CreateSmtpProvider, CreateTelesignProvider, CreateTextmagicProvider, CreateTwilioProvider, CreateVonageProvider } from './messaging.types';
+import {
+  CreateApnsProvider,
+  CreateFcmProvider,
+  CreateMailgunProvider,
+  CreateMsg91Provider,
+  CreateSendgridProvider,
+  CreateSmtpProvider,
+  CreateTelesignProvider,
+  CreateTextmagicProvider,
+  CreateTwilioProvider,
+  CreateVonageProvider,
+} from './messaging.types';
 import { Database, Document, DuplicateException, ID } from '@nuvix/database';
 import { Exception } from '@nuvix/core/extend/exception';
-import { MESSAGE_TYPE_EMAIL, MESSAGE_TYPE_PUSH, MESSAGE_TYPE_SMS } from '@nuvix/utils/constants';
+import {
+  MESSAGE_TYPE_EMAIL,
+  MESSAGE_TYPE_PUSH,
+  MESSAGE_TYPE_SMS,
+} from '@nuvix/utils/constants';
 
 @Injectable()
 export class MessagingService {
+  constructor() {}
 
-    constructor() { }
+  /**
+   * Common method to create a provider.
+   */
+  private async createProvider({
+    input,
+    db,
+    providerType,
+    messageType,
+    credentialFields,
+    optionFields,
+    enabledCondition,
+  }: {
+    input: any;
+    db: Database;
+    providerType: string;
+    messageType: string;
+    credentialFields: Record<string, string>;
+    optionFields: Record<string, string>;
+    enabledCondition: (
+      credentials: Record<string, any>,
+      options: Record<string, any>,
+    ) => boolean;
+  }) {
+    const { providerId: inputProviderId, name, enabled: inputEnabled } = input;
+    const providerId =
+      inputProviderId === 'unique()' ? ID.unique() : inputProviderId;
 
-    /**
-     * Common method to create a provider.
-     */
-    private async createProvider({
-        input,
-        db,
-        providerType,
-        messageType,
-        credentialFields,
-        optionFields,
-        enabledCondition
-    }: {
-        input: any;
-        db: Database;
-        providerType: string;
-        messageType: string;
-        credentialFields: Record<string, string>;
-        optionFields: Record<string, string>;
-        enabledCondition: (credentials: Record<string, any>, options: Record<string, any>) => boolean;
-    }) {
-        const { providerId: inputProviderId, name, enabled: inputEnabled } = input;
-        const providerId = inputProviderId === 'unique()' ? ID.unique() : inputProviderId;
+    const credentials: Record<string, any> = {};
+    const options: Record<string, any> = {};
 
-        const credentials: Record<string, any> = {};
-        const options: Record<string, any> = {};
+    // Map credential fields
+    Object.entries(credentialFields).forEach(([key, inputKey]) => {
+      if (input[inputKey]) {
+        credentials[key] = input[inputKey];
+      }
+    });
 
-        // Map credential fields
-        Object.entries(credentialFields).forEach(([key, inputKey]) => {
-            if (input[inputKey]) {
-                credentials[key] = input[inputKey];
-            }
-        });
+    // Map option fields
+    Object.entries(optionFields).forEach(([key, inputKey]) => {
+      if (input[inputKey]) {
+        options[key] = input[inputKey];
+      }
+    });
 
-        // Map option fields
-        Object.entries(optionFields).forEach(([key, inputKey]) => {
-            if (input[inputKey]) {
-                options[key] = input[inputKey];
-            }
-        });
+    const enabled =
+      inputEnabled === true && enabledCondition(credentials, options);
 
-        const enabled = inputEnabled === true && enabledCondition(credentials, options);
+    const provider = new Document({
+      $id: providerId,
+      name,
+      provider: providerType,
+      type: messageType,
+      enabled,
+      credentials,
+      options,
+    });
 
-        const provider = new Document({
-            $id: providerId,
-            name,
-            provider: providerType,
-            type: messageType,
-            enabled,
-            credentials,
-            options,
-        });
-
-        try {
-            const createdProvider = await db.createDocument('providers', provider);
-            // TODO: queue for events
-            // this.queueForEvents.setParam('providerId', createdProvider.getId());
-            return createdProvider;
-        } catch (error) {
-            if (error instanceof DuplicateException) {
-                throw new Exception(Exception.PROVIDER_ALREADY_EXISTS);
-            }
-            throw error;
-        }
+    try {
+      const createdProvider = await db.createDocument('providers', provider);
+      // TODO: queue for events
+      // this.queueForEvents.setParam('providerId', createdProvider.getId());
+      return createdProvider;
+    } catch (error) {
+      if (error instanceof DuplicateException) {
+        throw new Exception(Exception.PROVIDER_ALREADY_EXISTS);
+      }
+      throw error;
     }
+  }
 
-    /**
-     * Creates a Mailgun provider.
-     */
-    async createMailgunProvider({ input, db }: CreateMailgunProvider) {
-        return this.createProvider({
-            input,
-            db,
-            providerType: 'mailgun',
-            messageType: MESSAGE_TYPE_EMAIL,
-            credentialFields: {
-                isEuRegion: 'isEuRegion',
-                apiKey: 'apiKey',
-                domain: 'domain'
-            },
-            optionFields: {
-                fromName: 'fromName',
-                fromEmail: 'fromEmail',
-                replyToName: 'replyToName',
-                replyToEmail: 'replyToEmail'
-            },
-            enabledCondition: (credentials, options) =>
-                options.fromEmail &&
-                credentials.hasOwnProperty('isEuRegion') &&
-                credentials.hasOwnProperty('apiKey') &&
-                credentials.hasOwnProperty('domain')
-        });
-    }
+  /**
+   * Creates a Mailgun provider.
+   */
+  async createMailgunProvider({ input, db }: CreateMailgunProvider) {
+    return this.createProvider({
+      input,
+      db,
+      providerType: 'mailgun',
+      messageType: MESSAGE_TYPE_EMAIL,
+      credentialFields: {
+        isEuRegion: 'isEuRegion',
+        apiKey: 'apiKey',
+        domain: 'domain',
+      },
+      optionFields: {
+        fromName: 'fromName',
+        fromEmail: 'fromEmail',
+        replyToName: 'replyToName',
+        replyToEmail: 'replyToEmail',
+      },
+      enabledCondition: (credentials, options) =>
+        options.fromEmail &&
+        credentials.hasOwnProperty('isEuRegion') &&
+        credentials.hasOwnProperty('apiKey') &&
+        credentials.hasOwnProperty('domain'),
+    });
+  }
 
-    /**
-     * Creates a SendGrid provider.
-     */
-    async createSendGridProvider({ input, db }: CreateSendgridProvider) {
-        return this.createProvider({
-            input,
-            db,
-            providerType: 'sendgrid',
-            messageType: MESSAGE_TYPE_EMAIL,
-            credentialFields: {
-                apiKey: 'apiKey'
-            },
-            optionFields: {
-                fromName: 'fromName',
-                fromEmail: 'fromEmail',
-                replyToName: 'replyToName',
-                replyToEmail: 'replyToEmail'
-            },
-            enabledCondition: (credentials, options) =>
-                options.fromEmail && credentials.hasOwnProperty('apiKey')
-        });
-    }
+  /**
+   * Creates a SendGrid provider.
+   */
+  async createSendGridProvider({ input, db }: CreateSendgridProvider) {
+    return this.createProvider({
+      input,
+      db,
+      providerType: 'sendgrid',
+      messageType: MESSAGE_TYPE_EMAIL,
+      credentialFields: {
+        apiKey: 'apiKey',
+      },
+      optionFields: {
+        fromName: 'fromName',
+        fromEmail: 'fromEmail',
+        replyToName: 'replyToName',
+        replyToEmail: 'replyToEmail',
+      },
+      enabledCondition: (credentials, options) =>
+        options.fromEmail && credentials.hasOwnProperty('apiKey'),
+    });
+  }
 
-    /**
-     * Creates an SMTP provider.
-     */
-    async createSmtpProvider({ input, db }: CreateSmtpProvider) {
-        return this.createProvider({
-            input,
-            db,
-            providerType: 'smtp',
-            messageType: MESSAGE_TYPE_EMAIL,
-            credentialFields: {
-                port: 'port',
-                username: 'username',
-                password: 'password',
-                host: 'host'
-            },
-            optionFields: {
-                fromName: 'fromName',
-                fromEmail: 'fromEmail',
-                replyToName: 'replyToName',
-                replyToEmail: 'replyToEmail',
-                encryption: 'encryption',
-                autoTLS: 'autoTLS',
-                mailer: 'mailer'
-            },
-            enabledCondition: (credentials, options) =>
-                options.fromEmail &&
-                credentials.hasOwnProperty('host')
-        });
-    }
+  /**
+   * Creates an SMTP provider.
+   */
+  async createSmtpProvider({ input, db }: CreateSmtpProvider) {
+    return this.createProvider({
+      input,
+      db,
+      providerType: 'smtp',
+      messageType: MESSAGE_TYPE_EMAIL,
+      credentialFields: {
+        port: 'port',
+        username: 'username',
+        password: 'password',
+        host: 'host',
+      },
+      optionFields: {
+        fromName: 'fromName',
+        fromEmail: 'fromEmail',
+        replyToName: 'replyToName',
+        replyToEmail: 'replyToEmail',
+        encryption: 'encryption',
+        autoTLS: 'autoTLS',
+        mailer: 'mailer',
+      },
+      enabledCondition: (credentials, options) =>
+        options.fromEmail && credentials.hasOwnProperty('host'),
+    });
+  }
 
-    /**
-     * Creates a MSG91 provider.
-     */
-    async createMsg91Provider({ input, db }: CreateMsg91Provider) {
-        return this.createProvider({
-            input,
-            db,
-            providerType: 'msg91',
-            messageType: MESSAGE_TYPE_SMS,
-            credentialFields: {
-                templateId: 'templateId',
-                senderId: 'senderId',
-                authKey: 'authKey'
-            },
-            optionFields: {
-                from: 'from'
-            },
-            enabledCondition: (credentials, options) =>
-                credentials.hasOwnProperty('senderId') &&
-                credentials.hasOwnProperty('authKey') &&
-                options.hasOwnProperty('from')
-        });
-    }
+  /**
+   * Creates a MSG91 provider.
+   */
+  async createMsg91Provider({ input, db }: CreateMsg91Provider) {
+    return this.createProvider({
+      input,
+      db,
+      providerType: 'msg91',
+      messageType: MESSAGE_TYPE_SMS,
+      credentialFields: {
+        templateId: 'templateId',
+        senderId: 'senderId',
+        authKey: 'authKey',
+      },
+      optionFields: {
+        from: 'from',
+      },
+      enabledCondition: (credentials, options) =>
+        credentials.hasOwnProperty('senderId') &&
+        credentials.hasOwnProperty('authKey') &&
+        options.hasOwnProperty('from'),
+    });
+  }
 
-    /**
-     * Creates a Telesign provider.
-     */
-    async createTelesignProvider({ input, db }: CreateTelesignProvider) {
-        return this.createProvider({
-            input,
-            db,
-            providerType: 'telesign',
-            messageType: MESSAGE_TYPE_SMS,
-            credentialFields: {
-                customerId: 'customerId',
-                apiKey: 'apiKey'
-            },
-            optionFields: {
-                from: 'from'
-            },
-            enabledCondition: (credentials, options) =>
-                credentials.hasOwnProperty('customerId') &&
-                credentials.hasOwnProperty('apiKey') &&
-                options.hasOwnProperty('from')
-        });
-    }
+  /**
+   * Creates a Telesign provider.
+   */
+  async createTelesignProvider({ input, db }: CreateTelesignProvider) {
+    return this.createProvider({
+      input,
+      db,
+      providerType: 'telesign',
+      messageType: MESSAGE_TYPE_SMS,
+      credentialFields: {
+        customerId: 'customerId',
+        apiKey: 'apiKey',
+      },
+      optionFields: {
+        from: 'from',
+      },
+      enabledCondition: (credentials, options) =>
+        credentials.hasOwnProperty('customerId') &&
+        credentials.hasOwnProperty('apiKey') &&
+        options.hasOwnProperty('from'),
+    });
+  }
 
-    /**
-     * Creates a TextMagic provider.
-     */
-    async createTextMagicProvider({ input, db }: CreateTextmagicProvider) {
-        return this.createProvider({
-            input,
-            db,
-            providerType: 'textmagic',
-            messageType: MESSAGE_TYPE_SMS,
-            credentialFields: {
-                username: 'username',
-                apiKey: 'apiKey'
-            },
-            optionFields: {
-                from: 'from'
-            },
-            enabledCondition: (credentials, options) =>
-                credentials.hasOwnProperty('username') &&
-                credentials.hasOwnProperty('apiKey') &&
-                options.hasOwnProperty('from')
-        });
-    }
+  /**
+   * Creates a TextMagic provider.
+   */
+  async createTextMagicProvider({ input, db }: CreateTextmagicProvider) {
+    return this.createProvider({
+      input,
+      db,
+      providerType: 'textmagic',
+      messageType: MESSAGE_TYPE_SMS,
+      credentialFields: {
+        username: 'username',
+        apiKey: 'apiKey',
+      },
+      optionFields: {
+        from: 'from',
+      },
+      enabledCondition: (credentials, options) =>
+        credentials.hasOwnProperty('username') &&
+        credentials.hasOwnProperty('apiKey') &&
+        options.hasOwnProperty('from'),
+    });
+  }
 
-    /**
-     * Creates a Twilio provider.
-     */
-    async createTwilioProvider({ input, db }: CreateTwilioProvider) {
-        return this.createProvider({
-            input,
-            db,
-            providerType: 'twilio',
-            messageType: MESSAGE_TYPE_SMS,
-            credentialFields: {
-                accountSid: 'accountSid',
-                authToken: 'authToken'
-            },
-            optionFields: {
-                from: 'from'
-            },
-            enabledCondition: (credentials, options) =>
-                credentials.hasOwnProperty('accountSid') &&
-                credentials.hasOwnProperty('authToken') &&
-                options.hasOwnProperty('from')
-        });
-    }
+  /**
+   * Creates a Twilio provider.
+   */
+  async createTwilioProvider({ input, db }: CreateTwilioProvider) {
+    return this.createProvider({
+      input,
+      db,
+      providerType: 'twilio',
+      messageType: MESSAGE_TYPE_SMS,
+      credentialFields: {
+        accountSid: 'accountSid',
+        authToken: 'authToken',
+      },
+      optionFields: {
+        from: 'from',
+      },
+      enabledCondition: (credentials, options) =>
+        credentials.hasOwnProperty('accountSid') &&
+        credentials.hasOwnProperty('authToken') &&
+        options.hasOwnProperty('from'),
+    });
+  }
 
-    /**
-     * Creates a Vonage provider.
-     */
-    async createVonageProvider({ input, db }: CreateVonageProvider) {
-        return this.createProvider({
-            input,
-            db,
-            providerType: 'vonage',
-            messageType: MESSAGE_TYPE_SMS,
-            credentialFields: {
-                apiKey: 'apiKey',
-                apiSecret: 'apiSecret'
-            },
-            optionFields: {
-                from: 'from'
-            },
-            enabledCondition: (credentials, options) =>
-                credentials.hasOwnProperty('apiKey') &&
-                credentials.hasOwnProperty('apiSecret') &&
-                options.hasOwnProperty('from')
-        });
-    }
+  /**
+   * Creates a Vonage provider.
+   */
+  async createVonageProvider({ input, db }: CreateVonageProvider) {
+    return this.createProvider({
+      input,
+      db,
+      providerType: 'vonage',
+      messageType: MESSAGE_TYPE_SMS,
+      credentialFields: {
+        apiKey: 'apiKey',
+        apiSecret: 'apiSecret',
+      },
+      optionFields: {
+        from: 'from',
+      },
+      enabledCondition: (credentials, options) =>
+        credentials.hasOwnProperty('apiKey') &&
+        credentials.hasOwnProperty('apiSecret') &&
+        options.hasOwnProperty('from'),
+    });
+  }
 
-    /**
-     * Creates a Firebase Cloud Messaging (FCM) provider.
-     */
-    async createFcmProvider({ input, db }: CreateFcmProvider) {
-        return this.createProvider({
-            input,
-            db,
-            providerType: 'fcm',
-            messageType: MESSAGE_TYPE_PUSH,
-            credentialFields: {
-                serviceAccountJSON: 'serviceAccountJSON'
-            },
-            optionFields: {},
-            enabledCondition: (credentials, options) =>
-                credentials.hasOwnProperty('serviceAccountJSON')
-        });
-    }
+  /**
+   * Creates a Firebase Cloud Messaging (FCM) provider.
+   */
+  async createFcmProvider({ input, db }: CreateFcmProvider) {
+    return this.createProvider({
+      input,
+      db,
+      providerType: 'fcm',
+      messageType: MESSAGE_TYPE_PUSH,
+      credentialFields: {
+        serviceAccountJSON: 'serviceAccountJSON',
+      },
+      optionFields: {},
+      enabledCondition: (credentials, options) =>
+        credentials.hasOwnProperty('serviceAccountJSON'),
+    });
+  }
 
-    /**
-     * Creates an APNS provider.
-     */
-    async createApnsProvider({ input, db }: CreateApnsProvider) {
-        return this.createProvider({
-            input,
-            db,
-            providerType: 'apns',
-            messageType: MESSAGE_TYPE_PUSH,
-            credentialFields: {
-                authKey: 'authKey',
-                authKeyId: 'authKeyId',
-                teamId: 'teamId',
-                bundleId: 'bundleId'
-            },
-            optionFields: {
-                sandbox: 'sandbox'
-            },
-            enabledCondition: (credentials, options) =>
-                credentials.hasOwnProperty('authKey') &&
-                credentials.hasOwnProperty('authKeyId') &&
-                credentials.hasOwnProperty('teamId') &&
-                credentials.hasOwnProperty('bundleId')
-        });
-    }
-
+  /**
+   * Creates an APNS provider.
+   */
+  async createApnsProvider({ input, db }: CreateApnsProvider) {
+    return this.createProvider({
+      input,
+      db,
+      providerType: 'apns',
+      messageType: MESSAGE_TYPE_PUSH,
+      credentialFields: {
+        authKey: 'authKey',
+        authKeyId: 'authKeyId',
+        teamId: 'teamId',
+        bundleId: 'bundleId',
+      },
+      optionFields: {
+        sandbox: 'sandbox',
+      },
+      enabledCondition: (credentials, options) =>
+        credentials.hasOwnProperty('authKey') &&
+        credentials.hasOwnProperty('authKeyId') &&
+        credentials.hasOwnProperty('teamId') &&
+        credentials.hasOwnProperty('bundleId'),
+    });
+  }
 }

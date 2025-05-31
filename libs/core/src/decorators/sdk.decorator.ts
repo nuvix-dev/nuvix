@@ -24,7 +24,7 @@ interface SdkOptions {
   auth?: AuthType | AuthType[];
   code?: HttpStatus | number;
   description?: string;
-  // TODO: 
+  // TODO:
   version?: string;
   tags?: string[];
   isPublic?: boolean;
