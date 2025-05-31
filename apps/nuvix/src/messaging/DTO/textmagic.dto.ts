@@ -34,4 +34,6 @@ export class CreateTextmagicProviderDTO {
   enabled?: boolean;
 }
 
-export class UpdateTextmagicProviderDTO extends PartialType(OmitType(CreateTextmagicProviderDTO, ['providerId'])) { }
+export class UpdateTextmagicProviderDTO extends PartialType(
+  OmitType(CreateTextmagicProviderDTO, ['providerId']),
+) {}

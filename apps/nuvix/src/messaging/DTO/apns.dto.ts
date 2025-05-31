@@ -36,4 +36,6 @@ export class CreateApnsProviderDTO {
   enabled?: boolean;
 }
 
-export class UpdateApnsProviderDTO extends PartialType(OmitType(CreateApnsProviderDTO, ['providerId'])) { }
+export class UpdateApnsProviderDTO extends PartialType(
+  OmitType(CreateApnsProviderDTO, ['providerId']),
+) {}

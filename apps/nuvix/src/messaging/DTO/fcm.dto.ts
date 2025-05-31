@@ -28,4 +28,6 @@ export class CreateFcmProviderDTO {
   enabled?: boolean;
 }
 
-export class UpdateFcmProviderDTO extends PartialType(OmitType(CreateFcmProviderDTO, ['providerId'])) { }
+export class UpdateFcmProviderDTO extends PartialType(
+  OmitType(CreateFcmProviderDTO, ['providerId']),
+) {}

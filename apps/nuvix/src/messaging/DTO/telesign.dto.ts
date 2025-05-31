@@ -34,4 +34,6 @@ export class CreateTelesignProviderDTO {
   enabled?: boolean;
 }
 
-export class UpdateTelesignProviderDTO extends PartialType(OmitType(CreateTelesignProviderDTO, ['providerId'])) { }
+export class UpdateTelesignProviderDTO extends PartialType(
+  OmitType(CreateTelesignProviderDTO, ['providerId']),
+) {}

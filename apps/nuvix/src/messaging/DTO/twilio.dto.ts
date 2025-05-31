@@ -34,4 +34,6 @@ export class CreateTwilioProviderDTO {
   enabled?: boolean;
 }
 
-export class UpdateTwilioProviderDTO extends PartialType(OmitType(CreateTwilioProviderDTO, ['providerId'])) { }
+export class UpdateTwilioProviderDTO extends PartialType(
+  OmitType(CreateTwilioProviderDTO, ['providerId']),
+) {}

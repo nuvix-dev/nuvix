@@ -33,4 +33,6 @@ export class CreateVonageProviderDTO {
   enabled?: boolean;
 }
 
-export class UpdateVonageProviderDTO extends PartialType(OmitType(CreateVonageProviderDTO, ['providerId'])) { }
+export class UpdateVonageProviderDTO extends PartialType(
+  OmitType(CreateVonageProviderDTO, ['providerId']),
+) {}

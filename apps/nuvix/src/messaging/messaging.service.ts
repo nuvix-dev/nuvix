@@ -12,7 +12,17 @@ import {
   CreateVonageProvider,
   ListProviders,
 } from './messaging.types';
-import { Authorization, CursorValidator, Database, DatabaseError, Document, DuplicateException, ID, OrderValidator, Query } from '@nuvix/database';
+import {
+  Authorization,
+  CursorValidator,
+  Database,
+  DatabaseError,
+  Document,
+  DuplicateException,
+  ID,
+  OrderValidator,
+  Query,
+} from '@nuvix/database';
 import { Exception } from '@nuvix/core/extend/exception';
 import {
   MESSAGE_TYPE_EMAIL,
@@ -22,7 +32,7 @@ import {
 
 @Injectable()
 export class MessagingService {
-  constructor() { }
+  constructor() {}
 
   /**
    * Common method to create a provider.
@@ -343,21 +353,30 @@ export class MessagingService {
     }
 
     // Get cursor document if there was a cursor query
-    const cursor = queries.find(query =>
-      query.getMethod() in [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE]
+    const cursor = queries.find(
+      query =>
+        query.getMethod() in
+        [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE],
     );
 
     if (cursor) {
       const validator = new CursorValidator();
       if (!validator.isValid(cursor)) {
-        throw new Exception(Exception.GENERAL_QUERY_INVALID, validator.getDescription());
+        throw new Exception(
+          Exception.GENERAL_QUERY_INVALID,
+          validator.getDescription(),
+        );
       }
 
       const providerId = cursor.getValue();
-      const cursorDocument = await Authorization.skip(async () => await db.getDocument('providers', providerId));
+      const cursorDocument = await Authorization.skip(
+        async () => await db.getDocument('providers', providerId),
+      );
 
       if (cursorDocument.isEmpty()) {
-        throw new Exception(`Provider '${providerId}' for the 'cursor' value not found.`);
+        throw new Exception(
+          `Provider '${providerId}' for the 'cursor' value not found.`,
+        );
       }
 
       cursor.setValue(cursorDocument);
@@ -374,7 +393,10 @@ export class MessagingService {
     } catch (error) {
       // TODO: OrderException
       if (error instanceof DatabaseError) {
-        throw new Exception(Exception.DATABASE_QUERY_ORDER_NULL, `The order attribute '${(error as any).attribute}' had a null value. Cursor pagination requires all documents order attribute values are non-null.`);
+        throw new Exception(
+          Exception.DATABASE_QUERY_ORDER_NULL,
+          `The order attribute '${(error as any).attribute}' had a null value. Cursor pagination requires all documents order attribute values are non-null.`,
+        );
       }
       throw error;
     }
@@ -384,10 +406,10 @@ export class MessagingService {
    * Get Provider
    */
   async getProvider(db: Database, id: string) {
-    const provider = await db.getDocument('providers', id)
+    const provider = await db.getDocument('providers', id);
 
     if (provider.isEmpty()) {
-      throw new Exception(Exception.PROVIDER_NOT_FOUND)
+      throw new Exception(Exception.PROVIDER_NOT_FOUND);
     }
 
     return provider;

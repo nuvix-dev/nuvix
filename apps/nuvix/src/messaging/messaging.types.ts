@@ -1,15 +1,36 @@
 import { LocaleTranslator } from '@nuvix/core/helper';
 import { Database, Query } from '@nuvix/database';
-import { CreateMailgunProviderDTO } from './DTO/mailgun.dto';
-import { CreateSendgridProviderDTO } from './DTO/sendgrid.dto';
-import { CreateTwilioProviderDTO } from './DTO/twilio.dto';
-import { CreateSMTPProviderDTO } from './DTO/smtp.dto';
-import { CreateMsg91ProviderDTO } from './DTO/msg91.dto';
-import { CreateTelesignProviderDTO } from './DTO/telesign.dto';
-import { CreateTextmagicProviderDTO } from './DTO/textmagic.dto';
-import { CreateVonageProviderDTO } from './DTO/vonage.dto';
-import { CreateFcmProviderDTO } from './DTO/fcm.dto';
-import { CreateApnsProviderDTO } from './DTO/apns.dto';
+import {
+  CreateMailgunProviderDTO,
+  UpdateMailgunProviderDTO,
+} from './DTO/mailgun.dto';
+import {
+  CreateSendgridProviderDTO,
+  UpdateSendgridProviderDTO,
+} from './DTO/sendgrid.dto';
+import {
+  CreateTwilioProviderDTO,
+  UpdateTwilioProviderDTO,
+} from './DTO/twilio.dto';
+import { CreateSMTPProviderDTO, UpdateSMTPProviderDTO } from './DTO/smtp.dto';
+import {
+  CreateMsg91ProviderDTO,
+  UpdateMsg91ProviderDTO,
+} from './DTO/msg91.dto';
+import {
+  CreateTelesignProviderDTO,
+  UpdateTelesignProviderDTO,
+} from './DTO/telesign.dto';
+import {
+  CreateTextmagicProviderDTO,
+  UpdateTextmagicProviderDTO,
+} from './DTO/textmagic.dto';
+import {
+  CreateVonageProviderDTO,
+  UpdateVonageProviderDTO,
+} from './DTO/vonage.dto';
+import { CreateFcmProviderDTO, UpdateFcmProviderDTO } from './DTO/fcm.dto';
+import { CreateApnsProviderDTO, UpdateApnsProviderDTO } from './DTO/apns.dto';
 
 interface DB {
   db: Database;
@@ -77,3 +98,24 @@ export type CreateProviderInput =
 export type CreateAnyProvider = CreateProviderBase<CreateProviderInput>;
 
 export interface ListProviders extends DB, QandS {}
+
+export interface UpdateMailgunProvider
+  extends CreateProviderBase<UpdateMailgunProviderDTO> {}
+export interface UpdateSendgridProvider
+  extends CreateProviderBase<UpdateSendgridProviderDTO> {}
+export interface UpdateSmtpProvider
+  extends CreateProviderBase<UpdateSMTPProviderDTO> {}
+export interface UpdateMsg91Provider
+  extends CreateProviderBase<UpdateMsg91ProviderDTO> {}
+export interface UpdateTelesignProvider
+  extends CreateProviderBase<UpdateTelesignProviderDTO> {}
+export interface UpdateTextmagicProvider
+  extends CreateProviderBase<UpdateTextmagicProviderDTO> {}
+export interface UpdateTwilioProvider
+  extends CreateProviderBase<UpdateTwilioProviderDTO> {}
+export interface UpdateVonageProvider
+  extends CreateProviderBase<UpdateVonageProviderDTO> {}
+export interface UpdateFcmProvider
+  extends CreateProviderBase<UpdateFcmProviderDTO> {}
+export interface UpdateApnsProvider
+  extends CreateProviderBase<UpdateApnsProviderDTO> {}

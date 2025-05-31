@@ -43,4 +43,6 @@ export class CreateSendgridProviderDTO {
   enabled?: boolean;
 }
 
-export class UpdateSendgridProviderDTO extends PartialType(OmitType(CreateSendgridProviderDTO, ['providerId'])) { }
+export class UpdateSendgridProviderDTO extends PartialType(
+  OmitType(CreateSendgridProviderDTO, ['providerId']),
+) {}

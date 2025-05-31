@@ -74,4 +74,6 @@ export class CreateSMTPProviderDTO {
   enabled?: boolean;
 }
 
-export class UpdateSMTPProviderDTO extends PartialType(OmitType(CreateSMTPProviderDTO, ['providerId'])) { }
+export class UpdateSMTPProviderDTO extends PartialType(
+  OmitType(CreateSMTPProviderDTO, ['providerId']),
+) {}

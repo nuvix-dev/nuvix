@@ -52,4 +52,6 @@ export class CreateMailgunProviderDTO {
   enabled?: boolean;
 }
 
-export class UpdateMailgunProviderDTO extends PartialType(OmitType(CreateMailgunProviderDTO, ['providerId'])) { }
+export class UpdateMailgunProviderDTO extends PartialType(
+  OmitType(CreateMailgunProviderDTO, ['providerId']),
+) {}

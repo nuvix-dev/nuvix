@@ -28,4 +28,6 @@ export class CreateMsg91ProviderDTO {
   enabled?: boolean;
 }
 
-export class UpdateMsg91ProviderDTO extends PartialType(OmitType(CreateMsg91ProviderDTO, ['providerId'])) { }
+export class UpdateMsg91ProviderDTO extends PartialType(
+  OmitType(CreateMsg91ProviderDTO, ['providerId']),
+) {}

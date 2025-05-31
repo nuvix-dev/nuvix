@@ -25,15 +25,36 @@ import {
 import { Models } from '@nuvix/core/helper';
 import { User } from '@nuvix/core/decorators/project-user.decorator';
 
-import { CreateMailgunProviderDTO, UpdateMailgunProviderDTO } from './DTO/mailgun.dto';
+import {
+  CreateMailgunProviderDTO,
+  UpdateMailgunProviderDTO,
+} from './DTO/mailgun.dto';
 import { Database, Query as Queries } from '@nuvix/database';
-import { CreateSendgridProviderDTO, UpdateSendgridProviderDTO } from './DTO/sendgrid.dto';
+import {
+  CreateSendgridProviderDTO,
+  UpdateSendgridProviderDTO,
+} from './DTO/sendgrid.dto';
 import { CreateSMTPProviderDTO, UpdateSMTPProviderDTO } from './DTO/smtp.dto';
-import { CreateMsg91ProviderDTO, UpdateMsg91ProviderDTO } from './DTO/msg91.dto';
-import { CreateTwilioProviderDTO, UpdateTwilioProviderDTO } from './DTO/twilio.dto';
-import { CreateTelesignProviderDTO, UpdateTelesignProviderDTO } from './DTO/telesign.dto';
-import { CreateTextmagicProviderDTO, UpdateTextmagicProviderDTO } from './DTO/textmagic.dto';
-import { CreateVonageProviderDTO, UpdateVonageProviderDTO } from './DTO/vonage.dto';
+import {
+  CreateMsg91ProviderDTO,
+  UpdateMsg91ProviderDTO,
+} from './DTO/msg91.dto';
+import {
+  CreateTwilioProviderDTO,
+  UpdateTwilioProviderDTO,
+} from './DTO/twilio.dto';
+import {
+  CreateTelesignProviderDTO,
+  UpdateTelesignProviderDTO,
+} from './DTO/telesign.dto';
+import {
+  CreateTextmagicProviderDTO,
+  UpdateTextmagicProviderDTO,
+} from './DTO/textmagic.dto';
+import {
+  CreateVonageProviderDTO,
+  UpdateVonageProviderDTO,
+} from './DTO/vonage.dto';
 import { CreateFcmProviderDTO, UpdateFcmProviderDTO } from './DTO/fcm.dto';
 import { CreateApnsProviderDTO, UpdateApnsProviderDTO } from './DTO/apns.dto';
 import { ParseQueryPipe } from '@nuvix/core/pipes';
@@ -42,7 +63,7 @@ import { ParseQueryPipe } from '@nuvix/core/pipes';
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor)
 export class MessagingController {
-  constructor(private readonly messagingService: MessagingService) { }
+  constructor(private readonly messagingService: MessagingService) {}
 
   @Post('providers/mailgun')
   @Scope('providers.create')
@@ -278,7 +299,7 @@ export class MessagingController {
     @Param('providerId') providerId: string,
     @MessagingDatabase() db: Database,
   ) {
-    return await this.messagingService.getProvider(db, providerId)
+    return await this.messagingService.getProvider(db, providerId);
   }
 
   @Patch('providers/mailgun/:providerId')
