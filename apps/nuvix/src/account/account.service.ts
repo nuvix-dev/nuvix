@@ -63,6 +63,7 @@ import { PhraseGenerator } from '@nuvix/utils/auth/pharse';
 import { JwtService } from '@nestjs/jwt';
 import { PasswordHistoryValidator } from '@nuvix/core/validators';
 import { CreateRecoveryDTO, UpdateRecoveryDTO } from './DTO/recovery.dto';
+import { CreateEmailVerificationDTO } from './DTO/verification.dto';
 
 @Injectable()
 export class AccountService {
@@ -71,7 +72,7 @@ export class AccountService {
     @InjectQueue('mails') private readonly mailQueue: Queue<MailQueueOptions>,
     private eventEmitter: EventEmitter2,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   private readonly oauthDefaultSuccess = '/auth/oauth2/success';
   private readonly oauthDefaultFailure = '/auth/oauth2/failure';
@@ -337,9 +338,9 @@ export class AccountService {
     sessionId =
       sessionId === 'current'
         ? (Auth.sessionVerify(
-            user.getAttribute('sessions'),
-            Auth.secret,
-          ) as string)
+          user.getAttribute('sessions'),
+          Auth.secret,
+        ) as string)
         : sessionId;
 
     for (const session of sessions) {
@@ -441,9 +442,9 @@ export class AccountService {
     sessionId =
       sessionId === 'current'
         ? (Auth.sessionVerify(
-            user.getAttribute('sessions'),
-            Auth.secret,
-          ) as string)
+          user.getAttribute('sessions'),
+          Auth.secret,
+        ) as string)
         : sessionId;
 
     const sessions = user.getAttribute('sessions', []);
@@ -861,7 +862,7 @@ export class AccountService {
 
     const countryName = locale.getText(
       'countries.' +
-        createdSession.getAttribute('countryCode', '').toLowerCase(),
+      createdSession.getAttribute('countryCode', '').toLowerCase(),
       locale.getText('locale.country.unknown'),
     );
 
@@ -1651,7 +1652,7 @@ export class AccountService {
     let subject = locale.getText('emails.magicSession.subject');
     const customTemplate =
       project.getAttribute('templates', {})[
-        `email.magicSession-${locale.default}`
+      `email.magicSession-${locale.default}`
       ] ?? {};
 
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN');
@@ -1858,7 +1859,7 @@ export class AccountService {
     let subject = locale.getText('emails.otpSession.subject');
     const customTemplate =
       project.getAttribute('templates', {})[
-        `email.otpSession-${locale.default}`
+      `email.otpSession-${locale.default}`
       ] ?? {};
 
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN');
@@ -2140,7 +2141,7 @@ export class AccountService {
     let subject: string = locale.getText('emails.sessionAlert.subject');
     const customTemplate =
       project.getAttribute('templates', {})?.[
-        'email.sessionAlert-' + locale.default
+      'email.sessionAlert-' + locale.default
       ] ?? {};
     const templatePath = path.join(ASSETS.TEMPLATES, 'email-session-alert.tpl');
     const templateSource = await fs.readFile(templatePath, 'utf8');
@@ -2658,7 +2659,7 @@ export class AccountService {
 
     const countryName = locale.getText(
       'countries.' +
-        createdSession.getAttribute('countryCode', '').toLowerCase(),
+      createdSession.getAttribute('countryCode', '').toLowerCase(),
       locale.getText('locale.country.unknown'),
     );
 
@@ -2745,7 +2746,7 @@ export class AccountService {
     let subject = locale.getText('emails.recovery.subject');
     const customTemplate =
       project.getAttribute('templates', {})[
-        `email.recovery-${locale.default}`
+      `email.recovery-${locale.default}`
       ] ?? {};
 
     const templatePath = path.join(ASSETS.TEMPLATES, 'email-inner-base.tpl');
@@ -2919,6 +2920,201 @@ export class AccountService {
     response.status(200);
     return recoveryDocument;
   }
+
+  /**
+   * Create email verification token
+   */
+  async createEmailVerification({
+    db,
+    user,
+    request,
+    response,
+    locale,
+    project,
+    url,
+  }: WithDB<
+    WithReqRes<WithUser<WithProject<WithLocale<{ url: string }>>>>
+  >) {
+    if (!APP_SMTP_HOST) {
+      throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP Disabled');
+    }
+
+    if (user.getAttribute('emailVerification')) {
+      throw new Exception(Exception.USER_EMAIL_ALREADY_VERIFIED);
+    }
+
+    const verificationSecret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_VERIFICATION);
+    const expire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_CONFIRM * 1000);
+
+    const verification = new Document({
+      $id: ID.unique(),
+      userId: user.getId(),
+      userInternalId: user.getInternalId(),
+      type: Auth.TOKEN_TYPE_VERIFICATION,
+      secret: Auth.hash(verificationSecret), // One way hash encryption to protect DB leak
+      expire: expire,
+      userAgent: request.headers['user-agent'] || 'UNKNOWN',
+      ip: request.ip,
+    });
+
+    Authorization.setRole(Role.user(user.getId()).toString());
+
+    const createdVerification = await db.createDocument(
+      'tokens',
+      verification.setAttribute('$permissions', [
+        Permission.read(Role.user(user.getId())),
+        Permission.update(Role.user(user.getId())),
+        Permission.delete(Role.user(user.getId())),
+      ]),
+    );
+
+    await db.purgeCachedDocument('users', user.getId());
+
+    // Parse and merge URL query parameters
+    const urlObj = new URL(url);
+    urlObj.searchParams.set('userId', user.getId());
+    urlObj.searchParams.set('secret', verificationSecret);
+    urlObj.searchParams.set('expire', expire.toISOString());
+    const finalUrl = urlObj.toString();
+
+    const projectName = project.isEmpty() ? 'Console' : project.getAttribute('name', '[APP-NAME]');
+    let body = locale.getText('emails.verification.body');
+    let subject = locale.getText('emails.verification.subject');
+    const customTemplate = project.getAttribute('templates', {})[`email.verification-${locale.default}`] ?? {};
+
+    const templatePath = path.join(ASSETS.TEMPLATES, 'email-inner-base.tpl');
+    const templateSource = await fs.readFile(templatePath, 'utf8');
+    const template = Template.compile(templateSource);
+
+    const emailData = {
+      body: body,
+      hello: locale.getText('emails.verification.hello'),
+      footer: locale.getText('emails.verification.footer'),
+      thanks: locale.getText('emails.verification.thanks'),
+      signature: locale.getText('emails.verification.signature'),
+    };
+
+    body = template(emailData);
+
+    const smtp = project.getAttribute('smtp', {});
+    const smtpEnabled = smtp['enabled'] ?? false;
+
+    let senderEmail = APP_SYSTEM_EMAIL_ADDRESS || APP_EMAIL_TEAM;
+    let senderName = APP_SYSTEM_EMAIL_NAME || APP_NAME + ' Server';
+    let replyTo = '';
+
+    const smtpServer: any = {};
+
+    if (smtpEnabled) {
+      if (smtp['senderEmail']) senderEmail = smtp['senderEmail'];
+      if (smtp['senderName']) senderName = smtp['senderName'];
+      if (smtp['replyTo']) replyTo = smtp['replyTo'];
+
+      smtpServer['host'] = smtp['host'] || '';
+      smtpServer['port'] = smtp['port'] || '';
+      smtpServer['username'] = smtp['username'] || '';
+      smtpServer['password'] = smtp['password'] || '';
+      smtpServer['secure'] = smtp['secure'] ?? false;
+
+      if (customTemplate) {
+        if (customTemplate['senderEmail']) senderEmail = customTemplate['senderEmail'];
+        if (customTemplate['senderName']) senderName = customTemplate['senderName'];
+        if (customTemplate['replyTo']) replyTo = customTemplate['replyTo'];
+
+        body = customTemplate['message'] || body;
+        subject = customTemplate['subject'] || subject;
+      }
+
+      smtpServer['replyTo'] = replyTo;
+      smtpServer['senderEmail'] = senderEmail;
+      smtpServer['senderName'] = senderName;
+    }
+
+    const emailVariables = {
+      direction: locale.getText('settings.direction'),
+      user: user.getAttribute('name'),
+      redirect: finalUrl,
+      project: projectName,
+      team: '',
+    };
+
+    await this.mailQueue.add(SEND_TYPE_EMAIL, {
+      email: user.getAttribute('email'),
+      subject,
+      body,
+      server: smtpServer,
+      variables: emailVariables,
+    });
+
+    createdVerification.setAttribute('secret', verificationSecret);
+
+    // TODO: Handle Events
+    // queueForEvents
+    //   .setParam('userId', user.getId())
+    //   .setParam('tokenId', createdVerification.getId())
+    //   .setPayload(Response.showSensitive(() => response.output(createdVerification, Response.MODEL_TOKEN)), { sensitive: ['secret'] });
+
+    response.status(201);
+    return createdVerification;
+  }
+
+  /**
+   * Verify email
+   */
+  async updateEmailVerification({
+    db,
+    user,
+    response,
+    userId,
+    secret,
+  }: WithDB<WithUser<{ response: NuvixRes; userId: string; secret: string }>>) {
+    const profile = await Authorization.skip(
+      async () => await db.getDocument('users', userId)
+    );
+
+    if (profile.isEmpty()) {
+      throw new Exception(Exception.USER_NOT_FOUND);
+    }
+
+    const tokens = profile.getAttribute('tokens', []);
+    const verifiedToken = Auth.tokenVerify(
+      tokens,
+      Auth.TOKEN_TYPE_VERIFICATION,
+      secret
+    );
+
+    if (!verifiedToken) {
+      throw new Exception(Exception.USER_INVALID_TOKEN);
+    }
+
+    Authorization.setRole(Role.user(profile.getId()).toString());
+
+    const updatedProfile = await db.updateDocument(
+      'users',
+      profile.getId(),
+      profile.setAttribute('emailVerification', true)
+    );
+
+    user.setAttributes(updatedProfile.toObject());
+
+    const verification = await db.getDocument('tokens', verifiedToken.getId());
+
+    /**
+     * We act like we're updating and validating
+     * the verification token but actually we don't need it anymore.
+     */
+    await db.deleteDocument('tokens', verifiedToken.getId());
+    await db.purgeCachedDocument('users', profile.getId());
+
+    // TODO: Handle Events
+    // queueForEvents
+    //   .setParam('userId', userId)
+    //   .setParam('tokenId', verification.getId())
+    //   .setPayload(Response.showSensitive(() => response.output(verification, Response.MODEL_TOKEN)), { sensitive: ['secret'] });
+
+    return verification;
+  }
+
 }
 
 type WithDB<T> = { db: Database } & T;
