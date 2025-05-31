@@ -12,7 +12,7 @@ import {
   CreateVonageProvider,
   ListProviders,
 } from './messaging.types';
-import { Database, Document, DuplicateException, ID } from '@nuvix/database';
+import { Authorization, CursorValidator, Database, DatabaseError, Document, DuplicateException, ID, OrderValidator, Query } from '@nuvix/database';
 import { Exception } from '@nuvix/core/extend/exception';
 import {
   MESSAGE_TYPE_EMAIL,
@@ -22,7 +22,7 @@ import {
 
 @Injectable()
 export class MessagingService {
-  constructor() {}
+  constructor() { }
 
   /**
    * Common method to create a provider.
@@ -338,6 +338,47 @@ export class MessagingService {
    * Lists all providers.
    */
   async listProviders({ db, queries, search }: ListProviders) {
-    // TODO: Implement search and queries logic
+    if (search) {
+      queries.push(Query.search('search', search));
+    }
+
+    // Get cursor document if there was a cursor query
+    const cursor = queries.find(query =>
+      query.getMethod() in [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE]
+    );
+
+    if (cursor) {
+      const validator = new CursorValidator();
+      if (!validator.isValid(cursor)) {
+        throw new Exception(Exception.GENERAL_QUERY_INVALID, validator.getDescription());
+      }
+
+      const providerId = cursor.getValue();
+      const cursorDocument = await Authorization.skip(async () => await db.getDocument('providers', providerId));
+
+      if (cursorDocument.isEmpty()) {
+        throw new Exception(`Provider '${providerId}' for the 'cursor' value not found.`);
+      }
+
+      cursor.setValue(cursorDocument);
+    }
+
+    try {
+      const providers = await db.find('providers', queries);
+      const total = await db.count('providers', queries);
+
+      return {
+        providers,
+        total,
+      };
+    } catch (error) {
+      // TODO: OrderException
+      if (error instanceof DatabaseError) {
+        throw new Exception(Exception.DATABASE_QUERY_ORDER_NULL, `The order attribute '${(error as any).attribute}' had a null value. Cursor pagination requires all documents order attribute values are non-null.`);
+      }
+      throw error;
+    }
   }
+
+  
 }

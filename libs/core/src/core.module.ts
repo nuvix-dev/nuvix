@@ -39,11 +39,10 @@ import { filters, formats } from './resolvers/db.resolver';
 import { CountryResponse, Reader } from 'maxmind';
 import { Cache, RedisAdapter } from '@nuvix/cache';
 import { ProjectUsageService } from './project-usage.service';
-// import { Adapter } from '@nuvix/database/dist/adapter/base'; // TODO: fix after updating lib
+import { Adapter } from '@nuvix/database';
 import { Pool as PgPool, PoolClient } from 'pg';
 import { createHash } from 'crypto';
 
-type Adapter = any;
 
 Object.keys(filters).forEach(key => {
   Database.addFilter(key, {
