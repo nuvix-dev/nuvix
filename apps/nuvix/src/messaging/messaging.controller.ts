@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpStatus,
+  Param,
   Post,
   Query,
   UseGuards,
@@ -40,7 +41,7 @@ import { ParseQueryPipe } from '@nuvix/core/pipes';
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor)
 export class MessagingController {
-  constructor(private readonly messagingService: MessagingService) {}
+  constructor(private readonly messagingService: MessagingService) { }
 
   @Post('providers/mailgun')
   @Scope('providers.create')
@@ -262,4 +263,22 @@ export class MessagingController {
       search,
     });
   }
+
+  @Get('providers/:providerId')
+  @Scope('providers.read')
+  @ResModel(Models.PROVIDER)
+  @Sdk({
+    name: 'getProvider',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.OK,
+    description: 'Get provider',
+  })
+  async getProvider(
+    @Param('providerId') providerId: string,
+    @MessagingDatabase() db: Database,
+  ) {
+    return await this.messagingService.getProvider(db, providerId)
+  }
+
+  
 }

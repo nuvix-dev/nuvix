@@ -380,5 +380,16 @@ export class MessagingService {
     }
   }
 
-  
+  /**
+   * Get Provider
+   */
+  async getProvider(db: Database, id: string) {
+    const provider = await db.getDocument('providers', id)
+
+    if (provider.isEmpty()) {
+      throw new Exception(Exception.PROVIDER_NOT_FOUND)
+    }
+
+    return provider;
+  }
 }
