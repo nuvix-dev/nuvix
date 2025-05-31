@@ -152,6 +152,7 @@ export class Exception extends HttpException {
   static readonly DATABASE_NOT_FOUND = 'database_not_found';
   static readonly DATABASE_ALREADY_EXISTS = 'database_already_exists';
   static readonly DATABASE_TIMEOUT = 'database_timeout';
+  static readonly DATABASE_QUERY_ORDER_NULL = 'database_query_order_null';
 
   /** Schema */
   static readonly SCHEMA_NOT_FOUND = 'schema_not_found';

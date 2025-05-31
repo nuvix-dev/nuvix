@@ -84,6 +84,8 @@ import {
   UpdatePushTargetDTO,
 } from './DTO/target.dto';
 import { IdentityIdParamDTO } from './DTO/identity.dto';
+import { Query as Queries } from '@nuvix/database';
+import { ParseQueryPipe } from '@nuvix/core/pipes';
 
 @Controller({ version: ['1'], path: 'account' })
 @UseGuards(ProjectGuard)
@@ -1140,11 +1142,15 @@ export class AccountController {
   @Get('identities')
   @Scope('account')
   @ResModel(Models.IDENTITY, { list: true })
+  @Sdk({
+    name: 'getIdentities',
+  })
   async getIdentities(
+    @Query('queries', ParseQueryPipe) queries: Queries[],
     @User() user: Document,
     @AuthDatabase() db: Database,
   ) {
-    return this.accountService.getIdentities({ user, db });
+    return this.accountService.getIdentities({ user, db, queries });
   }
 
   @Delete('identities/:identityId')
@@ -1152,14 +1158,15 @@ export class AccountController {
   @AuditEvent('user.update', { resource: 'user/{user.$id}/identity/{params.identityId}', userId: '{user.$id}' }) // TODO: #AI Revisit AuditEvent type, 'identity.delete' was not recognized. 'user.update' used as placeholder.
   @HttpCode(HttpStatus.NO_CONTENT)
   @ResModel(Models.NONE)
+  @Sdk({
+    name: 'deleteIdentity',
+  })
   async deleteIdentity(
-    @Param() params: IdentityIdParamDTO,
-    @User() user: Document,
+    @Param() { identityId }: IdentityIdParamDTO,
     @AuthDatabase() db: Database,
   ) {
     return this.accountService.deleteIdentity({
-      identityId: params.identityId,
-      user,
+      identityId,
       db,
     });
   }

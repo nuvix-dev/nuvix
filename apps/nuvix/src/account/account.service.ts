@@ -18,6 +18,7 @@ import { Models } from '@nuvix/core/helper/response.helper';
 import { PersonalDataValidator } from '@nuvix/core/validators/personal-data.validator';
 import {
   APP_EMAIL_TEAM,
+  APP_LIMIT_COUNT,
   APP_LIMIT_USERS,
   APP_NAME,
   APP_SMTP_HOST,
@@ -3914,6 +3915,79 @@ export class AccountService {
     //   .setParam('userId', user.getId())
     //   .setParam('targetId', target.getId())
     //   .setPayload(response.output(target, Response.MODEL_TARGET));
+
+    return {};
+  }
+
+  /**
+   * Get Identities
+   */
+  async getIdentities({
+    db,
+    user,
+    queries,
+  }: WithDB<WithUser<{ queries: Query[] }>>) {
+    queries.push(Query.equal('userInternalId', [user.getInternalId()]));
+
+    /**
+     * Get cursor document if there was a cursor query, we use array_filter and reset for reference cursor to queries
+     */
+    const cursor = queries.find(query =>
+      [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(query.getMethod())
+    );
+
+    if (cursor) {
+      // TODO: cursor validator
+      const identityId = cursor.getValue();
+      const cursorDocument = await db.getDocument('identities', identityId);
+
+      if (cursorDocument.isEmpty()) {
+        throw new Exception(
+          Exception.GENERAL_CURSOR_NOT_FOUND,
+          `Identity '${identityId}' for the 'cursor' value not found.`,
+        );
+      }
+
+      cursor.setValue(cursorDocument);
+    }
+
+    const filterQueries = Query.groupByType(queries)['filters'];
+    try {
+      const results = await db.find('identities', queries);
+      const total = await db.count('identities', filterQueries, APP_LIMIT_COUNT);
+
+      return new Document({
+        identities: results,
+        total: total,
+      });
+    } catch (error) {
+      if (error.name === 'OrderException') {
+        throw new Exception(Exception.DATABASE_QUERY_ORDER_NULL, `The order attribute '${error.getAttribute()}' had a null value. Cursor pagination requires all documents order attribute values are non-null.`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Delete Identity
+   */
+  async deleteIdentity({
+    db,
+    identityId,
+  }: WithDB<{ identityId: string }>) {
+    const identity = await db.getDocument('identities', identityId);
+
+    if (identity.isEmpty()) {
+      throw new Exception(Exception.USER_IDENTITY_NOT_FOUND);
+    }
+
+    await db.deleteDocument('identities', identityId);
+
+    // TODO: Handle Events
+    // queueForEvents
+    //   .setParam('userId', identity.getAttribute('userId'))
+    //   .setParam('identityId', identity.getId())
+    //   .setPayload(response.output(identity, Response.MODEL_IDENTITY));
 
     return {};
   }
