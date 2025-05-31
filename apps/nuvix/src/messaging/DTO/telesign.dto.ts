@@ -1,3 +1,4 @@
+import { PartialType, OmitType } from '@nestjs/mapped-types';
 import { IsUID } from '@nuvix/core/validators';
 import {
   IsString,
@@ -32,3 +33,5 @@ export class CreateTelesignProviderDTO {
   @IsBoolean()
   enabled?: boolean;
 }
+
+export class UpdateTelesignProviderDTO extends PartialType(OmitType(CreateTelesignProviderDTO, ['providerId'])) { }

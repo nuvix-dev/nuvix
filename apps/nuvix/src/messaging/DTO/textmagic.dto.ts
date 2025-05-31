@@ -1,3 +1,4 @@
+import { OmitType, PartialType } from '@nestjs/mapped-types';
 import { IsUID } from '@nuvix/core/validators';
 import {
   IsString,
@@ -32,3 +33,5 @@ export class CreateTextmagicProviderDTO {
   @IsOptional()
   enabled?: boolean;
 }
+
+export class UpdateTextmagicProviderDTO extends PartialType(OmitType(CreateTextmagicProviderDTO, ['providerId'])) { }

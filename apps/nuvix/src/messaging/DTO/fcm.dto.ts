@@ -1,3 +1,4 @@
+import { OmitType, PartialType } from '@nestjs/mapped-types';
 import { IsUID } from '@nuvix/core/validators';
 import {
   IsString,
@@ -26,3 +27,5 @@ export class CreateFcmProviderDTO {
   @IsBoolean()
   enabled?: boolean;
 }
+
+export class UpdateFcmProviderDTO extends PartialType(OmitType(CreateFcmProviderDTO, ['providerId'])) { }

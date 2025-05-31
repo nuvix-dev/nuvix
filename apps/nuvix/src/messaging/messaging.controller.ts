@@ -4,6 +4,7 @@ import {
   Get,
   HttpStatus,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -24,17 +25,17 @@ import {
 import { Models } from '@nuvix/core/helper';
 import { User } from '@nuvix/core/decorators/project-user.decorator';
 
-import { CreateMailgunProviderDTO } from './DTO/mailgun.dto';
+import { CreateMailgunProviderDTO, UpdateMailgunProviderDTO } from './DTO/mailgun.dto';
 import { Database, Query as Queries } from '@nuvix/database';
-import { CreateSendgridProviderDTO } from './DTO/sendgrid.dto';
-import { CreateSMTPProviderDTO } from './DTO/smtp.dto';
-import { CreateMsg91ProviderDTO } from './DTO/msg91.dto';
-import { CreateTwilioProviderDTO } from './DTO/twilio.dto';
-import { CreateTelesignProviderDTO } from './DTO/telesign.dto';
-import { CreateTextmagicProviderDTO } from './DTO/textmagic.dto';
-import { CreateVonageProviderDTO } from './DTO/vonage.dto';
-import { CreateFcmProviderDTO } from './DTO/fcm.dto';
-import { CreateApnsProviderDTO } from './DTO/apns.dto';
+import { CreateSendgridProviderDTO, UpdateSendgridProviderDTO } from './DTO/sendgrid.dto';
+import { CreateSMTPProviderDTO, UpdateSMTPProviderDTO } from './DTO/smtp.dto';
+import { CreateMsg91ProviderDTO, UpdateMsg91ProviderDTO } from './DTO/msg91.dto';
+import { CreateTwilioProviderDTO, UpdateTwilioProviderDTO } from './DTO/twilio.dto';
+import { CreateTelesignProviderDTO, UpdateTelesignProviderDTO } from './DTO/telesign.dto';
+import { CreateTextmagicProviderDTO, UpdateTextmagicProviderDTO } from './DTO/textmagic.dto';
+import { CreateVonageProviderDTO, UpdateVonageProviderDTO } from './DTO/vonage.dto';
+import { CreateFcmProviderDTO, UpdateFcmProviderDTO } from './DTO/fcm.dto';
+import { CreateApnsProviderDTO, UpdateApnsProviderDTO } from './DTO/apns.dto';
 import { ParseQueryPipe } from '@nuvix/core/pipes';
 
 @Controller({ path: 'messaging', version: ['1'] })
@@ -280,5 +281,223 @@ export class MessagingController {
     return await this.messagingService.getProvider(db, providerId)
   }
 
-  
+  @Patch('providers/mailgun/:providerId')
+  @Scope('providers.update')
+  @AuditEvent('provider.update', 'provider/{res.$id}')
+  @ResModel(Models.PROVIDER)
+  @Sdk({
+    name: 'updateMailgunProvider',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.OK,
+    description: 'Update Mailgun provider',
+  })
+  async updateMailgunProvider(
+    @Param('providerId') providerId: string,
+    @MessagingDatabase() db: Database,
+    @Body() input: UpdateMailgunProviderDTO,
+  ) {
+    return await this.messagingService.updateMailgunProvider({
+      db,
+      providerId,
+      input,
+    });
+  }
+
+  @Patch('providers/sendgrid/:providerId')
+  @Scope('providers.update')
+  @AuditEvent('provider.update', 'provider/{res.$id}')
+  @ResModel(Models.PROVIDER)
+  @Sdk({
+    name: 'updateSendgridProvider',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.OK,
+    description: 'Update Sendgrid provider',
+  })
+  async updateSendgridProvider(
+    @Param('providerId') providerId: string,
+    @MessagingDatabase() db: Database,
+    @Body() input: UpdateSendgridProviderDTO,
+  ) {
+    return await this.messagingService.updateSendgridProvider({
+      db,
+      providerId,
+      input,
+    });
+  }
+
+  @Patch('providers/smtp/:providerId')
+  @Scope('providers.update')
+  @AuditEvent('provider.update', 'provider/{res.$id}')
+  @ResModel(Models.PROVIDER)
+  @Sdk({
+    name: 'updateSmtpProvider',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.OK,
+    description: 'Update SMTP provider',
+  })
+  async updateSmtpProvider(
+    @Param('providerId') providerId: string,
+    @MessagingDatabase() db: Database,
+    @Body() input: UpdateSMTPProviderDTO,
+  ) {
+    return await this.messagingService.updateSmtpProvider({
+      db,
+      providerId,
+      input,
+    });
+  }
+
+  @Patch('providers/msg91/:providerId')
+  @Scope('providers.update')
+  @AuditEvent('provider.update', 'provider/{res.$id}')
+  @ResModel(Models.PROVIDER)
+  @Sdk({
+    name: 'updateMsg91Provider',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.OK,
+    description: 'Update Msg91 provider',
+  })
+  async updateMsg91Provider(
+    @Param('providerId') providerId: string,
+    @MessagingDatabase() db: Database,
+    @Body() input: UpdateMsg91ProviderDTO,
+  ) {
+    return await this.messagingService.updateMsg91Provider({
+      db,
+      providerId,
+      input,
+    });
+  }
+
+  @Patch('providers/telesign/:providerId')
+  @Scope('providers.update')
+  @AuditEvent('provider.update', 'provider/{res.$id}')
+  @ResModel(Models.PROVIDER)
+  @Sdk({
+    name: 'updateTelesignProvider',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.OK,
+    description: 'Update Telesign provider',
+  })
+  async updateTelesignProvider(
+    @Param('providerId') providerId: string,
+    @MessagingDatabase() db: Database,
+    @Body() input: UpdateTelesignProviderDTO,
+  ) {
+    return await this.messagingService.updateTelesignProvider({
+      db,
+      providerId,
+      input,
+    });
+  }
+
+  @Patch('providers/textmagic/:providerId')
+  @Scope('providers.update')
+  @AuditEvent('provider.update', 'provider/{res.$id}')
+  @ResModel(Models.PROVIDER)
+  @Sdk({
+    name: 'updateTextmagicProvider',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.OK,
+    description: 'Update Textmagic provider',
+  })
+  async updateTextmagicProvider(
+    @Param('providerId') providerId: string,
+    @MessagingDatabase() db: Database,
+    @Body() input: UpdateTextmagicProviderDTO,
+  ) {
+    return await this.messagingService.updateTextmagicProvider({
+      db,
+      providerId,
+      input,
+    });
+  }
+
+  @Patch('providers/twilio/:providerId')
+  @Scope('providers.update')
+  @AuditEvent('provider.update', 'provider/{res.$id}')
+  @ResModel(Models.PROVIDER)
+  @Sdk({
+    name: 'updateTwilioProvider',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.OK,
+    description: 'Update Twilio provider',
+  })
+  async updateTwilioProvider(
+    @Param('providerId') providerId: string,
+    @MessagingDatabase() db: Database,
+    @Body() input: UpdateTwilioProviderDTO,
+  ) {
+    return await this.messagingService.updateTwilioProvider({
+      db,
+      providerId,
+      input,
+    });
+  }
+
+  @Patch('providers/vonage/:providerId')
+  @Scope('providers.update')
+  @AuditEvent('provider.update', 'provider/{res.$id}')
+  @ResModel(Models.PROVIDER)
+  @Sdk({
+    name: 'updateVonageProvider',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.OK,
+    description: 'Update Vonage provider',
+  })
+  async updateVonageProvider(
+    @Param('providerId') providerId: string,
+    @MessagingDatabase() db: Database,
+    @Body() input: UpdateVonageProviderDTO,
+  ) {
+    return await this.messagingService.updateVonageProvider({
+      db,
+      providerId,
+      input,
+    });
+  }
+
+  @Patch('providers/fcm/:providerId')
+  @Scope('providers.update')
+  @AuditEvent('provider.update', 'provider/{res.$id}')
+  @ResModel(Models.PROVIDER)
+  @Sdk({
+    name: 'updateFcmProvider',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.OK,
+    description: 'Update FCM provider',
+  })
+  async updateFcmProvider(
+    @Param('providerId') providerId: string,
+    @MessagingDatabase() db: Database,
+    @Body() input: UpdateFcmProviderDTO,
+  ) {
+    return await this.messagingService.updateFcmProvider({
+      db,
+      providerId,
+      input,
+    });
+  }
+
+  @Patch('providers/apns/:providerId')
+  @Scope('providers.update')
+  @AuditEvent('provider.update', 'provider/{res.$id}')
+  @ResModel(Models.PROVIDER)
+  @Sdk({
+    name: 'updateApnsProvider',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.OK,
+    description: 'Update APNs provider',
+  })
+  async updateApnsProvider(
+    @Param('providerId') providerId: string,
+    @MessagingDatabase() db: Database,
+    @Body() input: UpdateApnsProviderDTO,
+  ) {
+    return await this.messagingService.updateApnsProvider({
+      db,
+      providerId,
+      input,
+    });
+  }
 }

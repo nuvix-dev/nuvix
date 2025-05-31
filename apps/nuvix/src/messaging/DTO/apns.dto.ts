@@ -1,3 +1,4 @@
+import { PartialType, OmitType } from '@nestjs/mapped-types';
 import { IsUID } from '@nuvix/core/validators';
 import { IsString, IsBoolean, IsOptional, MaxLength } from 'class-validator';
 
@@ -34,3 +35,5 @@ export class CreateApnsProviderDTO {
   @IsOptional()
   enabled?: boolean;
 }
+
+export class UpdateApnsProviderDTO extends PartialType(OmitType(CreateApnsProviderDTO, ['providerId'])) { }

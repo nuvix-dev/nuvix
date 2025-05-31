@@ -1,3 +1,4 @@
+import { PartialType, OmitType } from '@nestjs/mapped-types';
 import { IsUID } from '@nuvix/core/validators/input.validator';
 import {
   IsString,
@@ -50,3 +51,5 @@ export class CreateMailgunProviderDTO {
   @IsOptional()
   enabled?: boolean;
 }
+
+export class UpdateMailgunProviderDTO extends PartialType(OmitType(CreateMailgunProviderDTO, ['providerId'])) { }

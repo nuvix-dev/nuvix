@@ -1,3 +1,4 @@
+import { PartialType, OmitType } from '@nestjs/mapped-types';
 import { IsUID } from '@nuvix/core/validators';
 import {
   IsString,
@@ -5,7 +6,6 @@ import {
   IsBoolean,
   IsOptional,
   MaxLength,
-  MinLength,
 } from 'class-validator';
 
 export class CreateTwilioProviderDTO {
@@ -33,3 +33,5 @@ export class CreateTwilioProviderDTO {
   @IsBoolean()
   enabled?: boolean;
 }
+
+export class UpdateTwilioProviderDTO extends PartialType(OmitType(CreateTwilioProviderDTO, ['providerId'])) { }
