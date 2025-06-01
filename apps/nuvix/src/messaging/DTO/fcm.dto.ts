@@ -1,5 +1,5 @@
 import { OmitType, PartialType } from '@nestjs/mapped-types';
-import { IsUID } from '@nuvix/core/validators';
+import { IsCustomID } from '@nuvix/core/validators';
 import {
   IsString,
   IsNotEmpty,
@@ -11,7 +11,7 @@ import {
 
 export class CreateFcmProviderDTO {
   @IsString()
-  @IsUID()
+  @IsCustomID()
   providerId: string;
 
   @IsString()

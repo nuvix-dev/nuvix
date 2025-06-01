@@ -7,11 +7,11 @@ import {
   IsOptional,
   IsObject,
 } from 'class-validator';
-import { IsUID } from '@nuvix/core/validators';
+import { IsCustomID } from '@nuvix/core/validators';
 import { APP_LIMIT_ARRAY_PARAMS_SIZE } from '@nuvix/utils/constants';
 
 export class CreateTeamDTO {
-  @IsUID()
+  @IsCustomID()
   teamId: string;
 
   @IsString()

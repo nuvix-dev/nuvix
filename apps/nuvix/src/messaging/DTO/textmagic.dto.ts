@@ -1,5 +1,5 @@
 import { OmitType, PartialType } from '@nestjs/mapped-types';
-import { IsUID } from '@nuvix/core/validators';
+import { IsCustomID } from '@nuvix/core/validators';
 import {
   IsString,
   IsPhoneNumber,
@@ -10,7 +10,7 @@ import {
 
 export class CreateTextmagicProviderDTO {
   @IsString()
-  @IsUID()
+  @IsCustomID()
   providerId: string;
 
   @IsString()

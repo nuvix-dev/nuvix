@@ -1,5 +1,5 @@
 import { PartialType, OmitType } from '@nestjs/mapped-types';
-import { IsUID } from '@nuvix/core/validators';
+import { IsCustomID } from '@nuvix/core/validators';
 import {
   IsString,
   IsOptional,
@@ -10,7 +10,7 @@ import {
 
 export class CreateTelesignProviderDTO {
   @IsString()
-  @IsUID()
+  @IsCustomID()
   providerId: string;
 
   @IsString()

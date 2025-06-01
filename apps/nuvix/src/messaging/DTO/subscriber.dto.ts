@@ -1,8 +1,8 @@
-import { IsUID } from '@nuvix/core/validators';
+import { IsCustomID } from '@nuvix/core/validators';
 import { IsString, IsNotEmpty } from 'class-validator';
 
 export class CreateSubscriberDTO {
-    @IsUID()
+    @IsCustomID()
     subscriberId: string;
 
     @IsString()

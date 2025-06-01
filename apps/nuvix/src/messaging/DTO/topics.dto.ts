@@ -1,6 +1,6 @@
 import { PartialType } from '@nestjs/mapped-types';
 import { OmitType } from '@nestjs/swagger';
-import { IsUID } from '@nuvix/core/validators';
+import { IsCustomID } from '@nuvix/core/validators';
 import { APP_LIMIT_ARRAY_PARAMS_SIZE } from '@nuvix/utils/constants';
 import {
   IsString,
@@ -11,7 +11,7 @@ import {
 } from 'class-validator';
 
 export class CreateTopicDTO {
-  @IsUID()
+  @IsCustomID()
   topicId: string;
 
   @IsString()

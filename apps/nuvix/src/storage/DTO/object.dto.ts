@@ -6,7 +6,7 @@ import {
   Length,
   Matches,
 } from 'class-validator';
-import { IsUID } from '@nuvix/core/validators';
+import { IsCustomID } from '@nuvix/core/validators';
 
 export class CreateFolderDTO {
   /**
@@ -37,7 +37,7 @@ export class CreateFolderDTO {
 }
 
 export class UploadFileDTO {
-  @IsUID()
+  @IsCustomID()
   fileId: string;
   /**
    * The name of the file.

@@ -7,10 +7,10 @@ import {
   Matches,
   MaxLength,
 } from 'class-validator';
-import { IsUID } from '@nuvix/core/validators/input.validator';
+import { IsCustomID } from '@nuvix/core/validators/input.validator';
 
 export class CreateCollectionDTO {
-  @IsUID()
+  @IsCustomID()
   collectionId: string;
 
   @IsString()

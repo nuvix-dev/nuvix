@@ -61,6 +61,7 @@ import { CreateApnsProviderDTO, UpdateApnsProviderDTO } from './DTO/apns.dto';
 import { ParseQueryPipe } from '@nuvix/core/pipes';
 import { CreateTopicDTO, UpdateTopicDTO } from './DTO/topics.dto';
 import { CreateSubscriberDTO } from './DTO/subscriber.dto';
+import { CreateEmailDTO, CreatePushDTO, CreateSmsDTO } from './DTO/message.dto';
 
 @Controller({ path: 'messaging', version: ['1'] })
 @UseGuards(ProjectGuard)
@@ -718,6 +719,64 @@ export class MessagingController {
     return await this.messagingService.deleteSubscriber(db, topicId, subscriberId);
   }
 
-  
+  @Post('messages/email')
+  @Scope('messages.create')
+  @AuditEvent('message.create', 'message/{res.$id}')
+  @ResModel(Models.MESSAGE)
+  @Sdk({
+    name: 'createEmail',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.CREATED,
+    description: 'Create email',
+  })
+  async createEmail(
+    @MessagingDatabase() db: Database,
+    @Body() input: CreateEmailDTO,
+  ) {
+    return await this.messagingService.createEmail({
+      db,
+      input,
+    });
+  }
 
+  @Post('messages/sms')
+  @Scope('messages.create')
+  @AuditEvent('message.create', 'message/{res.$id}')
+  @ResModel(Models.MESSAGE)
+  @Sdk({
+    name: 'createSms',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.CREATED,
+    description: 'Create SMS',
+  })
+  async createSms(
+    @MessagingDatabase() db: Database,
+    @Body() input: CreateSmsDTO,
+  ) {
+    return await this.messagingService.createSms({
+      db,
+      input,
+    });
+  }
+
+  @Post('messages/push')
+  @Scope('messages.create')
+  @AuditEvent('message.create', 'message/{res.$id}')
+  @ResModel(Models.MESSAGE)
+  @Sdk({
+    name: 'createPush',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.CREATED,
+    description: 'Create push notification',
+  })
+  async createPush(
+    @MessagingDatabase() db: Database,
+    @Body() input: CreatePushDTO,
+  ) {
+    return await this.messagingService.createPush({
+      db,
+      input,
+    });
+  }
+  
 }

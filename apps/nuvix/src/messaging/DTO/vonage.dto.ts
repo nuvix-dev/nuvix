@@ -1,5 +1,5 @@
 import { PartialType, OmitType } from '@nestjs/mapped-types';
-import { IsUID } from '@nuvix/core/validators';
+import { IsCustomID } from '@nuvix/core/validators';
 import {
   IsBoolean,
   IsOptional,
@@ -9,7 +9,7 @@ import {
 } from 'class-validator';
 
 export class CreateVonageProviderDTO {
-  @IsUID()
+  @IsCustomID()
   providerId: string;
 
   @IsString()

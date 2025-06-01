@@ -6,10 +6,10 @@ import {
   Length,
   Matches,
 } from 'class-validator';
-import { IsUID } from '@nuvix/core/validators/input.validator';
+import { IsCustomID } from '@nuvix/core/validators/input.validator';
 
 export class CreateDatabaseDTO {
-  @IsUID()
+  @IsCustomID()
   databaseId: string;
 
   @IsString()

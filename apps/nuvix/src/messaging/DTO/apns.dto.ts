@@ -1,10 +1,10 @@
 import { PartialType, OmitType } from '@nestjs/mapped-types';
-import { IsUID } from '@nuvix/core/validators';
+import { IsCustomID } from '@nuvix/core/validators';
 import { IsString, IsBoolean, IsOptional, MaxLength } from 'class-validator';
 
 export class CreateApnsProviderDTO {
   @IsString()
-  @IsUID()
+  @IsCustomID()
   providerId: string;
 
   @IsString()
