@@ -33,7 +33,14 @@ import { CreateFcmProviderDTO, UpdateFcmProviderDTO } from './DTO/fcm.dto';
 import { CreateApnsProviderDTO, UpdateApnsProviderDTO } from './DTO/apns.dto';
 import { CreateTopicDTO, UpdateTopicDTO } from './DTO/topics.dto';
 import { CreateSubscriberDTO } from './DTO/subscriber.dto';
-import { CreateEmailMessageDTO, CreatePushMessageDTO, CreateSmsMessageDTO, UpdateEmailMessageDTO, UpdatePushMessageDTO, UpdateSmsMessageDTO } from './DTO/message.dto';
+import {
+  CreateEmailMessageDTO,
+  CreatePushMessageDTO,
+  CreateSmsMessageDTO,
+  UpdateEmailMessageDTO,
+  UpdatePushMessageDTO,
+  UpdateSmsMessageDTO,
+} from './DTO/message.dto';
 
 interface DB {
   db: Database;
@@ -66,25 +73,25 @@ interface CreateProviderBase<T> extends DB {
 }
 
 export interface CreateMailgunProvider
-  extends CreateProviderBase<CreateMailgunProviderDTO> { }
+  extends CreateProviderBase<CreateMailgunProviderDTO> {}
 export interface CreateSendgridProvider
-  extends CreateProviderBase<CreateSendgridProviderDTO> { }
+  extends CreateProviderBase<CreateSendgridProviderDTO> {}
 export interface CreateSmtpProvider
-  extends CreateProviderBase<CreateSMTPProviderDTO> { }
+  extends CreateProviderBase<CreateSMTPProviderDTO> {}
 export interface CreateMsg91Provider
-  extends CreateProviderBase<CreateMsg91ProviderDTO> { }
+  extends CreateProviderBase<CreateMsg91ProviderDTO> {}
 export interface CreateTelesignProvider
-  extends CreateProviderBase<CreateTelesignProviderDTO> { }
+  extends CreateProviderBase<CreateTelesignProviderDTO> {}
 export interface CreateTextmagicProvider
-  extends CreateProviderBase<CreateTextmagicProviderDTO> { }
+  extends CreateProviderBase<CreateTextmagicProviderDTO> {}
 export interface CreateTwilioProvider
-  extends CreateProviderBase<CreateTwilioProviderDTO> { }
+  extends CreateProviderBase<CreateTwilioProviderDTO> {}
 export interface CreateVonageProvider
-  extends CreateProviderBase<CreateVonageProviderDTO> { }
+  extends CreateProviderBase<CreateVonageProviderDTO> {}
 export interface CreateFcmProvider
-  extends CreateProviderBase<CreateFcmProviderDTO> { }
+  extends CreateProviderBase<CreateFcmProviderDTO> {}
 export interface CreateApnsProvider
-  extends CreateProviderBase<CreateApnsProviderDTO> { }
+  extends CreateProviderBase<CreateApnsProviderDTO> {}
 
 export type CreateProviderInput =
   | CreateMailgunProviderDTO
@@ -100,7 +107,7 @@ export type CreateProviderInput =
 
 export type CreateAnyProvider = CreateProviderBase<CreateProviderInput>;
 
-export interface ListProviders extends DB, QandS { }
+export interface ListProviders extends DB, QandS {}
 
 interface UpdateProviderBase<T> extends DB {
   input: T;
@@ -108,25 +115,25 @@ interface UpdateProviderBase<T> extends DB {
 }
 
 export interface UpdateMailgunProvider
-  extends UpdateProviderBase<UpdateMailgunProviderDTO> { }
+  extends UpdateProviderBase<UpdateMailgunProviderDTO> {}
 export interface UpdateSendgridProvider
-  extends UpdateProviderBase<UpdateSendgridProviderDTO> { }
+  extends UpdateProviderBase<UpdateSendgridProviderDTO> {}
 export interface UpdateSmtpProvider
-  extends UpdateProviderBase<UpdateSMTPProviderDTO> { }
+  extends UpdateProviderBase<UpdateSMTPProviderDTO> {}
 export interface UpdateMsg91Provider
-  extends UpdateProviderBase<UpdateMsg91ProviderDTO> { }
+  extends UpdateProviderBase<UpdateMsg91ProviderDTO> {}
 export interface UpdateTelesignProvider
-  extends UpdateProviderBase<UpdateTelesignProviderDTO> { }
+  extends UpdateProviderBase<UpdateTelesignProviderDTO> {}
 export interface UpdateTextmagicProvider
-  extends UpdateProviderBase<UpdateTextmagicProviderDTO> { }
+  extends UpdateProviderBase<UpdateTextmagicProviderDTO> {}
 export interface UpdateTwilioProvider
-  extends UpdateProviderBase<UpdateTwilioProviderDTO> { }
+  extends UpdateProviderBase<UpdateTwilioProviderDTO> {}
 export interface UpdateVonageProvider
-  extends UpdateProviderBase<UpdateVonageProviderDTO> { }
+  extends UpdateProviderBase<UpdateVonageProviderDTO> {}
 export interface UpdateFcmProvider
-  extends UpdateProviderBase<UpdateFcmProviderDTO> { }
+  extends UpdateProviderBase<UpdateFcmProviderDTO> {}
 export interface UpdateApnsProvider
-  extends UpdateProviderBase<UpdateApnsProviderDTO> { }
+  extends UpdateProviderBase<UpdateApnsProviderDTO> {}
 
 export interface CreateTopic extends DB {
   input: CreateTopicDTO;
@@ -137,7 +144,7 @@ export interface UpdateTopic extends DB {
   input: UpdateTopicDTO;
 }
 
-export interface ListTopics extends DB, QandS { }
+export interface ListTopics extends DB, QandS {}
 export interface GetTopic extends DB {
   topicId: string;
 }
@@ -161,7 +168,7 @@ export interface CreatePushMessage extends DB, Project {
   input: CreatePushMessageDTO;
 }
 
-export interface ListMessages extends DB, QandS { }
+export interface ListMessages extends DB, QandS {}
 export interface ListTargets extends DB {
   messageId: string;
   queries: Query[];
@@ -179,4 +186,3 @@ export interface UpdatePushMessage extends DB, Project {
   input: UpdatePushMessageDTO;
   messageId: string;
 }
-

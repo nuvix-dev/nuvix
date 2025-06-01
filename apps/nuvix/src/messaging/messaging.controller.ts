@@ -13,7 +13,10 @@ import {
 } from '@nestjs/common';
 import { MessagingService } from './messaging.service';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards';
-import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers/interceptors';
+import {
+  ApiInterceptor,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers/interceptors';
 import {
   AuditEvent,
   AuthType,
@@ -61,14 +64,21 @@ import { CreateApnsProviderDTO, UpdateApnsProviderDTO } from './DTO/apns.dto';
 import { ParseQueryPipe } from '@nuvix/core/pipes';
 import { CreateTopicDTO, UpdateTopicDTO } from './DTO/topics.dto';
 import { CreateSubscriberDTO } from './DTO/subscriber.dto';
-import { CreateEmailMessageDTO, CreatePushMessageDTO, CreateSmsMessageDTO, UpdateEmailMessageDTO, UpdatePushMessageDTO, UpdateSmsMessageDTO } from './DTO/message.dto';
+import {
+  CreateEmailMessageDTO,
+  CreatePushMessageDTO,
+  CreateSmsMessageDTO,
+  UpdateEmailMessageDTO,
+  UpdatePushMessageDTO,
+  UpdateSmsMessageDTO,
+} from './DTO/message.dto';
 
 @Controller({ path: 'messaging', version: ['1'] })
 @Namespace('messaging')
 @UseGuards(ProjectGuard)
 @UseInterceptors(ApiInterceptor, ResponseInterceptor)
 export class MessagingController {
-  constructor(private readonly messagingService: MessagingService) { }
+  constructor(private readonly messagingService: MessagingService) {}
 
   @Post('providers/mailgun')
   @Scope('providers.create')
@@ -717,7 +727,11 @@ export class MessagingController {
     @Param('subscriberId') subscriberId: string,
     @MessagingDatabase() db: Database,
   ) {
-    return await this.messagingService.deleteSubscriber(db, topicId, subscriberId);
+    return await this.messagingService.deleteSubscriber(
+      db,
+      topicId,
+      subscriberId,
+    );
   }
 
   @Post('messages/email')
@@ -738,7 +752,7 @@ export class MessagingController {
     return await this.messagingService.createEmailMessage({
       db,
       input,
-      project
+      project,
     });
   }
 
@@ -760,7 +774,7 @@ export class MessagingController {
     return await this.messagingService.createSmsMessage({
       db,
       input,
-      project
+      project,
     });
   }
 
@@ -782,7 +796,7 @@ export class MessagingController {
     return await this.messagingService.createPushMessage({
       db,
       input,
-      project
+      project,
     });
   }
 
@@ -932,5 +946,4 @@ export class MessagingController {
   ) {
     return await this.messagingService.deleteMessage(db, messageId);
   }
-
 }

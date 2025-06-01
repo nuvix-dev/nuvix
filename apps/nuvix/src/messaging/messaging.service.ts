@@ -65,7 +65,7 @@ export class MessagingService {
   constructor(
     @Inject(DB_FOR_PLATFORM) private readonly dbForPlatform: Database,
     private readonly jwtService: JwtService,
-  ) { }
+  ) {}
 
   /**
    * Common method to create a provider.
@@ -968,10 +968,11 @@ export class MessagingService {
    */
   async createSubscriber({ input, db, topicId }: CreateSubscriber) {
     const { subscriberId: inputSubscriberId, targetId } = input;
-    const subscriberId = inputSubscriberId === 'unique()' ? ID.unique() : inputSubscriberId;
+    const subscriberId =
+      inputSubscriberId === 'unique()' ? ID.unique() : inputSubscriberId;
 
     const topic = await Authorization.skip(
-      async () => await db.getDocument('topics', topicId)
+      async () => await db.getDocument('topics', topicId),
     );
 
     if (topic.isEmpty()) {
@@ -980,11 +981,14 @@ export class MessagingService {
 
     const validator = new Authorization('subscribe');
     if (!validator.isValid(topic.getAttribute('subscribe'))) {
-      throw new Exception(Exception.USER_UNAUTHORIZED, validator.getDescription());
+      throw new Exception(
+        Exception.USER_UNAUTHORIZED,
+        validator.getDescription(),
+      );
     }
 
     const target = await Authorization.skip(
-      async () => await db.getDocument('targets', targetId)
+      async () => await db.getDocument('targets', targetId),
     );
 
     if (target.isEmpty()) {
@@ -992,7 +996,7 @@ export class MessagingService {
     }
 
     const user = await Authorization.skip(
-      async () => await db.getDocument('users', target.getAttribute('userId'))
+      async () => await db.getDocument('users', target.getAttribute('userId')),
     );
 
     const subscriber = new Document({
@@ -1017,7 +1021,10 @@ export class MessagingService {
     });
 
     try {
-      const createdSubscriber = await db.createDocument('subscribers', subscriber);
+      const createdSubscriber = await db.createDocument(
+        'subscribers',
+        subscriber,
+      );
 
       const totalAttribute = (() => {
         switch (target.getAttribute('providerType')) {
@@ -1032,8 +1039,9 @@ export class MessagingService {
         }
       })();
 
-      await Authorization.skip(async () =>
-        await db.increaseDocumentAttribute('topics', topicId, totalAttribute)
+      await Authorization.skip(
+        async () =>
+          await db.increaseDocumentAttribute('topics', topicId, totalAttribute),
       );
 
       // TODO: queue for events
@@ -1063,7 +1071,7 @@ export class MessagingService {
     }
 
     const topic = await Authorization.skip(
-      async () => await db.getDocument('topics', topicId)
+      async () => await db.getDocument('topics', topicId),
     );
 
     if (topic.isEmpty()) {
@@ -1109,18 +1117,23 @@ export class MessagingService {
 
       // Batch process subscribers to add target and userName
       const enrichedSubscribers = await Promise.all(
-        subscribers.map(async (subscriber) => {
+        subscribers.map(async subscriber => {
           const target = await Authorization.skip(
-            async () => await db.getDocument('targets', subscriber.getAttribute('targetId'))
+            async () =>
+              await db.getDocument(
+                'targets',
+                subscriber.getAttribute('targetId'),
+              ),
           );
           const user = await Authorization.skip(
-            async () => await db.getDocument('users', target.getAttribute('userId'))
+            async () =>
+              await db.getDocument('users', target.getAttribute('userId')),
           );
 
           return subscriber
             .setAttribute('target', target)
             .setAttribute('userName', user.getAttribute('name'));
-        })
+        }),
       );
 
       return {
@@ -1144,7 +1157,7 @@ export class MessagingService {
    */
   async getSubscriber(db: Database, topicId: string, subscriberId: string) {
     const topic = await Authorization.skip(
-      async () => await db.getDocument('topics', topicId)
+      async () => await db.getDocument('topics', topicId),
     );
 
     if (topic.isEmpty()) {
@@ -1153,15 +1166,19 @@ export class MessagingService {
 
     const subscriber = await db.getDocument('subscribers', subscriberId);
 
-    if (subscriber.isEmpty() || subscriber.getAttribute('topicId') !== topicId) {
+    if (
+      subscriber.isEmpty() ||
+      subscriber.getAttribute('topicId') !== topicId
+    ) {
       throw new Exception(Exception.SUBSCRIBER_NOT_FOUND);
     }
 
     const target = await Authorization.skip(
-      async () => await db.getDocument('targets', subscriber.getAttribute('targetId'))
+      async () =>
+        await db.getDocument('targets', subscriber.getAttribute('targetId')),
     );
     const user = await Authorization.skip(
-      async () => await db.getDocument('users', target.getAttribute('userId'))
+      async () => await db.getDocument('users', target.getAttribute('userId')),
     );
 
     subscriber
@@ -1176,7 +1193,7 @@ export class MessagingService {
    */
   async deleteSubscriber(db: Database, topicId: string, subscriberId: string) {
     const topic = await Authorization.skip(
-      async () => await db.getDocument('topics', topicId)
+      async () => await db.getDocument('topics', topicId),
     );
 
     if (topic.isEmpty()) {
@@ -1185,11 +1202,17 @@ export class MessagingService {
 
     const subscriber = await db.getDocument('subscribers', subscriberId);
 
-    if (subscriber.isEmpty() || subscriber.getAttribute('topicId') !== topicId) {
+    if (
+      subscriber.isEmpty() ||
+      subscriber.getAttribute('topicId') !== topicId
+    ) {
       throw new Exception(Exception.SUBSCRIBER_NOT_FOUND);
     }
 
-    const target = await db.getDocument('targets', subscriber.getAttribute('targetId'));
+    const target = await db.getDocument(
+      'targets',
+      subscriber.getAttribute('targetId'),
+    );
 
     await db.deleteDocument('subscribers', subscriberId);
 
@@ -1206,13 +1229,14 @@ export class MessagingService {
       }
     })();
 
-    await Authorization.skip(async () =>
-      await db.decreaseDocumentAttribute(
-        'topics',
-        topicId,
-        totalAttribute,
-        0
-      )
+    await Authorization.skip(
+      async () =>
+        await db.decreaseDocumentAttribute(
+          'topics',
+          topicId,
+          totalAttribute,
+          0,
+        ),
     );
 
     // TODO: queue for events
@@ -1226,11 +1250,7 @@ export class MessagingService {
   /**
    * Create Email Message
    */
-  async createEmailMessage({
-    input,
-    db,
-    project,
-  }: CreateEmailMessage) {
+  async createEmailMessage({ input, db, project }: CreateEmailMessage) {
     const {
       messageId: inputMessageId,
       subject,
@@ -1243,10 +1263,11 @@ export class MessagingService {
       attachments = [],
       draft = false,
       html = false,
-      scheduledAt = null
+      scheduledAt = null,
     } = input;
 
-    const messageId = inputMessageId === 'unique()' ? ID.unique() : inputMessageId;
+    const messageId =
+      inputMessageId === 'unique()' ? ID.unique() : inputMessageId;
 
     const status = draft
       ? MessageStatus.DRAFT
@@ -1254,7 +1275,12 @@ export class MessagingService {
         ? MessageStatus.SCHEDULED
         : MessageStatus.PROCESSING;
 
-    if (status !== MessageStatus.DRAFT && topics.length === 0 && users.length === 0 && targets.length === 0) {
+    if (
+      status !== MessageStatus.DRAFT &&
+      topics.length === 0 &&
+      users.length === 0 &&
+      targets.length === 0
+    ) {
       throw new Exception(Exception.MESSAGE_MISSING_TARGET);
     }
 
@@ -1292,7 +1318,10 @@ export class MessagingService {
           throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
         }
 
-        const file = await db.getDocument(`bucket_${bucket.getInternalId()}`, fileId);
+        const file = await db.getDocument(
+          `bucket_${bucket.getInternalId()}`,
+          fileId,
+        );
         if (file.isEmpty()) {
           throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
         }
@@ -1342,9 +1371,16 @@ export class MessagingService {
           active: true,
         });
 
-        const createdSchedule = await this.dbForPlatform.createDocument('schedules', schedule);
+        const createdSchedule = await this.dbForPlatform.createDocument(
+          'schedules',
+          schedule,
+        );
         createdMessage.setAttribute('scheduleId', createdSchedule.getId());
-        await db.updateDocument('messages', createdMessage.getId(), createdMessage);
+        await db.updateDocument(
+          'messages',
+          createdMessage.getId(),
+          createdMessage,
+        );
         break;
     }
 
@@ -1356,11 +1392,7 @@ export class MessagingService {
   /**
    * Create SMS Message
    */
-  async createSmsMessage({
-    input,
-    db,
-    project,
-  }: CreateSmsMessage) {
+  async createSmsMessage({ input, db, project }: CreateSmsMessage) {
     const {
       messageId: inputMessageId,
       content,
@@ -1368,10 +1400,11 @@ export class MessagingService {
       users = [],
       targets = [],
       draft = false,
-      scheduledAt = null
+      scheduledAt = null,
     } = input;
 
-    const messageId = inputMessageId === 'unique()' ? ID.unique() : inputMessageId;
+    const messageId =
+      inputMessageId === 'unique()' ? ID.unique() : inputMessageId;
 
     const status = draft
       ? MessageStatus.DRAFT
@@ -1379,7 +1412,12 @@ export class MessagingService {
         ? MessageStatus.SCHEDULED
         : MessageStatus.PROCESSING;
 
-    if (status !== MessageStatus.DRAFT && topics.length === 0 && users.length === 0 && targets.length === 0) {
+    if (
+      status !== MessageStatus.DRAFT &&
+      topics.length === 0 &&
+      users.length === 0 &&
+      targets.length === 0
+    ) {
       throw new Exception(Exception.MESSAGE_MISSING_TARGET);
     }
 
@@ -1438,9 +1476,16 @@ export class MessagingService {
           active: true,
         });
 
-        const createdSchedule = await this.dbForPlatform.createDocument('schedules', schedule);
+        const createdSchedule = await this.dbForPlatform.createDocument(
+          'schedules',
+          schedule,
+        );
         createdMessage.setAttribute('scheduleId', createdSchedule.getId());
-        await db.updateDocument('messages', createdMessage.getId(), createdMessage);
+        await db.updateDocument(
+          'messages',
+          createdMessage.getId(),
+          createdMessage,
+        );
         break;
     }
 
@@ -1452,11 +1497,7 @@ export class MessagingService {
   /**
    * Create Push Message
    */
-  async createPushMessage({
-    input,
-    db,
-    project,
-  }: CreatePushMessage) {
+  async createPushMessage({ input, db, project }: CreatePushMessage) {
     const {
       messageId: inputMessageId,
       title = '',
@@ -1476,10 +1517,11 @@ export class MessagingService {
       scheduledAt = null,
       contentAvailable = false,
       critical = false,
-      priority = 'high'
+      priority = 'high',
     } = input;
 
-    const messageId = inputMessageId === 'unique()' ? ID.unique() : inputMessageId;
+    const messageId =
+      inputMessageId === 'unique()' ? ID.unique() : inputMessageId;
 
     const status = draft
       ? MessageStatus.DRAFT
@@ -1487,7 +1529,12 @@ export class MessagingService {
         ? MessageStatus.SCHEDULED
         : MessageStatus.PROCESSING;
 
-    if (status !== MessageStatus.DRAFT && topics.length === 0 && users.length === 0 && targets.length === 0) {
+    if (
+      status !== MessageStatus.DRAFT &&
+      topics.length === 0 &&
+      users.length === 0 &&
+      targets.length === 0
+    ) {
       throw new Exception(Exception.MESSAGE_MISSING_TARGET);
     }
 
@@ -1522,7 +1569,10 @@ export class MessagingService {
         throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
       }
 
-      const file = await db.getDocument(`bucket_${bucket.getInternalId()}`, fileId);
+      const file = await db.getDocument(
+        `bucket_${bucket.getInternalId()}`,
+        fileId,
+      );
       if (file.isEmpty()) {
         throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
       }
@@ -1547,14 +1597,17 @@ export class MessagingService {
         expiry = Math.floor(expiryDate.getTime() / 1000);
       }
 
-      const jwt = this.jwtService.sign({
-        bucketId: bucket.getId(),
-        fileId: file.getId(),
-        projectId: project.getId(),
-      }, {
-        expiresIn: expiry,
-        algorithm: 'HS256'
-      });
+      const jwt = this.jwtService.sign(
+        {
+          bucketId: bucket.getId(),
+          fileId: file.getId(),
+          projectId: project.getId(),
+        },
+        {
+          expiresIn: expiry,
+          algorithm: 'HS256',
+        },
+      );
 
       processedImage = {
         bucketId: bucket.getId(),
@@ -1610,9 +1663,16 @@ export class MessagingService {
           active: true,
         });
 
-        const createdSchedule = await this.dbForPlatform.createDocument('schedules', schedule);
+        const createdSchedule = await this.dbForPlatform.createDocument(
+          'schedules',
+          schedule,
+        );
         createdMessage.setAttribute('scheduleId', createdSchedule.getId());
-        await db.updateDocument('messages', createdMessage.getId(), createdMessage);
+        await db.updateDocument(
+          'messages',
+          createdMessage.getId(),
+          createdMessage,
+        );
         break;
     }
 
@@ -1836,13 +1896,19 @@ export class MessagingService {
         active: status === MessageStatus.SCHEDULED,
       });
 
-      const createdSchedule = await this.dbForPlatform.createDocument('schedules', schedule);
+      const createdSchedule = await this.dbForPlatform.createDocument(
+        'schedules',
+        schedule,
+      );
       message.setAttribute('scheduleId', createdSchedule.getId());
     }
 
     // Handle schedule updates
     if (currentScheduledAt) {
-      const schedule = await this.dbForPlatform.getDocument('schedules', message.getAttribute('scheduleId'));
+      const schedule = await this.dbForPlatform.getDocument(
+        'schedules',
+        message.getAttribute('scheduleId'),
+      );
       const scheduledStatus = status === MessageStatus.SCHEDULED;
 
       if (schedule.isEmpty()) {
@@ -1857,7 +1923,11 @@ export class MessagingService {
         schedule.setAttribute('schedule', input.scheduledAt);
       }
 
-      await this.dbForPlatform.updateDocument('schedules', schedule.getId(), schedule);
+      await this.dbForPlatform.updateDocument(
+        'schedules',
+        schedule.getId(),
+        schedule,
+      );
     }
 
     if (input.scheduledAt) {
@@ -1896,7 +1966,10 @@ export class MessagingService {
           throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
         }
 
-        const file = await db.getDocument(`bucket_${bucket.getInternalId()}`, fileId);
+        const file = await db.getDocument(
+          `bucket_${bucket.getInternalId()}`,
+          fileId,
+        );
         if (file.isEmpty()) {
           throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
         }
@@ -1927,7 +2000,11 @@ export class MessagingService {
       message.setAttribute('status', status);
     }
 
-    const updatedMessage = await db.updateDocument('messages', message.getId(), message);
+    const updatedMessage = await db.updateDocument(
+      'messages',
+      message.getId(),
+      message,
+    );
 
     if (status === MessageStatus.PROCESSING) {
       // queueForMessaging
@@ -1943,12 +2020,7 @@ export class MessagingService {
   /**
    * Update SMS Message
    */
-  async updateSmsMessage({
-    messageId,
-    input,
-    db,
-    project,
-  }: UpdateSmsMessage) {
+  async updateSmsMessage({ messageId, input, db, project }: UpdateSmsMessage) {
     const message = await db.getDocument('messages', messageId);
 
     if (message.isEmpty()) {
@@ -2013,13 +2085,19 @@ export class MessagingService {
         active: status === MessageStatus.SCHEDULED,
       });
 
-      const createdSchedule = await this.dbForPlatform.createDocument('schedules', schedule);
+      const createdSchedule = await this.dbForPlatform.createDocument(
+        'schedules',
+        schedule,
+      );
       message.setAttribute('scheduleId', createdSchedule.getId());
     }
 
     // Handle schedule updates
     if (currentScheduledAt) {
-      const schedule = await this.dbForPlatform.getDocument('schedules', message.getAttribute('scheduleId'));
+      const schedule = await this.dbForPlatform.getDocument(
+        'schedules',
+        message.getAttribute('scheduleId'),
+      );
       const scheduledStatus = status === MessageStatus.SCHEDULED;
 
       if (schedule.isEmpty()) {
@@ -2034,7 +2112,11 @@ export class MessagingService {
         schedule.setAttribute('schedule', input.scheduledAt);
       }
 
-      await this.dbForPlatform.updateDocument('schedules', schedule.getId(), schedule);
+      await this.dbForPlatform.updateDocument(
+        'schedules',
+        schedule.getId(),
+        schedule,
+      );
     }
 
     if (input.scheduledAt) {
@@ -2065,7 +2147,11 @@ export class MessagingService {
       message.setAttribute('status', status);
     }
 
-    const updatedMessage = await db.updateDocument('messages', message.getId(), message);
+    const updatedMessage = await db.updateDocument(
+      'messages',
+      message.getId(),
+      message,
+    );
 
     if (status === MessageStatus.PROCESSING) {
       // queueForMessaging
@@ -2151,13 +2237,19 @@ export class MessagingService {
         active: status === MessageStatus.SCHEDULED,
       });
 
-      const createdSchedule = await this.dbForPlatform.createDocument('schedules', schedule);
+      const createdSchedule = await this.dbForPlatform.createDocument(
+        'schedules',
+        schedule,
+      );
       message.setAttribute('scheduleId', createdSchedule.getId());
     }
 
     // Handle schedule updates
     if (currentScheduledAt) {
-      const schedule = await this.dbForPlatform.getDocument('schedules', message.getAttribute('scheduleId'));
+      const schedule = await this.dbForPlatform.getDocument(
+        'schedules',
+        message.getAttribute('scheduleId'),
+      );
       const scheduledStatus = status === MessageStatus.SCHEDULED;
 
       if (schedule.isEmpty()) {
@@ -2172,7 +2264,11 @@ export class MessagingService {
         schedule.setAttribute('schedule', input.scheduledAt);
       }
 
-      await this.dbForPlatform.updateDocument('schedules', schedule.getId(), schedule);
+      await this.dbForPlatform.updateDocument(
+        'schedules',
+        schedule.getId(),
+        schedule,
+      );
     }
 
     if (input.scheduledAt) {
@@ -2249,7 +2345,10 @@ export class MessagingService {
         throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
       }
 
-      const file = await db.getDocument(`bucket_${bucket.getInternalId()}`, fileId);
+      const file = await db.getDocument(
+        `bucket_${bucket.getInternalId()}`,
+        fileId,
+      );
       if (file.isEmpty()) {
         throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
       }
@@ -2274,14 +2373,17 @@ export class MessagingService {
         expiry = Math.floor(expiryDate.getTime() / 1000);
       }
 
-      const jwt = this.jwtService.sign({
-        bucketId: bucket.getId(),
-        fileId: file.getId(),
-        projectId: project.getId(),
-      }, {
-        expiresIn: expiry,
-        algorithm: 'HS256'
-      });
+      const jwt = this.jwtService.sign(
+        {
+          bucketId: bucket.getId(),
+          fileId: file.getId(),
+          projectId: project.getId(),
+        },
+        {
+          expiresIn: expiry,
+          algorithm: 'HS256',
+        },
+      );
 
       pushData.image = {
         bucketId: bucket.getId(),
@@ -2296,7 +2398,11 @@ export class MessagingService {
       message.setAttribute('status', status);
     }
 
-    const updatedMessage = await db.updateDocument('messages', message.getId(), message);
+    const updatedMessage = await db.updateDocument(
+      'messages',
+      message.getId(),
+      message,
+    );
 
     if (status === MessageStatus.PROCESSING) {
       // queueForMessaging
@@ -2354,5 +2460,4 @@ export class MessagingService {
 
     return {};
   }
-
 }

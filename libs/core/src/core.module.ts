@@ -43,7 +43,6 @@ import { Adapter } from '@nuvix/database';
 import { Pool as PgPool, PoolClient } from 'pg';
 import { createHash } from 'crypto';
 
-
 Object.keys(filters).forEach(key => {
   Database.addFilter(key, {
     encode: filters[key].serialize,
