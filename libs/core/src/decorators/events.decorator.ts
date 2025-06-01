@@ -9,12 +9,17 @@ const event = <T extends string>(name: T): readonly `${T}.${EventActions}`[] =>
 type EventCategory = 'user' | 'target' | 'session';
 
 const auditEvents = [
+  'identity.delete',
   ...event<EventCategory>('user'),
   ...event<EventCategory>('target'),
   ...event<EventCategory>('session'),
   ...event('recovery'),
   ...event('verification'),
   ...event('identities'),
+  ...event('provider'),
+  ...event('topic'),
+  ...event('subscriber'),
+  ...event('message'),
 ] as const;
 
 type AuditEventKey = (typeof auditEvents)[number];

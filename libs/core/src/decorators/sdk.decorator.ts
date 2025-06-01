@@ -6,22 +6,26 @@ import {
   APP_AUTH_TYPE_KEY,
   APP_AUTH_TYPE_SESSION,
 } from '@nuvix/utils/constants';
+import { HttpStatus } from '@nestjs/common';
 
 export const Namespace = Reflector.createDecorator<keyof typeof services>();
 
-const authTypes = [
-  APP_AUTH_TYPE_SESSION,
-  APP_AUTH_TYPE_JWT,
-  APP_AUTH_TYPE_KEY,
-  APP_AUTH_TYPE_ADMIN,
-] as const;
+export enum AuthType {
+  SESSION = APP_AUTH_TYPE_SESSION,
+  JWT = APP_AUTH_TYPE_JWT,
+  KEY = APP_AUTH_TYPE_KEY,
+  ADMIN = APP_AUTH_TYPE_ADMIN,
+}
 
-export const AuthType = Reflector.createDecorator<(typeof authTypes)[number]>();
+export const Auth = Reflector.createDecorator<AuthType | AuthType[]>();
 
 interface SdkOptions {
   name: string;
-  version?: string;
+  auth?: AuthType | AuthType[];
+  code?: HttpStatus | number;
   description?: string;
+  // TODO:
+  version?: string;
   tags?: string[];
   isPublic?: boolean;
   isInternal?: boolean;

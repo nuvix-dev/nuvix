@@ -127,7 +127,9 @@ export const PROJECT = 'project';
 export const USER = 'user';
 export const SESSION = 'session';
 export const POOLS = 'pools';
+/**@deprecated use {DB_FOR_PLATFORM} instead */
 export const DB_FOR_CONSOLE = Symbol('dbForConsole');
+export const DB_FOR_PLATFORM = Symbol('dbForPlatform');
 /**@deprecated use {PROJECT_DB} and upgrade to new setup*/
 export const DB_FOR_PROJECT = 'dbForProject';
 export const GET_PROJECT_DB = Symbol('getProjectDb');
@@ -227,7 +229,9 @@ export const LOG_LEVELS: { [key: string]: boolean } = (
 
 // APP
 export const APP_NAME = 'Nuvix';
-export const APP_DOMAIN = 'nuvix.io';
+export const APP_DOMAIN = process.env['APP_DOMAIN'] ?? 'localhost';
+export const APP_OPTIONS_FORCE_HTTPS =
+  process.env['APP_OPTIONS_FORCE_HTTPS'] ?? false;
 export const APP_EMAIL_TEAM = 'team@localhost.test'; // Default email address
 export const APP_EMAIL_SECURITY = ''; // Default security email address
 export const APP_USERAGENT =

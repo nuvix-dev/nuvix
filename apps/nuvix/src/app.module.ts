@@ -49,6 +49,8 @@ import { AvatarsController } from './avatars/avatars.controller';
 import { FunctionsController } from './functions/functions.controller';
 import { SchemaController } from './schema/schema.controller';
 import { StorageController } from './storage/storage.controller';
+import { MessagingModule } from './messaging/messaging.module';
+import { MessagingModule } from './messaging/messaging.module';
 
 @Module({
   imports: [
@@ -90,6 +92,7 @@ import { StorageController } from './storage/storage.controller';
     FunctionsModule,
     StorageModule,
     SchemaModule,
+    MessagingModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailQueue],

@@ -26,7 +26,7 @@
         "@nestjs/swagger": "^11.1.4",
         "@nestjs/websockets": "^11.0.20",
         "@nuvix/cache": "^1.0.2-alpha.2",
-        "@nuvix/database": "^1.0.2-alpha.3",
+        "@nuvix/database": "^1.0.3",
         "@nuvix/pg": "^1.0.1-alpha.1",
         "@nuvix/telemetry": "^1.0.0-alpha.1",
         "argon2": "^0.41.1",
@@ -531,7 +531,7 @@
 
     "@nuvix/cache": ["@nuvix/cache@1.0.2-alpha.2", "", { "dependencies": { "ioredis": "^5.6.0" }, "peerDependencies": { "@nuvix/telemetry": "^1.0.0-alpha.1" } }, "sha512-BwliHTPsc4Q28KzxMX0IKBcIXNaPZA3r1/vnShWfMA54Db8DwwTDeQCkXnvYyzjqsVjIDvHniAcdq7yY/sm71g=="],
 
-    "@nuvix/database": ["@nuvix/database@1.0.2-alpha.3", "", { "dependencies": { "chalk": "^4.1.2", "cli-highlight": "^2.1.11", "reflect-metadata": "^0.2.2" } }, "sha512-dKNDMHc/V9vWQ/giAqaMe9HJWNneqV+6yNZYZ+9FgQewpa5QkHTQLY95xpSAe4CU/o8/NdNvUVFDgCCyH17SkA=="],
+    "@nuvix/database": ["@nuvix/database@1.0.3", "", { "dependencies": { "chalk": "^4.1.2", "cli-highlight": "^2.1.11", "reflect-metadata": "^0.2.2" } }, "sha512-HgeadKQDUqtT8lXU6FqfMs66nFpDieqRe90hjDuxjRGb4RnuW/kPNlCGcfHaCNWWwmHzG2vGSYzCQ3eEfRS4sA=="],
 
     "@nuvix/pg": ["@nuvix/pg@1.0.1-alpha.1", "", { "dependencies": { "colorette": "^2.0.20", "debug": "^4.4.0", "lodash": "^4.17.21", "zod": "^3.24.2" } }, "sha512-ALoxKSNI/t5vTy+OPKj3X4E87u0GMe+WGb8gCwDUECtzNo2xbZtZIaXS96il49M3JB1AJAsiI5jZxiSTkjtRDA=="],
 

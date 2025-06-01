@@ -1,10 +1,10 @@
 import { OmitType, PartialType } from '@nestjs/mapped-types';
 import { IsString, IsJSON, IsOptional, IsArray } from 'class-validator';
-import { IsUID } from '@nuvix/core/validators/input.validator';
+import { IsCustomID } from '@nuvix/core/validators/input.validator';
 
 export class CreateDocumentDTO {
   @IsString()
-  @IsUID()
+  @IsCustomID()
   documentId: string;
 
   data: object;

@@ -47,12 +47,11 @@ import { ParseQueryPipe } from '@nuvix/core/pipes/query.pipe';
 import type { Database, Document, Query as Queries } from '@nuvix/database';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard';
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor';
-import { APP_AUTH_TYPE_KEY, CACHE } from '@nuvix/utils/constants';
+import { CACHE } from '@nuvix/utils/constants';
 import { Cache } from '@nuvix/cache';
 
 @Namespace('users')
 @Controller({ version: ['1'], path: 'users' })
-@AuthType(APP_AUTH_TYPE_KEY)
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class UsersController {

@@ -13,11 +13,11 @@ import {
   APP_LIMIT_ARRAY_PARAMS_SIZE,
   APP_STORAGE_MAX_SIZE,
 } from '@nuvix/utils/constants';
-import { IsUID } from '@nuvix/core/validators/input.validator';
+import { IsCustomID } from '@nuvix/core/validators/input.validator';
 
 export class CreateBucketDTO {
   @IsString()
-  @IsUID()
+  @IsCustomID()
   bucketId: string;
 
   @IsString()

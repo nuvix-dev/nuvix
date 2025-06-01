@@ -10,11 +10,11 @@ import {
   Length,
   Matches,
 } from 'class-validator';
-import { IsUID } from '@nuvix/core/validators/input.validator';
+import { IsCustomID } from '@nuvix/core/validators/input.validator';
 
 export class CreateUserDTO {
   @IsOptional()
-  @IsUID()
+  @IsCustomID()
   userId: string;
 
   @IsOptional()

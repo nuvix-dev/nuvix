@@ -601,11 +601,11 @@ export class AccountController {
   }
 
   @Post(['jwts', 'jwt'])
-  @AuthType('JWT')
   @Scope('account')
   @ResModel(Models.JWT)
   @Sdk({
     name: 'createJWT',
+    auth: AuthType.JWT,
   })
   async createJWT(
     @User() user: Document,
@@ -1193,14 +1193,15 @@ export class AccountController {
 
   @Delete('identities/:identityId')
   @Scope('account')
-  @AuditEvent('user.update', {
+  @AuditEvent('identity.delete', {
     resource: 'user/{user.$id}/identity/{params.identityId}',
     userId: '{user.$id}',
-  }) // TODO: #AI Revisit AuditEvent type, 'identity.delete' was not recognized. 'user.update' used as placeholder.
+  })
   @HttpCode(HttpStatus.NO_CONTENT)
   @ResModel(Models.NONE)
   @Sdk({
     name: 'deleteIdentity',
+    code: HttpStatus.NO_CONTENT,
   })
   async deleteIdentity(
     @Param() { identityId }: IdentityIdParamDTO,

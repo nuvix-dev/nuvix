@@ -1,9 +1,9 @@
-import { IsUID } from '@nuvix/core/validators/input.validator';
+import { IsCustomID } from '@nuvix/core/validators/input.validator';
 import { IsNotEmpty, IsString } from 'class-validator';
 
 export class IdentityIdParamDTO {
   @IsString()
   @IsNotEmpty()
-  @IsUID()
+  @IsCustomID()
   identityId: string;
 }

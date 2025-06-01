@@ -1,4 +1,4 @@
-import { IsUID, TOTP } from '@nuvix/core/validators';
+import { IsCustomID, TOTP } from '@nuvix/core/validators';
 import {
   IsBoolean,
   IsNotEmpty,
@@ -34,14 +34,14 @@ export class CreateMfaChallengeDTO {
 
   @IsOptional()
   @IsString()
-  @IsUID()
+  @IsCustomID()
   userId?: string;
 }
 
 export class VerifyMfaChallengeDTO {
   @IsString()
   @IsNotEmpty()
-  @IsUID()
+  @IsCustomID()
   challengeId: string;
 
   @IsString()
