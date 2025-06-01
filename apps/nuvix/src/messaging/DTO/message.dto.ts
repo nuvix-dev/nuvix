@@ -1,3 +1,4 @@
+import { PartialType, PickType } from '@nestjs/mapped-types';
 import { IsCustomID, IsUID } from '@nuvix/core/validators';
 import { IsString, IsOptional, IsArray, IsBoolean, IsObject, IsInt, IsDateString, IsIn, MaxLength, Min } from 'class-validator';
 
@@ -53,7 +54,7 @@ export class CreateEmailMessageDTO {
 
     @IsOptional()
     @IsDateString()
-    scheduledAt?: string;
+    scheduledAt?: string; // TODO: Future Date validation 
 }
 
 export class CreateSmsMessageDTO {
@@ -175,3 +176,53 @@ export class CreatePushMessageDTO {
     @IsIn(['normal', 'high'])
     priority?: 'normal' | 'high';
 }
+
+export class UpdateEmailMessageDTO extends PartialType(
+    PickType(CreateEmailMessageDTO, [
+        'topics',
+        'users',
+        'targets',
+        'subject',
+        'content',
+        'draft',
+        'html',
+        'cc',
+        'bcc',
+        'scheduledAt',
+        'attachments'
+    ])
+) { }
+
+export class UpdateSmsMessageDTO extends PartialType(
+    PickType(CreateSmsMessageDTO, [
+        'topics',
+        'users',
+        'targets',
+        'content',
+        'draft',
+        'scheduledAt'
+    ])
+) { }
+
+export class UpdatePushMessageDTO extends PartialType(
+    PickType(CreatePushMessageDTO, [
+        'topics',
+        'users',
+        'targets',
+        'title',
+        'body',
+        'data',
+        'action',
+        'image',
+        'icon',
+        'sound',
+        'color',
+        'tag',
+        'badge',
+        'draft',
+        'scheduledAt',
+        'contentAvailable',
+        'critical',
+        'priority'
+    ])
+) { }

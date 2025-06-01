@@ -21,10 +21,13 @@ import type {
   ListTargets,
   ListTopics,
   UpdateApnsProvider,
+  UpdateEmailMessage,
   UpdateFcmProvider,
   UpdateMailgunProvider,
   UpdateMsg91Provider,
+  UpdatePushMessage,
   UpdateSendgridProvider,
+  UpdateSmsMessage,
   UpdateSmtpProvider,
   UpdateTelesignProvider,
   UpdateTextmagicProvider,
@@ -1755,6 +1758,552 @@ export class MessagingService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Update Email Message
+   */
+  async updateEmailMessage({
+    messageId,
+    input,
+    db,
+    project,
+  }: UpdateEmailMessage) {
+    const message = await db.getDocument('messages', messageId);
+
+    if (message.isEmpty()) {
+      throw new Exception(Exception.MESSAGE_NOT_FOUND);
+    }
+
+    let status: string;
+    if (input.draft !== undefined || input.scheduledAt !== undefined) {
+      if (input.draft) {
+        status = MessageStatus.DRAFT;
+      } else {
+        status = input.scheduledAt
+          ? MessageStatus.SCHEDULED
+          : MessageStatus.PROCESSING;
+      }
+    } else {
+      status = message.getAttribute('status');
+    }
+
+    if (
+      status !== MessageStatus.DRAFT &&
+      (input.topics ?? message.getAttribute('topics', [])).length === 0 &&
+      (input.users ?? message.getAttribute('users', [])).length === 0 &&
+      (input.targets ?? message.getAttribute('targets', [])).length === 0
+    ) {
+      throw new Exception(Exception.MESSAGE_MISSING_TARGET);
+    }
+
+    const currentScheduledAt = message.getAttribute('scheduledAt');
+
+    switch (message.getAttribute('status')) {
+      case MessageStatus.PROCESSING:
+        throw new Exception(Exception.MESSAGE_ALREADY_PROCESSING);
+      case MessageStatus.SENT:
+        throw new Exception(Exception.MESSAGE_ALREADY_SENT);
+      case MessageStatus.FAILED:
+        throw new Exception(Exception.MESSAGE_ALREADY_FAILED);
+    }
+
+    if (
+      status === MessageStatus.SCHEDULED &&
+      !input.scheduledAt &&
+      !currentScheduledAt
+    ) {
+      throw new Exception(Exception.MESSAGE_MISSING_SCHEDULE);
+    }
+
+    if (currentScheduledAt && new Date(currentScheduledAt) < new Date()) {
+      throw new Exception(Exception.MESSAGE_ALREADY_SCHEDULED);
+    }
+
+    // Handle schedule creation
+    if (!currentScheduledAt && input.scheduledAt) {
+      const schedule = new Document({
+        region: project.getAttribute('region'),
+        resourceType: 'message',
+        resourceId: message.getId(),
+        resourceInternalId: message.getInternalId(),
+        resourceUpdatedAt: new Date().toISOString(),
+        projectId: project.getId(),
+        schedule: input.scheduledAt,
+        active: status === MessageStatus.SCHEDULED,
+      });
+
+      const createdSchedule = await db.createDocument('schedules', schedule);
+      message.setAttribute('scheduleId', createdSchedule.getId());
+    }
+
+    // Handle schedule updates
+    if (currentScheduledAt) {
+      const schedule = await db.getDocument('schedules', message.getAttribute('scheduleId'));
+      const scheduledStatus = status === MessageStatus.SCHEDULED;
+
+      if (schedule.isEmpty()) {
+        throw new Exception(Exception.SCHEDULE_NOT_FOUND);
+      }
+
+      schedule
+        .setAttribute('resourceUpdatedAt', new Date().toISOString())
+        .setAttribute('active', scheduledStatus);
+
+      if (input.scheduledAt) {
+        schedule.setAttribute('schedule', input.scheduledAt);
+      }
+
+      await db.updateDocument('schedules', schedule.getId(), schedule);
+    }
+
+    if (input.scheduledAt) {
+      message.setAttribute('scheduledAt', input.scheduledAt);
+    }
+
+    if (input.topics !== undefined) {
+      message.setAttribute('topics', input.topics);
+    }
+
+    if (input.users !== undefined) {
+      message.setAttribute('users', input.users);
+    }
+
+    if (input.targets !== undefined) {
+      message.setAttribute('targets', input.targets);
+    }
+
+    const data = message.getAttribute('data');
+
+    if (input.subject !== undefined) {
+      data.subject = input.subject;
+    }
+
+    if (input.content !== undefined) {
+      data.content = input.content;
+    }
+
+    if (input.attachments !== undefined) {
+      const processedAttachments = [];
+      for (const attachment of input.attachments) {
+        const [bucketId, fileId] = attachment.split(':');
+
+        const bucket = await db.getDocument('buckets', bucketId);
+        if (bucket.isEmpty()) {
+          throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
+        }
+
+        const file = await db.getDocument(`bucket_${bucket.getInternalId()}`, fileId);
+        if (file.isEmpty()) {
+          throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
+        }
+
+        processedAttachments.push({
+          bucketId,
+          fileId,
+        });
+      }
+      data.attachments = processedAttachments;
+    }
+
+    if (input.html !== undefined) {
+      data.html = input.html;
+    }
+
+    if (input.cc !== undefined) {
+      data.cc = input.cc;
+    }
+
+    if (input.bcc !== undefined) {
+      data.bcc = input.bcc;
+    }
+
+    message.setAttribute('data', data);
+
+    if (status) {
+      message.setAttribute('status', status);
+    }
+
+    const updatedMessage = await db.updateDocument('messages', message.getId(), message);
+
+    if (status === MessageStatus.PROCESSING) {
+      // queueForMessaging
+      //   .setType(MESSAGE_SEND_TYPE_EXTERNAL)
+      //   .setMessageId(updatedMessage.getId());
+    }
+
+    // queueForEvents.setParam('messageId', updatedMessage.getId());
+
+    return updatedMessage;
+  }
+
+  /**
+   * Update SMS Message
+   */
+  async updateSmsMessage({
+    messageId,
+    input,
+    db,
+    project,
+  }: UpdateSmsMessage) {
+    const message = await db.getDocument('messages', messageId);
+
+    if (message.isEmpty()) {
+      throw new Exception(Exception.MESSAGE_NOT_FOUND);
+    }
+
+    let status: string;
+    if (input.draft !== undefined || input.scheduledAt !== undefined) {
+      if (input.draft) {
+        status = MessageStatus.DRAFT;
+      } else {
+        status = input.scheduledAt
+          ? MessageStatus.SCHEDULED
+          : MessageStatus.PROCESSING;
+      }
+    } else {
+      status = message.getAttribute('status');
+    }
+
+    if (
+      status !== MessageStatus.DRAFT &&
+      (input.topics ?? message.getAttribute('topics', [])).length === 0 &&
+      (input.users ?? message.getAttribute('users', [])).length === 0 &&
+      (input.targets ?? message.getAttribute('targets', [])).length === 0
+    ) {
+      throw new Exception(Exception.MESSAGE_MISSING_TARGET);
+    }
+
+    const currentScheduledAt = message.getAttribute('scheduledAt');
+
+    switch (message.getAttribute('status')) {
+      case MessageStatus.PROCESSING:
+        throw new Exception(Exception.MESSAGE_ALREADY_PROCESSING);
+      case MessageStatus.SENT:
+        throw new Exception(Exception.MESSAGE_ALREADY_SENT);
+      case MessageStatus.FAILED:
+        throw new Exception(Exception.MESSAGE_ALREADY_FAILED);
+    }
+
+    if (
+      status === MessageStatus.SCHEDULED &&
+      !input.scheduledAt &&
+      !currentScheduledAt
+    ) {
+      throw new Exception(Exception.MESSAGE_MISSING_SCHEDULE);
+    }
+
+    if (currentScheduledAt && new Date(currentScheduledAt) < new Date()) {
+      throw new Exception(Exception.MESSAGE_ALREADY_SCHEDULED);
+    }
+
+    // Handle schedule creation
+    if (!currentScheduledAt && input.scheduledAt) {
+      const schedule = new Document({
+        region: project.getAttribute('region'),
+        resourceType: 'message',
+        resourceId: message.getId(),
+        resourceInternalId: message.getInternalId(),
+        resourceUpdatedAt: new Date().toISOString(),
+        projectId: project.getId(),
+        schedule: input.scheduledAt,
+        active: status === MessageStatus.SCHEDULED,
+      });
+
+      const createdSchedule = await db.createDocument('schedules', schedule);
+      message.setAttribute('scheduleId', createdSchedule.getId());
+    }
+
+    // Handle schedule updates
+    if (currentScheduledAt) {
+      const schedule = await db.getDocument('schedules', message.getAttribute('scheduleId'));
+      const scheduledStatus = status === MessageStatus.SCHEDULED;
+
+      if (schedule.isEmpty()) {
+        throw new Exception(Exception.SCHEDULE_NOT_FOUND);
+      }
+
+      schedule
+        .setAttribute('resourceUpdatedAt', new Date().toISOString())
+        .setAttribute('active', scheduledStatus);
+
+      if (input.scheduledAt) {
+        schedule.setAttribute('schedule', input.scheduledAt);
+      }
+
+      await db.updateDocument('schedules', schedule.getId(), schedule);
+    }
+
+    if (input.scheduledAt) {
+      message.setAttribute('scheduledAt', input.scheduledAt);
+    }
+
+    if (input.topics !== undefined) {
+      message.setAttribute('topics', input.topics);
+    }
+
+    if (input.users !== undefined) {
+      message.setAttribute('users', input.users);
+    }
+
+    if (input.targets !== undefined) {
+      message.setAttribute('targets', input.targets);
+    }
+
+    const data = message.getAttribute('data');
+
+    if (input.content !== undefined) {
+      data.content = input.content;
+    }
+
+    message.setAttribute('data', data);
+
+    if (status) {
+      message.setAttribute('status', status);
+    }
+
+    const updatedMessage = await db.updateDocument('messages', message.getId(), message);
+
+    if (status === MessageStatus.PROCESSING) {
+      // queueForMessaging
+      //   .setType(MESSAGE_SEND_TYPE_EXTERNAL)
+      //   .setMessageId(updatedMessage.getId());
+    }
+
+    // queueForEvents.setParam('messageId', updatedMessage.getId());
+
+    return updatedMessage;
+  }
+
+  /**
+   * Update Push Message
+   */
+  async updatePushMessage({
+    messageId,
+    input,
+    db,
+    project,
+  }: UpdatePushMessage) {
+    const message = await db.getDocument('messages', messageId);
+
+    if (message.isEmpty()) {
+      throw new Exception(Exception.MESSAGE_NOT_FOUND);
+    }
+
+    let status: string;
+    if (input.draft !== undefined || input.scheduledAt !== undefined) {
+      if (input.draft) {
+        status = MessageStatus.DRAFT;
+      } else {
+        status = input.scheduledAt
+          ? MessageStatus.SCHEDULED
+          : MessageStatus.PROCESSING;
+      }
+    } else {
+      status = message.getAttribute('status');
+    }
+
+    if (
+      status !== MessageStatus.DRAFT &&
+      (input.topics ?? message.getAttribute('topics', [])).length === 0 &&
+      (input.users ?? message.getAttribute('users', [])).length === 0 &&
+      (input.targets ?? message.getAttribute('targets', [])).length === 0
+    ) {
+      throw new Exception(Exception.MESSAGE_MISSING_TARGET);
+    }
+
+    const currentScheduledAt = message.getAttribute('scheduledAt');
+
+    switch (message.getAttribute('status')) {
+      case MessageStatus.PROCESSING:
+        throw new Exception(Exception.MESSAGE_ALREADY_PROCESSING);
+      case MessageStatus.SENT:
+        throw new Exception(Exception.MESSAGE_ALREADY_SENT);
+      case MessageStatus.FAILED:
+        throw new Exception(Exception.MESSAGE_ALREADY_FAILED);
+    }
+
+    if (
+      status === MessageStatus.SCHEDULED &&
+      !input.scheduledAt &&
+      !currentScheduledAt
+    ) {
+      throw new Exception(Exception.MESSAGE_MISSING_SCHEDULE);
+    }
+
+    if (currentScheduledAt && new Date(currentScheduledAt) < new Date()) {
+      throw new Exception(Exception.MESSAGE_ALREADY_SCHEDULED);
+    }
+
+    // Handle schedule creation
+    if (!currentScheduledAt && input.scheduledAt) {
+      const schedule = new Document({
+        region: project.getAttribute('region'),
+        resourceType: 'message',
+        resourceId: message.getId(),
+        resourceInternalId: message.getInternalId(),
+        resourceUpdatedAt: new Date().toISOString(),
+        projectId: project.getId(),
+        schedule: input.scheduledAt,
+        active: status === MessageStatus.SCHEDULED,
+      });
+
+      const createdSchedule = await db.createDocument('schedules', schedule);
+      message.setAttribute('scheduleId', createdSchedule.getId());
+    }
+
+    // Handle schedule updates
+    if (currentScheduledAt) {
+      const schedule = await db.getDocument('schedules', message.getAttribute('scheduleId'));
+      const scheduledStatus = status === MessageStatus.SCHEDULED;
+
+      if (schedule.isEmpty()) {
+        throw new Exception(Exception.SCHEDULE_NOT_FOUND);
+      }
+
+      schedule
+        .setAttribute('resourceUpdatedAt', new Date().toISOString())
+        .setAttribute('active', scheduledStatus);
+
+      if (input.scheduledAt) {
+        schedule.setAttribute('schedule', input.scheduledAt);
+      }
+
+      await db.updateDocument('schedules', schedule.getId(), schedule);
+    }
+
+    if (input.scheduledAt) {
+      message.setAttribute('scheduledAt', input.scheduledAt);
+    }
+
+    if (input.topics !== undefined) {
+      message.setAttribute('topics', input.topics);
+    }
+
+    if (input.users !== undefined) {
+      message.setAttribute('users', input.users);
+    }
+
+    if (input.targets !== undefined) {
+      message.setAttribute('targets', input.targets);
+    }
+
+    const pushData = message.getAttribute('data');
+
+    if (input.title !== undefined) {
+      pushData.title = input.title;
+    }
+
+    if (input.body !== undefined) {
+      pushData.body = input.body;
+    }
+
+    if (input.data !== undefined) {
+      pushData.data = input.data;
+    }
+
+    if (input.action !== undefined) {
+      pushData.action = input.action;
+    }
+
+    if (input.icon !== undefined) {
+      pushData.icon = input.icon;
+    }
+
+    if (input.sound !== undefined) {
+      pushData.sound = input.sound;
+    }
+
+    if (input.color !== undefined) {
+      pushData.color = input.color;
+    }
+
+    if (input.tag !== undefined) {
+      pushData.tag = input.tag;
+    }
+
+    if (input.badge !== undefined) {
+      pushData.badge = input.badge;
+    }
+
+    if (input.contentAvailable !== undefined) {
+      pushData.contentAvailable = input.contentAvailable;
+    }
+
+    if (input.critical !== undefined) {
+      pushData.critical = input.critical;
+    }
+
+    if (input.priority !== undefined) {
+      pushData.priority = input.priority;
+    }
+
+    if (input.image !== undefined) {
+      const [bucketId, fileId] = input.image.split(':');
+
+      const bucket = await db.getDocument('buckets', bucketId);
+      if (bucket.isEmpty()) {
+        throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
+      }
+
+      const file = await db.getDocument(`bucket_${bucket.getInternalId()}`, fileId);
+      if (file.isEmpty()) {
+        throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
+      }
+
+      const allowedMimeTypes = ['image/png', 'image/jpeg'];
+      if (!allowedMimeTypes.includes(file.getAttribute('mimeType'))) {
+        throw new Exception(Exception.STORAGE_FILE_TYPE_UNSUPPORTED);
+      }
+
+      const host = APP_DOMAIN || 'localhost';
+      const protocol = APP_OPTIONS_FORCE_HTTPS ? 'https' : 'http';
+
+      const scheduleTime = currentScheduledAt || input.scheduledAt;
+      let expiry: number;
+      if (scheduleTime) {
+        const expiryDate = new Date(scheduleTime);
+        expiryDate.setDate(expiryDate.getDate() + 15);
+        expiry = Math.floor(expiryDate.getTime() / 1000);
+      } else {
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + 15);
+        expiry = Math.floor(expiryDate.getTime() / 1000);
+      }
+
+      const jwt = this.jwtService.sign({
+        bucketId: bucket.getId(),
+        fileId: file.getId(),
+        projectId: project.getId(),
+      }, {
+        expiresIn: expiry,
+        algorithm: 'HS256'
+      });
+
+      pushData.image = {
+        bucketId: bucket.getId(),
+        fileId: file.getId(),
+        url: `${protocol}://${host}/v1/storage/buckets/${bucket.getId()}/files/${file.getId()}/push?project=${project.getId()}&jwt=${jwt}`,
+      };
+    }
+
+    message.setAttribute('data', pushData);
+
+    if (status) {
+      message.setAttribute('status', status);
+    }
+
+    const updatedMessage = await db.updateDocument('messages', message.getId(), message);
+
+    if (status === MessageStatus.PROCESSING) {
+      // queueForMessaging
+      //   .setType(MESSAGE_SEND_TYPE_EXTERNAL)
+      //   .setMessageId(updatedMessage.getId());
+    }
+
+    // queueForEvents.setParam('messageId', updatedMessage.getId());
+
+    return updatedMessage;
   }
 
 }

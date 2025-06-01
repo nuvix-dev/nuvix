@@ -61,7 +61,7 @@ import { CreateApnsProviderDTO, UpdateApnsProviderDTO } from './DTO/apns.dto';
 import { ParseQueryPipe } from '@nuvix/core/pipes';
 import { CreateTopicDTO, UpdateTopicDTO } from './DTO/topics.dto';
 import { CreateSubscriberDTO } from './DTO/subscriber.dto';
-import { CreateEmailMessageDTO, CreatePushMessageDTO, CreateSmsMessageDTO } from './DTO/message.dto';
+import { CreateEmailMessageDTO, CreatePushMessageDTO, CreateSmsMessageDTO, UpdateEmailMessageDTO, UpdatePushMessageDTO, UpdateSmsMessageDTO } from './DTO/message.dto';
 
 @Controller({ path: 'messaging', version: ['1'] })
 @UseGuards(ProjectGuard)
@@ -840,6 +840,78 @@ export class MessagingController {
       db,
       messageId,
       queries,
+    });
+  }
+
+  @Patch('messages/email/:messageId')
+  @Scope('messages.update')
+  @AuditEvent('message.update', 'message/{res.$id}')
+  @ResModel(Models.MESSAGE)
+  @Sdk({
+    name: 'updateEmail',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.OK,
+    description: 'Update email',
+  })
+  async updateEmail(
+    @Param('messageId') messageId: string,
+    @MessagingDatabase() db: Database,
+    @Body() input: UpdateEmailMessageDTO,
+    @Project() project: Document,
+  ) {
+    return await this.messagingService.updateEmailMessage({
+      db,
+      messageId,
+      input,
+      project,
+    });
+  }
+
+  @Patch('messages/sms/:messageId')
+  @Scope('messages.update')
+  @AuditEvent('message.update', 'message/{res.$id}')
+  @ResModel(Models.MESSAGE)
+  @Sdk({
+    name: 'updateSms',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.OK,
+    description: 'Update SMS',
+  })
+  async updateSms(
+    @Param('messageId') messageId: string,
+    @MessagingDatabase() db: Database,
+    @Body() input: UpdateSmsMessageDTO,
+    @Project() project: Document,
+  ) {
+    return await this.messagingService.updateSmsMessage({
+      db,
+      messageId,
+      input,
+      project,
+    });
+  }
+
+  @Patch('messages/push/:messageId')
+  @Scope('messages.update')
+  @AuditEvent('message.update', 'message/{res.$id}')
+  @ResModel(Models.MESSAGE)
+  @Sdk({
+    name: 'updatePush',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.OK,
+    description: 'Update push notification',
+  })
+  async updatePush(
+    @Param('messageId') messageId: string,
+    @MessagingDatabase() db: Database,
+    @Body() input: UpdatePushMessageDTO,
+    @Project() project: Document,
+  ) {
+    return await this.messagingService.updatePushMessage({
+      db,
+      messageId,
+      input,
+      project,
     });
   }
 

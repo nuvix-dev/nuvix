@@ -33,7 +33,7 @@ import { CreateFcmProviderDTO, UpdateFcmProviderDTO } from './DTO/fcm.dto';
 import { CreateApnsProviderDTO, UpdateApnsProviderDTO } from './DTO/apns.dto';
 import { CreateTopicDTO, UpdateTopicDTO } from './DTO/topics.dto';
 import { CreateSubscriberDTO } from './DTO/subscriber.dto';
-import { CreateEmailMessageDTO, CreatePushMessageDTO, CreateSmsMessageDTO } from './DTO/message.dto';
+import { CreateEmailMessageDTO, CreatePushMessageDTO, CreateSmsMessageDTO, UpdateEmailMessageDTO, UpdatePushMessageDTO, UpdateSmsMessageDTO } from './DTO/message.dto';
 
 interface DB {
   db: Database;
@@ -166,3 +166,17 @@ export interface ListTargets extends DB {
   messageId: string;
   queries: Query[];
 }
+
+export interface UpdateEmailMessage extends DB, Project {
+  input: UpdateEmailMessageDTO;
+  messageId: string;
+}
+export interface UpdateSmsMessage extends DB, Project {
+  input: UpdateSmsMessageDTO;
+  messageId: string;
+}
+export interface UpdatePushMessage extends DB, Project {
+  input: UpdatePushMessageDTO;
+  messageId: string;
+}
+
