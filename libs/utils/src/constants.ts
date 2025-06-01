@@ -227,7 +227,8 @@ export const LOG_LEVELS: { [key: string]: boolean } = (
 
 // APP
 export const APP_NAME = 'Nuvix';
-export const APP_DOMAIN = 'nuvix.io';
+export const APP_DOMAIN = process.env["APP_DOMAIN"] ?? 'localhost';
+export const APP_OPTIONS_FORCE_HTTPS = process.env["APP_OPTIONS_FORCE_HTTPS"] ?? false;
 export const APP_EMAIL_TEAM = 'team@localhost.test'; // Default email address
 export const APP_EMAIL_SECURITY = ''; // Default security email address
 export const APP_USERAGENT =

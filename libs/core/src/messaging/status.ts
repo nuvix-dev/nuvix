@@ -1,4 +1,4 @@
-export class Status {
+export class MessageStatus {
   /**
    * Message that is not ready to be sent
    */

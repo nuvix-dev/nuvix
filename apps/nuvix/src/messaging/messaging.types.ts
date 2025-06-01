@@ -1,5 +1,5 @@
 import { LocaleTranslator } from '@nuvix/core/helper';
-import { Database, Query } from '@nuvix/database';
+import { Database, Document, Query } from '@nuvix/database';
 import {
   CreateMailgunProviderDTO,
   UpdateMailgunProviderDTO,
@@ -33,6 +33,7 @@ import { CreateFcmProviderDTO, UpdateFcmProviderDTO } from './DTO/fcm.dto';
 import { CreateApnsProviderDTO, UpdateApnsProviderDTO } from './DTO/apns.dto';
 import { CreateTopicDTO, UpdateTopicDTO } from './DTO/topics.dto';
 import { CreateSubscriberDTO } from './DTO/subscriber.dto';
+import { CreateEmailMessageDTO, CreatePushMessageDTO, CreateSmsMessageDTO } from './DTO/message.dto';
 
 interface DB {
   db: Database;
@@ -148,4 +149,14 @@ export interface CreateSubscriber extends DB {
 
 export interface ListSubscribers extends DB, QandS {
   topicId: string;
+}
+
+export interface CreateEmailMessage extends DB, Project {
+  input: CreateEmailMessageDTO;
+}
+export interface CreateSmsMessage extends DB, Project {
+  input: CreateSmsMessageDTO;
+}
+export interface CreatePushMessage extends DB, Project {
+  input: CreatePushMessageDTO;
 }

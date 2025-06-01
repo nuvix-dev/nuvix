@@ -1,7 +1,7 @@
 import { IsCustomID, IsUID } from '@nuvix/core/validators';
 import { IsString, IsOptional, IsArray, IsBoolean, IsObject, IsInt, IsDateString, IsIn, MaxLength, Min } from 'class-validator';
 
-export class CreateEmailDTO {
+export class CreateEmailMessageDTO {
     @IsCustomID()
     messageId: string;
 
@@ -56,7 +56,7 @@ export class CreateEmailDTO {
     scheduledAt?: string;
 }
 
-export class CreateSmsDTO {
+export class CreateSmsMessageDTO {
     @IsCustomID()
     messageId: string;
 
@@ -88,7 +88,7 @@ export class CreateSmsDTO {
     scheduledAt?: string;
 }
 
-export class CreatePushDTO {
+export class CreatePushMessageDTO {
     @IsCustomID()
     messageId: string;
 

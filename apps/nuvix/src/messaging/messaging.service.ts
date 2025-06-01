@@ -1,10 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import type {
   CreateApnsProvider,
+  CreateEmailMessage,
   CreateFcmProvider,
   CreateMailgunProvider,
   CreateMsg91Provider,
+  CreatePushMessage,
   CreateSendgridProvider,
+  CreateSmsMessage,
   CreateSmtpProvider,
   CreateSubscriber,
   CreateTelesignProvider,
@@ -41,14 +44,20 @@ import {
 } from '@nuvix/database';
 import { Exception } from '@nuvix/core/extend/exception';
 import {
+  APP_DOMAIN,
+  APP_OPTIONS_FORCE_HTTPS,
   MESSAGE_TYPE_EMAIL,
   MESSAGE_TYPE_PUSH,
   MESSAGE_TYPE_SMS,
 } from '@nuvix/utils/constants';
+import { MessageStatus } from '@nuvix/core/messaging/status';
+import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class MessagingService {
-  constructor() { }
+  constructor(
+    private readonly jwtService: JwtService,
+  ) { }
 
   /**
    * Common method to create a provider.
@@ -1204,6 +1213,404 @@ export class MessagingService {
     //   .setParam('subscriberId', subscriber.getId());
 
     return {};
+  }
+
+  /**
+   * Create Email Message
+   */
+  async createEmailMessage({
+    input,
+    db,
+    project,
+  }: CreateEmailMessage) {
+    const {
+      messageId: inputMessageId,
+      subject,
+      content,
+      topics = [],
+      users = [],
+      targets = [],
+      cc = [],
+      bcc = [],
+      attachments = [],
+      draft = false,
+      html = false,
+      scheduledAt = null
+    } = input;
+
+    const messageId = inputMessageId === 'unique()' ? ID.unique() : inputMessageId;
+
+    const status = draft
+      ? MessageStatus.DRAFT
+      : scheduledAt
+        ? MessageStatus.SCHEDULED
+        : MessageStatus.PROCESSING;
+
+    if (status !== MessageStatus.DRAFT && topics.length === 0 && users.length === 0 && targets.length === 0) {
+      throw new Exception(Exception.MESSAGE_MISSING_TARGET);
+    }
+
+    if (status === MessageStatus.SCHEDULED && !scheduledAt) {
+      throw new Exception(Exception.MESSAGE_MISSING_SCHEDULE);
+    }
+
+    const mergedTargets = [...targets, ...cc, ...bcc];
+
+    if (mergedTargets.length > 0) {
+      const foundTargets = await db.find('targets', [
+        Query.equal('$id', mergedTargets),
+        Query.equal('providerType', [MESSAGE_TYPE_EMAIL]),
+        Query.limit(mergedTargets.length),
+      ]);
+
+      if (foundTargets.length !== mergedTargets.length) {
+        throw new Exception(Exception.MESSAGE_TARGET_NOT_EMAIL);
+      }
+
+      for (const target of foundTargets) {
+        if (target.isEmpty()) {
+          throw new Exception(Exception.USER_TARGET_NOT_FOUND);
+        }
+      }
+    }
+
+    const processedAttachments = [];
+    if (attachments.length > 0) {
+      for (const attachment of attachments) {
+        const [bucketId, fileId] = attachment.split(':');
+
+        const bucket = await db.getDocument('buckets', bucketId);
+        if (bucket.isEmpty()) {
+          throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
+        }
+
+        const file = await db.getDocument(`bucket_${bucket.getInternalId()}`, fileId);
+        if (file.isEmpty()) {
+          throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
+        }
+
+        processedAttachments.push({
+          bucketId,
+          fileId,
+        });
+      }
+    }
+
+    const message = new Document({
+      $id: messageId,
+      providerType: MESSAGE_TYPE_EMAIL,
+      topics,
+      users,
+      targets,
+      scheduledAt,
+      data: {
+        subject,
+        content,
+        html,
+        cc,
+        bcc,
+        attachments: processedAttachments,
+      },
+      status,
+    });
+
+    const createdMessage = await db.createDocument('messages', message);
+
+    switch (status) {
+      case MessageStatus.PROCESSING:
+        // queueForMessaging
+        //   .setType('MESSAGE_SEND_TYPE_EXTERNAL')
+        //   .setMessageId(createdMessage.getId());
+        break;
+      case MessageStatus.SCHEDULED:
+        const schedule = new Document({
+          region: project.getAttribute('region'),
+          resourceType: 'message',
+          resourceId: createdMessage.getId(),
+          resourceInternalId: createdMessage.getInternalId(),
+          resourceUpdatedAt: new Date().toISOString(),
+          projectId: project.getId(),
+          schedule: scheduledAt,
+          active: true,
+        });
+
+        const createdSchedule = await db.createDocument('schedules', schedule);
+        createdMessage.setAttribute('scheduleId', createdSchedule.getId());
+        await db.updateDocument('messages', createdMessage.getId(), createdMessage);
+        break;
+    }
+
+    // queueForEvents.setParam('messageId', createdMessage.getId());
+
+    return createdMessage;
+  }
+
+  /**
+   * Create SMS Message
+   */
+  async createSmsMessage({
+    input,
+    db,
+    project,
+  }: CreateSmsMessage) {
+    const {
+      messageId: inputMessageId,
+      content,
+      topics = [],
+      users = [],
+      targets = [],
+      draft = false,
+      scheduledAt = null
+    } = input;
+
+    const messageId = inputMessageId === 'unique()' ? ID.unique() : inputMessageId;
+
+    const status = draft
+      ? MessageStatus.DRAFT
+      : scheduledAt
+        ? MessageStatus.SCHEDULED
+        : MessageStatus.PROCESSING;
+
+    if (status !== MessageStatus.DRAFT && topics.length === 0 && users.length === 0 && targets.length === 0) {
+      throw new Exception(Exception.MESSAGE_MISSING_TARGET);
+    }
+
+    if (status === MessageStatus.SCHEDULED && !scheduledAt) {
+      throw new Exception(Exception.MESSAGE_MISSING_SCHEDULE);
+    }
+
+    if (targets.length > 0) {
+      const foundTargets = await db.find('targets', [
+        Query.equal('$id', targets),
+        Query.equal('providerType', [MESSAGE_TYPE_SMS]),
+        Query.limit(targets.length),
+      ]);
+
+      if (foundTargets.length !== targets.length) {
+        throw new Exception(Exception.MESSAGE_TARGET_NOT_SMS);
+      }
+
+      for (const target of foundTargets) {
+        if (target.isEmpty()) {
+          throw new Exception(Exception.USER_TARGET_NOT_FOUND);
+        }
+      }
+    }
+
+    const message = new Document({
+      $id: messageId,
+      providerType: MESSAGE_TYPE_SMS,
+      topics,
+      users,
+      targets,
+      scheduledAt,
+      data: {
+        content,
+      },
+      status,
+    });
+
+    const createdMessage = await db.createDocument('messages', message);
+
+    switch (status) {
+      case MessageStatus.PROCESSING:
+        // queueForMessaging
+        //   .setType('MESSAGE_SEND_TYPE_EXTERNAL')
+        //   .setMessageId(createdMessage.getId());
+        break;
+      case MessageStatus.SCHEDULED:
+        const schedule = new Document({
+          region: project.getAttribute('region'),
+          resourceType: 'message',
+          resourceId: createdMessage.getId(),
+          resourceInternalId: createdMessage.getInternalId(),
+          resourceUpdatedAt: new Date().toISOString(),
+          projectId: project.getId(),
+          schedule: scheduledAt,
+          active: true,
+        });
+
+        const createdSchedule = await db.createDocument('schedules', schedule);
+        createdMessage.setAttribute('scheduleId', createdSchedule.getId());
+        await db.updateDocument('messages', createdMessage.getId(), createdMessage);
+        break;
+    }
+
+    // queueForEvents.setParam('messageId', createdMessage.getId());
+
+    return createdMessage;
+  }
+
+  /**
+   * Create Push Message
+   */
+  async createPushMessage({
+    input,
+    db,
+    project,
+  }: CreatePushMessage) {
+    const {
+      messageId: inputMessageId,
+      title = '',
+      body = '',
+      topics = [],
+      users = [],
+      targets = [],
+      data = null,
+      action = '',
+      image = '',
+      icon = '',
+      sound = '',
+      color = '',
+      tag = '',
+      badge = -1,
+      draft = false,
+      scheduledAt = null,
+      contentAvailable = false,
+      critical = false,
+      priority = 'high'
+    } = input;
+
+    const messageId = inputMessageId === 'unique()' ? ID.unique() : inputMessageId;
+
+    const status = draft
+      ? MessageStatus.DRAFT
+      : scheduledAt
+        ? MessageStatus.SCHEDULED
+        : MessageStatus.PROCESSING;
+
+    if (status !== MessageStatus.DRAFT && topics.length === 0 && users.length === 0 && targets.length === 0) {
+      throw new Exception(Exception.MESSAGE_MISSING_TARGET);
+    }
+
+    if (status === MessageStatus.SCHEDULED && !scheduledAt) {
+      throw new Exception(Exception.MESSAGE_MISSING_SCHEDULE);
+    }
+
+    if (targets.length > 0) {
+      const foundTargets = await db.find('targets', [
+        Query.equal('$id', targets),
+        Query.equal('providerType', [MESSAGE_TYPE_PUSH]),
+        Query.limit(targets.length),
+      ]);
+
+      if (foundTargets.length !== targets.length) {
+        throw new Exception(Exception.MESSAGE_TARGET_NOT_PUSH);
+      }
+
+      for (const target of foundTargets) {
+        if (target.isEmpty()) {
+          throw new Exception(Exception.USER_TARGET_NOT_FOUND);
+        }
+      }
+    }
+
+    let processedImage: any = null;
+    if (image) {
+      const [bucketId, fileId] = image.split(':');
+
+      const bucket = await db.getDocument('buckets', bucketId);
+      if (bucket.isEmpty()) {
+        throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
+      }
+
+      const file = await db.getDocument(`bucket_${bucket.getInternalId()}`, fileId);
+      if (file.isEmpty()) {
+        throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
+      }
+
+      const allowedMimeTypes = ['image/png', 'image/jpeg'];
+      if (!allowedMimeTypes.includes(file.getAttribute('mimeType'))) {
+        throw new Exception(Exception.STORAGE_FILE_TYPE_UNSUPPORTED);
+      }
+
+      const host = APP_DOMAIN || 'localhost';
+      const protocol = APP_OPTIONS_FORCE_HTTPS ? 'https' : 'http';
+
+      const scheduleTime = scheduledAt;
+      let expiry: number;
+      if (scheduleTime) {
+        const expiryDate = new Date(scheduleTime);
+        expiryDate.setDate(expiryDate.getDate() + 15); // Add 15 days
+        expiry = Math.floor(expiryDate.getTime() / 1000);
+      } else {
+        const expiryDate = new Date();
+        expiryDate.setDate(expiryDate.getDate() + 15); // Add 15 days
+        expiry = Math.floor(expiryDate.getTime() / 1000);
+      }
+
+      const jwt = this.jwtService.sign({
+        bucketId: bucket.getId(),
+        fileId: file.getId(),
+        projectId: project.getId(),
+      }, {
+        expiresIn: expiry,
+        algorithm: 'HS256'
+      });
+
+      processedImage = {
+        bucketId: bucket.getId(),
+        fileId: file.getId(),
+        url: `${protocol}://${host}/v1/storage/buckets/${bucket.getId()}/files/${file.getId()}/push?project=${project.getId()}&jwt=${jwt}`,
+      };
+    }
+
+    const pushData: Record<string, any> = {};
+
+    if (title) pushData.title = title;
+    if (body) pushData.body = body;
+    if (data) pushData.data = data;
+    if (action) pushData.action = action;
+    if (processedImage) pushData.image = processedImage;
+    if (icon) pushData.icon = icon;
+    if (sound) pushData.sound = sound;
+    if (color) pushData.color = color;
+    if (tag) pushData.tag = tag;
+    if (badge >= 0) pushData.badge = badge;
+    if (contentAvailable) pushData.contentAvailable = true;
+    if (critical) pushData.critical = true;
+    if (priority) pushData.priority = priority;
+
+    const message = new Document({
+      $id: messageId,
+      providerType: MESSAGE_TYPE_PUSH,
+      topics,
+      users,
+      targets,
+      scheduledAt,
+      data: pushData,
+      status,
+    });
+
+    const createdMessage = await db.createDocument('messages', message);
+
+    switch (status) {
+      case MessageStatus.PROCESSING:
+        // queueForMessaging
+        //   .setType('MESSAGE_SEND_TYPE_EXTERNAL')
+        //   .setMessageId(createdMessage.getId());
+        break;
+      case MessageStatus.SCHEDULED:
+        const schedule = new Document({
+          region: project.getAttribute('region'),
+          resourceType: 'message',
+          resourceId: createdMessage.getId(),
+          resourceInternalId: createdMessage.getInternalId(),
+          resourceUpdatedAt: new Date().toISOString(),
+          projectId: project.getId(),
+          schedule: scheduledAt,
+          active: true,
+        });
+
+        const createdSchedule = await db.createDocument('schedules', schedule);
+        createdMessage.setAttribute('scheduleId', createdSchedule.getId());
+        await db.updateDocument('messages', createdMessage.getId(), createdMessage);
+        break;
+    }
+
+    // queueForEvents.setParam('messageId', createdMessage.getId());
+
+    return createdMessage;
   }
 
 }

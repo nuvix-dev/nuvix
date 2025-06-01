@@ -30,7 +30,7 @@ import {
   CreateMailgunProviderDTO,
   UpdateMailgunProviderDTO,
 } from './DTO/mailgun.dto';
-import { Database, Query as Queries } from '@nuvix/database';
+import { Database, Document, Query as Queries } from '@nuvix/database';
 import {
   CreateSendgridProviderDTO,
   UpdateSendgridProviderDTO,
@@ -61,7 +61,7 @@ import { CreateApnsProviderDTO, UpdateApnsProviderDTO } from './DTO/apns.dto';
 import { ParseQueryPipe } from '@nuvix/core/pipes';
 import { CreateTopicDTO, UpdateTopicDTO } from './DTO/topics.dto';
 import { CreateSubscriberDTO } from './DTO/subscriber.dto';
-import { CreateEmailDTO, CreatePushDTO, CreateSmsDTO } from './DTO/message.dto';
+import { CreateEmailMessageDTO, CreatePushMessageDTO, CreateSmsMessageDTO } from './DTO/message.dto';
 
 @Controller({ path: 'messaging', version: ['1'] })
 @UseGuards(ProjectGuard)
@@ -731,11 +731,13 @@ export class MessagingController {
   })
   async createEmail(
     @MessagingDatabase() db: Database,
-    @Body() input: CreateEmailDTO,
+    @Body() input: CreateEmailMessageDTO,
+    @Project() project: Document,
   ) {
-    return await this.messagingService.createEmail({
+    return await this.messagingService.createEmailMessage({
       db,
       input,
+      project
     });
   }
 
@@ -751,11 +753,13 @@ export class MessagingController {
   })
   async createSms(
     @MessagingDatabase() db: Database,
-    @Body() input: CreateSmsDTO,
+    @Body() input: CreateSmsMessageDTO,
+    @Project() project: Document,
   ) {
-    return await this.messagingService.createSms({
+    return await this.messagingService.createSmsMessage({
       db,
       input,
+      project
     });
   }
 
@@ -771,12 +775,14 @@ export class MessagingController {
   })
   async createPush(
     @MessagingDatabase() db: Database,
-    @Body() input: CreatePushDTO,
+    @Body() input: CreatePushMessageDTO,
+    @Project() project: Document,
   ) {
-    return await this.messagingService.createPush({
+    return await this.messagingService.createPushMessage({
       db,
       input,
+      project
     });
   }
-  
+
 }
