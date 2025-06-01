@@ -65,7 +65,7 @@ import { CreateTopicDTO } from './DTO/topics.dto';
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor)
 export class MessagingController {
-  constructor(private readonly messagingService: MessagingService) {}
+  constructor(private readonly messagingService: MessagingService) { }
 
   @Post('providers/mailgun')
   @Scope('providers.create')
@@ -559,5 +559,42 @@ export class MessagingController {
       db,
       input,
     });
+  }
+
+  @Get('topics')
+  @Scope('topics.read')
+  @ResModel(Models.TOPIC, { list: true })
+  @Sdk({
+    name: 'listTopics',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.OK,
+    description: 'List all topics',
+  })
+  async listTopics(
+    @MessagingDatabase() db: Database,
+    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('search') search?: string,
+  ) {
+    return await this.messagingService.listTopics({
+      db,
+      queries,
+      search,
+    });
+  }
+
+  @Get('topics/:topicId')
+  @Scope('topics.read')
+  @ResModel(Models.TOPIC)
+  @Sdk({
+    name: 'getTopic',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.OK,
+    description: 'Get topic',
+  })
+  async getTopic(
+    @Param('topicId') topicId: string,
+    @MessagingDatabase() db: Database,
+  ) {
+    return await this.messagingService.getTopic(db, topicId);
   }
 }

@@ -12,6 +12,7 @@ import type {
   CreateTwilioProvider,
   CreateVonageProvider,
   ListProviders,
+  ListTopics,
   UpdateApnsProvider,
   UpdateFcmProvider,
   UpdateMailgunProvider,
@@ -42,7 +43,7 @@ import {
 
 @Injectable()
 export class MessagingService {
-  constructor() {}
+  constructor() { }
 
   /**
    * Common method to create a provider.
@@ -365,8 +366,7 @@ export class MessagingService {
     // Get cursor document if there was a cursor query
     const cursor = queries.find(
       query =>
-        query.getMethod() in
-        [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE],
+        [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(query.getMethod())
     );
 
     if (cursor) {
@@ -819,4 +819,75 @@ export class MessagingService {
       throw error;
     }
   }
+
+  /**
+   * Lists all topics.
+   */
+  async listTopics({ db, queries, search }: ListTopics) {
+    if (search) {
+      queries.push(Query.search('search', search));
+    }
+
+    // Get cursor document if there was a cursor query
+    const cursor = queries.find(query =>
+      [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(query.getMethod())
+    );
+
+    if (cursor) {
+      const validator = new CursorValidator();
+      if (!validator.isValid(cursor)) {
+        throw new Exception(
+          Exception.GENERAL_QUERY_INVALID,
+          validator.getDescription(),
+        );
+      }
+
+      const topicId = cursor.getValue();
+      const cursorDocument = await Authorization.skip(
+        async () => await db.getDocument('topics', topicId),
+      );
+
+      if (cursorDocument.isEmpty()) {
+        throw new Exception(
+          Exception.GENERAL_CURSOR_NOT_FOUND,
+          `Topic '${topicId}' for the 'cursor' value not found.`,
+        );
+      }
+
+      cursor.setValue(cursorDocument);
+    }
+
+    try {
+      const topics = await db.find('topics', queries);
+      const total = await db.count('topics', queries);
+
+      return {
+        topics,
+        total,
+      };
+    } catch (error) {
+      // TODO: OrderException
+      if (error instanceof DatabaseError) {
+        throw new Exception(
+          Exception.DATABASE_QUERY_ORDER_NULL,
+          `The order attribute '${(error as any).attribute}' had a null value. Cursor pagination requires all documents order attribute values are non-null.`,
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get Topic
+   */
+  async getTopic(db: Database, id: string) {
+    const topic = await db.getDocument('topics', id);
+
+    if (topic.isEmpty()) {
+      throw new Exception(Exception.TOPIC_NOT_FOUND);
+    }
+
+    return topic;
+  }
+
 }

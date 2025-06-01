@@ -129,3 +129,8 @@ export interface UpdateApnsProvider
 export interface CreateTopic extends DB {
   input: CreateTopicDTO;
 }
+
+export interface ListTopics extends DB, QandS {}
+export interface GetTopic extends DB {
+  topicId: string;
+}
