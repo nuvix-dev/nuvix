@@ -17,6 +17,7 @@ const auditEvents = [
   ...event('verification'),
   ...event('identities'),
   ...event('provider'),
+  ...event('topic'),
 ] as const;
 
 type AuditEventKey = (typeof auditEvents)[number];

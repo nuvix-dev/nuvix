@@ -59,12 +59,13 @@ import {
 import { CreateFcmProviderDTO, UpdateFcmProviderDTO } from './DTO/fcm.dto';
 import { CreateApnsProviderDTO, UpdateApnsProviderDTO } from './DTO/apns.dto';
 import { ParseQueryPipe } from '@nuvix/core/pipes';
+import { CreateTopicDTO } from './DTO/topics.dto';
 
 @Controller({ path: 'messaging', version: ['1'] })
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor)
 export class MessagingController {
-  constructor(private readonly messagingService: MessagingService) { }
+  constructor(private readonly messagingService: MessagingService) {}
 
   @Post('providers/mailgun')
   @Scope('providers.create')
@@ -537,10 +538,26 @@ export class MessagingController {
     @Param('providerId') providerId: string,
     @MessagingDatabase() db: Database,
   ) {
-    return await this.messagingService.deleteProvider(
-      db,
-      providerId,
-    );
+    return await this.messagingService.deleteProvider(db, providerId);
   }
 
+  @Post('topics')
+  @Scope('topics.create')
+  @AuditEvent('topic.create', 'topic/{res.$id}')
+  @ResModel(Models.TOPIC)
+  @Sdk({
+    name: 'createTopic',
+    auth: [AuthType.ADMIN, AuthType.KEY],
+    code: HttpStatus.CREATED,
+    description: 'Create a topic',
+  })
+  async createTopic(
+    @MessagingDatabase() db: Database,
+    @Body() input: CreateTopicDTO,
+  ) {
+    return await this.messagingService.createTopic({
+      db,
+      input,
+    });
+  }
 }

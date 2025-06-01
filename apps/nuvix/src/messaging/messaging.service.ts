@@ -8,6 +8,7 @@ import type {
   CreateSmtpProvider,
   CreateTelesignProvider,
   CreateTextmagicProvider,
+  CreateTopic,
   CreateTwilioProvider,
   CreateVonageProvider,
   ListProviders,
@@ -41,7 +42,7 @@ import {
 
 @Injectable()
 export class MessagingService {
-  constructor() { }
+  constructor() {}
 
   /**
    * Common method to create a provider.
@@ -793,5 +794,29 @@ export class MessagingService {
     return {};
   }
 
+  /**
+   * Create Topic
+   */
+  async createTopic({ input, db }: CreateTopic) {
+    const { topicId: inputTopicId, name, subscribe } = input;
+    const topicId = inputTopicId === 'unique()' ? ID.unique() : inputTopicId;
 
+    const topic = new Document({
+      $id: topicId,
+      name,
+      subscribe,
+    });
+
+    try {
+      const createdTopic = await db.createDocument('topics', topic);
+      // TODO: queue for events
+      // this.queueForEvents.setParam('topicId', createdTopic.getId());
+      return createdTopic;
+    } catch (error) {
+      if (error instanceof DuplicateException) {
+        throw new Exception(Exception.TOPIC_ALREADY_EXISTS);
+      }
+      throw error;
+    }
+  }
 }
