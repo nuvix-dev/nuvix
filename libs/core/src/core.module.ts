@@ -120,7 +120,7 @@ export type GetProjectPG = (
 
           const newPool = new PgPool({
             ...databaseOptions,
-            max: options.max ?? 40,
+            max: options.max ?? 10,
             idleTimeoutMillis: 30000, // 30 seconds
             statement_timeout: 30000, // 30 seconds
             query_timeout: 30000, // 30 seconds

@@ -71,7 +71,7 @@ export class ProjectHook implements Hook {
           password: APP_POSTGRES_PASSWORD,
           port: dbOptions.port,
           host: dbOptions.host,
-          max: 30,
+          max: 10,
         });
         req[PROJECT_POOL] = pool;
         req[PROJECT_DB] = this.getProjectDb(pool, project.getId());
