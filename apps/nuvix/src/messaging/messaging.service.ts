@@ -987,6 +987,7 @@ export class MessagingService {
       );
     }
 
+    console.log('========>>>', authDb.getDatabase(), db.getDatabase(), authDb.getAdapter().getDatabase(), db.getAdapter().getDatabase())
     const target = await Authorization.skip(
       async () => await authDb.getDocument('targets', targetId),
     );

@@ -313,21 +313,6 @@ export const filters = {
       });
     },
   },
-  // subProjectQueryTargets: {
-  //   serialize: (value: any) => {
-  //     return null;
-  //   },
-  //   deserialize: async (value: any, document: Document, database: Database) => {
-  //     return await Authorization.skip(async () => {
-  //       const db = new Database(database.getAdapter(), database.getCache());
-  //       db.setDatabase('messaging');
-  //       return await db.find('targets', [
-  //         Query.equal('userInternalId', [document.getInternalId()]),
-  //         Query.limit(APP_LIMIT_SUBQUERY),
-  //       ]);
-  //     });
-  //   },
-  // },
   subQueryTopicTargets: {
     serialize: (value: any) => {
       return null;
@@ -345,9 +330,9 @@ export const filters = {
 
       if (targetIds.length > 0) {
         return await database.skipValidation(async () => {
-          return await database.find('targets', [
+          return await withAuthSchema(database, (database) => database.find('targets', [
             Query.equal('$internalId', targetIds),
-          ]);
+          ]));
         });
       }
       return [];
@@ -450,3 +435,13 @@ export const formats = {
     type: Database.VAR_FLOAT,
   },
 };
+
+// TODO: This is a temporary solution to switch the database to 'auth' for auth-related queries.
+// It should be replaced with withSchema or a similar function that handles schema switching more gracefully.
+const withAuthSchema = async(db: Database, callback: (db: Database)=>Promise<any>)=>{
+  const database = db.getDatabase();
+  db.setDatabase('auth');
+  const res = await callback(db);
+  db.setDatabase(database);
+  return res;
+}
