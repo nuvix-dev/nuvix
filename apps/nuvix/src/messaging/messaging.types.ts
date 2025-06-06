@@ -46,6 +46,10 @@ interface DB {
   db: Database;
 }
 
+interface AuthDB {
+  authDb: Database;
+}
+
 interface ReqRes {
   request: NuvixRequest;
   response: NuvixRes;
@@ -149,27 +153,27 @@ export interface GetTopic extends DB {
   topicId: string;
 }
 
-export interface CreateSubscriber extends DB {
+export interface CreateSubscriber extends DB, AuthDB {
   input: CreateSubscriberDTO;
   topicId: string;
 }
 
-export interface ListSubscribers extends DB, QandS {
+export interface ListSubscribers extends DB, QandS, AuthDB {
   topicId: string;
 }
 
-export interface CreateEmailMessage extends DB, Project {
+export interface CreateEmailMessage extends DB, Project, AuthDB {
   input: CreateEmailMessageDTO;
 }
-export interface CreateSmsMessage extends DB, Project {
+export interface CreateSmsMessage extends DB, Project, AuthDB {
   input: CreateSmsMessageDTO;
 }
-export interface CreatePushMessage extends DB, Project {
+export interface CreatePushMessage extends DB, Project, AuthDB {
   input: CreatePushMessageDTO;
 }
 
 export interface ListMessages extends DB, QandS {}
-export interface ListTargets extends DB {
+export interface ListTargets extends DB, AuthDB {
   messageId: string;
   queries: Query[];
 }

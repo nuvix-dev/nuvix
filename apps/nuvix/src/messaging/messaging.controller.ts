@@ -19,6 +19,7 @@ import {
 } from '@nuvix/core/resolvers/interceptors';
 import {
   AuditEvent,
+  AuthDatabase,
   AuthType,
   MessagingDatabase,
   Namespace,
@@ -664,11 +665,13 @@ export class MessagingController {
     @Param('topicId') topicId: string,
     @MessagingDatabase() db: Database,
     @Body() input: CreateSubscriberDTO,
+    @AuthDatabase() authDb: Database,
   ) {
     return await this.messagingService.createSubscriber({
       db,
       topicId,
       input,
+      authDb,
     });
   }
 
@@ -685,6 +688,7 @@ export class MessagingController {
     @Param('topicId') topicId: string,
     @MessagingDatabase() db: Database,
     @Query('queries', ParseQueryPipe) queries: Queries[],
+    @AuthDatabase() authDb: Database,
     @Query('search') search?: string,
   ) {
     return await this.messagingService.listSubscribers({
@@ -692,6 +696,7 @@ export class MessagingController {
       topicId,
       queries,
       search,
+      authDb,
     });
   }
 
@@ -708,8 +713,14 @@ export class MessagingController {
     @Param('topicId') topicId: string,
     @Param('subscriberId') subscriberId: string,
     @MessagingDatabase() db: Database,
+    @AuthDatabase() authDb: Database,
   ) {
-    return await this.messagingService.getSubscriber(db, topicId, subscriberId);
+    return await this.messagingService.getSubscriber(
+      db,
+      topicId,
+      subscriberId,
+      authDb,
+    );
   }
 
   @Delete('topics/:topicId/subscribers/:subscriberId')
@@ -726,11 +737,13 @@ export class MessagingController {
     @Param('topicId') topicId: string,
     @Param('subscriberId') subscriberId: string,
     @MessagingDatabase() db: Database,
+    @AuthDatabase() authDb: Database,
   ) {
     return await this.messagingService.deleteSubscriber(
       db,
       topicId,
       subscriberId,
+      authDb,
     );
   }
 
@@ -748,11 +761,13 @@ export class MessagingController {
     @MessagingDatabase() db: Database,
     @Body() input: CreateEmailMessageDTO,
     @Project() project: Document,
+    @AuthDatabase() authDb: Database,
   ) {
     return await this.messagingService.createEmailMessage({
       db,
       input,
       project,
+      authDb,
     });
   }
 
@@ -770,11 +785,13 @@ export class MessagingController {
     @MessagingDatabase() db: Database,
     @Body() input: CreateSmsMessageDTO,
     @Project() project: Document,
+    @AuthDatabase() authDb: Database,
   ) {
     return await this.messagingService.createSmsMessage({
       db,
       input,
       project,
+      authDb,
     });
   }
 
@@ -792,11 +809,13 @@ export class MessagingController {
     @MessagingDatabase() db: Database,
     @Body() input: CreatePushMessageDTO,
     @Project() project: Document,
+    @AuthDatabase() authDb: Database,
   ) {
     return await this.messagingService.createPushMessage({
       db,
       input,
       project,
+      authDb,
     });
   }
 
@@ -850,11 +869,13 @@ export class MessagingController {
     @Param('messageId') messageId: string,
     @MessagingDatabase() db: Database,
     @Query('queries', ParseQueryPipe) queries: Queries[],
+    @AuthDatabase() authDb: Database,
   ) {
     return await this.messagingService.listTargets({
       db,
       messageId,
       queries,
+      authDb,
     });
   }
 

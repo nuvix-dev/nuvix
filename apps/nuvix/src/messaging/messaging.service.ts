@@ -966,7 +966,7 @@ export class MessagingService {
   /**
    * Create Subscriber
    */
-  async createSubscriber({ input, db, topicId }: CreateSubscriber) {
+  async createSubscriber({ input, db, topicId, authDb }: CreateSubscriber) {
     const { subscriberId: inputSubscriberId, targetId } = input;
     const subscriberId =
       inputSubscriberId === 'unique()' ? ID.unique() : inputSubscriberId;
@@ -988,7 +988,7 @@ export class MessagingService {
     }
 
     const target = await Authorization.skip(
-      async () => await db.getDocument('targets', targetId),
+      async () => await authDb.getDocument('targets', targetId),
     );
 
     if (target.isEmpty()) {
@@ -1065,7 +1065,13 @@ export class MessagingService {
   /**
    * Lists all subscribers for a topic.
    */
-  async listSubscribers({ db, topicId, queries, search }: ListSubscribers) {
+  async listSubscribers({
+    db,
+    topicId,
+    queries,
+    search,
+    authDb,
+  }: ListSubscribers) {
     if (search) {
       queries.push(Query.search('search', search));
     }
@@ -1120,7 +1126,7 @@ export class MessagingService {
         subscribers.map(async subscriber => {
           const target = await Authorization.skip(
             async () =>
-              await db.getDocument(
+              await authDb.getDocument(
                 'targets',
                 subscriber.getAttribute('targetId'),
               ),
@@ -1155,7 +1161,12 @@ export class MessagingService {
   /**
    * Get Subscriber
    */
-  async getSubscriber(db: Database, topicId: string, subscriberId: string) {
+  async getSubscriber(
+    db: Database,
+    topicId: string,
+    subscriberId: string,
+    authDb: Database,
+  ) {
     const topic = await Authorization.skip(
       async () => await db.getDocument('topics', topicId),
     );
@@ -1175,7 +1186,10 @@ export class MessagingService {
 
     const target = await Authorization.skip(
       async () =>
-        await db.getDocument('targets', subscriber.getAttribute('targetId')),
+        await authDb.getDocument(
+          'targets',
+          subscriber.getAttribute('targetId'),
+        ),
     );
     const user = await Authorization.skip(
       async () => await db.getDocument('users', target.getAttribute('userId')),
@@ -1191,7 +1205,12 @@ export class MessagingService {
   /**
    * Deletes a subscriber.
    */
-  async deleteSubscriber(db: Database, topicId: string, subscriberId: string) {
+  async deleteSubscriber(
+    db: Database,
+    topicId: string,
+    subscriberId: string,
+    authDb: Database,
+  ) {
     const topic = await Authorization.skip(
       async () => await db.getDocument('topics', topicId),
     );
@@ -1209,7 +1228,7 @@ export class MessagingService {
       throw new Exception(Exception.SUBSCRIBER_NOT_FOUND);
     }
 
-    const target = await db.getDocument(
+    const target = await authDb.getDocument(
       'targets',
       subscriber.getAttribute('targetId'),
     );
@@ -1250,7 +1269,7 @@ export class MessagingService {
   /**
    * Create Email Message
    */
-  async createEmailMessage({ input, db, project }: CreateEmailMessage) {
+  async createEmailMessage({ input, db, project, authDb }: CreateEmailMessage) {
     const {
       messageId: inputMessageId,
       subject,
@@ -1291,7 +1310,7 @@ export class MessagingService {
     const mergedTargets = [...targets, ...cc, ...bcc];
 
     if (mergedTargets.length > 0) {
-      const foundTargets = await db.find('targets', [
+      const foundTargets = await authDb.find('targets', [
         Query.equal('$id', mergedTargets),
         Query.equal('providerType', [MESSAGE_TYPE_EMAIL]),
         Query.limit(mergedTargets.length),
@@ -1392,7 +1411,7 @@ export class MessagingService {
   /**
    * Create SMS Message
    */
-  async createSmsMessage({ input, db, project }: CreateSmsMessage) {
+  async createSmsMessage({ input, db, project, authDb }: CreateSmsMessage) {
     const {
       messageId: inputMessageId,
       content,
@@ -1426,7 +1445,7 @@ export class MessagingService {
     }
 
     if (targets.length > 0) {
-      const foundTargets = await db.find('targets', [
+      const foundTargets = await authDb.find('targets', [
         Query.equal('$id', targets),
         Query.equal('providerType', [MESSAGE_TYPE_SMS]),
         Query.limit(targets.length),
@@ -1497,7 +1516,7 @@ export class MessagingService {
   /**
    * Create Push Message
    */
-  async createPushMessage({ input, db, project }: CreatePushMessage) {
+  async createPushMessage({ input, db, project, authDb }: CreatePushMessage) {
     const {
       messageId: inputMessageId,
       title = '',
@@ -1543,7 +1562,7 @@ export class MessagingService {
     }
 
     if (targets.length > 0) {
-      const foundTargets = await db.find('targets', [
+      const foundTargets = await authDb.find('targets', [
         Query.equal('$id', targets),
         Query.equal('providerType', [MESSAGE_TYPE_PUSH]),
         Query.limit(targets.length),
@@ -1756,7 +1775,7 @@ export class MessagingService {
   /**
    *  List targets for a message.
    */
-  async listTargets({ db, messageId, queries }: ListTargets) {
+  async listTargets({ db, messageId, queries, authDb }: ListTargets) {
     const message = await db.getDocument('messages', messageId);
 
     if (message.isEmpty()) {
@@ -1791,7 +1810,7 @@ export class MessagingService {
       }
 
       const targetId = cursor.getValue();
-      const cursorDocument = await db.getDocument('targets', targetId);
+      const cursorDocument = await authDb.getDocument('targets', targetId);
 
       if (cursorDocument.isEmpty()) {
         throw new Exception(
@@ -1804,8 +1823,8 @@ export class MessagingService {
     }
 
     try {
-      const targets = await db.find('targets', queries);
-      const total = await db.count('targets', queries);
+      const targets = await authDb.find('targets', queries);
+      const total = await authDb.count('targets', queries);
 
       return {
         targets,
