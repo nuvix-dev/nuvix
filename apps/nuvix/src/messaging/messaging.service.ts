@@ -996,7 +996,7 @@ export class MessagingService {
     }
 
     const user = await Authorization.skip(
-      async () => await db.getDocument('users', target.getAttribute('userId')),
+      async () => await authDb.getDocument('users', target.getAttribute('userId')),
     );
 
     const subscriber = new Document({
@@ -1133,7 +1133,7 @@ export class MessagingService {
           );
           const user = await Authorization.skip(
             async () =>
-              await db.getDocument('users', target.getAttribute('userId')),
+              await authDb.getDocument('users', target.getAttribute('userId')),
           );
 
           return subscriber
@@ -1192,7 +1192,7 @@ export class MessagingService {
         ),
     );
     const user = await Authorization.skip(
-      async () => await db.getDocument('users', target.getAttribute('userId')),
+      async () => await authDb.getDocument('users', target.getAttribute('userId')),
     );
 
     subscriber
