@@ -3,7 +3,6 @@ import { Redis } from 'ioredis';
 import { Queue } from 'bullmq';
 import {
   CACHE_DB,
-  DB_FOR_PROJECT,
   GET_PROJECT_DB,
   METRIC_BUCKET_ID_FILES,
   METRIC_BUCKET_ID_FILES_STORAGE,

@@ -1,8 +1,11 @@
 import { Database, ID } from '@nuvix/database';
-import { commonCollections } from './common';
 import { consoleCollections } from './console';
 import { bucketCollections, dbCollections } from './misc';
 import { projectCollections } from './project';
+
+// Remove the databases property from projectCollections
+// as it is not needed in our new collections structure
+delete projectCollections.databases;
 
 /**
  * $collection: id of the parent collection where this will be inserted
@@ -14,30 +17,7 @@ import { projectCollections } from './project';
  */
 const collections = {
   project: {
-    auth: {
-      users: projectCollections.users,
-      tokens: commonCollections.tokens,
-      authenticators: commonCollections.authenticators,
-      challenges: commonCollections.challenges,
-      sessions: commonCollections.sessions,
-      identities: commonCollections.identities,
-      teams: projectCollections.teams,
-      memberships: projectCollections.memberships,
-      targets: commonCollections.targets,
-    },
-    storage: {
-      buckets: commonCollections.buckets,
-    },
-    messaging: {
-      providers: commonCollections.providers,
-      messages: commonCollections.messages,
-      topics: commonCollections.topics,
-      subscribers: commonCollections.subscribers,
-    },
-    functions: {
-      functions: projectCollections.functions,
-      deployments: projectCollections.deployments,
-    },
+    ...projectCollections,
   },
   projects: projectCollections,
   console: consoleCollections,

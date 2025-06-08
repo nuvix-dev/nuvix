@@ -147,21 +147,21 @@ export const SCOPES = 'scopes';
 export const HOOKS = 'hooks';
 export const APP_COLOR = '#f67520';
 
-export const AUTH_SCHEMA_DB = Symbol('authSchemaDb');
-export const STORAGE_SCHEMA_DB = Symbol('storageSchemaDb');
-export const FUNCTIONS_SCHEMA_DB = Symbol('functionsSchemaDb');
-export const MESSAGING_SCHEMA_DB = Symbol('messagingSchemaDb');
+/**@deprecated */ export const AUTH_SCHEMA_DB = Symbol('authSchemaDb');
+/**@deprecated */ export const STORAGE_SCHEMA_DB = Symbol('storageSchemaDb');
+/**@deprecated */ export const FUNCTIONS_SCHEMA_DB = Symbol('functionsSchemaDb');
+/**@deprecated */ export const MESSAGING_SCHEMA_DB = Symbol('messagingSchemaDb');
+export const CORE_SCHEMA_DB = Symbol('coreSchemaDb');
 export const CURRENT_SCHEMA_DB = Symbol('currentSchemaDb');
 export const CURRENT_SCHEMA_PG = Symbol('currentSchemaPg');
 
 export const INTERNAL_SCHEMAS = [
-  'auth',
-  'storage',
-  'functions',
-  'messaging',
+  'system',
+  'core'
 ] as const;
 
 export const SYSTEM_SCHEMA = 'system' as const;
+export const CORE_SCHEMA = 'core' as const;
 
 const allowedHeaders = [
   'Content-Type',
