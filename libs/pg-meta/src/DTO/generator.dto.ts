@@ -1,7 +1,7 @@
 import { IsBoolean, IsIn, IsOptional, IsString } from 'class-validator';
 import { TransformStringToBoolean } from '@nuvix/core/validators';
 
-export class GeneratorQueryDto {
+export class GeneratorQueryDTO {
   @IsOptional()
   @IsString()
   excluded_schemas?: string;

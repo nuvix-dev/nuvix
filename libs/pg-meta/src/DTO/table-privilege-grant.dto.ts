@@ -11,7 +11,7 @@ type PrivilegeType =
   | 'TRIGGER'
   | 'MAINTAIN';
 
-export class TablePrivilegeGrantDto {
+export class TablePrivilegeGrantDTO {
   @IsInt()
   relation_id: number;
 

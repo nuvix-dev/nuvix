@@ -72,9 +72,9 @@ export class DatabaseController {
   @ResModel(Models.COLLECTION)
   async createCollection(
     @CurrentDatabase() db: Database,
-    @Body() createCollectionDto: CreateCollectionDTO,
+    @Body() createCollectionDTO: CreateCollectionDTO,
   ) {
-    return await this.databaseService.createCollection(db, createCollectionDto);
+    return await this.databaseService.createCollection(db, createCollectionDTO);
   }
 
   @Get(':id/collections/:collectionId/usage')
@@ -121,13 +121,13 @@ export class DatabaseController {
   async updateCollection(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
-    @Body() updateCollectionDto: UpdateCollectionDTO,
+    @Body() updateCollectionDTO: UpdateCollectionDTO,
   ) {
     return await this.databaseService.updateCollection(
       db,
 
       collectionId,
-      updateCollectionDto,
+      updateCollectionDTO,
     );
   }
 
@@ -171,14 +171,14 @@ export class DatabaseController {
   async createStringAttribute(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
-    @Body() createAttributeDto: CreateStringAttributeDTO,
+    @Body() createAttributeDTO: CreateStringAttributeDTO,
     @Project() project: Document,
   ) {
     return await this.databaseService.createStringAttribute(
       db,
 
       collectionId,
-      createAttributeDto,
+      createAttributeDTO,
       project,
     );
   }
@@ -188,14 +188,14 @@ export class DatabaseController {
   async createEmailAttribute(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
-    @Body() createAttributeDto: CreateEmailAttributeDTO,
+    @Body() createAttributeDTO: CreateEmailAttributeDTO,
     @Project() project: Document,
   ) {
     return await this.databaseService.createEmailAttribute(
       db,
 
       collectionId,
-      createAttributeDto,
+      createAttributeDTO,
       project,
     );
   }
@@ -205,14 +205,14 @@ export class DatabaseController {
   async createEnumAttribute(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
-    @Body() createAttributeDto: CreateEnumAttributeDTO,
+    @Body() createAttributeDTO: CreateEnumAttributeDTO,
     @Project() project: Document,
   ) {
     return await this.databaseService.createEnumAttribute(
       db,
 
       collectionId,
-      createAttributeDto,
+      createAttributeDTO,
       project,
     );
   }
@@ -222,14 +222,14 @@ export class DatabaseController {
   async createIpAttribute(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
-    @Body() createAttributeDto: CreateIpAttributeDTO,
+    @Body() createAttributeDTO: CreateIpAttributeDTO,
     @Project() project: Document,
   ) {
     return await this.databaseService.createIPAttribute(
       db,
 
       collectionId,
-      createAttributeDto,
+      createAttributeDTO,
       project,
     );
   }
@@ -239,14 +239,14 @@ export class DatabaseController {
   async createUrlAttribute(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
-    @Body() createAttributeDto: CreateURLAttributeDTO,
+    @Body() createAttributeDTO: CreateURLAttributeDTO,
     @Project() project: Document,
   ) {
     return await this.databaseService.createURLAttribute(
       db,
 
       collectionId,
-      createAttributeDto,
+      createAttributeDTO,
       project,
     );
   }
@@ -256,14 +256,14 @@ export class DatabaseController {
   async createIntegerAttribute(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
-    @Body() createAttributeDto: CreateIntegerAttributeDTO,
+    @Body() createAttributeDTO: CreateIntegerAttributeDTO,
     @Project() project: Document,
   ) {
     return await this.databaseService.createIntegerAttribute(
       db,
 
       collectionId,
-      createAttributeDto,
+      createAttributeDTO,
       project,
     );
   }
@@ -273,14 +273,14 @@ export class DatabaseController {
   async createFloatAttribute(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
-    @Body() createAttributeDto: CreateFloatAttributeDTO,
+    @Body() createAttributeDTO: CreateFloatAttributeDTO,
     @Project() project: Document,
   ) {
     return await this.databaseService.createFloatAttribute(
       db,
 
       collectionId,
-      createAttributeDto,
+      createAttributeDTO,
       project,
     );
   }
@@ -290,14 +290,14 @@ export class DatabaseController {
   async createBooleanAttribute(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
-    @Body() createAttributeDto: CreateBooleanAttributeDTO,
+    @Body() createAttributeDTO: CreateBooleanAttributeDTO,
     @Project() project: Document,
   ) {
     return await this.databaseService.createBooleanAttribute(
       db,
 
       collectionId,
-      createAttributeDto,
+      createAttributeDTO,
       project,
     );
   }
@@ -307,14 +307,14 @@ export class DatabaseController {
   async createDatetimeAttribute(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
-    @Body() createAttributeDto: CreateDatetimeAttributeDTO,
+    @Body() createAttributeDTO: CreateDatetimeAttributeDTO,
     @Project() project: Document,
   ) {
     return await this.databaseService.createDateAttribute(
       db,
 
       collectionId,
-      createAttributeDto,
+      createAttributeDTO,
       project,
     );
   }
@@ -324,14 +324,14 @@ export class DatabaseController {
   async createRelationAttribute(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
-    @Body() createAttributeDto: CreateRelationAttributeDTO,
+    @Body() createAttributeDTO: CreateRelationAttributeDTO,
     @Project() project: Document,
   ) {
     return await this.databaseService.createRelationshipAttribute(
       db,
 
       collectionId,
-      createAttributeDto,
+      createAttributeDTO,
       project,
     );
   }
@@ -357,14 +357,14 @@ export class DatabaseController {
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Param('attributeId') attributeId: string,
-    @Body() updateAttributeDto: UpdateStringAttributeDTO,
+    @Body() updateAttributeDTO: UpdateStringAttributeDTO,
   ) {
     return await this.databaseService.updateStringAttribute(
       db,
 
       collectionId,
       attributeId,
-      updateAttributeDto,
+      updateAttributeDTO,
     );
   }
 
@@ -374,14 +374,14 @@ export class DatabaseController {
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Param('attributeId') attributeId: string,
-    @Body() updateAttributeDto: UpdateEmailAttributeDTO,
+    @Body() updateAttributeDTO: UpdateEmailAttributeDTO,
   ) {
     return await this.databaseService.updateEmailAttribute(
       db,
 
       collectionId,
       attributeId,
-      updateAttributeDto,
+      updateAttributeDTO,
     );
   }
 
@@ -391,14 +391,14 @@ export class DatabaseController {
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Param('attributeId') attributeId: string,
-    @Body() updateAttributeDto: UpdateEnumAttributeDTO,
+    @Body() updateAttributeDTO: UpdateEnumAttributeDTO,
   ) {
     return await this.databaseService.updateEnumAttribute(
       db,
 
       collectionId,
       attributeId,
-      updateAttributeDto,
+      updateAttributeDTO,
     );
   }
 
@@ -408,14 +408,14 @@ export class DatabaseController {
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Param('attributeId') attributeId: string,
-    @Body() updateAttributeDto: UpdateIpAttributeDTO,
+    @Body() updateAttributeDTO: UpdateIpAttributeDTO,
   ) {
     return await this.databaseService.updateIPAttribute(
       db,
 
       collectionId,
       attributeId,
-      updateAttributeDto,
+      updateAttributeDTO,
     );
   }
 
@@ -425,14 +425,14 @@ export class DatabaseController {
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Param('attributeId') attributeId: string,
-    @Body() updateAttributeDto: UpdateURLAttributeDTO,
+    @Body() updateAttributeDTO: UpdateURLAttributeDTO,
   ) {
     return await this.databaseService.updateURLAttribute(
       db,
 
       collectionId,
       attributeId,
-      updateAttributeDto,
+      updateAttributeDTO,
     );
   }
 
@@ -442,14 +442,14 @@ export class DatabaseController {
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Param('attributeId') attributeId: string,
-    @Body() updateAttributeDto: UpdateIntegerAttributeDTO,
+    @Body() updateAttributeDTO: UpdateIntegerAttributeDTO,
   ) {
     return await this.databaseService.updateIntegerAttribute(
       db,
 
       collectionId,
       attributeId,
-      updateAttributeDto,
+      updateAttributeDTO,
     );
   }
 
@@ -459,14 +459,14 @@ export class DatabaseController {
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Param('attributeId') attributeId: string,
-    @Body() updateAttributeDto: UpdateFloatAttributeDTO,
+    @Body() updateAttributeDTO: UpdateFloatAttributeDTO,
   ) {
     return await this.databaseService.updateFloatAttribute(
       db,
 
       collectionId,
       attributeId,
-      updateAttributeDto,
+      updateAttributeDTO,
     );
   }
 
@@ -476,14 +476,14 @@ export class DatabaseController {
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Param('attributeId') attributeId: string,
-    @Body() updateAttributeDto: UpdateBooleanAttributeDTO,
+    @Body() updateAttributeDTO: UpdateBooleanAttributeDTO,
   ) {
     return await this.databaseService.updateBooleanAttribute(
       db,
 
       collectionId,
       attributeId,
-      updateAttributeDto,
+      updateAttributeDTO,
     );
   }
 
@@ -493,14 +493,14 @@ export class DatabaseController {
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Param('attributeId') attributeId: string,
-    @Body() updateAttributeDto: UpdateDatetimeAttributeDTO,
+    @Body() updateAttributeDTO: UpdateDatetimeAttributeDTO,
   ) {
     return await this.databaseService.updateDateAttribute(
       db,
 
       collectionId,
       attributeId,
-      updateAttributeDto,
+      updateAttributeDTO,
     );
   }
 
@@ -510,14 +510,14 @@ export class DatabaseController {
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Param('attributeId') attributeId: string,
-    @Body() updateAttributeDto: UpdateRelationAttributeDTO,
+    @Body() updateAttributeDTO: UpdateRelationAttributeDTO,
   ) {
     return await this.databaseService.updateRelationshipAttribute(
       db,
 
       collectionId,
       attributeId,
-      updateAttributeDto,
+      updateAttributeDTO,
     );
   }
 

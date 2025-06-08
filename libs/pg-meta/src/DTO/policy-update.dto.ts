@@ -6,7 +6,7 @@ import {
   IsString,
 } from 'class-validator';
 
-export class PolicyUpdateDto {
+export class PolicyUpdateDTO {
   @IsString()
   name: string;
 

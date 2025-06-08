@@ -1,8 +1,8 @@
 import { ident, literal } from 'pg-format';
 import { rolesSql } from './sql/index';
 import { PostgresMetaResult, PostgresRole } from './types';
-import { RoleCreateDto } from '../DTO/role-create.dto';
-import { RoleUpdateDto } from '../DTO/role-update.dto';
+import { RoleCreateDTO } from '../DTO/role-create.dto';
+import { RoleUpdateDTO } from '../DTO/role-update.dto';
 import { PgMetaException } from '../extra/execption';
 export function changeRoleConfig2Object(config: string[]) {
   if (!config) {
@@ -127,7 +127,7 @@ WHERE
     members,
     admins,
     config,
-  }: RoleCreateDto): Promise<PostgresMetaResult<PostgresRole>> {
+  }: RoleCreateDTO): Promise<PostgresMetaResult<PostgresRole>> {
     const isSuperuserClause = is_superuser ? 'SUPERUSER' : 'NOSUPERUSER';
     const canCreateDbClause = can_create_db ? 'CREATEDB' : 'NOCREATEDB';
     const canCreateRoleClause = can_create_role ? 'CREATEROLE' : 'NOCREATEROLE';
@@ -201,7 +201,7 @@ COMMIT;`;
       password,
       valid_until,
       config,
-    }: RoleUpdateDto,
+    }: RoleUpdateDTO,
   ): Promise<PostgresMetaResult<PostgresRole>> {
     const { data: old, error } = await this.retrieve({ id });
     if (error) {

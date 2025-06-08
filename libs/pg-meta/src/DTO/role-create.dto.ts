@@ -7,7 +7,7 @@ import {
   IsString,
 } from 'class-validator';
 
-export class RoleCreateDto {
+export class RoleCreateDTO {
   @IsString()
   name: string;
 

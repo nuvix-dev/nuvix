@@ -6,7 +6,7 @@ import {
   IsString,
 } from 'class-validator';
 
-export class PublicationCreateDto {
+export class PublicationCreateDTO {
   @IsString()
   name: string;
 

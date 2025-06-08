@@ -6,7 +6,7 @@ import {
   IsEnum,
 } from 'class-validator';
 
-export class PolicyCreateDto {
+export class PolicyCreateDTO {
   @IsString()
   name: string;
 

@@ -20,13 +20,13 @@ import {
   CreateTeamDTO,
   UpdateTeamDTO,
   UpdateTeamPrefsDTO,
-} from './dto/team.dto';
+} from './DTO/team.dto';
 import { User } from '@nuvix/core/decorators/project-user.decorator';
 import {
   CreateMembershipDTO,
   UpdateMembershipDTO,
   UpdateMembershipStatusDTO,
-} from './dto/membership.dto';
+} from './DTO/membership.dto';
 import { ParseQueryPipe } from '@nuvix/core/pipes/query.pipe';
 import { Database, Document, Query as Queries } from '@nuvix/database';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard';

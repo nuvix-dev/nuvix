@@ -26,8 +26,8 @@ import {
   UpdateUserPoneVerificationDTO,
   UpdateUserPrefsDTO,
   UpdateUserStatusDTO,
-} from './dto/user.dto';
-import { CreateTargetDTO, UpdateTargetDTO } from './dto/target.dto';
+} from './DTO/user.dto';
+import { CreateTargetDTO, UpdateTargetDTO } from './DTO/target.dto';
 import { Models } from '@nuvix/core/helper/response.helper';
 import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor';
 import {
@@ -41,8 +41,8 @@ import {
   ProjectDatabase,
 } from '@nuvix/core/decorators';
 
-import { CreateTokenDTO } from './dto/token.dto';
-import { CreateJwtDTO } from './dto/jwt.dto';
+import { CreateTokenDTO } from './DTO/token.dto';
+import { CreateJwtDTO } from './DTO/jwt.dto';
 import { ParseQueryPipe } from '@nuvix/core/pipes/query.pipe';
 import type { Database, Document, Query as Queries } from '@nuvix/database';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard';

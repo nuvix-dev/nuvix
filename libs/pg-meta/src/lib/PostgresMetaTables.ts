@@ -3,8 +3,8 @@ import { DEFAULT_SYSTEM_SCHEMAS } from './constants';
 import { coalesceRowsToArray, filterByList } from './helpers';
 import { columnsSql, tablesSql } from './sql/index';
 import { PostgresMetaResult, PostgresTable } from './types';
-import { TableCreateDto } from '../DTO/table-create.dto';
-import { TableUpdateDto } from '../DTO/table-update.dto';
+import { TableCreateDTO } from '../DTO/table-create.dto';
+import { TableUpdateDTO } from '../DTO/table-update.dto';
 import { PgMetaException } from '../extra/execption';
 
 export default class PostgresMetaTables {
@@ -119,7 +119,7 @@ export default class PostgresMetaTables {
     name,
     schema = 'public',
     comment,
-  }: TableCreateDto): Promise<PostgresMetaResult<PostgresTable>> {
+  }: TableCreateDTO): Promise<PostgresMetaResult<PostgresTable>> {
     const tableSql = `CREATE TABLE ${ident(schema)}.${ident(name)} ();`;
     const commentSql =
       comment === undefined
@@ -144,7 +144,7 @@ export default class PostgresMetaTables {
       replica_identity_index,
       primary_keys,
       comment,
-    }: TableUpdateDto,
+    }: TableUpdateDTO,
   ): Promise<PostgresMetaResult<PostgresTable>> {
     const { data: old, error } = await this.retrieve({ id });
     if (error) {

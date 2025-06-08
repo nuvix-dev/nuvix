@@ -687,12 +687,12 @@ export class AccountController {
   async updateEmail(
     @ProjectDatabase() db: Database,
     @User() user: Document,
-    @Body() updateEmailDto: UpdateEmailDTO,
+    @Body() updateEmailDTO: UpdateEmailDTO,
   ) {
     return await this.accountService.updateEmail(
       db,
       user,
-      updateEmailDto,
+      updateEmailDTO,
     );
   }
 

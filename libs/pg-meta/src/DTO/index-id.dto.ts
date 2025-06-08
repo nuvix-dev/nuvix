@@ -1,7 +1,7 @@
 import { IsInt, IsPositive } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class IndexIdParamDto {
+export class IndexIdParamDTO {
   @IsInt()
   @IsPositive()
   @Type(() => Number)

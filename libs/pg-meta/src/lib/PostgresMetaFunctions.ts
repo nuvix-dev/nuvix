@@ -3,7 +3,7 @@ import { DEFAULT_SYSTEM_SCHEMAS } from './constants';
 import { filterByList } from './helpers';
 import { functionsSql } from './sql/index';
 import { PostgresMetaResult, PostgresFunction } from './types';
-import { FunctionCreateDto } from '../DTO/function-create.dto';
+import { FunctionCreateDTO } from '../DTO/function-create.dto';
 import { PgMetaException } from '../extra/execption';
 
 export default class PostgresMetaFunctions {
@@ -106,7 +106,7 @@ export default class PostgresMetaFunctions {
     behavior = 'VOLATILE',
     security_definer = false,
     config_params = {},
-  }: FunctionCreateDto): Promise<PostgresMetaResult<PostgresFunction>> {
+  }: FunctionCreateDTO): Promise<PostgresMetaResult<PostgresFunction>> {
     const sql = this.generateCreateFunctionSql({
       name,
       schema,
@@ -240,7 +240,7 @@ export default class PostgresMetaFunctions {
       behavior,
       security_definer,
       config_params,
-    }: FunctionCreateDto,
+    }: FunctionCreateDTO,
     { replace = false } = {},
   ): string {
     return `

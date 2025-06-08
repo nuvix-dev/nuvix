@@ -1,6 +1,6 @@
 import { IsOptional, IsString } from 'class-validator';
 
-export class ExtensionCreateDto {
+export class ExtensionCreateDTO {
   @IsString()
   name: string;
 

@@ -7,7 +7,7 @@ import {
   IsString,
 } from 'class-validator';
 
-export class FunctionUpdateDto {
+export class FunctionUpdateDTO {
   @IsOptional()
   @IsString()
   name?: string;

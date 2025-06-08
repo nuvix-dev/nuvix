@@ -1,6 +1,6 @@
 import { IsBoolean, IsObject, IsOptional, IsString } from 'class-validator';
 
-export class TableCreateDto {
+export class TableCreateDTO {
   @IsString()
   name: string;
 

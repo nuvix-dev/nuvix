@@ -9,7 +9,7 @@ import {
 import { Type } from 'class-transformer';
 import { TransformStringToBoolean } from '@nuvix/core/validators';
 
-export class TypeQueryDto {
+export class TypeQueryDTO {
   @IsOptional()
   @IsBoolean()
   @TransformStringToBoolean()

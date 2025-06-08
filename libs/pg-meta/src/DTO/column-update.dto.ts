@@ -1,6 +1,6 @@
 import { IsString, IsOptional, IsBoolean, IsEnum } from 'class-validator';
 
-export class ColumnUpdateDto {
+export class ColumnUpdateDTO {
   @IsOptional()
   @IsString()
   name?: string;

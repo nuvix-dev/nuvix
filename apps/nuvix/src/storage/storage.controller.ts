@@ -59,9 +59,9 @@ export class StorageController {
   @ResModel(Models.BUCKET)
   async createBucket(
     @ProjectDatabase() db: Database,
-    @Body() createBucketDto: CreateBucketDTO,
+    @Body() createBucketDTO: CreateBucketDTO,
   ) {
-    return await this.storageService.createBucket(db, createBucketDto);
+    return await this.storageService.createBucket(db, createBucketDTO);
   }
 
   @Get('buckets/:id')
@@ -75,9 +75,9 @@ export class StorageController {
   async updateBucket(
     @ProjectDatabase() db: Database,
     @Param('id') id: string,
-    @Body() createBucketDto: UpdateBucketDTO,
+    @Body() createBucketDTO: UpdateBucketDTO,
   ) {
-    return await this.storageService.updateBucket(db, id, createBucketDto);
+    return await this.storageService.updateBucket(db, id, createBucketDTO);
   }
 
   @Delete('buckets/:id')
@@ -117,14 +117,14 @@ export class StorageController {
   // async createObject(
   //   @ProjectDatabase() db: Database,
   //   @Param('id') id: string,
-  //   @Body() createObjectDto: CreateBucketDTO,
+  //   @Body() createObjectDTO: CreateBucketDTO,
   //   @User() user: Document,
   // ) {
   //   return await this.storageService.createFolder(
   //     db,
   //     user,
   //     id,
-  //     createObjectDto,
+  //     createObjectDTO,
   //   );
   // }
 
@@ -283,9 +283,9 @@ export class StorageController {
     @ProjectDatabase() db: Database,
     @Param('id') id: string,
     @Param('fileId') fileId: string,
-    @Body() updateFileDto: UpdateFileDTO,
+    @Body() updateFileDTO: UpdateFileDTO,
   ) {
-    return await this.storageService.updateFile(db, id, fileId, updateFileDto);
+    return await this.storageService.updateFile(db, id, fileId, updateFileDTO);
   }
 
   @Delete('buckets/:id/files/:fileId')

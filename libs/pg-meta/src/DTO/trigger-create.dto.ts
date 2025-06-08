@@ -7,7 +7,7 @@ import {
   IsIn,
 } from 'class-validator';
 
-export class TriggerCreateDto {
+export class TriggerCreateDTO {
   @IsString()
   @IsNotEmpty()
   name: string;

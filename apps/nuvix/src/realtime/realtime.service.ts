@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { CreateRealtimeDto } from './dto/create-realtime.dto';
-import { UpdateRealtimeDto } from './dto/update-realtime.dto';
+import { CreateRealtimeDTO } from './DTO/create-realtime.dto';
+import { UpdateRealtimeDTO } from './DTO/update-realtime.dto';
 
 @Injectable()
 export class RealtimeService {
-  create(createRealtimeDto: CreateRealtimeDto) {
+  create(createRealtimeDTO: CreateRealtimeDTO) {
     return 'This action adds a new realtime';
   }
 
@@ -16,7 +16,7 @@ export class RealtimeService {
     return `This action returns a #${id} realtime`;
   }
 
-  update(id: number, updateRealtimeDto: UpdateRealtimeDto) {
+  update(id: number, updateRealtimeDTO: UpdateRealtimeDTO) {
     return `This action updates a #${id} realtime`;
   }
 

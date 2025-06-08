@@ -6,7 +6,7 @@ import {
   ArrayNotEmpty,
 } from 'class-validator';
 
-export class PublicationUpdateDto {
+export class PublicationUpdateDTO {
   @IsOptional()
   @IsString()
   name?: string;
