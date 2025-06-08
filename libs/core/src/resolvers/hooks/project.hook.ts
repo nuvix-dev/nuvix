@@ -4,6 +4,7 @@ import ParamsHelper from '@nuvix/core/helper/params.helper';
 
 import {
   APP_POSTGRES_PASSWORD,
+  CORE_SCHEMA,
   CORE_SCHEMA_DB,
   DB_FOR_CONSOLE,
   GET_PROJECT_DB,
@@ -76,9 +77,9 @@ export class ProjectHook implements Hook {
         req[PROJECT_POOL] = pool;
         req[PROJECT_DB] = this.getProjectDb(pool, project.getId());
         req[PROJECT_PG] = this.gerProjectPg(await pool.connect());
-        const authDB = this.getProjectDb(pool, project.getId());
-        authDB.setDatabase('auth');
-        req[CORE_SCHEMA_DB] = authDB;
+        const coreDatabase = this.getProjectDb(pool, project.getId());
+        coreDatabase.setDatabase(CORE_SCHEMA);
+        req[CORE_SCHEMA_DB] = coreDatabase;
       } catch (e) {
         this.logger.error('Something went wrong while connecting database.', e);
         throw new Exception(Exception.GENERAL_SERVER_ERROR);

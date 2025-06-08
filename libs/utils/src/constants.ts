@@ -147,10 +147,6 @@ export const SCOPES = 'scopes';
 export const HOOKS = 'hooks';
 export const APP_COLOR = '#f67520';
 
-/**@deprecated */ export const AUTH_SCHEMA_DB = Symbol('authSchemaDb');
-/**@deprecated */ export const STORAGE_SCHEMA_DB = Symbol('storageSchemaDb');
-/**@deprecated */ export const FUNCTIONS_SCHEMA_DB = Symbol('functionsSchemaDb');
-/**@deprecated */ export const MESSAGING_SCHEMA_DB = Symbol('messagingSchemaDb');
 export const CORE_SCHEMA_DB = Symbol('coreSchemaDb');
 export const CURRENT_SCHEMA_DB = Symbol('currentSchemaDb');
 export const CURRENT_SCHEMA_PG = Symbol('currentSchemaPg');
