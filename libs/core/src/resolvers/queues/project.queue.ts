@@ -8,7 +8,7 @@ import type { PoolStoreFn, GetProjectDbFn } from '@nuvix/core/core.module';
 import {
   POOLS,
   GET_PROJECT_DB,
-  DB_FOR_CONSOLE,
+  DB_FOR_PLATFORM,
   APP_POSTGRES_HOST,
   APP_POSTGRES_PORT,
   APP_POSTGRES_PASSWORD,
@@ -29,7 +29,7 @@ export class ProjectQueue extends Queue {
   constructor(
     @Inject(POOLS) private readonly getPool: PoolStoreFn,
     @Inject(GET_PROJECT_DB) private readonly getProjectDb: GetProjectDbFn,
-    @Inject(DB_FOR_CONSOLE) private readonly db: Database,
+    @Inject(DB_FOR_PLATFORM) private readonly db: Database,
   ) {
     super();
   }

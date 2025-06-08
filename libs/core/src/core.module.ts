@@ -5,7 +5,7 @@ import IORedis from 'ioredis';
 
 // Services
 import {
-  DB_FOR_CONSOLE,
+  DB_FOR_PLATFORM,
   DB_FOR_PROJECT,
   GEO_DB,
   CACHE_DB,
@@ -178,7 +178,7 @@ export type GetProjectPG = (
       inject: [CACHE_DB],
     },
     {
-      provide: DB_FOR_CONSOLE,
+      provide: DB_FOR_PLATFORM,
       useFactory: async (cache: Cache) => {
         const adapter = new MariaDB({
           connection: {
@@ -278,7 +278,7 @@ export type GetProjectPG = (
   ],
   exports: [
     POOLS,
-    DB_FOR_CONSOLE,
+    DB_FOR_PLATFORM,
     DB_FOR_PROJECT,
     GET_PROJECT_DB,
     GET_PROJECT_PG,

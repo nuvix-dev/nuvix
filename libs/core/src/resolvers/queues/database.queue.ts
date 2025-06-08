@@ -17,7 +17,7 @@ import {
   DATABASE_TYPE_DELETE_COLLECTION,
   DATABASE_TYPE_DELETE_DATABASE,
   DATABASE_TYPE_DELETE_INDEX,
-  DB_FOR_CONSOLE,
+  DB_FOR_PLATFORM,
   GET_PROJECT_DB,
   POOLS,
 } from '@nuvix/utils/constants';
@@ -29,7 +29,7 @@ export class DatabaseQueue extends Queue {
   private readonly logger = new Logger(DatabaseQueue.name);
 
   constructor(
-    @Inject(DB_FOR_CONSOLE) private readonly dbForConsole: Database,
+    @Inject(DB_FOR_PLATFORM) private readonly dbForPlatform: Database,
     @Inject(POOLS) private readonly getPool: PoolStoreFn,
     @Inject(GET_PROJECT_DB)
     private readonly getProjectDb: GetProjectDbFn,
@@ -81,7 +81,7 @@ export class DatabaseQueue extends Queue {
 
     this.logger.debug('createAttribute', collection, attribute, project);
 
-    const dbForConsole = this.dbForConsole;
+    const dbForPlatform = this.dbForPlatform;
     const dbOptions = project.getAttribute('database');
     const pool = await this.getPool(project.getId(), {
       database: dbOptions.name,
@@ -131,7 +131,7 @@ export class DatabaseQueue extends Queue {
       const formatOptions = attribute.getAttribute('formatOptions', {});
       const filters = attribute.getAttribute('filters', []);
       const options = attribute.getAttribute('options', {});
-      const projectDoc = await dbForConsole.getDocument('projects', projectId);
+      const projectDoc = await dbForPlatform.getDocument('projects', projectId);
 
       let relatedAttribute: Document;
       let relatedCollection: Document;
@@ -243,7 +243,7 @@ export class DatabaseQueue extends Queue {
     const collection = new Document(data.collection);
     const attribute = new Document(data.attribute);
     const project = new Document(data.project);
-    const dbForConsole = this.dbForConsole;
+    const dbForPlatform = this.dbForPlatform;
     const dbOptions = project.getAttribute('database');
     const pool = await this.getPool(project.getId(), {
       database: dbOptions.name,
@@ -276,7 +276,7 @@ export class DatabaseQueue extends Queue {
       const key = attribute.getAttribute('key', '');
       const status = attribute.getAttribute('status', '');
       const type = attribute.getAttribute('type', '');
-      const projectDoc = await dbForConsole.getDocument('projects', projectId);
+      const projectDoc = await dbForPlatform.getDocument('projects', projectId);
       const options = attribute.getAttribute('options', []);
       let relatedAttribute: Document;
       let relatedCollection: Document;
@@ -396,7 +396,7 @@ export class DatabaseQueue extends Queue {
                   collection,
                   index,
                   projectDoc,
-                  dbForConsole,
+                  dbForPlatform,
                   dbForProject,
                 },
                 token,
@@ -438,7 +438,7 @@ export class DatabaseQueue extends Queue {
     const collection = new Document(data.collection);
     const index = new Document(data.index);
     const project = new Document(data.project);
-    const dbForConsole = this.dbForConsole;
+    const dbForPlatform = this.dbForPlatform;
     const dbOptions = project.getAttribute('database');
     const pool = await this.getPool(project.getId(), {
       database: dbOptions.name,
@@ -473,7 +473,7 @@ export class DatabaseQueue extends Queue {
       const attributes = index.getAttribute('attributes', []);
       const lengths = index.getAttribute('lengths', []);
       const orders = index.getAttribute('orders', []);
-      const projectDoc = await dbForConsole.getDocument('projects', projectId);
+      const projectDoc = await dbForPlatform.getDocument('projects', projectId);
 
       try {
         if (
@@ -516,7 +516,7 @@ export class DatabaseQueue extends Queue {
     const collection = new Document(data.collection);
     const index = new Document(data.index);
     const project = new Document(data.project);
-    const dbForConsole = this.dbForConsole;
+    const dbForPlatform = this.dbForPlatform;
     const dbOptions = project.getAttribute('database');
     const pool = await this.getPool(project.getId(), {
       database: dbOptions.name,
@@ -547,7 +547,7 @@ export class DatabaseQueue extends Queue {
     await Authorization.skip(async () => {
       const key = index.getAttribute('key', '');
       const status = index.getAttribute('status', '');
-      const projectDoc = await dbForConsole.getDocument('projects', projectId);
+      const projectDoc = await dbForPlatform.getDocument('projects', projectId);
 
       try {
         if (
@@ -722,5 +722,5 @@ export type DatabaseJobData = {
   attribute?: Document | object;
   index?: Document | object;
   project: Document | object;
-  dbForConsole?: Database;
+  dbForPlatform?: Database;
 };

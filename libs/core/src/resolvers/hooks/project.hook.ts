@@ -6,7 +6,7 @@ import {
   APP_POSTGRES_PASSWORD,
   CORE_SCHEMA,
   CORE_SCHEMA_DB,
-  DB_FOR_CONSOLE,
+  DB_FOR_PLATFORM,
   GET_PROJECT_DB,
   GET_PROJECT_PG,
   POOLS,
@@ -30,7 +30,7 @@ import { DataSource } from '@nuvix/pg';
 export class ProjectHook implements Hook {
   private readonly logger = new Logger(ProjectHook.name);
   constructor(
-    @Inject(DB_FOR_CONSOLE) private readonly db: Database,
+    @Inject(DB_FOR_PLATFORM) private readonly db: Database,
     @Inject(POOLS) private readonly getPool: PoolStoreFn,
     @Inject(GET_PROJECT_PG) private readonly gerProjectPg: GetProjectPG,
     @Inject(GET_PROJECT_DB)
