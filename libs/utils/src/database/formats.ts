@@ -1,16 +1,12 @@
+import { Database, DatetimeValidator, RangeValidator } from '@nuvix/database';
 import {
-    Database,
-    DatetimeValidator,
-    RangeValidator,
-} from '@nuvix/database';
-import {
-    APP_DATABASE_ATTRIBUTE_DATETIME,
-    APP_DATABASE_ATTRIBUTE_EMAIL,
-    APP_DATABASE_ATTRIBUTE_ENUM,
-    APP_DATABASE_ATTRIBUTE_FLOAT_RANGE,
-    APP_DATABASE_ATTRIBUTE_INT_RANGE,
-    APP_DATABASE_ATTRIBUTE_IP,
-    APP_DATABASE_ATTRIBUTE_URL,
+  APP_DATABASE_ATTRIBUTE_DATETIME,
+  APP_DATABASE_ATTRIBUTE_EMAIL,
+  APP_DATABASE_ATTRIBUTE_ENUM,
+  APP_DATABASE_ATTRIBUTE_FLOAT_RANGE,
+  APP_DATABASE_ATTRIBUTE_INT_RANGE,
+  APP_DATABASE_ATTRIBUTE_IP,
+  APP_DATABASE_ATTRIBUTE_URL,
 } from '@nuvix/utils/constants';
 import { EmailValidator } from '@nuvix/core/validators/email.validator';
 import { URLValidator } from '@nuvix/core/validators/url.validator';

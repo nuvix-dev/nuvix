@@ -258,7 +258,9 @@ export class ConsoleService {
   }
 
   async getPlanById(id: string) {
-    return await this.dbForPlatform.findOne('plans', [Query.equal('$id', [id])]);
+    return await this.dbForPlatform.findOne('plans', [
+      Query.equal('$id', [id]),
+    ]);
   }
 
   async initConsole() {

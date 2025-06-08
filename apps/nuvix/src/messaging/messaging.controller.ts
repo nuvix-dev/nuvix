@@ -78,7 +78,7 @@ import {
 @UseGuards(ProjectGuard)
 @UseInterceptors(ApiInterceptor, ResponseInterceptor)
 export class MessagingController {
-  constructor(private readonly messagingService: MessagingService) { }
+  constructor(private readonly messagingService: MessagingService) {}
 
   @Post('providers/mailgun')
   @Scope('providers.create')
@@ -709,11 +709,7 @@ export class MessagingController {
     @Param('subscriberId') subscriberId: string,
     @ProjectDatabase() db: Database,
   ) {
-    return await this.messagingService.getSubscriber(
-      db,
-      topicId,
-      subscriberId,
-    );
+    return await this.messagingService.getSubscriber(db, topicId, subscriberId);
   }
 
   @Delete('topics/:topicId/subscribers/:subscriberId')

@@ -70,10 +70,7 @@ export class TeamsController {
 
   @Get(':id')
   @ResModel({ type: Models.TEAM })
-  async findOne(
-    @ProjectDatabase() db: Database,
-    @Param('id') id: string,
-  ) {
+  async findOne(@ProjectDatabase() db: Database, @Param('id') id: string) {
     return await this.teamsService.findOne(db, id);
   }
 
@@ -89,18 +86,12 @@ export class TeamsController {
 
   @Delete(':id')
   @ResModel({ type: Models.NONE })
-  async remove(
-    @ProjectDatabase() db: Database,
-    @Param('id') id: string,
-  ) {
+  async remove(@ProjectDatabase() db: Database, @Param('id') id: string) {
     return await this.teamsService.remove(db, id);
   }
 
   @Get(':id/prefs')
-  async getPrefs(
-    @ProjectDatabase() db: Database,
-    @Param('id') id: string,
-  ) {
+  async getPrefs(@ProjectDatabase() db: Database, @Param('id') id: string) {
     return await this.teamsService.getPrefs(db, id);
   }
 
@@ -115,10 +106,7 @@ export class TeamsController {
 
   @Get(':id/logs')
   @ResModel({ type: Models.LOG, list: true })
-  async teamLogs(
-    @ProjectDatabase() db: Database,
-    @Param('id') id: string,
-  ) {
+  async teamLogs(@ProjectDatabase() db: Database, @Param('id') id: string) {
     return {
       total: 0,
       logs: [],
@@ -153,12 +141,7 @@ export class TeamsController {
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.teamsService.getMembers(
-      db,
-      id,
-      queries,
-      search,
-    );
+    return await this.teamsService.getMembers(db, id, queries, search);
   }
 
   @Get(':id/memberships/:memberId')
@@ -179,12 +162,7 @@ export class TeamsController {
     @Param('memberId') memberId: string,
     @Body() input: UpdateMembershipDTO,
   ) {
-    return await this.teamsService.updateMember(
-      db,
-      id,
-      memberId,
-      input,
-    );
+    return await this.teamsService.updateMember(db, id, memberId, input);
   }
 
   @Patch(':id/memberships/:memberId/status')
@@ -195,12 +173,7 @@ export class TeamsController {
     @Param('memberId') memberId: string,
     @Body() input: UpdateMembershipStatusDTO,
   ) {
-    return await this.teamsService.updateMemberStatus(
-      db,
-      id,
-      memberId,
-      input,
-    );
+    return await this.teamsService.updateMemberStatus(db, id, memberId, input);
   }
 
   @Delete(':id/memberships/:memberId')

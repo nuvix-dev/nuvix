@@ -65,7 +65,7 @@ export class MessagingService {
   constructor(
     @Inject(DB_FOR_PLATFORM) private readonly dbForPlatform: Database,
     private readonly jwtService: JwtService,
-  ) { }
+  ) {}
 
   /**
    * Common method to create a provider.
@@ -1065,12 +1065,7 @@ export class MessagingService {
   /**
    * Lists all subscribers for a topic.
    */
-  async listSubscribers({
-    db,
-    topicId,
-    queries,
-    search,
-  }: ListSubscribers) {
+  async listSubscribers({ db, topicId, queries, search }: ListSubscribers) {
     if (search) {
       queries.push(Query.search('search', search));
     }
@@ -1160,11 +1155,7 @@ export class MessagingService {
   /**
    * Get Subscriber
    */
-  async getSubscriber(
-    db: Database,
-    topicId: string,
-    subscriberId: string,
-  ) {
+  async getSubscriber(db: Database, topicId: string, subscriberId: string) {
     const topic = await Authorization.skip(
       async () => await db.getDocument('topics', topicId),
     );
@@ -1184,10 +1175,7 @@ export class MessagingService {
 
     const target = await Authorization.skip(
       async () =>
-        await db.getDocument(
-          'targets',
-          subscriber.getAttribute('targetId'),
-        ),
+        await db.getDocument('targets', subscriber.getAttribute('targetId')),
     );
     const user = await Authorization.skip(
       async () => await db.getDocument('users', target.getAttribute('userId')),
@@ -1203,11 +1191,7 @@ export class MessagingService {
   /**
    * Deletes a subscriber.
    */
-  async deleteSubscriber(
-    db: Database,
-    topicId: string,
-    subscriberId: string,
-  ) {
+  async deleteSubscriber(db: Database, topicId: string, subscriberId: string) {
     const topic = await Authorization.skip(
       async () => await db.getDocument('topics', topicId),
     );
@@ -1408,7 +1392,7 @@ export class MessagingService {
   /**
    * Create SMS Message
    */
-  async createSmsMessage({ input, db, project, }: CreateSmsMessage) {
+  async createSmsMessage({ input, db, project }: CreateSmsMessage) {
     const {
       messageId: inputMessageId,
       content,
@@ -1513,7 +1497,7 @@ export class MessagingService {
   /**
    * Create Push Message
    */
-  async createPushMessage({ input, db, project, }: CreatePushMessage) {
+  async createPushMessage({ input, db, project }: CreatePushMessage) {
     const {
       messageId: inputMessageId,
       title = '',
@@ -1772,7 +1756,7 @@ export class MessagingService {
   /**
    *  List targets for a message.
    */
-  async listTargets({ db, messageId, queries, }: ListTargets) {
+  async listTargets({ db, messageId, queries }: ListTargets) {
     const message = await db.getDocument('messages', messageId);
 
     if (message.isEmpty()) {

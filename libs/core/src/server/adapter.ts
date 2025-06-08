@@ -5,7 +5,6 @@ import { LegacyRouteConverter } from '@nestjs/core/router/legacy-route-converter
 import { HookMethods } from './hooks/interface';
 
 export class NuvixAdapter extends FastifyAdapter {
-
   override async createMiddlewareFactory(
     requestMethod: RequestMethod,
   ): Promise<(path: string, callback: Function) => any> {
@@ -72,8 +71,8 @@ export class NuvixAdapter extends FastifyAdapter {
         typeof args[args.length - 1] === 'function'
           ? args[args.length - 1]
           : (e: Error) => {
-            if (e) throw e;
-          };
+              if (e) throw e;
+            };
       const extra = args.slice(2, -1);
       // TODO: handle sync hooks
       switch (hookName) {

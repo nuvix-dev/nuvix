@@ -151,10 +151,7 @@ export const CORE_SCHEMA_DB = Symbol('coreSchemaDb');
 export const CURRENT_SCHEMA_DB = Symbol('currentSchemaDb');
 export const CURRENT_SCHEMA_PG = Symbol('currentSchemaPg');
 
-export const INTERNAL_SCHEMAS = [
-  'system',
-  'core'
-] as const;
+export const INTERNAL_SCHEMAS = ['system', 'core'] as const;
 
 export const SYSTEM_SCHEMA = 'system' as const;
 export const CORE_SCHEMA = 'core' as const;

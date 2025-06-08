@@ -107,7 +107,7 @@ export class NuvixFactoryStatic {
       httpServer,
     );
 
-    // #CUSTOM: added NuvixApplication instead 
+    // #CUSTOM: added NuvixApplication instead
     const instance = new NuvixApplication(
       container,
       httpServer,
@@ -116,7 +116,10 @@ export class NuvixFactoryStatic {
       appOptions,
     );
     const target = this.createNestInstance(instance);
-    return this.createAdapterProxy<T>(target as unknown as NestApplication, httpServer);
+    return this.createAdapterProxy<T>(
+      target as unknown as NestApplication,
+      httpServer,
+    );
   }
 
   /**

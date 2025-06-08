@@ -138,10 +138,7 @@ export class AccountController {
   @Label('res.type', 'JSON')
   @ResModel(Models.NONE)
   @AuditEvent('user.delete', 'user/{res.$id}')
-  async deleteAccount(
-    @ProjectDatabase() db: Database,
-    @User() user: Document,
-  ) {
+  async deleteAccount(@ProjectDatabase() db: Database, @User() user: Document) {
     return await this.accountService.deleteAccount(db, user);
   }
 
@@ -228,12 +225,7 @@ export class AccountController {
     @Param('id') id: string,
     @Project() project: Document,
   ) {
-    return await this.accountService.updateSession(
-      db,
-      user,
-      id,
-      project,
-    );
+    return await this.accountService.updateSession(db, user, id, project);
   }
 
   @Public()
@@ -634,11 +626,7 @@ export class AccountController {
     @User() user: Document,
     @Body() input: UpdatePrefsDTO,
   ) {
-    return await this.accountService.updatePrefs(
-      db,
-      user,
-      input.prefs,
-    );
+    return await this.accountService.updatePrefs(db, user, input.prefs);
   }
 
   @Patch('name')
@@ -689,11 +677,7 @@ export class AccountController {
     @User() user: Document,
     @Body() updateEmailDTO: UpdateEmailDTO,
   ) {
-    return await this.accountService.updateEmail(
-      db,
-      user,
-      updateEmailDTO,
-    );
+    return await this.accountService.updateEmail(db, user, updateEmailDTO);
   }
 
   @Patch('phone')

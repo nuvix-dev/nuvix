@@ -83,7 +83,9 @@ export class ProjectQueue extends Queue {
       const dataSource = new DataSource(client);
       try {
         await dataSource.init();
-        this.logger.log(`Data source initialized for project ${project.getId()}`);
+        this.logger.log(
+          `Data source initialized for project ${project.getId()}`,
+        );
       } catch (error) {
         this.logger.error(`Failed to initialize data source: ${error.message}`);
         throw new Exception('Failed to initialize data source');
@@ -96,9 +98,13 @@ export class ProjectQueue extends Queue {
           'document',
           'This schema is used to store and manage core data and documents.',
         );
-        this.logger.log(`Schema ${CORE_SCHEMA} created successfully for project ${project.getId()}`);
+        this.logger.log(
+          `Schema ${CORE_SCHEMA} created successfully for project ${project.getId()}`,
+        );
       } catch (error) {
-        this.logger.error(`Failed to create schema ${CORE_SCHEMA}: ${error.message}`);
+        this.logger.error(
+          `Failed to create schema ${CORE_SCHEMA}: ${error.message}`,
+        );
         throw new Exception('Failed to create schemas and set permissions');
       }
 
@@ -117,13 +123,14 @@ export class ProjectQueue extends Queue {
         }
 
         try {
-          const attributes = collection['attributes']?.map(
-            (attribute: any) => new Document(attribute),
-          ) || [];
+          const attributes =
+            collection['attributes']?.map(
+              (attribute: any) => new Document(attribute),
+            ) || [];
 
-          const indexes = collection['indexes']?.map(
-            (index: any) => new Document(index),
-          ) || [];
+          const indexes =
+            collection['indexes']?.map((index: any) => new Document(index)) ||
+            [];
 
           this.logger.log(
             `Creating collection ${collection.$id} in schema ${CORE_SCHEMA} for project ${project.getId()}`,
@@ -131,7 +138,6 @@ export class ProjectQueue extends Queue {
 
           await db.createCollection(collection.$id, attributes, indexes);
           successfulCollections++;
-
         } catch (error) {
           if (error instanceof DuplicateException) {
             this.logger.warn(
@@ -151,7 +157,6 @@ export class ProjectQueue extends Queue {
       this.logger.log(
         `Collection creation completed: ${successfulCollections} successful, ${failedCollections} failed for project ${project.getId()}`,
       );
-
     } catch (error) {
       this.logger.error(
         `Failed to initialize project ${project.getId()}: ${error.message}`,
@@ -164,18 +169,26 @@ export class ProjectQueue extends Queue {
       if (db) {
         try {
           await db.close();
-          this.logger.debug(`Database connection closed for project ${project.getId()}`);
+          this.logger.debug(
+            `Database connection closed for project ${project.getId()}`,
+          );
         } catch (error) {
-          this.logger.error(`Failed to close database connection: ${error.message}`);
+          this.logger.error(
+            `Failed to close database connection: ${error.message}`,
+          );
         }
       }
 
       if (client) {
         try {
           client.release();
-          this.logger.debug(`Client connection released for project ${project.getId()}`);
+          this.logger.debug(
+            `Client connection released for project ${project.getId()}`,
+          );
         } catch (error) {
-          this.logger.error(`Failed to release client connection: ${error.message}`);
+          this.logger.error(
+            `Failed to release client connection: ${error.message}`,
+          );
         }
       }
 

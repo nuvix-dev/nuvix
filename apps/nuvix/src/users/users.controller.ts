@@ -98,11 +98,7 @@ export class UsersController {
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: Document,
   ) {
-    return await this.usersService.createWithArgon2(
-      db,
-      createUserDTO,
-      project,
-    );
+    return await this.usersService.createWithArgon2(db, createUserDTO, project);
   }
 
   @Post('bcrypt')
@@ -116,11 +112,7 @@ export class UsersController {
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: Document,
   ) {
-    return await this.usersService.createWithBcrypt(
-      db,
-      createUserDTO,
-      project,
-    );
+    return await this.usersService.createWithBcrypt(db, createUserDTO, project);
   }
 
   @Post('md5')
@@ -134,11 +126,7 @@ export class UsersController {
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: Document,
   ) {
-    return await this.usersService.createWithMd5(
-      db,
-      createUserDTO,
-      project,
-    );
+    return await this.usersService.createWithMd5(db, createUserDTO, project);
   }
 
   @Post('sha')
@@ -152,11 +140,7 @@ export class UsersController {
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: Document,
   ) {
-    return await this.usersService.createWithSha(
-      db,
-      createUserDTO,
-      project,
-    );
+    return await this.usersService.createWithSha(db, createUserDTO, project);
   }
 
   @Post('phpass')
@@ -170,11 +154,7 @@ export class UsersController {
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: Document,
   ) {
-    return await this.usersService.createWithPhpass(
-      db,
-      createUserDTO,
-      project,
-    );
+    return await this.usersService.createWithPhpass(db, createUserDTO, project);
   }
 
   @Post('scrypt')
@@ -188,11 +168,7 @@ export class UsersController {
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: Document,
   ) {
-    return await this.usersService.createWithScrypt(
-      db,
-      createUserDTO,
-      project,
-    );
+    return await this.usersService.createWithScrypt(db, createUserDTO, project);
   }
 
   @Post('scrypt-modified')
@@ -242,20 +218,14 @@ export class UsersController {
   @Get(':id')
   @Scope('users.read')
   @ResModel(Models.USER)
-  async findOne(
-    @ProjectDatabase() db: Database,
-    @Param('id') id: string,
-  ) {
+  async findOne(@ProjectDatabase() db: Database, @Param('id') id: string) {
     return await this.usersService.findOne(db, id);
   }
 
   @Get(':id/prefs')
   @Scope('users.read')
   @ResModel(Models.PREFERENCES)
-  async getPrefs(
-    @ProjectDatabase() db: Database,
-    @Param('id') id: string,
-  ) {
+  async getPrefs(@ProjectDatabase() db: Database, @Param('id') id: string) {
     return await this.usersService.getPrefs(db, id);
   }
 
@@ -311,12 +281,7 @@ export class UsersController {
     @Body() input: UpdateUserPasswordDTO,
     @Project() project: Document,
   ) {
-    return await this.usersService.updatePassword(
-      db,
-      id,
-      input,
-      project,
-    );
+    return await this.usersService.updatePassword(db, id, input, project);
   }
 
   @Patch(':id/email')
@@ -360,11 +325,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body() createTargetDTO: CreateTargetDTO,
   ): Promise<any> {
-    return await this.usersService.createTarget(
-      db,
-      id,
-      createTargetDTO,
-    );
+    return await this.usersService.createTarget(db, id, createTargetDTO);
   }
 
   @Get(':id/targets')
@@ -403,12 +364,7 @@ export class UsersController {
     @Req() req: any,
     @Project() project: Document,
   ): Promise<any> {
-    return await this.usersService.createSession(
-      db,
-      id,
-      req,
-      project,
-    );
+    return await this.usersService.createSession(db, id, req, project);
   }
 
   @Delete(':id/sessions')
@@ -456,11 +412,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body() input: UpdateUserEmailVerificationDTO,
   ) {
-    return await this.usersService.updateEmailVerification(
-      db,
-      id,
-      input,
-    );
+    return await this.usersService.updateEmailVerification(db, id, input);
   }
 
   @Patch(':id/verification/phone')
@@ -470,11 +422,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body() input: UpdateUserPoneVerificationDTO,
   ) {
-    return await this.usersService.updatePhoneVerification(
-      db,
-      id,
-      input,
-    );
+    return await this.usersService.updatePhoneVerification(db, id, input);
   }
 
   @Get(':id/targets/:targetId')
@@ -495,12 +443,7 @@ export class UsersController {
     @Param('targetId') targetId: string,
     @Body() input: UpdateTargetDTO,
   ): Promise<any> {
-    return await this.usersService.updateTarget(
-      db,
-      id,
-      targetId,
-      input,
-    );
+    return await this.usersService.updateTarget(db, id, targetId, input);
   }
 
   @Get(':id/mfa/factors')
@@ -545,11 +488,7 @@ export class UsersController {
     @Param('id') id: string,
     @Param('type') type: string,
   ) {
-    return await this.usersService.deleteMfaAuthenticator(
-      db,
-      id,
-      type,
-    );
+    return await this.usersService.deleteMfaAuthenticator(db, id, type);
   }
 
   @Delete(':id/session/:sessionId')
@@ -571,10 +510,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  async remove(
-    @ProjectDatabase() db: Database,
-    @Param('id') id: string,
-  ) {
+  async remove(@ProjectDatabase() db: Database, @Param('id') id: string) {
     return await this.usersService.remove(db, id);
   }
 }

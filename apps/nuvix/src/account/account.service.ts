@@ -2587,8 +2587,7 @@ export class AccountService {
     );
 
     await Authorization.skip(
-      async () =>
-        await db.deleteDocument('tokens', verifiedToken.getId()),
+      async () => await db.deleteDocument('tokens', verifiedToken.getId()),
     );
     await db.purgeCachedDocument('users', user.getId());
 
