@@ -137,6 +137,7 @@ export const GET_PROJECT_PG = Symbol('getProjectPostgreDb');
 export const PROJECT_DB = Symbol('project-db');
 export const PROJECT_PG = Symbol('project-pg');
 export const PROJECT_POOL = Symbol('project-pool');
+export const PROJECT_POOL_CLIENT = Symbol('project-pool-client');
 export const GEO_DB = Symbol('geoDb');
 export const CACHE_DB = Symbol('cacheDb');
 export const CACHE = 'cache';

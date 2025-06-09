@@ -14,6 +14,7 @@ import {
   PROJECT_DB,
   PROJECT_PG,
   PROJECT_POOL,
+  PROJECT_POOL_CLIENT,
 } from '@nuvix/utils/constants';
 import { Hook } from '../../server/hooks/interface';
 import type {
@@ -32,7 +33,7 @@ export class ProjectHook implements Hook {
   constructor(
     @Inject(DB_FOR_PLATFORM) private readonly db: Database,
     @Inject(POOLS) private readonly getPool: PoolStoreFn,
-    @Inject(GET_PROJECT_PG) private readonly gerProjectPg: GetProjectPG,
+    @Inject(GET_PROJECT_PG) private readonly getProjectPg: GetProjectPG,
     @Inject(GET_PROJECT_DB)
     private readonly getProjectDb: GetProjectDbFn,
   ) {}
@@ -74,10 +75,12 @@ export class ProjectHook implements Hook {
           host: dbOptions.host,
           max: 10,
         });
+        const client = await pool.connect();
         req[PROJECT_POOL] = pool;
-        req[PROJECT_DB] = this.getProjectDb(pool, project.getId());
-        req[PROJECT_PG] = this.gerProjectPg(await pool.connect());
-        const coreDatabase = this.getProjectDb(pool, project.getId());
+        req[PROJECT_POOL_CLIENT] = client;
+        req[PROJECT_DB] = this.getProjectDb(client, project.getId());
+        req[PROJECT_PG] = this.getProjectPg(client);
+        const coreDatabase = this.getProjectDb(client, project.getId());
         coreDatabase.setDatabase(CORE_SCHEMA);
         req[CORE_SCHEMA_DB] = coreDatabase;
       } catch (e) {

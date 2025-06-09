@@ -67,7 +67,7 @@ export interface PoolStoreFn {
   (name: 'root', options?: Partial<PoolOptions>): Promise<PgPool>;
 }
 
-export type GetProjectDbFn = (pool: PgPool, projectId: string) => Database;
+export type GetProjectDbFn = (pool: PoolClient, projectId: string) => Database;
 
 export type GetProjectPG = (
   client: PoolClient,
@@ -226,7 +226,7 @@ export type GetProjectPG = (
     {
       provide: GET_PROJECT_DB,
       useFactory: (cache: Cache) => {
-        return (pool: PgPool, projectId: string) => {
+        return (pool: PoolClient, projectId: string) => {
           const adapter = new PostgreDB({
             connection: pool,
           });

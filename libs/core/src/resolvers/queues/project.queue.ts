@@ -59,7 +59,7 @@ export class ProjectQueue extends Queue {
 
     try {
       // Get pool with retry mechanism
-      pool = await this.getPoolWithRetries(project, { max: 10 });
+      pool = await this.getPool('root', { max: 10 });
       client = await pool.connect();
 
       // Update project document with database configuration
@@ -68,7 +68,7 @@ export class ProjectQueue extends Queue {
         project.getId(),
         project
           .setAttribute('database', {
-            ...project.getAttribute('database'),
+            ...project.getAttribute('database', {}),
             password: APP_POSTGRES_PASSWORD,
             name: dbName,
             host: APP_POSTGRES_HOST,
@@ -109,7 +109,7 @@ export class ProjectQueue extends Queue {
       }
 
       // Setup database and collections
-      db = this.getProjectDb(pool, project.getId());
+      db = this.getProjectDb(client, project.getId());
       db.setDatabase(CORE_SCHEMA);
       await db.create(CORE_SCHEMA);
 
@@ -165,20 +165,6 @@ export class ProjectQueue extends Queue {
         `Failed to initialize project ${project.getId()}: ${error.message}`,
       );
     } finally {
-      // Cleanup resources in reverse order
-      if (db) {
-        try {
-          await db.close();
-          this.logger.debug(
-            `Database connection closed for project ${project.getId()}`,
-          );
-        } catch (error) {
-          this.logger.error(
-            `Failed to close database connection: ${error.message}`,
-          );
-        }
-      }
-
       if (client) {
         try {
           client.release();

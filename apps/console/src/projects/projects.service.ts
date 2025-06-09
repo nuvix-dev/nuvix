@@ -12,8 +12,6 @@ import {
   APP_VERSION_STABLE,
   CACHE,
   DB_FOR_PLATFORM,
-  DB_FOR_PROJECT,
-  GET_PROJECT_DB,
   GET_PROJECT_PG,
   POOLS,
 } from '@nuvix/utils/constants';
