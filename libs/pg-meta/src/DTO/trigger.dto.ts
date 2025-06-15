@@ -9,7 +9,7 @@ import {
 import { Type } from 'class-transformer';
 import { TransformStringToBoolean } from '@nuvix/core/validators';
 
-export class TriggerQueryDto {
+export class TriggerQueryDTO {
   @IsOptional()
   @IsBoolean()
   @TransformStringToBoolean()

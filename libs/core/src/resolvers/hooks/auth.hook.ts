@@ -7,8 +7,8 @@ import ParamsHelper from '@nuvix/core/helper/params.helper';
 import {
   APP_MODE_ADMIN,
   APP_MODE_DEFAULT,
-  AUTH_SCHEMA_DB,
-  DB_FOR_CONSOLE,
+  CORE_SCHEMA_DB,
+  DB_FOR_PLATFORM,
   PROJECT,
   USER,
 } from '@nuvix/utils/constants';
@@ -19,14 +19,14 @@ export class AuthHook implements Hook {
   private readonly logger = new Logger(AuthHook.name);
   private projectDb: Database;
   constructor(
-    @Inject(DB_FOR_CONSOLE) readonly db: Database,
+    @Inject(DB_FOR_PLATFORM) readonly db: Database,
     private readonly jwtService: JwtService,
   ) {}
 
   async onRequest(req: NuvixRequest, reply: NuvixRes): Promise<void> {
     const params = new ParamsHelper(req);
     const project: Document = req[PROJECT];
-    this.projectDb = req[AUTH_SCHEMA_DB];
+    this.projectDb = req[CORE_SCHEMA_DB];
     const mode =
       params.getFromHeaders('x-nuvix-mode') ||
       params.getFromQuery('mode', APP_MODE_DEFAULT);

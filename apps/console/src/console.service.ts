@@ -2,7 +2,7 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Database, Document, Permission, Query, Role } from '@nuvix/database';
 import collections from '@nuvix/core/collections';
 import {
-  DB_FOR_CONSOLE,
+  DB_FOR_PLATFORM,
   APP_DATABASE_HOST,
   APP_DATABASE_USER,
   APP_DATABASE_PASSWORD,
@@ -25,7 +25,7 @@ export class ConsoleService {
   private readonly logger = new Logger('CONSOLE');
 
   constructor(
-    @Inject(DB_FOR_CONSOLE) private readonly dbForConsole: Database,
+    @Inject(DB_FOR_PLATFORM) private readonly dbForPlatform: Database,
     @InjectQueue(WORKER_TYPE_MAILS)
     private readonly mailQueue: Queue<MailQueueOptions, MailJobs>,
   ) {}
@@ -230,12 +230,12 @@ export class ConsoleService {
     ];
 
     for (const plan of plans) {
-      const existingPlan = await this.dbForConsole.findOne('plans', [
+      const existingPlan = await this.dbForPlatform.findOne('plans', [
         Query.equal('$id', [plan.$id]),
       ]);
 
       if (existingPlan.isEmpty()) {
-        await this.dbForConsole.createDocument(
+        await this.dbForPlatform.createDocument(
           'plans',
           new Document<any>({
             ...plan,
@@ -254,11 +254,13 @@ export class ConsoleService {
   }
 
   async getPlans() {
-    return await this.dbForConsole.find('plans');
+    return await this.dbForPlatform.find('plans');
   }
 
   async getPlanById(id: string) {
-    return await this.dbForConsole.findOne('plans', [Query.equal('$id', [id])]);
+    return await this.dbForPlatform.findOne('plans', [
+      Query.equal('$id', [id]),
+    ]);
   }
 
   async initConsole() {
@@ -271,9 +273,9 @@ export class ConsoleService {
           port: APP_DATABASE_PORT,
         });
         await pool.query(
-          `CREATE DATABASE IF NOT EXISTS \`${this.dbForConsole.getDatabase()}\`;`,
+          `CREATE DATABASE IF NOT EXISTS \`${this.dbForPlatform.getDatabase()}\`;`,
         );
-        await this.dbForConsole.create();
+        await this.dbForPlatform.create();
         await pool.end();
       } catch (e) {
         this.logger.error(e);
@@ -286,7 +288,7 @@ export class ConsoleService {
         if ((collection as any).$collection !== Database.METADATA) {
           continue;
         }
-        if (!(await this.dbForConsole.getCollection(key)).isEmpty()) {
+        if (!(await this.dbForPlatform.getCollection(key)).isEmpty()) {
           continue;
         }
 
@@ -318,23 +320,23 @@ export class ConsoleService {
             }),
         );
 
-        await this.dbForConsole.createCollection(key, attributes, indexes);
+        await this.dbForPlatform.createCollection(key, attributes, indexes);
       }
 
-      const defaultBucket = await this.dbForConsole.getDocument(
+      const defaultBucket = await this.dbForPlatform.getDocument(
         'buckets',
         'default',
       );
       if (
         defaultBucket.isEmpty() &&
-        !(await this.dbForConsole.exists(
-          this.dbForConsole.getDatabase(),
+        !(await this.dbForPlatform.exists(
+          this.dbForPlatform.getDatabase(),
           'bucket_1',
         ))
       ) {
         this.logger.log('[Setup] - Creating default bucket...');
 
-        await this.dbForConsole.createDocument(
+        await this.dbForPlatform.createDocument(
           'buckets',
           new Document({
             $id: 'default',
@@ -357,7 +359,7 @@ export class ConsoleService {
           }),
         );
 
-        const bucket = await this.dbForConsole.getDocument(
+        const bucket = await this.dbForPlatform.getDocument(
           'buckets',
           'default',
         );
@@ -397,7 +399,7 @@ export class ConsoleService {
             }),
         );
 
-        await this.dbForConsole.createCollection(
+        await this.dbForPlatform.createCollection(
           `bucket_${bucket.getInternalId()}`,
           fileAttributes,
           fileIndexes,
@@ -413,7 +415,7 @@ export class ConsoleService {
   }
 
   async resetConsole() {
-    return await this.dbForConsole.delete();
+    return await this.dbForPlatform.delete();
   }
 
   async testSmtp() {

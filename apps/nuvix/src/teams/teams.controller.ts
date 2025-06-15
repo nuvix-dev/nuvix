@@ -20,20 +20,20 @@ import {
   CreateTeamDTO,
   UpdateTeamDTO,
   UpdateTeamPrefsDTO,
-} from './dto/team.dto';
+} from './DTO/team.dto';
 import { User } from '@nuvix/core/decorators/project-user.decorator';
 import {
   CreateMembershipDTO,
   UpdateMembershipDTO,
   UpdateMembershipStatusDTO,
-} from './dto/membership.dto';
+} from './DTO/membership.dto';
 import { ParseQueryPipe } from '@nuvix/core/pipes/query.pipe';
 import { Database, Document, Query as Queries } from '@nuvix/database';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard';
 import { Mode } from '@nuvix/core/decorators/mode.decorator';
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor';
 import {
-  AuthDatabase,
+  ProjectDatabase,
   Project,
 } from '@nuvix/core/decorators/project.decorator';
 import { Locale } from '@nuvix/core/decorators/locale.decorator';
@@ -50,75 +50,63 @@ export class TeamsController {
   @Scope('teams.read')
   @ResModel({ type: Models.TEAM, list: true })
   async findAll(
-    @AuthDatabase() authDatabase: Database,
+    @ProjectDatabase() db: Database,
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.teamsService.findAll(authDatabase, queries, search);
+    return await this.teamsService.findAll(db, queries, search);
   }
 
   @Post()
   @ResModel({ type: Models.TEAM })
   async create(
-    @AuthDatabase() authDatabase: Database,
+    @ProjectDatabase() db: Database,
     @User() user: any,
     @Body() input: CreateTeamDTO,
     @Mode() mode: string,
   ) {
-    return await this.teamsService.create(authDatabase, user, input, mode);
+    return await this.teamsService.create(db, user, input, mode);
   }
 
   @Get(':id')
   @ResModel({ type: Models.TEAM })
-  async findOne(
-    @AuthDatabase() authDatabase: Database,
-    @Param('id') id: string,
-  ) {
-    return await this.teamsService.findOne(authDatabase, id);
+  async findOne(@ProjectDatabase() db: Database, @Param('id') id: string) {
+    return await this.teamsService.findOne(db, id);
   }
 
   @Put(':id')
   @ResModel({ type: Models.TEAM })
   async update(
-    @AuthDatabase() authDatabase: Database,
+    @ProjectDatabase() db: Database,
     @Param('id') id: string,
     @Body() input: UpdateTeamDTO,
   ) {
-    return await this.teamsService.update(authDatabase, id, input);
+    return await this.teamsService.update(db, id, input);
   }
 
   @Delete(':id')
   @ResModel({ type: Models.NONE })
-  async remove(
-    @AuthDatabase() authDatabase: Database,
-    @Param('id') id: string,
-  ) {
-    return await this.teamsService.remove(authDatabase, id);
+  async remove(@ProjectDatabase() db: Database, @Param('id') id: string) {
+    return await this.teamsService.remove(db, id);
   }
 
   @Get(':id/prefs')
-  async getPrefs(
-    @AuthDatabase() authDatabase: Database,
-    @Param('id') id: string,
-  ) {
-    return await this.teamsService.getPrefs(authDatabase, id);
+  async getPrefs(@ProjectDatabase() db: Database, @Param('id') id: string) {
+    return await this.teamsService.getPrefs(db, id);
   }
 
   @Put(':id/prefs')
   async setPrefs(
-    @AuthDatabase() authDatabase: Database,
+    @ProjectDatabase() db: Database,
     @Param('id') id: string,
     @Body() input: UpdateTeamPrefsDTO,
   ) {
-    return await this.teamsService.setPrefs(authDatabase, id, input);
+    return await this.teamsService.setPrefs(db, id, input);
   }
 
   @Get(':id/logs')
   @ResModel({ type: Models.LOG, list: true })
-  async teamLogs(
-    @AuthDatabase() authDatabase: Database,
-    @Param('id') id: string,
-  ) {
+  async teamLogs(@ProjectDatabase() db: Database, @Param('id') id: string) {
     return {
       total: 0,
       logs: [],
@@ -128,7 +116,7 @@ export class TeamsController {
   @Post(':id/memberships')
   @ResModel({ type: Models.MEMBERSHIP })
   async addMember(
-    @AuthDatabase() authDatabase: Database,
+    @ProjectDatabase() db: Database,
     @Param('id') id: string,
     @Body() input: CreateMembershipDTO,
     @Project() project: Document,
@@ -136,7 +124,7 @@ export class TeamsController {
     @User() user: Document,
   ) {
     return await this.teamsService.addMember(
-      authDatabase,
+      db,
       id,
       input,
       project,
@@ -148,68 +136,53 @@ export class TeamsController {
   @Get(':id/memberships')
   @ResModel({ type: Models.MEMBERSHIP, list: true })
   async getMembers(
-    @AuthDatabase() authDatabase: Database,
+    @ProjectDatabase() db: Database,
     @Param('id') id: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.teamsService.getMembers(
-      authDatabase,
-      id,
-      queries,
-      search,
-    );
+    return await this.teamsService.getMembers(db, id, queries, search);
   }
 
   @Get(':id/memberships/:memberId')
   @ResModel({ type: Models.MEMBERSHIP })
   async getMember(
-    @AuthDatabase() authDatabase: Database,
+    @ProjectDatabase() db: Database,
     @Param('id') id: string,
     @Param('memberId') memberId: string,
   ) {
-    return await this.teamsService.getMember(authDatabase, id, memberId);
+    return await this.teamsService.getMember(db, id, memberId);
   }
 
   @Patch(':id/memberships/:memberId')
   @ResModel({ type: Models.MEMBERSHIP })
   async updateMember(
-    @AuthDatabase() authDatabase: Database,
+    @ProjectDatabase() db: Database,
     @Param('id') id: string,
     @Param('memberId') memberId: string,
     @Body() input: UpdateMembershipDTO,
   ) {
-    return await this.teamsService.updateMember(
-      authDatabase,
-      id,
-      memberId,
-      input,
-    );
+    return await this.teamsService.updateMember(db, id, memberId, input);
   }
 
   @Patch(':id/memberships/:memberId/status')
   @ResModel({ type: Models.MEMBERSHIP })
   async updateMemberStatus(
-    @AuthDatabase() authDatabase: Database,
+    @ProjectDatabase() db: Database,
     @Param('id') id: string,
     @Param('memberId') memberId: string,
     @Body() input: UpdateMembershipStatusDTO,
   ) {
-    return await this.teamsService.updateMemberStatus(
-      authDatabase,
-      id,
-      memberId,
-      input,
-    );
+    return await this.teamsService.updateMemberStatus(db, id, memberId, input);
   }
 
   @Delete(':id/memberships/:memberId')
   @ResModel({ type: Models.NONE })
   async removeMember(
-    @AuthDatabase() authDatabase: Database,
+    @ProjectDatabase() db: Database,
     @Param('id') id: string,
     @Param('memberId') memberId: string,
   ) {
-    return await this.teamsService.deleteMember(authDatabase, id, memberId);
+    return await this.teamsService.deleteMember(db, id, memberId);
   }
 }

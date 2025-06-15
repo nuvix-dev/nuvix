@@ -88,6 +88,15 @@ WHERE
     )
     OR has_any_column_privilege(c.oid, 'SELECT, INSERT, UPDATE, REFERENCES')
   )
+  -- Exclude system tables and views
+  AND (
+    NOT c.relname LIKE '%_perms'
+    OR EXISTS (
+      SELECT 1 FROM system.schemas s 
+      WHERE s.name = nc.nspname AND s.type = 'unmanaged'
+    )
+  )
+  -- Exclude End
 group by
   c.oid,
   c.relname,

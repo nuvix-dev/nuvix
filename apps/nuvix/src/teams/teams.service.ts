@@ -3,7 +3,7 @@ import {
   CreateTeamDTO,
   UpdateTeamDTO,
   UpdateTeamPrefsDTO,
-} from './dto/team.dto';
+} from './DTO/team.dto';
 import { ID } from '@nuvix/core/helper/ID.helper';
 import { Exception } from '@nuvix/core/extend/exception';
 import { TOTP } from '@nuvix/core/validators/MFA.validator';
@@ -11,7 +11,7 @@ import {
   CreateMembershipDTO,
   UpdateMembershipDTO,
   UpdateMembershipStatusDTO,
-} from './dto/membership.dto';
+} from './DTO/membership.dto';
 import {
   APP_EMAIL_TEAM,
   APP_NAME,

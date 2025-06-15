@@ -3,8 +3,8 @@ import { DEFAULT_SYSTEM_SCHEMAS } from './constants';
 import { filterByList } from './helpers';
 import { tablePrivilegesSql } from './sql/index';
 import { PostgresMetaResult, PostgresTablePrivileges } from './types';
-import { TablePrivilegeGrantDto } from '../DTO/table-privilege-grant.dto';
-import { TablePrivilegeRevokeDto } from '../DTO/table-privilege-revoke.dto';
+import { TablePrivilegeGrantDTO } from '../DTO/table-privilege-grant.dto';
+import { TablePrivilegeRevokeDTO } from '../DTO/table-privilege-revoke.dto';
 import { PgMetaException } from '../extra/execption';
 
 export default class PostgresMetaTablePrivileges {
@@ -110,7 +110,7 @@ where table_privileges.schema = ${literal(schema)}
   }
 
   async grant(
-    grants: TablePrivilegeGrantDto[],
+    grants: TablePrivilegeGrantDTO[],
   ): Promise<PostgresMetaResult<PostgresTablePrivileges[]>> {
     let sql = `
 do $$
@@ -144,7 +144,7 @@ where relation_id in (${relationIds.map(literal).join(',')})
   }
 
   async revoke(
-    revokes: TablePrivilegeRevokeDto[],
+    revokes: TablePrivilegeRevokeDTO[],
   ): Promise<PostgresMetaResult<PostgresTablePrivileges[]>> {
     let sql = `
 do $$

@@ -18,7 +18,7 @@ import { PersonalDataValidator } from '@nuvix/core/validators/personal-data.vali
 import {
   ASSETS,
   CONSOLE_CONFIG,
-  DB_FOR_CONSOLE,
+  DB_FOR_PLATFORM,
   GEO_DB,
   SEND_TYPE_EMAIL,
   WORKER_TYPE_MAILS,
@@ -48,7 +48,7 @@ import path from 'path';
 export class AccountService {
   constructor(
     @Inject(GEO_DB) private readonly geodb: Reader<CountryResponse>,
-    @Inject(DB_FOR_CONSOLE) private readonly db: Database,
+    @Inject(DB_FOR_PLATFORM) private readonly db: Database,
     @InjectQueue(WORKER_TYPE_MAILS)
     private readonly mailQueue: Queue<MailQueueOptions, MailJobs>,
   ) {}

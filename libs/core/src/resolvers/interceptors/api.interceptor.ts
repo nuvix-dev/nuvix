@@ -11,6 +11,7 @@ import {
   APP_MODE_ADMIN,
   APP_MODE_DEFAULT,
   CACHE_DB,
+  CORE_SCHEMA_DB,
   PROJECT,
   SCOPES,
   SESSION,
@@ -127,29 +128,30 @@ export class ApiInterceptor implements NestInterceptor {
     }
 
     request[USER] = user;
-    // this.dbForProject
-    //   .on(
-    //     Database.EVENT_DOCUMENT_CREATE,
-    //     'calculate-usage',
-    //     async (event, document) =>
-    //       await this.projectUsage.databaseListener({
-    //         event,
-    //         document,
-    //         project,
-    //         dbForProject: this.dbForProject,
-    //       }),
-    //   )
-    //   .on(
-    //     Database.EVENT_DOCUMENT_DELETE,
-    //     'calculate-usage',
-    //     async (event, document) =>
-    //       await this.projectUsage.databaseListener({
-    //         event,
-    //         document,
-    //         project,
-    //         dbForProject: this.dbForProject,
-    //       }),
-    //   );
+    const dbForProject = request[CORE_SCHEMA_DB] as Database;
+    dbForProject
+      .on(
+        Database.EVENT_DOCUMENT_CREATE,
+        'calculate-usage',
+        async (event, document) =>
+          await this.projectUsage.databaseListener({
+            event,
+            document,
+            project,
+            dbForProject,
+          }),
+      )
+      .on(
+        Database.EVENT_DOCUMENT_DELETE,
+        'calculate-usage',
+        async (event, document) =>
+          await this.projectUsage.databaseListener({
+            event,
+            document,
+            project,
+            dbForProject,
+          }),
+      );
 
     return next.handle();
   }

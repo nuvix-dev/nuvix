@@ -19,8 +19,8 @@ import {
 } from '@nuvix/core/resolvers/interceptors';
 import {
   AuditEvent,
+  ProjectDatabase,
   AuthType,
-  MessagingDatabase,
   Namespace,
   Project,
   ResModel,
@@ -91,7 +91,7 @@ export class MessagingController {
     description: 'Create a Mailgun provider',
   })
   async createMailgunProvider(
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: CreateMailgunProviderDTO,
   ) {
     return await this.messagingService.createMailgunProvider({
@@ -111,7 +111,7 @@ export class MessagingController {
     description: 'Create a Sendgrid provider',
   })
   async createSendgridProvider(
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: CreateSendgridProviderDTO,
   ) {
     return await this.messagingService.createSendGridProvider({
@@ -131,7 +131,7 @@ export class MessagingController {
     description: 'Create a SMTP provider',
   })
   async createSMTPProvider(
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: CreateSMTPProviderDTO,
   ) {
     return await this.messagingService.createSmtpProvider({
@@ -151,7 +151,7 @@ export class MessagingController {
     description: 'Create a Msg91 provider',
   })
   async createMsg91Provider(
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: CreateMsg91ProviderDTO,
   ) {
     return await this.messagingService.createMsg91Provider({
@@ -171,7 +171,7 @@ export class MessagingController {
     description: 'Create a Telesign provider',
   })
   async createTelesignProvider(
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: CreateTelesignProviderDTO,
   ) {
     return await this.messagingService.createTelesignProvider({
@@ -191,7 +191,7 @@ export class MessagingController {
     description: 'Create a Textmagic provider',
   })
   async createTextmagicProvider(
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: CreateTextmagicProviderDTO,
   ) {
     return await this.messagingService.createTextMagicProvider({
@@ -211,7 +211,7 @@ export class MessagingController {
     description: 'Create a Twilio provider',
   })
   async createTwilioProvider(
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: CreateTwilioProviderDTO,
   ) {
     return await this.messagingService.createTwilioProvider({
@@ -231,7 +231,7 @@ export class MessagingController {
     description: 'Create a Vonage provider',
   })
   async createVonageProvider(
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: CreateVonageProviderDTO,
   ) {
     return await this.messagingService.createVonageProvider({
@@ -251,7 +251,7 @@ export class MessagingController {
     description: 'Create a FCM provider',
   })
   async createFcmProvider(
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: CreateFcmProviderDTO,
   ) {
     return await this.messagingService.createFcmProvider({
@@ -271,7 +271,7 @@ export class MessagingController {
     description: 'Create a APNs provider',
   })
   async createApnsProvider(
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: CreateApnsProviderDTO,
   ) {
     return await this.messagingService.createApnsProvider({
@@ -290,7 +290,7 @@ export class MessagingController {
     description: 'List all providers',
   })
   async listProviders(
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
@@ -312,7 +312,7 @@ export class MessagingController {
   })
   async getProvider(
     @Param('providerId') providerId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
   ) {
     return await this.messagingService.getProvider(db, providerId);
   }
@@ -329,7 +329,7 @@ export class MessagingController {
   })
   async updateMailgunProvider(
     @Param('providerId') providerId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: UpdateMailgunProviderDTO,
   ) {
     return await this.messagingService.updateMailgunProvider({
@@ -351,7 +351,7 @@ export class MessagingController {
   })
   async updateSendgridProvider(
     @Param('providerId') providerId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: UpdateSendgridProviderDTO,
   ) {
     return await this.messagingService.updateSendGridProvider({
@@ -373,7 +373,7 @@ export class MessagingController {
   })
   async updateSmtpProvider(
     @Param('providerId') providerId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: UpdateSMTPProviderDTO,
   ) {
     return await this.messagingService.updateSmtpProvider({
@@ -395,7 +395,7 @@ export class MessagingController {
   })
   async updateMsg91Provider(
     @Param('providerId') providerId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: UpdateMsg91ProviderDTO,
   ) {
     return await this.messagingService.updateMsg91Provider({
@@ -417,7 +417,7 @@ export class MessagingController {
   })
   async updateTelesignProvider(
     @Param('providerId') providerId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: UpdateTelesignProviderDTO,
   ) {
     return await this.messagingService.updateTelesignProvider({
@@ -439,7 +439,7 @@ export class MessagingController {
   })
   async updateTextmagicProvider(
     @Param('providerId') providerId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: UpdateTextmagicProviderDTO,
   ) {
     return await this.messagingService.updateTextMagicProvider({
@@ -461,7 +461,7 @@ export class MessagingController {
   })
   async updateTwilioProvider(
     @Param('providerId') providerId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: UpdateTwilioProviderDTO,
   ) {
     return await this.messagingService.updateTwilioProvider({
@@ -483,7 +483,7 @@ export class MessagingController {
   })
   async updateVonageProvider(
     @Param('providerId') providerId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: UpdateVonageProviderDTO,
   ) {
     return await this.messagingService.updateVonageProvider({
@@ -505,7 +505,7 @@ export class MessagingController {
   })
   async updateFcmProvider(
     @Param('providerId') providerId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: UpdateFcmProviderDTO,
   ) {
     return await this.messagingService.updateFcmProvider({
@@ -527,7 +527,7 @@ export class MessagingController {
   })
   async updateApnsProvider(
     @Param('providerId') providerId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: UpdateApnsProviderDTO,
   ) {
     return await this.messagingService.updateApnsProvider({
@@ -549,7 +549,7 @@ export class MessagingController {
   })
   async deleteProvider(
     @Param('providerId') providerId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
   ) {
     return await this.messagingService.deleteProvider(db, providerId);
   }
@@ -565,7 +565,7 @@ export class MessagingController {
     description: 'Create a topic',
   })
   async createTopic(
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: CreateTopicDTO,
   ) {
     return await this.messagingService.createTopic({
@@ -584,7 +584,7 @@ export class MessagingController {
     description: 'List all topics',
   })
   async listTopics(
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
@@ -606,7 +606,7 @@ export class MessagingController {
   })
   async getTopic(
     @Param('topicId') topicId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
   ) {
     return await this.messagingService.getTopic(db, topicId);
   }
@@ -623,7 +623,7 @@ export class MessagingController {
   })
   async updateTopic(
     @Param('topicId') topicId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: UpdateTopicDTO,
   ) {
     return await this.messagingService.updateTopic({
@@ -645,7 +645,7 @@ export class MessagingController {
   })
   async deleteTopic(
     @Param('topicId') topicId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
   ) {
     return await this.messagingService.deleteTopic(db, topicId);
   }
@@ -662,7 +662,7 @@ export class MessagingController {
   })
   async createSubscriber(
     @Param('topicId') topicId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: CreateSubscriberDTO,
   ) {
     return await this.messagingService.createSubscriber({
@@ -683,7 +683,7 @@ export class MessagingController {
   })
   async listSubscribers(
     @Param('topicId') topicId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
@@ -707,7 +707,7 @@ export class MessagingController {
   async getSubscriber(
     @Param('topicId') topicId: string,
     @Param('subscriberId') subscriberId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
   ) {
     return await this.messagingService.getSubscriber(db, topicId, subscriberId);
   }
@@ -725,7 +725,7 @@ export class MessagingController {
   async deleteSubscriber(
     @Param('topicId') topicId: string,
     @Param('subscriberId') subscriberId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
   ) {
     return await this.messagingService.deleteSubscriber(
       db,
@@ -745,7 +745,7 @@ export class MessagingController {
     description: 'Create email',
   })
   async createEmail(
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: CreateEmailMessageDTO,
     @Project() project: Document,
   ) {
@@ -767,7 +767,7 @@ export class MessagingController {
     description: 'Create SMS',
   })
   async createSms(
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: CreateSmsMessageDTO,
     @Project() project: Document,
   ) {
@@ -789,7 +789,7 @@ export class MessagingController {
     description: 'Create push notification',
   })
   async createPush(
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: CreatePushMessageDTO,
     @Project() project: Document,
   ) {
@@ -810,7 +810,7 @@ export class MessagingController {
     description: 'List all messages',
   })
   async listMessages(
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
@@ -832,7 +832,7 @@ export class MessagingController {
   })
   async getMessage(
     @Param('messageId') messageId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
   ) {
     return await this.messagingService.getMessage(db, messageId);
   }
@@ -848,7 +848,7 @@ export class MessagingController {
   })
   async listTargets(
     @Param('messageId') messageId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Query('queries', ParseQueryPipe) queries: Queries[],
   ) {
     return await this.messagingService.listTargets({
@@ -870,7 +870,7 @@ export class MessagingController {
   })
   async updateEmail(
     @Param('messageId') messageId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: UpdateEmailMessageDTO,
     @Project() project: Document,
   ) {
@@ -894,7 +894,7 @@ export class MessagingController {
   })
   async updateSms(
     @Param('messageId') messageId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: UpdateSmsMessageDTO,
     @Project() project: Document,
   ) {
@@ -918,7 +918,7 @@ export class MessagingController {
   })
   async updatePush(
     @Param('messageId') messageId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
     @Body() input: UpdatePushMessageDTO,
     @Project() project: Document,
   ) {
@@ -942,7 +942,7 @@ export class MessagingController {
   })
   async deleteMessage(
     @Param('messageId') messageId: string,
-    @MessagingDatabase() db: Database,
+    @ProjectDatabase() db: Database,
   ) {
     return await this.messagingService.deleteMessage(db, messageId);
   }

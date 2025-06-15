@@ -1,6 +1,6 @@
 import { IsString, IsOptional } from 'class-validator';
 
-export class SchemaCreateDto {
+export class SchemaCreateDTO {
   @IsString()
   name: string;
 

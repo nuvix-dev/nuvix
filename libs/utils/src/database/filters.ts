@@ -1,28 +1,10 @@
+import { Authorization, Database, Document, Query } from '@nuvix/database';
 import {
-  Authorization,
-  Database,
-  DatetimeValidator,
-  Document,
-  Query,
-  RangeValidator,
-} from '@nuvix/database';
-import {
-  APP_DATABASE_ATTRIBUTE_DATETIME,
-  APP_DATABASE_ATTRIBUTE_EMAIL,
-  APP_DATABASE_ATTRIBUTE_ENUM,
-  APP_DATABASE_ATTRIBUTE_FLOAT_RANGE,
-  APP_DATABASE_ATTRIBUTE_INT_RANGE,
-  APP_DATABASE_ATTRIBUTE_IP,
-  APP_DATABASE_ATTRIBUTE_URL,
   APP_LIMIT_SUBQUERY,
   APP_LIMIT_SUBSCRIBERS_SUBQUERY,
   APP_OPENSSL_KEY_1,
 } from '@nuvix/utils/constants';
 import crypto from 'crypto';
-import { EmailValidator } from '../validators/email.validator';
-import { URLValidator } from '../validators/url.validator';
-import { IPValidator } from '../validators/ip.validator';
-import { WhiteList } from '../validators/whitelist.validator';
 
 export const filters = {
   casting: {
@@ -313,21 +295,6 @@ export const filters = {
       });
     },
   },
-  // subProjectQueryTargets: {
-  //   serialize: (value: any) => {
-  //     return null;
-  //   },
-  //   deserialize: async (value: any, document: Document, database: Database) => {
-  //     return await Authorization.skip(async () => {
-  //       const db = new Database(database.getAdapter(), database.getCache());
-  //       db.setDatabase('messaging');
-  //       return await db.find('targets', [
-  //         Query.equal('userInternalId', [document.getInternalId()]),
-  //         Query.limit(APP_LIMIT_SUBQUERY),
-  //       ]);
-  //     });
-  //   },
-  // },
   subQueryTopicTargets: {
     serialize: (value: any) => {
       return null;
@@ -406,47 +373,5 @@ export const filters = {
     deserialize: (value: any) => {
       return value;
     },
-  },
-};
-
-export const formats = {
-  [APP_DATABASE_ATTRIBUTE_EMAIL]: {
-    create: () => new EmailValidator(),
-    type: Database.VAR_STRING,
-  },
-  [APP_DATABASE_ATTRIBUTE_DATETIME]: {
-    create: () => new DatetimeValidator(),
-    type: Database.VAR_DATETIME,
-  },
-  [APP_DATABASE_ATTRIBUTE_ENUM]: {
-    create: (attribute: any) => {
-      const elements = attribute.formatOptions.elements;
-      return new WhiteList(elements, true);
-    },
-    type: Database.VAR_STRING,
-  },
-  [APP_DATABASE_ATTRIBUTE_IP]: {
-    create: () => new IPValidator(),
-    type: Database.VAR_STRING,
-  },
-  [APP_DATABASE_ATTRIBUTE_URL]: {
-    create: () => new URLValidator(),
-    type: Database.VAR_STRING,
-  },
-  [APP_DATABASE_ATTRIBUTE_INT_RANGE]: {
-    create: (attribute: any) => {
-      const min = attribute.formatOptions.min ?? -Infinity;
-      const max = attribute.formatOptions.max ?? Infinity;
-      return new RangeValidator(min, max, `integer`);
-    },
-    type: Database.VAR_INTEGER,
-  },
-  [APP_DATABASE_ATTRIBUTE_FLOAT_RANGE]: {
-    create: (attribute: any) => {
-      const min = attribute.formatOptions.min ?? -Infinity;
-      const max = attribute.formatOptions.max ?? Infinity;
-      return new RangeValidator(min, max, `float`);
-    },
-    type: Database.VAR_FLOAT,
   },
 };

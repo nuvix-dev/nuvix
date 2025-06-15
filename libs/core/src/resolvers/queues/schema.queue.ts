@@ -47,39 +47,38 @@ export class SchemaQueue extends Queue {
     project: Document,
     schema: string,
   ): Promise<void> {
-    const dbOptions = project.getAttribute('database');
-    const pool = await this.getPool(project.getId(), {
-      database: dbOptions.name,
-      user: dbOptions.adminRole,
-      password: APP_POSTGRES_PASSWORD,
-      port: dbOptions.port,
-      host: dbOptions.host,
-      max: 30,
-    });
-    const db = this.getProjectDb(pool, project.getId());
-    db.setDatabase(schema);
-    await db.create(schema);
+    const { pool, dbForProject } = await this.getDatabase(project, schema);
 
-    for (const [key, collection] of Object.entries(collections.docSchema)) {
-      if (collection['$collection'] !== Database.METADATA) {
-        continue;
-      }
+    try {
+      await dbForProject.create(schema);
 
-      const attributes = collection['attributes'].map(
-        (attribute: any) => new Document(attribute),
-      );
+      for (const [key, collection] of Object.entries(collections.docSchema)) {
+        if (collection['$collection'] !== Database.METADATA) {
+          continue;
+        }
 
-      const indexes = collection['indexes'].map(
-        (index: any) => new Document(index),
-      );
+        const attributes = collection['attributes'].map(
+          (attribute: any) => new Document(attribute),
+        );
 
-      try {
-        await db.createCollection(collection.$id, attributes, indexes);
-      } catch (error) {
-        if (!(error instanceof DuplicateException)) {
-          throw error;
+        const indexes = collection['indexes'].map(
+          (index: any) => new Document(index),
+        );
+
+        try {
+          await dbForProject.createCollection(
+            collection.$id,
+            attributes,
+            indexes,
+          );
+        } catch (error) {
+          if (!(error instanceof DuplicateException)) {
+            throw error;
+          }
         }
       }
+    } finally {
+      await this.releaseClient(pool);
     }
   }
 
@@ -98,6 +97,34 @@ export class SchemaQueue extends Queue {
   @OnWorkerEvent('completed')
   onCompleted(job: Job) {
     this.logger.log(`Completed job ${job.id} of type ${job.name}...`);
+  }
+
+  private async getDatabase(project: Document, database: string) {
+    const dbOptions = project.getAttribute('database');
+    const pool = await this.getPool(project.getId(), {
+      database: dbOptions.name,
+      user: dbOptions.adminRole,
+      password: APP_POSTGRES_PASSWORD,
+      port: dbOptions.port,
+      host: dbOptions.host,
+      max: 2,
+    });
+    const client = await pool.connect();
+    const dbForProject = this.getProjectDb(client, project.getId());
+    dbForProject.setDatabase(database);
+    return { pool, dbForProject };
+  }
+
+  private async releaseClient(
+    pool: Awaited<ReturnType<typeof this.getDatabase>>['pool'],
+  ) {
+    try {
+      if (pool && !pool.ended) {
+        await pool.end();
+      }
+    } catch (error) {
+      this.logger.error('Failed to release database client', error);
+    }
   }
 }
 

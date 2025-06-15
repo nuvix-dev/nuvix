@@ -6,7 +6,7 @@ import {
   IsEnum,
 } from 'class-validator';
 
-export class ColumnCreateDto {
+export class ColumnCreateDTO {
   @IsString()
   name: string;
 

@@ -2,7 +2,7 @@ import { TransformStringToBoolean } from '@nuvix/core/validators';
 import { Type } from 'class-transformer';
 import { IsBoolean, IsInt, IsOptional, IsString } from 'class-validator';
 
-export class FunctionQueryDto {
+export class FunctionQueryDTO {
   @IsOptional()
   @TransformStringToBoolean()
   @IsBoolean()

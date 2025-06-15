@@ -11,21 +11,21 @@ import {
   Role,
 } from '@nuvix/database';
 import { Exception } from '@nuvix/core/extend/exception';
-import { DB_FOR_CONSOLE } from '@nuvix/utils/constants';
+import { DB_FOR_PLATFORM } from '@nuvix/utils/constants';
 import {
   CreateMembershipDTO,
   UpdateMembershipDTO,
   UpdateMembershipStatusDTO,
-} from './dto/membership.dto';
+} from './DTO/membership.dto';
 import { Auth } from '@nuvix/core/helper/auth.helper';
 import { TOTP } from '@nuvix/core/validators/MFA.validator';
-import { CreateOrgDTO, UpdateOrgDTO, UpdateTeamPrefsDTO } from './dto/team.dto';
+import { CreateOrgDTO, UpdateOrgDTO, UpdateTeamPrefsDTO } from './DTO/team.dto';
 
 @Injectable()
 export class OrganizationsService {
   private readonly logger = new Logger();
 
-  constructor(@Inject(DB_FOR_CONSOLE) private readonly db: Database) {}
+  constructor(@Inject(DB_FOR_PLATFORM) private readonly db: Database) {}
 
   /**
    * Find all teams

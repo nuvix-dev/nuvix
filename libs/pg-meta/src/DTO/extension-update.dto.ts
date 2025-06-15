@@ -1,6 +1,6 @@
 import { IsOptional, IsString } from 'class-validator';
 
-export class ExtensionUpdateDto {
+export class ExtensionUpdateDTO {
   @IsOptional()
   @IsString()
   schema?: string;

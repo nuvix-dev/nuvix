@@ -244,6 +244,7 @@ export class HooksModule<
     }
   }
 
+  // #CUSTOM
   private async bindHandler(
     wrapper: InstanceWrapper<Hook>,
     applicationRef: HttpServer,
@@ -317,6 +318,7 @@ export class HooksModule<
     }
   }
 
+  // #CUSTOM
   private async createProxy<TRequest = unknown, TResponse = unknown>(
     instance: Hook,
     method: string,

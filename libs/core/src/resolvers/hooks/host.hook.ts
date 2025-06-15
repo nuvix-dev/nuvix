@@ -2,14 +2,18 @@ import { Injectable, Logger, Inject } from '@nestjs/common';
 import { Authorization, Database, Document, Query } from '@nuvix/database';
 import { Exception } from '@nuvix/core/extend/exception';
 
-import { DB_FOR_CONSOLE, PROJECT, SERVER_CONFIG } from '@nuvix/utils/constants';
+import {
+  DB_FOR_PLATFORM,
+  PROJECT,
+  SERVER_CONFIG,
+} from '@nuvix/utils/constants';
 import { Hook } from '../../server/hooks/interface';
 
 @Injectable()
 export class HostHook implements Hook {
   private readonly logger = new Logger(HostHook.name);
   constructor(
-    @Inject(DB_FOR_CONSOLE) private readonly dbForConsole: Database,
+    @Inject(DB_FOR_PLATFORM) private readonly dbForPlatform: Database,
   ) {}
 
   async onRequest(req: NuvixRequest, reply: NuvixRes): Promise<void> {
@@ -27,7 +31,7 @@ export class HostHook implements Hook {
     const route =
       (await Authorization.skip(
         async () =>
-          await this.dbForConsole.find('rules', [
+          await this.dbForPlatform.find('rules', [
             Query.equal('domain', [host]),
             Query.limit(1),
           ]),

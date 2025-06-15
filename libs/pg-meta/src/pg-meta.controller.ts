@@ -11,58 +11,58 @@ import {
 } from '@nestjs/common';
 import { Client } from './decorators';
 import { PostgresMeta } from './lib';
-import { DeparseDto, QueryDto } from './DTO/query.dto';
+import { DeparseDTO, QueryDTO } from './DTO/query.dto';
 import * as Parser from './lib/Parser';
-import { SchemaQueryDto } from './DTO/schema.dto';
-import { SchemaIdParamDto } from './DTO/schema-id.dto';
-import { SchemaCreateDto } from './DTO/schema-create.dto';
-import { SchemaUpdateDto } from './DTO/schema-update.dto';
-import { SchemaDeleteQueryDto } from './DTO/schema-delete.dto';
-import { TableIdParamDto } from './DTO/table-id.dto';
-import { TableCreateDto } from './DTO/table-create.dto';
-import { TableUpdateDto } from './DTO/table-update.dto';
-import { ColumnCreateDto } from './DTO/column-create.dto';
-import { ColumnUpdateDto } from './DTO/column-update.dto';
-import { ExtensionQueryDto } from './DTO/extension.dto';
-import { ExtensionNameParamDto } from './DTO/extension-name.dto';
-import { ExtensionCreateDto } from './DTO/extension-create.dto';
-import { ExtensionUpdateDto } from './DTO/extension-update.dto';
-import { ExtensionDeleteQueryDto } from './DTO/extension-delete.dto';
-import { RoleQueryDto } from './DTO/role.dto';
-import { RoleIdParamDto } from './DTO/role-id.dto';
-import { RoleCreateDto } from './DTO/role-create.dto';
-import { RoleUpdateDto } from './DTO/role-update.dto';
-import { FunctionQueryDto } from './DTO/function.dto';
-import { FunctionIdParamDto } from './DTO/function-id.dto';
-import { FunctionCreateDto } from './DTO/function-create.dto';
-import { FunctionUpdateDto } from './DTO/function-update.dto';
-import { IndexQueryDto } from './DTO/index.dto';
-import { IndexIdParamDto } from './DTO/index-id.dto';
-import { ViewQueryDto } from './DTO/view.dto';
-import { ViewIdParamDto } from './DTO/view-id.dto';
-import { ForeignTableQueryDto } from './DTO/foreign-table.dto';
-import { ForeignTableIdParamDto } from './DTO/foreign-table-id.dto';
-import { ColumnPrivilegeQueryDto } from './DTO/column-privilege.dto';
-import { ColumnPrivilegeGrantDto } from './DTO/column-privilege-grant.dto';
-import { ColumnPrivilegeRevokeDto } from './DTO/column-privilege-revoke.dto';
-import { MaterializedViewQueryDto } from './DTO/materialized-view.dto';
-import { MaterializedViewIdParamDto } from './DTO/materialized-view-id.dto';
-import { ConfigQueryDto } from './DTO/config.dto';
-import { PolicyQueryDto } from './DTO/policy.dto';
-import { PolicyCreateDto } from './DTO/policy-create.dto';
-import { PolicyUpdateDto } from './DTO/policy-update.dto';
-import { PublicationQueryDto } from './DTO/publication.dto';
-import { PublicationCreateDto } from './DTO/publication-create.dto';
-import { PublicationUpdateDto } from './DTO/publication-update.dto';
-import { TablePrivilegeQueryDto } from './DTO/table-privilege.dto';
-import { TablePrivilegeGrantDto } from './DTO/table-privilege-grant.dto';
-import { TablePrivilegeRevokeDto } from './DTO/table-privilege-revoke.dto';
-import { TriggerQueryDto } from './DTO/trigger.dto';
-import { TriggerCreateDto } from './DTO/trigger-create.dto';
-import { TriggerUpdateDto } from './DTO/trigger-update.dto';
-import { TriggerDeleteQueryDto } from './DTO/trigger-delete.dto';
-import { TypeQueryDto } from './DTO/type.dto';
-import { GeneratorQueryDto } from './DTO/generator.dto';
+import { SchemaQueryDTO } from './DTO/schema.dto';
+import { SchemaIdParamDTO } from './DTO/schema-id.dto';
+import { SchemaCreateDTO } from './DTO/schema-create.dto';
+import { SchemaUpdateDTO } from './DTO/schema-update.dto';
+import { SchemaDeleteQueryDTO } from './DTO/schema-delete.dto';
+import { TableIdParamDTO } from './DTO/table-id.dto';
+import { TableCreateDTO } from './DTO/table-create.dto';
+import { TableUpdateDTO } from './DTO/table-update.dto';
+import { ColumnCreateDTO } from './DTO/column-create.dto';
+import { ColumnUpdateDTO } from './DTO/column-update.dto';
+import { ExtensionQueryDTO } from './DTO/extension.dto';
+import { ExtensionNameParamDTO } from './DTO/extension-name.dto';
+import { ExtensionCreateDTO } from './DTO/extension-create.dto';
+import { ExtensionUpdateDTO } from './DTO/extension-update.dto';
+import { ExtensionDeleteQueryDTO } from './DTO/extension-delete.dto';
+import { RoleQueryDTO } from './DTO/role.dto';
+import { RoleIdParamDTO } from './DTO/role-id.dto';
+import { RoleCreateDTO } from './DTO/role-create.dto';
+import { RoleUpdateDTO } from './DTO/role-update.dto';
+import { FunctionQueryDTO } from './DTO/function.dto';
+import { FunctionIdParamDTO } from './DTO/function-id.dto';
+import { FunctionCreateDTO } from './DTO/function-create.dto';
+import { FunctionUpdateDTO } from './DTO/function-update.dto';
+import { IndexQueryDTO } from './DTO/index.dto';
+import { IndexIdParamDTO } from './DTO/index-id.dto';
+import { ViewQueryDTO } from './DTO/view.dto';
+import { ViewIdParamDTO } from './DTO/view-id.dto';
+import { ForeignTableQueryDTO } from './DTO/foreign-table.dto';
+import { ForeignTableIdParamDTO } from './DTO/foreign-table-id.dto';
+import { ColumnPrivilegeQueryDTO } from './DTO/column-privilege.dto';
+import { ColumnPrivilegeGrantDTO } from './DTO/column-privilege-grant.dto';
+import { ColumnPrivilegeRevokeDTO } from './DTO/column-privilege-revoke.dto';
+import { MaterializedViewQueryDTO } from './DTO/materialized-view.dto';
+import { MaterializedViewIdParamDTO } from './DTO/materialized-view-id.dto';
+import { ConfigQueryDTO } from './DTO/config.dto';
+import { PolicyQueryDTO } from './DTO/policy.dto';
+import { PolicyCreateDTO } from './DTO/policy-create.dto';
+import { PolicyUpdateDTO } from './DTO/policy-update.dto';
+import { PublicationQueryDTO } from './DTO/publication.dto';
+import { PublicationCreateDTO } from './DTO/publication-create.dto';
+import { PublicationUpdateDTO } from './DTO/publication-update.dto';
+import { TablePrivilegeQueryDTO } from './DTO/table-privilege.dto';
+import { TablePrivilegeGrantDTO } from './DTO/table-privilege-grant.dto';
+import { TablePrivilegeRevokeDTO } from './DTO/table-privilege-revoke.dto';
+import { TriggerQueryDTO } from './DTO/trigger.dto';
+import { TriggerCreateDTO } from './DTO/trigger-create.dto';
+import { TriggerUpdateDTO } from './DTO/trigger-update.dto';
+import { TriggerDeleteQueryDTO } from './DTO/trigger-delete.dto';
+import { TypeQueryDTO } from './DTO/type.dto';
+import { GeneratorQueryDTO } from './DTO/generator.dto';
 import { getGeneratorMetadata } from './lib/generators';
 import { apply as applyTypescriptTemplate } from './templates/typescript';
 import { apply as applyGoTemplate } from './templates/go';
@@ -75,25 +75,25 @@ import { Exception } from '@nuvix/core/extend/exception';
 @UseFilters(PgMetaExceptionFilter)
 export class PgMetaController {
   @Post('query')
-  async query(@Client() client: PostgresMeta, @Body() body: QueryDto) {
+  async query(@Client() client: PostgresMeta, @Body() body: QueryDTO) {
     const { data } = await client.query(body.query, false);
     return data ?? [];
   }
 
   @Post('query/format')
-  async format(@Body() body: QueryDto) {
+  async format(@Body() body: QueryDTO) {
     const { data } = await Parser.Format(body.query);
     return data;
   }
 
   @Post('query/parse')
-  async parse(@Body() body: QueryDto) {
+  async parse(@Body() body: QueryDTO) {
     const { data } = Parser.Parse(body.query);
     return data;
   }
 
   @Post('query/deparse')
-  async deparse(@Body() body: DeparseDto) {
+  async deparse(@Body() body: DeparseDTO) {
     const { data } = Parser.Deparse(body.ast);
     return data;
   }
@@ -102,7 +102,7 @@ export class PgMetaController {
 
   @Get('schemas')
   async getSchemas(
-    @Query() query: SchemaQueryDto,
+    @Query() query: SchemaQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const {
@@ -126,7 +126,7 @@ export class PgMetaController {
 
   @Post('schemas')
   async createSchema(
-    @Body() body: SchemaCreateDto,
+    @Body() body: SchemaCreateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.schemas.create(body);
@@ -135,8 +135,8 @@ export class PgMetaController {
 
   @Patch('schemas/:id')
   async updateSchema(
-    @Param() params: SchemaIdParamDto,
-    @Body() body: SchemaUpdateDto,
+    @Param() params: SchemaIdParamDTO,
+    @Body() body: SchemaUpdateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { id } = params;
@@ -146,8 +146,8 @@ export class PgMetaController {
 
   @Delete('schemas/:id')
   async deleteSchema(
-    @Param() params: SchemaIdParamDto,
-    @Query() query: SchemaDeleteQueryDto,
+    @Param() params: SchemaIdParamDTO,
+    @Query() query: SchemaDeleteQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const { id } = params;
@@ -181,7 +181,7 @@ export class PgMetaController {
 
   @Get('tables/:id')
   async getTableById(
-    @Param() params: TableIdParamDto,
+    @Param() params: TableIdParamDTO,
     @Client() client: PostgresMeta,
   ) {
     const { id } = params;
@@ -191,7 +191,7 @@ export class PgMetaController {
 
   @Post('tables')
   async createTable(
-    @Body() body: TableCreateDto,
+    @Body() body: TableCreateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.tables.create(body);
@@ -200,8 +200,8 @@ export class PgMetaController {
 
   @Patch('tables/:id')
   async updateTable(
-    @Param() params: TableIdParamDto,
-    @Body() body: TableUpdateDto,
+    @Param() params: TableIdParamDTO,
+    @Body() body: TableUpdateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { id } = params;
@@ -211,7 +211,7 @@ export class PgMetaController {
 
   @Delete('tables/:id')
   async deleteTable(
-    @Param() params: TableIdParamDto,
+    @Param() params: TableIdParamDTO,
     @Client() client: PostgresMeta,
     @Query('cascade') cascade?: boolean,
   ) {
@@ -285,7 +285,7 @@ export class PgMetaController {
 
   @Post('columns')
   async createColumn(
-    @Body() body: ColumnCreateDto,
+    @Body() body: ColumnCreateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.columns.create(body);
@@ -295,7 +295,7 @@ export class PgMetaController {
   @Patch('columns/:id')
   async updateColumn(
     @Param('id') id: string,
-    @Body() body: ColumnUpdateDto,
+    @Body() body: ColumnUpdateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.columns.update(id, body);
@@ -316,7 +316,7 @@ export class PgMetaController {
 
   @Get('extensions')
   async getExtensions(
-    @Query() query: ExtensionQueryDto,
+    @Query() query: ExtensionQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const { limit, offset } = query;
@@ -326,7 +326,7 @@ export class PgMetaController {
 
   @Get('extensions/:name')
   async getExtensionByName(
-    @Param() params: ExtensionNameParamDto,
+    @Param() params: ExtensionNameParamDTO,
     @Client() client: PostgresMeta,
   ) {
     const { name } = params;
@@ -336,7 +336,7 @@ export class PgMetaController {
 
   @Post('extensions')
   async createExtension(
-    @Body() body: ExtensionCreateDto,
+    @Body() body: ExtensionCreateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.extensions.create(body);
@@ -345,8 +345,8 @@ export class PgMetaController {
 
   @Patch('extensions/:name')
   async updateExtension(
-    @Param() params: ExtensionNameParamDto,
-    @Body() body: ExtensionUpdateDto,
+    @Param() params: ExtensionNameParamDTO,
+    @Body() body: ExtensionUpdateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { name } = params;
@@ -356,8 +356,8 @@ export class PgMetaController {
 
   @Delete('extensions/:name')
   async deleteExtension(
-    @Param() params: ExtensionNameParamDto,
-    @Query() query: ExtensionDeleteQueryDto,
+    @Param() params: ExtensionNameParamDTO,
+    @Query() query: ExtensionDeleteQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const { name } = params;
@@ -369,7 +369,7 @@ export class PgMetaController {
   /*************************** Roles *********************************/
 
   @Get('roles')
-  async getRoles(@Query() query: RoleQueryDto, @Client() client: PostgresMeta) {
+  async getRoles(@Query() query: RoleQueryDTO, @Client() client: PostgresMeta) {
     const { include_default_roles: includeDefaultRoles, limit, offset } = query;
     const { data } = await client.roles.list({
       includeDefaultRoles,
@@ -381,7 +381,7 @@ export class PgMetaController {
 
   @Get('roles/:id')
   async getRoleById(
-    @Param() params: RoleIdParamDto,
+    @Param() params: RoleIdParamDTO,
     @Client() client: PostgresMeta,
   ) {
     const { id } = params;
@@ -391,7 +391,7 @@ export class PgMetaController {
 
   @Post('roles')
   async createRole(
-    @Body() body: RoleCreateDto,
+    @Body() body: RoleCreateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.roles.create(body);
@@ -400,8 +400,8 @@ export class PgMetaController {
 
   @Patch('roles/:id')
   async updateRole(
-    @Param() params: RoleIdParamDto,
-    @Body() body: RoleUpdateDto,
+    @Param() params: RoleIdParamDTO,
+    @Body() body: RoleUpdateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { id } = params;
@@ -411,7 +411,7 @@ export class PgMetaController {
 
   @Delete('roles/:id')
   async deleteRole(
-    @Param() params: RoleIdParamDto,
+    @Param() params: RoleIdParamDTO,
     @Client() client: PostgresMeta,
   ) {
     const { id } = params;
@@ -423,7 +423,7 @@ export class PgMetaController {
 
   @Get('functions')
   async getFunctions(
-    @Query() query: FunctionQueryDto,
+    @Query() query: FunctionQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const {
@@ -445,7 +445,7 @@ export class PgMetaController {
 
   @Get('functions/:id')
   async getFunctionById(
-    @Param() params: FunctionIdParamDto,
+    @Param() params: FunctionIdParamDTO,
     @Client() client: PostgresMeta,
   ) {
     const { id } = params;
@@ -455,7 +455,7 @@ export class PgMetaController {
 
   @Post('functions')
   async createFunction(
-    @Body() body: FunctionCreateDto,
+    @Body() body: FunctionCreateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.functions.create(body);
@@ -464,8 +464,8 @@ export class PgMetaController {
 
   @Patch('functions/:id')
   async updateFunction(
-    @Param() params: FunctionIdParamDto,
-    @Body() body: FunctionUpdateDto,
+    @Param() params: FunctionIdParamDTO,
+    @Body() body: FunctionUpdateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { id } = params;
@@ -475,7 +475,7 @@ export class PgMetaController {
 
   @Delete('functions/:id')
   async deleteFunction(
-    @Param() params: FunctionIdParamDto,
+    @Param() params: FunctionIdParamDTO,
     @Client() client: PostgresMeta,
   ) {
     const { id } = params;
@@ -487,7 +487,7 @@ export class PgMetaController {
 
   @Get('indexes')
   async getIndexes(
-    @Query() query: IndexQueryDto,
+    @Query() query: IndexQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const {
@@ -509,7 +509,7 @@ export class PgMetaController {
 
   @Get('indexes/:id')
   async getIndexById(
-    @Param() params: IndexIdParamDto,
+    @Param() params: IndexIdParamDTO,
     @Client() client: PostgresMeta,
   ) {
     const { id } = params;
@@ -520,7 +520,7 @@ export class PgMetaController {
   /*************************** Views *********************************/
 
   @Get('views')
-  async getViews(@Query() query: ViewQueryDto, @Client() client: PostgresMeta) {
+  async getViews(@Query() query: ViewQueryDTO, @Client() client: PostgresMeta) {
     const {
       include_system_schemas: includeSystemSchemas,
       included_schemas: includedSchemas,
@@ -542,7 +542,7 @@ export class PgMetaController {
 
   @Get('views/:id')
   async getViewById(
-    @Param() params: ViewIdParamDto,
+    @Param() params: ViewIdParamDTO,
     @Client() client: PostgresMeta,
   ) {
     const { id } = params;
@@ -554,7 +554,7 @@ export class PgMetaController {
 
   @Get('foreign-tables')
   async getForeignTables(
-    @Query() query: ForeignTableQueryDto,
+    @Query() query: ForeignTableQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const { limit, offset, include_columns: includeColumns } = query;
@@ -568,7 +568,7 @@ export class PgMetaController {
 
   @Get('foreign-tables/:id')
   async getForeignTableById(
-    @Param() params: ForeignTableIdParamDto,
+    @Param() params: ForeignTableIdParamDTO,
     @Client() client: PostgresMeta,
   ) {
     const { id } = params;
@@ -580,7 +580,7 @@ export class PgMetaController {
 
   @Get('column-privileges')
   async getColumnPrivileges(
-    @Query() query: ColumnPrivilegeQueryDto,
+    @Query() query: ColumnPrivilegeQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const {
@@ -602,7 +602,7 @@ export class PgMetaController {
 
   @Post('column-privileges')
   async grantColumnPrivileges(
-    @Body() body: ColumnPrivilegeGrantDto[],
+    @Body() body: ColumnPrivilegeGrantDTO[],
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.columnPrivileges.grant(body);
@@ -611,7 +611,7 @@ export class PgMetaController {
 
   @Delete('column-privileges')
   async revokeColumnPrivileges(
-    @Body() body: ColumnPrivilegeRevokeDto[],
+    @Body() body: ColumnPrivilegeRevokeDTO[],
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.columnPrivileges.revoke(body);
@@ -622,7 +622,7 @@ export class PgMetaController {
 
   @Get('materialized-views')
   async getMaterializedViews(
-    @Query() query: MaterializedViewQueryDto,
+    @Query() query: MaterializedViewQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const {
@@ -644,7 +644,7 @@ export class PgMetaController {
 
   @Get('materialized-views/:id')
   async getMaterializedViewById(
-    @Param() params: MaterializedViewIdParamDto,
+    @Param() params: MaterializedViewIdParamDTO,
     @Client() client: PostgresMeta,
   ) {
     const { id } = params;
@@ -656,7 +656,7 @@ export class PgMetaController {
 
   @Get('config')
   async getConfig(
-    @Query() query: ConfigQueryDto,
+    @Query() query: ConfigQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const { limit, offset } = query;
@@ -674,7 +674,7 @@ export class PgMetaController {
 
   @Get('policies')
   async getPolicies(
-    @Query() query: PolicyQueryDto,
+    @Query() query: PolicyQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const {
@@ -702,7 +702,7 @@ export class PgMetaController {
 
   @Post('policies')
   async createPolicy(
-    @Body() body: PolicyCreateDto,
+    @Body() body: PolicyCreateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.policies.create(body);
@@ -712,7 +712,7 @@ export class PgMetaController {
   @Patch('policies/:id')
   async updatePolicy(
     @Param('id') id: number,
-    @Body() body: PolicyUpdateDto,
+    @Body() body: PolicyUpdateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.policies.update(id, body);
@@ -729,7 +729,7 @@ export class PgMetaController {
 
   @Get('publications')
   async getPublications(
-    @Query() query: PublicationQueryDto,
+    @Query() query: PublicationQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const { limit, offset } = query;
@@ -748,7 +748,7 @@ export class PgMetaController {
 
   @Post('publications')
   async createPublication(
-    @Body() body: PublicationCreateDto,
+    @Body() body: PublicationCreateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.publications.create(body);
@@ -758,7 +758,7 @@ export class PgMetaController {
   @Patch('publications/:id')
   async updatePublication(
     @Param('id') id: number,
-    @Body() body: PublicationUpdateDto,
+    @Body() body: PublicationUpdateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.publications.update(id, body);
@@ -778,7 +778,7 @@ export class PgMetaController {
 
   @Get('table-privileges')
   async getTablePrivileges(
-    @Query() query: TablePrivilegeQueryDto,
+    @Query() query: TablePrivilegeQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const {
@@ -800,7 +800,7 @@ export class PgMetaController {
 
   @Post('table-privileges')
   async grantTablePrivileges(
-    @Body() body: TablePrivilegeGrantDto[],
+    @Body() body: TablePrivilegeGrantDTO[],
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.tablePrivileges.grant(body);
@@ -809,7 +809,7 @@ export class PgMetaController {
 
   @Delete('table-privileges')
   async revokeTablePrivileges(
-    @Body() body: TablePrivilegeRevokeDto[],
+    @Body() body: TablePrivilegeRevokeDTO[],
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.tablePrivileges.revoke(body);
@@ -820,7 +820,7 @@ export class PgMetaController {
 
   @Get('triggers')
   async getTriggers(
-    @Query() query: TriggerQueryDto,
+    @Query() query: TriggerQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const {
@@ -851,7 +851,7 @@ export class PgMetaController {
 
   @Post('triggers')
   async createTrigger(
-    @Body() body: TriggerCreateDto,
+    @Body() body: TriggerCreateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.triggers.create(body);
@@ -861,7 +861,7 @@ export class PgMetaController {
   @Patch('triggers/:id')
   async updateTrigger(
     @Param('id') id: number,
-    @Body() body: TriggerUpdateDto,
+    @Body() body: TriggerUpdateDTO,
     @Client() client: PostgresMeta,
   ) {
     const { data } = await client.triggers.update(id, body);
@@ -871,7 +871,7 @@ export class PgMetaController {
   @Delete('triggers/:id')
   async deleteTrigger(
     @Param('id') id: number,
-    @Query() query: TriggerDeleteQueryDto,
+    @Query() query: TriggerDeleteQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const { cascade } = query;
@@ -882,7 +882,7 @@ export class PgMetaController {
   /*************************** Types *********************************/
 
   @Get('types')
-  async getTypes(@Query() query: TypeQueryDto, @Client() client: PostgresMeta) {
+  async getTypes(@Query() query: TypeQueryDTO, @Client() client: PostgresMeta) {
     const {
       include_array_types: includeArrayTypes,
       include_system_schemas: includeSystemSchemas,
@@ -906,7 +906,7 @@ export class PgMetaController {
 
   @Get('generators/typescript')
   async generateTypescript(
-    @Query() query: GeneratorQueryDto,
+    @Query() query: GeneratorQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const {
@@ -931,7 +931,7 @@ export class PgMetaController {
 
   @Get('generators/go')
   async generateGo(
-    @Query() query: GeneratorQueryDto,
+    @Query() query: GeneratorQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const { included_schemas, excluded_schemas } = query;
@@ -948,7 +948,7 @@ export class PgMetaController {
 
   @Get('generators/swift')
   async generateSwift(
-    @Query() query: GeneratorQueryDto,
+    @Query() query: GeneratorQueryDTO,
     @Client() client: PostgresMeta,
   ) {
     const { included_schemas, excluded_schemas, access_control } = query;

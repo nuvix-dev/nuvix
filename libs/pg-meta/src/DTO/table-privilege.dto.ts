@@ -2,7 +2,7 @@ import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { TransformStringToBoolean } from '@nuvix/core/validators';
 
-export class TablePrivilegeQueryDto {
+export class TablePrivilegeQueryDTO {
   @IsOptional()
   @IsBoolean()
   @TransformStringToBoolean()

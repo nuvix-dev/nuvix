@@ -16,11 +16,11 @@ pg.types.setTypeParser(pg.types.builtins.DATE, x => x);
 pg.types.setTypeParser(pg.types.builtins.INTERVAL, x => x);
 pg.types.setTypeParser(pg.types.builtins.TIMESTAMP, x => x);
 pg.types.setTypeParser(pg.types.builtins.TIMESTAMPTZ, x => x);
-pg.types.setTypeParser(1115, parseArray); // _timestamp
-pg.types.setTypeParser(1182, parseArray); // _date
-pg.types.setTypeParser(1185, parseArray); // _timestamptz
-pg.types.setTypeParser(600, x => x); // point
-pg.types.setTypeParser(1017, x => x); // _point
+pg.types.setTypeParser(1115 as any, parseArray); // _timestamp
+pg.types.setTypeParser(1182 as any, parseArray); // _date
+pg.types.setTypeParser(1185 as any, parseArray); // _timestamptz
+pg.types.setTypeParser(600 as any, x => x); // point
+pg.types.setTypeParser(1017 as any, x => x); // _point
 
 // Ensure any query will have an appropriate error handler on the pool to prevent connections errors
 // to bubble up all the stack eventually killing the server

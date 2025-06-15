@@ -1,5 +1,5 @@
 import { HttpException } from '@nestjs/common';
-import { Status as MessageStatus } from '../messaging/status';
+import { MessageStatus } from '../messaging/status';
 
 export class Exception extends HttpException {
   static readonly GENERAL_UNKNOWN = 'general_unknown';

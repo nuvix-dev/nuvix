@@ -1,9 +1,9 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
-import { CreateProjectDTO } from './dto/create-project.dto';
+import { CreateProjectDTO } from './DTO/create-project.dto';
 import {
   UpdateProjectDTO,
   UpdateProjectTeamDTO,
-} from './dto/update-project.dto';
+} from './DTO/update-project.dto';
 import { Exception } from '@nuvix/core/extend/exception';
 import {
   API_KEY_DYNAMIC,
@@ -11,9 +11,7 @@ import {
   APP_MAX_COUNT,
   APP_VERSION_STABLE,
   CACHE,
-  DB_FOR_CONSOLE,
-  DB_FOR_PROJECT,
-  GET_PROJECT_DB,
+  DB_FOR_PLATFORM,
   GET_PROJECT_PG,
   POOLS,
 } from '@nuvix/utils/constants';
@@ -24,18 +22,18 @@ import authMethods, {
 import { oAuthProviders } from '@nuvix/core/config/authProviders';
 import { defaultSmtpConfig } from '@nuvix/core/config/smtp';
 import { services } from '@nuvix/core/config/services';
-import { UpdateProjectServiceDTO } from './dto/project-service.dto';
-import { ProjectApiStatusDTO } from './dto/project-api.dto';
+import { UpdateProjectServiceDTO } from './DTO/project-service.dto';
+import { ProjectApiStatusDTO } from './DTO/project-api.dto';
 import apis from '@nuvix/core/config/apis';
-import { oAuth2DTO } from './dto/oauth2.dto';
-import { AuthMockNumbersDTO } from './dto/project-auth.dto';
-import { CreateWebhookDTO, UpdateWebhookDTO } from './dto/webhook.dto';
+import { oAuth2DTO } from './DTO/oauth2.dto';
+import { AuthMockNumbersDTO } from './DTO/project-auth.dto';
+import { CreateWebhookDTO, UpdateWebhookDTO } from './DTO/webhook.dto';
 import { randomBytes } from 'crypto';
-import { CreateKeyDTO, UpdateKeyDTO } from './dto/keys.dto';
+import { CreateKeyDTO, UpdateKeyDTO } from './DTO/keys.dto';
 import { JwtService } from '@nestjs/jwt';
-import { CreateJwtDTO } from './dto/create-jwt.dto';
-import { CreatePlatformDTO, UpdatePlatformDTO } from './dto/platform.dto';
-import { SmtpTestsDTO, UpdateSmtpDTO } from './dto/smtp.dto';
+import { CreateJwtDTO } from './DTO/create-jwt.dto';
+import { CreatePlatformDTO, UpdatePlatformDTO } from './DTO/platform.dto';
+import { SmtpTestsDTO, UpdateSmtpDTO } from './DTO/smtp.dto';
 import {
   Database,
   Document,
@@ -61,7 +59,7 @@ import { Cache } from '@nuvix/cache';
 @Injectable()
 export class ProjectService {
   constructor(
-    @Inject(DB_FOR_CONSOLE) private readonly db: Database,
+    @Inject(DB_FOR_PLATFORM) private readonly db: Database,
     @Inject(POOLS) private readonly getPool: PoolStoreFn,
     @Inject(GET_PROJECT_PG) private readonly getProjectPg: GetProjectPG,
     @Inject(CACHE) private readonly cache: Cache,

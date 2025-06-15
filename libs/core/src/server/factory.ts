@@ -43,6 +43,9 @@ type IEntryNestModule =
   | ForwardReference
   | Promise<IEntryNestModule>;
 
+/**
+ * @publicApi
+ */
 export class NuvixFactoryStatic {
   private readonly logger = new Logger('NestFactory', {
     timestamp: true,
@@ -104,6 +107,7 @@ export class NuvixFactoryStatic {
       httpServer,
     );
 
+    // #CUSTOM: added NuvixApplication instead
     const instance = new NuvixApplication(
       container,
       httpServer,
@@ -313,6 +317,7 @@ export class NuvixFactoryStatic {
     this.autoFlushLogs = autoFlushLogs ?? true;
   }
 
+  // #CUSTOM: used fastify instead of express
   private createHttpAdapter<T = any>(httpServer?: T): AbstractHttpAdapter {
     const { FastifyAdapter } = loadAdapter(
       '@nestjs/platform-fastify',
@@ -378,4 +383,17 @@ export class NuvixFactoryStatic {
   }
 }
 
+/**
+ * Use NuvixFactory to create an application instance.
+ *
+ * ### Specifying an entry module
+ *
+ * Pass the required *root module* for the application via the module parameter.
+ * By convention, it is usually called `ApplicationModule`.  Starting with this
+ * module, Nest assembles the dependency graph and begins the process of
+ * Dependency Injection and instantiates the classes needed to launch your
+ * application.
+ *
+ * @publicApi
+ */
 export const NuvixFactory = new NuvixFactoryStatic();

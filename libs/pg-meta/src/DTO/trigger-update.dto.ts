@@ -1,6 +1,6 @@
 import { IsIn, IsOptional, IsString, IsArray } from 'class-validator';
 
-export class TriggerUpdateDto {
+export class TriggerUpdateDTO {
   @IsOptional()
   @IsString()
   name?: string;

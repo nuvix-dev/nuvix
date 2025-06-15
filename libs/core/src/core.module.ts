@@ -5,7 +5,7 @@ import IORedis from 'ioredis';
 
 // Services
 import {
-  DB_FOR_CONSOLE,
+  DB_FOR_PLATFORM,
   DB_FOR_PROJECT,
   GEO_DB,
   CACHE_DB,
@@ -35,13 +35,13 @@ import {
 } from '@nuvix/utils/constants';
 import { Database, MariaDB, Structure, PostgreDB } from '@nuvix/database';
 import { Context, DataSource } from '@nuvix/pg';
-import { filters, formats } from './resolvers/db.resolver';
 import { CountryResponse, Reader } from 'maxmind';
 import { Cache, RedisAdapter } from '@nuvix/cache';
 import { ProjectUsageService } from './project-usage.service';
 import { Adapter } from '@nuvix/database';
 import { Pool as PgPool, PoolClient } from 'pg';
 import { createHash } from 'crypto';
+import { filters, formats } from '@nuvix/utils/database';
 
 Object.keys(filters).forEach(key => {
   Database.addFilter(key, {
@@ -67,7 +67,7 @@ export interface PoolStoreFn {
   (name: 'root', options?: Partial<PoolOptions>): Promise<PgPool>;
 }
 
-export type GetProjectDbFn = (pool: PgPool, projectId: string) => Database;
+export type GetProjectDbFn = (pool: PoolClient, projectId: string) => Database;
 
 export type GetProjectPG = (
   client: PoolClient,
@@ -120,7 +120,7 @@ export type GetProjectPG = (
 
           const newPool = new PgPool({
             ...databaseOptions,
-            max: options.max ?? 40,
+            max: options.max ?? 10,
             idleTimeoutMillis: 30000, // 30 seconds
             statement_timeout: 30000, // 30 seconds
             query_timeout: 30000, // 30 seconds
@@ -178,7 +178,7 @@ export type GetProjectPG = (
       inject: [CACHE_DB],
     },
     {
-      provide: DB_FOR_CONSOLE,
+      provide: DB_FOR_PLATFORM,
       useFactory: async (cache: Cache) => {
         const adapter = new MariaDB({
           connection: {
@@ -226,7 +226,7 @@ export type GetProjectPG = (
     {
       provide: GET_PROJECT_DB,
       useFactory: (cache: Cache) => {
-        return (pool: PgPool, projectId: string) => {
+        return (pool: PoolClient, projectId: string) => {
           const adapter = new PostgreDB({
             connection: pool,
           });
@@ -278,7 +278,7 @@ export type GetProjectPG = (
   ],
   exports: [
     POOLS,
-    DB_FOR_CONSOLE,
+    DB_FOR_PLATFORM,
     DB_FOR_PROJECT,
     GET_PROJECT_DB,
     GET_PROJECT_PG,

@@ -79,9 +79,9 @@ export class AccountController {
   @ResModel({ type: Models.USER })
   async updateEmail(
     @User() user: Document,
-    @Body() updateEmailDto: UpdateEmailDTO,
+    @Body() updateEmailDTO: UpdateEmailDTO,
   ) {
-    return await this.accountService.updateEmail(user, updateEmailDto);
+    return await this.accountService.updateEmail(user, updateEmailDTO);
   }
 
   @Patch('name')
@@ -94,9 +94,9 @@ export class AccountController {
   @ResModel({ type: Models.USER })
   async updatePhone(
     @User() user: Document,
-    @Body() updatePhoneDto: UpdatePhoneDTO,
+    @Body() updatePhoneDTO: UpdatePhoneDTO,
   ) {
-    await this.accountService.updatePhone(user, updatePhoneDto);
+    await this.accountService.updatePhone(user, updatePhoneDTO);
   }
 
   @Patch('password')

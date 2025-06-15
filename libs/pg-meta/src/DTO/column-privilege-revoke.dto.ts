@@ -1,6 +1,6 @@
 import { IsString } from 'class-validator';
 
-export class ColumnPrivilegeRevokeDto {
+export class ColumnPrivilegeRevokeDTO {
   @IsString()
   column_id: string;
 

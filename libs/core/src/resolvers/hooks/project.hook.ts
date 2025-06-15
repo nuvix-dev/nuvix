@@ -4,8 +4,9 @@ import ParamsHelper from '@nuvix/core/helper/params.helper';
 
 import {
   APP_POSTGRES_PASSWORD,
-  AUTH_SCHEMA_DB,
-  DB_FOR_CONSOLE,
+  CORE_SCHEMA,
+  CORE_SCHEMA_DB,
+  DB_FOR_PLATFORM,
   GET_PROJECT_DB,
   GET_PROJECT_PG,
   POOLS,
@@ -13,6 +14,7 @@ import {
   PROJECT_DB,
   PROJECT_PG,
   PROJECT_POOL,
+  PROJECT_POOL_CLIENT,
 } from '@nuvix/utils/constants';
 import { Hook } from '../../server/hooks/interface';
 import type {
@@ -29,9 +31,9 @@ import { DataSource } from '@nuvix/pg';
 export class ProjectHook implements Hook {
   private readonly logger = new Logger(ProjectHook.name);
   constructor(
-    @Inject(DB_FOR_CONSOLE) private readonly db: Database,
+    @Inject(DB_FOR_PLATFORM) private readonly db: Database,
     @Inject(POOLS) private readonly getPool: PoolStoreFn,
-    @Inject(GET_PROJECT_PG) private readonly gerProjectPg: GetProjectPG,
+    @Inject(GET_PROJECT_PG) private readonly getProjectPg: GetProjectPG,
     @Inject(GET_PROJECT_DB)
     private readonly getProjectDb: GetProjectDbFn,
   ) {}
@@ -71,14 +73,16 @@ export class ProjectHook implements Hook {
           password: APP_POSTGRES_PASSWORD,
           port: dbOptions.port,
           host: dbOptions.host,
-          max: 30,
+          max: 10,
         });
+        const client = await pool.connect();
         req[PROJECT_POOL] = pool;
-        req[PROJECT_DB] = this.getProjectDb(pool, project.getId());
-        req[PROJECT_PG] = this.gerProjectPg(await pool.connect());
-        const authDB = this.getProjectDb(pool, project.getId());
-        authDB.setDatabase('auth');
-        req[AUTH_SCHEMA_DB] = authDB;
+        req[PROJECT_POOL_CLIENT] = client;
+        req[PROJECT_DB] = this.getProjectDb(client, project.getId());
+        req[PROJECT_PG] = this.getProjectPg(client);
+        const coreDatabase = this.getProjectDb(client, project.getId());
+        coreDatabase.setDatabase(CORE_SCHEMA);
+        req[CORE_SCHEMA_DB] = coreDatabase;
       } catch (e) {
         this.logger.error('Something went wrong while connecting database.', e);
         throw new Exception(Exception.GENERAL_SERVER_ERROR);

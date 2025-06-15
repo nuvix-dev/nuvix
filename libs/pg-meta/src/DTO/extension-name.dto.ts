@@ -1,6 +1,6 @@
 import { IsString } from 'class-validator';
 
-export class ExtensionNameParamDto {
+export class ExtensionNameParamDTO {
   @IsString()
   name: string;
 }

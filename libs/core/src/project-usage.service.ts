@@ -3,7 +3,6 @@ import { Redis } from 'ioredis';
 import { Queue } from 'bullmq';
 import {
   CACHE_DB,
-  DB_FOR_PROJECT,
   GET_PROJECT_DB,
   METRIC_BUCKET_ID_FILES,
   METRIC_BUCKET_ID_FILES_STORAGE,
@@ -24,19 +23,17 @@ import {
   METRIC_SESSIONS,
   METRIC_TEAMS,
   METRIC_USERS,
+  POOLS,
 } from '@nuvix/utils/constants';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
+import { GetProjectDbFn, PoolStoreFn } from './core.module';
 
 @Injectable()
 export class ProjectUsageService {
   private readonly logger = new Logger(ProjectUsageService.name);
 
-  constructor(
-    @Inject(CACHE_DB) private readonly cacheDb: Redis,
-    @Inject(GET_PROJECT_DB)
-    private readonly getProjectDb: (projectId: string) => Promise<Database>,
-  ) {}
+  constructor(@Inject(CACHE_DB) private readonly cacheDb: Redis) {}
 
   async addMetric(
     metric: string,
@@ -76,7 +73,7 @@ export class ProjectUsageService {
       );
       if (Object.keys(usageData).length > 0) {
         try {
-          const projectDb = await this.getProjectDb(projectId);
+          // const projectDb = await this.getProjectDb(projectId);
 
           for (const [key, value] of Object.entries(usageData)) {
             if (!value) continue;
@@ -90,42 +87,42 @@ export class ProjectUsageService {
               const time = period === 'inf' ? null : new Date().toISOString();
               const id = `${period}_${key}_${projectId}`;
 
-              try {
-                await projectDb.createDocument(
-                  'stats',
-                  new Document({
-                    $id: id,
-                    period,
-                    time,
-                    metric: key,
-                    value: Number(value),
-                    region: process.env._APP_REGION || 'default',
-                  }),
-                );
-              } catch (error) {
-                if (error instanceof DuplicateException) {
-                  const v = Number(value ?? 0);
-                  if (v < 0) {
-                    await projectDb.decreaseDocumentAttribute(
-                      'stats',
-                      id,
-                      'value',
-                      Math.abs(v),
-                    );
-                  } else {
-                    await projectDb.increaseDocumentAttribute(
-                      'stats',
-                      id,
-                      'value',
-                      v,
-                    );
-                  }
-                } else {
-                  this.logger.error(
-                    `Failed to save metric ${key} for ${projectId}: ${error.message}`,
-                  );
-                }
-              }
+              // try {
+              //   await projectDb.createDocument(
+              //     'stats',
+              //     new Document({
+              //       $id: id,
+              //       period,
+              //       time,
+              //       metric: key,
+              //       value: Number(value),
+              //       region: process.env._APP_REGION || 'default',
+              //     }),
+              //   );
+              // } catch (error) {
+              //   if (error instanceof DuplicateException) {
+              //     const v = Number(value ?? 0);
+              //     if (v < 0) {
+              //       await projectDb.decreaseDocumentAttribute(
+              //         'stats',
+              //         id,
+              //         'value',
+              //         Math.abs(v),
+              //       );
+              //     } else {
+              //       await projectDb.increaseDocumentAttribute(
+              //         'stats',
+              //         id,
+              //         'value',
+              //         v,
+              //       );
+              //     }
+              //   } else {
+              //     this.logger.error(
+              //       `Failed to save metric ${key} for ${projectId}: ${error.message}`,
+              //     );
+              //   }
+              // }
             }
           }
 

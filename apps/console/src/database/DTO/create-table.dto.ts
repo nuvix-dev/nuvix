@@ -13,7 +13,7 @@ import {
   IsDefined,
 } from 'class-validator';
 
-export class ValidationDto {
+export class ValidationDTO {
   @IsOptional()
   @IsNumber()
   min?: number;
@@ -27,7 +27,7 @@ export class ValidationDto {
   regex?: string;
 }
 
-export class ReferencesDto {
+export class ReferencesDTO {
   @IsString()
   schema: string;
 
@@ -46,7 +46,7 @@ export class ReferencesDto {
   onUpdate?: 'CASCADE' | 'SET NULL' | 'RESTRICT' | 'NO ACTION';
 }
 
-export class ColumnDto {
+export class ColumnDTO {
   @IsString()
   name: string;
 
@@ -103,16 +103,16 @@ export class ColumnDto {
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => ValidationDto)
-  validation?: ValidationDto;
+  @Type(() => ValidationDTO)
+  validation?: ValidationDTO;
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => ReferencesDto)
-  references?: ReferencesDto;
+  @Type(() => ReferencesDTO)
+  references?: ReferencesDTO;
 }
 
-export class IndexDto {
+export class IndexDTO {
   @IsString()
   name: string;
 
@@ -136,13 +136,13 @@ export class IndexDto {
   concurrently?: boolean;
 }
 
-export class StorageParametersDto {
+export class StorageParametersDTO {
   @IsOptional()
   @IsNumber()
   fillfactor?: number;
 }
 
-export class PartitionItemDto {
+export class PartitionItemDTO {
   @IsString()
   name: string;
 
@@ -154,7 +154,7 @@ export class PartitionItemDto {
   parent?: string;
 }
 
-export class PartitionDto {
+export class PartitionDTO {
   @IsEnum(['RANGE', 'LIST', 'HASH'])
   strategy: 'RANGE' | 'LIST' | 'HASH';
 
@@ -163,11 +163,11 @@ export class PartitionDto {
 
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => PartitionItemDto)
-  partitions: PartitionItemDto[];
+  @Type(() => PartitionItemDTO)
+  partitions: PartitionItemDTO[];
 }
 
-export class CreateTableDto {
+export class CreateTableDTO {
   @IsString()
   @IsNotEmpty()
   $id: string;
@@ -199,13 +199,13 @@ export class CreateTableDto {
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => StorageParametersDto)
-  storage_parameters?: StorageParametersDto;
+  @Type(() => StorageParametersDTO)
+  storage_parameters?: StorageParametersDTO;
 
   @IsOptional()
   @ValidateNested()
-  @Type(() => PartitionDto)
-  partition?: PartitionDto;
+  @Type(() => PartitionDTO)
+  partition?: PartitionDTO;
 
   @IsOptional()
   @IsArray()
@@ -215,12 +215,12 @@ export class CreateTableDto {
   @IsDefined()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => ColumnDto)
-  columns: ColumnDto[];
+  @Type(() => ColumnDTO)
+  columns: ColumnDTO[];
 
   @IsDefined()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => IndexDto)
-  indexes: IndexDto[];
+  @Type(() => IndexDTO)
+  indexes: IndexDTO[];
 }

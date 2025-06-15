@@ -3,8 +3,8 @@ import { DEFAULT_SYSTEM_SCHEMAS } from './constants';
 import { filterByList } from './helpers';
 import { columnPrivilegesSql } from './sql/index';
 import { PostgresMetaResult, PostgresColumnPrivileges } from './types';
-import { ColumnPrivilegeGrantDto } from '../DTO/column-privilege-grant.dto';
-import { ColumnPrivilegeRevokeDto } from '../DTO/column-privilege-revoke.dto';
+import { ColumnPrivilegeGrantDTO } from '../DTO/column-privilege-grant.dto';
+import { ColumnPrivilegeRevokeDTO } from '../DTO/column-privilege-revoke.dto';
 
 export default class PostgresMetaColumnPrivileges {
   query: (sql: string) => Promise<PostgresMetaResult<any>>;
@@ -49,7 +49,7 @@ from column_privileges
   }
 
   async grant(
-    grants: ColumnPrivilegeGrantDto[],
+    grants: ColumnPrivilegeGrantDTO[],
   ): Promise<PostgresMetaResult<PostgresColumnPrivileges[]>> {
     let sql = `
 do $$
@@ -93,7 +93,7 @@ where column_id in (${columnIds.map(literal).join(',')})
   }
 
   async revoke(
-    revokes: ColumnPrivilegeRevokeDto[],
+    revokes: ColumnPrivilegeRevokeDTO[],
   ): Promise<PostgresMetaResult<PostgresColumnPrivileges[]>> {
     let sql = `
 do $$

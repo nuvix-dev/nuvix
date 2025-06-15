@@ -2501,7 +2501,7 @@ export class AccountService {
     response,
     locale,
     project,
-    authDatabase,
+    db,
   }: {
     user: Document;
     input: CreateSessionDTO;
@@ -2509,10 +2509,10 @@ export class AccountService {
     response: NuvixRes;
     locale: LocaleTranslator;
     project: Document;
-    authDatabase: Database;
+    db: Database;
   }) {
     const userFromRequest = await Authorization.skip(
-      async () => await authDatabase.getDocument('users', input.userId),
+      async () => await db.getDocument('users', input.userId),
     );
 
     if (userFromRequest.isEmpty()) {
@@ -2577,7 +2577,7 @@ export class AccountService {
 
     Authorization.setRole(Role.user(user.getId()).toString());
 
-    const createdSession = await authDatabase.createDocument(
+    const createdSession = await db.createDocument(
       'sessions',
       session.setAttribute('$permissions', [
         Permission.read(Role.user(user.getId())),
@@ -2587,10 +2587,9 @@ export class AccountService {
     );
 
     await Authorization.skip(
-      async () =>
-        await authDatabase.deleteDocument('tokens', verifiedToken.getId()),
+      async () => await db.deleteDocument('tokens', verifiedToken.getId()),
     );
-    await authDatabase.purgeCachedDocument('users', user.getId());
+    await db.purgeCachedDocument('users', user.getId());
 
     // Magic URL + Email OTP
     if (
@@ -2605,7 +2604,7 @@ export class AccountService {
     }
 
     try {
-      await authDatabase.updateDocument('users', user.getId(), user);
+      await db.updateDocument('users', user.getId(), user);
     } catch (error) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
@@ -2620,7 +2619,7 @@ export class AccountService {
     const isSessionAlertsEnabled =
       project.getAttribute('auths', {})['sessionAlerts'] ?? false;
 
-    const sessionCount = await authDatabase.count('sessions', [
+    const sessionCount = await db.count('sessions', [
       Query.equal('userId', [user.getId()]),
     ]);
     const isNotFirstSession = sessionCount !== 1;

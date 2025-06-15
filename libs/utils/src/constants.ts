@@ -127,9 +127,9 @@ export const PROJECT = 'project';
 export const USER = 'user';
 export const SESSION = 'session';
 export const POOLS = 'pools';
-/**@deprecated use {DB_FOR_PLATFORM} instead */
-export const DB_FOR_CONSOLE = Symbol('dbForConsole');
 export const DB_FOR_PLATFORM = Symbol('dbForPlatform');
+/**@deprecated use {DB_FOR_PLATFORM} instead */
+export const DB_FOR_CONSOLE = DB_FOR_PLATFORM;
 /**@deprecated use {PROJECT_DB} and upgrade to new setup*/
 export const DB_FOR_PROJECT = 'dbForProject';
 export const GET_PROJECT_DB = Symbol('getProjectDb');
@@ -137,6 +137,7 @@ export const GET_PROJECT_PG = Symbol('getProjectPostgreDb');
 export const PROJECT_DB = Symbol('project-db');
 export const PROJECT_PG = Symbol('project-pg');
 export const PROJECT_POOL = Symbol('project-pool');
+export const PROJECT_POOL_CLIENT = Symbol('project-pool-client');
 export const GEO_DB = Symbol('geoDb');
 export const CACHE_DB = Symbol('cacheDb');
 export const CACHE = 'cache';
@@ -147,21 +148,14 @@ export const SCOPES = 'scopes';
 export const HOOKS = 'hooks';
 export const APP_COLOR = '#f67520';
 
-export const AUTH_SCHEMA_DB = Symbol('authSchemaDb');
-export const STORAGE_SCHEMA_DB = Symbol('storageSchemaDb');
-export const FUNCTIONS_SCHEMA_DB = Symbol('functionsSchemaDb');
-export const MESSAGING_SCHEMA_DB = Symbol('messagingSchemaDb');
+export const CORE_SCHEMA_DB = Symbol('coreSchemaDb');
 export const CURRENT_SCHEMA_DB = Symbol('currentSchemaDb');
 export const CURRENT_SCHEMA_PG = Symbol('currentSchemaPg');
 
-export const INTERNAL_SCHEMAS = [
-  'auth',
-  'storage',
-  'functions',
-  'messaging',
-] as const;
+export const INTERNAL_SCHEMAS = ['system', 'core'] as const;
 
 export const SYSTEM_SCHEMA = 'system' as const;
+export const CORE_SCHEMA = 'core' as const;
 
 const allowedHeaders = [
   'Content-Type',

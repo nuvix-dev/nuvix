@@ -8,7 +8,7 @@ import type { PoolStoreFn, GetProjectDbFn } from '@nuvix/core/core.module';
 import {
   POOLS,
   GET_PROJECT_DB,
-  DB_FOR_CONSOLE,
+  DB_FOR_PLATFORM,
   APP_POSTGRES_HOST,
   APP_POSTGRES_PORT,
   APP_POSTGRES_PASSWORD,
@@ -16,6 +16,7 @@ import {
   INTERNAL_SCHEMAS,
   SYSTEM_SCHEMA,
   APP_INTERNAL_POOL_API,
+  CORE_SCHEMA,
 } from '@nuvix/utils/constants';
 import collections from '@nuvix/core/collections';
 import { DataSource } from '@nuvix/pg';
@@ -28,7 +29,7 @@ export class ProjectQueue extends Queue {
   constructor(
     @Inject(POOLS) private readonly getPool: PoolStoreFn,
     @Inject(GET_PROJECT_DB) private readonly getProjectDb: GetProjectDbFn,
-    @Inject(DB_FOR_CONSOLE) private readonly db: Database,
+    @Inject(DB_FOR_PLATFORM) private readonly db: Database,
   ) {
     super();
   }
@@ -41,6 +42,7 @@ export class ProjectQueue extends Queue {
       case 'init':
         const project = new Document(job.data.project as object);
         await this.initProject(project);
+        return; // Add explicit return to prevent fall-through
       default: // noop
     }
   }
@@ -48,20 +50,34 @@ export class ProjectQueue extends Queue {
   // Temp Setup (until infrastructure setup)
   private async initProject(project: Document): Promise<void> {
     const dbName = 'postgres';
-    const pool = await this.getPool('root', { max: 10 });
-    const client = await pool.connect();
+    let pool: any = null;
+    let client: any = null;
+    let db: any = null;
 
     const projectHost = APP_POSTGRES_HOST;
     const projectPort = APP_POSTGRES_PORT;
     const projectDatabase = dbName;
 
     try {
+      // Check if project is already initialized
+      if (project.getAttribute('status') === 'active') {
+        this.logger.log(
+          `Project ${project.getId()} is already initialized, skipping...`,
+        );
+        return;
+      }
+
+      // Get pool with retry mechanism
+      pool = await this.getPool('root', { max: 10 });
+      client = await pool.connect();
+
+      // Update project document with database configuration (temporarily before collections)
       project = await this.db.updateDocument(
         'projects',
         project.getId(),
         project
           .setAttribute('database', {
-            ...project.getAttribute('database'),
+            ...project.getAttribute('database', {}),
             password: APP_POSTGRES_PASSWORD,
             name: dbName,
             host: APP_POSTGRES_HOST,
@@ -71,99 +87,115 @@ export class ProjectQueue extends Queue {
           })
           .setAttribute('status', 'active'),
       );
-
+      await this.db.clearCache();
+      // Initialize data source
       const dataSource = new DataSource(client);
       try {
         await dataSource.init();
-      } catch (e) {
-        this.logger.error(e);
-        // throw new Error('Failed to initialize data source');
+        this.logger.log(
+          `Data source initialized for project ${project.getId()}`,
+        );
+      } catch (error) {
+        this.logger.error(`Failed to initialize data source: ${error.message}`);
+        throw new Exception('Failed to initialize data source');
       }
 
+      // Create core schema
       try {
         await dataSource.createSchema(
-          'auth',
+          CORE_SCHEMA,
           'document',
-          'This schema is used to store and manage authentication data and documents.',
+          'This schema is used to store and manage core data and documents.',
         );
-
-        await dataSource.createSchema(
-          'storage',
-          'document',
-          'This schema is used to store and manage file storage data and documents.',
+        this.logger.log(
+          `Schema ${CORE_SCHEMA} created successfully for project ${project.getId()}`,
         );
-
-        await dataSource.createSchema(
-          'functions',
-          'document',
-          'This schema is used to store and manage serverless functions and their configurations.',
+      } catch (error) {
+        this.logger.error(
+          `Failed to create schema ${CORE_SCHEMA}: ${error.message}`,
         );
-
-        await dataSource.createSchema(
-          'messaging',
-          'document',
-          'This schema is used to store and manage messaging and notification data.',
-        );
-      } catch (e) {
-        this.logger.error(e);
-        throw new Error('Failed to create schemas and set permissions');
+        throw new Exception('Failed to create schemas and set permissions');
       }
 
-      const schemas = Object.entries(collections.project) ?? [];
-      for (const [schema, $collections] of schemas) {
-        const collections = Object.entries($collections) ?? [];
-        const db = this.getProjectDb(pool, project.getId());
-        db.setDatabase(schema);
-        await db.create(schema);
-        this.logger.log(`Created schema: ${schema}`);
-        for (const [key, collection] of collections) {
-          if (collection['$collection'] !== Database.METADATA) {
-            continue;
-          }
+      // Setup database and collections
+      db = this.getProjectDb(client, project.getId());
+      db.setDatabase(CORE_SCHEMA);
+      await db.create(CORE_SCHEMA);
+      await db.clearCache();
 
-          const attributes = collection['attributes'].map(
-            (attribute: any) => new Document(attribute),
+      const $collections = Object.entries(collections.project) ?? [];
+      let successfulCollections = 0;
+      let failedCollections = 0;
+
+      this.logger.log(
+        `Found ${$collections.length} collections to process for project ${project.getId()}`,
+      );
+
+      for (const [key, collection] of $collections) {
+        if (collection['$collection'] !== Database.METADATA) {
+          continue;
+        }
+
+        try {
+          const attributes =
+            collection['attributes']?.map(
+              (attribute: any) => new Document(attribute),
+            ) || [];
+
+          const indexes =
+            collection['indexes']?.map((index: any) => new Document(index)) ||
+            [];
+
+          this.logger.log(
+            `Creating collection ${collection.$id} in schema ${CORE_SCHEMA} for project ${project.getId()}`,
           );
 
-          const indexes = collection['indexes'].map(
-            (index: any) => new Document(index),
-          );
-
-          try {
-            this.logger.log(
-              `Creating collection ${collection.$id} in schema ${schema} for project ${project.getId()}`,
+          await db.createCollection(collection.$id, attributes, indexes);
+          successfulCollections++;
+        } catch (error) {
+          if (error instanceof DuplicateException) {
+            this.logger.warn(
+              `Collection ${collection.$id} already exists in schema ${CORE_SCHEMA} for project ${project.getId()}`,
             );
-            await db.createCollection(collection.$id, attributes, indexes);
-          } catch (error) {
+            successfulCollections++;
+          } else {
             this.logger.error(
-              `Failed to create collection ${collection.$id} in schema ${schema} for project ${project.getId()}: ${error.message}`,
+              `Failed to create collection ${collection.$id} in schema ${CORE_SCHEMA} for project ${project.getId()}: ${error.message}`,
             );
-            if (!(error instanceof DuplicateException)) {
-              throw error;
-            }
+            failedCollections++;
+            throw error;
           }
         }
       }
+
+      this.logger.log(
+        `Collection creation completed: ${successfulCollections} successful, ${failedCollections} failed for project ${project.getId()}`,
+      );
     } catch (error) {
       this.logger.error(
-        `Failed to create database: ${error.message}`,
-        error.stack,
+        `Failed to initialize project ${project.getId()}: ${error.message}`,
       );
       throw new Exception(
-        Exception.GENERAL_SERVER_ERROR,
-        'Failed to create project database',
+        `Failed to initialize project ${project.getId()}: ${error.message}`,
       );
     } finally {
-      try {
-        client.release();
-        if (!pool.ended) {
-          await pool.end();
+      if (client) {
+        try {
+          client.release();
+          this.logger.debug(
+            `Client connection released for project ${project.getId()}`,
+          );
+        } catch (error) {
+          this.logger.error(
+            `Failed to release client connection: ${error.message}`,
+          );
         }
-      } catch (e) {
-        this.logger.error(e);
       }
+
+      this.logger.log(
+        `Project ${project.getId()} initialization completed with database ${dbName} at ${projectHost}:${projectPort}`,
+      );
     }
-    this.logger.log(`Project ${project.getId()} successfully initialized.`);
   }
 
   @OnWorkerEvent('active')

@@ -18,23 +18,23 @@ import { Exception } from '@nuvix/core/extend/exception';
 import { ProjectService } from './projects.service';
 
 // DTO
-import { oAuth2DTO } from './dto/oauth2.dto';
-import { CreateJwtDTO } from './dto/create-jwt.dto';
-import { CreateKeyDTO, UpdateKeyDTO } from './dto/keys.dto';
-import { CreateProjectDTO } from './dto/create-project.dto';
-import { CreateWebhookDTO, UpdateWebhookDTO } from './dto/webhook.dto';
+import { oAuth2DTO } from './DTO/oauth2.dto';
+import { CreateJwtDTO } from './DTO/create-jwt.dto';
+import { CreateKeyDTO, UpdateKeyDTO } from './DTO/keys.dto';
+import { CreateProjectDTO } from './DTO/create-project.dto';
+import { CreateWebhookDTO, UpdateWebhookDTO } from './DTO/webhook.dto';
 import {
   UpdateProjectDTO,
   UpdateProjectTeamDTO,
-} from './dto/update-project.dto';
+} from './DTO/update-project.dto';
 import {
   ProjectApiStatusAllDTO,
   ProjectApiStatusDTO,
-} from './dto/project-api.dto';
+} from './DTO/project-api.dto';
 import {
   UpdateProjectAllServiceDTO,
   UpdateProjectServiceDTO,
-} from './dto/project-service.dto';
+} from './DTO/project-service.dto';
 import {
   AuthSessionAlertsDTO,
   AuthLimitDTO,
@@ -45,9 +45,9 @@ import {
   AuthPersonalDataDTO,
   AuthMaxSessionsDTO,
   AuthMockNumbersDTO,
-} from './dto/project-auth.dto';
-import { CreatePlatformDTO, UpdatePlatformDTO } from './dto/platform.dto';
-import { SmtpTestsDTO, UpdateSmtpDTO } from './dto/smtp.dto';
+} from './DTO/project-auth.dto';
+import { CreatePlatformDTO, UpdatePlatformDTO } from './DTO/platform.dto';
+import { SmtpTestsDTO, UpdateSmtpDTO } from './DTO/smtp.dto';
 import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor';
 import { Models } from '@nuvix/core/helper/response.helper';
 import { ParseQueryPipe } from '@nuvix/core/pipes/query.pipe';

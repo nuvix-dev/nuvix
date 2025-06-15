@@ -13,18 +13,18 @@ import {
   UpdateUserPasswordDTO,
   UpdateUserPoneVerificationDTO,
   UpdateUserStatusDTO,
-} from './dto/user.dto';
+} from './DTO/user.dto';
 import { APP_LIMIT_COUNT, GEO_DB } from '@nuvix/utils/constants';
 import { Auth } from '@nuvix/core/helper/auth.helper';
-import { CreateTargetDTO, UpdateTargetDTO } from './dto/target.dto';
+import { CreateTargetDTO, UpdateTargetDTO } from './DTO/target.dto';
 import { EmailValidator } from '@nuvix/core/validators/email.validator';
 import { PhoneValidator } from '@nuvix/core/validators/phone.validator';
 import { PasswordHistoryValidator } from '@nuvix/core/validators/password-history.validator';
 import { MfaType, TOTP } from '@nuvix/core/validators/MFA.validator';
 import { Detector } from '@nuvix/core/helper/detector.helper';
 
-import { CreateTokenDTO } from './dto/token.dto';
-import { CreateJwtDTO } from './dto/jwt.dto';
+import { CreateTokenDTO } from './DTO/token.dto';
+import { CreateJwtDTO } from './DTO/jwt.dto';
 import { JwtService } from '@nestjs/jwt';
 import {
   Database,

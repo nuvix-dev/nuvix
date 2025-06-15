@@ -1,6 +1,6 @@
 import { IsOptional, IsString } from 'class-validator';
 
-export class ColumnPrivilegeGrantDto {
+export class ColumnPrivilegeGrantDTO {
   @IsString()
   grantee: string;
 

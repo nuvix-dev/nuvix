@@ -1,6 +1,6 @@
 import { IsString, IsOptional, IsObject } from 'class-validator';
 
-export class SchemaUpdateDto {
+export class SchemaUpdateDTO {
   @IsOptional()
   @IsString()
   name?: string;

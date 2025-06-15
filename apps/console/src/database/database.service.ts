@@ -12,7 +12,7 @@ import { INTERNAL_SCHEMAS, SYSTEM_SCHEMA } from '@nuvix/utils/constants';
 
 // DTO's
 import { CreateDocumentSchema, CreateSchema } from './DTO/create-schema.dto';
-import { CreateTableDto } from './DTO/create-table.dto';
+import { CreateTableDTO } from './DTO/create-table.dto';
 
 @Injectable()
 export class DatabaseService {
@@ -137,7 +137,7 @@ export class DatabaseService {
   public async createTable(
     pg: DataSource,
     schema: string,
-    data: CreateTableDto,
+    data: CreateTableDTO,
   ) {
     const table = await pg.createTable({
       ...data,

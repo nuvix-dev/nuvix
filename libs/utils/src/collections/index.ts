@@ -1,5 +1,4 @@
 import { Database, ID } from '@nuvix/database';
-import { commonCollections } from './common';
 import { consoleCollections } from './console';
 import { bucketCollections, dbCollections } from './misc';
 import { projectCollections } from './project';
@@ -13,32 +12,11 @@ import { projectCollections } from './project';
  * indexes: list of indexes
  */
 const collections = {
-  project: {
-    auth: {
-      users: projectCollections.users,
-      tokens: commonCollections.tokens,
-      authenticators: commonCollections.authenticators,
-      challenges: commonCollections.challenges,
-      sessions: commonCollections.sessions,
-      identities: commonCollections.identities,
-      teams: projectCollections.teams,
-      memberships: projectCollections.memberships,
-      targets: commonCollections.targets,
-    },
-    storage: {
-      buckets: commonCollections.buckets,
-    },
-    messaging: {
-      providers: commonCollections.providers,
-      messages: commonCollections.messages,
-      topics: commonCollections.topics,
-      subscribers: commonCollections.subscribers,
-    },
-    functions: {
-      functions: projectCollections.functions,
-      deployments: projectCollections.deployments,
-    },
-  },
+  project: Object.fromEntries(
+    Object.entries(projectCollections).filter(
+      ([key]) => !['databases', 'attributes', 'indexes'].includes(key),
+    ),
+  ),
   projects: projectCollections,
   console: consoleCollections,
   buckets: bucketCollections,
@@ -47,17 +25,15 @@ const collections = {
     collections: {
       ...dbCollections.collections,
       $collection: ID.custom(Database.METADATA),
-      attributes: [
-        ...dbCollections.collections.attributes.filter(
-          v => !['databaseId', 'databaseInternalId'].includes(v.$id),
-        ),
-      ],
+      attributes: dbCollections.collections.attributes.filter(
+        attr => !['databaseId', 'databaseInternalId'].includes(attr.$id),
+      ),
     },
     attributes: {
       ...projectCollections.attributes,
       $collection: ID.custom(Database.METADATA),
       attributes: projectCollections.attributes.attributes.filter(
-        v => !['databaseId', 'databaseInternalId'].includes(v.$id),
+        attr => !['databaseId', 'databaseInternalId'].includes(attr.$id),
       ),
       indexes: [
         {
@@ -73,7 +49,7 @@ const collections = {
       ...projectCollections.indexes,
       $collection: ID.custom(Database.METADATA),
       attributes: projectCollections.indexes.attributes.filter(
-        v => !['databaseId', 'databaseInternalId'].includes(v.$id),
+        attr => !['databaseId', 'databaseInternalId'].includes(attr.$id),
       ),
       indexes: [
         {

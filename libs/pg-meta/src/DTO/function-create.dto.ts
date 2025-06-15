@@ -7,7 +7,7 @@ import {
   IsString,
 } from 'class-validator';
 
-export class FunctionCreateDto {
+export class FunctionCreateDTO {
   @IsString()
   name: string;
 

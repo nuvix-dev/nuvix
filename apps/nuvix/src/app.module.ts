@@ -38,6 +38,7 @@ import { TeamsModule } from './teams/teams.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { FunctionsModule } from './functions/functions.module';
 import { StorageModule } from './storage/storage.module';
+import { MessagingModule } from './messaging/messaging.module';
 // Controllers
 import { SchemaModule } from './schema/schema.module';
 import { BaseController } from './base/base.controller';
@@ -49,8 +50,7 @@ import { AvatarsController } from './avatars/avatars.controller';
 import { FunctionsController } from './functions/functions.controller';
 import { SchemaController } from './schema/schema.controller';
 import { StorageController } from './storage/storage.controller';
-import { MessagingModule } from './messaging/messaging.module';
-import { MessagingModule } from './messaging/messaging.module';
+import { MessagingController } from './messaging/messaging.controller';
 
 @Module({
   imports: [
@@ -111,6 +111,7 @@ export class AppModule implements NestModule {
         FunctionsController,
         SchemaController,
         StorageController,
+        MessagingController,
       )
       .apply(AuthHook, ApiHook, ProjectUsageHook)
       .forRoutes(
@@ -123,6 +124,7 @@ export class AppModule implements NestModule {
         FunctionsController,
         SchemaController,
         StorageController,
+        MessagingController,
       );
   }
 }
