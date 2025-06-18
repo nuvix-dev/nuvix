@@ -36,7 +36,7 @@ import {
 import { Database, MariaDB, Structure, PostgreDB } from '@nuvix/database';
 import { Context, DataSource } from '@nuvix/pg';
 import { CountryResponse, Reader } from 'maxmind';
-import { Cache, RedisAdapter } from '@nuvix/cache';
+import { Cache, Redis } from '@nuvix/cache';
 import { ProjectUsageService } from './project-usage.service';
 import { Adapter } from '@nuvix/database';
 import { Pool as PgPool, PoolClient } from 'pg';
@@ -163,7 +163,7 @@ export type GetProjectPG = (
     {
       provide: CACHE,
       useFactory: async (redis: IORedis) => {
-        const adpter = new RedisAdapter({
+        const adpter = new Redis({
           port: APP_REDIS_PORT,
           host: APP_REDIS_HOST,
           username: APP_REDIS_USER,
