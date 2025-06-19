@@ -68,10 +68,9 @@ import { MessagingJob, MessagingJobData } from '@nuvix/core/resolvers/queues/mes
 export class MessagingService {
   constructor(
     @Inject(DB_FOR_PLATFORM) private readonly dbForPlatform: Database,
-    @Inject()
+    @InjectQueue(WORKER_TYPE_MESSAGING) private readonly queue: Queue<MessagingJobData, any, MessagingJob>,
     private readonly jwtService: JwtService,
-    @InjectQueue(WORKER_TYPE_MESSAGING) private readonly queue: Queue<MessagingJobData, any, MessagingJob>
-  ) {}
+  ) { }
 
   /**
    * Common method to create a provider.
@@ -1359,7 +1358,7 @@ export class MessagingService {
     switch (status) {
       case MessageStatus.PROCESSING:
         await this.queue.add(MESSAGE_SEND_TYPE_EXTERNAL, {
-          project, 
+          project,
           message: createdMessage
         })
         break;
