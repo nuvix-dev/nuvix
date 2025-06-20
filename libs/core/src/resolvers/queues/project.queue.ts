@@ -87,7 +87,7 @@ export class ProjectQueue extends Queue {
           })
           .setAttribute('status', 'active'),
       );
-      await this.db.clearCache();
+      await this.db.getCache().flush();
       // Initialize data source
       const dataSource = new DataSource(client);
       try {
