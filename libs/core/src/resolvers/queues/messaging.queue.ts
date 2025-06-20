@@ -32,7 +32,6 @@ import {
   APP_POSTGRES_PASSWORD,
   POOLS,
   GET_PROJECT_DB,
-  INTERNAL_SCHEMAS,
   CORE_SCHEMA,
   GET_DEVICE_FOR_PROJECT,
   WORKER_TYPE_MESSAGING,
@@ -250,7 +249,7 @@ export class MessagingQueue extends Queue {
         //     await deviceForFiles.transfer(path, path, this.getLocalDevice(project));
         // }
 
-        const fileData = Buffer.from(await deviceForFiles.read(path));
+        const fileData = await deviceForFiles.read(path);
 
         attachments[i] = new Attachment(
           file.getAttribute('name'),
