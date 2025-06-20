@@ -35,7 +35,11 @@ import { UpdateFileDTO } from './DTO/file.dto';
 import { CreateBucketDTO, UpdateBucketDTO } from './DTO/bucket.dto';
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor';
 import { ParseDuplicatePipe } from '@nuvix/core/pipes/duplicate.pipe';
-import { MultipartFile, MultipartValue, SavedMultipartFile } from '@fastify/multipart';
+import {
+  MultipartFile,
+  MultipartValue,
+  SavedMultipartFile,
+} from '@fastify/multipart';
 import { User } from '@nuvix/core/decorators/project-user.decorator';
 import { Exception } from '@nuvix/core/extend/exception';
 
@@ -223,19 +227,25 @@ export class StorageController {
     @Query('background', ParseDuplicatePipe) background?: string,
     @Query('output', ParseDuplicatePipe) output?: string,
   ) {
-    return await this.storageService.previewFile(db, id, fileId, {
-      width,
-      height,
-      gravity,
-      quality,
-      borderWidth,
-      borderColor,
-      borderRadius,
-      opacity,
-      rotation,
-      background,
-      output,
-    } as any, project);
+    return await this.storageService.previewFile(
+      db,
+      id,
+      fileId,
+      {
+        width,
+        height,
+        gravity,
+        quality,
+        borderWidth,
+        borderColor,
+        borderRadius,
+        opacity,
+        rotation,
+        background,
+        output,
+      } as any,
+      project,
+    );
   }
 
   @Get('buckets/:id/files/:fileId/download')
@@ -247,7 +257,14 @@ export class StorageController {
     @Res({ passthrough: true }) res: any,
     @Project() project: Document,
   ) {
-    return await this.storageService.downloadFile(db, id, fileId, res, req, project);
+    return await this.storageService.downloadFile(
+      db,
+      id,
+      fileId,
+      res,
+      req,
+      project,
+    );
   }
 
   @Get('buckets/:id/files/:fileId/view')
@@ -259,7 +276,14 @@ export class StorageController {
     @Res({ passthrough: true }) res: any,
     @Project() project: Document,
   ) {
-    return await this.storageService.viewFile(db, id, fileId, res, req, project);
+    return await this.storageService.viewFile(
+      db,
+      id,
+      fileId,
+      res,
+      req,
+      project,
+    );
   }
 
   @Get('buckets/:id/files/:fileId/push')
@@ -279,7 +303,7 @@ export class StorageController {
       jwt,
       req,
       res,
-      project
+      project,
     );
   }
 

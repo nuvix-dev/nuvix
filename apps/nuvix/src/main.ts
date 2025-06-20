@@ -150,9 +150,12 @@ async function bootstrap() {
   openApiSetup(app);
 
   // TODO: create a separate function to handle setup
-  await fs.mkdir(APP_STORAGE_TEMP, { recursive: true }).catch((err) => {
+  await fs.mkdir(APP_STORAGE_TEMP, { recursive: true }).catch(err => {
     if (err.code !== 'EEXIST') {
-      Logger.error(`Failed to create temp storage directory: ${err.message}`, 'Bootstrap');
+      Logger.error(
+        `Failed to create temp storage directory: ${err.message}`,
+        'Bootstrap',
+      );
       process.exit(1);
     }
   });

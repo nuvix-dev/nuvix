@@ -305,4 +305,4 @@ export type GetProjectPG = (
     ProjectUsageService,
   ],
 })
-export class CoreModule { }
+export class CoreModule {}

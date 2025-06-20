@@ -9,9 +9,9 @@ export const UploadedFile = createParamDecorator(
     const request: NuvixRequest = ctx.switchToHttp().getRequest<NuvixRequest>();
 
     const files = await request.saveRequestFiles({
-      tmpdir: APP_STORAGE_TEMP
+      tmpdir: APP_STORAGE_TEMP,
     });
-    const file = files.find((f) => f.fieldname === data);
+    const file = files.find(f => f.fieldname === data);
     if (!file) {
       throw new Exception(Exception.STORAGE_INVALID_FILE);
     }
