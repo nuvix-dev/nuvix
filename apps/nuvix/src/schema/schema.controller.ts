@@ -98,17 +98,25 @@ export class SchemaController {
   // its time to add a powerful route, THE MAIN QUERY ROUTE
   @Get('/query')
   async query(
-    @Query() queries: string | any,
     @Req() request: NuvixRequest
   ): Promise<any> {
-    this.logger.debug(queries, '<========================[Queries]')
     const queryString = request.raw.url.split('?')[1];
     this.logger.debug(queryString, '<========================[Query String]')
 
     // here we have to do the main thing with queries, i mean the parsing time
     // we have to parse very complex query structure, i mean the powerful parser
 
-    const parsedQuery = parser.parse(queries.filters)
+    const urlParams = new URLSearchParams(queryString);
+    const filters = urlParams.get('filters') || '';
+
+    this.logger.debug(filters, '<========================[Decoded Filters]')
+
+    const startTime = performance.now();
+    const parsedQuery = parser.parse(filters);
+    const endTime = performance.now();
+
+    this.logger.debug(`Parse time: ${endTime - startTime}ms`, '<========================[Parse Time]');
+
     return parsedQuery;
   }
 }

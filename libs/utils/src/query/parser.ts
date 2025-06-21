@@ -1,5 +1,3 @@
-// we have to create very complex queryString parser class
-
 import { Logger } from "@nestjs/common";
 import { Exception } from "@nuvix/core/extend/exception";
 
@@ -55,7 +53,7 @@ export class Parser {
         if (typeof str !== 'string') {
             throw new Error('Parser input must be a string');
         }
-
+        this.logger.debug(`Parsing input (decoded): "${str}"`);
         try {
             return this._parseExpression(str.trim());
         } catch (error) {
@@ -76,8 +74,8 @@ export class Parser {
             throw new Error('All group characters (OPEN, CLOSE, SEP, OR, NOT) must be defined');
         }
 
-        if (OPEN === CLOSE) {
-            throw new Error('OPEN and CLOSE characters cannot be the same');
+        if (OPEN === CLOSE && OPEN !== '(' && OPEN !== ')') {
+            throw new Error('OPEN and CLOSE characters cannot be the same (except for parentheses)');
         }
 
         // Validate matching brackets
@@ -85,8 +83,10 @@ export class Parser {
             ['{', '}'], ['(', ')'], ['[', ']']
         ];
         const validPair = bracketPairs.find(([open, close]) => open === OPEN && close === CLOSE);
-        if (!validPair && OPEN !== CLOSE) {
-            console.warn(`Warning: OPEN '${OPEN}' and CLOSE '${CLOSE}' are not standard bracket pairs`);
+        const isParenthesesBoth = OPEN === '(' && CLOSE === ')';
+
+        if (!validPair && !isParenthesesBoth && OPEN !== CLOSE) {
+            this.logger.warn(`Warning: OPEN '${OPEN}' and CLOSE '${CLOSE}' are not standard bracket pairs`);
         }
     }
 
@@ -104,11 +104,18 @@ export class Parser {
             if (!remaining) {
                 throw new Error('NOT operator requires an expression to negate');
             }
-            return { not: this._parseExpression(remaining) };
+
+            // If the remaining starts with parentheses, remove them first
+            let innerExpression = remaining;
+            if (remaining.startsWith('(') && remaining.endsWith(')')) {
+                innerExpression = remaining.slice(1, -1).trim();
+            }
+
+            return { not: this._parseExpression(innerExpression) };
         }
 
         // Handle groups
-        if (str.startsWith(this.config.groups.OPEN) && str.endsWith(this.config.groups.CLOSE)) {
+        if (this._isProperGroup(str)) {
             const content = str.slice(1, -1).trim();
             if (!content) {
                 throw new Error('Empty group expression is not allowed');
@@ -136,6 +143,24 @@ export class Parser {
                 throw new Error('OR function requires at least one argument');
             }
             return { or: this._parseCommaList(content) };
+        }
+
+        // Handle explicit AND function
+        if (str.startsWith('and(') && str.endsWith(')')) {
+            const content = str.slice(4, -1).trim();
+            if (!content) {
+                throw new Error('AND function requires at least one argument');
+            }
+            return { and: this._parseCommaList(content) };
+        }
+
+        // Handle explicit NOT function
+        if (str.startsWith('not(') && str.endsWith(')')) {
+            const content = str.slice(4, -1).trim();
+            if (!content) {
+                throw new Error('NOT function requires an expression to negate');
+            }
+            return { not: this._parseExpression(content) };
         }
 
         this.logger.debug(`Parsing expression: "${str}"`);
@@ -197,10 +222,12 @@ export class Parser {
         // Handle function-style: field.op(value) - supports complex field paths with JSON operators
         this.logger.debug(`Parsing condition: "${trimmed}"`);
         if (this.config.values.FUNCTION_STYLE) {
-            const fnMatch = trimmed.match(/^([^(]+)\.([^(]+)\(([^)]*)\)$/);
-            this.logger.debug(`Function-style match: ${fnMatch ? 'found' : 'not found'}`);
-            if (fnMatch) {
-                const [_, fieldPath, operator, args] = fnMatch;
+            // Find the last occurrence of .operator( pattern to handle complex field paths with parentheses
+            // Look for the pattern: anything.operator(args) where operator doesn't contain dots or parentheses
+            const match = trimmed.match(/^(.+)\.([a-zA-Z_][a-zA-Z0-9_]*)\(([^)]*)\)$/);
+            this.logger.debug(`Function-style match: ${match ? 'found' : 'not found'}`);
+            if (match) {
+                const [_, fieldPath, operator, args] = match;
                 return this._buildCondition(`${fieldPath.trim()}.${operator.trim()}`, args);
             }
         }
@@ -214,14 +241,16 @@ export class Parser {
                 throw new Error('Invalid LIST_STYLE configuration');
             }
 
-            const escapedOpen = this._escapeRegexChar(openChar);
-            const escapedClose = this._escapeRegexChar(closeChar);
-            this.logger.debug('List Style parse condition: ', str)
-            const listRegex = new RegExp(`^([^\\${escapedOpen}]+)\\${escapedOpen}([^\\${escapedClose}]*)\\${escapedClose}$`);
+            this.logger.debug('List Style parse condition: ', trimmed);
 
-            const listMatch = trimmed.match(listRegex);
-            if (listMatch) {
-                const [_, fieldOpPath, args] = listMatch;
+            // Use a simpler approach to avoid regex escaping issues
+            const openIndex = trimmed.lastIndexOf(openChar);
+            const closeIndex = trimmed.lastIndexOf(closeChar);
+
+            if (openIndex > 0 && closeIndex > openIndex && closeIndex === trimmed.length - 1) {
+                const fieldOpPath = trimmed.substring(0, openIndex);
+                const args = trimmed.substring(openIndex + 1, closeIndex);
+
                 // Extract the last dot-separated part as operator
                 const lastDotIndex = fieldOpPath.lastIndexOf('.');
                 if (lastDotIndex === -1) {
@@ -443,8 +472,13 @@ export class Parser {
                 if (char === this.config.groups.OPEN) depth++;
                 if (char === this.config.groups.CLOSE) depth--;
 
-                if (char === this.config.values.LIST_STYLE[0]) bracketDepth++;
-                if (char === this.config.values.LIST_STYLE[1]) bracketDepth--;
+                // Handle square brackets []
+                if (char === '[') bracketDepth++;
+                if (char === ']') bracketDepth--;
+
+                // Handle parentheses ()
+                if (char === '(') parenDepth++;
+                if (char === ')') parenDepth--;
             }
 
             // Split at operator when not in any nested structure
@@ -559,8 +593,13 @@ export class Parser {
                 if (char === this.config.groups.OPEN) depth++;
                 if (char === this.config.groups.CLOSE) depth--;
 
-                if (char === this.config.values.LIST_STYLE[0]) bracketDepth++;
-                if (char === this.config.values.LIST_STYLE[0]) bracketDepth--;
+                // Handle square brackets []
+                if (char === '[') bracketDepth++;
+                if (char === ']') bracketDepth--;
+
+                // Handle parentheses ()
+                if (char === '(') parenDepth++;
+                if (char === ')') parenDepth--;
 
                 // Check for operator at top level (not nested in any structure)
                 if (char === operator && depth === 0 && bracketDepth === 0 && parenDepth === 0) return true;
@@ -574,13 +613,106 @@ export class Parser {
         const specialChars = /[.*+?^${}()|[\]\\]/g;
         return char.replace(specialChars, '\\$&');
     }
+
+    private _isProperGroup(str: string): boolean {
+        // Check if this is a proper group expression and not just a field with parentheses
+        // A proper group should contain logical operators (commas, |) or be explicitly a group
+
+        if (!str.startsWith(this.config.groups.OPEN) || !str.endsWith(this.config.groups.CLOSE)) {
+            return false;
+        }
+
+        const content = str.slice(1, -1).trim();
+        if (!content) return false;
+
+        // Special case: PostgreSQL cast expressions like (field)::type.operator(value)
+        // Check if this looks like a cast expression
+        if (this._isPostgreSQLCastExpression(str)) {
+            return false;
+        }
+
+        // If it contains top-level commas or OR operators, it's likely a group
+        if (this._containsTopLevelOperator(content, this.config.groups.SEP) ||
+            this._containsTopLevelOperator(content, this.config.groups.OR)) {
+            return true;
+        }
+
+        // If it starts with 'or(' it's definitely a function call, not a group
+        if (content.startsWith('or(')) {
+            return false;
+        }
+
+        // Check if it looks like a field expression with operators
+        // Pattern: something.operator(value) or something[values] or something.operator.value
+        const fieldPatterns = [
+            /^.+\.[a-zA-Z_][a-zA-Z0-9_]*\([^)]*\)$/, // function style
+            /^.+\.[a-zA-Z_][a-zA-Z0-9_]*\[[^\]]*\]$/, // list style
+            /^.+\.[a-zA-Z_][a-zA-Z0-9_]*\..+$/        // operator style
+        ];
+
+        // If the content matches a field pattern, it's probably not a group
+        for (const pattern of fieldPatterns) {
+            if (pattern.test(content)) {
+                return false;
+            }
+        }
+
+        // If it's a simple field name or complex field path, it's not a group
+        if (/^[a-zA-Z_][a-zA-Z0-9_\->.:\(\)]*$/.test(content) && !content.includes(',') && !content.includes('|')) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private _isPostgreSQLCastExpression(str: string): boolean {
+        // Check if this looks like a PostgreSQL cast expression: (field)::type.operator(value)
+        // Pattern: (something)::type.operator OR (something)::type[values] OR (something)::type.operator.value
+
+        if (!str.startsWith('(')) return false;
+
+        // Find the first closing parenthesis
+        let parenCount = 0;
+        let closeParenIndex = -1;
+
+        for (let i = 0; i < str.length; i++) {
+            if (str[i] === '(') parenCount++;
+            if (str[i] === ')') {
+                parenCount--;
+                if (parenCount === 0) {
+                    closeParenIndex = i;
+                    break;
+                }
+            }
+        }
+
+        if (closeParenIndex === -1) return false;
+
+        // Check if what follows looks like ::type.operator
+        const remaining = str.slice(closeParenIndex + 1);
+
+        // Must start with ::
+        if (!remaining.startsWith('::')) return false;
+
+        // Remove :: and check if it follows field.operator pattern
+        const afterCast = remaining.slice(2);
+
+        // Check for various operator patterns after the cast
+        const castOperatorPatterns = [
+            /^[a-zA-Z_][a-zA-Z0-9_]*\.[a-zA-Z_][a-zA-Z0-9_]*\([^)]*\)$/, // type.operator(value)
+            /^[a-zA-Z_][a-zA-Z0-9_]*\.[a-zA-Z_][a-zA-Z0-9_]*\[[^\]]*\]$/, // type.operator[values]
+            /^[a-zA-Z_][a-zA-Z0-9_]*\.[a-zA-Z_][a-zA-Z0-9_]*\..+$/        // type.operator.value
+        ];
+
+        return castOperatorPatterns.some(pattern => pattern.test(afterCast));
+    }
 }
 
 const defaultConfig: Config = {
     // Grouping syntax options
     groups: {
-        OPEN: '{',      // Can be '{', '(', or '['
-        CLOSE: '}',     // Matching closing character
+        OPEN: '(',      // Can be '{' or '('
+        CLOSE: ')',     // Matching closing character
         SEP: ',',       // Condition separator (for AND)
         OR: '|',        // OR separator
         NOT: '!'        // NOT operator
