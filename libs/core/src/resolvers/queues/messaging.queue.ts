@@ -1,4 +1,4 @@
-import { Processor } from '@nestjs/bullmq';
+import { OnWorkerEvent, Processor } from '@nestjs/bullmq';
 import { Queue } from './queue';
 import { Job } from 'bullmq';
 import {
@@ -84,6 +84,20 @@ export class MessagingQueue extends Queue {
       default:
       // TODO: ---
     }
+  }
+
+  @OnWorkerEvent('active')
+  onActive(job: Job) {
+    this.logger.verbose(
+      `Processing job ${job.id} of type ${job.name}`,
+    );
+  }
+
+  @OnWorkerEvent('failed')
+  onFailed(job: Job, err: any) {
+    this.logger.error(
+      `Job ${job.id} of type ${job.name} failed with error: ${err.message}`,
+    );
   }
 
   private getSmsAdapter(provider: Document): SMSAdapter | null {

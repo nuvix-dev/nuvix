@@ -62,8 +62,13 @@ import { MessagingController } from './messaging/messaging.controller';
         password: APP_REDIS_PASSWORD,
         db: APP_REDIS_DB,
         tls: APP_REDIS_SECURE ? {} : undefined,
+        enableOfflineQueue: false, // Disable offline queue to avoid job accumulation when Redis is down
+        enableReadyCheck: true, // Ensure the connection is ready before processing jobs
       },
       defaultJobOptions: {
+        priority: 1,
+        attempts: 3, 
+        backoff: { type: 'exponential', delay: 5000 },
         removeOnComplete: true,
         removeOnFail: true,
       },
