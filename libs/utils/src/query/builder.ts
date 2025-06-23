@@ -11,6 +11,29 @@ import {
 
 type QueryBuilder = ReturnType<DataSource['queryBuilder']>;
 
+interface ParsedOrdering {
+  path: string;
+  direction: 'asc' | 'desc';
+  nulls: 'nullsfirst' | 'nullslast' | null;
+}
+
+interface ColumnNode {
+  type: 'column';
+  path: string;
+  alias: string | null;
+  cast: string | null;
+}
+
+interface EmbedNode {
+  type: 'embed';
+  resource: string;
+  constraint: string | null;
+  alias: string | null;
+  select: SelectNode[];
+}
+
+type SelectNode = ColumnNode | EmbedNode;
+
 export interface ASTToQueryBuilderOptions {
   tableName?: string;
   baseQuery?: QueryBuilder;
@@ -23,6 +46,8 @@ export class ASTToQueryBuilder {
   private nestingDepth = 0;
   private readonly maxNestingDepth: number;
   private readonly allowUnsafeOperators: boolean;
+  private anyAllsupportedOperators = ['eq', 'like', 'ilike', 'gt', 'gte', 'lt', 'lte', 'match', 'imatch'];
+
 
   constructor(options: ASTToQueryBuilderOptions = {}) {
     this.maxNestingDepth = options.maxNestingDepth || 10;
@@ -30,9 +55,9 @@ export class ASTToQueryBuilder {
   }
 
   /**
-   * Convert AST expression to QueryBuilder conditions
+   *apply AST expression to QueryBuilder conditions
    */
-  convert(
+ applyFilters(
     expression: Expression,
     queryBuilder: QueryBuilder,
     options: ASTToQueryBuilderOptions = {},
@@ -53,6 +78,67 @@ export class ASTToQueryBuilder {
       }
       throw new Error('Unknown query builder conversion error');
     }
+  }
+
+  /**
+   *apply select nodes to QueryBuilder select clauses
+   */
+ applySelect(
+    selectNodes: SelectNode[],
+    queryBuilder: QueryBuilder,
+  ): QueryBuilder {
+    if (!selectNodes || selectNodes.length === 0) {
+      return queryBuilder;
+    }
+
+    const selectColumns: string[] = [];
+    const embeds: EmbedNode[] = [];
+
+    selectNodes.forEach(node => {
+      if (node.type === 'column') {
+        selectColumns.push(this._buildColumnSelect(node));
+      } else if (node.type === 'embed') {
+        embeds.push(node);
+      }
+    });
+
+    // Add column selections
+    if (selectColumns.length > 0) {
+      queryBuilder.select(selectColumns);
+    }
+
+    // Handle embeds (subqueries/joins)
+    embeds.forEach(embed => {
+      this._handleEmbedNode(embed, queryBuilder);
+    });
+
+    return queryBuilder;
+  }
+
+  /**
+   *apply ordering to QueryBuilder order clauses
+   */
+ applyOrder(
+    orderings: ParsedOrdering[],
+    queryBuilder: QueryBuilder,
+  ): QueryBuilder {
+    if (!orderings || orderings.length === 0) {
+      return queryBuilder;
+    }
+
+    orderings.forEach(ordering => {
+      const { path, direction, nulls } = ordering;
+
+      if (nulls) {
+        // Handle NULLS FIRST/LAST
+        const nullsClause = nulls === 'nullsfirst' ? 'NULLS FIRST' : 'NULLS LAST';
+        queryBuilder.orderByRaw(`?? ${direction.toUpperCase()} ${nullsClause}`, [path]);
+      } else {
+        queryBuilder.orderBy(path, direction);
+      }
+    });
+
+    return queryBuilder;
   }
 
   private _convertExpression(
@@ -108,6 +194,14 @@ export class ASTToQueryBuilder {
     // Validate operator if safety is enabled
     if (!this.allowUnsafeOperators && !this._isKnownOperator(operator)) {
       this.logger.warn(`Unknown operator: ${operator}, proceeding with caution`);
+    }
+
+    // Check for ANY/ALL pattern with 3 values
+    if (values && Array.isArray(values) && values.length === 3 && this.anyAllsupportedOperators.includes(operator)) {
+      const [modifier, ...operatorValues] = values;
+      if (modifier === 'any' || modifier === 'all') {
+        return this._applyAnyAllCondition(field, operator, modifier, operatorValues, queryBuilder);
+      }
     }
 
     switch (operator) {
@@ -333,6 +427,127 @@ export class ASTToQueryBuilder {
       'json_extract', 'json_extract_text', 'json_contains'
     ];
     return knownOperators.includes(operator);
+  }
+
+  /**
+   * Handle ANY/ALL conditions for specific operators
+   * Creates OR conditions for 'any' and AND conditions for 'all'
+   */
+  private _applyAnyAllCondition(
+    field: string,
+    operator: string,
+    modifier: 'any' | 'all',
+    operatorValues: any[],
+    queryBuilder: QueryBuilder,
+  ): QueryBuilder {
+    if (modifier === 'any') {
+      // ANY creates OR conditions
+      return queryBuilder.where((builder) => {
+        operatorValues.forEach((val, index) => {
+          if (index === 0) {
+            this._applySingleOperatorCondition(field, operator, val, builder);
+          } else {
+            builder.orWhere((subBuilder) => {
+              this._applySingleOperatorCondition(field, operator, val, subBuilder);
+            });
+          }
+        });
+      });
+    } else {
+      // ALL creates AND conditions
+      return queryBuilder.where((builder) => {
+        operatorValues.forEach((val) => {
+          this._applySingleOperatorCondition(field, operator, val, builder);
+        });
+      });
+    }
+  }
+
+  /**
+   * Apply a single operator condition (helper for ANY/ALL)
+   */
+  private _applySingleOperatorCondition(
+    field: string,
+    operator: string,
+    value: any,
+    queryBuilder: QueryBuilder,
+  ): QueryBuilder {
+    switch (operator) {
+      case 'eq':
+        return queryBuilder.where(field, '=', value);
+      case 'like':
+        return queryBuilder.where(field, 'like', value);
+      case 'ilike':
+        return queryBuilder.where(field, 'ilike', value);
+      case 'gt':
+        return queryBuilder.where(field, '>', value);
+      case 'gte':
+        return queryBuilder.where(field, '>=', value);
+      case 'lt':
+        return queryBuilder.where(field, '<', value);
+      case 'lte':
+        return queryBuilder.where(field, '<=', value);
+      case 'match':
+        return queryBuilder.whereRaw(`?? ~ ?`, [field, value]);
+      case 'imatch':
+        return queryBuilder.whereRaw(`?? ~* ?`, [field, value]);
+      default:
+        throw new Error(`Unsupported operator for ANY/ALL: ${operator}`);
+    }
+  }
+
+  /**
+   * Build column select string with alias and cast
+   */
+  private _buildColumnSelect(node: ColumnNode): string {
+    let columnSelect = node.path;
+
+    // Apply cast if specified
+    if (node.cast) {
+      columnSelect = `${columnSelect}::${node.cast}`;
+    }
+
+    // Apply alias if specified
+    if (node.alias) {
+      columnSelect = `${columnSelect} as ${node.alias}`;
+    }
+
+    return columnSelect;
+  }
+
+  /**
+   * Handle embed node (subqueries/joins)
+   */
+  private _handleEmbedNode(embed: EmbedNode, queryBuilder: QueryBuilder): void {
+    const { resource, constraint, alias, select } = embed;
+
+    // TODO: AI GENERATED
+    // This is a simplified implementation - you may need to expand based on your needs
+    if (select && select.length > 0) {
+      // Create a subquery for the embed
+      const subQuery = queryBuilder.clone().from(resource);
+
+      // Apply constraint if provided
+      if (constraint) {
+        // Parse and apply the constraint - this would need proper parsing
+        // For now, assuming it's a simple field=value constraint
+        const [field, value] = constraint.split('=');
+        if (field && value) {
+          subQuery.where(field.trim(), value.trim());
+        }
+      }
+
+      // Apply select for the embed
+      this.applySelect(select, subQuery);
+
+      // Join or handle the embed based on your requirements
+      // This is where you'd implement the actual join logic
+      const joinAlias = alias || resource;
+      queryBuilder.leftJoin(`${resource} as ${joinAlias}`, function () {
+        // Add join conditions here based on your schema
+        // This is a placeholder - you'll need to implement proper join logic
+      });
+    }
   }
 
   // Type guards
