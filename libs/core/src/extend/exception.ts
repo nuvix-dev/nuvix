@@ -28,6 +28,7 @@ export class Exception extends HttpException {
   static readonly GENERAL_REGION_ACCESS_DENIED = 'general_region_access_denied';
   static readonly GENERAL_BAD_REQUEST = 'general_bad_request';
   static readonly GENERAL_PARSER_ERROR = 'general_parser_error';
+  static readonly GENERAL_QUERY_BUILDER_ERROR = 'general_query_builder_error'
 
   /** Users */
   static readonly USER_COUNT_EXCEEDED = 'user_count_exceeded';

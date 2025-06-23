@@ -28,7 +28,7 @@
         "@nuvix/cache": "^1.0.3-alpha.1",
         "@nuvix/database": "^1.0.3-alpha.4",
         "@nuvix/messaging": "^1.0.0",
-        "@nuvix/pg": "^1.0.1-alpha.1",
+        "@nuvix/pg": "^1.0.1-alpha.5",
         "@nuvix/storage": "^1.0.0",
         "@nuvix/telemetry": "^1.0.1",
         "argon2": "^0.43.0",
@@ -541,7 +541,7 @@
 
     "@nuvix/messaging": ["@nuvix/messaging@1.0.0", "", { "dependencies": { "libphonenumber-js": "^1.12.9" }, "peerDependencies": { "typescript": "^5" } }, "sha512-eVXoY/fqFdfcp1GKvn81x/GwoCposbwXA9zuMp8ZOkWbuVsskqZqasQ6d+j4lMqCFHZqKf9zxZL8pFJX55exIw=="],
 
-    "@nuvix/pg": ["@nuvix/pg@1.0.1-alpha.1", "", { "dependencies": { "colorette": "^2.0.20", "debug": "^4.4.0", "lodash": "^4.17.21", "zod": "^3.24.2" } }, "sha512-ALoxKSNI/t5vTy+OPKj3X4E87u0GMe+WGb8gCwDUECtzNo2xbZtZIaXS96il49M3JB1AJAsiI5jZxiSTkjtRDA=="],
+    "@nuvix/pg": ["@nuvix/pg@1.0.1-alpha.5", "", { "dependencies": { "colorette": "^2.0.20", "debug": "^4.4.0", "lodash": "^4.17.21", "zod": "^3.24.2" } }, "sha512-wJdNPQUo+xIVe5mtfvL1nB1+2vLMje6y1YvgPIhBCy6NK38aIYwgvNyAeMbH/rNac3MtjIBGShrqDVgBsPjrIA=="],
 
     "@nuvix/storage": ["@nuvix/storage@1.0.0", "", { "dependencies": { "xml2js": "^0.6.2" } }, "sha512-Vbt6iHRt47I1Cq/mi8lLAYwkJeI44fuinMmxEXPK1rSmGqvUdxLbakoesMazqKh/H6cFIfUvhCAXBhb05jgB+w=="],
 

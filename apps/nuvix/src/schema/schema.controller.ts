@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  HttpStatus,
   Logger,
   Param,
   Post,
@@ -21,25 +22,26 @@ import {
   CurrentSchema,
   Label,
   Namespace,
-  Project,
-  ProjectPg,
-  ResModel,
   Scope,
+  Sdk,
 } from '@nuvix/core/decorators';
 import { Document, ID } from '@nuvix/database';
 import { DataSource } from '@nuvix/pg';
-import { parser } from '@nuvix/utils/query/parser';
+import { Expression, parser } from '@nuvix/utils/query/parser';
+import { ASTToQueryBuilder } from '@nuvix/utils/query/builder';
 
 // DTO's
 
 // Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
-@Controller({ version: ['1'], path: 'schemas' })
+@Controller({ version: ['1'], path: ['schemas', 'db'] })
 @UseGuards(ProjectGuard)
 @Namespace() // TODO: --->
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class SchemaController {
   private readonly logger = new Logger(SchemaController.name);
-  constructor(private readonly schemaService: SchemaService) {}
+  private readonly astToQueryBuilder = new ASTToQueryBuilder();
+
+  constructor(private readonly schemaService: SchemaService) { }
 
   @Get(':schemaId/table/:tableId')
   @Scope('schema.read')
@@ -51,7 +53,7 @@ export class SchemaController {
     @CurrentSchema() pg: DataSource,
     @Query() query: any,
   ) {
-    const qb = pg.qb()(table);
+    const qb = pg.qb(table);
     return await qb.select('*').withSchema(schema).from(table);
   }
 
@@ -65,7 +67,7 @@ export class SchemaController {
     @CurrentSchema() pg: DataSource,
     @Body() body: any,
   ) {
-    const qb = pg.qb()(table);
+    const qb = pg.qb(table);
     return await qb
       .insert({
         ...body,
@@ -86,7 +88,7 @@ export class SchemaController {
     @CurrentSchema() pg: DataSource,
     @Body() body: any,
   ) {
-    const qb = pg.qb()(table);
+    const qb = pg.qb(table);
     return await qb
       .delete()
       .withSchema(schema)
@@ -95,29 +97,40 @@ export class SchemaController {
       .returning('*');
   }
 
-  // its time to add a powerful route, THE MAIN QUERY ROUTE
-  @Get('/query')
-  async query(@Req() request: NuvixRequest): Promise<any> {
-    const queryString = request.raw.url.split('?')[1];
-    this.logger.debug(queryString, '<========================[Query String]');
+  @Get(':tableId')
+  @Scope('schema.read')
+  @Sdk({
+    name: 'queryTable',
+    description: 'Query a table with optional filters',
+    code: HttpStatus.OK,
+  })
+  async queryTable(
+    @Param('tableId') table: string,
+    @Req() request: NuvixRequest,
+    @CurrentSchema() pg: DataSource,
+    @Query() query: any = {},
+  ) {
+    const qb = pg.qb(table).select('*');
 
-    // here we have to do the main thing with queries, i mean the parsing time
-    // we have to parse very complex query structure, i mean the powerful parser
+    const filters = this.getFiltersFromUrl(request.raw.url);
+    this.applyFiltersToQuery(qb, filters);
 
-    const urlParams = new URLSearchParams(queryString);
+    return await qb;
+  }
+
+  private getFiltersFromUrl(query: string): Expression | undefined {
+    const urlParams = new URLSearchParams(query);
     const filters = urlParams.get('filters') || '';
+    return filters ? parser.parse(filters) : undefined;
+  }
 
-    this.logger.debug(filters, '<========================[Decoded Filters]');
-
-    const startTime = performance.now();
-    const parsedQuery = parser.parse(filters);
-    const endTime = performance.now();
-
-    this.logger.debug(
-      `Parse time: ${endTime - startTime}ms`,
-      '<========================[Parse Time]',
-    );
-
-    return parsedQuery;
+  private applyFiltersToQuery<T>(
+    qb: T,
+    filters: Expression | undefined,
+  ): T {
+    if (filters) {
+      this.astToQueryBuilder.convert(filters, qb as any);
+    }
+    return qb;
   }
 }
