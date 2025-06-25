@@ -21,10 +21,11 @@ export interface EmbedNode {
   type: 'embed';
   resource: string;
   mainTable: string;
-  joinType?: 'left' | 'right' | 'inner';
+  joinType?: 'left' | 'right' | 'inner' | 'full' | 'cross';
   alias: string | null;
   constraint: Expression;
   select: SelectNode[];
+  nested?: boolean; // Optional, defaults to false
 }
 
 export type SelectNode = ColumnNode | EmbedNode;

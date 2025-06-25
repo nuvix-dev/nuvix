@@ -3,9 +3,6 @@ import { PG } from '@nuvix/pg';
 import {
   Condition,
   Expression,
-  AndExpression,
-  OrExpression,
-  NotExpression,
 } from './types';
 import { Exception } from '@nuvix/core/extend/exception';
 import { ASTToQueryBuilder } from './builder';
@@ -90,21 +87,22 @@ export class JoinBuilder<T extends ASTToQueryBuilder<any>> {
     }
 
     const left = this.astBuilder._rawField(field, tableName).toSQL().sql;
-
+    const right = (values.length === 2 && values[0] === '?') ? '?' : this.astBuilder._rawField(values.length ? values.slice(1) : value, values.length ? values[0] : this.mainTable).toSQL().sql;
+    const bindings = (values.length === 2 && values[0] === '?') ? [value] : [];
     switch (operator) {
       case 'eq':
-        return { sql: `${left} = ??.??`, bindings: [this.mainTable, value] };
+        return { sql: `${left} = ${right}`, bindings };
       case 'ne':
       case 'neq':
-        return { sql: `${left} <> ?`, bindings: [value] };
+        return { sql: `${left} <> ${right}`, bindings };
       case 'gt':
-        return { sql: `${left} > ?`, bindings: [value] };
+        return { sql: `${left} > ${right}`, bindings };
       case 'gte':
-        return { sql: `${left} >= ?`, bindings: [value] };
+        return { sql: `${left} >= ${right}`, bindings };
       case 'lt':
-        return { sql: `${left} < ?`, bindings: [value] };
+        return { sql: `${left} < ${right}`, bindings };
       case 'lte':
-        return { sql: `${left} <= ?`, bindings: [value] };
+        return { sql: `${left} <= ${right}`, bindings };
 
       case 'like':
         return { sql: `${left} LIKE ?`, bindings: [value] };
