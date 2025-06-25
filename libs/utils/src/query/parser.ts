@@ -1,25 +1,25 @@
 import { Logger } from '@nestjs/common';
 import { Exception } from '@nuvix/core/extend/exception';
+import { JsonFieldType } from './types';
 
 interface Config {
   groups: {
     NOT: string;
-    OPEN: string;
-    CLOSE: string;
+    OPEN: '(' | '{';
+    CLOSE: ')' | '}';
     OR: string;
     SEP: string;
   };
   values: {
     FUNCTION_STYLE: boolean;
     LIST_STYLE: '[]' | '()' | '{}';
-    OPERATOR_STYLE: boolean;
   };
 }
 
 export interface Condition {
-  field: string;
+  field: string | (string | JsonFieldType)[];
   operator: string;
-  value?: any;
+  value?: any; // TODO: --
   values?: any[];
 }
 
@@ -83,12 +83,6 @@ export class Parser {
       );
     }
 
-    if (OPEN === CLOSE) {
-      throw new Error(
-        'OPEN and CLOSE characters cannot be the same',
-      );
-    }
-
     // Validate matching brackets
     const bracketPairs = [
       ['{', '}'],
@@ -99,7 +93,7 @@ export class Parser {
       ([open, close]) => open === OPEN && close === CLOSE,
     );
 
-    if (!validPair && OPEN !== CLOSE) {
+    if (!validPair) {
       this.logger.warn(
         `Warning: OPEN '${OPEN}' and CLOSE '${CLOSE}' are not standard bracket pairs`,
       );
@@ -251,7 +245,8 @@ export class Parser {
       if (match) {
         const [_, fieldPath, operator, args] = match;
         return this._buildCondition(
-          `${fieldPath.trim()}.${operator.trim()}`,
+          fieldPath.trim(),
+          operator.trim(),
           args,
         );
       }
@@ -284,47 +279,8 @@ export class Parser {
         }
         const fieldPath = fieldOpPath.substring(0, lastDotIndex);
         const operator = fieldOpPath.substring(lastDotIndex + 1);
-        return this._buildCondition(`${fieldPath}.${operator}`, args);
+        return this._buildCondition(fieldPath.trim(), operator.trim(), args);
       }
-    }
-
-    // Handle operator-style: field.op.value - supports complex field paths
-    if (this.config.values.OPERATOR_STYLE) {
-      // Find the last dot that separates operator from value
-      const lastDotIndex = trimmed.lastIndexOf('.');
-      if (lastDotIndex > 0) {
-        const beforeLastDot = trimmed.substring(0, lastDotIndex);
-        const value = trimmed.substring(lastDotIndex + 1);
-
-        // Find the second-to-last dot that separates field from operator
-        const secondLastDotIndex = beforeLastDot.lastIndexOf('.');
-        if (secondLastDotIndex > 0) {
-          const field = beforeLastDot.substring(0, secondLastDotIndex);
-          const operator = beforeLastDot.substring(secondLastDotIndex + 1);
-
-          if (!field || !operator) {
-            throw new Error(
-              `Invalid condition format: "${trimmed}". Expected field.operator.value`,
-            );
-          }
-
-          return { field, operator, value: this._parseValue(value) };
-        }
-      }
-    }
-
-    // Default to simple existence check for simple field names
-    if (/^[a-zA-Z_][a-zA-Z0-9_]*$/.test(trimmed)) {
-      return { field: trimmed, operator: 'exists', value: true };
-    }
-
-    // Handle complex field paths without operators (for existence checks)
-    if (
-      trimmed.includes('->') ||
-      trimmed.includes('->>') ||
-      trimmed.includes('::')
-    ) {
-      return { field: trimmed, operator: 'exists', value: true };
     }
 
     throw new Error(
@@ -332,41 +288,69 @@ export class Parser {
     );
   }
 
-  private _buildCondition(fieldOp: string, args: string): Condition {
-    if (!fieldOp || !fieldOp.includes('.')) {
-      throw new Error(`Invalid field.operator format: "${fieldOp}"`);
-    }
-
-    // Find the last dot to separate field path from operator
-    const lastDotIndex = fieldOp.lastIndexOf('.');
-    if (lastDotIndex === -1) {
+  private _buildCondition(_field: string | undefined, operator: string | undefined, args: string): Condition {
+    if (!_field || !operator) {
       throw new Error(
-        `Field.operator must contain at least one dot: "${fieldOp}"`,
+        `Both field and operator must be specified: "${_field}.${operator}"`,
       );
     }
 
-    const field = fieldOp.substring(0, lastDotIndex);
-    const operator = fieldOp.substring(lastDotIndex + 1);
-
-    if (!field || !operator) {
-      throw new Error(
-        `Both field and operator must be specified: "${fieldOp}"`,
-      );
-    }
+    const field = this._parseField(_field)
 
     if (!args && args !== '') {
-      return { field, operator, value: null };
+      return { field, operator, value: null, values: [null] };
     }
 
     const values = this._parseArgumentList(args);
 
     if (values.length === 0) {
-      return { field, operator, value: null };
+      return { field, operator, value: null, values: [null] };
     }
 
     return values.length === 1
-      ? { field, operator, value: values[0] }
+      ? { field, operator, value: values[0], values }
       : { field, operator, values };
+  }
+
+  public _parseField(field: string): Condition['field'] {
+    if (field.includes('->') || field.includes('->>') || field.includes('.')) {
+      const parts: (string | JsonFieldType)[] = [];
+      let current = '';
+      let i = 0;
+
+      while (i < field.length) {
+        if (field.substring(i, i + 3) === '->>') {
+          if (current) {
+            parts.push({ name: current, operator: '->>' });
+            current = '';
+          }
+          i += 3;
+        } else if (field.substring(i, i + 2) === '->') {
+          if (current) {
+            parts.push({ name: current, operator: '->' });
+            current = '';
+          }
+          i += 2;
+        } else if (field[i] === '.') {
+          if (current) {
+            parts.push(current);
+            current = '';
+          }
+          i++;
+        } else {
+          current += field[i];
+          i++;
+        }
+      }
+
+      if (current) {
+        parts.push(current);
+      }
+
+      return parts;
+    } else {
+      return field;
+    }
   }
 
   private _parseArgumentList(args: string): any[] {
@@ -779,9 +763,9 @@ const defaultConfig: Config = {
   // Value syntax options
   values: {
     FUNCTION_STYLE: true, // Enable fn(value) syntax
-    OPERATOR_STYLE: true, // Enable op.value syntax
     LIST_STYLE: '[]', // List format: '[]', '()', or '{}'
   },
 };
 
 export const parser = new Parser(defaultConfig);
+export { type Config as ParserConfig };

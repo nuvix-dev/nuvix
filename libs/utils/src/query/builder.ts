@@ -10,7 +10,9 @@ import {
 } from './parser';
 import { ParsedOrdering } from './order';
 import { ColumnNode, EmbedNode, SelectNode } from './select';
-import Raw from 'node_modules/@nuvix/pg/dist/raw';
+import pg from '@nuvix/pg';
+
+type PG = ReturnType<typeof pg<{}, any[]>>;
 
 type QueryBuilder = ReturnType<DataSource['queryBuilder']>;
 
@@ -33,6 +35,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
 
   constructor(qb: T, pg: DataSource, options: ASTToQueryBuilderOptions = {}) {
     this.qb = qb;
+    qb.debug(true); // Enable debug mode for query logging
     this.pg = pg;
     this.maxNestingDepth = options.maxNestingDepth || 10;
     this.allowUnsafeOperators = options.allowUnsafeOperators || false;
@@ -167,9 +170,9 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
     condition: Condition,
     queryBuilder: QueryBuilder,
   ): QueryBuilder {
-    const { field, operator, value, values } = condition;
+    const { field: _field, operator, value, values } = condition;
 
-    if (!field || !operator) {
+    if (!_field || !operator) {
       throw new Error('Condition must have both field and operator');
     }
 
@@ -178,11 +181,14 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
       this.logger.warn(`Unknown operator: ${operator}, proceeding with caution`);
     }
 
+    const field = this._rawField(_field) as unknown as ReturnType<PG['raw']>;
+    const fieldSql = field.toSQL().sql;
+
     // Check for ANY/ALL pattern with 3 values
     if (values && Array.isArray(values) && values.length === 3 && this.anyAllsupportedOperators.includes(operator)) {
       const [modifier, ...operatorValues] = values;
       if (modifier === 'any' || modifier === 'all') {
-        return this._applyAnyAllCondition(field, operator, modifier, operatorValues, queryBuilder);
+        return this._applyAnyAllCondition(fieldSql, operator, modifier, operatorValues, queryBuilder);
       }
     }
 
@@ -198,6 +204,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
         return queryBuilder.where(field, '<', value);
       case 'lte':
         return queryBuilder.where(field, '<=', value);
+      case 'ne':
       case 'neq':
         return queryBuilder.where(field, '<>', value);
 
@@ -216,26 +223,26 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
         if (!values || !Array.isArray(values)) {
           throw new Error('IN operator requires an array of values');
         }
-        return queryBuilder.whereIn(field, values);
+        return queryBuilder.whereIn(fieldSql, values);
 
       // IS operator
       case 'is':
         if (value === null || value === 'null') {
-          return queryBuilder.whereNull(field);
+          return queryBuilder.whereNull(fieldSql);
         } else if (value === 'not_null') {
-          return queryBuilder.whereNotNull(field);
+          return queryBuilder.whereNotNull(fieldSql);
         } else if (value === true || value === 'true') {
-          return queryBuilder.where(field, true);
+          return queryBuilder.where(fieldSql, true);
         } else if (value === false || value === 'false') {
-          return queryBuilder.where(field, false);
+          return queryBuilder.where(fieldSql, false);
         } else if (value === 'unknown') {
-          return queryBuilder.whereRaw(`?? IS UNKNOWN`, [field]);
+          return queryBuilder.whereRaw(`?? IS UNKNOWN`, [fieldSql]);
         }
-        return queryBuilder.where(field, value);
+        return queryBuilder.where(fieldSql, value);
 
       // IS DISTINCT FROM
       case 'isdistinct':
-        return queryBuilder.whereRaw(`?? IS DISTINCT FROM ?`, [field, value]);
+        return queryBuilder.whereRaw(`?? IS DISTINCT FROM ?`, [fieldSql, value]);
 
       // Full-Text Search operators
       case 'fts':
@@ -303,23 +310,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
         if (!values || !Array.isArray(values) || values.length !== 2) {
           throw new Error('BETWEEN operator requires exactly 2 values');
         }
-        return queryBuilder.whereBetween(field, values as any);
-      case '->':
-      case '->>':
-        return queryBuilder.whereRaw(`?? ${operator} ?`, [field, value]);
-      case 'not_in':
-        if (!values || !Array.isArray(values)) {
-          throw new Error('NOT IN operator requires an array of values');
-        }
-        return queryBuilder.whereNotIn(field, values);
-      case 'not_like':
-        return queryBuilder.where(field, 'not like', value);
-      case 'not_ilike':
-        return queryBuilder.where(field, 'not ilike', value);
-      case 'is_null':
-        return queryBuilder.whereNull(field);
-      case 'is_not_null':
-        return queryBuilder.whereNotNull(field);
+        return queryBuilder.whereBetween(fieldSql, values as any);
       case 'regex':
         return queryBuilder.whereRaw(`?? ~ ?`, [field, value]);
       case 'iregex':
@@ -328,15 +319,65 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
         return queryBuilder.whereRaw(`?? !~ ?`, [field, value]);
       case 'not_iregex':
         return queryBuilder.whereRaw(`?? !~* ?`, [field, value]);
-      case 'json_extract':
-        return queryBuilder.whereRaw(`?? -> ? = ?`, [field, value.path, value.value]);
-      case 'json_extract_text':
-        return queryBuilder.whereRaw(`?? ->> ? = ?`, [field, value.path, value.value]);
-      case 'json_contains':
-        return queryBuilder.whereRaw(`?? ? ?`, [field, value]);
 
       default:
         throw new Error(`Unsupported operator: ${operator}`);
+    }
+  }
+
+  public _rawField(_field: Condition['field']): ReturnType<typeof this.pg['raw']> {
+    if (typeof _field === 'string') {
+      return this.pg.raw('??', [_field]);
+    } else if (Array.isArray(_field)) {
+      // Handle complex field paths with JSON operators
+      const sqlParts: string[] = [];
+      const bindings: any[] = [];
+
+      for (let i = 0; i < _field.length; i++) {
+        const part = _field[i];
+        const isLastPart = i === _field.length - 1;
+        const hasObjectPartsBefore = _field.slice(0, i).some(p => typeof p === 'object' && 'operator' in p);
+
+        if (typeof part === 'string') {
+          const isAfterOperator = i > 0 && _field.slice(0, i).some(p => typeof p === 'object' && 'operator' in p);
+
+          if (isAfterOperator) {
+            // Try to convert to number if possible
+            const numericValue = Number(part);
+            if (!isNaN(numericValue) && isFinite(numericValue)) {
+              sqlParts.push(part);
+            } else {
+              sqlParts.push(`'${part}'`);
+            }
+          } else {
+            sqlParts.push(`"${part}"`);
+          }
+
+          // Add dot separator only if not last part
+          if (!isLastPart) {
+            sqlParts.push('.');
+          }
+        } else if (typeof part === 'object' && 'operator' in part) {
+          // Handle JSON operators (->, ->>)
+          if (!hasObjectPartsBefore) {
+            sqlParts.push(`"${part.name}"`);
+          } else {
+            // Try to convert to number if possible when i > 0
+            const numericValue = Number(part.name);
+            if (!isNaN(numericValue) && isFinite(numericValue)) {
+              sqlParts.push(part.name);
+            } else {
+              sqlParts.push(`'${part.name}'`);
+            }
+          }
+          sqlParts.push(part.operator);
+        }
+      }
+
+      this.logger.debug('Generated SQL:', sqlParts.join(''), 'Field:', _field, 'Bindings:', bindings);
+      return this.pg.raw(sqlParts.join(''), bindings);
+    } else {
+      throw new Error('Invalid field type: field must be string or array');
     }
   }
 
@@ -388,7 +429,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
   private _isKnownOperator(operator: string): boolean {
     const knownOperators = [
       // Basic comparisons
-      'eq', 'gt', 'gte', 'lt', 'lte', 'neq',
+      'eq', 'gt', 'gte', 'lt', 'lte', 'neq', 'ne',
       // Pattern matching
       'like', 'ilike', 'match', 'imatch',
       // List operations
@@ -404,9 +445,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
       // Operator modifiers
       'all', 'any',
       // Legacy operators
-      'between', '->', '->>', 'not_in', 'not_like', 'not_ilike',
-      'is_null', 'is_not_null', 'regex', 'iregex', 'not_regex', 'not_iregex',
-      'json_extract', 'json_extract_text', 'json_contains'
+      'between', 'regex', 'iregex', 'not_regex', 'not_iregex',
     ];
     return knownOperators.includes(operator);
   }
@@ -482,44 +521,22 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
    * Build column select string with alias and cast
    */
   private _buildColumnSelect(node: ColumnNode) {
-    const columnSelect = node.path;
-
-    return this.pg.raw(`"${columnSelect}"${node.cast ? '::' + node.cast : ''}${node.alias ? ` as ${node.alias}` : ''}`);
+    const rawPath = this._rawField(node.path).toSQL().sql;
+    const casted = node.cast ? `CAST((${rawPath}) AS ${node.cast})` : rawPath;
+    return this.pg.raw(`${casted}${node.alias ? ` as "${node.alias}"` : ''}`);
   }
 
   /**
    * Handle embed node (subqueries/joins)
    */
-  private _handleEmbedNode(embed: EmbedNode, queryBuilder: QueryBuilder): void {
+  private _handleEmbedNode(embed: EmbedNode, qb: QueryBuilder): void {
     const { resource, constraint, alias, select } = embed;
 
-    // TODO: AI GENERATED
-    // This is a simplified implementation - you may need to expand based on your needs
-    if (select && select.length > 0) {
-      // Create a subquery for the embed
-      const subQuery = queryBuilder.clone().from(resource);
 
-      // Apply constraint if provided
-      if (constraint) {
-        // Parse and apply the constraint - this would need proper parsing
-        // For now, assuming it's a simple field=value constraint
-        const [field, value] = constraint.split('=');
-        if (field && value) {
-          subQuery.where(field.trim(), value.trim());
-        }
-      }
+  }
 
-      // Apply select for the embed
-      this.applySelect(select, subQuery as any);
-
-      // Join or handle the embed based on your requirements
-      // This is where you'd implement the actual join logic
-      const joinAlias = alias || resource;
-      queryBuilder.leftJoin(`${resource} as ${joinAlias}`, function () {
-        // Add join conditions here based on your schema
-        // This is a placeholder - you'll need to implement proper join logic
-      });
-    }
+  private resolveConstraintValue(value: string) {
+    return value;
   }
 
   // Type guards
