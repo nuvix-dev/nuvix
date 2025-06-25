@@ -28,10 +28,11 @@ import {
 } from '@nuvix/core/decorators';
 import { Document, ID } from '@nuvix/database';
 import { DataSource } from '@nuvix/pg';
-import { Expression, parser } from '@nuvix/utils/query/parser';
+import { parser } from '@nuvix/utils/query/parser';
 import { ASTToQueryBuilder } from '@nuvix/utils/query/builder';
-import { SelectNode, SelectParser } from '@nuvix/utils/query/select';
-import { OrderParser, ParsedOrdering } from '@nuvix/utils/query/order';
+import { SelectParser } from '@nuvix/utils/query/select';
+import { OrderParser } from '@nuvix/utils/query/order';
+import { Expression, ParsedOrdering, SelectNode } from '@nuvix/utils/query/types';
 
 // DTO's
 

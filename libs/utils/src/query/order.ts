@@ -1,9 +1,4 @@
-
-interface ParsedOrdering {
-    path: string;
-    direction: 'asc' | 'desc';
-    nulls: 'nullsfirst' | 'nullslast' | null;
-}
+import { ParsedOrdering } from "./types";
 
 class OrderParser {
     private static readonly DIRECTIONS = ['asc', 'desc'] as const;

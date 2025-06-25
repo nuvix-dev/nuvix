@@ -1,54 +1,14 @@
 import { Logger } from '@nestjs/common';
 import { Exception } from '@nuvix/core/extend/exception';
-import { JsonFieldType } from './types';
-
-interface Config {
-  groups: {
-    NOT: string;
-    OPEN: '(' | '{';
-    CLOSE: ')' | '}';
-    OR: string;
-    SEP: string;
-  };
-  values: {
-    FUNCTION_STYLE: boolean;
-    LIST_STYLE: '[]' | '()' | '{}';
-  };
-}
-
-export interface Condition {
-  field: string | (string | JsonFieldType)[];
-  operator: string;
-  value?: any; // TODO: --
-  values?: any[];
-}
-
-export interface NotExpression {
-  not: Expression;
-}
-
-export interface OrExpression {
-  or: Expression[];
-}
-
-export interface AndExpression {
-  and: Expression[];
-}
-
-export type Expression =
-  | Condition
-  | NotExpression
-  | OrExpression
-  | AndExpression
-  | null;
+import type { Condition, Expression, JsonFieldType, ParserConfig } from './types';
 
 export class Parser {
   private readonly logger = new Logger(Parser.name);
 
-  private config: Config;
+  private config: ParserConfig;
   private escapeChar: string;
 
-  constructor(config: Config) {
+  constructor(config: ParserConfig) {
     this.config = config;
     this.escapeChar = '\\';
     this._validateConfig();
@@ -298,17 +258,17 @@ export class Parser {
     const field = this._parseField(_field)
 
     if (!args && args !== '') {
-      return { field, operator, value: null, values: [null] };
+      return { field, operator, value: null, };
     }
 
     const values = this._parseArgumentList(args);
 
     if (values.length === 0) {
-      return { field, operator, value: null, values: [null] };
+      return { field, operator, value: null, };
     }
 
     return values.length === 1
-      ? { field, operator, value: values[0], values }
+      ? { field, operator, value: values[0] }
       : { field, operator, values };
   }
 
@@ -750,7 +710,7 @@ export class Parser {
   }
 }
 
-const defaultConfig: Config = {
+const defaultConfig: ParserConfig = {
   // Grouping syntax options
   groups: {
     OPEN: '(', // Can be '{' or '('
@@ -768,4 +728,3 @@ const defaultConfig: Config = {
 };
 
 export const parser = new Parser(defaultConfig);
-export { type Config as ParserConfig };

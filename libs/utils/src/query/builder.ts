@@ -1,18 +1,17 @@
 import { DataSource } from '@nuvix/pg';
 import { Logger } from '@nestjs/common';
 import { Exception } from '@nuvix/core/extend/exception';
-import {
+import type {
   Expression,
   Condition,
   NotExpression,
   OrExpression,
   AndExpression,
-} from './parser';
-import { ParsedOrdering } from './order';
-import { ColumnNode, EmbedNode, SelectNode } from './select';
-import pg from '@nuvix/pg';
-
-type PG = ReturnType<typeof pg<{}, any[]>>;
+  ColumnNode, EmbedNode, SelectNode,
+  ParsedOrdering
+} from './types';
+import { PG } from '@nuvix/pg';
+import { JoinBuilder } from './join-builder';
 
 type QueryBuilder = ReturnType<DataSource['queryBuilder']>;
 
@@ -26,7 +25,7 @@ export interface ASTToQueryBuilderOptions {
 export class ASTToQueryBuilder<T extends QueryBuilder> {
   private readonly logger = new Logger(ASTToQueryBuilder.name);
   private qb: T;
-  private pg: DataSource;
+  public pg: DataSource;
   private nestingDepth = 0;
   private readonly maxNestingDepth: number;
   private readonly allowUnsafeOperators: boolean;
@@ -119,7 +118,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
         const nullsClause = nulls === 'nullsfirst' ? 'NULLS FIRST' : 'NULLS LAST';
         this.qb.orderByRaw(`?? ${direction.toUpperCase()} ${nullsClause}`, [path]);
       } else {
-        this.qb.orderBy(path, direction);
+        this.qb.orderBy(this._rawField(path).toSQL().sql, direction);
       }
     });
 
@@ -144,19 +143,19 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
     this.nestingDepth++;
 
     try {
-      if (this._isCondition(expression)) {
+      if (ASTToQueryBuilder._isCondition(expression)) {
         return this._applyCondition(expression, queryBuilder);
       }
 
-      if (this._isNotExpression(expression)) {
+      if (ASTToQueryBuilder._isNotExpression(expression)) {
         return this._applyNotExpression(expression, queryBuilder);
       }
 
-      if (this._isOrExpression(expression)) {
+      if (ASTToQueryBuilder._isOrExpression(expression)) {
         return this._applyOrExpression(expression, queryBuilder);
       }
 
-      if (this._isAndExpression(expression)) {
+      if (ASTToQueryBuilder._isAndExpression(expression)) {
         return this._applyAndExpression(expression, queryBuilder);
       }
 
@@ -185,10 +184,10 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
     const fieldSql = field.toSQL().sql;
 
     // Check for ANY/ALL pattern with 3 values
-    if (values && Array.isArray(values) && values.length === 3 && this.anyAllsupportedOperators.includes(operator)) {
+    if (values && Array.isArray(values) && values.length >= 2 && this.anyAllsupportedOperators.includes(operator)) {
       const [modifier, ...operatorValues] = values;
       if (modifier === 'any' || modifier === 'all') {
-        return this._applyAnyAllCondition(fieldSql, operator, modifier, operatorValues, queryBuilder);
+        return this._applyAnyAllCondition(field, operator, modifier, operatorValues, queryBuilder);
       }
     }
 
@@ -374,7 +373,6 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
         }
       }
 
-      this.logger.debug('Generated SQL:', sqlParts.join(''), 'Field:', _field, 'Bindings:', bindings);
       return this.pg.raw(sqlParts.join(''), bindings);
     } else {
       throw new Error('Invalid field type: field must be string or array');
@@ -442,8 +440,6 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
       'sl', 'sr', 'nxr', 'nxl', 'adj',
       // Logical operators
       'not', 'or', 'and',
-      // Operator modifiers
-      'all', 'any',
       // Legacy operators
       'between', 'regex', 'iregex', 'not_regex', 'not_iregex',
     ];
@@ -455,7 +451,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
    * Creates OR conditions for 'any' and AND conditions for 'all'
    */
   private _applyAnyAllCondition(
-    field: string,
+    field: ReturnType<PG['raw']>,
     operator: string,
     modifier: 'any' | 'all',
     operatorValues: any[],
@@ -488,7 +484,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
    * Apply a single operator condition (helper for ANY/ALL)
    */
   private _applySingleOperatorCondition(
-    field: string,
+    field: ReturnType<PG['raw']>,
     operator: string,
     value: any,
     queryBuilder: QueryBuilder,
@@ -530,17 +526,21 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
    * Handle embed node (subqueries/joins)
    */
   private _handleEmbedNode(embed: EmbedNode, qb: QueryBuilder): void {
-    const { resource, constraint, alias, select } = embed;
+    const { resource, constraint, alias, select, joinType } = embed;
 
-
-  }
-
-  private resolveConstraintValue(value: string) {
-    return value;
+    switch (joinType) {
+      case 'left':
+        const table = `"${resource}"`
+        qb.leftJoin(resource, (builder) => {
+          new JoinBuilder(builder, this).applyJoin(constraint)
+        });
+        this.applySelect(select, qb as any)
+        break;
+    }
   }
 
   // Type guards
-  private _isCondition(expression: Expression): expression is Condition {
+  public static _isCondition(expression: Expression): expression is Condition {
     return (
       expression !== null &&
       typeof expression === 'object' &&
@@ -549,7 +549,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
     );
   }
 
-  private _isNotExpression(expression: Expression): expression is NotExpression {
+  public static _isNotExpression(expression: Expression): expression is NotExpression {
     return (
       expression !== null &&
       typeof expression === 'object' &&
@@ -557,7 +557,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
     );
   }
 
-  private _isOrExpression(expression: Expression): expression is OrExpression {
+  public static _isOrExpression(expression: Expression): expression is OrExpression {
     return (
       expression !== null &&
       typeof expression === 'object' &&
@@ -566,7 +566,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
     );
   }
 
-  private _isAndExpression(expression: Expression): expression is AndExpression {
+  public static _isAndExpression(expression: Expression): expression is AndExpression {
     return (
       expression !== null &&
       typeof expression === 'object' &&

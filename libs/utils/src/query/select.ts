@@ -1,24 +1,6 @@
 import { Logger } from '@nestjs/common';
-import { Expression, parser } from './parser';
-import { JsonFieldType } from './types';
-
-export interface ColumnNode {
-    type: 'column';
-    path: string | (string | JsonFieldType)[];
-    alias: string | null;
-    cast: string | null;
-}
-
-export interface EmbedNode {
-    type: 'embed';
-    resource: string;
-    joinType?: 'left' | 'right' | 'inner';
-    alias: string | null;
-    constraint: Expression;
-    select: SelectNode[];
-}
-
-export type SelectNode = ColumnNode | EmbedNode;
+import { parser } from './parser';
+import type { ColumnNode, EmbedNode, Expression, SelectNode } from './types';
 
 export class SelectParser {
     private static readonly QUOTE_CHARS = ['"', "'"] as const;
