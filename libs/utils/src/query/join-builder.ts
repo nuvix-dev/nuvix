@@ -8,7 +8,7 @@ type QueryBuilder = ReturnType<DataSource['queryBuilder']>;
 export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
   private readonly logger = new Logger(JoinBuilder.name);
   private readonly astBuilder: T;
-  private readonly maxDepth = 10;
+  private readonly maxDepth = 3;
 
   constructor(astBuilder: T) {
     this.astBuilder = astBuilder;
@@ -169,9 +169,7 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
 
   private _conditionToSQL(
     cond: Condition,
-
     leftTable: string,
-
     rightTable: string,
   ): { sql: string; bindings: any[] } {
     const { field, operator, value, values } = cond;

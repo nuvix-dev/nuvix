@@ -8,11 +8,14 @@ export class SelectParser {
   private readonly CAST_DELIMITER = '::';
   private readonly ALIAS_DELIMITER = ':';
   private logger = new Logger(SelectParser.name);
+  private depth: number = 0;
+  private maxDepth: number = 3;
 
   private tableName: string;
 
-  constructor({ tableName }: { tableName: string }) {
+  constructor({ tableName, depth = 0 }: { tableName: string; depth?: number }) {
     this.tableName = tableName;
+    this.depth = depth;
   }
 
   parse(selectStr: string): SelectNode[] {
@@ -177,6 +180,9 @@ export class SelectParser {
   }
 
   private parseEmbed(token: string): EmbedNode {
+    if (this.depth > this.maxDepth) {
+      throw new Error('Max depth limit reached.')
+    }
     const match = this.extractEmbedToken(token);
 
     const [
@@ -208,9 +214,9 @@ export class SelectParser {
 
     // Select (optional if shaping is indicated)
     const select = selectPart?.trim()
-      ? new SelectParser({ tableName: alias || resource }).parse(
-          selectPart.trim(),
-        )
+      ? new SelectParser({ tableName: alias || resource, depth: ++this.depth }).parse(
+        selectPart.trim(),
+      )
       : [];
     console.log({ select });
     return {
