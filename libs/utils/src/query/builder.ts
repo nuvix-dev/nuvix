@@ -26,7 +26,7 @@ export interface ASTToQueryBuilderOptions {
 
 export class ASTToQueryBuilder<T extends QueryBuilder> {
   private readonly logger = new Logger(ASTToQueryBuilder.name);
-  private qb: T;
+  public qb: T;
   public pg: DataSource;
   private nestingDepth = 0;
   private readonly maxNestingDepth: number;
@@ -627,234 +627,22 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
    * Handle embed node (subqueries/joins)
    */
   private _handleEmbedNode(embed: EmbedNode, qb: QueryBuilder): void {
-    const { resource, alias, nested = false } = embed;
+    const { resource, alias, flatten } = embed;
 
     try {
-      if (nested && alias) {
-        // Handle nested structure using JSON aggregation
-        this._handleNestedEmbed(embed, qb);
-      } else {
-        // Handle traditional join with flattened columns
-        this._handleFlatEmbed(embed, qb);
-      }
+      const joinBuilder = new JoinBuilder(this);
+      joinBuilder.applyEmbedNode(embed);
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      this.logger.error(`Failed to handle embed node for ${resource}: ${errorMessage}`);
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(
+        `Failed to handle embed node for ${resource}: ${errorMessage}`,
+      );
       throw new Exception(
         Exception.GENERAL_QUERY_BUILDER_ERROR,
-        `Embed node processing failed: ${errorMessage}`
+        `Embed node processing failed: ${errorMessage}`,
       );
     }
-  }
-
-  /**
-   * Handle nested embed using JSON aggregation to create nested objects/arrays
-   */
-  private _handleNestedEmbed(embed: EmbedNode, qb: QueryBuilder): void {
-    const { resource, constraint, alias, select, joinType = 'inner', mainTable } = embed;
-
-    if (!alias) {
-      throw new Error('Nested embeds require an alias');
-    }
-
-    // For nested embeds, we'll use a correlated subquery approach
-    // This creates a JSON object/array under the specified alias
-
-    // Build column selections for the nested object
-    const columnSelects: string[] = [];
-    select.forEach(node => {
-      if (node.type === 'column') {
-        const columnPath = Array.isArray(node.path)
-          ? node.path.map(p => typeof p === 'string' ? p : p.name).join('_')
-          : node.path;
-        const columnName = node.alias || columnPath;
-        const rawPath = this._rawField(node.path, resource).toSQL().sql;
-        const casted = node.cast ? `CAST((${rawPath}) AS ${node.cast})` : rawPath;
-        columnSelects.push(`'${columnName}', ${casted}`);
-      }
-    });
-
-    if (columnSelects.length > 0) {
-      // Create JSON object aggregation using a subquery
-      const jsonObjectSql = `JSON_OBJECT(${columnSelects.join(', ')})`;
-
-      // Build the constraint condition for the subquery
-      let whereCondition = 'TRUE';
-      if (constraint) {
-        try {
-          const joinBuilder = new JoinBuilder(this, resource, mainTable);
-          whereCondition = joinBuilder.buildJoinSQL(constraint).toSQL().sql;
-        } catch (error) {
-          this.logger.warn(`Failed to build constraint for nested embed: ${error}`);
-        }
-      }
-
-      // Determine if this should be an array or single object based on join type
-      const isArray = joinType === 'left' || joinType === 'inner';
-
-      if (isArray) {
-        // Use JSON_ARRAYAGG for multiple related records
-        const subquerySql = `(
-          SELECT COALESCE(JSON_ARRAYAGG(${jsonObjectSql}), JSON_ARRAY())
-          FROM ${resource}
-          WHERE ${whereCondition}
-        )`;
-
-        const nestedSelect = this.pg.raw(`${subquerySql} as ??`, [alias]);
-        qb.select(nestedSelect);
-      } else {
-        // Use single JSON_OBJECT for one-to-one relations
-        const subquerySql = `(
-          SELECT ${jsonObjectSql}
-          FROM ${resource}
-          WHERE ${whereCondition}
-          LIMIT 1
-        )`;
-
-        const nestedSelect = this.pg.raw(`${subquerySql} as ??`, [alias]);
-        qb.select(nestedSelect);
-      }
-    }
-  }
-
-  /**
-   * Handle traditional flat embed with column prefixing
-   */
-  private _handleFlatEmbed(embed: EmbedNode, qb: QueryBuilder): void {
-    const { resource, constraint, alias, select, joinType = 'inner', mainTable } = embed;
-
-    // Determine the table reference for the join
-    const tableRef = alias ? `${resource} as ${alias}` : resource;
-    const targetTable = alias || resource;
-
-    // Build join condition using JoinBuilder
-    const joinCondition = new JoinBuilder(this, targetTable, mainTable).buildJoinSQL(constraint);
-
-    // Apply the appropriate join type
-    switch (joinType) {
-      case 'left':
-        qb.leftJoin(tableRef, builder => {
-          builder.on(joinCondition);
-        });
-        break;
-
-      case 'right':
-        qb.rightJoin(tableRef, builder => {
-          builder.on(joinCondition);
-        });
-        break;
-
-      case 'inner':
-        qb.innerJoin(tableRef, builder => {
-          builder.on(joinCondition);
-        });
-        break;
-
-      case 'full':
-        qb.fullOuterJoin(tableRef, builder => {
-          builder.on(joinCondition);
-        });
-        break;
-
-      case 'cross':
-        // Cross join doesn't use ON condition, just the table reference
-        qb.crossJoin(this.pg.raw('??', [tableRef]) as any);
-        break;
-
-      default:
-        throw new Error(`Unsupported join type: ${joinType}`);
-    }
-
-    // Apply select clauses for the joined table
-    if (select && select.length > 0) {
-      this._applyEmbedSelect(select, targetTable, qb, alias);
-    }
-  }
-
-  /**
-   * Build join condition SQL for nested embeds
-   */
-  private _buildJoinConditionForNested(
-    constraint: Expression,
-    mainTable: string,
-    joinTable: string
-  ): string {
-    if (!constraint) return 'TRUE';
-
-    try {
-      const joinBuilder = new JoinBuilder(this, joinTable, mainTable);
-      return joinBuilder.buildJoinSQL(constraint).toSQL().sql;
-    } catch (error) {
-      this.logger.warn(`Failed to build join condition for nested embed: ${error}`);
-      return 'TRUE';
-    }
-  }
-
-  /**
-   * Apply select clauses specifically for embedded (joined) tables
-   * Handles proper aliasing and column selection for joins
-   */
-  private _applyEmbedSelect(
-    selectNodes: SelectNode[],
-    tableName: string,
-    qb: QueryBuilder,
-    tableAlias?: string | null
-  ): void {
-    const embedColumns: any[] = [];
-    const nestedEmbeds: EmbedNode[] = [];
-
-    selectNodes.forEach(node => {
-      if (node.type === 'column') {
-        // Build column selection with proper table reference
-        const columnSelect = this._buildEmbedColumnSelect(node, tableName, tableAlias);
-        embedColumns.push(columnSelect);
-      } else if (node.type === 'embed') {
-        // Handle nested embeds (joins within joins)
-        nestedEmbeds.push(node);
-      }
-    });
-
-    // Add column selections to the query
-    if (embedColumns.length > 0) {
-      // Add each column selection to the existing query
-      embedColumns.forEach(col => {
-        qb.select(col);
-      });
-    }
-
-    // Process nested embeds recursively
-    nestedEmbeds.forEach(nestedEmbed => {
-      this._handleEmbedNode(nestedEmbed, qb);
-    });
-  }
-
-  /**
-   * Build column select for embedded tables with proper aliasing
-   */
-  private _buildEmbedColumnSelect(
-    node: ColumnNode,
-    tableName: string,
-    tableAlias?: string | null
-  ): ReturnType<(typeof this.pg)['raw']> {
-    const actualTableName = tableAlias || tableName;
-    const rawPath = this._rawField(node.path, actualTableName).toSQL().sql;
-
-    // Apply casting if specified
-    const casted = node.cast ? `CAST((${rawPath}) AS ${node.cast})` : rawPath;
-
-    // Generate alias - use node alias if provided, otherwise create one
-    let columnAlias: string;
-    if (node.alias) {
-      columnAlias = node.alias;
-    } else {
-      // Create meaningful alias by combining table and column names
-      const columnName = Array.isArray(node.path)
-        ? node.path.map(p => typeof p === 'string' ? p : p.name).join('_')
-        : node.path;
-      columnAlias = `${actualTableName}_${columnName}`;
-    }
-
-    return this.pg.raw(`${casted} as "${columnAlias}"`);
   }
 
   // Type guards

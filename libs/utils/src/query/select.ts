@@ -119,11 +119,12 @@ export class SelectParser {
   }
 
   private isEmbedToken(token: string): boolean {
-    return (
-      token.includes('{') &&
-      token.includes('}') &&
-      token.includes('(') &&
-      token.endsWith(')')
+    return !!this.extractEmbedToken(token);
+  }
+
+  private extractEmbedToken(token: string): string[] {
+    return token.match(
+      /^(?:(\.{3})?)?(?:([^${:({]+):)?([^${({]+)(?:\$([^{]+))?{([^}]*)}(\[\]|\{\})?(?:\((.*?)\))?$/s,
     );
   }
 
@@ -176,47 +177,42 @@ export class SelectParser {
   }
 
   private parseEmbed(token: string): EmbedNode {
-    //format: resource$joinType{constraints}(select)
-    const match = token.match(/^([^{$]+)(?:\$([^{]+))?{([^}]*)}?\((.+)\)$/s);
-    if (!match) throw new Error(`Invalid embed syntax: ${token}`);
+    const match = this.extractEmbedToken(token);
 
-    const [_, resourceWithAlias, joinTypeRaw, constraintPart, selectPart] =
-      match;
-
-    // Parse resource and alias
-    const { value: resource, alias } = this.extractAlias(
-      resourceWithAlias.trim(),
-    );
-
-    // Parse join type
+    const [
+      _,
+      flatten,
+      aliasRaw,
+      resourceBase,
+      joinTypeRaw,
+      constraintPart,
+      shapeHint,
+      selectPart,
+    ] = match;
+    // Parse alias, join type, flatten, shape
+    const flattenFlag = !!flatten;
+    const resource = resourceBase.trim();
+    const alias = aliasRaw?.trim() || null;
     const joinType = (joinTypeRaw?.trim() || 'inner') as
       | 'left'
       | 'right'
       | 'inner';
+    const shape = shapeHint === '{}' ? 'object' : 'array';
 
-    // Parse constraints
-    let constraint: Expression;
-    if (constraintPart && constraintPart.trim()) {
-      constraint = Parser.create({ tableName: alias || resource }).parse(
-        constraintPart.trim(),
-      );
-    } else {
+    // Constraints (required)
+    if (!constraintPart?.trim())
       throw new Error(`Missing constraint in embed: ${token}`);
-    }
-
-    // Parse inner select
-    if (!selectPart.trim()) throw new Error(`Empty select in embed: ${token}`); // TODO
-
-    const select = new SelectParser({ tableName: alias || resource }).parse(
-      selectPart.trim(),
+    const constraint = Parser.create({ tableName: alias || resource }).parse(
+      constraintPart.trim(),
     );
-    this.logger.debug({
-      resource,
-      joinType,
-      alias,
-      constraint,
-      select,
-    });
+
+    // Select (optional if shaping is indicated)
+    const select = selectPart?.trim()
+      ? new SelectParser({ tableName: alias || resource }).parse(
+          selectPart.trim(),
+        )
+      : [];
+    console.log({ select });
     return {
       type: 'embed',
       resource,
@@ -225,6 +221,8 @@ export class SelectParser {
       alias,
       constraint,
       select,
+      shape,
+      flatten: flattenFlag,
     };
   }
 }

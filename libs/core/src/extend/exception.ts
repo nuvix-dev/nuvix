@@ -359,6 +359,10 @@ export class Exception extends HttpException {
   public isPublishable(): boolean {
     return this.publish;
   }
+
+  addDetails(values: Record<string, any>) {
+    return this;
+  }
 }
 
 interface ErrorCode {

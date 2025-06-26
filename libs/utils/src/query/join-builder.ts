@@ -1,135 +1,284 @@
 import { Logger } from '@nestjs/common';
-import { PG } from '@nuvix/pg';
-import {
-  Condition,
-  Expression,
-} from './types';
-import { Exception } from '@nuvix/core/extend/exception';
+import { DataSource, PG } from '@nuvix/pg';
+import { EmbedNode, Expression, Condition } from './types';
 import { ASTToQueryBuilder } from './builder';
 
-export class JoinBuilder<T extends ASTToQueryBuilder<any>> {
+type QueryBuilder = ReturnType<DataSource['queryBuilder']>;
+
+export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
   private readonly logger = new Logger(JoinBuilder.name);
   private readonly astBuilder: T;
-  private nestingDepth = 0;
   private readonly maxDepth = 10;
-  private tableName: string;
-  private mainTable: string;
 
-  constructor(astBuilder: T, tableName: string, mainTable: string) {
+  constructor(astBuilder: T) {
     this.astBuilder = astBuilder;
-    this.tableName = tableName;
-    this.mainTable = mainTable;
   }
 
-  public buildJoinSQL(expression?: Expression): ReturnType<PG['raw']> {
-    if (!expression) return this.astBuilder.pg.raw('TRUE') as any;
+  public applyEmbedNode(embed: EmbedNode): void {
+    const {
+      resource,
+      alias,
+      joinType,
+      constraint,
+      mainTable,
+      select,
+      flatten,
+      shape,
+    } = embed;
+    this.logger.debug('Applying EmbedNode:', embed); // Use logger for better debug output
+    const joinAlias = alias || resource;
+    const conditionSQL = this._buildJoinConditionSQL(
+      constraint,
+      joinAlias,
+      mainTable,
+    );
 
-    try {
-      this.nestingDepth = 0;
-      const { sql, bindings } = this._convert(expression);
-      return this.astBuilder.pg.raw(sql, bindings) as any;
-    } catch (error) {
-      if (error instanceof Error) {
-        throw new Exception(
-          Exception.GENERAL_QUERY_BUILDER_ERROR,
-          `JoinBuilder error: ${error.message}`,
-        );
-      }
-      throw new Error('Unknown JoinBuilder error');
-    }
-  }
+    if (flatten) {
+      // ➕ Flattened JOIN (leftJoin / innerJoin with direct field selections)
+      this.astBuilder.qb[joinType + 'Join'](
+        this.astBuilder.pg.alias(resource, joinAlias),
+        this.astBuilder.pg.raw(conditionSQL.sql, conditionSQL.bindings),
+      );
 
-  private _convert(expr: Expression): { sql: string; bindings: any[] } {
-    if (this.nestingDepth++ > this.maxDepth) {
-      throw new Error(`Exceeded max nesting depth (${this.maxDepth})`);
-    }
+      const childAST = new ASTToQueryBuilder(
+        this.astBuilder.qb,
+        this.astBuilder.pg,
+        {
+          tableName: joinAlias,
+        },
+      );
 
-    let result: { sql: string; bindings: any[] };
-
-    if (ASTToQueryBuilder._isCondition(expr)) {
-      result = this._conditionToSQL(expr);
-    } else if (ASTToQueryBuilder._isAndExpression(expr)) {
-      result = this._logicToSQL(expr.and, 'AND');
-    } else if (ASTToQueryBuilder._isOrExpression(expr)) {
-      result = this._logicToSQL(expr.or, 'OR');
-    } else if (ASTToQueryBuilder._isNotExpression(expr)) {
-      const inner = this._convert(expr.not);
-      result = { sql: `NOT (${inner.sql})`, bindings: inner.bindings };
+      childAST.applySelect(select);
     } else {
-      throw new Error(`Unknown expression: ${JSON.stringify(expr)}`);
-    }
+      // ⚠️ Safe nested result with array or object (LATERAL / subquery)
+      // Build the subquery for the embedded resource
+      const subQb = this.astBuilder.pg.qb(
+        this.astBuilder.pg.alias(resource, joinAlias),
+      );
 
-    this.nestingDepth--;
+      // Apply select statements to the subquery
+      const childAST = new ASTToQueryBuilder(subQb, this.astBuilder.pg, {
+        tableName: resource, // tableName for context in child AST, but subQb is aliased
+      });
+      childAST.applySelect(select);
+
+      // Apply WHERE condition to subquery
+      subQb.where(
+        this.astBuilder.pg.raw(conditionSQL.sql, conditionSQL.bindings),
+      );
+
+      // Capture the SQL and bindings for the subquery before aggregation
+      const subQuerySQL = subQb.toSQL();
+
+      let wrapperSQL: string;
+      let finalBindings: readonly any[] = []; // Bindings for the final wrapped query
+
+      // Determine the final JSON output structure based on 'shape' and count
+      // This is done via a nested SELECT within the main SELECT
+      // For 'object' shape, we dynamically switch between object and array based on count
+      if (shape === 'object') {
+        // Here's the core change: use a subquery to count and then conditionally aggregate
+        // We'll wrap the existing subQuerySQL
+        wrapperSQL = `
+          (SELECT
+              CASE
+                  WHEN jsonb_array_length(result_array) = 1 THEN result_array -> 0
+                  ELSE result_array
+              END
+          FROM (
+              SELECT COALESCE(jsonb_agg(row_to_json(q)), '[]'::jsonb) AS result_array
+              FROM (${subQuerySQL.sql}) as q
+          ) as agg_q)
+        `;
+        finalBindings = subQuerySQL.bindings; // Bindings from the original subquery are passed to this new nested select
+      } else {
+        // Default to array (shape === 'array' or undefined)
+        // Ensure jsonb_agg returns an empty array if no results, not NULL
+        wrapperSQL = `
+          (SELECT COALESCE(jsonb_agg(row_to_json(q)), '[]'::jsonb)
+          FROM (${subQuerySQL.sql}) as q)
+        `;
+        finalBindings = subQuerySQL.bindings; // Bindings from the original subquery
+      }
+
+      // Final SELECT AS alias
+      // The wrapped SQL becomes a column in the main query's SELECT statement
+      this.astBuilder.qb.select(
+        this.astBuilder.pg.raw(
+          `${wrapperSQL} as ${this.astBuilder.pg.wrapIdentifier(joinAlias, undefined)}`,
+          finalBindings,
+        ),
+      );
+    }
+  }
+
+  private _buildJoinConditionSQL(
+    expr: Expression,
+    leftTable: string,
+    rightTable: string,
+  ): { sql: string; bindings: any[] } {
+    const result = this._convertExpression(expr, leftTable, rightTable, 0);
+
     return result;
   }
 
-  private _logicToSQL(expressions: Expression[], operator: 'AND' | 'OR') {
-    const parts: string[] = [];
-    const bindings: any[] = [];
+  private _convertExpression(
+    expr: Expression,
 
-    for (const expr of expressions) {
-      const converted = this._convert(expr);
-      parts.push(`(${converted.sql})`);
-      bindings.push(...converted.bindings);
+    leftTable: string,
+
+    rightTable: string,
+
+    depth: number,
+  ): { sql: string; bindings: any[] } {
+    if (depth > this.maxDepth)
+      throw new Error(`Join condition nesting too deep`);
+
+    if (ASTToQueryBuilder._isCondition(expr)) {
+      return this._conditionToSQL(expr as Condition, leftTable, rightTable);
     }
 
-    return {
-      sql: parts.join(` ${operator} `),
-      bindings,
-    };
+    if ('and' in expr) {
+      const parts = expr.and.map(e =>
+        this._convertExpression(e, leftTable, rightTable, depth + 1),
+      );
+
+      return {
+        sql: parts.map(p => `(${p.sql})`).join(' AND '),
+
+        bindings: parts.flatMap(p => p.bindings),
+      };
+    }
+
+    if ('or' in expr) {
+      const parts = expr.or.map(e =>
+        this._convertExpression(e, leftTable, rightTable, depth + 1),
+      );
+
+      return {
+        sql: parts.map(p => `(${p.sql})`).join(' OR '),
+
+        bindings: parts.flatMap(p => p.bindings),
+      };
+    }
+
+    if ('not' in expr) {
+      const sub = this._convertExpression(
+        expr.not,
+        leftTable,
+        rightTable,
+        depth + 1,
+      );
+
+      return {
+        sql: `NOT (${sub.sql})`,
+
+        bindings: sub.bindings,
+      };
+    }
+
+    throw new Error(`Unknown join expression`);
   }
 
-  private _conditionToSQL(cond: Condition): { sql: string; bindings: any[] } {
-    const { field, operator, value, values, tableName } = cond;
+  // Minor improvement in _conditionToSQL:
+  // Consider if `value` could genuinely be a non-string that includes '.' but isn't a field.
+  // The current logic `typeof value === 'string' && value.includes('.')` for `rightField`
+  // seems to correctly imply it's a field reference. Your removed comment hints at this.
+  // I've kept your current behavior.
+  private _conditionToSQL(
+    cond: Condition,
+
+    leftTable: string,
+
+    rightTable: string,
+  ): { sql: string; bindings: any[] } {
+    const { field, operator, value, values } = cond;
 
     if (!field || !operator) {
       throw new Error('Invalid condition: missing field/operator');
     }
 
-    const left = this.astBuilder._rawField(field, tableName).toSQL().sql;
-    const right = (values.length === 2 && values[0] === '?') ? '?' : this.astBuilder._rawField(values.length ? values.slice(1) : value, values.length ? values[0] : this.mainTable).toSQL().sql;
-    const bindings = (values.length === 2 && values[0] === '?') ? [value] : [];
+    const leftField = this.astBuilder._rawField(field, leftTable).toSQL().sql;
+
+    let rightField: string | undefined;
+
+    const bindings: any[] = [];
+
+    // if (typeof value === 'string' && value.includes('.')) {
+
+    rightField = this.astBuilder._rawField(value, rightTable).toSQL().sql;
+
+    // }
+
     switch (operator) {
       case 'eq':
-        return { sql: `${left} = ${right}`, bindings };
-      case 'ne':
-      case 'neq':
-        return { sql: `${left} <> ${right}`, bindings };
-      case 'gt':
-        return { sql: `${left} > ${right}`, bindings };
-      case 'gte':
-        return { sql: `${left} >= ${right}`, bindings };
-      case 'lt':
-        return { sql: `${left} < ${right}`, bindings };
-      case 'lte':
-        return { sql: `${left} <= ${right}`, bindings };
+        return {
+          sql: `${leftField} = ${rightField ?? '?'}`,
+          bindings: rightField ? [] : [value],
+        };
 
-      case 'like':
-        return { sql: `${left} LIKE ?`, bindings: [value] };
-      case 'ilike':
-        return { sql: `${left} ILIKE ?`, bindings: [value] };
+      case 'ne':
+
+      case 'neq':
+        return {
+          sql: `${leftField} <> ${rightField ?? '?'}`,
+          bindings: rightField ? [] : [value],
+        };
+
+      case 'gt':
+        return {
+          sql: `${leftField} > ${rightField ?? '?'}`,
+          bindings: rightField ? [] : [value],
+        };
+
+      case 'gte':
+        return {
+          sql: `${leftField} >= ${rightField ?? '?'}`,
+          bindings: rightField ? [] : [value],
+        };
+
+      case 'lt':
+        return {
+          sql: `${leftField} < ${rightField ?? '?'}`,
+          bindings: rightField ? [] : [value],
+        };
+
+      case 'lte':
+        return {
+          sql: `${leftField} <= ${rightField ?? '?'}`,
+          bindings: rightField ? [] : [value],
+        };
 
       case 'in':
-        if (!Array.isArray(values)) throw new Error('IN requires an array');
-        const placeholders = values.map(() => '?').join(', ');
-        return { sql: `${left} IN (${placeholders})`, bindings: values };
+        if (!Array.isArray(values)) throw new Error('IN requires array');
 
-      case 'between':
-        if (!Array.isArray(values) || values.length !== 2) {
-          throw new Error('BETWEEN requires exactly 2 values');
-        }
-        return { sql: `${left} BETWEEN ? AND ?`, bindings: values };
+        const placeholders = values.map(() => '?').join(', ');
+
+        return { sql: `${leftField} IN (${placeholders})`, bindings: values };
 
       case 'is':
-        if (value === 'null') return { sql: `${left} IS NULL`, bindings: [] };
+        if (value === 'null')
+          return { sql: `${leftField} IS NULL`, bindings: [] };
+
         if (value === 'not_null')
-          return { sql: `${left} IS NOT NULL`, bindings: [] };
-        if (value === 'true') return { sql: `${left} IS TRUE`, bindings: [] };
-        if (value === 'false') return { sql: `${left} IS FALSE`, bindings: [] };
+          return { sql: `${leftField} IS NOT NULL`, bindings: [] };
+
         throw new Error(`Unsupported IS value: ${value}`);
 
+      case 'like':
+        return { sql: `${leftField} LIKE ?`, bindings: [value] };
+
+      case 'ilike':
+        return { sql: `${leftField} ILIKE ?`, bindings: [value] };
+
+      case 'between':
+        if (!Array.isArray(values) || values.length !== 2)
+          throw new Error('BETWEEN requires two values');
+
+        return { sql: `${leftField} BETWEEN ? AND ?`, bindings: values };
+
       default:
-        throw new Error(`Unknown operator: ${operator}`);
+        throw new Error(`Unsupported join operator: ${operator}`);
     }
   }
 }
