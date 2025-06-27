@@ -27,15 +27,10 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
     } = embed;
 
     const joinAlias = alias || resource;
-    const conditionSQL = this._buildJoinConditionSQL(
-      constraint,
-      joinAlias,
-      mainTable,
-    );
+    const conditionSQL = this._buildJoinConditionSQL(constraint, joinAlias, mainTable);
 
     if (flatten) {
-      // TODO: --
-      //  Flattened JOIN (leftJoin / innerJoin with direct field selections)
+      // Flattened JOIN (existing behavior)
       this.astBuilder.qb[joinType + 'Join'](
         this.astBuilder.pg.alias(resource, joinAlias),
         this.astBuilder.pg.raw(conditionSQL.sql, conditionSQL.bindings),
@@ -44,14 +39,12 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
       const childAST = new ASTToQueryBuilder(
         this.astBuilder.qb,
         this.astBuilder.pg,
-        {
-          tableName: joinAlias,
-        },
+        { tableName: joinAlias },
       );
 
       childAST.applySelect(select);
     } else {
-      // Build the subquery for the embedded resource
+      // LOIN: Lateral Object Inline Join with JSON aggregation
       const subQb = this.astBuilder.pg.qb(
         this.astBuilder.pg.alias(resource, joinAlias),
       );
@@ -59,47 +52,44 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
       const childAST = new ASTToQueryBuilder(subQb, this.astBuilder.pg, {
         tableName: resource,
       });
+
       childAST.applySelect(select);
 
+      // Add constraint condition
       subQb.where(
         this.astBuilder.pg.raw(conditionSQL.sql, conditionSQL.bindings),
       );
 
+      let lateralSelect;
       const subQuerySQL = subQb.toSQL();
 
-      let wrapperSQL: string;
-      let finalBindings: readonly any[] = [];
-
-      // Determine the final JSON output structure based on 'shape' and count
-      // This is done via a nested SELECT within the main SELECT
-      // For 'object' shape, we dynamically switch between object and array based on count
       if (shape === 'object') {
-        wrapperSQL = `
-          (SELECT
-              CASE
-                  WHEN jsonb_array_length(result_array) = 1 THEN result_array -> 0
-                  ELSE result_array
-              END
-          FROM (
-              SELECT COALESCE(jsonb_agg(row_to_json(q)), '[]'::jsonb) AS result_array
-              FROM (${subQuerySQL.sql}) as q
-          ) as agg_q)
-        `;
-        finalBindings = subQuerySQL.bindings;
+        lateralSelect = `
+        SELECT
+          CASE
+            WHEN jsonb_array_length(result_array) = 1 THEN result_array -> 0
+            ELSE result_array
+          END as ${this.astBuilder.pg.wrapIdentifier(joinAlias, undefined)}
+        FROM (
+          SELECT COALESCE(jsonb_agg(row_to_json(${joinAlias})), '[]'::jsonb) AS result_array
+          FROM (${subQuerySQL.sql}) as ${joinAlias}
+        ) as agg_${joinAlias}
+      `;
       } else {
-        wrapperSQL = `
-          (SELECT COALESCE(jsonb_agg(row_to_json(q)), '[]'::jsonb)
-          FROM (${subQuerySQL.sql}) as q)
-        `;
-        finalBindings = subQuerySQL.bindings;
+        lateralSelect = `
+        SELECT COALESCE(jsonb_agg(row_to_json(${joinAlias})), '[]'::jsonb) as ${this.astBuilder.pg.wrapIdentifier(joinAlias, undefined)}
+        FROM (${subQuerySQL.sql}) as ${joinAlias}
+      `;
       }
 
-      this.astBuilder.qb.select(
-        this.astBuilder.pg.raw(
-          `${wrapperSQL} as ${this.astBuilder.pg.wrapIdentifier(joinAlias, undefined)}`,
-          finalBindings,
-        ),
+      const hh = this.astBuilder.pg.wrapIdentifier(joinAlias, undefined)
+
+      this.astBuilder.qb[joinType + 'Join'](
+        this.astBuilder.pg.raw(`LATERAL (${lateralSelect}) as ${hh} on true`),
+        subQuerySQL.bindings,
       );
+
+      this.astBuilder.qb.select(joinAlias)
     }
   }
 
