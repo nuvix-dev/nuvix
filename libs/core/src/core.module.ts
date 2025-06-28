@@ -41,10 +41,36 @@ import { CountryResponse, Reader } from 'maxmind';
 import { Cache, Redis } from '@nuvix/cache';
 import { ProjectUsageService } from './project-usage.service';
 import { Adapter } from '@nuvix/database';
-import { Pool as PgPool, PoolClient } from 'pg';
+import pg, { Pool as PgPool, PoolClient } from 'pg';
+import { parse as parseArray } from 'postgres-array';
 import { createHash } from 'crypto';
 import { filters, formats } from '@nuvix/utils/database';
 import { Device, Local } from '@nuvix/storage';
+
+export function configurePgTypeParsers() {
+  const types = pg.types;
+
+  types.setTypeParser(types.builtins.INT8, x => {
+    const asNumber = Number(x);
+    return Number.isSafeInteger(asNumber) ? asNumber : x;
+  });
+
+  types.setTypeParser(types.builtins.NUMERIC, parseFloat);
+  types.setTypeParser(types.builtins.FLOAT4, parseFloat);
+  types.setTypeParser(types.builtins.FLOAT8, parseFloat);
+  types.setTypeParser(types.builtins.BOOL, val => val === 't');
+
+  types.setTypeParser(types.builtins.DATE, x => x);
+  types.setTypeParser(types.builtins.TIMESTAMP, x => x);
+  types.setTypeParser(types.builtins.TIMESTAMPTZ, x => x);
+  types.setTypeParser(types.builtins.INTERVAL, x => x);
+
+  types.setTypeParser(1115 as any, parseArray); // _timestamp[]
+  types.setTypeParser(1182 as any, parseArray); // _date[]
+  types.setTypeParser(1185 as any, parseArray); // _timestamptz[]
+  types.setTypeParser(600 as any, x => x); // point
+  types.setTypeParser(1017 as any, x => x); // _point
+}
 
 Object.keys(filters).forEach(key => {
   Database.addFilter(key, {

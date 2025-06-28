@@ -1,26 +1,7 @@
 import pg from 'pg';
 // import * as Sentry from '@sentry/node'
-import { parse as parseArray } from 'postgres-array';
 import { PostgresMetaResult, PoolConfig } from './types';
 import { PgMetaException } from '../extra/execption';
-
-pg.types.setTypeParser(pg.types.builtins.INT8, x => {
-  const asNumber = Number(x);
-  if (Number.isSafeInteger(asNumber)) {
-    return asNumber;
-  } else {
-    return x;
-  }
-});
-pg.types.setTypeParser(pg.types.builtins.DATE, x => x);
-pg.types.setTypeParser(pg.types.builtins.INTERVAL, x => x);
-pg.types.setTypeParser(pg.types.builtins.TIMESTAMP, x => x);
-pg.types.setTypeParser(pg.types.builtins.TIMESTAMPTZ, x => x);
-pg.types.setTypeParser(1115 as any, parseArray); // _timestamp
-pg.types.setTypeParser(1182 as any, parseArray); // _date
-pg.types.setTypeParser(1185 as any, parseArray); // _timestamptz
-pg.types.setTypeParser(600 as any, x => x); // point
-pg.types.setTypeParser(1017 as any, x => x); // _point
 
 // Ensure any query will have an appropriate error handler on the pool to prevent connections errors
 // to bubble up all the stack eventually killing the server
