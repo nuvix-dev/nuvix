@@ -11,6 +11,7 @@ import type {
   EmbedNode,
   SelectNode,
   ParsedOrdering,
+  ValueType,
 } from './types';
 import { PG } from '@nuvix/pg';
 import { JoinBuilder } from './join-builder';
@@ -178,7 +179,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
     condition: Condition,
     queryBuilder: QueryBuilder,
   ): QueryBuilder {
-    const { field: _field, operator, value, values, tableName } = condition;
+    const { field: _field, operator, value: _value, values, tableName } = condition;
 
     if (!_field || !operator) {
       throw new Error('Condition must have both field and operator');
@@ -215,58 +216,62 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
       }
     }
 
+    const right = this._valueTypeToPlaceholder(_value);
+    const value = this._isValueColumnName(_value) ? _value.name : _value;
+    const filterdValues = values?.filter((v) => !this._isValueColumnName(v))
+
     switch (operator) {
       // Basic comparisons
       case 'eq':
-        return queryBuilder.where(field, '=', value);
+        return queryBuilder.whereRaw(`?? = ${right}`, [field, value]);
       case 'gt':
-        return queryBuilder.where(field, '>', value);
+        return queryBuilder.whereRaw(`?? > ${right}`, [field, value]);
       case 'gte':
-        return queryBuilder.where(field, '>=', value);
+        return queryBuilder.whereRaw(`?? >= ${right}`, [field, value]);
       case 'lt':
-        return queryBuilder.where(field, '<', value);
+        return queryBuilder.whereRaw(`?? < ${right}`, [field, value]);
       case 'lte':
-        return queryBuilder.where(field, '<=', value);
+        return queryBuilder.whereRaw(`?? <= ${right}`, [field, value]);
       case 'ne':
       case 'neq':
-        return queryBuilder.where(field, '<>', value);
+        return queryBuilder.whereRaw(`?? <> ${right}`, [field, value]);
 
       // Pattern matching
       case 'like':
-        return queryBuilder.where(field, 'like', value);
+        return queryBuilder.whereRaw(`?? like ${right}`, [field, value]);
       case 'ilike':
-        return queryBuilder.where(field, 'ilike', value);
+        return queryBuilder.whereRaw(`?? ilike ${right}`, [field, value]);
       case 'match':
-        return queryBuilder.whereRaw(`?? ~ ?`, [field, value]);
+        return queryBuilder.whereRaw(`?? ~ ${right}`, [field, value]);
       case 'imatch':
-        return queryBuilder.whereRaw(`?? ~* ?`, [field, value]);
+        return queryBuilder.whereRaw(`?? ~* ${right}`, [field, value]);
 
       // IN operator
       case 'in':
-        if (!values || !Array.isArray(values)) {
+        if (!filterdValues || !Array.isArray(filterdValues)) {
           throw new Error('IN operator requires an array of values');
         }
-        return queryBuilder.whereIn(fieldSql, values);
+        return queryBuilder.whereIn(fieldSql, filterdValues);
 
       // IS operator
       case 'is':
         if (value === null || value === 'null') {
-          return queryBuilder.whereNull(fieldSql);
+          return queryBuilder.whereRaw('?? is null', [field]);
         } else if (value === 'not_null') {
-          return queryBuilder.whereNotNull(fieldSql);
+          return queryBuilder.whereRaw('?? is not null', [field]);
         } else if (value === true || value === 'true') {
           return queryBuilder.where(fieldSql, true);
         } else if (value === false || value === 'false') {
           return queryBuilder.where(fieldSql, false);
         } else if (value === 'unknown') {
-          return queryBuilder.whereRaw(`?? IS UNKNOWN`, [fieldSql]);
+          return queryBuilder.whereRaw(`?? IS UNKNOWN`, [field]);
         }
-        return queryBuilder.where(fieldSql, value);
+        throw Error() // TODO: --------------
 
       // IS DISTINCT FROM
       case 'isdistinct':
-        return queryBuilder.whereRaw(`?? IS DISTINCT FROM ?`, [
-          fieldSql,
+        return queryBuilder.whereRaw(`?? IS DISTINCT FROM ${right}`, [
+          field,
           value,
         ]);
 
@@ -372,16 +377,30 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
         }
         return queryBuilder.whereBetween(fieldSql, values as any);
       case 'regex':
-        return queryBuilder.whereRaw(`?? ~ ?`, [field, value]);
+        return queryBuilder.whereRaw(`?? ~ ${right}`, [field, value]);
       case 'iregex':
-        return queryBuilder.whereRaw(`?? ~* ?`, [field, value]);
+        return queryBuilder.whereRaw(`?? ~* ${right}`, [field, value]);
       case 'not_regex':
-        return queryBuilder.whereRaw(`?? !~ ?`, [field, value]);
+        return queryBuilder.whereRaw(`?? !~ ${right}`, [field, value]);
       case 'not_iregex':
-        return queryBuilder.whereRaw(`?? !~* ?`, [field, value]);
+        return queryBuilder.whereRaw(`?? !~* ${right}`, [field, value]);
 
       default:
         throw new Error(`Unsupported operator: ${operator}`);
+    }
+  }
+
+  private _isValueColumnName(value: Condition['value']): value is ValueType {
+    if (
+      value !== null && typeof value === "object" && '__type' in value && value.__type === 'column'
+    ) return true; else false;
+  }
+
+  private _valueTypeToPlaceholder(value: Condition['value']): '?' | '??' {
+    if (this._isValueColumnName(value)) {
+      return '??'
+    } else {
+      return '?'
     }
   }
 

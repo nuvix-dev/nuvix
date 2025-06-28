@@ -235,9 +235,8 @@ export class SelectParser {
       throw new Error(`Missing constraint in embed: ${token}`);
     const constraint = Parser.create<EmbedParserResult>({
       tableName: alias || resource,
+      mainTable: this.tableName
     }).parse(constraintPart.trim());
-
-    this.logger.debug({ constraint }, '<<------------------------!!');
 
     if (constraint.joinType) {
       joinType = constraint.joinType;

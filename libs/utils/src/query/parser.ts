@@ -7,6 +7,7 @@ import type {
   ParserConfig,
   ParserResult,
 } from './types';
+import { OrderParser } from './order';
 
 export class Parser<T extends ParserResult = ParserResult> {
   private readonly logger = new Logger(Parser.name);
@@ -14,17 +15,19 @@ export class Parser<T extends ParserResult = ParserResult> {
   private config: ParserConfig;
   private escapeChar: string;
   private tableName: string;
+  private mainTable: string;
   private extraData: Record<string, any> = {};
 
-  constructor(config: ParserConfig, tableName: string) {
+  constructor(config: ParserConfig, tableName: string, mainTable?: string) {
     this.config = config;
     this.tableName = tableName;
+    this.mainTable = mainTable ?? tableName;
     this.escapeChar = '\\';
     this._validateConfig();
   }
 
-  static create<T>({ tableName }: { tableName: string }) {
-    return new Parser<T>(defaultConfig, tableName);
+  static create<T>({ tableName, mainTable }: { tableName: string, mainTable?: string }) {
+    return new Parser<T>(defaultConfig, tableName, mainTable);
   }
 
   parse(str: string): T & Expression {
@@ -333,8 +336,8 @@ export class Parser<T extends ParserResult = ParserResult> {
           // 'true' and '{}' map to 'object', '[]' maps to 'array'
           this.extraData['shape'] =
             parsedShape === 'object' ||
-            parsedShape === '{}' ||
-            parsedShape === 'true'
+              parsedShape === '{}' ||
+              parsedShape === 'true'
               ? 'object'
               : 'array';
         } else {
@@ -344,12 +347,48 @@ export class Parser<T extends ParserResult = ParserResult> {
           );
         }
         break;
+      case 'group':
+        const columns = this._parseGroupBy(args);
+        if (columns && columns.length > 0) {
+          this.extraData['group'] = columns;
+        }
+      case 'order':
+        const orders = OrderParser.parse(args)
+        if (orders && orders.length > 0) {
+          this.extraData['order'] = orders;
+        }
       default:
         throw new Exception(
           Exception.GENERAL_PARSER_ERROR,
           `Unsupported special function: $.${operator}`,
         );
     }
+  }
+
+  private _parseGroupBy(args: string): Condition['field'] {
+    if (!args || args.trim().length === 0) {
+      return [];
+    }
+
+    const rawFields = args.split(',');
+    const processedFields: Condition['field'] = [];
+
+    for (const field of rawFields) {
+      const trimmedField = field.trim();
+      if (trimmedField) {
+        let unquotedField = trimmedField;
+        if (
+          (unquotedField.startsWith('"') && unquotedField.endsWith('"')) ||
+          (unquotedField.startsWith("'") && unquotedField.endsWith("'"))
+        ) {
+          unquotedField = unquotedField.slice(1, -1);
+        }
+
+        processedFields.push(...this._parseField(unquotedField));
+      }
+    }
+
+    return processedFields;
   }
 
   private integerOrThrow(value: string, field: string): number {
@@ -376,13 +415,13 @@ export class Parser<T extends ParserResult = ParserResult> {
       while (i < field.length) {
         if (field.substring(i, i + 3) === '->>') {
           if (current) {
-            parts.push({ name: current, operator: '->>' });
+            parts.push({ name: current, operator: '->>', __type: 'json' });
             current = '';
           }
           i += 3;
         } else if (field.substring(i, i + 2) === '->') {
           if (current) {
-            parts.push({ name: current, operator: '->' });
+            parts.push({ name: current, operator: '->', __type: 'json' });
             current = '';
           }
           i += 2;
@@ -421,7 +460,6 @@ export class Parser<T extends ParserResult = ParserResult> {
     for (let i = 0; i < args.length; i++) {
       const char = args[i];
 
-      // Handle escapes
       if (escaped) {
         current += char;
         escaped = false;
@@ -430,12 +468,10 @@ export class Parser<T extends ParserResult = ParserResult> {
 
       if (char === this.escapeChar) {
         escaped = true;
-        current += char;
         continue;
       }
 
-      // Handle quotes
-      if ((char === '"' || char === "'") && !inQuotes) {
+      if ((char === '"' || char === "'" || char === '`') && !inQuotes) {
         inQuotes = true;
         quoteChar = char;
       } else if (char === quoteChar && inQuotes) {
@@ -443,31 +479,24 @@ export class Parser<T extends ParserResult = ParserResult> {
         quoteChar = '';
       }
 
-      // Handle nested structures
       if (!inQuotes) {
         if (char === '(' || char === '[' || char === '{') depth++;
-        if (char === ')' || char === ']' || char === '}') depth--;
+        else if (char === ')' || char === ']' || char === '}') depth--;
       }
 
-      // Split at comma when not in nested structure
       if (char === ',' && depth === 0 && !inQuotes) {
         const trimmed = current.trim();
-        if (trimmed) {
-          values.push(this._parseValue(trimmed));
-        }
+        if (trimmed) values.push(this._parseValue(trimmed));
         current = '';
       } else {
         current += char;
       }
     }
 
-    // Add the last value
     const trimmed = current.trim();
-    if (trimmed) {
-      values.push(this._parseValue(trimmed));
-    }
+    if (trimmed) values.push(this._parseValue(trimmed));
 
-    return values.filter(v => v !== '');
+    return values;
   }
 
   private _parseValue(val: string): any {
@@ -475,36 +504,42 @@ export class Parser<T extends ParserResult = ParserResult> {
 
     const trimmed = val.trim();
 
-    // Handle quoted strings
-    if (
-      (trimmed.startsWith('"') && trimmed.endsWith('"')) ||
-      (trimmed.startsWith("'") && trimmed.endsWith("'"))
-    ) {
+    // Quoted as column name
+    if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
+      const columnName = trimmed.slice(1, -1);
+      return { __type: 'column', name: columnName.includes('.') ? columnName : `${this.mainTable}.${columnName}` };
+    }
+
+    // Quoted as string literal
+    if (trimmed.startsWith("'") && trimmed.endsWith("'")) {
       return trimmed.slice(1, -1);
     }
 
-    // Handle boolean values
+    // Quoted as raw literal (may contain reserved chars)
+    if (trimmed.startsWith('`') && trimmed.endsWith('`')) {
+      return trimmed.slice(1, -1);
+    }
+
+    // Unquoted known literals
     if (trimmed === 'true') return true;
     if (trimmed === 'false') return false;
     if (trimmed === 'null') return null;
     if (trimmed === 'undefined') return undefined;
 
-    // Handle ISO date strings (common in PostgreSQL)
-    if (/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d{3})?Z?)?$/.test(trimmed)) {
+    // Date-like values (could be enhanced further)
+    if (/^\d{4}-\d{2}-\d{2}(T\d{2}:\d{2}:\d{2}(\.\d+)?Z?)?$/.test(trimmed)) {
       return trimmed;
     }
 
-    // Handle PostgreSQL cast expressions like (field)::type
+    // PostgreSQL cast expressions
     if (trimmed.includes('::')) {
-      return trimmed;
+      return { __type: 'raw', value: trimmed };
     }
 
-    // Handle numbers (including scientific notation)
+    // Number
     if (/^-?\d+(\.\d+)?([eE][+-]?\d+)?$/.test(trimmed)) {
       const num = Number(trimmed);
-      if (!isNaN(num) && isFinite(num)) {
-        return num;
-      }
+      if (!isNaN(num) && isFinite(num)) return num;
     }
 
     return trimmed;

@@ -1,7 +1,13 @@
 export type JsonFieldType = {
+  __type: 'json'; // TODO
   name: string;
   operator?: '->' | '->>';
 };
+
+export type ValueType = {
+  __type: 'column' | 'raw';
+  name: string;
+}
 
 export interface ParsedOrdering {
   path: string | (string | JsonFieldType)[];
@@ -49,8 +55,8 @@ export interface Condition {
   tableName: string;
   field: string | (string | JsonFieldType)[];
   operator: string;
-  value?: any; // TODO: --
-  values?: any[];
+  value?: string | number | null | boolean | undefined | ValueType; // TODO: --
+  values?: (string | number | null | undefined | boolean | ValueType)[];
 }
 
 export interface NotExpression {
@@ -79,6 +85,8 @@ export interface ParserResult {
 
 export interface EmbedParserResult extends ParserResult {
   joinType?: 'left' | 'right' | 'inner' | 'full' | 'cross';
+  group?: Condition['field'];
+  order?: ParsedOrdering[];
 }
 
 export type FieldPath = string | (string | JsonFieldType)[];
