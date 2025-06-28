@@ -37,7 +37,7 @@ export class SelectParser {
     let current = '';
     let inQuotes = false;
     let inParens = 0;
-    let inBraces = 0; // Track braces for constraints
+    let inBraces = 0;
     let quoteChar: string | null = null;
 
     for (let i = 0; i < str.length; i++) {

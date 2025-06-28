@@ -88,7 +88,6 @@ export class Parser<T extends ParserResult = ParserResult> {
   private _parseExpression(str: string): Expression {
     if (!str || str.length === 0) return null;
 
-    // Validate parentheses balance
     if (!this._isBalanced(str)) {
       throw new Error(`Unbalanced brackets in expression: "${str}"`);
     }
@@ -595,15 +594,13 @@ export class Parser<T extends ParserResult = ParserResult> {
 
       // Handle all types of nested structures
       if (!inQuotes) {
-        // Handle configured group brackets (usually {})
+        // Handle configured group brackets (usually ())
         if (char === this.config.groups.OPEN) depth++;
         if (char === this.config.groups.CLOSE) depth--;
 
-        // Handle square brackets []
         if (char === '[') bracketDepth++;
         if (char === ']') bracketDepth--;
 
-        // Handle parentheses ()
         if (char === '(') parenDepth++;
         if (char === ')') parenDepth--;
       }
@@ -675,14 +672,13 @@ export class Parser<T extends ParserResult = ParserResult> {
       }
 
       if (!inQuotes) {
-        // Handle configured group brackets (usually {})
+        // Handle configured group brackets (usually ())
         if (char === this.config.groups.OPEN) groupCount++;
         if (char === this.config.groups.CLOSE) groupCount--;
 
         if (char === '[') bracketCount++;
         if (char === ']') bracketCount--;
 
-        // Handle parentheses ()
         if (char === '(') parenCount++;
         if (char === ')') parenCount--;
 
@@ -724,15 +720,13 @@ export class Parser<T extends ParserResult = ParserResult> {
       }
 
       if (!inQuotes) {
-        // Handle configured group brackets (usually {})
+        // Handle configured group brackets (usually ())
         if (char === this.config.groups.OPEN) depth++;
         if (char === this.config.groups.CLOSE) depth--;
 
-        // Handle square brackets []
         if (char === '[') bracketDepth++;
         if (char === ']') bracketDepth--;
 
-        // Handle parentheses ()
         if (char === '(') parenDepth++;
         if (char === ')') parenDepth--;
 

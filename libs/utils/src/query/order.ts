@@ -1,82 +1,85 @@
 import { ParsedOrdering } from './types';
 
 class OrderParser {
-  private static readonly DIRECTIONS = ['asc', 'desc'] as const;
-  private static readonly NULLS_HANDLING = ['nullsfirst', 'nullslast'] as const;
+  private static readonly SORT_DIRECTIONS = ['asc', 'desc'] as const;
+  private static readonly NULL_HANDLING_OPTIONS = [
+    'nullsfirst',
+    'nullslast',
+  ] as const;
 
-  static parse(orderStr: string | null | undefined): ParsedOrdering[] {
-    if (!orderStr?.trim()) return [];
+  static parse(orderingString: string | null | undefined): ParsedOrdering[] {
+    if (!orderingString?.trim()) return [];
 
-    return orderStr.split(',').map(part => {
-      const tokens = this.tokenize(part.trim());
-      return this.parseOrdering(tokens);
+    return orderingString.split(',').map(orderClause => {
+      const tokens = this.tokenize(orderClause.trim());
+      return this.parseOrderingClause(tokens);
     });
   }
 
-  private static tokenize(str: string): string[] {
+  private static tokenize(inputString: string): string[] {
     const tokens: string[] = [];
-    let current = '';
-    let i = 0;
+    let currentToken = '';
+    let charIndex = 0;
 
-    while (i < str.length) {
-      const char = str[i];
-      const next = str[i + 1];
+    while (charIndex < inputString.length) {
+      const currentChar = inputString[charIndex];
+      const nextChar = inputString[charIndex + 1];
 
-      // Handle arrow operators
-      if (char === '-' && next === '>') {
-        if (current.trim()) {
-          tokens.push(current.trim());
-          current = '';
+      // Handle arrow operators (-> and ->>)
+      if (currentChar === '-' && nextChar === '>') {
+        if (currentToken.trim()) {
+          tokens.push(currentToken.trim());
+          currentToken = '';
         }
 
-        // Check for double arrow
-        if (str[i + 2] === '>') {
+        // Check for double arrow (->>)
+        if (inputString[charIndex + 2] === '>') {
           tokens.push('->>');
-          i += 3;
+          charIndex += 3;
         } else {
           tokens.push('->');
-          i += 2;
+          charIndex += 2;
         }
         continue;
       }
 
       // Handle dot separator
-      if (char === '.') {
-        if (current.trim()) {
-          tokens.push(current.trim());
-          current = '';
+      if (currentChar === '.') {
+        if (currentToken.trim()) {
+          tokens.push(currentToken.trim());
+          currentToken = '';
         }
-        i++;
+        charIndex++;
         continue;
       }
 
       // Handle whitespace
-      if (char === ' ') {
-        if (current.trim()) {
-          tokens.push(current.trim());
-          current = '';
+      if (currentChar === ' ') {
+        if (currentToken.trim()) {
+          tokens.push(currentToken.trim());
+          currentToken = '';
         }
-        i++;
+        charIndex++;
         continue;
       }
 
-      current += char;
-      i++;
+      currentToken += currentChar;
+      charIndex++;
     }
 
-    if (current.trim()) {
-      tokens.push(current.trim());
+    if (currentToken.trim()) {
+      tokens.push(currentToken.trim());
     }
 
     return tokens.filter(token => token.length > 0);
   }
 
-  private static parseOrdering(tokens: string[]): ParsedOrdering {
+  private static parseOrderingClause(tokens: string[]): ParsedOrdering {
     if (tokens.length === 0) {
       throw new Error('Empty ordering expression');
     }
 
-    const result: ParsedOrdering = {
+    const orderingResult: ParsedOrdering = {
       path: '',
       direction: 'asc',
       nulls: null,
@@ -85,10 +88,10 @@ class OrderParser {
     const pathTokens: string[] = [];
 
     for (const token of tokens) {
-      if (this.DIRECTIONS.includes(token as any)) {
-        result.direction = token as 'asc' | 'desc';
-      } else if (this.NULLS_HANDLING.includes(token as any)) {
-        result.nulls = token as 'nullsfirst' | 'nullslast';
+      if (this.SORT_DIRECTIONS.includes(token as any)) {
+        orderingResult.direction = token as 'asc' | 'desc';
+      } else if (this.NULL_HANDLING_OPTIONS.includes(token as any)) {
+        orderingResult.nulls = token as 'nullsfirst' | 'nullslast';
       } else {
         pathTokens.push(token);
       }
@@ -99,9 +102,9 @@ class OrderParser {
     }
 
     // Reconstruct path with proper spacing around arrows
-    result.path = pathTokens.join('');
+    orderingResult.path = pathTokens.join('');
 
-    return result;
+    return orderingResult;
   }
 }
 
