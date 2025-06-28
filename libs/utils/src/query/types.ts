@@ -7,7 +7,7 @@ export type JsonFieldType = {
 export type ValueType = {
   __type: 'column' | 'raw';
   name: string;
-}
+};
 
 export interface ParsedOrdering {
   path: string | (string | JsonFieldType)[];
@@ -81,11 +81,11 @@ export type Expression =
 export interface ParserResult {
   limit?: number;
   offset?: number;
+  group?: Condition['field'][];
 }
 
 export interface EmbedParserResult extends ParserResult {
   joinType?: 'left' | 'right' | 'inner' | 'full' | 'cross';
-  group?: Condition['field'];
   order?: ParsedOrdering[];
 }
 

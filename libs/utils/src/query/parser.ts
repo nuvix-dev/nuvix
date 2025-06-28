@@ -26,7 +26,13 @@ export class Parser<T extends ParserResult = ParserResult> {
     this._validateConfig();
   }
 
-  static create<T>({ tableName, mainTable }: { tableName: string, mainTable?: string }) {
+  static create<T>({
+    tableName,
+    mainTable,
+  }: {
+    tableName: string;
+    mainTable?: string;
+  }) {
     return new Parser<T>(defaultConfig, tableName, mainTable);
   }
 
@@ -336,8 +342,8 @@ export class Parser<T extends ParserResult = ParserResult> {
           // 'true' and '{}' map to 'object', '[]' maps to 'array'
           this.extraData['shape'] =
             parsedShape === 'object' ||
-              parsedShape === '{}' ||
-              parsedShape === 'true'
+            parsedShape === '{}' ||
+            parsedShape === 'true'
               ? 'object'
               : 'array';
         } else {
@@ -352,11 +358,13 @@ export class Parser<T extends ParserResult = ParserResult> {
         if (columns && columns.length > 0) {
           this.extraData['group'] = columns;
         }
+        break;
       case 'order':
-        const orders = OrderParser.parse(args)
+        const orders = OrderParser.parse(args);
         if (orders && orders.length > 0) {
           this.extraData['order'] = orders;
         }
+        break;
       default:
         throw new Exception(
           Exception.GENERAL_PARSER_ERROR,
@@ -365,13 +373,13 @@ export class Parser<T extends ParserResult = ParserResult> {
     }
   }
 
-  private _parseGroupBy(args: string): Condition['field'] {
+  private _parseGroupBy(args: string): Condition['field'][] {
     if (!args || args.trim().length === 0) {
       return [];
     }
 
     const rawFields = args.split(',');
-    const processedFields: Condition['field'] = [];
+    const processedFields: Condition['field'][] = [];
 
     for (const field of rawFields) {
       const trimmedField = field.trim();
@@ -384,7 +392,7 @@ export class Parser<T extends ParserResult = ParserResult> {
           unquotedField = unquotedField.slice(1, -1);
         }
 
-        processedFields.push(...this._parseField(unquotedField));
+        processedFields.push(this._parseField(unquotedField));
       }
     }
 
@@ -507,7 +515,12 @@ export class Parser<T extends ParserResult = ParserResult> {
     // Quoted as column name
     if (trimmed.startsWith('"') && trimmed.endsWith('"')) {
       const columnName = trimmed.slice(1, -1);
-      return { __type: 'column', name: columnName.includes('.') ? columnName : `${this.mainTable}.${columnName}` };
+      return {
+        __type: 'column',
+        name: columnName.includes('.')
+          ? columnName
+          : `${this.mainTable}.${columnName}`,
+      };
     }
 
     // Quoted as string literal

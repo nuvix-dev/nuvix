@@ -31,16 +31,18 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
     const joinAlias = alias || resource;
 
     if (flatten) {
-      // Flattened JOIN (existing behavior)
       const subQb = this._buildJoinConditionSQL(
         restConstraint,
-        this.astBuilder.pg.queryBuilder()
+        this.astBuilder.pg.queryBuilder(),
       );
 
-      const conditionSQL = subQb.toSQL()
+      const conditionSQL = subQb.toSQL();
       this.astBuilder.qb[joinType + 'Join'](
         this.astBuilder.pg.alias(resource, joinAlias),
-        this.astBuilder.pg.raw(conditionSQL.sql.replace('select * where', ''), conditionSQL.bindings),
+        this.astBuilder.pg.raw(
+          conditionSQL.sql.replace('select * where', ''),
+          conditionSQL.bindings,
+        ),
       );
 
       const childAST = new ASTToQueryBuilder(
@@ -48,10 +50,10 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
         this.astBuilder.pg,
         { tableName: joinAlias },
       );
-
+      childAST.applyGroupBy(group, joinAlias);
+      childAST.applyOrder(order, joinAlias);
       childAST.applySelect(select);
     } else {
-      // LOIN: Lateral Object Inline Join with JSON aggregation
       const subQb = this.astBuilder.pg.qb(
         this.astBuilder.pg.alias(resource, joinAlias),
       );
@@ -61,46 +63,39 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
       });
 
       childAST.applySelect(select);
+      childAST.applyGroupBy(group, joinAlias);
+      childAST.applyOrder(order, joinAlias);
 
-      // Add constraint condition
+      // Add constraint condition (LIMIT, OFFSET)
       if (shape === 'object') {
         subQb.limit(1);
       } else {
         subQb.limit(limit);
       }
-
       subQb.offset(offset);
-      this._buildJoinConditionSQL(
-        restConstraint,
-        subQb
-      );
 
-      let lateralSelect: string;
+      this._buildJoinConditionSQL(restConstraint, subQb);
+
       const subQuerySQL = subQb.toSQL();
 
-      // TODO: improve the query to return only one object, to_jsonb & row_to_json dosen't return object as result
-      if (shape === 'object') {
-        if (shape === 'object') {
-          lateralSelect = `
-            SELECT to_jsonb(${joinAlias}.*) as ${this.astBuilder.pg.wrapIdentifier(joinAlias, undefined)}
-            FROM (${subQuerySQL.sql}) as ${joinAlias}
-          `;
-        }
-      } else {
-        lateralSelect = `
-        SELECT COALESCE(jsonb_agg(row_to_json(${joinAlias})), '[]'::jsonb) as ${this.astBuilder.pg.wrapIdentifier(joinAlias, undefined)}
-        FROM (${subQuerySQL.sql}) as ${joinAlias}
-      `;
-      }
+      let lateralSelectContent: string;
+      const aliasedSubqueryResult = `${this.astBuilder.pg.wrapIdentifier(joinAlias, undefined)}.*`;
 
-      const wrappedJoinAlias = this.astBuilder.pg.wrapIdentifier(
-        joinAlias,
-        undefined,
-      );
+      if (shape === 'object') {
+        lateralSelectContent = `
+            SELECT to_jsonb(${aliasedSubqueryResult}) AS ${this.astBuilder.pg.wrapIdentifier(joinAlias, undefined)}
+            FROM (${subQuerySQL.sql}) AS ${this.astBuilder.pg.wrapIdentifier(joinAlias, undefined)}
+        `;
+      } else {
+        lateralSelectContent = `
+            SELECT COALESCE(jsonb_agg(to_jsonb(${aliasedSubqueryResult})), '[]'::jsonb) AS ${this.astBuilder.pg.wrapIdentifier(joinAlias, undefined)}
+            FROM (${subQuerySQL.sql}) AS ${this.astBuilder.pg.wrapIdentifier(joinAlias, undefined)}
+        `;
+      }
 
       this.astBuilder.qb[joinType + 'Join'](
         this.astBuilder.pg.raw(
-          `LATERAL (${lateralSelect}) as ${wrappedJoinAlias}`,
+          `LATERAL (${lateralSelectContent})`,
           subQuerySQL.bindings,
         ),
         this.astBuilder.pg.raw('TRUE'),
@@ -110,12 +105,9 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
     }
   }
 
-  private _buildJoinConditionSQL(
-    expr: Expression,
-    subQb: QueryBuilder
-  ) {
-    const ast = new ASTToQueryBuilder(subQb, this.astBuilder.pg)
-    ast.applyFilters(expr, {})
+  private _buildJoinConditionSQL(expr: Expression, subQb: QueryBuilder) {
+    const ast = new ASTToQueryBuilder(subQb, this.astBuilder.pg);
+    ast.applyFilters(expr, {});
     return subQb;
   }
 }

@@ -12,6 +12,7 @@ import type {
   SelectNode,
   ParsedOrdering,
   ValueType,
+  ParserResult,
 } from './types';
 import { PG } from '@nuvix/pg';
 import { JoinBuilder } from './join-builder';
@@ -19,6 +20,7 @@ import { JoinBuilder } from './join-builder';
 type QueryBuilder = ReturnType<DataSource['queryBuilder']>;
 
 export interface ASTToQueryBuilderOptions {
+  applyExtra?: boolean;
   tableName?: string;
   baseQuery?: QueryBuilder;
   allowUnsafeOperators?: boolean;
@@ -46,7 +48,6 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
 
   constructor(qb: T, pg: DataSource, options: ASTToQueryBuilderOptions = {}) {
     this.qb = qb;
-    qb.debug(true); // Enable debug mode for query logging
     this.pg = pg;
     this.maxNestingDepth = options.maxNestingDepth || 10;
     this.allowUnsafeOperators = options.allowUnsafeOperators || false;
@@ -56,7 +57,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
    *apply AST expression to QueryBuilder conditions
    */
   applyFilters(
-    expression?: Expression,
+    expression?: Expression & ParserResult,
     options: ASTToQueryBuilderOptions = {},
   ): QueryBuilder {
     if (!expression) {
@@ -65,6 +66,14 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
 
     try {
       this.nestingDepth = 0;
+      if (options.applyExtra) {
+        const { limit, offset, group } = expression;
+        this.applyLimitOffset({
+          limit,
+          offset,
+        });
+        this.applyGroupBy(group, options.tableName);
+      }
       return this._convertExpression(expression, this.qb);
     } catch (error) {
       if (error instanceof Error) {
@@ -128,9 +137,47 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
           path,
         ]);
       } else {
-        this.qb.orderBy(this._rawField(path, table).toSQL().sql, direction);
+        this.qb.orderByRaw(`?? ${direction.toUpperCase()}`, [
+          this._rawField(path, table),
+        ]);
       }
     });
+
+    return this.qb;
+  }
+
+  applyGroupBy(columns?: Condition['field'][], tableName?: string) {
+    if (columns && columns.length) {
+      const _columns = columns.map(
+        column => this._rawField(column, tableName).toSQL().sql,
+      );
+      this.qb.groupByRaw(_columns.join(', '));
+    }
+    return this.qb;
+  }
+
+  applyLimitOffset({
+    limit,
+    offset,
+  }: {
+    limit?: number | string;
+    offset?: number | string;
+  }) {
+    limit =
+      typeof limit === 'number'
+        ? limit
+        : typeof limit === 'string'
+          ? Number(limit)
+          : undefined;
+    offset =
+      typeof offset === 'number'
+        ? offset
+        : typeof offset === 'string'
+          ? Number(offset)
+          : undefined;
+
+    if (Number.isInteger(limit)) this.qb.limit(limit);
+    if (Number.isInteger(offset)) this.qb.limit(offset);
 
     return this.qb;
   }
@@ -179,7 +226,13 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
     condition: Condition,
     queryBuilder: QueryBuilder,
   ): QueryBuilder {
-    const { field: _field, operator, value: _value, values, tableName } = condition;
+    const {
+      field: _field,
+      operator,
+      value: _value,
+      values,
+      tableName,
+    } = condition;
 
     if (!_field || !operator) {
       throw new Error('Condition must have both field and operator');
@@ -218,7 +271,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
 
     const right = this._valueTypeToPlaceholder(_value);
     const value = this._isValueColumnName(_value) ? _value.name : _value;
-    const filterdValues = values?.filter((v) => !this._isValueColumnName(v))
+    const filterdValues = values?.filter(v => !this._isValueColumnName(v));
 
     switch (operator) {
       // Basic comparisons
@@ -266,7 +319,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
         } else if (value === 'unknown') {
           return queryBuilder.whereRaw(`?? IS UNKNOWN`, [field]);
         }
-        throw Error() // TODO: --------------
+        throw Error(); // TODO: --------------
 
       // IS DISTINCT FROM
       case 'isdistinct':
@@ -392,15 +445,20 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
 
   private _isValueColumnName(value: Condition['value']): value is ValueType {
     if (
-      value !== null && typeof value === "object" && '__type' in value && value.__type === 'column'
-    ) return true; else false;
+      value !== null &&
+      typeof value === 'object' &&
+      '__type' in value &&
+      value.__type === 'column'
+    )
+      return true;
+    else false;
   }
 
   private _valueTypeToPlaceholder(value: Condition['value']): '?' | '??' {
     if (this._isValueColumnName(value)) {
-      return '??'
+      return '??';
     } else {
-      return '?'
+      return '?';
     }
   }
 

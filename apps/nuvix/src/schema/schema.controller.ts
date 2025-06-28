@@ -26,7 +26,7 @@ import {
   Scope,
   Sdk,
 } from '@nuvix/core/decorators';
-import { Document, ID } from '@nuvix/database';
+import { ID } from '@nuvix/database';
 import { DataSource } from '@nuvix/pg';
 import { Parser } from '@nuvix/utils/query/parser';
 import { ASTToQueryBuilder } from '@nuvix/utils/query/builder';
@@ -115,6 +115,7 @@ export class SchemaController {
     @Req() request: NuvixRequest,
     @CurrentSchema() pg: DataSource,
     @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 100,
+    @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
   ) {
     const qb = pg.qb(table).withSchema('public');
     const astToQueryBuilder = new ASTToQueryBuilder(qb, pg);
@@ -124,9 +125,13 @@ export class SchemaController {
       table,
     );
     astToQueryBuilder.applySelect(select);
-    astToQueryBuilder.applyFilters(filter);
+    astToQueryBuilder.applyFilters(filter, {
+      applyExtra: true,
+      tableName: table,
+    });
     astToQueryBuilder.applyOrder(order, table);
     qb.limit(limit);
+    offset !== undefined && qb.offset(offset);
 
     this.logger.debug(qb.toSQL());
 

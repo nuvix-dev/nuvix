@@ -4,7 +4,6 @@ import type {
   ColumnNode,
   EmbedNode,
   EmbedParserResult,
-  Expression,
   SelectNode,
 } from './types';
 
@@ -235,7 +234,7 @@ export class SelectParser {
       throw new Error(`Missing constraint in embed: ${token}`);
     const constraint = Parser.create<EmbedParserResult>({
       tableName: alias || resource,
-      mainTable: this.tableName
+      mainTable: this.tableName,
     }).parse(constraintPart.trim());
 
     if (constraint.joinType) {
@@ -255,7 +254,7 @@ export class SelectParser {
             path: '*',
           } as SelectNode,
         ];
-    console.log({ select });
+
     return {
       type: 'embed',
       resource,
