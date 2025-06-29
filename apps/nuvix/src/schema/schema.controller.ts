@@ -23,26 +23,21 @@ import {
   ResponseInterceptor,
   ApiInterceptor,
 } from '@nuvix/core/resolvers/interceptors';
-import {
-  CurrentSchema,
-  Namespace,
-  Scope,
-  Sdk,
-} from '@nuvix/core/decorators';
+import { CurrentSchema, Namespace, Scope, Sdk } from '@nuvix/core/decorators';
 import { DataSource } from '@nuvix/pg';
 
 // DTO's
 
 // Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
-@Controller({ version: ['1'], path: ['schemas'] })
+@Controller({ version: ['1'] })
 @UseGuards(ProjectGuard)
 @Namespace() // TODO: --->
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class SchemaController {
   private readonly logger = new Logger(SchemaController.name);
-  constructor(private readonly schemaService: SchemaService) { }
+  constructor(private readonly schemaService: SchemaService) {}
 
-  @Get([':schemaId/:tableId', ':tableId'])
+  @Get(['schemas/:schemaId/:tableId', 'schema/:tableId'])
   @Sdk({
     name: 'queryTable',
     description: 'Query a table with optional filters',
@@ -57,16 +52,22 @@ export class SchemaController {
     @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
   ) {
     return await this.schemaService.select({
-      table, pg, limit, offset, schema, url: request.raw.url
-    })
+      table,
+      pg,
+      limit,
+      offset,
+      schema,
+      url: request.raw.url,
+    });
   }
 
-  @Post([':schemaId/:tableId', ':tableId'])
+  @Post(['schemas/:schemaId/:tableId', 'schema/:tableId'])
   async insertIntoTable(
     @Param('tableId') table: string,
     @CurrentSchema() pg: DataSource,
     @Body() input: Record<string, any> | Record<string, any>[],
-    @Query('columns', new ParseArrayPipe({ items: String, optional: true })) columns?: string[]
+    @Query('columns', new ParseArrayPipe({ items: String, optional: true }))
+    columns?: string[],
   ) {
     return await this.schemaService.insert({
       pg,
@@ -76,24 +77,17 @@ export class SchemaController {
     });
   }
 
-  @Patch([':schemaId/:tableId', ':tableId'])
-  async updateTables() {
+  @Patch(['schemas/:schemaId/:tableId', 'schema/:tableId'])
+  async updateTables() {}
 
-  }
+  @Put(['schemas/:schemaId/:tableId', 'schema/:tableId'])
+  async upsertTable() {}
 
-  @Put([':schemaId/:tableId', ':tableId'])
-  async upsertTable() {
+  @Delete(['schemas/:schemaId/:tableId', 'schema/:tableId'])
+  async deleteTables() {}
 
-  }
+  // @Head(['schemas/:schemaId/:tableId', 'schema/:tableId'])
+  // async tableMetadata() {
 
-  @Delete([':schemaId/:tableId', ':tableId'])
-  async deleteTables() {
-
-  }
-
-  @Head([':schemaId/:tableId', ':tableId'])
-  async tableMetadata() {
-
-  }
-
+  // }
 }
