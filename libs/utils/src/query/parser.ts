@@ -432,6 +432,11 @@ export class Parser<T extends ParserResult = ParserResult> {
           }
           i += 2;
         } else if (field[i] === '.') {
+          if (parts.some(p => typeof p === 'object' && p.__type === 'json')) {
+            throw new Error(
+              'Invalid field name `.` cannot be after `->` or `->>`',
+            );
+          }
           if (current) {
             parts.push(current);
             current = '';

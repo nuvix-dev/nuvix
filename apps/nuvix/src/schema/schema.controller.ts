@@ -36,7 +36,7 @@ import ParamsHelper from '@nuvix/core/helper/params.helper';
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class SchemaController {
   private readonly logger = new Logger(SchemaController.name);
-  constructor(private readonly schemaService: SchemaService) { }
+  constructor(private readonly schemaService: SchemaService) {}
 
   @Get(['schemas/:schemaId/:tableId', 'schema/:tableId'])
   @Sdk({
@@ -103,7 +103,7 @@ export class SchemaController {
       url: request.raw.url,
       limit,
       offset,
-    })
+    });
   }
 
   @Put(['schemas/:schemaId/:tableId', 'schema/:tableId'])
@@ -117,7 +117,7 @@ export class SchemaController {
     columns?: string[],
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
     @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
-  ) { }
+  ) {}
 
   @Delete(['schemas/:schemaId/:tableId', 'schema/:tableId'])
   async deleteTables(

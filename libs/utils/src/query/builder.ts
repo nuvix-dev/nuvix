@@ -191,8 +191,12 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
   /**
    * Apply returning select nodes to QueryBuilder
    */
-  applyReturning(selectNodes: SelectNode[], queryBuilder = this.qb): QueryBuilder {
+  applyReturning(
+    selectNodes: SelectNode[],
+    queryBuilder = this.qb,
+  ): QueryBuilder {
     if (!selectNodes || selectNodes.length === 0) {
+      queryBuilder.returning('*');
       return queryBuilder;
     }
 
@@ -501,6 +505,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
     _field: Condition['field'],
     table: string,
   ): ReturnType<(typeof this.pg)['raw']> {
+    this.logger.debug({ _field });
     if (typeof _field === 'string') {
       return this.pg.raw('??.??', [table, _field]);
     } else if (Array.isArray(_field)) {
@@ -540,6 +545,10 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
           }
         } else if (typeof part === 'object' && 'operator' in part) {
           // Handle JSON operators (->, ->>)
+          if (isLastPart)
+            throw new Error(
+              'Invalid syntax, should be string after `->` or `->>`',
+            ); // TODO: $error
           if (!hasObjectPartsBefore) {
             sqlParts.push(`"${part.name}"`);
           } else {
@@ -729,10 +738,35 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
   /**
    * Build column select string with alias and cast
    */
-  private _buildColumnSelect(node: ColumnNode) {
-    const rawPath = this._rawField(node.path, node.tableName).toSQL().sql;
-    const casted = node.cast ? `CAST((${rawPath}) AS ${node.cast})` : rawPath;
-    return this.pg.raw(`${casted}${node.alias ? ` as "${node.alias}"` : ''}`);
+  private _buildColumnSelect({ path, tableName, alias, cast }: ColumnNode) {
+    if (!alias && Array.isArray(path)) {
+      const firstJsonPartIndex = path.findIndex(
+        p => typeof p === 'object' && p.__type === 'json',
+      );
+
+      if (firstJsonPartIndex !== -1) {
+        const aliasParts = path
+          .map((p, i) => {
+            if (i >= firstJsonPartIndex) {
+              if (typeof p === 'string') {
+                return p;
+              } else if (typeof p === 'object' && p.name) {
+                return p.name;
+              }
+            }
+            return '';
+          })
+          .filter(Boolean);
+
+        if (aliasParts.length > 0) {
+          alias = aliasParts.join('_');
+        }
+      }
+    }
+
+    const rawPath = this._rawField(path, tableName).toSQL().sql;
+    const casted = cast ? `CAST((${rawPath}) AS ${cast})` : rawPath;
+    return this.pg.raw(`${casted}${alias ? ` as "${alias}"` : ''}`);
   }
 
   /**

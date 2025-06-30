@@ -13,8 +13,8 @@ export interface Insert {
   pg: DataSource;
   table: string;
   input:
-  | Record<string, string | number | null | boolean>
-  | Record<string, string | number | null | boolean>[];
+    | Record<string, string | number | null | boolean>
+    | Record<string, string | number | null | boolean>[];
   columns?: string[];
   schema: string;
   url: string;
@@ -27,6 +27,4 @@ export interface Update extends Omit<Insert, 'input'> {
   offset?: number;
 }
 
-export interface Delete extends Select {
-  
-}
+export interface Delete extends Select {}

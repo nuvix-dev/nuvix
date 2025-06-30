@@ -65,7 +65,7 @@ export class ApiHook implements Hook {
     }
 
     let scopes = roles[role].scopes; // Allowed scopes for user role
-    const apiKey: string = params.get('x-nuvix-api');
+    const apiKey: string = params.getFromHeaders('x-nuvix-api');
 
     if (apiKey) {
       // Don't allow API key to be used for session based requests
@@ -144,7 +144,7 @@ export class ApiHook implements Hook {
             sdk => sdk.name,
           );
 
-          const sdk = params.get('x-sdk-name') || 'UNKNOWN';
+          const sdk = params.getFromHeaders('x-sdk-name') || 'UNKNOWN';
           if (sdksList.includes(sdk)) {
             const sdks = key.getAttribute('sdks', []);
             if (!sdks.includes(sdk)) {

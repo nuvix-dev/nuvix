@@ -14,7 +14,10 @@ class ParamsHelper {
    * and can be accessed directly in query.
    * If the parameter is not found, it returns the default value.
    */
-  get<T extends null>(param: string, defaultValue: T = null): T | string | string[] | undefined {
+  get<T extends null>(
+    param: string,
+    defaultValue: T = null,
+  ): T | string | string[] | undefined {
     let value: string | string[] | undefined;
     let headerParam = `x-nuvix-${param.toLowerCase()}`;
     // Check in headers
