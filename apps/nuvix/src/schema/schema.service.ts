@@ -81,7 +81,7 @@ export class SchemaService {
 
     this.logger.debug(qb.toSQL());
 
-    return await qb;
+    return pg.withTransaction(async () => await qb);
   }
 
   async update({
@@ -129,7 +129,7 @@ export class SchemaService {
 
     this.logger.debug(qb.toSQL());
 
-    return await qb;
+    return pg.withTransaction(async () => await qb);
   }
 
   async delete({ pg, table, schema, url, limit, offset }: Delete) {
@@ -150,7 +150,7 @@ export class SchemaService {
 
     this.logger.debug(qb.toSQL());
 
-    return await qb.delete();
+    return pg.withTransaction(async () => await qb);
   }
 
   private getParamsFromUrl(

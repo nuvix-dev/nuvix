@@ -467,7 +467,11 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
         if (!values || !Array.isArray(values) || values.length !== 2) {
           throw new Error('BETWEEN operator requires exactly 2 values');
         }
-        return queryBuilder.whereBetween(fieldSql, values as any);
+        return queryBuilder.whereRaw(`?? BETWEEN ? AND ?`, [
+          field,
+          values[0],
+          values[1],
+        ]);
       case 'regex':
         return queryBuilder.whereRaw(`?? ~ ${right}`, [field, value]);
       case 'iregex':
@@ -505,7 +509,6 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
     _field: Condition['field'],
     table: string,
   ): ReturnType<(typeof this.pg)['raw']> {
-    this.logger.debug({ _field });
     if (typeof _field === 'string') {
       return this.pg.raw('??.??', [table, _field]);
     } else if (Array.isArray(_field)) {
@@ -674,62 +677,53 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
     operatorValues: any[],
     queryBuilder: QueryBuilder,
   ): QueryBuilder {
-    if (modifier === 'any') {
-      // ANY creates OR conditions
-      return queryBuilder.where(builder => {
-        operatorValues.forEach((val, index) => {
-          if (index === 0) {
-            this._applySingleOperatorCondition(field, operator, val, builder);
-          } else {
-            builder.orWhere(subBuilder => {
-              this._applySingleOperatorCondition(
-                field,
-                operator,
-                val,
-                subBuilder,
-              );
-            });
-          }
-        });
-      });
-    } else {
-      // ALL creates AND conditions
-      return queryBuilder.where(builder => {
-        operatorValues.forEach(val => {
-          this._applySingleOperatorCondition(field, operator, val, builder);
-        });
-      });
-    }
-  }
-
-  /**
-   * Apply a single operator condition (helper for ANY/ALL)
-   */
-  private _applySingleOperatorCondition(
-    field: ReturnType<PG['raw']>,
-    operator: string,
-    value: any,
-    queryBuilder: QueryBuilder,
-  ): QueryBuilder {
+    modifier = modifier.toUpperCase() as typeof modifier;
     switch (operator) {
       case 'eq':
-        return queryBuilder.where(field, '=', value);
+        return queryBuilder.whereRaw(`?? = ${modifier}(?)`, [
+          field,
+          operatorValues,
+        ]);
       case 'like':
-        return queryBuilder.where(field, 'like', value);
+        return queryBuilder.whereRaw(`?? LIKE ${modifier}(?)`, [
+          field,
+          operatorValues,
+        ]);
       case 'ilike':
-        return queryBuilder.where(field, 'ilike', value);
+        return queryBuilder.whereRaw(`?? ILIKE ${modifier}(?)`, [
+          field,
+          operatorValues,
+        ]);
       case 'gt':
-        return queryBuilder.where(field, '>', value);
+        return queryBuilder.whereRaw(`?? > ${modifier}(?)`, [
+          field,
+          operatorValues,
+        ]);
       case 'gte':
-        return queryBuilder.where(field, '>=', value);
+        return queryBuilder.whereRaw(`?? >= ${modifier}(?)`, [
+          field,
+          operatorValues,
+        ]);
       case 'lt':
-        return queryBuilder.where(field, '<', value);
+        return queryBuilder.whereRaw(`?? < ${modifier}(?)`, [
+          field,
+          operatorValues,
+        ]);
       case 'lte':
-        return queryBuilder.where(field, '<=', value);
+        return queryBuilder.whereRaw(`?? <= ${modifier}(?)`, [
+          field,
+          operatorValues,
+        ]);
       case 'match':
-        return queryBuilder.whereRaw(`?? ~ ?`, [field, value]);
+        return queryBuilder.whereRaw(`?? ~ ${modifier}(?)`, [
+          field,
+          operatorValues,
+        ]);
       case 'imatch':
-        return queryBuilder.whereRaw(`?? ~* ?`, [field, value]);
+        return queryBuilder.whereRaw(`?? ~* ${modifier}(?)`, [
+          field,
+          operatorValues,
+        ]);
       default:
         throw new Error(`Unsupported operator for ANY/ALL: ${operator}`);
     }
