@@ -30,7 +30,10 @@ export class SchemaQueue extends Queue {
     switch (job.name) {
       case 'init_doc':
         const project = new Document(job.data.project as object);
-        return await this.initDocumentSchema(project, job.data.schema);
+        await this.initDocumentSchema(project, job.data.schema);
+        return {
+          success: true,
+        }
       case 'process': // added case for 'process'
         break; // added break statement
       default: // noop

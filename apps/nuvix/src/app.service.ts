@@ -1,16 +1,12 @@
 import { Injectable, StreamableFile } from '@nestjs/common';
-import { readFileSync } from 'fs';
+import { readFile } from 'fs/promises';
 
 @Injectable()
 export class AppService {
   constructor() {}
-
-  async getHello(): Promise<string> {
-    return 'Hello World!';
-  }
-
-  getFavicon() {
-    const favicon = readFileSync('assets/images/nuvix.png');
+  
+  async getFavicon() {
+    const favicon = await readFile('assets/images/nuvix.png');
     return new StreamableFile(favicon);
   }
 }

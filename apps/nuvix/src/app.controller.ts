@@ -1,14 +1,13 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Redirect } from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(private readonly appService: AppService) { }
 
   @Get()
-  async getHello(): Promise<string> {
-    return this.appService.getHello();
-  }
+  @Redirect('https://console.nuvix.in')
+  main() { }
 
   @Get('favicon.ico')
   async getFavicon() {

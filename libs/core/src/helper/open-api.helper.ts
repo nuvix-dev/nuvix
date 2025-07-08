@@ -1,5 +1,6 @@
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { apiReference } from '@scalar/nestjs-api-reference'
 
 export function openApiSetup(app: NestFastifyApplication) {
   const config = new DocumentBuilder()
@@ -10,6 +11,17 @@ export function openApiSetup(app: NestFastifyApplication) {
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, documentFactory, {
-    explorer: true,
+    swaggerUiEnabled: false,
   });
+
+  // TODO: ---------
+  app.getHttpAdapter().get(
+    '/reference',
+    (req, res) => {
+      apiReference({
+        content: documentFactory(),
+        withFastify: true
+      })(req as any, res.raw as any)
+    }
+  )
 }

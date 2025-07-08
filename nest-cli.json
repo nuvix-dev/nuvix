@@ -9,7 +9,16 @@
     "deleteOutDir": true,
     "typeCheck": false,
     "tsConfigPath": "apps/nuvix/tsconfig.app.json",
-    "webpackConfigPath": "webpack.config.js"
+    "webpackConfigPath": "webpack.config.js",
+    "plugins": [
+      {
+        "name": "@nestjs/swagger",
+        "options": {
+          "classValidatorShim": true,
+           "esmCompatible": true  
+        }
+      }
+    ]
   },
   "monorepo": true,
   "root": "apps/nuvix",

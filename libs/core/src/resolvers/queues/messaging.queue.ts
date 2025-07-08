@@ -87,7 +87,7 @@ export class MessagingQueue extends Queue {
           projectId: project.getId(),
         };
       default:
-        return;
+        throw Error('Invalid Job!');
     }
   }
 

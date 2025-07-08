@@ -40,23 +40,28 @@ export class DatabaseQueue extends Queue {
   async process(job: Job, token?: string): Promise<any> {
     switch (job.name) {
       case DATABASE_TYPE_CREATE_ATTRIBUTE:
-        return await this.createAttribute(job.data, token);
-
+        await this.createAttribute(job.data, token);
+        break;
       case DATABASE_TYPE_DELETE_ATTRIBUTE:
-        return await this.deleteAttribute(job.data, token);
-
+        await this.deleteAttribute(job.data, token);
+        break;
       case DATABASE_TYPE_CREATE_INDEX:
-        return await this.createIndex(job.data, token);
-
+        await this.createIndex(job.data, token);
+        break;
       case DATABASE_TYPE_DELETE_INDEX:
-        return await this.deleteIndex(job.data, token);
-
+        await this.deleteIndex(job.data, token);
+        break;
       case DATABASE_TYPE_DELETE_COLLECTION:
-        return await this.deleteCollection(job.data, token);
-
+        await this.deleteCollection(job.data, token);
+        break;
       default:
         this.logger.error('Invalid job type');
         throw new Exception(Exception.GENERAL_SERVER_ERROR);
+    }
+
+    // TODO: --------
+    return {
+      done: true,
     }
   }
 
@@ -161,8 +166,8 @@ export class DatabaseQueue extends Queue {
                   relatedAttribute = await dbForProject.getDocument(
                     'attributes',
                     relatedCollection.getInternalId() +
-                      '_' +
-                      options['twoWayKey'],
+                    '_' +
+                    options['twoWayKey'],
                   );
                   await dbForProject.updateDocument(
                     'attributes',
@@ -291,8 +296,8 @@ export class DatabaseQueue extends Queue {
                 relatedAttribute = await dbForProject.getDocument(
                   'attributes',
                   relatedCollection.getInternalId() +
-                    '_' +
-                    options['twoWayKey'],
+                  '_' +
+                  options['twoWayKey'],
                 );
               }
 
@@ -378,9 +383,9 @@ export class DatabaseQueue extends Queue {
                 if (
                   existing.getAttribute('key') !== index.getAttribute('key') &&
                   existing.getAttribute('attributes').toString() ===
-                    index.getAttribute('attributes').toString() &&
+                  index.getAttribute('attributes').toString() &&
                   existing.getAttribute('orders').toString() ===
-                    index.getAttribute('orders').toString()
+                  index.getAttribute('orders').toString()
                 ) {
                   exists = true;
                   break;

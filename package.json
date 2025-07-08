@@ -59,6 +59,7 @@
     "@nuvix/pg": "^1.0.2",
     "@nuvix/storage": "^1.0.0",
     "@nuvix/telemetry": "^1.0.1",
+    "@scalar/nestjs-api-reference": "^0.5.8",
     "argon2": "^0.43.0",
     "axios": "^1.9.0",
     "bcrypt": "^6.0.0",
