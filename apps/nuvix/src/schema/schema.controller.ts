@@ -14,6 +14,7 @@ import {
   Put,
   Query,
   Req,
+  UseFilters,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -25,6 +26,7 @@ import {
 } from '@nuvix/core/resolvers/interceptors';
 import { CurrentSchema, Namespace, Scope, Sdk } from '@nuvix/core/decorators';
 import { DataSource } from '@nuvix/pg';
+import { ParserErrorFilter } from '@nuvix/core/filters/parser-error.filter';
 
 // DTO's
 
@@ -33,6 +35,7 @@ import { DataSource } from '@nuvix/pg';
 @UseGuards(ProjectGuard)
 @Namespace() // TODO: This should be set to the actual namespace of the schema
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
+@UseFilters(ParserErrorFilter)
 export class SchemaController {
   private readonly logger = new Logger(SchemaController.name);
   constructor(private readonly schemaService: SchemaService) {}

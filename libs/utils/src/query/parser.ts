@@ -7,70 +7,9 @@ import type {
   ParserConfig,
   ParserResult,
   ParsePosition,
-  ParseError,
 } from './types';
 import { OrderParser } from './order';
-
-export class ParserError extends Error implements ParseError {
-  public position: ParsePosition;
-  public statement: string;
-  public expected?: string;
-  public received?: string;
-  public context?: string;
-
-  constructor(
-    message: string,
-    position: ParsePosition,
-    statement: string,
-    options: {
-      expected?: string;
-      received?: string;
-      context?: string;
-    } = {},
-  ) {
-    const fullMessage = ParserError.formatErrorMessage(
-      message,
-      position,
-      statement,
-      options,
-    );
-    super(fullMessage);
-    this.name = 'ParserError';
-    this.position = position;
-    this.statement = statement;
-    this.expected = options.expected;
-    this.received = options.received;
-    this.context = options.context;
-  }
-
-  private static formatErrorMessage(
-    message: string,
-    position: ParsePosition,
-    statement: string,
-    options: { expected?: string; received?: string; context?: string },
-  ): string {
-    let formatted = `${message} at line ${position.line}, column ${position.column}\n`;
-    formatted += `Statement: "${statement}"\n`;
-
-    if (options.expected) {
-      formatted += `Expected: ${options.expected}\n`;
-    }
-
-    if (options.received) {
-      formatted += `Received: ${options.received}\n`;
-    }
-
-    if (options.context) {
-      formatted += `Context: ${options.context}\n`;
-    }
-
-    // Add visual indicator of error position
-    const indicator = ' '.repeat(Math.max(0, position.column - 1)) + '^';
-    formatted += `${statement}\n${indicator}`;
-
-    return formatted;
-  }
-}
+import { ParserError } from './error';
 
 // Parser context to track position and state
 interface ParserContext {

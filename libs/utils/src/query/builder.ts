@@ -16,6 +16,7 @@ import type {
 } from './types';
 import { PG } from '@nuvix/pg';
 import { JoinBuilder } from './join-builder';
+import { ParserError } from './error';
 
 type QueryBuilder = ReturnType<DataSource['queryBuilder']>;
 
@@ -76,11 +77,8 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
       }
       return this._convertExpression(expression, this.qb);
     } catch (error) {
-      if (error instanceof Error) {
-        throw new Exception(
-          Exception.GENERAL_QUERY_BUILDER_ERROR,
-          `Query builder conversion error: ${error.message}`,
-        );
+      if (error instanceof ParserError) {
+        throw error;
       }
       throw new Error('Unknown query builder conversion error');
     }
