@@ -26,9 +26,14 @@ export class ParserError extends Error implements ParseError {
       expected?: string;
       received?: string;
       context?: string;
-    } = {}
+    } = {},
   ) {
-    const fullMessage = ParserError.formatErrorMessage(message, position, statement, options);
+    const fullMessage = ParserError.formatErrorMessage(
+      message,
+      position,
+      statement,
+      options,
+    );
     super(fullMessage);
     this.name = 'ParserError';
     this.position = position;
@@ -42,7 +47,7 @@ export class ParserError extends Error implements ParseError {
     message: string,
     position: ParsePosition,
     statement: string,
-    options: { expected?: string; received?: string; context?: string }
+    options: { expected?: string; received?: string; context?: string },
   ): string {
     let formatted = `${message} at line ${position.line}, column ${position.column}\n`;
     formatted += `Statement: "${statement}"\n`;
@@ -95,8 +100,8 @@ export class Parser<T extends ParserResult = ParserResult> {
       originalInput: '',
       currentInput: '',
       position: { line: 1, column: 1, offset: 0 },
-      callStack: []
-    }
+      callStack: [],
+    };
   }
 
   static create<T>({
@@ -115,7 +120,7 @@ export class Parser<T extends ParserResult = ParserResult> {
         'Parser input must be a string',
         { line: 1, column: 1, offset: 0 },
         String(str),
-        { expected: 'string', received: typeof str }
+        { expected: 'string', received: typeof str },
       );
     }
 
@@ -124,7 +129,7 @@ export class Parser<T extends ParserResult = ParserResult> {
       originalInput: str,
       currentInput: str.trim(),
       position: { line: 1, column: 1, offset: 0 },
-      callStack: []
+      callStack: [],
     };
 
     try {
@@ -149,12 +154,15 @@ export class Parser<T extends ParserResult = ParserResult> {
       }
       throw new Exception(
         Exception.GENERAL_PARSER_ERROR,
-        'Unknown parsing error occurred'
+        'Unknown parsing error occurred',
       );
     }
   }
 
-  private _updatePosition(input: string, startOffset: number = 0): ParsePosition {
+  private _updatePosition(
+    input: string,
+    startOffset: number = 0,
+  ): ParsePosition {
     let line = 1;
     let column = 1;
 
@@ -170,7 +178,11 @@ export class Parser<T extends ParserResult = ParserResult> {
     return { line, column, offset: startOffset };
   }
 
-  private _getStatementContext(input: string, position: number, contextSize: number = 20): string {
+  private _getStatementContext(
+    input: string,
+    position: number,
+    contextSize: number = 20,
+  ): string {
     const start = Math.max(0, position - contextSize);
     const end = Math.min(input.length, position + contextSize);
     let context = input.slice(start, end);
@@ -190,19 +202,22 @@ export class Parser<T extends ParserResult = ParserResult> {
       received?: string;
       context?: string;
       operation?: string;
-    } = {}
+    } = {},
   ): never {
-    const pos = this._updatePosition(this.context.originalInput,
-      this.context.originalInput.indexOf(input) + position);
+    const pos = this._updatePosition(
+      this.context.originalInput,
+      this.context.originalInput.indexOf(input) + position,
+    );
 
     const statement = this._getStatementContext(input, position);
-    const contextInfo = options.context ||
+    const contextInfo =
+      options.context ||
       (options.operation ? `While parsing ${options.operation}` : undefined);
 
     throw new ParserError(message, pos, statement, {
       expected: options.expected,
       received: options.received,
-      context: contextInfo
+      context: contextInfo,
     });
   }
 
@@ -212,7 +227,10 @@ export class Parser<T extends ParserResult = ParserResult> {
         'Config must include groups configuration',
         { line: 1, column: 1, offset: 0 },
         'config validation',
-        { expected: 'valid ParserConfig with groups', received: 'invalid config' }
+        {
+          expected: 'valid ParserConfig with groups',
+          received: 'invalid config',
+        },
       );
     }
 
@@ -225,8 +243,8 @@ export class Parser<T extends ParserResult = ParserResult> {
         {
           expected: 'all group characters defined',
           received: `OPEN: ${OPEN}, CLOSE: ${CLOSE}, SEP: ${SEP}, OR: ${OR}, NOT: ${NOT}`,
-          context: 'Configuration validation'
-        }
+          context: 'Configuration validation',
+        },
       );
     }
 
@@ -251,7 +269,9 @@ export class Parser<T extends ParserResult = ParserResult> {
     if (!str || str.length === 0) return null;
 
     // Add to call stack for better error context
-    this.context.callStack.push(`_parseExpression("${str.substring(0, 30)}${str.length > 30 ? '...' : ''}")`);
+    this.context.callStack.push(
+      `_parseExpression("${str.substring(0, 30)}${str.length > 30 ? '...' : ''}")`,
+    );
 
     try {
       // if (!this._isBalanced(str)) {
@@ -278,8 +298,8 @@ export class Parser<T extends ParserResult = ParserResult> {
             {
               expected: 'expression after NOT operator',
               received: 'empty expression',
-              operation: 'NOT expression parsing'
-            }
+              operation: 'NOT expression parsing',
+            },
           );
         }
 
@@ -305,8 +325,8 @@ export class Parser<T extends ParserResult = ParserResult> {
             {
               expected: 'non-empty group content',
               received: 'empty group',
-              operation: 'group parsing'
-            }
+              operation: 'group parsing',
+            },
           );
         }
         const result = this._parseGroup(content);
@@ -325,8 +345,8 @@ export class Parser<T extends ParserResult = ParserResult> {
             {
               expected: 'at least two operands',
               received: `${parts.length} operand(s)`,
-              operation: 'OR expression parsing'
-            }
+              operation: 'OR expression parsing',
+            },
           );
         }
         const expressions = parts
@@ -340,8 +360,8 @@ export class Parser<T extends ParserResult = ParserResult> {
             {
               expected: 'valid operands',
               received: 'no valid operands',
-              operation: 'OR expression parsing'
-            }
+              operation: 'OR expression parsing',
+            },
           );
         }
         const result = { or: expressions };
@@ -360,8 +380,8 @@ export class Parser<T extends ParserResult = ParserResult> {
             {
               expected: 'at least one argument',
               received: 'empty arguments',
-              operation: 'OR function parsing'
-            }
+              operation: 'OR function parsing',
+            },
           );
         }
         const result = { or: this._parseCommaList(content) };
@@ -380,8 +400,8 @@ export class Parser<T extends ParserResult = ParserResult> {
             {
               expected: 'at least one argument',
               received: 'empty arguments',
-              operation: 'AND function parsing'
-            }
+              operation: 'AND function parsing',
+            },
           );
         }
         const result = { and: this._parseCommaList(content) };
@@ -400,8 +420,8 @@ export class Parser<T extends ParserResult = ParserResult> {
             {
               expected: 'expression to negate',
               received: 'empty expression',
-              operation: 'NOT function parsing'
-            }
+              operation: 'NOT function parsing',
+            },
           );
         }
         const result = { not: this._parseExpression(content) };
@@ -421,8 +441,8 @@ export class Parser<T extends ParserResult = ParserResult> {
             {
               expected: 'at least two operands',
               received: `${parts.length} operand(s)`,
-              operation: 'AND expression parsing'
-            }
+              operation: 'AND expression parsing',
+            },
           );
         }
         const expressions = parts
@@ -436,8 +456,8 @@ export class Parser<T extends ParserResult = ParserResult> {
             {
               expected: 'valid operands',
               received: 'no valid operands',
-              operation: 'AND expression parsing'
-            }
+              operation: 'AND expression parsing',
+            },
           );
         }
         const result = { and: expressions };
@@ -457,19 +477,16 @@ export class Parser<T extends ParserResult = ParserResult> {
 
   private _parseGroup(str: string): Expression {
     if (!str) {
-      this._throwParseError(
-        'Group cannot be empty',
-        str,
-        0,
-        {
-          expected: 'non-empty group content',
-          received: 'empty string',
-          operation: 'group parsing'
-        }
-      );
+      this._throwParseError('Group cannot be empty', str, 0, {
+        expected: 'non-empty group content',
+        received: 'empty string',
+        operation: 'group parsing',
+      });
     }
 
-    this.context.callStack.push(`_parseGroup("${str.substring(0, 30)}${str.length > 30 ? '...' : ''}")`);
+    this.context.callStack.push(
+      `_parseGroup("${str.substring(0, 30)}${str.length > 30 ? '...' : ''}")`,
+    );
 
     try {
       // Check for OR separator first
@@ -514,20 +531,17 @@ export class Parser<T extends ParserResult = ParserResult> {
 
   private _parseCondition(str: string): Condition {
     if (!str || str.trim().length === 0) {
-      this._throwParseError(
-        'Condition cannot be empty',
-        str,
-        0,
-        {
-          expected: 'non-empty condition',
-          received: 'empty string',
-          operation: 'condition parsing'
-        }
-      );
+      this._throwParseError('Condition cannot be empty', str, 0, {
+        expected: 'non-empty condition',
+        received: 'empty string',
+        operation: 'condition parsing',
+      });
     }
 
     const trimmed = str.trim();
-    this.context.callStack.push(`_parseCondition("${trimmed.substring(0, 30)}${trimmed.length > 30 ? '...' : ''}")`);
+    this.context.callStack.push(
+      `_parseCondition("${trimmed.substring(0, 30)}${trimmed.length > 30 ? '...' : ''}")`,
+    );
 
     try {
       // Handle function-style: field.op(value) - supports complex field paths with JSON operators
@@ -547,7 +561,11 @@ export class Parser<T extends ParserResult = ParserResult> {
             return undefined as any;
           }
 
-          const result = this._buildCondition(fieldPath.trim(), operator.trim(), args);
+          const result = this._buildCondition(
+            fieldPath.trim(),
+            operator.trim(),
+            args,
+          );
           this.context.callStack.pop();
           return result;
         }
@@ -566,8 +584,8 @@ export class Parser<T extends ParserResult = ParserResult> {
             {
               expected: 'valid LIST_STYLE with open and close characters',
               received: `openChar: ${openChar}, closeChar: ${closeChar}`,
-              operation: 'list-style parsing'
-            }
+              operation: 'list-style parsing',
+            },
           );
         }
 
@@ -592,13 +610,17 @@ export class Parser<T extends ParserResult = ParserResult> {
               {
                 expected: 'field.operator format',
                 received: fieldOpPath,
-                operation: 'field.operator parsing'
-              }
+                operation: 'field.operator parsing',
+              },
             );
           }
           const fieldPath = fieldOpPath.substring(0, lastDotIndex);
           const operator = fieldOpPath.substring(lastDotIndex + 1);
-          const result = this._buildCondition(fieldPath.trim(), operator.trim(), args);
+          const result = this._buildCondition(
+            fieldPath.trim(),
+            operator.trim(),
+            args,
+          );
           this.context.callStack.pop();
           return result;
         }
@@ -609,11 +631,12 @@ export class Parser<T extends ParserResult = ParserResult> {
         trimmed,
         0,
         {
-          expected: 'valid condition syntax (field.operator(value) or field.operator[values])',
+          expected:
+            'valid condition syntax (field.operator(value) or field.operator[values])',
           received: trimmed,
           operation: 'condition parsing',
-          context: `Available call stack: ${this.context.callStack.join(' → ')}`
-        }
+          context: `Available call stack: ${this.context.callStack.join(' → ')}`,
+        },
       );
     } catch (error) {
       this.context.callStack.pop();
@@ -634,12 +657,14 @@ export class Parser<T extends ParserResult = ParserResult> {
         {
           expected: 'field.operator format',
           received: `field: "${_field}", operator: "${operator}"`,
-          operation: 'condition building'
-        }
+          operation: 'condition building',
+        },
       );
     }
 
-    this.context.callStack.push(`_buildCondition("${_field}", "${operator}", "${args.substring(0, 20)}${args.length > 20 ? '...' : ''}")`);
+    this.context.callStack.push(
+      `_buildCondition("${_field}", "${operator}", "${args.substring(0, 20)}${args.length > 20 ? '...' : ''}")`,
+    );
 
     try {
       const field = this._parseField(_field);
@@ -659,9 +684,10 @@ export class Parser<T extends ParserResult = ParserResult> {
         return result;
       }
 
-      const result = values.length === 1
-        ? { field, operator, value: values[0], tableName }
-        : { field, operator, values, tableName };
+      const result =
+        values.length === 1
+          ? { field, operator, value: values[0], tableName }
+          : { field, operator, values, tableName };
 
       this.context.callStack.pop();
       return result;
@@ -683,7 +709,9 @@ export class Parser<T extends ParserResult = ParserResult> {
       );
     }
 
-    this.context.callStack.push(`_buidSpecialCase("${_field}", "${operator}", "${args.substring(0, 20)}${args.length > 20 ? '...' : ''}")`);
+    this.context.callStack.push(
+      `_buidSpecialCase("${_field}", "${operator}", "${args.substring(0, 20)}${args.length > 20 ? '...' : ''}")`,
+    );
 
     try {
       switch (operator) {
@@ -698,16 +726,11 @@ export class Parser<T extends ParserResult = ParserResult> {
           if (['inner', 'left', 'right', 'full'].includes(parsedJoinType)) {
             this.extraData['joinType'] = parsedJoinType;
           } else {
-            this._throwParseError(
-              'Unsupported join type',
-              args,
-              0,
-              {
-                expected: 'one of: inner, left, right, full',
-                received: args,
-                operation: 'join type parsing'
-              }
-            );
+            this._throwParseError('Unsupported join type', args, 0, {
+              expected: 'one of: inner, left, right, full',
+              received: args,
+              operation: 'join type parsing',
+            });
           }
           break;
         case 'shape':
@@ -716,21 +739,16 @@ export class Parser<T extends ParserResult = ParserResult> {
             // 'true' and '{}' map to 'object', '[]' maps to 'array'
             this.extraData['shape'] =
               parsedShape === 'object' ||
-                parsedShape === '{}' ||
-                parsedShape === 'true'
+              parsedShape === '{}' ||
+              parsedShape === 'true'
                 ? 'object'
                 : 'array';
           } else {
-            this._throwParseError(
-              'Unsupported shape value',
-              args,
-              0,
-              {
-                expected: 'one of: object, array, {}, [], true',
-                received: args,
-                operation: 'shape parsing'
-              }
-            );
+            this._throwParseError('Unsupported shape value', args, 0, {
+              expected: 'one of: object, array, {}, [], true',
+              received: args,
+              operation: 'shape parsing',
+            });
           }
           break;
         case 'group':
@@ -753,8 +771,8 @@ export class Parser<T extends ParserResult = ParserResult> {
             {
               expected: 'one of: limit, offset, join, shape, group, order',
               received: operator,
-              operation: 'special function parsing'
-            }
+              operation: 'special function parsing',
+            },
           );
       }
       this.context.callStack.pop();
@@ -797,16 +815,11 @@ export class Parser<T extends ParserResult = ParserResult> {
       isNaN(_value) ||
       !Number.isInteger(_value)
     ) {
-      this._throwParseError(
-        `${field} value should be an integer`,
-        value,
-        0,
-        {
-          expected: 'integer value',
-          received: value,
-          operation: `${field} parsing`
-        }
-      );
+      this._throwParseError(`${field} value should be an integer`, value, 0, {
+        expected: 'integer value',
+        received: value,
+        operation: `${field} parsing`,
+      });
     }
     return _value;
   }
@@ -815,7 +828,11 @@ export class Parser<T extends ParserResult = ParserResult> {
     this.context.callStack.push(`_parseField("${field}")`);
 
     try {
-      if (field.includes('->') || field.includes('->>') || field.includes('.')) {
+      if (
+        field.includes('->') ||
+        field.includes('->>') ||
+        field.includes('.')
+      ) {
         const parts: (string | JsonFieldType)[] = [];
         let current = '';
         let i = 0;
@@ -842,8 +859,8 @@ export class Parser<T extends ParserResult = ParserResult> {
                 {
                   expected: 'field name without dots after JSON operators',
                   received: `dot at position ${i}`,
-                  operation: 'field parsing'
-                }
+                  operation: 'field parsing',
+                },
               );
             }
             if (current) {
@@ -876,7 +893,9 @@ export class Parser<T extends ParserResult = ParserResult> {
   private _parseArgumentList(args: string): any[] {
     if (!args && args !== '') return [];
 
-    this.context.callStack.push(`_parseArgumentList("${args.substring(0, 30)}${args.length > 30 ? '...' : ''}")`);
+    this.context.callStack.push(
+      `_parseArgumentList("${args.substring(0, 30)}${args.length > 30 ? '...' : ''}")`,
+    );
 
     try {
       const values: any[] = [];
@@ -927,8 +946,8 @@ export class Parser<T extends ParserResult = ParserResult> {
                   expected: 'valid argument value',
                   received: trimmed,
                   operation: 'argument parsing',
-                  context: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
-                }
+                  context: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+                },
               );
             }
           }
@@ -951,8 +970,8 @@ export class Parser<T extends ParserResult = ParserResult> {
               expected: 'valid argument value',
               received: trimmed,
               operation: 'argument parsing',
-              context: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`
-            }
+              context: `Error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            },
           );
         }
       }
@@ -1089,7 +1108,9 @@ export class Parser<T extends ParserResult = ParserResult> {
   private _parseCommaList(str: string): Expression[] {
     if (!str) return [];
 
-    this.context.callStack.push(`_parseCommaList("${str.substring(0, 30)}${str.length > 30 ? '...' : ''}")`);
+    this.context.callStack.push(
+      `_parseCommaList("${str.substring(0, 30)}${str.length > 30 ? '...' : ''}")`,
+    );
 
     try {
       const parts = this._splitByOperator(str, ',');
@@ -1105,8 +1126,8 @@ export class Parser<T extends ParserResult = ParserResult> {
           {
             expected: 'at least one valid expression',
             received: 'no valid expressions',
-            operation: 'comma-separated list parsing'
-          }
+            operation: 'comma-separated list parsing',
+          },
         );
       }
 

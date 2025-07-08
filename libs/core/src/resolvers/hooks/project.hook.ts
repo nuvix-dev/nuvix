@@ -34,7 +34,7 @@ export class ProjectHook implements Hook {
     @Inject(GET_PROJECT_PG) private readonly getProjectPg: GetProjectPG,
     @Inject(GET_PROJECT_DB)
     private readonly getProjectDb: GetProjectDbFn,
-  ) { }
+  ) {}
 
   async onRequest(req: NuvixRequest) {
     const params = new ParamsHelper(req);

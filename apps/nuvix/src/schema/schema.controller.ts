@@ -25,8 +25,6 @@ import {
 } from '@nuvix/core/resolvers/interceptors';
 import { CurrentSchema, Namespace, Scope, Sdk } from '@nuvix/core/decorators';
 import { DataSource } from '@nuvix/pg';
-import ParamsHelper from '@nuvix/core/helper/params.helper';
-import { runAllTests } from '@nuvix/utils/query/parser-benchmark';
 
 // DTO's
 
@@ -37,7 +35,7 @@ import { runAllTests } from '@nuvix/utils/query/parser-benchmark';
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class SchemaController {
   private readonly logger = new Logger(SchemaController.name);
-  constructor(private readonly schemaService: SchemaService) { }
+  constructor(private readonly schemaService: SchemaService) {}
 
   @Get(['schemas/:schemaId/:tableId', 'schema/:tableId'])
   @Sdk({
@@ -53,7 +51,6 @@ export class SchemaController {
     @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 500,
     @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
   ) {
-    await runAllTests();
     return await this.schemaService.select({
       table,
       pg,
@@ -119,7 +116,7 @@ export class SchemaController {
     columns?: string[],
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
     @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
-  ) { }
+  ) {}
 
   @Delete(['schemas/:schemaId/:tableId', 'schema/:tableId'])
   async deleteTables(
