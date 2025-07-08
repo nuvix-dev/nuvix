@@ -62,7 +62,7 @@ export class DatabaseQueue extends Queue {
     // TODO: --------
     return {
       done: true,
-    }
+    };
   }
 
   @OnWorkerEvent('active')
@@ -166,8 +166,8 @@ export class DatabaseQueue extends Queue {
                   relatedAttribute = await dbForProject.getDocument(
                     'attributes',
                     relatedCollection.getInternalId() +
-                    '_' +
-                    options['twoWayKey'],
+                      '_' +
+                      options['twoWayKey'],
                   );
                   await dbForProject.updateDocument(
                     'attributes',
@@ -296,8 +296,8 @@ export class DatabaseQueue extends Queue {
                 relatedAttribute = await dbForProject.getDocument(
                   'attributes',
                   relatedCollection.getInternalId() +
-                  '_' +
-                  options['twoWayKey'],
+                    '_' +
+                    options['twoWayKey'],
                 );
               }
 
@@ -383,9 +383,9 @@ export class DatabaseQueue extends Queue {
                 if (
                   existing.getAttribute('key') !== index.getAttribute('key') &&
                   existing.getAttribute('attributes').toString() ===
-                  index.getAttribute('attributes').toString() &&
+                    index.getAttribute('attributes').toString() &&
                   existing.getAttribute('orders').toString() ===
-                  index.getAttribute('orders').toString()
+                    index.getAttribute('orders').toString()
                 ) {
                   exists = true;
                   break;

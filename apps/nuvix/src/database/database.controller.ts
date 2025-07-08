@@ -52,7 +52,7 @@ import { CreateDocumentDTO, UpdateDocumentDTO } from './DTO/document.dto';
 import { CreateIndexDTO } from './DTO/indexes.dto';
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor';
 
-@Controller({ version: ['1'], path: 'databases' })
+@Controller({ version: ['1'], path: 'schemas' })
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class DatabaseController {

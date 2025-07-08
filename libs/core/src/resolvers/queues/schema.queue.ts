@@ -33,7 +33,7 @@ export class SchemaQueue extends Queue {
         await this.initDocumentSchema(project, job.data.schema);
         return {
           success: true,
-        }
+        };
       case 'process': // added case for 'process'
         break; // added break statement
       default: // noop

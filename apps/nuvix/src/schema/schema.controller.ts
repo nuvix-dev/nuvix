@@ -40,7 +40,7 @@ export class SchemaController {
   private readonly logger = new Logger(SchemaController.name);
   constructor(private readonly schemaService: SchemaService) {}
 
-  @Get(['schemas/:schemaId/:tableId', 'schema/:tableId'])
+  @Get(['schemas/:schemaId/:tableId', 'public/:tableId'])
   @Sdk({
     name: 'queryTable',
     description: 'Query a table with optional filters',
@@ -64,7 +64,7 @@ export class SchemaController {
     });
   }
 
-  @Post(['schemas/:schemaId/:tableId', 'schema/:tableId'])
+  @Post(['schemas/:schemaId/:tableId', 'public/:tableId'])
   async insertIntoTable(
     @Param('tableId') table: string,
     @CurrentSchema() pg: DataSource,
@@ -84,7 +84,7 @@ export class SchemaController {
     });
   }
 
-  @Patch(['schemas/:schemaId/:tableId', 'schema/:tableId'])
+  @Patch(['schemas/:schemaId/:tableId', 'public/:tableId'])
   async updateTables(
     @Param('tableId') table: string,
     @CurrentSchema() pg: DataSource,
@@ -108,7 +108,7 @@ export class SchemaController {
     });
   }
 
-  @Put(['schemas/:schemaId/:tableId', 'schema/:tableId'])
+  @Put(['schemas/:schemaId/:tableId', 'public/:tableId'])
   async upsertTable(
     @Param('tableId') table: string,
     @CurrentSchema() pg: DataSource,
@@ -121,7 +121,7 @@ export class SchemaController {
     @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
   ) {}
 
-  @Delete(['schemas/:schemaId/:tableId', 'schema/:tableId'])
+  @Delete(['schemas/:schemaId/:tableId', 'public/:tableId'])
   async deleteTables(
     @Param('tableId') table: string,
     @CurrentSchema() pg: DataSource,
