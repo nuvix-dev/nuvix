@@ -7,7 +7,9 @@ import {
   APP_MODE_DEFAULT,
   DB_FOR_PLATFORM,
   PROJECT,
+  PROJECT_DB_CLIENT,
   SCOPES,
+  SESSION,
   USER,
 } from '@nuvix/utils/constants';
 import { Exception } from '@nuvix/core/extend/exception';
@@ -17,6 +19,7 @@ import ParamsHelper from '@nuvix/core/helper/params.helper';
 import { JwtService } from '@nestjs/jwt';
 import { APP_PLATFORM_SERVER, platforms } from '@nuvix/core/config/platforms';
 import { Hook } from '../../server/hooks/interface';
+import { setupDatabaseMeta } from '@nuvix/core/helper/db-meta.helper';
 
 @Injectable()
 export class ApiHook implements Hook {
@@ -164,6 +167,25 @@ export class ApiHook implements Hook {
     for (const authRole of Auth.getRoles(user)) {
       Authorization.setRole(authRole);
     }
+
+    const session: Document = req[SESSION];
+
+    await setupDatabaseMeta({
+      client: req[PROJECT_DB_CLIENT],
+      extra: {
+        user:
+          user && !user.isEmpty()
+            ? JSON.stringify({
+                $id: user.getId(),
+                name: user.getAttribute('name'),
+                email: user.getAttribute('email'),
+              })
+            : undefined,
+        session: session ? JSON.stringify(session) : undefined,
+        roles: Authorization.getRoles(),
+      },
+      extraPrefix: 'app',
+    });
 
     req[SCOPES] = scopes;
     req['role'] = role;

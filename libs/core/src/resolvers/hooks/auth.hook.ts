@@ -10,6 +10,7 @@ import {
   CORE_SCHEMA_DB,
   DB_FOR_PLATFORM,
   PROJECT,
+  SESSION,
   USER,
 } from '@nuvix/utils/constants';
 import { Hook } from '../../server/hooks/interface';
@@ -94,10 +95,12 @@ export class AuthHook implements Hook {
       user = await this.db.getDocument('users', Auth.unique);
     }
 
-    if (
-      user.isEmpty() ||
-      !Auth.sessionVerify(user.getAttribute('sessions', []), Auth.secret)
-    ) {
+    const sessionId = Auth.sessionVerify(
+      user.getAttribute('sessions', []),
+      Auth.secret,
+    );
+
+    if (user.isEmpty() || !sessionId) {
       user = new Document();
     }
 
@@ -140,5 +143,9 @@ export class AuthHook implements Hook {
     }
 
     req[USER] = user;
+    req[SESSION] = user
+      .getAttribute('sessions', [])
+      .filter((s: Document) => s.getId() === sessionId);
+    return;
   }
 }

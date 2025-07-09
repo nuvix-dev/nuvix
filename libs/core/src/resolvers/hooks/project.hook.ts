@@ -24,6 +24,7 @@ import type {
 import { Exception } from '@nuvix/core/extend/exception';
 import { Client } from 'pg';
 import { DataSource } from '@nuvix/pg';
+import { setupDatabaseMeta } from '@nuvix/core/helper/db-meta.helper';
 
 @Injectable()
 export class ProjectHook implements Hook {
@@ -74,6 +75,13 @@ export class ProjectHook implements Hook {
           max: 10,
         });
         req[PROJECT_DB_CLIENT] = client;
+
+        await setupDatabaseMeta({
+          client,
+          project,
+          request: req,
+        });
+
         req[PROJECT_DB] = this.getProjectDb(client, project.getId());
         req[PROJECT_PG] = this.getProjectPg(client);
         const coreDatabase = this.getProjectDb(client, project.getId());
