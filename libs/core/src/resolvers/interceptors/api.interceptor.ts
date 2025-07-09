@@ -118,9 +118,10 @@ export class ApiInterceptor implements NestInterceptor {
     const minimumFactors = mfaEnabled && hasMoreFactors ? 2 : 1;
 
     if (!scopes.includes('mfa' as any)) {
-      const session = request[SESSION];
+      const session: Document = request[SESSION];
       if (
         session &&
+        !session.isEmpty() &&
         session.getAttribute('factors', []).length < minimumFactors
       ) {
         throw new Exception(Exception.USER_MORE_FACTORS_REQUIRED);

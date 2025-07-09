@@ -10,6 +10,10 @@ interface SetupDatabaseMeta {
   client: Client;
 }
 
+function escapeLiteral(value: string): string {
+  return `'${value.replace(/'/g, "''")}'`; // escape single quotes
+}
+
 export const setupDatabaseMeta = async ({
   client,
   request,
@@ -18,12 +22,8 @@ export const setupDatabaseMeta = async ({
   extraPrefix,
 }: SetupDatabaseMeta) => {
   const sqlChunks: string[] = [];
-  const bindings: any[] = [];
-
-  let paramIndex = 1;
 
   if (request) {
-    // Normalize headers to lowercase
     const headers: Record<string, string | string[]> = {};
     for (const [k, v] of Object.entries(request.headers ?? {})) {
       headers[k.toLowerCase()] = v;
@@ -39,8 +39,7 @@ export const setupDatabaseMeta = async ({
     ];
 
     for (const [key, value] of requestMeta) {
-      sqlChunks.push(`SET LOCAL ${key} = $${paramIndex++};`);
-      bindings.push(value);
+      sqlChunks.push(`SET LOCAL ${key} = ${escapeLiteral(String(value))};`);
     }
   }
 
@@ -49,25 +48,24 @@ export const setupDatabaseMeta = async ({
       id: project.getId(),
       name: project.getAttribute('name'),
     };
-
-    sqlChunks.push(`SET LOCAL app.project = $${paramIndex++};`);
-    bindings.push(JSON.stringify(projectData));
+    sqlChunks.push(
+      `SET LOCAL app.project = ${escapeLiteral(JSON.stringify(projectData))};`,
+    );
   }
 
   if (extra) {
     for (const [key, value] of Object.entries(extra)) {
-      if (key && value) {
+      if (key && value != null) {
+        const fullKey = `${extraPrefix ? extraPrefix + '.' : ''}${key}`;
         sqlChunks.push(
-          `SET LOCAL ${extraPrefix ? extraPrefix + '.' : ''}${key} = $${paramIndex++};`,
+          `SET LOCAL ${fullKey} = ${escapeLiteral(String(value))};`,
         );
-        bindings.push(value);
       }
     }
   }
 
   if (!sqlChunks.length) return;
 
-  const finalQuery = sqlChunks.join(' ');
-
-  await client.query(finalQuery, bindings);
+  const finalSQL = sqlChunks.join(' ');
+  await client.query(finalSQL);
 };

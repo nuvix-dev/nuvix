@@ -142,10 +142,13 @@ export class AuthHook implements Hook {
       }
     }
 
+    const currentSession =
+      user
+        .getAttribute('sessions', [])
+        .find((s: Document) => s.getId() === sessionId) ?? new Document();
+
     req[USER] = user;
-    req[SESSION] = user
-      .getAttribute('sessions', [])
-      .filter((s: Document) => s.getId() === sessionId);
+    req[SESSION] = currentSession;
     return;
   }
 }
