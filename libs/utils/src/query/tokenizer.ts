@@ -10,6 +10,7 @@ export enum TokenType {
 
     // Identifiers and Operators
     IDENTIFIER = 'IDENTIFIER',
+    OPERATOR = 'OPERATOR',
     DOT = 'DOT',
 
     // JSON Operators
@@ -58,9 +59,37 @@ export class Tokenizer {
     private position: number = 0;
     private line: number = 1;
     private column: number = 1;
+    private allowedOperators = [
+        // Comparison operators
+        'eq', 'neq', 'gt', 'gte', 'lt', 'lte',
 
-    constructor(input: string) {
+        // String operators
+        'like', 'ilike', 'match', 'imatch',
+        'startswith', 'endswith', 'contains',
+        'icontains', 'istartswith', 'iendswith',
+
+        // Array/List operators
+        'in', 'notin', 'overlap', 'contains', 'containedby',
+
+        // Range operators
+        'between', 'notbetween',
+
+        // Null operators
+        'is', 'isnot', 'null', 'notnull',
+
+        // JSON operators
+        'cs', 'cd', 'sl', 'sr', 'nxr', 'nxl',
+
+        // Logical operators
+        'and', 'or', 'not',
+
+        // Special operators
+        'all', 'any', 'exists', 'notexists'
+    ]
+
+    constructor(input: string, allowedOperators?: string[]) {
         this.input = input;
+        if (allowedOperators) this.allowedOperators = allowedOperators;
     }
 
     public tokenize(): Token[] {
@@ -272,15 +301,23 @@ export class Tokenizer {
             this.advance();
         }
 
-        // Check for keywords
-        const tokenType = this.getKeywordType(value);
-
         // Special case for 'this'
         if (value === 'this') {
             return this.createToken(TokenType.SPECIAL_FIELD, value, start);
         }
 
-        return this.createToken(tokenType, value, start);
+        // Check for keywords first
+        const keywordType = this.getKeywordType(value);
+        if (keywordType !== TokenType.IDENTIFIER) {
+            return this.createToken(keywordType, value, start);
+        }
+
+        // Check if this could be an operator (only if it follows a dot)
+        if (this.shouldTreatAsOperator(value)) {
+            return this.createToken(TokenType.OPERATOR, value, start);
+        }
+
+        return this.createToken(TokenType.IDENTIFIER, value, start);
     }
 
     private getKeywordType(value: string): TokenType {
@@ -295,6 +332,26 @@ export class Tokenizer {
             default:
                 return TokenType.IDENTIFIER;
         }
+    }
+
+    private shouldTreatAsOperator(value: string): boolean {
+        // Only treat as operator if we just came from a DOT
+        // We need to look back at the last non-whitespace character
+        if (!this.isOperator(value)) {
+            return false;
+        }
+
+        // Look back to see if the previous non-whitespace token would be a DOT
+        let pos = this.position - value.length - 1;
+        while (pos >= 0 && this.isWhitespace(this.input[pos])) {
+            pos--;
+        }
+
+        return pos >= 0 && this.input[pos] === '.';
+    }
+
+    private isOperator(value: string): boolean {
+        return this.allowedOperators.includes(value.toLowerCase());
     }
 
     private skipWhitespace(): void {

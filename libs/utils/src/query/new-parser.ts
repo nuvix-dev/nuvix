@@ -54,6 +54,9 @@ export class NewParser<T extends ParserResult = ParserResult> {
             this.tokens = tokenizer.tokenize();
             this.current = 0;
 
+            // Debug: Log tokens for development
+            this.logger.debug('Tokenized input:', this.tokens);
+
             // Parse the expression
             const result = {
                 ...this.parseExpression(),
@@ -181,7 +184,7 @@ export class NewParser<T extends ParserResult = ParserResult> {
         // Parse type.operator
         const typeName = this.consume(TokenType.IDENTIFIER, "Expected type name after '::'").value;
         this.consume(TokenType.DOT, "Expected '.' after type name");
-        const operator = this.consume(TokenType.IDENTIFIER, "Expected operator after type").value;
+        const operator = this.consume(TokenType.OPERATOR, "Expected operator after type").value;
 
         // Parse arguments
         let args: any[] = [];
@@ -203,7 +206,7 @@ export class NewParser<T extends ParserResult = ParserResult> {
         if (this.check(TokenType.SPECIAL_FIELD)) {
             const specialField = this.advance().value;
             this.consume(TokenType.DOT, "Expected '.' after special field");
-            const operator = this.consume(TokenType.IDENTIFIER, "Expected operator").value;
+            const operator = this.consume(TokenType.OPERATOR, "Expected operator").value;
 
             let args: any[] = [];
             if (this.match(TokenType.LPAREN)) {
@@ -218,7 +221,7 @@ export class NewParser<T extends ParserResult = ParserResult> {
         // Parse field path
         const field = this.parseFieldPath();
         this.consume(TokenType.DOT, "Expected '.' after field");
-        const operator = this.consume(TokenType.IDENTIFIER, "Expected operator").value;
+        const operator = this.consume(TokenType.OPERATOR, "Expected operator").value;
 
         // Parse arguments
         let args: any[] = [];
@@ -242,7 +245,14 @@ export class NewParser<T extends ParserResult = ParserResult> {
 
         while (this.check(TokenType.DOT) || this.check(TokenType.JSON_EXTRACT) || this.check(TokenType.JSON_EXTRACT_TEXT)) {
             if (this.match(TokenType.DOT)) {
-                // Regular dot notation
+                // Check if the next token is an operator (end of field path) or identifier (continue field path)
+                if (this.check(TokenType.OPERATOR)) {
+                    // This dot is followed by an operator, so we're done with the field path
+                    // Put the dot back by moving current position back
+                    this.current--;
+                    break;
+                }
+                // Regular dot notation - continue building field path
                 const part = this.consume(TokenType.IDENTIFIER, "Expected field name after '.'").value;
                 parts.push(part);
             } else if (this.match(TokenType.JSON_EXTRACT)) {
