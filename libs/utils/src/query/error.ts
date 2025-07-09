@@ -6,8 +6,6 @@ export class ParserError extends Error implements ParseError {
   public expected?: string;
   public received?: string;
   public context?: string;
-  public hint?: string;
-  public detail?: string;
 
   constructor(
     message: string,
@@ -17,7 +15,6 @@ export class ParserError extends Error implements ParseError {
       expected?: string;
       received?: string;
       context?: string;
-      hint?: string;
     } = {},
   ) {
     super(message);
@@ -27,26 +24,15 @@ export class ParserError extends Error implements ParseError {
     this.expected = options.expected;
     this.received = options.received;
     this.context = options.context;
-    this.hint = options.hint ?? ParserError.defaultHint(options);
-    this.detail = ParserError.formatDetail(position, statement, options);
   }
 
-  private static formatDetail(
-    position: ParsePosition,
-    statement: string,
-    options: { expected?: string; received?: string },
-  ): string {
-    const parts: string[] = []; // [`Line ${position.line}, Column ${position.column}`];
-    if (options.expected) parts.push(`Expected: ${options.expected}`);
-    if (options.received) parts.push(`Received: ${options.received}`);
+  public toString(): string {
+    const pos = `Line ${this.position.line}, Column ${this.position.column}`;
+    const parts = [this.message, `at ${pos}`, `in: "${this.statement}"`];
+
+    if (this.expected) parts.push(`Expected: ${this.expected}`);
+    if (this.received) parts.push(`Received: ${this.received}`);
+
     return parts.join('\n');
-  }
-
-  private static defaultHint(options: {
-    expected?: string;
-    received?: string;
-  }): string | undefined {
-    if (!options.expected || !options.received) return undefined;
-    return `Check the syntax of your condition. ${options.expected}`;
   }
 }

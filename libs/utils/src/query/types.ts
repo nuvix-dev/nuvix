@@ -64,6 +64,10 @@ export interface ParserConfig {
     FUNCTION_STYLE: boolean;
     LIST_STYLE: '[]' | '()' | '{}';
   };
+  cast: {
+    OPEN: '{' | '(';
+    CLOSE: '}' | ')';
+  };
 }
 
 export interface Condition {

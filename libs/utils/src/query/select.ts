@@ -144,7 +144,7 @@ export class SelectParser {
     const { value: _path, alias } = this.extractAlias(workingToken);
 
     if (!_path) throw new Error(`Invalid column specification: ${token}`);
-    const path = Parser.create({ tableName: this.tableName })._parseField(
+    const path = Parser.create({ tableName: this.tableName }).parseFieldString(
       _path,
     );
 

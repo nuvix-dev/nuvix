@@ -10,6 +10,7 @@ import type {
 } from './types';
 import { OrderParser } from './order';
 import { ParserError } from './error';
+export  { NewParser as Parser } from './new-parser';
 
 // Parser context to track position and state
 interface ParserContext {
@@ -19,8 +20,9 @@ interface ParserContext {
   callStack: string[];
 }
 
-export class Parser<T extends ParserResult = ParserResult> {
-  private readonly logger = new Logger(Parser.name);
+
+export class Parser2<T extends ParserResult = ParserResult> {
+  private readonly logger = new Logger(Parser2.name);
 
   private config: ParserConfig;
   private escapeChar: string;
@@ -50,7 +52,7 @@ export class Parser<T extends ParserResult = ParserResult> {
     tableName: string;
     mainTable?: string;
   }) {
-    return new Parser<T>(defaultConfig, tableName, mainTable);
+    return new Parser2<T>(defaultConfig, tableName, mainTable);
   }
 
   parse(str: string): T & Expression {
@@ -1298,4 +1300,4 @@ const defaultConfig: ParserConfig = {
     FUNCTION_STYLE: true, // Enable fn(value) syntax
     LIST_STYLE: '[]', // List format: '[]', '()', or '{}'
   },
-};
+} as any;
