@@ -182,7 +182,7 @@ export class ApiHook implements Hook {
               })
             : undefined,
         session: session ? JSON.stringify(session) : undefined,
-        roles: Authorization.getRoles(),
+        roles: JSON.stringify(Authorization.getRoles()),
       },
       extraPrefix: 'app',
     });

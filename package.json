@@ -53,6 +53,7 @@
     "@nestjs/schedule": "^6.0.0",
     "@nestjs/swagger": "^11.2.0",
     "@nestjs/websockets": "^11.1.3",
+    "@nuvix/audit": "^1.0.0",
     "@nuvix/cache": "^1.0.3-alpha.1",
     "@nuvix/database": "^1.0.3-alpha.4",
     "@nuvix/messaging": "^1.0.0",

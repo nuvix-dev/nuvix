@@ -56,7 +56,7 @@ export const setupDatabaseMeta = async ({
   if (extra) {
     for (const [key, value] of Object.entries(extra)) {
       if (key && value != null) {
-        const fullKey = `${extraPrefix ? extraPrefix + '.' : ''}${key}`;
+        const fullKey = `${extraPrefix ? extraPrefix + '.' : ''}"${key}"`;
         sqlChunks.push(
           `SET LOCAL ${fullKey} = ${escapeLiteral(String(value))};`,
         );

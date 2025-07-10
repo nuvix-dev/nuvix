@@ -29,6 +29,7 @@ import cookieParser from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
 import QueryString from 'qs';
 import path from 'path';
+import { initSetup } from './utils/initial-setup';
 
 config({
   path: [
@@ -145,6 +146,8 @@ async function bootstrap() {
   });
 
   app.useGlobalFilters(new HttpExceptionFilter(), new ErrorFilter());
+
+  await initSetup();
 
   const port = parseInt(process.env.APP_CONSOLE_PORT, 10) || 4100;
   const host = '0.0.0.0';
