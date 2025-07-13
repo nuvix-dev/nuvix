@@ -74,6 +74,7 @@ export class ProjectHook implements Hook {
           host: dbOptions.host,
           max: 10,
         });
+        client.setMaxListeners(20);
         req[PROJECT_DB_CLIENT] = client;
 
         await setupDatabaseMeta({

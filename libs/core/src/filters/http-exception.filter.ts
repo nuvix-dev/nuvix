@@ -19,11 +19,12 @@ export class HttpExceptionFilter implements ExceptionFilter {
       status = 500;
     }
 
-    this.logger.error(
-      `${request.method} ${request.url}`,
-      exception.stack ?? exception.message,
-      HttpExceptionFilter.name,
-    );
+    if (status >= 500)
+      this.logger.error(
+        `${request.method} ${request.url}`,
+        exception.stack ?? exception.message,
+        HttpExceptionFilter.name,
+      );
 
     response.status(status).send({
       code: status,

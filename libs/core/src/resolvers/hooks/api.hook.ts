@@ -169,29 +169,32 @@ export class ApiHook implements Hook {
     }
 
     const session: Document = req[SESSION];
+    const client = req[PROJECT_DB_CLIENT];
 
-    await setupDatabaseMeta({
-      client: req[PROJECT_DB_CLIENT],
-      extra: {
-        user:
-          user && !user.isEmpty()
-            ? JSON.stringify({
-                $id: user.getId(),
-                name: user.getAttribute('name'),
-                email: user.getAttribute('email'),
-              })
-            : undefined,
-        session: session ? JSON.stringify(session) : undefined,
-        roles: JSON.stringify(Authorization.getRoles()),
-      },
-      extraPrefix: 'app',
-    });
+    if (client) {
+      await setupDatabaseMeta({
+        client: req[PROJECT_DB_CLIENT],
+        extra: {
+          user:
+            user && !user.isEmpty()
+              ? JSON.stringify({
+                  $id: user.getId(),
+                  name: user.getAttribute('name'),
+                  email: user.getAttribute('email'),
+                })
+              : undefined,
+          session: session ? JSON.stringify(session) : undefined,
+          roles: JSON.stringify(Authorization.getRoles()),
+        },
+        extraPrefix: 'app',
+      });
+    }
 
     req[SCOPES] = scopes;
     req['role'] = role;
     req[USER] = user;
 
-    this.logger.log(
+    this.logger.debug(
       `[${mode}] ${role} ${user.isEmpty() ? 'API' : user.getAttribute('email')}`,
     );
 
