@@ -33,7 +33,7 @@ import { ParserErrorFilter } from '@nuvix/core/filters/parser-error.filter';
 // Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
 @Controller({ version: ['1'] })
 @UseGuards(ProjectGuard)
-@Namespace() // TODO: This should be set to the actual namespace of the schema
+@Namespace('databases') // TODO: This should be set to the actual namespace of the schema
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @UseFilters(ParserErrorFilter)
 export class SchemaController {

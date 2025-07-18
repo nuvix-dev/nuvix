@@ -10,6 +10,7 @@ import { SelectParser } from '@nuvix/utils/query/select';
 import { OrderParser } from '@nuvix/utils/query/order';
 import { ASTToQueryBuilder } from '@nuvix/utils/query/builder';
 import { Exception } from '@nuvix/core/extend/exception';
+import { transformPgError } from '@nuvix/utils/database/pg-error';
 
 @Injectable()
 export class SchemaService {
@@ -33,8 +34,19 @@ export class SchemaService {
     });
 
     this.logger.debug(qb.toSQL());
-
-    return await qb;
+    try {
+      return await qb;
+    } catch (e) {
+      const error = transformPgError(e);
+      if (!error || error.status >= 500) {
+        throw new Exception(error.type ?? Exception.GENERAL_SERVER_ERROR, error.message ?? 'Database error', error.status);
+      }
+      throw new Exception(
+        error.type,
+        error.message,
+        error.status
+      ).addDetails({ hint: error.details['hint'], detail: error.details['detail'] })
+    }
   }
 
   async insert({ pg, table, input, columns, schema, url }: Insert) {
