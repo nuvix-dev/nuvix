@@ -22,24 +22,24 @@ const auditEvents = [
   ...event('message'),
 ] as const;
 
-type AuditEventKey = (typeof auditEvents)[number];
+export type AuditEventKey = (typeof auditEvents)[number];
 
 type ParameterKey = 'user' | 'req' | 'res' | 'params' | 'body' | 'query';
 type ResourceSegment = string | `{${ParameterKey}.${string}}`;
-type ResourcePath =
+export type ResourcePath =
   | `${ResourceSegment}/${ResourceSegment}`
   | `${ResourceSegment}/${ResourceSegment}/${ResourceSegment}`
   | `${ResourceSegment}/${ResourceSegment}/${ResourceSegment}/${ResourceSegment}`
   | ResourceSegment;
 
-type AuditEvent = {
+export type _AuditEvent = {
   resource: ResourcePath;
   userId?: `{${ParameterKey}.${string}}`;
 };
 
 export const AuditEvent = (
   key: AuditEventKey,
-  meta: AuditEvent | ResourcePath,
+  meta: _AuditEvent | ResourcePath,
 ) =>
   SetMetadata('audit-event', {
     key,

@@ -168,7 +168,7 @@ export class ProjectQueue extends Queue {
         }
       }
 
-      await new Audit(db).setup() // TODO: -------
+      await new Audit(db).setup(); // TODO: -------
       this.logger.log(
         `Collection creation completed: ${successfulCollections} successful, ${failedCollections} failed for project ${project.getId()}`,
       );
