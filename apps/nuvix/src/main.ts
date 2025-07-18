@@ -33,6 +33,8 @@ import { openApiSetup } from '@nuvix/core/helper';
 import QueryString from 'qs';
 import path from 'path';
 import fs from 'fs/promises';
+import metadata from './metadata';
+import { SwaggerModule } from '@nestjs/swagger';
 
 config({
   path: [
@@ -147,6 +149,7 @@ async function bootstrap() {
   });
 
   app.useGlobalFilters(new HttpExceptionFilter(), new ErrorFilter());
+  await SwaggerModule.loadPluginMetadata(metadata);
   openApiSetup(app);
 
   // TODO: create a separate function to handle setup

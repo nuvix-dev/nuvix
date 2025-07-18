@@ -1,4 +1,4 @@
-import { OmitType } from '@nestjs/mapped-types';
+import { OmitType } from '@nestjs/swagger';
 import { IsBoolean, IsIn } from 'class-validator';
 import { services } from '@nuvix/core/config/services';
 

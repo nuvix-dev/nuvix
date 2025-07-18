@@ -1,4 +1,4 @@
-import { OmitType, PartialType } from '@nestjs/mapped-types';
+import { OmitType, PartialType } from '@nestjs/swagger';
 import { CreateProjectDTO } from './create-project.dto';
 import { IsNotEmpty, IsString } from 'class-validator';
 

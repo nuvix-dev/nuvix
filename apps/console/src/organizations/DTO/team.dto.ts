@@ -1,4 +1,4 @@
-import { PartialType } from '@nestjs/mapped-types';
+import { PartialType } from '@nestjs/swagger';
 import { IsString, IsOptional, IsObject, IsNotEmpty } from 'class-validator';
 
 export class CreateOrgDTO {

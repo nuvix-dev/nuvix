@@ -67,8 +67,8 @@ export class UsersController {
   @ResModel({ type: Models.USER, list: true })
   async findAll(
     @ProjectDatabase() db: Database,
-    @Query('queries', ParseQueryPipe) queries: Queries[],
-    @Query('search') search: string,
+    @Query('queries', ParseQueryPipe) queries?: Queries[],
+    @Query('search') search?: string,
   ) {
     return await this.usersService.findAll(db, queries, search);
   }
@@ -200,8 +200,8 @@ export class UsersController {
   @ResModel({ type: Models.IDENTITY, list: true })
   async getIdentities(
     @ProjectDatabase() db: Database,
-    @Query('queries', ParseQueryPipe) queries: Queries[],
-    @Query('search') search: string,
+    @Query('queries', ParseQueryPipe) queries?: Queries[],
+    @Query('search') search?: string,
   ) {
     return await this.usersService.getIdentities(db, queries, search);
   }

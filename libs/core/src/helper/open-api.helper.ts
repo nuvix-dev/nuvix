@@ -14,7 +14,7 @@ export function openApiSetup(app: NestFastifyApplication) {
       deepScanRoutes: true,
     });
   SwaggerModule.setup('api', app, documentFactory, {
-    swaggerUiEnabled: false,
+    swaggerUiEnabled: true,
     raw: ['json'],
   });
 

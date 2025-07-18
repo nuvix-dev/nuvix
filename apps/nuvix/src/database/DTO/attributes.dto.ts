@@ -1,4 +1,4 @@
-import { OmitType, PartialType, PickType } from '@nestjs/mapped-types';
+import { OmitType, PartialType, PickType } from '@nestjs/swagger';
 import {
   IsArray,
   IsBoolean,

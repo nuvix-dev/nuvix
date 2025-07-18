@@ -1,4 +1,4 @@
-import { PartialType, OmitType } from '@nestjs/mapped-types';
+import { PartialType, OmitType } from '@nestjs/swagger';
 import { IsCustomID } from '@nuvix/core/validators/input.validator';
 import {
   IsString,

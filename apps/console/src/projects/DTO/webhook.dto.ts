@@ -6,7 +6,7 @@ import {
   IsArray,
   IsOptional,
 } from 'class-validator';
-import { PartialType } from '@nestjs/mapped-types';
+import { PartialType } from '@nestjs/swagger';
 
 export class CreateWebhookDTO {
   @IsString()

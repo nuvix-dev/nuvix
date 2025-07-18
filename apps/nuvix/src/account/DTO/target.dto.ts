@@ -1,4 +1,4 @@
-import { OmitType } from '@nestjs/mapped-types';
+import { OmitType } from '@nestjs/swagger';
 import { IsCustomID } from '@nuvix/core/validators';
 import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 

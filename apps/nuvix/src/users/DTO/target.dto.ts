@@ -1,4 +1,4 @@
-import { OmitType, PartialType } from '@nestjs/mapped-types';
+import { OmitType, PartialType } from '@nestjs/swagger';
 import { Database } from '@nuvix/database';
 import { IsString, IsOptional, Length, Matches } from 'class-validator';
 
