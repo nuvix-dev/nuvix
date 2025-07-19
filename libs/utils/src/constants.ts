@@ -147,6 +147,9 @@ export const GEO_DB = Symbol('geoDb');
 /** Symbol used to identify the operation for retrieving a device associated with a specific project. */
 export const GET_DEVICE_FOR_PROJECT = Symbol('getDeviceForProject');
 
+export const AUDITS_FOR_PLATFORM = Symbol('auditsForPlatform');
+export const AUDITS_FOR_PROJECT = Symbol('auditsForProject');
+
 export const CACHE = 'cache';
 export const IS_PUBLIC_KEY = 'isPublic';
 export const LOCALE = 'locale';

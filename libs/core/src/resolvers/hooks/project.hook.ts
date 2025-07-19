@@ -14,6 +14,7 @@ import {
   PROJECT_DB_CLIENT,
   PROJECT_PG,
   GET_PROJECT_DB_CLIENT,
+  AUDITS_FOR_PROJECT,
 } from '@nuvix/utils/constants';
 import { Hook } from '../../server/hooks/interface';
 import type {
@@ -25,6 +26,7 @@ import { Exception } from '@nuvix/core/extend/exception';
 import { Client } from 'pg';
 import { DataSource } from '@nuvix/pg';
 import { setupDatabaseMeta } from '@nuvix/core/helper/db-meta.helper';
+import { Audit } from '@nuvix/audit';
 
 @Injectable()
 export class ProjectHook implements Hook {
@@ -88,6 +90,7 @@ export class ProjectHook implements Hook {
         const coreDatabase = this.getProjectDb(client, project.getId());
         coreDatabase.setDatabase(CORE_SCHEMA);
         req[CORE_SCHEMA_DB] = coreDatabase;
+        req[AUDITS_FOR_PROJECT] = new Audit(coreDatabase);
       } catch (e) {
         // TODO: improve the error handling
         this.logger.error('Something went wrong while connecting database.', e);

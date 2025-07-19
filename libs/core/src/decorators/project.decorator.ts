@@ -2,6 +2,7 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import { Database, Document } from '@nuvix/database';
 import { DataSource } from '@nuvix/pg';
 import {
+  AUDITS_FOR_PROJECT,
   CORE_SCHEMA_DB,
   CURRENT_SCHEMA_DB,
   CURRENT_SCHEMA_PG,
@@ -9,6 +10,7 @@ import {
   PROJECT_PG,
 } from '@nuvix/utils/constants';
 import { Exception } from '../extend/exception';
+import { Audit } from '@nuvix/audit';
 
 export const Project = createParamDecorator<Document>(
   (data: unknown, ctx: ExecutionContext) => {
@@ -55,5 +57,13 @@ export const ProjectPg = createParamDecorator<any, DataSource | undefined>(
     const dataSource = request[PROJECT_PG] as DataSource;
     if (!dataSource) throw new Exception(Exception.DATABASE_NOT_FOUND);
     return dataSource;
+  },
+);
+
+export const ProjectAudits = createParamDecorator<any, Audit>(
+  (data: unknown, ctx: ExecutionContext) => {
+    const request: Request = ctx.switchToHttp().getRequest();
+    const audit = request[AUDITS_FOR_PROJECT] as Audit;
+    return audit;
   },
 );

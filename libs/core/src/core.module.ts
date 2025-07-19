@@ -33,6 +33,7 @@ import {
   APP_POSTGRES_SSL,
   GET_DEVICE_FOR_PROJECT,
   APP_STORAGE_UPLOADS,
+  AUDITS_FOR_PLATFORM,
 } from '@nuvix/utils/constants';
 import { Database, MariaDB, Structure, PostgreDB } from '@nuvix/database';
 import { Context, DataSource } from '@nuvix/pg';
@@ -43,6 +44,7 @@ import pg, { Client } from 'pg';
 import { parse as parseArray } from 'postgres-array';
 import { filters, formats } from '@nuvix/utils/database';
 import { Device, Local } from '@nuvix/storage';
+import { Audit } from '@nuvix/audit';
 
 export function configurePgTypeParsers() {
   const types = pg.types;
@@ -207,6 +209,13 @@ export type GetProjectPG = (client: Client, context?: Context) => DataSource;
       inject: [CACHE],
     },
     {
+      provide: AUDITS_FOR_PLATFORM,
+      useFactory: async (database: Database) => {
+        return new Audit(database);
+      },
+      inject: [DB_FOR_PLATFORM],
+    },
+    {
       provide: GET_PROJECT_DB,
       useFactory: (cache: Cache) => {
         return (client: Client, projectId: string) => {
@@ -271,6 +280,7 @@ export type GetProjectPG = (client: Client, context?: Context) => DataSource;
   exports: [
     GET_PROJECT_DB_CLIENT,
     DB_FOR_PLATFORM,
+    AUDITS_FOR_PLATFORM,
     GET_DEVICE_FOR_PROJECT,
     GET_PROJECT_DB,
     GET_PROJECT_PG,
