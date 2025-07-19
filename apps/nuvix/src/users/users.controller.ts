@@ -49,12 +49,11 @@ import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard';
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor';
 import { CACHE } from '@nuvix/utils/constants';
 import { Cache } from '@nuvix/cache';
-import { AuditInterceptor } from '@nuvix/core/resolvers/interceptors';
 
 @Namespace('users')
 @Controller({ version: ['1'], path: 'users' })
 @UseGuards(ProjectGuard)
-@UseInterceptors(ResponseInterceptor, ApiInterceptor, AuditInterceptor)
+@UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
