@@ -59,6 +59,11 @@ services:
       - nuvix
       - caddy
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   console-api:
     build:
@@ -83,13 +88,17 @@ services:
       - nuvix
       - caddy
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
 
   caddy:
     image: caddy:2
     container_name: nuvix-caddy
     restart: unless-stopped
     ports:
-      - "80:80"
       - "443:443"
       - "443:443/udp"
     volumes:

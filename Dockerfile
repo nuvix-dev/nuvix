@@ -4,10 +4,6 @@
 FROM node:20 AS base
 WORKDIR /app
 
-# Install native Node.js modules like pgsql-parser using npm.
-# This ensures any Node.js ABI dependencies are met by the Node.js base.
-RUN npm install pgsql-parser --no-save
-
 # Install necessary tools for Bun installation (curl, unzip),
 # and also Python and build-essential for node-gyp to compile native modules.
 RUN apt-get update && apt-get install -y \
@@ -25,12 +21,13 @@ RUN curl -fsSL https://bun.sh/install | bash
 # Add Bun's bin directory to the PATH environment variable so `bun` commands are found.
 ENV PATH="/root/.bun/bin:$PATH"
 
+RUN npm install pgsql-parser --no-save
 # Copy the Bun lock file and all project files into the image.
 COPY bun.lock ./
 COPY . .
 
 # The --frozen-lockfile flag ensures that the bun.lock file is respected and not modified.
-RUN bun install --frozen-lockfile
+RUN bun install
 
 # -------- Stage 2: Development Stage --------
 # This stage is optimized for development, building upon the 'base' stage.
