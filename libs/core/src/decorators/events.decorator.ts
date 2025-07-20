@@ -1,5 +1,6 @@
 import { SetMetadata } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { RouteConfig } from '@nestjs/platform-fastify';
 
 type EventActions = 'create' | 'update' | 'delete';
 
@@ -37,13 +38,34 @@ export type _AuditEvent = {
   userId?: `{${ParameterKey}.${string}}`;
 };
 
+export type AuditEventType = {
+  event: AuditEventKey;
+  meta: _AuditEvent;
+};
+
+/**
+ * Decorator function to configure an audit event for a route.
+ *
+ * @param event - The event representing the audit event. This is typically a constant
+ *              that identifies the type of event being audited.
+ *              Example: `'user.create'`, `'session.delete'`.
+ * @param meta - Metadata associated with the audit event. This can either be:
+ *               - A `ResourcePath` string representing the resource being audited.
+ *                 Example: `'users/{user.id}'`, `'sessions/{session.id}/details'`.
+ *               - An `_AuditEvent` object containing detailed metadata about the event.
+ *                 Example: `{ resource: 'users/{user.id}', userId: '{user.id}' }`.
+ *
+ * @returns A function that applies the audit event configuration to the route.
+ */
 export const AuditEvent = (
-  key: AuditEventKey,
+  event: AuditEventKey,
   meta: _AuditEvent | ResourcePath,
 ) =>
-  SetMetadata('audit-event', {
-    key,
-    meta: typeof meta === 'string' ? { resource: meta } : meta,
+  RouteConfig({
+    audit: {
+      event,
+      meta: typeof meta === 'string' ? { resource: meta } : meta,
+    },
   });
 
 const events = ['user.{userId}.create'] as const;

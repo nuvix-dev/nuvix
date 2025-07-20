@@ -51,6 +51,7 @@ import { FunctionsController } from './functions/functions.controller';
 import { SchemaController } from './schema/schema.controller';
 import { StorageController } from './storage/storage.controller';
 import { MessagingController } from './messaging/messaging.controller';
+import { AuditHook } from '@nuvix/core/resolvers/hooks/audit.hook';
 
 @Module({
   imports: [
@@ -130,6 +131,8 @@ export class AppModule implements NestModule {
         SchemaController,
         StorageController,
         MessagingController,
-      );
+      )
+      .apply(AuditHook)
+      .forRoutes('*');
   }
 }

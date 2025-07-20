@@ -1,5 +1,5 @@
 import { RequestMethod } from '@nestjs/common';
-import { FastifyAdapter } from '@nestjs/platform-fastify';
+import { FastifyAdapter, RouteConfig } from '@nestjs/platform-fastify';
 import { pathToRegexp } from 'path-to-regexp';
 import { LegacyRouteConverter } from '@nestjs/core/router/legacy-route-converter';
 import { HookMethods } from './hooks/interface';
@@ -54,8 +54,8 @@ export class NuvixAdapter extends FastifyAdapter {
   ) {
     // Register a hook for the specific lifecycle hook
     this.instance.addHook(hookName, async (...args: any[]) => {
-      const request = args[0];
-      const reply = args[1];
+      const request: NuvixRequest = args[0];
+      const reply: NuvixRes = args[1];
 
       const queryParamsIndex = request.originalUrl.indexOf('?');
       const pathname =
@@ -74,6 +74,13 @@ export class NuvixAdapter extends FastifyAdapter {
               if (e) throw e;
             };
       const extra = args.slice(2, -1);
+
+      if (extra.length) {
+        request['hooks_args'] = {
+          ...request['hooks_args'],
+          [hookName]: { args: extra },
+        };
+      }
       // TODO: handle sync hooks
       switch (hookName) {
         case 'preSerialization':

@@ -59,7 +59,7 @@ export interface LifecycleHookMethods {
     req: NuvixRequest,
     reply: NuvixRes,
     next: (err?: Error) => void,
-    payload: unknown,
+    // payload: unknown,
   ): Promise<unknown>;
 
   /**
@@ -70,7 +70,7 @@ export interface LifecycleHookMethods {
     req: NuvixRequest,
     reply: NuvixRes,
     next: (err?: Error) => void,
-    payload: unknown,
+    // payload: unknown,
   ): Promise<unknown>;
 
   /**
@@ -91,7 +91,7 @@ export interface LifecycleHookMethods {
     req: NuvixRequest,
     reply: NuvixRes,
     next: (err?: Error) => void,
-    error: Error,
+    error: Error, // TODO: -----
   ): Promise<unknown>;
 
   /**

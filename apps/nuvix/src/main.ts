@@ -72,7 +72,6 @@ async function bootstrap() {
           ? (Object.keys(LOG_LEVELS) as LogLevel[])
           : undefined,
       }),
-      autoFlushLogs: true,
     },
   );
 
@@ -136,6 +135,7 @@ async function bootstrap() {
       done();
     }
   });
+  fastify.decorateRequest('hooks_args', null);
 
   process.on('SIGINT', async () => {
     Logger.log('SIGINT received, shutting down gracefully...');

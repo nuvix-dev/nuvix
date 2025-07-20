@@ -21,7 +21,7 @@ export class AuthHook implements Hook {
   constructor(
     @Inject(DB_FOR_PLATFORM) readonly db: Database,
     private readonly jwtService: JwtService,
-  ) { }
+  ) {}
 
   async onRequest(req: NuvixRequest, reply: NuvixRes): Promise<void> {
     const params = new ParamsHelper(req);
@@ -41,7 +41,10 @@ export class AuthHook implements Hook {
       Auth.setCookieName(`session`);
     }
 
-    let session: { id: string | null; secret: string; } = { id: null, secret: '', };
+    let session: { id: string | null; secret: string } = {
+      id: null,
+      secret: '',
+    };
     const cookie = req.cookies[Auth.cookieName] || null;
     if (cookie) session = Auth.decodeSession(cookie);
 

@@ -3,13 +3,11 @@ import {
   ExecutionContext,
   Inject,
   Injectable,
-  Logger,
   NestInterceptor,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import {
-  APP_MODE_ADMIN,
-  APP_MODE_DEFAULT,
+  AppMode,
   CACHE_DB,
   CORE_SCHEMA_DB,
   PROJECT,
@@ -44,7 +42,7 @@ export class ApiInterceptor implements NestInterceptor {
     const scopes: Scopes[] = request[SCOPES];
     const mode =
       params.getFromHeaders('x-nuvix-mode') ||
-      params.getFromQuery('mode', APP_MODE_DEFAULT);
+      params.getFromQuery('mode', AppMode.DEFAULT);
 
     const scope = this.reflector.getAllAndOverride(Scope, [
       context.getHandler(),
@@ -54,20 +52,6 @@ export class ApiInterceptor implements NestInterceptor {
       context.getHandler(),
       context.getClass(),
     ]);
-
-    if (APP_MODE_ADMIN === mode) {
-      if (
-        user.find(
-          'teamInternalId',
-          project.getAttribute('teamInternalId'),
-          'memberships',
-        )
-      ) {
-        Authorization.setDefaultStatus(false);
-      } else {
-        user = new Document();
-      }
-    }
 
     if (namespace) {
       if (
@@ -83,6 +67,7 @@ export class ApiInterceptor implements NestInterceptor {
     }
 
     if (scope && !process.env.APP_SKIP_SCOPE) {
+      // TODO: remove APP_SKIP_SCOPE
       const requiredScopes = Array.isArray(scope) ? scope : [scope];
       const missingScopes = requiredScopes.filter(s => !scopes.includes(s));
 

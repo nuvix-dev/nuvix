@@ -40,7 +40,10 @@ export class ApiHook implements Hook {
     if (project.isEmpty()) throw new Exception(Exception.PROJECT_NOT_FOUND);
 
     if (mode === AppMode.ADMIN && project.getId() === 'console') {
-      throw new Exception(Exception.GENERAL_ACCESS_FORBIDDEN, 'Nuvix Console cannot be accessed in admin mode.');
+      throw new Exception(
+        Exception.GENERAL_ACCESS_FORBIDDEN,
+        'Nuvix Console cannot be accessed in admin mode.',
+      );
     }
 
     // ACL Check

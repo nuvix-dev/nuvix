@@ -280,6 +280,7 @@ export class HooksModule<
           req: TRequest,
           res: TResponse,
           next: VoidFunction,
+          ...rest: any
         ) => {
           try {
             const contextId = this.getContextId(req, isTreeDurable);
@@ -294,7 +295,7 @@ export class HooksModule<
               method,
               contextId,
             );
-            return proxy(req, res, next);
+            return proxy(req, res, next, ...rest);
           } catch (err) {
             let exceptionsHandler = this.exceptionFiltersCache.get(
               instance[method],
@@ -324,7 +325,12 @@ export class HooksModule<
     method: string,
     contextId = STATIC_CONTEXT,
   ): Promise<
-    (req: TRequest, res: TResponse, next: VoidFunction) => Promise<void>
+    (
+      req: TRequest,
+      res: TResponse,
+      next: VoidFunction,
+      ...rest: any
+    ) => Promise<void>
   > {
     const exceptionsHandler = this.routerExceptionFilter.create(
       instance,
@@ -344,6 +350,7 @@ export class HooksModule<
       req: TRequest,
       res: TResponse,
       next: VoidFunction,
+      ...rest: any
     ) => void,
   ): Promise<void> {
     const { method } = routeInfo;
@@ -357,9 +364,10 @@ export class HooksModule<
           req: TRequest,
           res: TResponse,
           next: VoidFunction,
+          ...rest: any
         ) => {
           if (applicationRef.getRequestMethod?.(req) === requestMethod) {
-            return await proxy(req, res, next);
+            return await proxy(req, res, next, ...rest);
           }
           return Promise.resolve();
         };
