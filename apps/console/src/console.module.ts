@@ -6,7 +6,7 @@ import { UsersModule } from './users/users.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { ProjectModule } from './projects/project.module';
 import { CoreModule } from '@nuvix/core/core.module';
-import { MailQueue } from '@nuvix/core/resolvers/queues';
+import { MailsQueue } from '@nuvix/core/resolvers/queues';
 import { BullModule } from '@nestjs/bullmq';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -19,11 +19,10 @@ import {
   APP_REDIS_SECURE,
   APP_REDIS_USER,
   JWT_SECRET,
-  WORKER_TYPE_MAILS,
-  WORKER_TYPE_USAGE,
+  QueueFor,
 } from '@nuvix/utils/constants';
 import { HostHook, AuthHook, ApiHook } from '@nuvix/core/resolvers/hooks';
-import { ProjectHook } from './hooks/project.hook';
+import { ProjectHook } from './resolvers/hooks/project.hook';
 import { ProjectHook as RequestProjectHook } from '@nuvix/core/resolvers/hooks';
 import { DatabaseModule } from './database/database.module';
 import { DatabaseController } from './database/database.controller';
@@ -34,6 +33,7 @@ import { OrganizationsController } from './organizations/organizations.controlle
 import { ProjectController } from './projects/project.controller';
 import { ProjectsController } from './projects/projects.controller';
 import { AuditHook } from '@nuvix/core/resolvers/hooks/audit.hook';
+import { AuditsQueue } from './resolvers/queues/audits.queue';
 
 @Module({
   imports: [
@@ -53,8 +53,9 @@ import { AuditHook } from '@nuvix/core/resolvers/hooks/audit.hook';
       prefix: 'nuvix',
     }),
     BullModule.registerQueue(
-      { name: WORKER_TYPE_MAILS },
-      { name: WORKER_TYPE_USAGE },
+      { name: QueueFor.MAILS },
+      { name: QueueFor.USAGE },
+      { name: QueueFor.AUDITS },
     ),
     EventEmitterModule.forRoot({
       global: true,
@@ -73,7 +74,7 @@ import { AuditHook } from '@nuvix/core/resolvers/hooks/audit.hook';
     PgMetaModule,
   ],
   controllers: [ConsoleController],
-  providers: [ConsoleService, MailQueue],
+  providers: [ConsoleService, MailsQueue, AuditsQueue],
 })
 export class ConsoleModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

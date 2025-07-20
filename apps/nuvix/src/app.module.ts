@@ -11,8 +11,7 @@ import {
   APP_REDIS_SECURE,
   APP_REDIS_USER,
   JWT_SECRET,
-  WORKER_TYPE_MAILS,
-  WORKER_TYPE_USAGE,
+  QueueFor,
 } from '@nuvix/utils/constants';
 // Hooks
 import {
@@ -52,6 +51,7 @@ import { SchemaController } from './schema/schema.controller';
 import { StorageController } from './storage/storage.controller';
 import { MessagingController } from './messaging/messaging.controller';
 import { AuditHook } from '@nuvix/core/resolvers/hooks/audit.hook';
+import { AuditsQueue } from '@nuvix/core/resolvers/queues/audits.queue';
 
 @Module({
   imports: [
@@ -76,8 +76,9 @@ import { AuditHook } from '@nuvix/core/resolvers/hooks/audit.hook';
       prefix: 'nuvix',
     }),
     BullModule.registerQueue(
-      { name: WORKER_TYPE_MAILS },
-      { name: WORKER_TYPE_USAGE },
+      { name: QueueFor.MAILS },
+      { name: QueueFor.USAGE },
+      { name: QueueFor.AUDITS },
     ),
     EventEmitterModule.forRoot({
       global: true,
@@ -101,7 +102,7 @@ import { AuditHook } from '@nuvix/core/resolvers/hooks/audit.hook';
     MessagingModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MailsQueue],
+  providers: [AppService, MailsQueue, AuditsQueue],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
