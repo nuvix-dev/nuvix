@@ -5,7 +5,7 @@ export default async () => {
     '@nestjs/swagger': {
       models: [
         [
-          import('./database/DTO/collection.dto'),
+          import('./schema/collections/DTO/collection.dto'),
           {
             CreateCollectionDTO: {
               collectionId: { required: true, type: () => String },
@@ -22,7 +22,7 @@ export default async () => {
           },
         ],
         [
-          import('./database/DTO/attributes.dto'),
+          import('./schema/collections/DTO/attributes.dto'),
           {
             CreateStringAttributeDTO: {
               key: { required: true, type: () => String },
@@ -103,7 +103,7 @@ export default async () => {
           },
         ],
         [
-          import('./database/DTO/document.dto'),
+          import('./schema/collections/DTO/document.dto'),
           {
             CreateDocumentDTO: {
               documentId: { required: true, type: () => String },
@@ -114,7 +114,7 @@ export default async () => {
           },
         ],
         [
-          import('./database/DTO/indexes.dto'),
+          import('./schema/collections/DTO/indexes.dto'),
           {
             CreateIndexDTO: {
               key: { required: true, type: () => String },
@@ -890,7 +890,7 @@ export default async () => {
           { Base: { exampleField: { required: true, type: () => Number } } },
         ],
         [
-          import('./database/DTO/database.dto'),
+          import('./schema/collections/DTO/database.dto'),
           {
             CreateDatabaseDTO: {
               databaseId: { required: true, type: () => String },
@@ -924,7 +924,7 @@ export default async () => {
           },
         ],
         [
-          import('./database/database.controller'),
+          import('./schema/collections/collections.controller'),
           {
             DatabaseController: {
               findCollections: {},

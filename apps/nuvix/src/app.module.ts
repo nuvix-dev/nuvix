@@ -44,7 +44,7 @@ import { BaseController } from './base/base.controller';
 import { UsersController } from './users/users.controller';
 import { TeamsController } from './teams/teams.controller';
 import { AccountController } from './account/account.controller';
-import { DatabaseController } from './database/database.controller';
+import { DatabaseController } from './schema/collections/collections.controller';
 import { AvatarsController } from './avatars/avatars.controller';
 import { FunctionsController } from './functions/functions.controller';
 import { SchemaController } from './schema/schema.controller';

@@ -7,6 +7,7 @@ import { Document } from '@nuvix/database';
 import { QueueFor, PROJECT, USER, AppMode } from '@nuvix/utils/constants';
 import { Queue } from 'bullmq';
 import { AuditsQueueJobData } from '../queues/audits.queue';
+import { Auth } from '@nuvix/core/helper';
 
 @Injectable()
 export class AuditHook implements Hook {
@@ -71,7 +72,7 @@ export class AuditHook implements Hook {
       user = new Document({
         $id: '',
         status: true,
-        // 'type': Auth.ACTIVITY_TYPE_GUEST, // TODO: Use a constant for guest type
+        type: Auth.ACTIVITY_TYPE_GUEST,
         email: 'guest.' + project.getId() + '@service.' + req.hostname,
         password: '',
         name: 'Guest',

@@ -69,8 +69,8 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { DatabaseJobData, DatabaseJobs } from '@nuvix/core/resolvers/queues';
 
 @Injectable()
-export class DatabaseService {
-  private readonly logger = new Logger(DatabaseService.name);
+export class CollectionsService {
+  private readonly logger = new Logger(CollectionsService.name);
 
   constructor(
     @Inject(GEO_DB) private readonly geoDb: Reader<CountryResponse>,

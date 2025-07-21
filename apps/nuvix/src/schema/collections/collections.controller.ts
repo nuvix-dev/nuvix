@@ -12,7 +12,7 @@ import {
   Put,
 } from '@nestjs/common';
 import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor';
-import { DatabaseService } from './database.service';
+import { CollectionsService } from './collections.service';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard';
 import { Models } from '@nuvix/core/helper/response.helper';
 import type { Database, Document, Query as Queries } from '@nuvix/database';
@@ -52,121 +52,117 @@ import { CreateDocumentDTO, UpdateDocumentDTO } from './DTO/document.dto';
 import { CreateIndexDTO } from './DTO/indexes.dto';
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor';
 
-@Controller({ version: ['1'], path: 'schemas' })
+@Controller({ version: ['1'], path: 'collections' })
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
-export class DatabaseController {
-  constructor(private readonly databaseService: DatabaseService) {}
+export class CollectionsController {
+  constructor(private readonly collectionsService: CollectionsService) { }
 
-  @Get(':id/collections')
+  @Get()
   @ResModel({ type: Models.COLLECTION, list: true })
   async findCollections(
     @CurrentDatabase() db: Database,
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.databaseService.getCollections(db, queries, search);
+    return await this.collectionsService.getCollections(db, queries, search);
   }
 
-  @Post(':id/collections')
+  @Post()
   @ResModel(Models.COLLECTION)
   async createCollection(
     @CurrentDatabase() db: Database,
     @Body() createCollectionDTO: CreateCollectionDTO,
   ) {
-    return await this.databaseService.createCollection(db, createCollectionDTO);
+    return await this.collectionsService.createCollection(db, createCollectionDTO);
   }
 
-  @Get(':id/collections/:collectionId/usage')
+  @Get(':collectionId/usage')
   @ResModel(Models.USAGE_COLLECTION)
   async getCollectionUsage(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Query('range') range?: string,
   ) {
-    return await this.databaseService.getCollectionUsage(
+    return await this.collectionsService.getCollectionUsage(
       db,
-
       collectionId,
       range,
     );
   }
 
-  @Get(':id/collections/:collectionId')
+  @Get(':collectionId')
   @ResModel(Models.COLLECTION)
   async findCollection(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
   ) {
-    return await this.databaseService.getCollection(db, collectionId);
+    return await this.collectionsService.getCollection(db, collectionId);
   }
 
-  @Get(':id/collections/:collectionId/logs')
+  @Get(':collectionId/logs')
   @ResModel({ type: Models.LOG, list: true })
   async findCollectionLogs(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
   ) {
-    return await this.databaseService.getCollectionLogs(
+    return await this.collectionsService.getCollectionLogs(
       db,
-
       collectionId,
       queries,
     );
   }
 
-  @Put(':id/collections/:collectionId')
+  @Put(':collectionId')
   @ResModel(Models.COLLECTION)
   async updateCollection(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Body() updateCollectionDTO: UpdateCollectionDTO,
   ) {
-    return await this.databaseService.updateCollection(
+    return await this.collectionsService.updateCollection(
       db,
-
       collectionId,
       updateCollectionDTO,
     );
   }
 
-  @Delete(':id/collections/:collectionId')
+  @Delete(':collectionId')
   @ResModel(Models.NONE)
   async removeCollection(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Project() project: Document,
   ) {
-    return await this.databaseService.removeCollection(
+    return await this.collectionsService.removeCollection(
       db,
-
       collectionId,
       project,
     );
   }
 
-  @Get(':id/collections/:collectionId/documents')
+  @Get(':collectionId/documents')
   @ResModel({ type: Models.DOCUMENT, list: true })
   async findDocuments(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
   ) {
-    return await this.databaseService.getDocuments(db, collectionId, queries);
+    return await this.collectionsService.getDocuments(db, collectionId, queries);
   }
 
-  @Get(':id/collections/:collectionId/attributes')
+  @Get(':collectionId/attributes')
   @ResModel({ type: Models.ATTRIBUTE, list: true })
   async findAttributes(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
   ) {
-    return await this.databaseService.getAttributes(db, collectionId, queries);
+    return await this.collectionsService.getAttributes(db, collectionId, queries);
   }
 
-  @Post(':id/collections/:collectionId/attributes/string')
+  @Post(':collectionId/attributes/string')
   @ResModel(Models.ATTRIBUTE_STRING)
   async createStringAttribute(
     @CurrentDatabase() db: Database,
@@ -174,16 +170,15 @@ export class DatabaseController {
     @Body() createAttributeDTO: CreateStringAttributeDTO,
     @Project() project: Document,
   ) {
-    return await this.databaseService.createStringAttribute(
+    return await this.collectionsService.createStringAttribute(
       db,
-
       collectionId,
       createAttributeDTO,
       project,
     );
   }
 
-  @Post(':id/collections/:collectionId/attributes/email')
+  @Post(':collectionId/attributes/email')
   @ResModel(Models.ATTRIBUTE_EMAIL)
   async createEmailAttribute(
     @CurrentDatabase() db: Database,
@@ -191,16 +186,15 @@ export class DatabaseController {
     @Body() createAttributeDTO: CreateEmailAttributeDTO,
     @Project() project: Document,
   ) {
-    return await this.databaseService.createEmailAttribute(
+    return await this.collectionsService.createEmailAttribute(
       db,
-
       collectionId,
       createAttributeDTO,
       project,
     );
   }
 
-  @Post(':id/collections/:collectionId/attributes/enum')
+  @Post(':collectionId/attributes/enum')
   @ResModel(Models.ATTRIBUTE_ENUM)
   async createEnumAttribute(
     @CurrentDatabase() db: Database,
@@ -208,16 +202,15 @@ export class DatabaseController {
     @Body() createAttributeDTO: CreateEnumAttributeDTO,
     @Project() project: Document,
   ) {
-    return await this.databaseService.createEnumAttribute(
+    return await this.collectionsService.createEnumAttribute(
       db,
-
       collectionId,
       createAttributeDTO,
       project,
     );
   }
 
-  @Post(':id/collections/:collectionId/attributes/ip')
+  @Post(':collectionId/attributes/ip')
   @ResModel(Models.ATTRIBUTE_IP)
   async createIpAttribute(
     @CurrentDatabase() db: Database,
@@ -225,16 +218,15 @@ export class DatabaseController {
     @Body() createAttributeDTO: CreateIpAttributeDTO,
     @Project() project: Document,
   ) {
-    return await this.databaseService.createIPAttribute(
+    return await this.collectionsService.createIPAttribute(
       db,
-
       collectionId,
       createAttributeDTO,
       project,
     );
   }
 
-  @Post(':id/collections/:collectionId/attributes/url')
+  @Post(':collectionId/attributes/url')
   @ResModel(Models.ATTRIBUTE_URL)
   async createUrlAttribute(
     @CurrentDatabase() db: Database,
@@ -242,16 +234,15 @@ export class DatabaseController {
     @Body() createAttributeDTO: CreateURLAttributeDTO,
     @Project() project: Document,
   ) {
-    return await this.databaseService.createURLAttribute(
+    return await this.collectionsService.createURLAttribute(
       db,
-
       collectionId,
       createAttributeDTO,
       project,
     );
   }
 
-  @Post(':id/collections/:collectionId/attributes/integer')
+  @Post(':collectionId/attributes/integer')
   @ResModel(Models.ATTRIBUTE_INTEGER)
   async createIntegerAttribute(
     @CurrentDatabase() db: Database,
@@ -259,16 +250,15 @@ export class DatabaseController {
     @Body() createAttributeDTO: CreateIntegerAttributeDTO,
     @Project() project: Document,
   ) {
-    return await this.databaseService.createIntegerAttribute(
+    return await this.collectionsService.createIntegerAttribute(
       db,
-
       collectionId,
       createAttributeDTO,
       project,
     );
   }
 
-  @Post(':id/collections/:collectionId/attributes/float')
+  @Post(':collectionId/attributes/float')
   @ResModel(Models.ATTRIBUTE_FLOAT)
   async createFloatAttribute(
     @CurrentDatabase() db: Database,
@@ -276,16 +266,15 @@ export class DatabaseController {
     @Body() createAttributeDTO: CreateFloatAttributeDTO,
     @Project() project: Document,
   ) {
-    return await this.databaseService.createFloatAttribute(
+    return await this.collectionsService.createFloatAttribute(
       db,
-
       collectionId,
       createAttributeDTO,
       project,
     );
   }
 
-  @Post(':id/collections/:collectionId/attributes/boolean')
+  @Post(':collectionId/attributes/boolean')
   @ResModel(Models.ATTRIBUTE_BOOLEAN)
   async createBooleanAttribute(
     @CurrentDatabase() db: Database,
@@ -293,16 +282,15 @@ export class DatabaseController {
     @Body() createAttributeDTO: CreateBooleanAttributeDTO,
     @Project() project: Document,
   ) {
-    return await this.databaseService.createBooleanAttribute(
+    return await this.collectionsService.createBooleanAttribute(
       db,
-
       collectionId,
       createAttributeDTO,
       project,
     );
   }
 
-  @Post(':id/collections/:collectionId/attributes/datetime')
+  @Post(':collectionId/attributes/datetime')
   @ResModel(Models.ATTRIBUTE_DATETIME)
   async createDatetimeAttribute(
     @CurrentDatabase() db: Database,
@@ -310,16 +298,15 @@ export class DatabaseController {
     @Body() createAttributeDTO: CreateDatetimeAttributeDTO,
     @Project() project: Document,
   ) {
-    return await this.databaseService.createDateAttribute(
+    return await this.collectionsService.createDateAttribute(
       db,
-
       collectionId,
       createAttributeDTO,
       project,
     );
   }
 
-  @Post(':id/collections/:collectionId/attributes/relationship')
+  @Post(':collectionId/attributes/relationship')
   @ResModel(Models.ATTRIBUTE_RELATIONSHIP)
   async createRelationAttribute(
     @CurrentDatabase() db: Database,
@@ -327,31 +314,29 @@ export class DatabaseController {
     @Body() createAttributeDTO: CreateRelationAttributeDTO,
     @Project() project: Document,
   ) {
-    return await this.databaseService.createRelationshipAttribute(
+    return await this.collectionsService.createRelationshipAttribute(
       db,
-
       collectionId,
       createAttributeDTO,
       project,
     );
   }
 
-  @Get(':id/collections/:collectionId/attributes/:attributeId')
+  @Get(':collectionId/attributes/:attributeId')
   @ResModel(Models.ATTRIBUTE)
   async findAttribute(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Param('attributeId') attributeId: string,
   ) {
-    return await this.databaseService.getAttribute(
+    return await this.collectionsService.getAttribute(
       db,
-
       collectionId,
       attributeId,
     );
   }
 
-  @Patch(':id/collections/:collectionId/attributes/string/:attributeId')
+  @Patch(':collectionId/attributes/string/:attributeId')
   @ResModel(Models.ATTRIBUTE_STRING)
   async updateStringAttribute(
     @CurrentDatabase() db: Database,
@@ -359,16 +344,15 @@ export class DatabaseController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateStringAttributeDTO,
   ) {
-    return await this.databaseService.updateStringAttribute(
+    return await this.collectionsService.updateStringAttribute(
       db,
-
       collectionId,
       attributeId,
       updateAttributeDTO,
     );
   }
 
-  @Patch(':id/collections/:collectionId/attributes/email/:attributeId')
+  @Patch(':collectionId/attributes/email/:attributeId')
   @ResModel(Models.ATTRIBUTE_EMAIL)
   async updateEmailAttribute(
     @CurrentDatabase() db: Database,
@@ -376,16 +360,15 @@ export class DatabaseController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateEmailAttributeDTO,
   ) {
-    return await this.databaseService.updateEmailAttribute(
+    return await this.collectionsService.updateEmailAttribute(
       db,
-
       collectionId,
       attributeId,
       updateAttributeDTO,
     );
   }
 
-  @Patch(':id/collections/:collectionId/attributes/enum/:attributeId')
+  @Patch(':collectionId/attributes/enum/:attributeId')
   @ResModel(Models.ATTRIBUTE_ENUM)
   async updateEnumAttribute(
     @CurrentDatabase() db: Database,
@@ -393,16 +376,15 @@ export class DatabaseController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateEnumAttributeDTO,
   ) {
-    return await this.databaseService.updateEnumAttribute(
+    return await this.collectionsService.updateEnumAttribute(
       db,
-
       collectionId,
       attributeId,
       updateAttributeDTO,
     );
   }
 
-  @Patch(':id/collections/:collectionId/attributes/ip/:attributeId')
+  @Patch(':collectionId/attributes/ip/:attributeId')
   @ResModel(Models.ATTRIBUTE_IP)
   async updateIpAttribute(
     @CurrentDatabase() db: Database,
@@ -410,16 +392,15 @@ export class DatabaseController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateIpAttributeDTO,
   ) {
-    return await this.databaseService.updateIPAttribute(
+    return await this.collectionsService.updateIPAttribute(
       db,
-
       collectionId,
       attributeId,
       updateAttributeDTO,
     );
   }
 
-  @Patch(':id/collections/:collectionId/attributes/url/:attributeId')
+  @Patch(':collectionId/attributes/url/:attributeId')
   @ResModel(Models.ATTRIBUTE_URL)
   async updateUrlAttribute(
     @CurrentDatabase() db: Database,
@@ -427,16 +408,15 @@ export class DatabaseController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateURLAttributeDTO,
   ) {
-    return await this.databaseService.updateURLAttribute(
+    return await this.collectionsService.updateURLAttribute(
       db,
-
       collectionId,
       attributeId,
       updateAttributeDTO,
     );
   }
 
-  @Patch(':id/collections/:collectionId/attributes/integer/:attributeId')
+  @Patch(':collectionId/attributes/integer/:attributeId')
   @ResModel(Models.ATTRIBUTE_INTEGER)
   async updateIntegerAttribute(
     @CurrentDatabase() db: Database,
@@ -444,16 +424,15 @@ export class DatabaseController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateIntegerAttributeDTO,
   ) {
-    return await this.databaseService.updateIntegerAttribute(
+    return await this.collectionsService.updateIntegerAttribute(
       db,
-
       collectionId,
       attributeId,
       updateAttributeDTO,
     );
   }
 
-  @Patch(':id/collections/:collectionId/attributes/float/:attributeId')
+  @Patch(':collectionId/attributes/float/:attributeId')
   @ResModel(Models.ATTRIBUTE_FLOAT)
   async updateFloatAttribute(
     @CurrentDatabase() db: Database,
@@ -461,16 +440,15 @@ export class DatabaseController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateFloatAttributeDTO,
   ) {
-    return await this.databaseService.updateFloatAttribute(
+    return await this.collectionsService.updateFloatAttribute(
       db,
-
       collectionId,
       attributeId,
       updateAttributeDTO,
     );
   }
 
-  @Patch(':id/collections/:collectionId/attributes/boolean/:attributeId')
+  @Patch(':collectionId/attributes/boolean/:attributeId')
   @ResModel(Models.ATTRIBUTE_BOOLEAN)
   async updateBooleanAttribute(
     @CurrentDatabase() db: Database,
@@ -478,16 +456,15 @@ export class DatabaseController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateBooleanAttributeDTO,
   ) {
-    return await this.databaseService.updateBooleanAttribute(
+    return await this.collectionsService.updateBooleanAttribute(
       db,
-
       collectionId,
       attributeId,
       updateAttributeDTO,
     );
   }
 
-  @Patch(':id/collections/:collectionId/attributes/datetime/:attributeId')
+  @Patch(':collectionId/attributes/datetime/:attributeId')
   @ResModel(Models.ATTRIBUTE_DATETIME)
   async updateDatetimeAttribute(
     @CurrentDatabase() db: Database,
@@ -495,16 +472,15 @@ export class DatabaseController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateDatetimeAttributeDTO,
   ) {
-    return await this.databaseService.updateDateAttribute(
+    return await this.collectionsService.updateDateAttribute(
       db,
-
       collectionId,
       attributeId,
       updateAttributeDTO,
     );
   }
 
-  @Patch(':id/collections/:collectionId/attributes/relationship/:attributeId')
+  @Patch(':collectionId/attributes/relationship/:attributeId')
   @ResModel(Models.ATTRIBUTE_RELATIONSHIP)
   async updateRelationAttribute(
     @CurrentDatabase() db: Database,
@@ -512,16 +488,15 @@ export class DatabaseController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateRelationAttributeDTO,
   ) {
-    return await this.databaseService.updateRelationshipAttribute(
+    return await this.collectionsService.updateRelationshipAttribute(
       db,
-
       collectionId,
       attributeId,
       updateAttributeDTO,
     );
   }
 
-  @Delete(':id/collections/:collectionId/attributes/:attributeId')
+  @Delete(':collectionId/attributes/:attributeId')
   @ResModel(Models.NONE)
   async removeAttribute(
     @CurrentDatabase() db: Database,
@@ -529,16 +504,15 @@ export class DatabaseController {
     @Param('attributeId') attributeId: string,
     @Project() project: Document,
   ) {
-    return await this.databaseService.deleteAttribute(
+    return await this.collectionsService.deleteAttribute(
       db,
-
       collectionId,
       attributeId,
       project,
     );
   }
 
-  @Post(':id/collections/:collectionId/indexes')
+  @Post(':collectionId/indexes')
   @ResModel(Models.INDEX)
   async createIndex(
     @CurrentDatabase() db: Database,
@@ -546,36 +520,35 @@ export class DatabaseController {
     @Body() input: CreateIndexDTO,
     @Project() project: Document,
   ) {
-    return await this.databaseService.createIndex(
+    return await this.collectionsService.createIndex(
       db,
-
       collectionId,
       input,
       project,
     );
   }
 
-  @Get(':id/collections/:collectionId/indexes')
+  @Get(':collectionId/indexes')
   @ResModel({ type: Models.INDEX, list: true })
   async findIndexes(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
   ) {
-    return await this.databaseService.getIndexes(db, collectionId, queries);
+    return await this.collectionsService.getIndexes(db, collectionId, queries);
   }
 
-  @Get(':id/collections/:collectionId/indexes/:indexId')
+  @Get(':collectionId/indexes/:indexId')
   @ResModel(Models.INDEX)
   async findIndex(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Param('indexId') indexId: string,
   ) {
-    return await this.databaseService.getIndex(db, collectionId, indexId);
+    return await this.collectionsService.getIndex(db, collectionId, indexId);
   }
 
-  @Delete(':id/collections/:collectionId/indexes/:indexId')
+  @Delete(':collectionId/indexes/:indexId')
   @ResModel(Models.NONE)
   async removeIndex(
     @CurrentDatabase() db: Database,
@@ -583,16 +556,15 @@ export class DatabaseController {
     @Param('indexId') indexId: string,
     @Project() project: Document,
   ) {
-    return await this.databaseService.deleteIndex(
+    return await this.collectionsService.deleteIndex(
       db,
-
       collectionId,
       indexId,
       project,
     );
   }
 
-  @Post(':id/collections/:collectionId/documents')
+  @Post(':collectionId/documents')
   @ResModel(Models.DOCUMENT)
   async createDocument(
     @CurrentDatabase() db: Database,
@@ -600,16 +572,15 @@ export class DatabaseController {
     @Body() document: CreateDocumentDTO,
     @Mode() mode: string,
   ) {
-    return await this.databaseService.createDocument(
+    return await this.collectionsService.createDocument(
       db,
-
       collectionId,
       document,
       mode,
     );
   }
 
-  @Get(':id/collections/:collectionId/documents/:documentId')
+  @Get(':collectionId/documents/:documentId')
   @ResModel(Models.DOCUMENT)
   async findDocument(
     @CurrentDatabase() db: Database,
@@ -617,16 +588,15 @@ export class DatabaseController {
     @Param('documentId') documentId: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
   ) {
-    return await this.databaseService.getDocument(
+    return await this.collectionsService.getDocument(
       db,
-
       collectionId,
       documentId,
       queries,
     );
   }
 
-  @Get(':id/collections/:collectionId/documents/:documentId/logs')
+  @Get(':collectionId/documents/:documentId/logs')
   @ResModel({ type: Models.LOG, list: true })
   async findDocumentLogs(
     @CurrentDatabase() db: Database,
@@ -634,16 +604,15 @@ export class DatabaseController {
     @Param('documentId') documentId: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
   ) {
-    return await this.databaseService.getDocumentLogs(
+    return await this.collectionsService.getDocumentLogs(
       db,
-
       collectionId,
       documentId,
       queries,
     );
   }
 
-  @Patch(':id/collections/:collectionId/documents/:documentId')
+  @Patch(':collectionId/documents/:documentId')
   @ResModel(Models.DOCUMENT)
   async updateDocument(
     @CurrentDatabase() db: Database,
@@ -652,9 +621,8 @@ export class DatabaseController {
     @Body() document: UpdateDocumentDTO,
     @Mode() mode: string,
   ) {
-    return await this.databaseService.updateDocument(
+    return await this.collectionsService.updateDocument(
       db,
-
       collectionId,
       documentId,
       document,
@@ -662,7 +630,7 @@ export class DatabaseController {
     );
   }
 
-  @Delete(':id/collections/:collectionId/documents/:documentId')
+  @Delete(':collectionId/documents/:documentId')
   @ResModel(Models.NONE)
   async removeDocument(
     @CurrentDatabase() db: Database,
@@ -670,9 +638,8 @@ export class DatabaseController {
     @Param('documentId') documentId: string,
     @Mode() mode: string,
   ) {
-    return await this.databaseService.deleteDocument(
+    return await this.collectionsService.deleteDocument(
       db,
-
       collectionId,
       documentId,
       mode,

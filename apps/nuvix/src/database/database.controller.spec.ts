@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { DatabaseController } from './database.controller';
-import { DatabaseService } from './database.service';
+import { DatabaseController } from '../schema/collections/collections.controller';
+import { DatabaseService } from '../schema/collections/collections.service';
 
 describe('DatabaseController', () => {
   let controller: DatabaseController;
