@@ -39,6 +39,7 @@ import {
   Scope,
   AuthType,
   ProjectDatabase,
+  Sdk,
 } from '@nuvix/core/decorators';
 
 import { CreateTokenDTO } from './DTO/token.dto';
@@ -57,14 +58,13 @@ import { Cache } from '@nuvix/cache';
 export class UsersController {
   constructor(
     private readonly usersService: UsersService,
-    @Inject(CACHE) private readonly cache: Cache,
   ) {}
 
   @Get()
   @Scope('users.read')
   @Label('res.type', 'JSON')
   @Label('res.status', 'OK')
-  @ResModel({ type: Models.USER, list: true })
+  @ResModel(Models.USER, { list: true })
   async findAll(
     @ProjectDatabase() db: Database,
     @Query('queries', ParseQueryPipe) queries?: Queries[],

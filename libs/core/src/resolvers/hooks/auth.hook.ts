@@ -1,35 +1,36 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Authorization, Database, Document } from '@nuvix/database';
+import { Authorization, Database, Document, Query } from '@nuvix/database';
 import { Exception } from '@nuvix/core/extend/exception';
 import { Auth } from '@nuvix/core/helper/auth.helper';
 import ParamsHelper from '@nuvix/core/helper/params.helper';
 import {
+  ApiKey,
   AppMode,
   CORE_SCHEMA_DB,
   DB_FOR_PLATFORM,
   PROJECT,
   SESSION,
+  TEAM,
   USER,
 } from '@nuvix/utils/constants';
 import { Hook } from '../../server/hooks/interface';
+import { Key } from '@nuvix/core/helper/key.helper';
 
 @Injectable()
 export class AuthHook implements Hook {
   private readonly logger = new Logger(AuthHook.name);
-  private projectDb: Database;
+
   constructor(
-    @Inject(DB_FOR_PLATFORM) readonly db: Database,
+    @Inject(DB_FOR_PLATFORM) readonly dbForPlatform: Database,
     private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   async onRequest(req: NuvixRequest, reply: NuvixRes): Promise<void> {
     const params = new ParamsHelper(req);
     const project: Document = req[PROJECT];
-    this.projectDb = req[CORE_SCHEMA_DB];
-    const mode =
-      params.getFromHeaders('x-nuvix-mode') ||
-      params.getFromQuery('mode', AppMode.DEFAULT);
+    const dbForProject = req[CORE_SCHEMA_DB];
+    const mode = req[AppMode._REQUEST];
 
     Authorization.setDefaultStatus(true);
 
@@ -88,13 +89,13 @@ export class AuthHook implements Hook {
         user = new Document();
       } else {
         if (project.getId() === 'console') {
-          user = await this.db.getDocument('users', Auth.unique);
+          user = await this.dbForPlatform.getDocument('users', Auth.unique);
         } else {
-          user = await this.projectDb.getDocument('users', Auth.unique);
+          user = await dbForProject.getDocument('users', Auth.unique);
         }
       }
     } else {
-      user = await this.db.getDocument('users', Auth.unique);
+      user = await this.dbForPlatform.getDocument('users', Auth.unique);
     }
 
     const sessionId = Auth.sessionVerify(
@@ -104,20 +105,6 @@ export class AuthHook implements Hook {
 
     if (user.isEmpty() || !sessionId) {
       user = new Document();
-    }
-
-    if (AppMode.ADMIN === mode) {
-      if (
-        user.find(
-          'teamInternalId',
-          project.getAttribute('teamInternalId'),
-          'memberships',
-        )
-      ) {
-        Authorization.setDefaultStatus(false);
-      } else {
-        user = new Document();
-      }
     }
 
     const authJWT = params.getFromHeaders('x-nuvix-jwt');
@@ -135,7 +122,7 @@ export class AuthHook implements Hook {
 
       const jwtUserId = payload?.userId || null;
       if (jwtUserId) {
-        user = await this.projectDb.findOne('users', jwtUserId);
+        user = await dbForProject.findOne('users', jwtUserId);
       }
 
       const jwtSessionId = payload?.sessionId || null;
@@ -148,6 +135,33 @@ export class AuthHook implements Hook {
       user
         .getAttribute('sessions', [])
         .find((s: Document) => s.getId() === sessionId) ?? new Document();
+
+    if (!project.isEmpty()) {
+      const apiKey = params.getFromHeaders('x-nuvix-key') || params.getFromQuery('apiKey');
+      req[ApiKey._REQUEST] = apiKey ? await Key.decode(project, apiKey) : null;
+
+      let teamInternalId: string;
+      if (project.getId() !== 'console') {
+        teamInternalId = project.getAttribute('teamInternalId');
+      } // TODO: we have to use another approch, or we should pass teamId in headers
+      else if (req.url.startsWith('/v1/projects/') && req.params['projectId']) {
+        const p = await Authorization.skip(async () => await this.dbForPlatform.getDocument('projects', req.params['projectId']));
+        teamInternalId = p.getAttribute('teamInternalId');
+      } else if (req.url.startsWith('/v1/projects') && params.getFromQuery('teamId')) {
+        const teamId = params.getFromQuery('teamId');
+        const team = await Authorization.skip(async () => await this.dbForPlatform.getDocument('teams', teamId));
+        req[TEAM] = team;
+      } else {
+        req[TEAM] = new Document();
+      }
+
+      if (teamInternalId) {
+        const team = await Authorization.skip(async () =>
+          await this.dbForPlatform.findOne('teams', [Query.equal('$internalId', [teamInternalId])])
+        );
+        req[TEAM] = team;
+      }
+    }
 
     req[USER] = user;
     req[SESSION] = currentSession;

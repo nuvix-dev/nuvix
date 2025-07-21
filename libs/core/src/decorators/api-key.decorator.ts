@@ -1,23 +1,10 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { API_KEY } from '@nuvix/utils/constants';
+import { ApiKey as ApiKeyEnum } from '@nuvix/utils/constants';
+import { Key } from 'readline';
 
-export const ApiKey = createParamDecorator<any, any>(
+export const ApiKey = createParamDecorator<any, Key>(
   (data: unknown, ctx: ExecutionContext): any => {
     const request: Request = ctx.switchToHttp().getRequest();
-    const apiKeyHeader = request.headers['x-nuvix-api'];
-
-    if (!apiKeyHeader) {
-      return null;
-    }
-
-    const apiKeys = Array.isArray(apiKeyHeader)
-      ? apiKeyHeader
-      : apiKeyHeader.split(',');
-    if (apiKeys.length === 0) {
-      return null;
-    }
-
-    request[API_KEY] = apiKeys[0];
-    return apiKeys[0];
+    return request[ApiKeyEnum._REQUEST];
   },
 );

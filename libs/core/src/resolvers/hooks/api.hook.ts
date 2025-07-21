@@ -1,41 +1,41 @@
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Authorization, Database, Document, Role } from '@nuvix/database';
 import {
-  API_KEY_DYNAMIC,
-  API_KEY_STANDARD,
+  ApiKey,
   APP_KEY_ACCESS,
   AppMode,
   DB_FOR_PLATFORM,
   PROJECT,
   PROJECT_DB_CLIENT,
+  ROLE,
   SCOPES,
   SESSION,
+  TEAM,
   USER,
 } from '@nuvix/utils/constants';
 import { Exception } from '@nuvix/core/extend/exception';
 import { Auth } from '@nuvix/core/helper/auth.helper';
 import { roles } from '@nuvix/core/config/roles';
 import ParamsHelper from '@nuvix/core/helper/params.helper';
-import { JwtService } from '@nestjs/jwt';
 import { APP_PLATFORM_SERVER, platforms } from '@nuvix/core/config/platforms';
 import { Hook } from '../../server/hooks/interface';
 import { setupDatabaseMeta } from '@nuvix/core/helper/db-meta.helper';
+import { Key } from '@nuvix/core/helper/key.helper';
 
 @Injectable()
 export class ApiHook implements Hook {
   private readonly logger = new Logger(ApiHook.name);
   constructor(
     @Inject(DB_FOR_PLATFORM) private readonly db: Database,
-    private readonly jwtService: JwtService,
-  ) {}
+  ) { }
 
   async onRequest(req: NuvixRequest, reply: NuvixRes): Promise<void> {
     const params = new ParamsHelper(req);
     const project: Document = req[PROJECT];
     let user: Document = req[USER];
-    const mode: string =
-      params.getFromHeaders('x-nuvix-mode') ||
-      params.getFromQuery('mode', AppMode.DEFAULT);
+    const team: Document = req[TEAM];
+    const mode: AppMode = req[AppMode._REQUEST];
+    const apiKey: Key | null = req[ApiKey._REQUEST];
 
     if (project.isEmpty()) throw new Exception(Exception.PROJECT_NOT_FOUND);
 
@@ -46,133 +46,120 @@ export class ApiHook implements Hook {
       );
     }
 
-    // ACL Check
     let role = user.isEmpty()
       ? Role.guests().toString()
       : Role.users().toString();
-
-    // Add user roles
-    const memberships = user.find<Document>(
-      'teamId',
-      project.getAttribute('teamId'),
-      'memberships',
-    );
-
-    if (memberships) {
-      memberships.getAttribute('roles', []).forEach((memberRole: string) => {
-        switch (memberRole) {
-          case 'owner':
-            role = Auth.USER_ROLE_OWNER;
-            break;
-          case 'admin':
-            role = Auth.USER_ROLE_ADMIN;
-            break;
-          case 'developer':
-            role = Auth.USER_ROLE_DEVELOPER;
-            break;
-        }
-      });
-    }
-
-    let scopes = roles[role].scopes; // Allowed scopes for user role
-    const apiKey: string = params.getFromHeaders('x-nuvix-api');
+    let scopes = roles[role].scopes;
 
     if (apiKey) {
-      // Don't allow API key to be used for session based requests
       if (!user.isEmpty()) {
         throw new Exception(Exception.USER_API_KEY_AND_SESSION_SET);
       }
 
-      if (!apiKey.includes('_')) {
-        throw new Exception(
-          Exception.INVALID_PARAMS,
-          'Invalid API Key Structure',
-        );
+      if (apiKey.isExpired()) {
+        throw new Exception(Exception.PROJECT_KEY_EXPIRED);
       }
 
-      const [keyType, KeyId] = apiKey.split('_', 2);
+      role = apiKey.getRole();
+      scopes = apiKey.getScopes();
 
-      if (keyType === API_KEY_DYNAMIC) {
-        let payload: any;
-        try {
-          payload = this.jwtService.verify(KeyId);
-        } catch (error) {
-          throw new Exception(Exception.API_KEY_EXPIRED);
+      // Disable authorization checks for API keys
+      Authorization.setDefaultStatus(false);
+
+      if (apiKey.getRole() === Auth.USER_ROLE_APPS) {
+        user = new Document({
+          $id: '',
+          status: true,
+          type: Auth.ACTIVITY_TYPE_APP,
+          email: 'app.' + project.getId() + '@service.' + req.hostname,
+          password: '',
+          name: apiKey.getName(),
+        });
+        // $queueForAudits -> setUser($user);
+      }
+
+      if (apiKey.getType() === ApiKey.STANDARD) {
+        const dbKey = project.find(
+          'secret',
+          params.getFromHeaders('x-nuvix-key') || params.getFromQuery('apiKey'),
+          'keys'
+        );
+
+        if (!dbKey || dbKey?.isEmpty?.()) {
+          throw new Exception(Exception.USER_UNAUTHORIZED);
         }
 
-        const projectId = payload['projectId'] ?? '';
-        const tokenScopes = payload['scopes'] ?? [];
+        const accessedAt = dbKey.getAttribute('accessedAt', 0);
 
-        // JWT includes project ID for better security
-        if (projectId === project.getId()) {
-          user = new Document({
-            $id: '',
-            status: true,
-            email: `app.${project.getId()}@service.${req.hostname}`,
-            password: '',
-            name: project.getAttribute('name', 'Untitled'),
-          });
-
-          role = Auth.USER_ROLE_APPS;
-          scopes = [...roles[role].scopes, ...tokenScopes];
-
-          Authorization.setRole(Auth.USER_ROLE_APPS);
-          Authorization.setDefaultStatus(false); // Cancel security segmentation for API keys.
+        if (new Date(Date.now() - APP_KEY_ACCESS * 1000) > new Date(accessedAt)) {
+          dbKey.setAttribute('accessedAt', new Date());
+          await this.db.updateDocument('keys', dbKey.getId(), dbKey);
+          await this.db.purgeCachedDocument('projects', project.getId());
         }
-      } else if (keyType === API_KEY_STANDARD) {
-        const key = project.find<Document>('secret', apiKey, 'keys');
-        if (key) {
-          user = new Document({
-            $id: '',
-            status: true,
-            email: `app.${project.getId()}@service.${req.hostname}`,
-            password: '',
-            name: project.getAttribute('name', 'Untitled'),
-          });
 
-          role = Auth.USER_ROLE_APPS;
-          scopes = [...roles[role].scopes, ...key.getAttribute('scopes', [])];
+        const sdksList = platforms[APP_PLATFORM_SERVER].sdks.map(sdk => sdk.name);
+        const sdk = params.getFromHeaders('x-sdk-name') || 'UNKNOWN';
 
-          const expire = key.getAttribute('expire');
-          if (expire && new Date(expire) < new Date()) {
-            throw new Exception(Exception.PROJECT_KEY_EXPIRED);
-          }
+        if (sdk !== 'UNKNOWN' && sdksList.includes(sdk)) {
+          const sdks = dbKey.getAttribute('sdks', []);
 
-          Authorization.setRole(Auth.USER_ROLE_APPS);
-          Authorization.setDefaultStatus(false);
+          if (!sdks.includes(sdk)) {
+            sdks.push(sdk);
+            dbKey.setAttribute('sdks', sdks);
 
-          const accessedAt = key.getAttribute('accessedAt', '');
-          if (
-            new Date(Date.now() - APP_KEY_ACCESS * 1000) > new Date(accessedAt)
-          ) {
-            key.setAttribute('accessedAt', new Date().toISOString());
-            await this.db.updateDocument('keys', key.getId(), key);
+            // Update access time as well
+            dbKey.setAttribute('accessedAt', new Date());
+            await this.db.updateDocument('keys', dbKey.getId(), dbKey);
             await this.db.purgeCachedDocument('projects', project.getId());
           }
-
-          const sdksList = platforms[APP_PLATFORM_SERVER].sdks.map(
-            sdk => sdk.name,
-          );
-
-          const sdk = params.getFromHeaders('x-sdk-name') || 'UNKNOWN';
-          if (sdksList.includes(sdk)) {
-            const sdks = key.getAttribute('sdks', []);
-            if (!sdks.includes(sdk)) {
-              sdks.push(sdk);
-              key.setAttribute('sdks', sdks);
-
-              key.setAttribute('accessedAt', new Date().toISOString());
-              await this.db.updateDocument('keys', key.getId(), key);
-              await this.db.purgeCachedDocument('projects', project.getId());
-            }
-          }
         }
       }
+    }
+    else if (
+      (project.getId() === 'console' && !team.isEmpty() && !user.isEmpty()) ||
+      (project.getId() !== 'console' && !user.isEmpty() && mode === AppMode.ADMIN)
+    ) {
+      const teamId = team.getId();
+      let adminRoles: string[] = [];
+      const memberships = user.getAttribute('memberships', []);
+      for (const membership of memberships) {
+        if (
+          membership.getAttribute('confirm', false) === true &&
+          membership.getAttribute('teamId') === teamId
+        ) {
+          adminRoles = membership.getAttribute('roles', []);
+          break;
+        }
+      }
+
+      if (adminRoles.length === 0) {
+        throw new Exception(Exception.USER_UNAUTHORIZED);
+      }
+
+      scopes = []; // Reset scope if admin
+      for (const adminRole of adminRoles) {
+        scopes = scopes.concat(roles[adminRole].scopes);
+      }
+
+      Authorization.setDefaultStatus(false); // Cancel security segmentation for admin users.
     }
 
     Authorization.setRole(role);
     for (const authRole of Auth.getRoles(user)) {
       Authorization.setRole(authRole);
+    }
+
+    scopes = Array.from(new Set(scopes));
+
+    // Update project last activity
+    if (!project.isEmpty() && project.getId() !== 'console') {
+      const accessedAt = project.getAttribute('accessedAt', 0);
+      if (new Date(Date.now() - APP_KEY_ACCESS * 1000) > new Date(accessedAt)) {
+        project.setAttribute('accessedAt', new Date());
+        await Authorization.skip(async () => {
+          await this.db.updateDocument('projects', project.getId(), project);
+        });
+      }
     }
 
     const session: Document = req[SESSION];
@@ -185,10 +172,10 @@ export class ApiHook implements Hook {
           user:
             user && !user.isEmpty()
               ? JSON.stringify({
-                  $id: user.getId(),
-                  name: user.getAttribute('name'),
-                  email: user.getAttribute('email'),
-                })
+                $id: user.getId(),
+                name: user.getAttribute('name'),
+                email: user.getAttribute('email'),
+              })
               : undefined,
           session: session ? JSON.stringify(session) : undefined,
           roles: JSON.stringify(Authorization.getRoles()),
@@ -198,7 +185,7 @@ export class ApiHook implements Hook {
     }
 
     req[SCOPES] = scopes;
-    req['role'] = role;
+    req[ROLE] = role;
     req[USER] = user;
 
     this.logger.debug(

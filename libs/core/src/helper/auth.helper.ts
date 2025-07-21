@@ -39,6 +39,11 @@ export class Auth {
   public static readonly USER_ROLE_APPS = 'apps';
   public static readonly USER_ROLE_SYSTEM = 'system';
 
+  // Activity associated with user or the app.
+  public static readonly ACTIVITY_TYPE_APP = 'app';
+  public static readonly ACTIVITY_TYPE_USER = 'user';
+  public static readonly ACTIVITY_TYPE_GUEST = 'guest';
+
   // Token Types
   public static readonly TOKEN_TYPE_VERIFICATION = 2;
   public static readonly TOKEN_TYPE_RECOVERY = 3;
@@ -314,8 +319,8 @@ export class Auth {
         roles.push(Role.user(user.getId()).toString());
         roles.push(Role.users().toString());
 
-        const emailVerified = user.getAttribute('emailVerification');
-        const phoneVerified = user.getAttribute('phoneVerification');
+        const emailVerified = user.getAttribute('emailVerification', false);
+        const phoneVerified = user.getAttribute('phoneVerification', false);
 
         if (emailVerified || phoneVerified) {
           roles.push(
@@ -352,7 +357,7 @@ export class Auth {
       }
     }
 
-    for (const label of user.getAttribute('labels') || []) {
+    for (const label of user.getAttribute('labels', [])) {
       roles.push(`label:${label}`);
     }
 

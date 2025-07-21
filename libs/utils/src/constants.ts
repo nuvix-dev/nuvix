@@ -125,6 +125,7 @@ export const APP_INTERNAL_POOL_API = process.env.APP_POOL_API;
 
 export const PROJECT = 'project';
 export const USER = 'user';
+export const TEAM = 'team';
 export const SESSION = 'session';
 
 /** Symbol used to identify the database connection for the platform. */
@@ -156,6 +157,7 @@ export const IS_PUBLIC_KEY = 'isPublic';
 export const LOCALE = 'locale';
 export const API_KEY = 'apiKey';
 export const SCOPES = 'scopes';
+export const ROLE = 'role';
 export const HOOKS = 'hooks';
 export const APP_COLOR = '#f67520';
 
@@ -378,8 +380,9 @@ export const FUNCTION_ALLOWLIST_HEADERS_RESPONSE = [
 export const MESSAGE_TYPE_EMAIL = 'email';
 export const MESSAGE_TYPE_SMS = 'sms';
 export const MESSAGE_TYPE_PUSH = 'push';
-// API key types
+/**@deprecated use `ApiKey` enum instead */
 export const API_KEY_STANDARD = 'standard';
+/**@deprecated use `ApiKey` enum instead */
 export const API_KEY_DYNAMIC = 'dynamic';
 // Worker Types
 export const WORKER_TYPE_USAGE = 'usage';
@@ -473,10 +476,17 @@ export const EVENT_SESSION_UPDATE = 'session' + EVENT_DELIMITER + 'update';
 // CLOUD
 export const GOOGLE_CLOUD_API = process.env.GOOGLE_CLOUD_API;
 
+// _REQUEST is used for inject in request
 export enum AppMode {
   ADMIN = 'admin',
   DEFAULT = 'default',
   _REQUEST = 'mode',
+}
+
+export enum ApiKey {
+  STANDARD = 'standard',
+  DYNAMIC = 'dynamic',
+  _REQUEST = 'apiKey',
 }
 
 export enum QueueFor {
