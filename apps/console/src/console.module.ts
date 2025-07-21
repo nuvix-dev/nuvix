@@ -24,8 +24,8 @@ import {
 import { HostHook, AuthHook, ApiHook } from '@nuvix/core/resolvers/hooks';
 import { ProjectHook } from './resolvers/hooks/project.hook';
 import { ProjectHook as RequestProjectHook } from '@nuvix/core/resolvers/hooks';
-import { DatabaseModule } from './database/database.module';
-import { DatabaseController } from './database/database.controller';
+import { DatabaseModule } from '../../nuvix/src/databases/databases.module';
+import { DatabaseController } from '../../nuvix/src/databases/databases.controller';
 import { PgMetaController, PgMetaModule } from '@nuvix/pg-meta';
 import { UsersController } from './users/users.controller';
 import { AccountController } from './account/account.controller';

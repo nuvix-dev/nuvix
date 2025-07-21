@@ -7,7 +7,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { DatabaseService } from './database.service';
+import { DatabasesService } from './databases.service';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards';
 import {
   ResponseInterceptor,
@@ -19,7 +19,6 @@ import { Models } from '@nuvix/core/helper';
 import {
   Project,
   ProjectPg,
-  CurrentSchema,
   Label,
   ResModel,
   Scope,
@@ -31,9 +30,8 @@ import { CreateDocumentSchema, CreateSchema } from './DTO/create-schema.dto';
 @Controller('databases')
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
-// Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
-export class DatabaseController {
-  constructor(private readonly databaseService: DatabaseService) {}
+export class DatabasesController {
+  constructor(private readonly databaseService: DatabasesService) { }
 
   @Post('schemas/document')
   @Scope('schema.create')
@@ -80,18 +78,6 @@ export class DatabaseController {
   @ResModel(Models.SCHEMA)
   async getSchema(@ProjectPg() pg: DataSource, @Param('schemaId') id: string) {
     const result = await this.databaseService.getSchema(pg, id);
-    return result;
-  }
-
-  @Get('schemas/:schemaId/tables')
-  @Scope('schema.read')
-  @Label('res.type', 'JSON')
-  @Label('res.status', 'OK')
-  async getSchemaTables(
-    @Param('schemaId') schema: string,
-    @CurrentSchema() pg: DataSource,
-  ) {
-    const result = await this.databaseService.getTables(pg, schema);
     return result;
   }
 }

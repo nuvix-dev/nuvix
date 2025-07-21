@@ -43,11 +43,11 @@ export const services = {
     optional: true,
     icon: '/images/services/avatars.png',
   },
-  databases: {
-    key: 'databases',
-    name: 'Databases',
+  schemas: {
+    key: 'schemas',
+    name: 'Schemas',
     subtitle:
-      'The Databases service allows you to create structured collections of documents, query and filter lists of documents',
+      'The Schemas service allows you to create structured collections of documents, query and filter lists of documents',
     description: '/docs/services/databases.md',
     controller: 'api/databases.php',
     sdk: true,

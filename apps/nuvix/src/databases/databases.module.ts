@@ -1,15 +1,15 @@
 // TODO: remove this module
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { DatabaseService } from './database.service';
-import { DatabaseController } from './database.controller';
+import { DatabasesService } from './databases.service';
+import { DatabasesController } from './databases.controller';
 import { SchemaHook } from '@nuvix/core/resolvers/hooks/schema.hook';
 import { BullModule } from '@nestjs/bullmq';
 import { DatabasesQueue } from '@nuvix/core/resolvers/queues/databases.queue';
 import { QueueFor } from '@nuvix/utils/constants';
 
 @Module({
-  controllers: [DatabaseController],
-  providers: [DatabaseService, DatabasesQueue],
+  controllers: [DatabasesController],
+  providers: [DatabasesService, DatabasesQueue],
   imports: [
     BullModule.registerQueue({
       name: QueueFor.DATABASES,
@@ -20,8 +20,8 @@ import { QueueFor } from '@nuvix/utils/constants';
     }),
   ],
 })
-export class DatabaseModule implements NestModule {
+export class DatabasesModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer.apply(SchemaHook).forRoutes(DatabaseController);
+    consumer.apply(SchemaHook).forRoutes(DatabasesController);
   }
 }

@@ -1,3 +1,3 @@
-export * from './schemas.queue';
+export * from './collections.queue';
 export * from './mails.queue';
 export * from './usage.queue';

@@ -494,9 +494,9 @@ export enum QueueFor {
   PROJECTS = 'projects',
   FUNCTIONS = 'functions',
   MESSAGING = 'messaging',
-  /**@deprecated use `SCHEMAS` */
   DATABASES = 'databases',
   MAILS = 'mails',
+  /**@deprecated use `SCHEMAS` */
   SCHEMAS = 'schemas',
   COLLECTIONS = 'collections',
   USAGE = 'usage',

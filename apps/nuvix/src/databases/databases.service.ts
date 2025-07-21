@@ -16,11 +16,10 @@ import {
 
 // DTO's
 import { CreateDocumentSchema, CreateSchema } from './DTO/create-schema.dto';
-import { CreateTableDTO } from './DTO/create-table.dto';
 
 @Injectable()
-export class DatabaseService {
-  private readonly logger = new Logger(DatabaseService.name);
+export class DatabasesService {
+  private readonly logger = new Logger(DatabasesService.name);
 
   constructor(
     @InjectQueue(QueueFor.DATABASES)
@@ -100,57 +99,5 @@ export class DatabaseService {
     );
 
     return schema;
-  }
-
-  /**
-   * Get all tables
-   */
-  public async getTables(pg: DataSource, schema: string) {
-    const isExists = await pg.getSchema(schema);
-    if (!isExists) {
-      throw new Exception(Exception.SCHEMA_NOT_FOUND);
-    }
-    const tables = await pg.getMetadataForSchema(schema);
-
-    return {
-      tables: tables,
-      total: tables.length,
-    };
-  }
-
-  /**
-   * Get a table by name
-   */
-  public async getTable(pg: DataSource, schema: string, name: string) {
-    const isExists = await pg.getSchema(schema);
-    if (!isExists) {
-      throw new Exception(Exception.SCHEMA_NOT_FOUND);
-    }
-    const table = await pg.getMetadata(name, schema);
-
-    if (!table) {
-      throw new Exception(Exception.GENERAL_NOT_FOUND, 'Table not found');
-    }
-
-    return table;
-  }
-
-  /**
-   * Create a table
-   */
-  public async createTable(
-    pg: DataSource,
-    schema: string,
-    data: CreateTableDTO,
-  ) {
-    const table = await pg.createTable({
-      ...data,
-      schema: schema,
-    });
-    return table;
-  }
-
-  public async executeQuery(pg: DataSource, sql: string) {
-    return await pg.execute(sql);
   }
 }

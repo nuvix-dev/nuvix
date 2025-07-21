@@ -5,7 +5,7 @@ export default async () => {
     '@nestjs/swagger': {
       models: [
         [
-          import('./schema/collections/DTO/collection.dto'),
+          import('./schemas/collections/DTO/collection.dto'),
           {
             CreateCollectionDTO: {
               collectionId: { required: true, type: () => String },
@@ -22,7 +22,7 @@ export default async () => {
           },
         ],
         [
-          import('./schema/collections/DTO/attributes.dto'),
+          import('./schemas/collections/DTO/attributes.dto'),
           {
             CreateStringAttributeDTO: {
               key: { required: true, type: () => String },
@@ -103,7 +103,7 @@ export default async () => {
           },
         ],
         [
-          import('./schema/collections/DTO/document.dto'),
+          import('./schemas/collections/DTO/document.dto'),
           {
             CreateDocumentDTO: {
               documentId: { required: true, type: () => String },
@@ -114,7 +114,7 @@ export default async () => {
           },
         ],
         [
-          import('./schema/collections/DTO/indexes.dto'),
+          import('./schemas/collections/DTO/indexes.dto'),
           {
             CreateIndexDTO: {
               key: { required: true, type: () => String },
@@ -890,7 +890,7 @@ export default async () => {
           { Base: { exampleField: { required: true, type: () => Number } } },
         ],
         [
-          import('./schema/collections/DTO/database.dto'),
+          import('./schemas/collections/DTO/database.dto'),
           {
             CreateDatabaseDTO: {
               databaseId: { required: true, type: () => String },
@@ -924,7 +924,7 @@ export default async () => {
           },
         ],
         [
-          import('./schema/collections/collections.controller'),
+          import('./schemas/collections/collections.controller'),
           {
             DatabaseController: {
               findCollections: {},
@@ -1175,7 +1175,7 @@ export default async () => {
           },
         ],
         [
-          import('./schema/schema.controller'),
+          import('./schemas/schemas.controller'),
           {
             SchemaController: {
               queryTable: { type: [Object] },

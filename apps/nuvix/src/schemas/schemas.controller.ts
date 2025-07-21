@@ -18,7 +18,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { SchemaService } from './schema.service';
+import { SchemasService } from './schemas.service';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards';
 import {
   ResponseInterceptor,
@@ -28,19 +28,17 @@ import { CurrentSchema, Namespace, Scope, Sdk } from '@nuvix/core/decorators';
 import { DataSource } from '@nuvix/pg';
 import { ParserErrorFilter } from '@nuvix/core/filters/parser-error.filter';
 
-// DTO's
-
 // Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
-@Controller({ version: ['1'] })
+@Controller({ version: ['1'], path: ['schemas/:schemaId', 'public'] })
 @UseGuards(ProjectGuard)
-@Namespace('databases') // TODO: This should be set to the actual namespace of the schema
+@Namespace('schemas')
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @UseFilters(ParserErrorFilter)
-export class SchemaController {
-  private readonly logger = new Logger(SchemaController.name);
-  constructor(private readonly schemaService: SchemaService) {}
+export class SchemasController {
+  private readonly logger = new Logger(SchemasController.name);
+  constructor(private readonly schemasService: SchemasService) { }
 
-  @Get(['schemas/:schemaId/:tableId', 'public/:tableId'])
+  @Get(':tableId')
   @Sdk({
     name: 'queryTable',
     description: 'Query a table with optional filters',
@@ -54,7 +52,7 @@ export class SchemaController {
     @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 500,
     @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
   ) {
-    return await this.schemaService.select({
+    return await this.schemasService.select({
       table,
       pg,
       limit,
@@ -64,7 +62,7 @@ export class SchemaController {
     });
   }
 
-  @Post(['schemas/:schemaId/:tableId', 'public/:tableId'])
+  @Post(':tableId')
   async insertIntoTable(
     @Param('tableId') table: string,
     @CurrentSchema() pg: DataSource,
@@ -74,7 +72,7 @@ export class SchemaController {
     @Query('columns', new ParseArrayPipe({ items: String, optional: true }))
     columns?: string[],
   ) {
-    return await this.schemaService.insert({
+    return await this.schemasService.insert({
       pg,
       schema,
       table,
@@ -84,7 +82,7 @@ export class SchemaController {
     });
   }
 
-  @Patch(['schemas/:schemaId/:tableId', 'public/:tableId'])
+  @Patch(':tableId')
   async updateTables(
     @Param('tableId') table: string,
     @CurrentSchema() pg: DataSource,
@@ -96,7 +94,7 @@ export class SchemaController {
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
     @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
   ) {
-    return this.schemaService.update({
+    return this.schemasService.update({
       pg,
       schema,
       table,
@@ -108,7 +106,7 @@ export class SchemaController {
     });
   }
 
-  @Put(['schemas/:schemaId/:tableId', 'public/:tableId'])
+  @Put(':tableId')
   async upsertTable(
     @Param('tableId') table: string,
     @CurrentSchema() pg: DataSource,
@@ -119,9 +117,9 @@ export class SchemaController {
     columns?: string[],
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
     @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
-  ) {}
+  ) { }
 
-  @Delete(['schemas/:schemaId/:tableId', 'public/:tableId'])
+  @Delete(':tableId')
   async deleteTables(
     @Param('tableId') table: string,
     @CurrentSchema() pg: DataSource,
@@ -130,7 +128,7 @@ export class SchemaController {
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
     @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
   ) {
-    return await this.schemaService.delete({
+    return await this.schemasService.delete({
       pg,
       schema,
       table,
@@ -140,7 +138,7 @@ export class SchemaController {
     });
   }
 
-  // @Head(['schemas/:schemaId/:tableId', 'schema/:tableId'])
+  // @Head(':tableId')
   // async tableMetadata() {
 
   // }

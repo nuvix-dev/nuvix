@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Delete, Insert, Select, Update } from './schema.types';
+import { Delete, Insert, Select, Update } from './schemas.types';
 import {
   Expression,
   ParsedOrdering,
@@ -13,8 +13,8 @@ import { Exception } from '@nuvix/core/extend/exception';
 import { transformPgError } from '@nuvix/utils/database/pg-error';
 
 @Injectable()
-export class SchemaService {
-  private readonly logger = new Logger(SchemaService.name);
+export class SchemasService {
+  private readonly logger = new Logger(SchemasService.name);
 
   async select({ pg, table, url, limit, offset, schema }: Select) {
     const qb = pg.qb(table).withSchema(schema);

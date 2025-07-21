@@ -74,7 +74,7 @@ export class CollectionsService {
 
   constructor(
     @Inject(GEO_DB) private readonly geoDb: Reader<CountryResponse>,
-    @InjectQueue(QueueFor.SCHEMAS)
+    @InjectQueue(QueueFor.COLLECTIONS)
     private readonly schemasQueue: Queue<DatabaseJobData, any, DatabaseJobs>,
     private readonly event: EventEmitter2,
   ) {}
