@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, OnModuleInit } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MailsQueue } from '@nuvix/core/resolvers/queues/mails.queue';
@@ -23,7 +23,7 @@ import {
   ProjectUsageHook,
 } from '@nuvix/core/resolvers/hooks';
 // Modules
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import { BullModule } from '@nestjs/bullmq';
 import { ScheduleModule } from '@nestjs/schedule';
 import { CoreModule } from '@nuvix/core/core.module';
@@ -52,6 +52,7 @@ import { StorageController } from './storage/storage.controller';
 import { MessagingController } from './messaging/messaging.controller';
 import { AuditHook } from '@nuvix/core/resolvers/hooks/audit.hook';
 import { AuditsQueue } from '@nuvix/core/resolvers/queues/audits.queue';
+import { Key } from '@nuvix/core/helper/key.helper';
 
 @Module({
   imports: [
@@ -104,7 +105,13 @@ import { AuditsQueue } from '@nuvix/core/resolvers/queues/audits.queue';
   controllers: [AppController],
   providers: [AppService, MailsQueue, AuditsQueue],
 })
-export class AppModule implements NestModule {
+export class AppModule implements NestModule, OnModuleInit {
+  constructor(private readonly jwtService: JwtService) { }
+
+  onModuleInit() {
+    Key.setJwtService(this.jwtService);
+  }
+
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(ProjectHook, HostHook, CorsHook)

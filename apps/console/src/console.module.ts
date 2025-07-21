@@ -1,4 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule, OnModuleInit } from '@nestjs/common';
 import { ConsoleService } from './console.service';
 import { ConsoleController } from './console.controller';
 import { AccountModule } from './account/account.module';
@@ -10,7 +10,7 @@ import { MailsQueue } from '@nuvix/core/resolvers/queues';
 import { BullModule } from '@nestjs/bullmq';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
-import { JwtModule } from '@nestjs/jwt';
+import { JwtModule, JwtService } from '@nestjs/jwt';
 import {
   APP_REDIS_DB,
   APP_REDIS_HOST,
@@ -34,6 +34,7 @@ import { ProjectController } from './projects/project.controller';
 import { ProjectsController } from './projects/projects.controller';
 import { AuditHook } from '@nuvix/core/resolvers/hooks/audit.hook';
 import { AuditsQueue } from './resolvers/queues/audits.queue';
+import { Key } from '@nuvix/core/helper/key.helper';
 
 @Module({
   imports: [
@@ -76,7 +77,13 @@ import { AuditsQueue } from './resolvers/queues/audits.queue';
   controllers: [ConsoleController],
   providers: [ConsoleService, MailsQueue, AuditsQueue],
 })
-export class ConsoleModule implements NestModule {
+export class ConsoleModule implements NestModule, OnModuleInit {
+  constructor(private readonly jwtService: JwtService) { }
+
+  onModuleInit() {
+    Key.setJwtService(this.jwtService);
+  }
+
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(ProjectHook)
