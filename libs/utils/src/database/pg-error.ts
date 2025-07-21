@@ -1,6 +1,5 @@
 import { DatabaseError } from 'pg';
 
-// Define a more specific type for our error categories
 type PgErrorType =
   | 'DATABASE_CONFLICT'
   | 'DATABASE_VALIDATION'
@@ -11,7 +10,6 @@ type PgErrorType =
   | 'DATABASE_INTERNAL'
   | 'DATABASE_UNKNOWN';
 
-// Define the structure for the transformed error
 interface PgTransformedError {
   status: number;
   code: string;
@@ -28,14 +26,10 @@ interface PgTransformedError {
   };
 }
 
-// Helper to safely get a message, preferring the specific detail if available.
 function safeMessage(defaultMessage: string, detail?: string): string {
   return detail || defaultMessage;
 }
 
-// --- Error Mapping Configuration ---
-
-// Type for a mapping entry, which can be a static object or a function for dynamic logic
 type ErrorMapEntry =
   | {
       status: number;
@@ -47,8 +41,7 @@ type ErrorMapEntry =
       authed: boolean,
     ) => Omit<PgTransformedError, 'code' | 'details'>);
 
-// Mappings for specific PostgreSQL error codes
-const SPECIFIC_ERROR_MAP: Map<string, ErrorMapEntry> = new Map([
+const errorMapArray: [string, ErrorMapEntry][] =  [
   // Class 23 — Integrity Constraint Violation
   [
     '23505',
@@ -142,7 +135,9 @@ const SPECIFIC_ERROR_MAP: Map<string, ErrorMapEntry> = new Map([
         'The database is currently undergoing maintenance. Please try again later.',
     },
   ], // admin_shutdown
-]);
+] as const
+
+const SPECIFIC_ERROR_MAP: Map<string, ErrorMapEntry> = new Map(errorMapArray);
 
 // Mappings for PostgreSQL error classes (the first two characters of the code)
 const CLASS_ERROR_MAP: Map<
