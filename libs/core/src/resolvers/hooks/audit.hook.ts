@@ -17,7 +17,7 @@ export class AuditHook implements Hook {
     private readonly auditsQueue: Queue<AuditsQueueJobData>,
   ) {}
 
-  async onSend(req: NuvixRequest, reply: NuvixRes) {
+  async preSerialization(req: NuvixRequest, reply: NuvixRes) {
     const audit: AuditEventType | undefined =
       req.routeOptions?.config?.['audit'];
     if (!audit || !audit.event || reply.statusCode >= 400) {
@@ -27,7 +27,7 @@ export class AuditHook implements Hook {
     try {
       const project = req[PROJECT] as Document;
       const user = req[USER] as Document;
-      const res = req['hooks_args']?.['onSend']?.['args']?.[0];
+      const res = req['hooks_args']?.['preSerialization']?.['args']?.[0];
       await this.handleAudit(req, res, { audit, user, project });
     } catch (e) {
       this.logger.error('Unexpected error during audit handling', { error: e });
