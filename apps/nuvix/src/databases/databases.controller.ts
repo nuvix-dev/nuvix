@@ -31,7 +31,7 @@ import { CreateDocumentSchema, CreateSchema } from './DTO/create-schema.dto';
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class DatabasesController {
-  constructor(private readonly databaseService: DatabasesService) { }
+  constructor(private readonly databaseService: DatabasesService) {}
 
   @Post('schemas/document')
   @Scope('schema.create')

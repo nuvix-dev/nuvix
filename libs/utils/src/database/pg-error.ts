@@ -41,7 +41,7 @@ type ErrorMapEntry =
       authed: boolean,
     ) => Omit<PgTransformedError, 'code' | 'details'>);
 
-const errorMapArray: [string, ErrorMapEntry][] =  [
+const errorMapArray: [string, ErrorMapEntry][] = [
   // Class 23 — Integrity Constraint Violation
   [
     '23505',
@@ -135,7 +135,7 @@ const errorMapArray: [string, ErrorMapEntry][] =  [
         'The database is currently undergoing maintenance. Please try again later.',
     },
   ], // admin_shutdown
-] as const
+] as const;
 
 const SPECIFIC_ERROR_MAP: Map<string, ErrorMapEntry> = new Map(errorMapArray);
 

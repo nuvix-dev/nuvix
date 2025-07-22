@@ -499,3 +499,8 @@ export enum QueueFor {
   COLLECTIONS = 'collections',
   USAGE = 'usage',
 }
+
+export enum Events {
+  SESSION_CREATE = 'session' + EVENT_DELIMITER + 'create',
+  SESSION_DELETE = 'session' + EVENT_DELIMITER + 'delete',
+}
