@@ -1,6 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { Cache, Memory } from '@nuvix/cache';
-import { Database, Document, MariaDB, Permission, Role } from '@nuvix/database';
+import { Database, Document, MariaDB, Permission, Role, DuplicateException } from '@nuvix/database';
 import collections from '@nuvix/utils/collections';
 import {
   APP_DATABASE_HOST,
@@ -40,7 +40,11 @@ export async function initSetup() {
     const cache = new Cache(cacheAdapter);
 
     const dbForPlatform = new Database(adapter, cache);
-    await dbForPlatform.create();
+    try {
+      await dbForPlatform.create();
+    } catch (e) {
+      if (!e instanceof DuplicateException) throw e;
+    }
 
     logger.log(`[Setup] - Starting...`);
     const consoleCollections = collections.console;
