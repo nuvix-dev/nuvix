@@ -50,14 +50,19 @@ export class Parser<T extends ParserResult = ParserResult> {
 
     try {
       const tokenizer = new Tokenizer(str.trim());
+      const start = performance.now()
       this.tokens = tokenizer.tokenize();
-      this.current = 0;
+      const end = performance.now()
 
+      this.logger.debug('THIS IS TIME', end - start, { tokens: this.tokens })
+      this.current = 0;
+      const _start = performance.now()
       const result = {
         ...this.parseExpression(),
         ...(this.extraData as T),
       };
-
+      const _end = performance.now()
+      this.logger.debug('Parser taken time', _end - _start, { result })
       return result;
     } catch (error) {
       if (error instanceof ParserError) {
@@ -161,45 +166,8 @@ export class Parser<T extends ParserResult = ParserResult> {
       return expr;
     }
 
-    // Handle cast expressions: {field}::type.operator(value)
-    if (this.match(TokenType.LBRACE)) {
-      return this.parseCastExpression();
-    }
-
     // Handle regular conditions
     return this.parseCondition();
-  }
-
-  private parseCastExpression(): Expression {
-    // Parse field inside braces
-    const field = this.parseFieldPath();
-    this.consume(TokenType.RBRACE, "Expected '}' after cast field");
-    this.consume(TokenType.CAST, "Expected '::' after cast expression");
-
-    // Parse type.operator
-    const typeName = this.consume(
-      TokenType.IDENTIFIER,
-      "Expected type name after '::'",
-    ).value;
-    this.consume(TokenType.DOT, "Expected '.' after type name");
-    const operator = this.consume(
-      TokenType.OPERATOR,
-      'Expected operator after type',
-    ).value;
-
-    // Parse arguments
-    let args: any[] = [];
-    if (this.match(TokenType.LPAREN)) {
-      args = this.parseArgumentList();
-      this.consume(TokenType.RPAREN, "Expected ')' after cast arguments");
-    } else if (this.match(TokenType.LBRACKET)) {
-      args = this.parseArgumentList();
-      this.consume(TokenType.RBRACKET, "Expected ']' after cast arguments");
-    }
-
-    // Create condition with cast
-    const castField = `{${this.fieldToString(field)}}::${typeName}`;
-    return this.buildCondition(castField, operator, args);
   }
 
   private parseCondition(): Condition {
@@ -241,9 +209,6 @@ export class Parser<T extends ParserResult = ParserResult> {
     if (this.match(TokenType.LPAREN)) {
       args = this.parseArgumentList();
       this.consume(TokenType.RPAREN, "Expected ')' after arguments");
-    } else if (this.match(TokenType.LBRACKET)) {
-      args = this.parseArgumentList();
-      this.consume(TokenType.RBRACKET, "Expected ']' after arguments");
     }
 
     return this.buildCondition(this.fieldToString(field), operator, args);
@@ -303,7 +268,7 @@ export class Parser<T extends ParserResult = ParserResult> {
   private parseArgumentList(): any[] {
     const args: any[] = [];
 
-    if (this.check(TokenType.RPAREN) || this.check(TokenType.RBRACKET)) {
+    if (this.check(TokenType.RPAREN)) {
       return args;
     }
 
@@ -328,7 +293,7 @@ export class Parser<T extends ParserResult = ParserResult> {
 
     const filteredExpressions =
       expressions.length === 1 &&
-      (expressions[0]['and'] || expressions[0]['or'])
+        (expressions[0]['and'] || expressions[0]['or'])
         ? (expressions[0]['and'] ?? expressions[0]['or'])
         : expressions;
     return filteredExpressions;

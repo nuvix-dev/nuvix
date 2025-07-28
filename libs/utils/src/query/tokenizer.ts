@@ -23,10 +23,8 @@ export enum TokenType {
   // Grouping
   LPAREN = 'LPAREN', // (
   RPAREN = 'RPAREN', // )
-  LBRACE = 'LBRACE', // {
-  RBRACE = 'RBRACE', // }
-  LBRACKET = 'LBRACKET', // [
-  RBRACKET = 'RBRACKET', // ]
+  // LBRACKET = 'LBRACKET', // [
+  // RBRACKET = 'RBRACKET', // ]
 
   // Separators
   COMMA = 'COMMA', // ,
@@ -38,7 +36,7 @@ export enum TokenType {
   // Special
   COLUMN_REF = 'COLUMN_REF', // "quoted"
   RAW_VALUE = 'RAW_VALUE', // `backticks`
-  SPECIAL_FIELD = 'SPECIAL_FIELD', // $ or this
+  SPECIAL_FIELD = 'SPECIAL_FIELD', // $
 
   // End of input
   EOF = 'EOF',
@@ -194,18 +192,6 @@ export class Tokenizer {
       case ')':
         this.advance();
         return this.createToken(TokenType.RPAREN, ')', start);
-      case '{':
-        this.advance();
-        return this.createToken(TokenType.LBRACE, '{', start);
-      case '}':
-        this.advance();
-        return this.createToken(TokenType.RBRACE, '}', start);
-      case '[':
-        this.advance();
-        return this.createToken(TokenType.LBRACKET, '[', start);
-      case ']':
-        this.advance();
-        return this.createToken(TokenType.RBRACKET, ']', start);
       case ',':
         this.advance();
         return this.createToken(TokenType.COMMA, ',', start);
@@ -359,11 +345,6 @@ export class Tokenizer {
       this.advance();
     }
 
-    // Special case for 'this'
-    if (value === 'this') {
-      return this.createToken(TokenType.SPECIAL_FIELD, value, start);
-    }
-
     // Check for keywords first
     const keywordType = this.getKeywordType(value);
     if (keywordType !== TokenType.IDENTIFIER) {
@@ -441,13 +422,6 @@ export class Tokenizer {
           if (fieldPos >= 0 && this.input[fieldPos] === '$') {
             return true;
           }
-          if (fieldPos >= 3) {
-            // minimum for "this"
-            const thisMatch = this.input.slice(fieldPos - 3, fieldPos + 1);
-            if (thisMatch === 'this') {
-              return true;
-            }
-          }
         }
       }
     }
@@ -469,13 +443,6 @@ export class Tokenizer {
           }
           if (fieldPos >= 0 && this.input[fieldPos] === '$') {
             return true;
-          }
-          if (fieldPos >= 3) {
-            // minimum for "this"
-            const thisMatch = this.input.slice(fieldPos - 3, fieldPos + 1);
-            if (thisMatch === 'this') {
-              return true;
-            }
           }
         }
       }

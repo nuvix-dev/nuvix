@@ -350,9 +350,9 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
         } else if (value === 'not_null') {
           return queryBuilder.whereRaw('?? is not null', [field]);
         } else if (value === true || value === 'true') {
-          return queryBuilder.where(fieldSql, true);
+          return queryBuilder.whereRaw('?? is true', [field]);
         } else if (value === false || value === 'false') {
-          return queryBuilder.where(fieldSql, false);
+          return queryBuilder.whereRaw('?? is false', [field]);
         } else if (value === 'unknown') {
           return queryBuilder.whereRaw(`?? IS UNKNOWN`, [field]);
         }

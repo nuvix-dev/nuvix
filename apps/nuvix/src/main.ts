@@ -59,7 +59,6 @@ async function bootstrap() {
         edgeLimit: 100,
         msgPrefix: '[Nuvix] ',
         safe: true,
-        level: 'error',
       },
     }),
     {
