@@ -1,117 +1,208 @@
-import { ParsedOrdering } from './types';
+import { BaseParser } from './base';
+import { Token, Tokenizer, TokenType } from './tokenizer';
+import { JsonFieldType, ParsedOrdering } from './types';
 
-class OrderParser {
+class OrderTokenizer extends Tokenizer {
+  override nextToken(): Token {
+    const start = this.getCurrentPosition();
+    const char = this.current();
+
+    // Handle multi-character operators first
+    if (this.peek(3) === '->>') {
+      this.advance(3);
+      return this.createToken(TokenType.JSON_EXTRACT_TEXT, '->>', start);
+    }
+
+    if (this.peek(2) === '->') {
+      this.advance(2);
+      return this.createToken(TokenType.JSON_EXTRACT, '->', start);
+    }
+
+    // Single character tokens
+    switch (char) {
+      case '.':
+        this.advance();
+        return this.createToken(TokenType.DOT, '.', start);
+      case ',':
+        this.advance();
+        return this.createToken(TokenType.COMMA, ',', start);
+      default:
+        // Handle identifiers and keywords
+        if (this.isAlpha(char) || char === '_') {
+          return this.readIdentifier(start);
+        }
+
+        // Invalid character
+        this.advance();
+        return this.createToken(TokenType.INVALID, char, start);
+    }
+  }
+}
+
+class OrderParser extends BaseParser {
   private static readonly SORT_DIRECTIONS = ['asc', 'desc'] as const;
   private static readonly NULL_HANDLING_OPTIONS = [
     'nullsfirst',
     'nullslast',
   ] as const;
 
-  static parse(
-    orderingString: string | null | undefined | string[],
+  constructor(tableName: string, mainTable?: string) {
+    super();
+    this.tableName = tableName;
+    this.mainTable = mainTable ?? tableName;
+  }
+
+  static parse(ordering: string | null | undefined | Token[], tableName: string, mainTable?: string) {
+    const parser = new OrderParser(tableName, mainTable);
+    return parser.parse(ordering);
+  }
+
+  public parse(
+    ordering: string | null | undefined | Token[],
   ): ParsedOrdering[] {
-    if (typeof orderingString === 'string' && !orderingString?.trim())
+    if (ordering === null || ordering === undefined) {
       return [];
-
-    return (
-      typeof orderingString === 'string'
-        ? orderingString.split(',')
-        : orderingString
-    ).map(orderClause => {
-      const tokens = this.tokenize(orderClause.trim());
-      return this.parseOrderingClause(tokens);
-    });
-  }
-
-  private static tokenize(inputString: string): string[] {
-    const tokens: string[] = [];
-    let currentToken = '';
-    let charIndex = 0;
-
-    while (charIndex < inputString.length) {
-      const currentChar = inputString[charIndex];
-      const nextChar = inputString[charIndex + 1];
-
-      // Handle arrow operators (-> and ->>)
-      if (currentChar === '-' && nextChar === '>') {
-        if (currentToken.trim()) {
-          tokens.push(currentToken.trim());
-          currentToken = '';
-        }
-
-        // Check for double arrow (->>)
-        if (inputString[charIndex + 2] === '>') {
-          tokens.push('->>');
-          charIndex += 3;
-        } else {
-          tokens.push('->');
-          charIndex += 2;
-        }
-        continue;
-      }
-
-      // Handle dot separator
-      if (currentChar === '.') {
-        if (currentToken.trim()) {
-          tokens.push(currentToken.trim());
-          currentToken = '';
-        }
-        charIndex++;
-        continue;
-      }
-
-      // Handle whitespace
-      if (currentChar === ' ') {
-        if (currentToken.trim()) {
-          tokens.push(currentToken.trim());
-          currentToken = '';
-        }
-        charIndex++;
-        continue;
-      }
-
-      currentToken += currentChar;
-      charIndex++;
     }
 
-    if (currentToken.trim()) {
-      tokens.push(currentToken.trim());
+    this.current = 0;
+    if (Array.isArray(ordering)) {
+      this.tokens = ordering;
+      return this.parseOrderingClause();
+    } else {
+      const tokenizer = new OrderTokenizer(ordering);
+      this.tokens = tokenizer.tokenize();
+      return this.parseOrderingClause();
     }
-
-    return tokens.filter(token => token.length > 0);
   }
 
-  private static parseOrderingClause(tokens: string[]): ParsedOrdering {
-    if (tokens.length === 0) {
+  private parseOrderingClause(): ParsedOrdering[] {
+    if (this.tokens.length === 0) {
       throw new Error('Empty ordering expression');
     }
 
-    const orderingResult: ParsedOrdering = {
-      path: '',
-      direction: 'asc',
-      nulls: null,
-    };
+    const results: ParsedOrdering[] = [];
+    while (!this.isAtEnd()) {
+      // Skip leading commas (in case of malformed input)
+      while (this.match(TokenType.COMMA)) { }
 
-    const pathTokens: string[] = [];
+      if (this.isAtEnd()) break;
 
-    for (const token of tokens) {
-      if (this.SORT_DIRECTIONS.includes(token as any)) {
-        orderingResult.direction = token as 'asc' | 'desc';
-      } else if (this.NULL_HANDLING_OPTIONS.includes(token as any)) {
-        orderingResult.nulls = token as 'nullsfirst' | 'nullslast';
+      // Parse path (column or json path)
+      let fieldPath = this.parseFieldPath();
+      let path: string;
+      if (typeof fieldPath === 'string') {
+        path = fieldPath;
       } else {
-        pathTokens.push(token);
+        // Join string parts and serialize JSON field accesses
+        path = fieldPath
+          .map(part =>
+            typeof part === 'string'
+              ? part
+              : `${part.operator}${part.name}`
+          )
+          .join('');
+      }
+
+      let direction: 'asc' | 'desc' = 'asc';
+      let nulls: 'nullsfirst' | 'nullslast' | null = null;
+
+      // Parse direction and nulls handling if present
+      // it can be 2 identifiers and a dot
+      for (let i = 0; i < 3 && !this.isAtEnd(); i++) {
+        const token = this.peek();
+
+        if (token.type === TokenType.IDENTIFIER) {
+          if (OrderParser.SORT_DIRECTIONS.includes(token.value as any)) {
+            direction = token.value as 'asc' | 'desc';
+            this.advance();
+            continue;
+          }
+          if (OrderParser.NULL_HANDLING_OPTIONS.includes(token.value as any)) {
+            nulls = token.value as 'nullsfirst' | 'nullslast';
+            this.advance();
+            continue;
+          }
+        } else if (token.type === TokenType.DOT) {
+          // Skip dot if it's not part of a field path e.g. "field.asc.nullsfirst"
+          if (this.peekNext().type !== TokenType.IDENTIFIER) {
+            // "field.asc."
+            throw new Error(
+              `Unexpected dot without identifier after: ${token.value}`,
+            )
+          }
+          this.advance();
+          continue;
+        }
+        break;
+      }
+
+      results.push({
+        path,
+        direction,
+        nulls,
+      });
+
+      // If next token is a comma, continue to next ordering
+      if (this.check(TokenType.COMMA)) {
+        this.advance();
+      } else if (!this.isAtEnd()) {
+        throw new Error(
+          `Unexpected token after ordering: ${this.peek().value}`,
+        );
+      }
+    }
+    return results;
+  }
+
+  override parseFieldPath(): string | (string | JsonFieldType)[] {
+    const parts: (string | JsonFieldType)[] = [];
+
+    // First part must be an identifier
+    const firstPart = this.consume(
+      TokenType.IDENTIFIER,
+      'Expected field name',
+    ).value;
+    parts.push(firstPart);
+
+    while (
+      this.check(TokenType.DOT) ||
+      this.check(TokenType.JSON_EXTRACT) ||
+      this.check(TokenType.JSON_EXTRACT_TEXT)
+    ) {
+      if (this.match(TokenType.DOT)) {
+        const token = this.peek()
+        if (this.check(TokenType.IDENTIFIER) && (
+          OrderParser.SORT_DIRECTIONS.includes(token.value as any) ||
+          OrderParser.NULL_HANDLING_OPTIONS.includes(token.value as any)
+        )) {
+          break;
+        }
+
+        const part = this.consume(
+          TokenType.IDENTIFIER,
+          "Expected field name after '.'",
+        ).value;
+        parts.push(part);
+      } else if (this.match(TokenType.JSON_EXTRACT)) {
+        // -> operator
+        const part = this.consume(
+          TokenType.IDENTIFIER,
+          "Expected field name after '->'",
+        ).value;
+        parts.push({ name: part, operator: '->', __type: 'json' });
+      } else if (this.match(TokenType.JSON_EXTRACT_TEXT)) {
+        // ->> operator
+        const part = this.consume(
+          TokenType.IDENTIFIER,
+          "Expected field name after '->>'",
+        ).value;
+        parts.push({ name: part, operator: '->>', __type: 'json' });
       }
     }
 
-    if (pathTokens.length === 0) {
-      throw new Error('No column path specified');
-    }
-
-    // Reconstruct path with proper spacing around arrows
-    orderingResult.path = pathTokens.join('');
-
-    return orderingResult;
+    return parts.length === 1 && typeof parts[0] === 'string'
+      ? parts[0]
+      : parts;
   }
 }
 

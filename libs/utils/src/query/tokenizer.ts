@@ -10,7 +10,6 @@ export enum TokenType {
 
   // Identifiers and Operators
   IDENTIFIER = 'IDENTIFIER',
-  OPERATOR = 'OPERATOR',
   DOT = 'DOT',
 
   // JSON Operators
@@ -23,8 +22,6 @@ export enum TokenType {
   // Grouping
   LPAREN = 'LPAREN', // (
   RPAREN = 'RPAREN', // )
-  // LBRACKET = 'LBRACKET', // [
-  // RBRACKET = 'RBRACKET', // ]
 
   // Separators
   COMMA = 'COMMA', // ,
@@ -53,77 +50,13 @@ export interface Token {
 }
 
 export class Tokenizer {
-  private input: string;
-  private position: number = 0;
-  private line: number = 1;
-  private column: number = 1;
-  private allowedOperators = [
-    // Comparison operators
-    'eq',
-    'neq',
-    'gt',
-    'gte',
-    'lt',
-    'lte',
+  protected input: string;
+  protected position: number = 0;
+  protected line: number = 1;
+  protected column: number = 1;
 
-    // String operators
-    'like',
-    'ilike',
-    'match',
-    'imatch',
-    'startswith',
-    'endswith',
-    'contains',
-    'icontains',
-    'istartswith',
-    'iendswith',
-
-    // Array/List operators
-    'in',
-    'notin',
-    'overlap',
-    'contains',
-    'containedby',
-
-    // Range operators
-    'between',
-    'notbetween',
-
-    // Null operators
-    'is',
-    'isnot',
-    'null',
-    'notnull',
-
-    // JSON operators
-    'cs',
-    'cd',
-    'sl',
-    'sr',
-    'nxr',
-    'nxl',
-
-    // Logical operators
-    'and',
-    'or',
-    'not',
-
-    // Special operators
-    'all',
-    'any',
-    'exists',
-    'notexists',
-    'limit',
-    'group',
-    'order',
-    'offset',
-    'join',
-    'shape',
-  ];
-
-  constructor(input: string, allowedOperators?: string[]) {
+  constructor(input: string) {
     this.input = input;
-    if (allowedOperators) this.allowedOperators = allowedOperators;
   }
 
   public tokenize(): Token[] {
@@ -156,7 +89,7 @@ export class Tokenizer {
     return tokens;
   }
 
-  private nextToken(): Token {
+  protected nextToken(): Token {
     const start = this.getCurrentPosition();
     const char = this.current();
 
@@ -182,11 +115,6 @@ export class Tokenizer {
         this.advance();
         return this.createToken(TokenType.DOT, '.', start);
       case '(':
-        // TODO: find better way to handle this
-        // Check if this starts a special function (order or group)
-        if (this.isStartingSpecialFunction()) {
-          return this.readSpecialFunctionContent(start);
-        }
         this.advance();
         return this.createToken(TokenType.LPAREN, '(', start);
       case ')':
@@ -230,7 +158,7 @@ export class Tokenizer {
     }
   }
 
-  private readQuotedString(
+  protected readQuotedString(
     quote: string,
     tokenType: TokenType,
     start: ParsePosition,
@@ -283,7 +211,7 @@ export class Tokenizer {
     return this.createToken(tokenType, value, start);
   }
 
-  private readNumber(start: ParsePosition): Token {
+  protected readNumber(start: ParsePosition): Token {
     let value = '';
 
     // Handle negative sign
@@ -334,7 +262,7 @@ export class Tokenizer {
     return this.createToken(TokenType.NUMBER, value, start);
   }
 
-  private readIdentifier(start: ParsePosition): Token {
+  protected readIdentifier(start: ParsePosition): Token {
     let value = '';
 
     while (
@@ -351,15 +279,10 @@ export class Tokenizer {
       return this.createToken(keywordType, value, start);
     }
 
-    // Check if this could be an operator (only if it follows a dot)
-    if (this.shouldTreatAsOperator(value)) {
-      return this.createToken(TokenType.OPERATOR, value, start);
-    }
-
     return this.createToken(TokenType.IDENTIFIER, value, start);
   }
 
-  private getKeywordType(value: string): TokenType {
+  protected getKeywordType(value: string): TokenType {
     switch (value.toLowerCase()) {
       case 'true':
       case 'false':
@@ -373,136 +296,7 @@ export class Tokenizer {
     }
   }
 
-  private shouldTreatAsOperator(value: string): boolean {
-    // Only treat as operator if we just came from a DOT
-    // We need to look back at the last non-whitespace character
-    if (!this.isOperator(value)) {
-      return false;
-    }
-
-    // Look back to see if the previous non-whitespace token would be a DOT
-    let pos = this.position - value.length - 1;
-    while (pos >= 0 && this.isWhitespace(this.input[pos])) {
-      pos--;
-    }
-
-    return pos >= 0 && this.input[pos] === '.';
-  }
-
-  private isOperator(value: string): boolean {
-    return this.allowedOperators.includes(value.toLowerCase());
-  }
-
-  private isStartingSpecialFunction(): boolean {
-    // Look back to see if the last few tokens were $ or this followed by . and order/group
-    // We need to check the last non-whitespace characters
-    let pos = this.position - 1;
-
-    // Skip whitespace before the (
-    while (pos >= 0 && this.isWhitespace(this.input[pos])) {
-      pos--;
-    }
-
-    // Check for "order" or "group" before the (
-    if (pos >= 4) {
-      // minimum for "order"
-      const orderMatch = this.input.slice(pos - 4, pos + 1);
-      if (orderMatch === 'order') {
-        // Check for . before order
-        let dotPos = pos - 5;
-        while (dotPos >= 0 && this.isWhitespace(this.input[dotPos])) {
-          dotPos--;
-        }
-        if (dotPos >= 0 && this.input[dotPos] === '.') {
-          // Check for $ or this before .
-          let fieldPos = dotPos - 1;
-          while (fieldPos >= 0 && this.isWhitespace(this.input[fieldPos])) {
-            fieldPos--;
-          }
-          if (fieldPos >= 0 && this.input[fieldPos] === '$') {
-            return true;
-          }
-        }
-      }
-    }
-
-    if (pos >= 4) {
-      // minimum for "group"
-      const groupMatch = this.input.slice(pos - 4, pos + 1);
-      if (groupMatch === 'group') {
-        // Check for . before group
-        let dotPos = pos - 5;
-        while (dotPos >= 0 && this.isWhitespace(this.input[dotPos])) {
-          dotPos--;
-        }
-        if (dotPos >= 0 && this.input[dotPos] === '.') {
-          // Check for $ or this before .
-          let fieldPos = dotPos - 1;
-          while (fieldPos >= 0 && this.isWhitespace(this.input[fieldPos])) {
-            fieldPos--;
-          }
-          if (fieldPos >= 0 && this.input[fieldPos] === '$') {
-            return true;
-          }
-        }
-      }
-    }
-
-    return false;
-  }
-
-  private readSpecialFunctionContent(start: ParsePosition): Token {
-    // Skip the opening parenthesis
-    this.advance();
-
-    let content = '';
-    let depth = 1;
-    let inQuotes = false;
-    let quoteChar = '';
-    let escaped = false;
-
-    while (this.position < this.input.length && depth > 0) {
-      const char = this.current();
-
-      if (escaped) {
-        content += char;
-        escaped = false;
-        this.advance();
-        continue;
-      }
-
-      if (char === '\\') {
-        escaped = true;
-        content += char;
-        this.advance();
-        continue;
-      }
-
-      if ((char === '"' || char === "'" || char === '`') && !inQuotes) {
-        inQuotes = true;
-        quoteChar = char;
-      } else if (char === quoteChar && inQuotes) {
-        inQuotes = false;
-        quoteChar = '';
-      }
-
-      if (!inQuotes) {
-        if (char === '(') depth++;
-        else if (char === ')') depth--;
-      }
-
-      if (depth > 0) {
-        content += char;
-      }
-
-      this.advance();
-    }
-
-    // Return the content as RAW_VALUE
-    return this.createToken(TokenType.RAW_VALUE, content, start);
-  }
-
-  private skipWhitespace(): void {
+  protected skipWhitespace(): void {
     while (
       this.position < this.input.length &&
       this.isWhitespace(this.current())
@@ -517,18 +311,18 @@ export class Tokenizer {
     }
   }
 
-  private current(): string {
+  protected current(): string {
     return this.position < this.input.length ? this.input[this.position] : '';
   }
 
-  private peek(offset: number = 1): string {
+  protected peek(offset: number = 1): string {
     const pos = this.position + offset - 1;
     return pos < this.input.length
       ? this.input.slice(this.position, this.position + offset)
       : '';
   }
 
-  private advance(count: number = 1): void {
+  protected advance(count: number = 1): void {
     for (let i = 0; i < count && this.position < this.input.length; i++) {
       if (this.current() === '\n') {
         this.line++;
@@ -540,7 +334,7 @@ export class Tokenizer {
     }
   }
 
-  private getCurrentPosition(): ParsePosition {
+  protected getCurrentPosition(): ParsePosition {
     return {
       line: this.line,
       column: this.column,
@@ -548,7 +342,7 @@ export class Tokenizer {
     };
   }
 
-  private createToken(
+  protected createToken(
     type: TokenType,
     value: string,
     start: ParsePosition,
@@ -561,19 +355,19 @@ export class Tokenizer {
     };
   }
 
-  private isWhitespace(char: string): boolean {
+  protected isWhitespace(char: string): boolean {
     return char === ' ' || char === '\t' || char === '\n' || char === '\r';
   }
 
-  private isDigit(char: string): boolean {
+  protected isDigit(char: string): boolean {
     return char >= '0' && char <= '9';
   }
 
-  private isAlpha(char: string): boolean {
+  protected isAlpha(char: string): boolean {
     return (char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z');
   }
 
-  private isAlphaNumeric(char: string): boolean {
+  protected isAlphaNumeric(char: string): boolean {
     return this.isAlpha(char) || this.isDigit(char);
   }
 }

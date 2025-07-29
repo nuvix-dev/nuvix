@@ -3,25 +3,22 @@ import { Exception } from '@nuvix/core/extend/exception';
 import type {
   Condition,
   Expression,
-  JsonFieldType,
   ParserConfig,
   ParserResult,
 } from './types';
 import { OrderParser } from './order';
 import { ParserError } from './error';
-import { Tokenizer, Token, TokenType } from './tokenizer';
+import { Tokenizer, TokenType } from './tokenizer';
+import { BaseParser, specialOperators } from './base';
 
-export class Parser<T extends ParserResult = ParserResult> {
+export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
   private readonly logger = new Logger(Parser.name);
 
   private config: ParserConfig;
-  private tableName: string;
-  private mainTable: string;
   private extraData: Record<string, any> = {};
-  private tokens: Token[] = [];
-  private current: number = 0;
 
   constructor(config: ParserConfig, tableName: string, mainTable?: string) {
+    super();
     this.config = config;
     this.tableName = tableName;
     this.mainTable = mainTable ?? tableName;
@@ -58,7 +55,7 @@ export class Parser<T extends ParserResult = ParserResult> {
       this.current = 0;
       const _start = performance.now()
       const result = {
-        ...this.parseExpression(),
+        ...this.parseExpression(true),
         ...(this.extraData as T),
       };
       const _end = performance.now()
@@ -80,20 +77,20 @@ export class Parser<T extends ParserResult = ParserResult> {
     }
   }
 
-  private parseExpression(): Expression {
-    return this.parseOrExpression();
+  private parseExpression(isTopLevel = false): Expression {
+    return this.parseOrExpression(isTopLevel);
   }
 
-  private parseOrExpression(): Expression {
-    let left = this.parseAndExpression();
+  private parseOrExpression(isTopLevel = false): Expression {
+    let left = this.parseAndExpression(isTopLevel);
 
     while (this.match(TokenType.PIPE)) {
       const expressions = [left];
-      expressions.push(this.parseAndExpression());
+      expressions.push(this.parseAndExpression(false));
 
       // Continue collecting OR expressions
       while (this.match(TokenType.PIPE)) {
-        expressions.push(this.parseAndExpression());
+        expressions.push(this.parseAndExpression(false));
       }
 
       left = { or: expressions.filter(Boolean) };
@@ -102,16 +99,16 @@ export class Parser<T extends ParserResult = ParserResult> {
     return left;
   }
 
-  private parseAndExpression(): Expression {
-    let left = this.parseNotExpression();
+  private parseAndExpression(isTopLevel = false): Expression {
+    let left = this.parseNotExpression(isTopLevel);
 
     while (this.match(TokenType.COMMA)) {
       const expressions = [left];
-      expressions.push(this.parseNotExpression());
+      expressions.push(this.parseNotExpression(isTopLevel));
 
       // Continue collecting AND expressions
       while (this.match(TokenType.COMMA)) {
-        expressions.push(this.parseNotExpression());
+        expressions.push(this.parseNotExpression(isTopLevel));
       }
 
       left = { and: expressions.filter(Boolean) as Expression[] };
@@ -120,16 +117,21 @@ export class Parser<T extends ParserResult = ParserResult> {
     return left;
   }
 
-  private parseNotExpression(): Expression {
+  private parseNotExpression(isTopLevel = false): Expression {
     if (this.match(TokenType.NOT)) {
-      const expr = this.parseNotExpression();
+      const expr = this.parseNotExpression(false);
       return { not: expr };
     }
 
-    return this.parsePrimaryExpression();
+    return this.parsePrimaryExpression(isTopLevel);
   }
 
-  private parsePrimaryExpression(): Expression {
+  private parsePrimaryExpression(isTopLevel = false): Expression {
+    // Special fields can only be at the top level
+    if (this.check(TokenType.SPECIAL_FIELD) && !isTopLevel) {
+      this.throwError('Special fields (like $) can only be used at the top level, not nested inside logical expressions', this.peek());
+    }
+
     // Handle function calls: or(...), and(...), not(...)
     if (this.check(TokenType.IDENTIFIER)) {
       const identifier = this.peek().value;
@@ -166,33 +168,47 @@ export class Parser<T extends ParserResult = ParserResult> {
       return expr;
     }
 
-    // Handle regular conditions
+    // Handle regular conditions or special fields
     return this.parseCondition();
   }
 
   private parseCondition(): Condition {
-    // Handle special fields: $ or this
+    // Handle special fields: $
     if (this.check(TokenType.SPECIAL_FIELD)) {
-      const specialField = this.advance().value;
       this.consume(TokenType.DOT, "Expected '.' after special field");
       const operator = this.consume(
-        TokenType.OPERATOR,
+        TokenType.IDENTIFIER,
         'Expected operator',
       ).value;
 
+      if (!specialOperators.includes(operator as typeof specialOperators[number])) {
+        throw new Error(`Unknown operator "${operator}" found.`)
+      }
+
       let args: any[] = [];
-      if (
-        (operator === 'order' || operator === 'group') &&
-        this.check(TokenType.RAW_VALUE)
-      ) {
-        const rawContent = this.advance().value;
-        args = [rawContent];
+      if (operator === 'order') {
+        // Collect tokens between '(' and ')'
+        if (this.match(TokenType.LPAREN)) {
+          const orderTokens: any[] = [];
+          while (!this.check(TokenType.RPAREN)) {
+            orderTokens.push(this.peek());
+            this.advance();
+          }
+          this.consume(TokenType.RPAREN, "Expected ')' after arguments");
+          orderTokens.push({
+            type: TokenType.EOF,
+            value: '',
+            position: 0,
+            length: 0,
+          })
+          args = orderTokens;
+        }
       } else if (this.match(TokenType.LPAREN)) {
         args = this.parseArgumentList();
         this.consume(TokenType.RPAREN, "Expected ')' after arguments");
       }
 
-      this.handleSpecialCase(specialField, operator, args);
+      this.handleSpecialCase(operator, args);
       return null as any; // Special cases don't return conditions
     }
 
@@ -200,7 +216,7 @@ export class Parser<T extends ParserResult = ParserResult> {
     const field = this.parseFieldPath();
     this.consume(TokenType.DOT, "Expected '.' after field");
     const operator = this.consume(
-      TokenType.OPERATOR,
+      TokenType.IDENTIFIER,
       'Expected operator',
     ).value;
 
@@ -212,57 +228,6 @@ export class Parser<T extends ParserResult = ParserResult> {
     }
 
     return this.buildCondition(this.fieldToString(field), operator, args);
-  }
-
-  private parseFieldPath(): string | (string | JsonFieldType)[] {
-    const parts: (string | JsonFieldType)[] = [];
-
-    // First part must be an identifier
-    const firstPart = this.consume(
-      TokenType.IDENTIFIER,
-      'Expected field name',
-    ).value;
-    parts.push(firstPart);
-
-    while (
-      this.check(TokenType.DOT) ||
-      this.check(TokenType.JSON_EXTRACT) ||
-      this.check(TokenType.JSON_EXTRACT_TEXT)
-    ) {
-      if (this.match(TokenType.DOT)) {
-        // Check if the next token is an operator (end of field path) or identifier (continue field path)
-        if (this.check(TokenType.OPERATOR)) {
-          // This dot is followed by an operator, so we're done with the field path
-          // Put the dot back by moving current position back
-          this.current--;
-          break;
-        }
-        // Regular dot notation - continue building field path
-        const part = this.consume(
-          TokenType.IDENTIFIER,
-          "Expected field name after '.'",
-        ).value;
-        parts.push(part);
-      } else if (this.match(TokenType.JSON_EXTRACT)) {
-        // -> operator
-        const part = this.consume(
-          TokenType.IDENTIFIER,
-          "Expected field name after '->'",
-        ).value;
-        parts.push({ name: part, operator: '->', __type: 'json' });
-      } else if (this.match(TokenType.JSON_EXTRACT_TEXT)) {
-        // ->> operator
-        const part = this.consume(
-          TokenType.IDENTIFIER,
-          "Expected field name after '->>'",
-        ).value;
-        parts.push({ name: part, operator: '->>', __type: 'json' });
-      }
-    }
-
-    return parts.length === 1 && typeof parts[0] === 'string'
-      ? parts[0]
-      : parts;
   }
 
   private parseArgumentList(): any[] {
@@ -287,7 +252,7 @@ export class Parser<T extends ParserResult = ParserResult> {
     }
 
     do {
-      const expr = this.parseExpression();
+      const expr = this.parseExpression(false);
       if (expr) expressions.push(expr);
     } while (this.match(TokenType.COMMA));
 
@@ -391,81 +356,7 @@ export class Parser<T extends ParserResult = ParserResult> {
     }
   }
 
-  public parseFieldString(field: string): Condition['field'] {
-    // TODO: Handle cast expressions
-    if (field.startsWith('{') && field.includes('}::')) {
-      return field; // Return as-is for cast expressions
-    }
-
-    // Parse regular field paths with JSON operators
-    if (field.includes('->') || field.includes('->>') || field.includes('.')) {
-      const parts: (string | JsonFieldType)[] = [];
-      let current = '';
-      let i = 0;
-
-      while (i < field.length) {
-        if (field.substring(i, i + 3) === '->>') {
-          if (current) {
-            parts.push({ name: current, operator: '->>', __type: 'json' });
-            current = '';
-          }
-          i += 3;
-        } else if (field.substring(i, i + 2) === '->') {
-          if (current) {
-            parts.push({ name: current, operator: '->', __type: 'json' });
-            current = '';
-          }
-          i += 2;
-        } else if (field[i] === '.') {
-          if (parts.some(p => typeof p === 'object' && p.__type === 'json')) {
-            this.throwError(
-              'Invalid field name - dot (.) cannot be used after JSON operators (-> or ->>)',
-              this.peek(),
-            );
-          }
-          if (current) {
-            parts.push(current);
-            current = '';
-          }
-          i++;
-        } else {
-          current += field[i];
-          i++;
-        }
-      }
-
-      if (current) {
-        parts.push(current);
-      }
-
-      return parts;
-    }
-
-    return field;
-  }
-
-  private fieldToString(field: string | (string | JsonFieldType)[]): string {
-    if (typeof field === 'string') {
-      return field;
-    }
-
-    let result = '';
-    for (let i = 0; i < field.length; i++) {
-      const part = field[i];
-      if (typeof part === 'string') {
-        result += part;
-        if (i < field.length - 1 && typeof field[i + 1] === 'string') {
-          result += '.'; // Add a dot if the next part is also a string
-        }
-      } else {
-        result += `${part.operator}${part.name}`;
-      }
-    }
-    return result;
-  }
-
   private handleSpecialCase(
-    field: string,
     operator: string,
     args: any[],
   ): void {
@@ -504,7 +395,8 @@ export class Parser<T extends ParserResult = ParserResult> {
         break;
       case 'order':
         if (args.length > 0) {
-          const orders = OrderParser.parse(args[0]);
+          this.logger.debug({ args })
+          const orders = OrderParser.parse(args, this.tableName, this.mainTable);
           if (orders && orders.length > 0) {
             this.extraData['order'] = orders;
           }
@@ -527,56 +419,6 @@ export class Parser<T extends ParserResult = ParserResult> {
       );
     }
     return num;
-  }
-
-  // Token navigation methods
-  private match(...types: TokenType[]): boolean {
-    for (const type of types) {
-      if (this.check(type)) {
-        this.advance();
-        return true;
-      }
-    }
-    return false;
-  }
-
-  private check(type: TokenType): boolean {
-    if (this.isAtEnd()) return false;
-    return this.peek().type === type;
-  }
-
-  private advance(): Token {
-    if (!this.isAtEnd()) this.current++;
-    return this.previous();
-  }
-
-  private isAtEnd(): boolean {
-    return this.peek().type === TokenType.EOF;
-  }
-
-  private peek(): Token {
-    return this.tokens[this.current];
-  }
-
-  private peekNext(): Token | undefined {
-    if (this.current + 1 >= this.tokens.length) return undefined;
-    return this.tokens[this.current + 1];
-  }
-
-  private previous(): Token {
-    return this.tokens[this.current - 1];
-  }
-
-  private consume(type: TokenType, message: string): Token {
-    if (this.check(type)) return this.advance();
-    this.throwError(message, this.peek());
-  }
-
-  private throwError(message: string, token: Token): never {
-    throw new ParserError(message, token.position, token.value, {
-      expected: 'valid syntax',
-      received: token.value,
-    });
   }
 
   private _validateConfig(): void {

@@ -204,7 +204,7 @@ export class SelectParser {
     const parts = fullResourceString.split('.');
     const lastPart = parts[parts.length - 1].trim();
 
-    if (lastPart === 'one' || lastPart === 'many') {
+    if (parts.length > 1 && (lastPart === 'one' || lastPart === 'many')) {
       cardinalityHint = lastPart;
       // The actual table name is everything EXCEPT the last part
       resource = parts.slice(0, -1).join('.').trim();
@@ -243,16 +243,16 @@ export class SelectParser {
     // Select (optional if shaping is indicated)
     const select = selectPart?.trim()
       ? new SelectParser({
-          tableName: alias || resource,
-          depth: ++this.depth,
-        }).parse(selectPart.trim())
+        tableName: alias || resource,
+        depth: ++this.depth,
+      }).parse(selectPart.trim())
       : [
-          {
-            type: 'column',
-            tableName: alias || resource,
-            path: '*',
-          } as SelectNode,
-        ];
+        {
+          type: 'column',
+          tableName: alias || resource,
+          path: '*',
+        } as SelectNode,
+      ];
 
     return {
       type: 'embed',
