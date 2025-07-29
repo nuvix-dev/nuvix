@@ -1547,4 +1547,10 @@ const errorCodes: Record<string, ErrorCode> = {
     description: 'Schema with the requested ID has an invalid type.',
     code: 400,
   },
+  [Exception.GENERAL_QUERY_BUILDER_ERROR]: {
+    name: Exception.GENERAL_QUERY_BUILDER_ERROR,
+    description:
+      'An error occurred while building the query. Please check your query and try again.',
+    code: 400,
+  }
 };

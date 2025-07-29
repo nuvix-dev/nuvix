@@ -8,7 +8,6 @@ import {
 } from './types';
 import { ASTToQueryBuilder } from './builder';
 import { Exception } from '@nuvix/core/extend/exception';
-import { flatten } from '@nestjs/common';
 
 type QueryBuilder = ReturnType<DataSource['queryBuilder']>;
 
@@ -45,7 +44,7 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
 
     const { limit, offset, order, group, ...filterConstraints } = constraint;
 
-    if (!flatten && !['left', 'inner'].includes(joinType)) {
+    if (!shouldFlatten && !['left', 'inner'].includes(joinType)) {
       throw new Exception(
         Exception.GENERAL_QUERY_BUILDER_ERROR,
         `Unsupported join type "${joinType}" for non-flattened embed: ${tableName}`,
@@ -96,7 +95,7 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
     );
 
     const conditionSQL = conditionQueryBuilder.toSQL();
-    const cleanedCondition = conditionSQL.sql.replace('select * where', '');
+    const cleanedCondition = conditionSQL.sql.replace('select * where ', '');
 
     this.astBuilder.qb[joinType + 'Join'](
       this.astBuilder.pg.alias(tableName, joinAlias),

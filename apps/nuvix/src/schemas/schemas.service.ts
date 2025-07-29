@@ -190,7 +190,7 @@ export class SchemasService {
     const qb = pg.queryBuilder().table(_raw as any);
 
     const astToQueryBuilder = new ASTToQueryBuilder(qb, pg);
-    const start = performance.now();
+
     const { select, filter, order } = this.getParamsFromUrl(url, functionName);
 
     astToQueryBuilder.applySelect(select);
@@ -200,8 +200,6 @@ export class SchemasService {
       limit,
       offset,
     });
-    const end = performance.now()
-    this.logger.debug(`Parser took ${end - start}ms`)
     this.logger.debug(qb.toSQL());
 
     return await qb;

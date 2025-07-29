@@ -75,7 +75,6 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
       if (error instanceof Exception) {
         throw error;
       }
-      this.logger.debug(error)
       throw new Error('Unknown query builder conversion error');
     }
   }
@@ -269,9 +268,13 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
       }
     }
 
-    const value = values[0];
     const filteredValues = values.filter(v => !this._isValueColumnName(v));
     const right = this._valueTypeToPlaceholder(values);
+    let value = values[0];
+
+    if (typeof value === 'object' && '__type' in value && value.__type === 'column' && right === '??') {
+      value = value.name
+    }
 
     switch (operator) {
       case 'eq': return queryBuilder.whereRaw(`?? = ${right}`, [field, value]);
@@ -280,10 +283,10 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
       case 'lt': return queryBuilder.whereRaw(`?? < ${right}`, [field, value]);
       case 'lte': return queryBuilder.whereRaw(`?? <= ${right}`, [field, value]);
       case 'neq': return queryBuilder.whereRaw(`?? <> ${right}`, [field, value]);
-      case 'like': return queryBuilder.whereRaw(`?? like ${right}`, [field, this._valueToPattern(value)]);
-      case 'ilike': return queryBuilder.whereRaw(`?? ilike ${right}`, [field, this._valueToPattern(value)]);
-      case 'match': return queryBuilder.whereRaw(`?? ~ ${right}`, [field, this._valueToPattern(value)]);
-      case 'imatch': return queryBuilder.whereRaw(`?? ~* ${right}`, [field, this._valueToPattern(value)]);
+      case 'like': return queryBuilder.whereRaw(`?? like ?`, [field, this._valueToPattern(value)]);
+      case 'ilike': return queryBuilder.whereRaw(`?? ilike ?`, [field, this._valueToPattern(value)]);
+      case 'match': return queryBuilder.whereRaw(`?? ~ ?`, [field, this._valueToPattern(value)]);
+      case 'imatch': return queryBuilder.whereRaw(`?? ~* ?`, [field, this._valueToPattern(value)]);
       case 'in': return queryBuilder.whereRaw(`?? in (?)`, [field, filteredValues]);
       case 'notin': return queryBuilder.whereRaw(`?? not in (?)`, [field, filteredValues]);
 
@@ -549,7 +552,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
       }
     }
 
-    const rawPath = this._rawField(path, tableName).toSQL().sql;
+    const rawPath = (aggregate && aggregate.fn === 'count' && path === '*') ? '*' : this._rawField(path, tableName).toSQL().sql;
     let sql = cast ? `cast((${rawPath}) as ${cast})` : rawPath;
 
     // Apply aggregate function if present

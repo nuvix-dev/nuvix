@@ -53,7 +53,6 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
       if (error instanceof Exception) {
         throw error;
       }
-      this.logger.debug(error)
       throw new Exception(
         Exception.GENERAL_PARSER_ERROR,
         'Unknown parsing error occurred',
@@ -193,7 +192,6 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
             length: 0,
           })
           args = orderTokens;
-          this.logger.debug({ args })
         }
       } else if (this.match(TokenType.LPAREN)) {
         args = this.parseArgumentList();
@@ -410,6 +408,22 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
         );
       }
     };
+
+    if (!['eq',
+      'neq',
+      'gt',
+      'gte',
+      'lt',
+      'lte'].includes(operator as AllowedOperators)) {
+      args.forEach((arg) => {
+        if (typeof arg === 'object' && arg !== null && '__type' in arg && arg.__type === 'column') {
+          this.throwError(
+            `Operator "${operator}" does not support column references as arguments.`,
+            this.peek()
+          );
+        }
+      });
+    }
 
     switch (operator as AllowedOperators) {
       // Simple binary comparison
