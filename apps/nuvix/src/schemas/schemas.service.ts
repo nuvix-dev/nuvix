@@ -3,6 +3,7 @@ import { CallFunction, Delete, Insert, Select, Update } from './schemas.types';
 import {
   Expression,
   ParsedOrdering,
+  ParserResult,
   SelectNode,
 } from '@nuvix/utils/query/types';
 import { Parser } from '@nuvix/utils/query/parser';
@@ -29,7 +30,7 @@ export class SchemasService {
     });
     astToQueryBuilder.applyOrder(order, table);
     astToQueryBuilder.applyLimitOffset({
-      limit,
+      limit: limit ?? filter?.limit ?? 500,
       offset,
     });
 
@@ -48,7 +49,6 @@ export class SchemasService {
       throw new Exception(error.type, error.message, error.status).addDetails({
         hint: error.details.hint,
         detail: error.details.detail,
-        orignalMessage: error.details.message, // TODO: ---------------
       });
     }
   }
@@ -97,7 +97,22 @@ export class SchemasService {
 
     this.logger.debug(qb.toSQL());
 
-    return pg.withTransaction(async () => await qb);
+    try {
+      return pg.withTransaction(async () => await qb);
+    } catch (e) {
+      const error = transformPgError(e);
+      if (!error || error.status >= 500) {
+        throw new Exception(
+          error.type ?? Exception.GENERAL_SERVER_ERROR,
+          error.message ?? 'Database error',
+          error.status,
+        );
+      }
+      throw new Exception(error.type, error.message, error.status).addDetails({
+        hint: error.details.hint,
+        detail: error.details.detail,
+      });
+    }
   }
 
   async update({
@@ -109,6 +124,7 @@ export class SchemasService {
     url,
     limit,
     offset,
+    force = false,
   }: Update) {
     if (!input) {
       throw new Exception(
@@ -135,7 +151,12 @@ export class SchemasService {
     const astToQueryBuilder = new ASTToQueryBuilder(qb, pg);
 
     astToQueryBuilder.applyReturning(select);
-    astToQueryBuilder.applyFilters(filter);
+    astToQueryBuilder.applyFilters(filter, {
+      applyExtra: true,
+      tableName: table,
+      throwOnEmpty: force,
+      throwOnEmptyError: new Exception(Exception.GENERAL_ACCESS_FORBIDDEN, 'you must provide a filter to update data or use &force=true'),
+    });
     astToQueryBuilder.applyOrder(order, table);
     astToQueryBuilder.applyLimitOffset({
       limit,
@@ -145,10 +166,25 @@ export class SchemasService {
 
     this.logger.debug(qb.toSQL());
 
-    return pg.withTransaction(async () => await qb);
+    try {
+      return pg.withTransaction(async () => await qb);
+    } catch (e) {
+      const error = transformPgError(e);
+      if (!error || error.status >= 500) {
+        throw new Exception(
+          error.type ?? Exception.GENERAL_SERVER_ERROR,
+          error.message ?? 'Database error',
+          error.status,
+        );
+      }
+      throw new Exception(error.type, error.message, error.status).addDetails({
+        hint: error.details.hint,
+        detail: error.details.detail,
+      });
+    }
   }
 
-  async delete({ pg, table, schema, url, limit, offset }: Delete) {
+  async delete({ pg, table, schema, url, limit, offset, force }: Delete) {
     const qb = pg.qb(table).withSchema(schema);
     const { select, filter, order } = this.getParamsFromUrl(url, table);
     const astToQueryBuilder = new ASTToQueryBuilder(qb, pg);
@@ -157,16 +193,36 @@ export class SchemasService {
     astToQueryBuilder.applyFilters(filter, {
       applyExtra: true,
       tableName: table,
+      throwOnEmpty: force,
+      throwOnEmptyError: new Exception(
+        Exception.GENERAL_ACCESS_FORBIDDEN,
+        'you must provide a filter to delete data or use &force=true',
+      ),
     });
     astToQueryBuilder.applyOrder(order, table);
     astToQueryBuilder.applyLimitOffset({
       limit,
       offset,
     });
-
+    qb.delete()
     this.logger.debug(qb.toSQL());
 
-    return pg.withTransaction(async () => await qb);
+    try {
+      return pg.withTransaction(async () => await qb);
+    } catch (e) {
+      const error = transformPgError(e);
+      if (!error || error.status >= 500) {
+        throw new Exception(
+          error.type ?? Exception.GENERAL_SERVER_ERROR,
+          error.message ?? 'Database error',
+          error.status,
+        );
+      }
+      throw new Exception(error.type, error.message, error.status).addDetails({
+        hint: error.details.hint,
+        detail: error.details.detail,
+      });
+    }
   }
 
   async callFunction({
@@ -202,14 +258,29 @@ export class SchemasService {
     });
     this.logger.debug(qb.toSQL());
 
-    return await qb;
+    try {
+      return await qb;
+    } catch (e) {
+      const error = transformPgError(e);
+      if (!error || error.status >= 500) {
+        throw new Exception(
+          error.type ?? Exception.GENERAL_SERVER_ERROR,
+          error.message ?? 'Database error',
+          error.status,
+        );
+      }
+      throw new Exception(error.type, error.message, error.status).addDetails({
+        hint: error.details.hint,
+        detail: error.details.detail,
+      });
+    }
   }
 
   private getParamsFromUrl(
     url: string,
     tableName: string,
   ): {
-    filter?: Expression;
+    filter?: Expression & ParserResult;
     select?: SelectNode[];
     order?: ParsedOrdering[];
   } {

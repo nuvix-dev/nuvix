@@ -8,6 +8,7 @@ import {
   Logger,
   Param,
   ParseArrayPipe,
+  ParseBoolPipe,
   ParseIntPipe,
   Patch,
   Post,
@@ -27,6 +28,7 @@ import {
 import { CurrentSchema, Namespace, Scope, Sdk } from '@nuvix/core/decorators';
 import { DataSource } from '@nuvix/pg';
 import { ParserErrorFilter } from '@nuvix/core/filters/parser-error.filter';
+import { ParseDuplicatePipe } from '@nuvix/core/pipes';
 
 // Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
 @Controller({ version: ['1'], path: ['schemas/:schemaId', 'public'] })
@@ -36,7 +38,7 @@ import { ParserErrorFilter } from '@nuvix/core/filters/parser-error.filter';
 @UseFilters(ParserErrorFilter)
 export class SchemasController {
   private readonly logger = new Logger(SchemasController.name);
-  constructor(private readonly schemasService: SchemasService) {}
+  constructor(private readonly schemasService: SchemasService) { }
 
   @Get([':tableId', 'tables/:tableId'])
   @Sdk({
@@ -49,8 +51,8 @@ export class SchemasController {
     @Req() request: NuvixRequest,
     @CurrentSchema() pg: DataSource,
     @Param('schemaId') schema: string = 'public',
-    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 500,
-    @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
+    @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true })) limit: number,
+    @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true })) offset?: number,
   ) {
     return await this.schemasService.select({
       table,
@@ -69,7 +71,7 @@ export class SchemasController {
     @Req() request: NuvixRequest,
     @Param('schemaId') schema: string = 'public',
     @Body() input: Record<string, any> | Record<string, any>[],
-    @Query('columns', new ParseArrayPipe({ items: String, optional: true }))
+    @Query('columns', ParseDuplicatePipe, new ParseArrayPipe({ items: String, optional: true }))
     columns?: string[],
   ) {
     return await this.schemasService.insert({
@@ -89,10 +91,11 @@ export class SchemasController {
     @Req() request: NuvixRequest,
     @Param('schemaId') schema: string = 'public',
     @Body() input: Record<string, any>,
-    @Query('columns', new ParseArrayPipe({ items: String, optional: true }))
+    @Query('columns', ParseDuplicatePipe, new ParseArrayPipe({ items: String, optional: true }))
     columns?: string[],
-    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
-    @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
+    @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true })) offset?: number,
+    @Query('force', ParseDuplicatePipe, new ParseBoolPipe({ optional: true })) force: boolean = false,
   ) {
     return this.schemasService.update({
       pg,
@@ -103,6 +106,7 @@ export class SchemasController {
       url: request.raw.url,
       limit,
       offset,
+      force,
     });
   }
 
@@ -117,7 +121,7 @@ export class SchemasController {
     columns?: string[],
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
     @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
-  ) {}
+  ) { }
 
   @Delete([':tableId', 'tables/:tableId'])
   async deleteTables(
@@ -125,8 +129,9 @@ export class SchemasController {
     @CurrentSchema() pg: DataSource,
     @Req() request: NuvixRequest,
     @Param('schemaId') schema: string = 'public',
-    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
-    @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
+    @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true })) offset?: number,
+    @Query('force', ParseDuplicatePipe, new ParseBoolPipe({ optional: true })) force: boolean = false,
   ) {
     return await this.schemasService.delete({
       pg,
@@ -135,6 +140,7 @@ export class SchemasController {
       url: request.raw.url,
       limit,
       offset,
+      force
     });
   }
 
@@ -149,8 +155,8 @@ export class SchemasController {
     @CurrentSchema() pg: DataSource,
     @Req() request: NuvixRequest,
     @Param('schemaId') schema: string = 'public',
-    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
-    @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
+    @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true })) limit?: number,
+    @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true })) offset?: number,
     @Body() args: Record<string, any> = {},
   ) {
     return await this.schemasService.callFunction({

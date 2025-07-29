@@ -7,27 +7,31 @@ export interface Select {
   url: string;
   limit?: number;
   offset?: number;
+  shape?: 'array' | 'object';
 }
 
 export interface Insert {
   pg: DataSource;
   table: string;
   input:
-    | Record<string, string | number | null | boolean>
-    | Record<string, string | number | null | boolean>[];
+  | Record<string, string | number | null | boolean>
+  | Record<string, string | number | null | boolean>[];
   columns?: string[];
   schema: string;
   url: string;
-  // returnPref: 'minimal' | 'location' | 'full';
+  returnPref?: 'minimal' | 'location' | 'full';
 }
 
 export interface Update extends Omit<Insert, 'input'> {
   input: Record<string, string | number | null | boolean>;
   limit?: number;
   offset?: number;
+  force?: boolean;
 }
 
-export interface Delete extends Select {}
+export interface Delete extends Select {
+  force?: boolean;
+}
 
 export interface CallFunction {
   schema: string;

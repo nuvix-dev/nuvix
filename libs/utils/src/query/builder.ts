@@ -25,6 +25,8 @@ export interface ASTToQueryBuilderOptions {
   baseQuery?: QueryBuilder;
   allowUnsafeOperators?: boolean;
   maxNestingDepth?: number;
+  throwOnEmpty?: boolean;
+  throwOnEmptyError?: Exception;
 }
 
 export class ASTToQueryBuilder<T extends QueryBuilder> {
@@ -74,6 +76,15 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
       }
 
       if (!expression || Object.keys(expression).length === 0) {
+        if (options.throwOnEmpty) {
+          const error = options.throwOnEmptyError ?
+            options.throwOnEmptyError
+            : new Exception(
+              Exception.GENERAL_PARSER_EMPTY_ERROR,
+              'Empty expression provided',
+            );
+          throw error;
+        }
         return this.qb;
       }
 
