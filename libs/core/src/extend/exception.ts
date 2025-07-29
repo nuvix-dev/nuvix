@@ -1552,5 +1552,5 @@ const errorCodes: Record<string, ErrorCode> = {
     description:
       'An error occurred while building the query. Please check your query and try again.',
     code: 400,
-  }
+  },
 };

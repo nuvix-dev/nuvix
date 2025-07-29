@@ -53,7 +53,14 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
    *apply AST expression to QueryBuilder conditions
    */
   applyFilters(
-    { limit, offset, group, order, shape, ...expression }: Expression & ParserResult = {} as any,
+    {
+      limit,
+      offset,
+      group,
+      order,
+      shape,
+      ...expression
+    }: Expression & ParserResult = {} as any,
     options: ASTToQueryBuilderOptions = {},
   ): QueryBuilder {
     try {
@@ -199,7 +206,10 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
       if (node.type === 'column') {
         selectColumns.push(this._buildColumnSelect(node));
       } else if (node.type === 'embed') {
-        throw new Exception(Exception.GENERAL_PARSER_ERROR, 'Embeds are not supported in returning clause');
+        throw new Exception(
+          Exception.GENERAL_PARSER_ERROR,
+          'Embeds are not supported in returning clause',
+        );
       }
     });
 
@@ -236,25 +246,27 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
       return this._applyAndExpression(expression, queryBuilder);
     }
 
-    throw new Error(`Unsupported expression type: ${JSON.stringify(expression)}`);
+    throw new Error(
+      `Unsupported expression type: ${JSON.stringify(expression)}`,
+    );
   }
 
   private _applyCondition(
     condition: Condition,
     queryBuilder: QueryBuilder,
   ): QueryBuilder {
-    const {
-      field: _field,
-      operator,
-      values = [],
-      tableName,
-    } = condition;
+    const { field: _field, operator, values = [], tableName } = condition;
 
     if (!_field || !operator) {
-      throw new Exception(Exception.GENERAL_PARSER_ERROR, 'Condition must have both column and operator');
+      throw new Exception(
+        Exception.GENERAL_PARSER_ERROR,
+        'Condition must have both column and operator',
+      );
     }
 
-    const field = this._rawField(_field, tableName) as unknown as ReturnType<PG['raw']>;
+    const field = this._rawField(_field, tableName) as unknown as ReturnType<
+      PG['raw']
+    >;
 
     // ANY/ALL modifiers
     if (
@@ -264,7 +276,13 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
     ) {
       const [modifier, ...restValues] = values;
       if (modifier === 'any' || modifier === 'all') {
-        return this._applyAnyAllCondition(field, operator, modifier, restValues, queryBuilder);
+        return this._applyAnyAllCondition(
+          field,
+          operator,
+          modifier,
+          restValues,
+          queryBuilder,
+        );
       }
     }
 
@@ -272,66 +290,145 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
     const right = this._valueTypeToPlaceholder(values);
     let value = values[0];
 
-    if (typeof value === 'object' && '__type' in value && value.__type === 'column' && right === '??') {
-      value = value.name
+    if (
+      typeof value === 'object' &&
+      '__type' in value &&
+      value.__type === 'column' &&
+      right === '??'
+    ) {
+      value = value.name;
     }
 
     switch (operator) {
-      case 'eq': return queryBuilder.whereRaw(`?? = ${right}`, [field, value]);
-      case 'gt': return queryBuilder.whereRaw(`?? > ${right}`, [field, value]);
-      case 'gte': return queryBuilder.whereRaw(`?? >= ${right}`, [field, value]);
-      case 'lt': return queryBuilder.whereRaw(`?? < ${right}`, [field, value]);
-      case 'lte': return queryBuilder.whereRaw(`?? <= ${right}`, [field, value]);
-      case 'neq': return queryBuilder.whereRaw(`?? <> ${right}`, [field, value]);
-      case 'like': return queryBuilder.whereRaw(`?? like ?`, [field, this._valueToPattern(value)]);
-      case 'ilike': return queryBuilder.whereRaw(`?? ilike ?`, [field, this._valueToPattern(value)]);
-      case 'match': return queryBuilder.whereRaw(`?? ~ ?`, [field, this._valueToPattern(value)]);
-      case 'imatch': return queryBuilder.whereRaw(`?? ~* ?`, [field, this._valueToPattern(value)]);
-      case 'in': return queryBuilder.whereRaw(`?? in (?)`, [field, filteredValues]);
-      case 'notin': return queryBuilder.whereRaw(`?? not in (?)`, [field, filteredValues]);
+      case 'eq':
+        return queryBuilder.whereRaw(`?? = ${right}`, [field, value]);
+      case 'gt':
+        return queryBuilder.whereRaw(`?? > ${right}`, [field, value]);
+      case 'gte':
+        return queryBuilder.whereRaw(`?? >= ${right}`, [field, value]);
+      case 'lt':
+        return queryBuilder.whereRaw(`?? < ${right}`, [field, value]);
+      case 'lte':
+        return queryBuilder.whereRaw(`?? <= ${right}`, [field, value]);
+      case 'neq':
+        return queryBuilder.whereRaw(`?? <> ${right}`, [field, value]);
+      case 'like':
+        return queryBuilder.whereRaw(`?? like ?`, [
+          field,
+          this._valueToPattern(value),
+        ]);
+      case 'ilike':
+        return queryBuilder.whereRaw(`?? ilike ?`, [
+          field,
+          this._valueToPattern(value),
+        ]);
+      case 'match':
+        return queryBuilder.whereRaw(`?? ~ ?`, [
+          field,
+          this._valueToPattern(value),
+        ]);
+      case 'imatch':
+        return queryBuilder.whereRaw(`?? ~* ?`, [
+          field,
+          this._valueToPattern(value),
+        ]);
+      case 'in':
+        return queryBuilder.whereRaw(`?? in (?)`, [field, filteredValues]);
+      case 'notin':
+        return queryBuilder.whereRaw(`?? not in (?)`, [field, filteredValues]);
 
       case 'is':
       case 'isnot':
         switch (String(value)) {
-          case 'null': return queryBuilder.whereRaw(`?? is null`, [field]);
-          case 'not_null': return queryBuilder.whereRaw(`?? is not null`, [field]);
-          case 'true': return queryBuilder.whereRaw(`?? is true`, [field]);
-          case 'false': return queryBuilder.whereRaw(`?? is false`, [field]);
-          case 'unknown': return queryBuilder.whereRaw(`?? is unknown`, [field]);
-          default: throw new Exception(Exception.GENERAL_PARSER_ERROR, `Unsupported IS condition: ${value}`);
+          case 'null':
+            return queryBuilder.whereRaw(`?? is null`, [field]);
+          case 'not_null':
+            return queryBuilder.whereRaw(`?? is not null`, [field]);
+          case 'true':
+            return queryBuilder.whereRaw(`?? is true`, [field]);
+          case 'false':
+            return queryBuilder.whereRaw(`?? is false`, [field]);
+          case 'unknown':
+            return queryBuilder.whereRaw(`?? is unknown`, [field]);
+          default:
+            throw new Exception(
+              Exception.GENERAL_PARSER_ERROR,
+              `Unsupported IS condition: ${value}`,
+            );
         }
 
-      case 'null': return queryBuilder.whereRaw(`?? is null`, [field]);
-      case 'notnull': return queryBuilder.whereRaw(`?? is not null`, [field]);
-      case 'isdistinct': return queryBuilder.whereRaw(`?? is distinct from ${right}`, [field, value]);
+      case 'null':
+        return queryBuilder.whereRaw(`?? is null`, [field]);
+      case 'notnull':
+        return queryBuilder.whereRaw(`?? is not null`, [field]);
+      case 'isdistinct':
+        return queryBuilder.whereRaw(`?? is distinct from ${right}`, [
+          field,
+          value,
+        ]);
 
       // Full-text search
-      case 'fts': return this._applyFts(field, values, 'to_tsquery', queryBuilder);
-      case 'plfts': return this._applyFts(field, values, 'plainto_tsquery', queryBuilder);
-      case 'phfts': return this._applyFts(field, values, 'phraseto_tsquery', queryBuilder);
-      case 'wfts': return this._applyFts(field, values, 'websearch_to_tsquery', queryBuilder);
+      case 'fts':
+        return this._applyFts(field, values, 'to_tsquery', queryBuilder);
+      case 'plfts':
+        return this._applyFts(field, values, 'plainto_tsquery', queryBuilder);
+      case 'phfts':
+        return this._applyFts(field, values, 'phraseto_tsquery', queryBuilder);
+      case 'wfts':
+        return this._applyFts(
+          field,
+          values,
+          'websearch_to_tsquery',
+          queryBuilder,
+        );
 
       // Array/JSON
-      case 'cs': return queryBuilder.whereRaw(`?? @> ?`, [field, JSON.stringify(values)]);
-      case 'cd': return queryBuilder.whereRaw(`?? <@ ?`, [field, JSON.stringify(values)]);
-      case 'ov': return queryBuilder.whereRaw(`?? && ?`, [field, JSON.stringify(values)]);
+      case 'cs':
+        return queryBuilder.whereRaw(`?? @> ?`, [
+          field,
+          JSON.stringify(values),
+        ]);
+      case 'cd':
+        return queryBuilder.whereRaw(`?? <@ ?`, [
+          field,
+          JSON.stringify(values),
+        ]);
+      case 'ov':
+        return queryBuilder.whereRaw(`?? && ?`, [
+          field,
+          JSON.stringify(values),
+        ]);
 
       // Range
-      case 'sl': return queryBuilder.whereRaw(`?? << ?`, [field, filteredValues]);
-      case 'sr': return queryBuilder.whereRaw(`?? >> ?`, [field, filteredValues]);
-      case 'nxl': return queryBuilder.whereRaw(`?? &> ?`, [field, filteredValues]);
-      case 'nxr': return queryBuilder.whereRaw(`?? &< ?`, [field, filteredValues]);
-      case 'adj': return queryBuilder.whereRaw(`?? -|- ?`, [field, filteredValues]);
+      case 'sl':
+        return queryBuilder.whereRaw(`?? << ?`, [field, filteredValues]);
+      case 'sr':
+        return queryBuilder.whereRaw(`?? >> ?`, [field, filteredValues]);
+      case 'nxl':
+        return queryBuilder.whereRaw(`?? &> ?`, [field, filteredValues]);
+      case 'nxr':
+        return queryBuilder.whereRaw(`?? &< ?`, [field, filteredValues]);
+      case 'adj':
+        return queryBuilder.whereRaw(`?? -|- ?`, [field, filteredValues]);
 
       // Modifiers
-      case 'all': return queryBuilder.whereRaw(`?? = all(?)`, [field, filteredValues]);
-      case 'any': return queryBuilder.whereRaw(`?? = any(?)`, [field, filteredValues]);
+      case 'all':
+        return queryBuilder.whereRaw(`?? = all(?)`, [field, filteredValues]);
+      case 'any':
+        return queryBuilder.whereRaw(`?? = any(?)`, [field, filteredValues]);
 
       case 'between':
         if (values.length !== 2) {
-          throw new Exception(Exception.GENERAL_PARSER_ERROR, `'between' operator expects exactly two values.`);
+          throw new Exception(
+            Exception.GENERAL_PARSER_ERROR,
+            `'between' operator expects exactly two values.`,
+          );
         }
-        return queryBuilder.whereRaw(`?? between ? and ?`, [field, values[0], values[1]]);
+        return queryBuilder.whereRaw(`?? between ? and ?`, [
+          field,
+          values[0],
+          values[1],
+        ]);
 
       default:
         throw new Error(`Unsupported operator: ${operator}`);
@@ -341,22 +438,34 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
   private _applyFts(
     field: ReturnType<PG['raw']>,
     values: any[],
-    tsFunction: 'to_tsquery' | 'plainto_tsquery' | 'phraseto_tsquery' | 'websearch_to_tsquery',
-    queryBuilder: QueryBuilder
+    tsFunction:
+      | 'to_tsquery'
+      | 'plainto_tsquery'
+      | 'phraseto_tsquery'
+      | 'websearch_to_tsquery',
+    queryBuilder: QueryBuilder,
   ): QueryBuilder {
     if (values.length >= 2) {
       const [language, query] = values;
-      return queryBuilder.whereRaw(`to_tsvector(?, ??) @@ ${tsFunction}(?, ?)`, [language, field, language, query]);
+      return queryBuilder.whereRaw(
+        `to_tsvector(?, ??) @@ ${tsFunction}(?, ?)`,
+        [language, field, language, query],
+      );
     } else {
-      return queryBuilder.whereRaw(`to_tsvector(??) @@ ${tsFunction}(?)`, [field, values[0]]);
+      return queryBuilder.whereRaw(`to_tsvector(??) @@ ${tsFunction}(?)`, [
+        field,
+        values[0],
+      ]);
     }
   }
 
   private _valueToPattern(value: any): string {
-    return String(value).replaceAll('*', '%')
+    return String(value).replaceAll('*', '%');
   }
 
-  private _isValueColumnName(value: Condition['values'][number]): value is ValueType {
+  private _isValueColumnName(
+    value: Condition['values'][number],
+  ): value is ValueType {
     if (
       value !== null &&
       typeof value === 'object' &&
@@ -531,11 +640,17 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
   /**
    * Build column select string with alias and cast, supporting aggregates and JSON paths.
    */
-  private _buildColumnSelect({ path, tableName, alias, cast, aggregate }: ColumnNode) {
+  private _buildColumnSelect({
+    path,
+    tableName,
+    alias,
+    cast,
+    aggregate,
+  }: ColumnNode) {
     // Auto-generate alias for JSON paths if not provided
     if (!alias && Array.isArray(path)) {
       const firstJsonPartIndex = path.findIndex(
-        p => typeof p === 'object' && (p.__type === 'json' || p.operator)
+        p => typeof p === 'object' && (p.__type === 'json' || p.operator),
       );
       if (firstJsonPartIndex !== -1) {
         alias = path
@@ -545,14 +660,17 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
               ? p
               : typeof p === 'object' && p.name
                 ? p.name
-                : ''
+                : '',
           )
           .filter(Boolean)
           .join('_');
       }
     }
 
-    const rawPath = (aggregate && aggregate.fn === 'count' && path === '*') ? '*' : this._rawField(path, tableName).toSQL().sql;
+    const rawPath =
+      aggregate && aggregate.fn === 'count' && path === '*'
+        ? '*'
+        : this._rawField(path, tableName).toSQL().sql;
     let sql = cast ? `cast((${rawPath}) as ${cast})` : rawPath;
 
     // Apply aggregate function if present

@@ -8,7 +8,12 @@ import type {
 } from './types';
 import { OrderParser } from './order';
 import { Tokenizer, TokenType } from './tokenizer';
-import { AllowedOperators, BaseParser, GroupParser, specialOperators } from './base';
+import {
+  AllowedOperators,
+  BaseParser,
+  GroupParser,
+  specialOperators,
+} from './base';
 
 export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
   private readonly logger = new Logger(Parser.name);
@@ -36,7 +41,10 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
 
   parse(str: string): T & Expression {
     if (typeof str !== 'string') {
-      throw new Exception(Exception.GENERAL_PARSER_ERROR, 'Input must be a string');
+      throw new Exception(
+        Exception.GENERAL_PARSER_ERROR,
+        'Input must be a string',
+      );
     }
 
     try {
@@ -112,7 +120,10 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
   private parsePrimaryExpression(isTopLevel = false): Expression {
     // Special fields can only be at the top level
     if (this.check(TokenType.SPECIAL_FIELD) && !isTopLevel) {
-      this.throwError('Special fields (like $) can only be used at the top level, not nested inside logical expressions', this.peek());
+      this.throwError(
+        'Special fields (like $) can only be used at the top level, not nested inside logical expressions',
+        this.peek(),
+      );
     }
 
     // Handle function calls: or(...), and(...), not(...)
@@ -171,8 +182,12 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
         'Expected operator',
       ).value;
 
-      if (!specialOperators.includes(operator as typeof specialOperators[number])) {
-        this.throwError(`Unknown operator "${operator}" found.`, this.peek())
+      if (
+        !specialOperators.includes(
+          operator as (typeof specialOperators)[number],
+        )
+      ) {
+        this.throwError(`Unknown operator "${operator}" found.`, this.peek());
       }
 
       let args: any[] = [];
@@ -190,7 +205,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
             value: '',
             position: 0,
             length: 0,
-          })
+          });
           args = orderTokens;
         }
       } else if (this.match(TokenType.LPAREN)) {
@@ -219,7 +234,11 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
 
     this.validateOperator(operator, args);
     // TODO: we have to direct pass the field to the buildCondition method
-    return this.buildCondition(this.fieldToString(field), operator as AllowedOperators, args);
+    return this.buildCondition(
+      this.fieldToString(field),
+      operator as AllowedOperators,
+      args,
+    );
   }
 
   private parseArgumentList(): any[] {
@@ -250,7 +269,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
 
     const filteredExpressions =
       expressions.length === 1 &&
-        (expressions[0]['and'] || expressions[0]['or'])
+      (expressions[0]['and'] || expressions[0]['or'])
         ? (expressions[0]['and'] ?? expressions[0]['or'])
         : expressions;
     return filteredExpressions;
@@ -321,7 +340,8 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     operator: AllowedOperators,
     args: any[],
   ): Condition {
-    let _field = typeof field === 'string' ? this.parseFieldString(field) : field;
+    let _field =
+      typeof field === 'string' ? this.parseFieldString(field) : field;
 
     return {
       field: _field,
@@ -331,10 +351,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     };
   }
 
-  private handleSpecialCase(
-    operator: string,
-    args: any[],
-  ): void {
+  private handleSpecialCase(operator: string, args: any[]): void {
     switch (operator) {
       case 'limit':
         this.extraData['limit'] = this.integerOrThrow(args[0], operator);
@@ -344,7 +361,8 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
         break;
       case 'join':
         const joinType = String(args[0]).toLowerCase();
-        if (['inner', 'left', 'right', 'full'].includes(joinType)) {
+        if (['inner', 'left', 'right'].includes(joinType)) {
+          // 'full'
           this.extraData['joinType'] = joinType;
         } else {
           this.throwError(`Unsupported join type: ${args[0]}`, this.peek());
@@ -369,7 +387,11 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
         break;
       case 'order':
         if (args.length > 0) {
-          const orders = OrderParser.parse(args, this.tableName, this.mainTable);
+          const orders = OrderParser.parse(
+            args,
+            this.tableName,
+            this.mainTable,
+          );
           if (orders && orders.length > 0) {
             this.extraData['order'] = orders;
           }
@@ -394,32 +416,33 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     return num;
   }
 
-  private validateOperator(
-    operator: string,
-    args: any[]
-  ) {
+  private validateOperator(operator: string, args: any[]) {
     const count = args.length;
 
     const expect = (expected: string, condition: boolean) => {
       if (!condition) {
         this.throwError(
           `Operator "${operator}" expects ${expected}, but got ${count} value${count !== 1 ? 's' : ''}.`,
-          this.peek()
+          this.peek(),
         );
       }
     };
 
-    if (!['eq',
-      'neq',
-      'gt',
-      'gte',
-      'lt',
-      'lte'].includes(operator as AllowedOperators)) {
-      args.forEach((arg) => {
-        if (typeof arg === 'object' && arg !== null && '__type' in arg && arg.__type === 'column') {
+    if (
+      !['eq', 'neq', 'gt', 'gte', 'lt', 'lte'].includes(
+        operator as AllowedOperators,
+      )
+    ) {
+      args.forEach(arg => {
+        if (
+          typeof arg === 'object' &&
+          arg !== null &&
+          '__type' in arg &&
+          arg.__type === 'column'
+        ) {
           this.throwError(
             `Operator "${operator}" does not support column references as arguments.`,
-            this.peek()
+            this.peek(),
           );
         }
       });
@@ -439,16 +462,16 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
       case 'imatch':
         expect(
           'a single value (unless using `any` or `all`)',
-          count === 1 || (count > 1 && ['any', 'all'].includes(args[0]))
+          count === 1 || (count > 1 && ['any', 'all'].includes(args[0])),
         );
         break;
 
       // Multi-value conditions
       case 'in':
       case 'notin':
-      case 'ov':  // overlap
-      case 'cs':  // contains
-      case 'cd':  // contained in
+      case 'ov': // overlap
+      case 'cs': // contains
+      case 'cd': // contained in
       case 'all':
       case 'any':
         expect('at least one value', count >= 1);
@@ -472,11 +495,11 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
         break;
 
       // Range and adjacency (PostgreSQL-specific range operators)
-      case 'sl':   // strictly left
-      case 'sr':   // strictly right
-      case 'nxl':  // not extend left
-      case 'nxr':  // not extend right
-      case 'adj':  // adjacent
+      case 'sl': // strictly left
+      case 'sr': // strictly right
+      case 'nxl': // not extend left
+      case 'nxr': // not extend right
+      case 'adj': // adjacent
         expect('exactly two values', count === 2);
         break;
 
@@ -497,7 +520,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
       case 'wfts':
         expect(
           'one or two values: (search term) or (language, search term)',
-          count === 1 || count === 2
+          count === 1 || count === 2,
         );
         break;
 
@@ -507,15 +530,16 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
         break;
 
       default:
-        this.throwError(`Unknown or unsupported operator "${operator}".`, this.peek());
+        this.throwError(
+          `Unknown or unsupported operator "${operator}".`,
+          this.peek(),
+        );
     }
   }
 
   private _validateConfig(): void {
     if (!this.config?.groups) {
-      throw new Error(
-        'Config must include groups configuration',
-      );
+      throw new Error('Config must include groups configuration');
     }
 
     const { OPEN, CLOSE, SEP, OR, NOT } = this.config.groups;

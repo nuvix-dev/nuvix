@@ -39,7 +39,9 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
           `Schema "${_schema}" is not allowed for join: ${tableName}`,
         );
       }
-      if (!tableAlias) { joinAlias = _table };
+      if (!tableAlias) {
+        joinAlias = _table;
+      }
     }
 
     const { limit, offset, order, group, ...filterConstraints } = constraint;

@@ -76,7 +76,10 @@ export class Tokenizer {
       } else {
         const contextRadius = 20;
         const errorStart = Math.max(0, this.position - contextRadius);
-        const errorEnd = Math.min(this.input.length, this.position + contextRadius);
+        const errorEnd = Math.min(
+          this.input.length,
+          this.position + contextRadius,
+        );
         const context = this.input.slice(errorStart, errorEnd);
 
         const pointer = ' '.repeat(this.position - errorStart) + '^';
@@ -85,9 +88,12 @@ export class Tokenizer {
         const detail = `${context}\n${pointer}`;
         const hint = `Unexpected token "${token.value}". Check for typos or unsupported characters.`;
 
-        const error = new Exception(Exception.GENERAL_PARSER_ERROR, message).addDetails({
+        const error = new Exception(
+          Exception.GENERAL_PARSER_ERROR,
+          message,
+        ).addDetails({
           detail,
-          hint
+          hint,
         });
 
         throw error;

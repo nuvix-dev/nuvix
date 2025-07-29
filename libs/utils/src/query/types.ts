@@ -1,4 +1,4 @@
-import { AllowedOperators } from "./base";
+import { AllowedOperators } from './base';
 
 export interface ParsePosition {
   line: number;

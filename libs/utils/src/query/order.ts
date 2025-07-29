@@ -52,7 +52,11 @@ class OrderParser extends BaseParser {
     this.mainTable = mainTable ?? tableName;
   }
 
-  static parse(ordering: string | null | undefined | Token[], tableName: string, mainTable?: string) {
+  static parse(
+    ordering: string | null | undefined | Token[],
+    tableName: string,
+    mainTable?: string,
+  ) {
     const parser = new OrderParser(tableName, mainTable);
     return parser.parse(ordering);
   }
@@ -83,13 +87,13 @@ class OrderParser extends BaseParser {
     const results: ParsedOrdering[] = [];
     while (!this.isAtEnd()) {
       // Skip leading commas (in case of malformed input)
-      while (this.match(TokenType.COMMA)) { }
+      while (this.match(TokenType.COMMA)) {}
 
       if (this.isAtEnd()) break;
 
       // Parse path (column or json path)
       let fieldPath = this.fieldToString(this.parseFieldPath());
-      console.log({ fieldPath })
+      console.log({ fieldPath });
 
       let direction: 'asc' | 'desc' = 'asc';
       let nulls: 'nullsfirst' | 'nullslast' | null = null;
@@ -116,7 +120,7 @@ class OrderParser extends BaseParser {
             // "field.asc."
             throw new Error(
               `Unexpected dot without identifier after: ${token.value}`,
-            )
+            );
           }
           this.advance();
           continue;
@@ -160,10 +164,9 @@ class OrderParser extends BaseParser {
       if (this.match(TokenType.DOT)) {
         const token = this.peek();
         if (
-          this.check(TokenType.IDENTIFIER) && (
-            OrderParser.SORT_DIRECTIONS.includes(token.value as any) ||
-            OrderParser.NULL_HANDLING_OPTIONS.includes(token.value as any)
-          )
+          this.check(TokenType.IDENTIFIER) &&
+          (OrderParser.SORT_DIRECTIONS.includes(token.value as any) ||
+            OrderParser.NULL_HANDLING_OPTIONS.includes(token.value as any))
         ) {
           break;
         }
@@ -175,17 +178,27 @@ class OrderParser extends BaseParser {
         parts.push(part);
       } else if (this.match(TokenType.JSON_EXTRACT)) {
         // -> operator
-        if (!(this.check(TokenType.IDENTIFIER) || this.check(TokenType.NUMBER))) {
-          this.throwError("Expected field name or index after '->'", this.peek());
+        if (
+          !(this.check(TokenType.IDENTIFIER) || this.check(TokenType.NUMBER))
+        ) {
+          this.throwError(
+            "Expected field name or index after '->'",
+            this.peek(),
+          );
         }
-        const partToken = this.advance()
+        const partToken = this.advance();
         parts.push({ name: partToken.value, operator: '->', __type: 'json' });
       } else if (this.match(TokenType.JSON_EXTRACT_TEXT)) {
         // ->> operator
-        if (!(this.check(TokenType.IDENTIFIER) || this.check(TokenType.NUMBER))) {
-          this.throwError("Expected field name or index after '->>'", this.peek());
+        if (
+          !(this.check(TokenType.IDENTIFIER) || this.check(TokenType.NUMBER))
+        ) {
+          this.throwError(
+            "Expected field name or index after '->>'",
+            this.peek(),
+          );
         }
-        const partToken = this.advance()
+        const partToken = this.advance();
         parts.push({ name: partToken.value, operator: '->>', __type: 'json' });
       }
     }
