@@ -155,7 +155,10 @@ export class SchemasService {
       applyExtra: true,
       tableName: table,
       throwOnEmpty: force,
-      throwOnEmptyError: new Exception(Exception.GENERAL_ACCESS_FORBIDDEN, 'you must provide a filter to update data or use &force=true'),
+      throwOnEmptyError: new Exception(
+        Exception.GENERAL_ACCESS_FORBIDDEN,
+        'you must provide a filter to update data or use &force=true',
+      ),
     });
     astToQueryBuilder.applyOrder(order, table);
     astToQueryBuilder.applyLimitOffset({
@@ -204,7 +207,7 @@ export class SchemasService {
       limit,
       offset,
     });
-    qb.delete()
+    qb.delete();
     this.logger.debug(qb.toSQL());
 
     try {

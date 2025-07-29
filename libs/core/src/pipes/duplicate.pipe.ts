@@ -16,7 +16,10 @@ export class ParseDuplicatePipe implements PipeTransform<string, any> {
 
   transform(value: any, metadata: ArgumentMetadata): any {
     if (metadata.type !== 'param' && metadata.type !== 'query') {
-      throw new Exception(Exception.GENERAL_SERVER_ERROR, 'Invalid metadata type');
+      throw new Exception(
+        Exception.GENERAL_SERVER_ERROR,
+        'Invalid metadata type',
+      );
     }
 
     if (this.isEmpty(value)) {
