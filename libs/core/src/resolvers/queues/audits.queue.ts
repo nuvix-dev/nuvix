@@ -29,8 +29,7 @@ interface AuditLogsBuffer {
 @Processor(QueueFor.AUDITS, { concurrency: 50000 })
 export class AuditsQueue
   extends Queue
-  implements OnModuleInit, OnModuleDestroy
-{
+  implements OnModuleInit, OnModuleDestroy {
   private static readonly BATCH_SIZE = 1000; // Number of logs to process in one batch
   private static readonly BATCH_INTERVAL_MS = 1000; // Interval in milliseconds to flush
   private readonly logger = new Logger(AuditsQueue.name);
@@ -80,10 +79,8 @@ export class AuditsQueue
         | undefined;
       try {
         const { project, logs } = data;
-        const database = project.getAttribute('database');
-        const db = await this.getDatabase(project);
-        client = db.client;
-        const { audits } = db;
+        const { client: _c, audits } = await this.getDatabase(project);
+        client = _c;
 
         this.logger.log(
           `Flushing ${logs.length} audit logs for project ${projectId}`,

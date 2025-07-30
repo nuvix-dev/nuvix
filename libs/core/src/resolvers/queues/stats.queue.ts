@@ -1,25 +1,23 @@
 import { Processor } from '@nestjs/bullmq';
 import { Queue } from './queue';
 import {
-  WORKER_TYPE_USAGE,
-  METRIC_NETWORK_REQUESTS,
-  METRIC_NETWORK_INBOUND,
-  METRIC_NETWORK_OUTBOUND,
-  CACHE_DB,
+  MetricFor,
+  QueueFor,
 } from '@nuvix/utils/constants';
 import { Job } from 'bullmq';
-import { Inject, Logger } from '@nestjs/common';
-import { Redis } from 'ioredis';
+import { Logger } from '@nestjs/common';
 import { Document } from '@nuvix/database';
 
-@Processor(WORKER_TYPE_USAGE)
-export class UsageQueue extends Queue {
-  private readonly logger = new Logger(UsageQueue.name);
-  constructor(@Inject(CACHE_DB) cacheDb: Redis) {
+@Processor(QueueFor.STATS, {
+  concurrency: 10000,
+})
+export class StatsQueue extends Queue {
+  private readonly logger = new Logger(StatsQueue.name);
+  constructor() {
     super();
   }
 
-  async process(job: Job<UsageQueueOptions, any, UsageJobs>): Promise<any> {
+  async process(job: Job<UsageQueueOptions, any, MetricFor>): Promise<any> {
     const { project: p, value, region } = job.data;
     const project = new Document(p);
     const metric = job.name;
@@ -43,10 +41,4 @@ export interface UsageQueueOptions {
   value: number;
   timestamp: number;
   region: string;
-}
-
-export enum UsageJobs {
-  NETWORK_REQUESTS = METRIC_NETWORK_REQUESTS,
-  NETWORK_INBOUND = METRIC_NETWORK_INBOUND,
-  NETWORK_OUTBOUND = METRIC_NETWORK_OUTBOUND,
 }

@@ -53,6 +53,7 @@ async function bootstrap() {
       querystringParser(str) {
         return QueryString.parse(str);
       },
+      exposeHeadRoutes: false,
       logger: {
         enabled: true,
         edgeLimit: 100,
@@ -61,6 +62,7 @@ async function bootstrap() {
       },
     }),
     {
+      rawBody: true,
       abortOnError: false,
       logger: new ConsoleLogger({
         json: APP_DEBUG_FORMAT,
@@ -117,7 +119,19 @@ async function bootstrap() {
     credentials: SERVER_CONFIG.credentials,
   });
 
+  fastify.decorateRequest('hooks_args', null);
   fastify.addHook('onRequest', (req, res, done) => {
+    let size: number = 0;
+    req.raw.on('data', (chunk) => {
+      size += chunk.length;
+    });
+    req.raw.on('end', () => {
+      req['hooks_args'] = {
+        onRequest: {
+          size,
+        },
+      };
+    });
     if (Authorization['useStorage']) {
       storage.run(new Map(), () => {
         Authorization.setDefaultStatus(true); // Set per-request default status
@@ -133,7 +147,6 @@ async function bootstrap() {
       done();
     }
   });
-  fastify.decorateRequest('hooks_args', null);
 
   process.on('SIGINT', async () => {
     Logger.log('SIGINT received, shutting down gracefully...');

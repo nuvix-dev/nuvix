@@ -26,7 +26,7 @@ import {
   CorsHook,
   HostHook,
   ProjectHook,
-  ProjectUsageHook,
+  StatsHook,
   AuditHook,
 } from '@nuvix/core/resolvers/hooks';
 // Modules
@@ -112,7 +112,7 @@ import { Key } from '@nuvix/core/helper/key.helper';
   providers: [AppService, MailsQueue, AuditsQueue],
 })
 export class AppModule implements NestModule, OnModuleInit {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(private readonly jwtService: JwtService) { }
 
   onModuleInit() {
     Key.setJwtService(this.jwtService);
@@ -133,7 +133,7 @@ export class AppModule implements NestModule, OnModuleInit {
         StorageController,
         MessagingController,
       )
-      .apply(AuthHook, ApiHook, ProjectUsageHook)
+      .apply(AuthHook, ApiHook, StatsHook)
       .forRoutes(
         BaseController,
         UsersController,

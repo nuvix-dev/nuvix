@@ -323,32 +323,6 @@ export const DATABASE_TYPE_DELETE_DATABASE = 'deleteDatabase' as const;
 export const BUILD_TYPE_DEPLOYMENT = 'deployment';
 export const BUILD_TYPE_RETRY = 'retry';
 
-// Deletion Types
-export const DELETE_TYPE_DATABASES = 'databases';
-export const DELETE_TYPE_DOCUMENT = 'document';
-export const DELETE_TYPE_COLLECTIONS = 'collections';
-export const DELETE_TYPE_PROJECTS = 'projects';
-export const DELETE_TYPE_FUNCTIONS = 'functions';
-export const DELETE_TYPE_DEPLOYMENTS = 'deployments';
-export const DELETE_TYPE_USERS = 'users';
-export const DELETE_TYPE_TEAM_PROJECTS = 'teams_projects';
-export const DELETE_TYPE_EXECUTIONS = 'executions';
-export const DELETE_TYPE_AUDIT = 'audit';
-export const DELETE_TYPE_ABUSE = 'abuse';
-export const DELETE_TYPE_USAGE = 'usage';
-export const DELETE_TYPE_REALTIME = 'realtime';
-export const DELETE_TYPE_BUCKETS = 'buckets';
-export const DELETE_TYPE_INSTALLATIONS = 'installations';
-export const DELETE_TYPE_RULES = 'rules';
-export const DELETE_TYPE_SESSIONS = 'sessions';
-export const DELETE_TYPE_CACHE_BY_TIMESTAMP = 'cacheByTimeStamp';
-export const DELETE_TYPE_CACHE_BY_RESOURCE = 'cacheByResource';
-export const DELETE_TYPE_SCHEDULES = 'schedules';
-export const DELETE_TYPE_TOPIC = 'topic';
-export const DELETE_TYPE_TARGET = 'target';
-export const DELETE_TYPE_EXPIRED_TARGETS = 'invalid_targets';
-export const DELETE_TYPE_SESSION_TARGETS = 'session_targets';
-
 // Message types
 export const MESSAGE_SEND_TYPE_INTERNAL = 'internal' as const;
 export const MESSAGE_SEND_TYPE_EXTERNAL = 'external' as const;
@@ -376,91 +350,19 @@ export const FUNCTION_ALLOWLIST_HEADERS_RESPONSE = [
   'content-type',
   'content-length',
 ];
-// Message types
+
+/**@deprecated */
 export const MESSAGE_TYPE_EMAIL = 'email';
+/**@deprecated */
 export const MESSAGE_TYPE_SMS = 'sms';
+/**@deprecated */
 export const MESSAGE_TYPE_PUSH = 'push';
 /**@deprecated use `ApiKey` enum instead */
 export const API_KEY_STANDARD = 'standard';
 /**@deprecated use `ApiKey` enum instead */
 export const API_KEY_DYNAMIC = 'dynamic';
-// Worker Types
+/**@deprecated */
 export const WORKER_TYPE_USAGE = 'usage';
-// Usage metrics
-export const METRIC_TEAMS = 'teams';
-export const METRIC_USERS = 'users';
-
-export const METRIC_AUTH_METHOD_PHONE = 'auth.method.phone';
-export const METRIC_AUTH_METHOD_PHONE_COUNTRY_CODE =
-  METRIC_AUTH_METHOD_PHONE + '.{countryCode}';
-export const METRIC_MESSAGES = 'messages';
-export const METRIC_MESSAGES_SENT = METRIC_MESSAGES + '.sent';
-export const METRIC_MESSAGES_FAILED = METRIC_MESSAGES + '.failed';
-export const METRIC_MESSAGES_TYPE = METRIC_MESSAGES + '.{type}';
-export const METRIC_MESSAGES_TYPE_SENT = METRIC_MESSAGES + '.{type}.sent';
-export const METRIC_MESSAGES_TYPE_FAILED = METRIC_MESSAGES + '.{type}.failed';
-export const METRIC_MESSAGES_TYPE_PROVIDER =
-  METRIC_MESSAGES + '.{type}.{provider}';
-export const METRIC_MESSAGES_TYPE_PROVIDER_SENT =
-  METRIC_MESSAGES + '.{type}.{provider}.sent';
-export const METRIC_MESSAGES_TYPE_PROVIDER_FAILED =
-  METRIC_MESSAGES + '.{type}.{provider}.failed';
-export const METRIC_SESSIONS = 'sessions';
-export const METRIC_DATABASES = 'databases';
-export const METRIC_COLLECTIONS = 'collections';
-export const METRIC_DATABASE_ID_COLLECTIONS =
-  '{databaseInternalId}.collections';
-export const METRIC_DOCUMENTS = 'documents';
-export const METRIC_DATABASE_ID_DOCUMENTS = '{databaseInternalId}.documents';
-export const METRIC_DATABASE_ID_COLLECTION_ID_DOCUMENTS =
-  '{databaseInternalId}.{collectionInternalId}.documents';
-export const METRIC_BUCKETS = 'buckets';
-export const METRIC_FILES = 'files';
-export const METRIC_FILES_STORAGE = 'files.storage';
-export const METRIC_BUCKET_ID_FILES = '{bucketInternalId}.files';
-export const METRIC_BUCKET_ID_FILES_STORAGE =
-  '{bucketInternalId}.files.storage';
-export const METRIC_FUNCTIONS = 'functions';
-export const METRIC_DEPLOYMENTS = 'deployments';
-export const METRIC_DEPLOYMENTS_STORAGE = 'deployments.storage';
-export const METRIC_BUILDS = 'builds';
-export const METRIC_BUILDS_SUCCESS = 'builds.success';
-export const METRIC_BUILDS_FAILED = 'builds.failed';
-export const METRIC_BUILDS_STORAGE = 'builds.storage';
-export const METRIC_BUILDS_COMPUTE = 'builds.compute';
-export const METRIC_BUILDS_COMPUTE_SUCCESS = 'builds.compute.success';
-export const METRIC_BUILDS_COMPUTE_FAILED = 'builds.compute.failed';
-export const METRIC_BUILDS_MB_SECONDS = 'builds.mbSeconds';
-export const METRIC_FUNCTION_ID_BUILDS = '{functionInternalId}.builds';
-export const METRIC_FUNCTION_ID_BUILDS_SUCCESS =
-  '{functionInternalId}.builds.success';
-export const METRIC_FUNCTION_ID_BUILDS_FAILED =
-  '{functionInternalId}.builds.failed';
-export const METRIC_FUNCTION_ID_BUILDS_STORAGE =
-  '{functionInternalId}.builds.storage';
-export const METRIC_FUNCTION_ID_BUILDS_COMPUTE =
-  '{functionInternalId}.builds.compute';
-export const METRIC_FUNCTION_ID_BUILDS_COMPUTE_SUCCESS =
-  '{functionInternalId}.builds.compute.success';
-export const METRIC_FUNCTION_ID_BUILDS_COMPUTE_FAILED =
-  '{functionInternalId}.builds.compute.failed';
-export const METRIC_FUNCTION_ID_DEPLOYMENTS =
-  '{resourceType}.{resourceInternalId}.deployments';
-export const METRIC_FUNCTION_ID_DEPLOYMENTS_STORAGE =
-  '{resourceType}.{resourceInternalId}.deployments.storage';
-export const METRIC_FUNCTION_ID_BUILDS_MB_SECONDS =
-  '{functionInternalId}.builds.mbSeconds';
-export const METRIC_EXECUTIONS = 'executions';
-export const METRIC_EXECUTIONS_COMPUTE = 'executions.compute';
-export const METRIC_EXECUTIONS_MB_SECONDS = 'executions.mbSeconds';
-export const METRIC_FUNCTION_ID_EXECUTIONS = '{functionInternalId}.executions';
-export const METRIC_FUNCTION_ID_EXECUTIONS_COMPUTE =
-  '{functionInternalId}.executions.compute';
-export const METRIC_FUNCTION_ID_EXECUTIONS_MB_SECONDS =
-  '{functionInternalId}.executions.mbSeconds';
-export const METRIC_NETWORK_REQUESTS = 'network.requests';
-export const METRIC_NETWORK_INBOUND = 'network.inbound';
-export const METRIC_NETWORK_OUTBOUND = 'network.outbound';
 
 // Events
 export const EVENT_DELIMITER = '.';
@@ -497,10 +399,104 @@ export enum QueueFor {
   DATABASES = 'databases',
   MAILS = 'mails',
   COLLECTIONS = 'collections',
+  /**@deprecated */
   USAGE = 'usage',
+  STATS = 'stats'
 }
 
 export enum Events {
   SESSION_CREATE = 'session' + EVENT_DELIMITER + 'create',
   SESSION_DELETE = 'session' + EVENT_DELIMITER + 'delete',
+}
+
+export enum MetricFor {
+  USERS = 'users',
+  TEAMS = 'teams',
+  AUTH_METHOD_PHONE = 'auth.method.phone',
+  AUTH_METHOD_PHONE_COUNTRY_CODE = 'auth.method.phone.{countryCode}',
+  MESSAGES = 'messages',
+  MESSAGES_SENT = 'messages.sent',
+  MESSAGES_FAILED = 'messages.failed',
+  MESSAGES_TYPE = 'messages.{type}',
+  MESSAGES_TYPE_SENT = 'messages.{type}.sent',
+  MESSAGES_TYPE_FAILED = 'messages.{type}.failed',
+  MESSAGES_TYPE_PROVIDER = 'messages.{type}.{provider}',
+  MESSAGES_TYPE_PROVIDER_SENT = 'messages.{type}.{provider}.sent',
+  MESSAGES_TYPE_PROVIDER_FAILED = 'messages.{type}.{provider}.failed',
+  SESSIONS = 'sessions',
+  SCHEMAS = 'schemas',
+  COLLECTIONS = 'collections',
+  SCHEMA_ID_COLLECTIONS = '{schemaId}.collections',
+  DOCUMENTS = 'documents',
+  SCHEMA_ID_DOCUMENTS = '{schemaId}.documents',
+  SCHEMA_ID_COLLECTION_ID_DOCUMENTS = '{schemaId}.{collectionInternalId}.documents',
+  BUCKETS = 'buckets',
+  FILES = 'files',
+  FILES_STORAGE = 'files.storage',
+  BUCKET_ID_FILES = '{bucketInternalId}.files',
+  BUCKET_ID_FILES_STORAGE = '{bucketInternalId}.files.storage',
+  REQUESTS = 'network.requests',
+  INBOUND = 'network.inbound',
+  OUTBOUND = 'network.outbound',
+
+  FUNCTIONS = 'functions',
+  DEPLOYMENTS = 'deployments',
+  DEPLOYMENTS_STORAGE = 'deployments.storage',
+  BUILDS = 'builds',
+  BUILDS_SUCCESS = 'builds.success',
+  BUILDS_FAILED = 'builds.failed',
+  BUILDS_STORAGE = 'builds.storage',
+  BUILDS_COMPUTE = 'builds.compute',
+  BUILDS_COMPUTE_SUCCESS = 'builds.compute.success',
+  BUILDS_COMPUTE_FAILED = 'builds.compute.failed',
+  BUILDS_MB_SECONDS = 'builds.mbSeconds',
+  FUNCTION_ID_BUILDS = '{functionInternalId}.builds',
+  FUNCTION_ID_BUILDS_SUCCESS = '{functionInternalId}.builds.success',
+  FUNCTION_ID_BUILDS_FAILED = '{functionInternalId}.builds.failed',
+  FUNCTION_ID_BUILDS_STORAGE = '{functionInternalId}.builds.storage',
+  FUNCTION_ID_BUILDS_COMPUTE = '{functionInternalId}.builds.compute',
+  FUNCTION_ID_BUILDS_COMPUTE_SUCCESS = '{functionInternalId}.builds.compute.success',
+  FUNCTION_ID_BUILDS_COMPUTE_FAILED = '{functionInternalId}.builds.compute.failed',
+  FUNCTION_ID_DEPLOYMENTS = '{resourceType}.{resourceInternalId}.deployments',
+  FUNCTION_ID_DEPLOYMENTS_STORAGE = '{resourceType}.{resourceInternalId}.deployments.storage',
+  FUNCTION_ID_BUILDS_MB_SECONDS = '{functionInternalId}.builds.mbSeconds',
+  EXECUTIONS = 'executions',
+  EXECUTIONS_COMPUTE = 'executions.compute',
+  EXECUTIONS_MB_SECONDS = 'executions.mbSeconds',
+  FUNCTION_ID_EXECUTIONS = '{functionInternalId}.executions',
+  FUNCTION_ID_EXECUTIONS_COMPUTE = '{functionInternalId}.executions.compute',
+  FUNCTION_ID_EXECUTIONS_MB_SECONDS = '{functionInternalId}.executions.mbSeconds',
+}
+
+export enum MessageType {
+  EMAIL = 'email',
+  PUSH = 'push',
+  SMS = 'sms'
+}
+
+export enum DeleteType {
+  DATABASES = 'databases',
+  DOCUMENT = 'document',
+  COLLECTIONS = 'collections',
+  PROJECTS = 'projects',
+  FUNCTIONS = 'functions',
+  DEPLOYMENTS = 'deployments',
+  USERS = 'users',
+  TEAM_PROJECTS = 'teams_projects',
+  EXECUTIONS = 'executions',
+  AUDIT = 'audit',
+  ABUSE = 'abuse',
+  USAGE = 'usage',
+  REALTIME = 'realtime',
+  BUCKETS = 'buckets',
+  INSTALLATIONS = 'installations',
+  RULES = 'rules',
+  SESSIONS = 'sessions',
+  CACHE_BY_TIMESTAMP = 'cacheByTimeStamp',
+  CACHE_BY_RESOURCE = 'cacheByResource',
+  SCHEDULES = 'schedules',
+  TOPIC = 'topic',
+  TARGET = 'target',
+  EXPIRED_TARGETS = 'invalid_targets',
+  SESSION_TARGETS = 'session_targets',
 }
