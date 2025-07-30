@@ -36,7 +36,7 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    this.logger.log('Module destroying. Flushing remaining logs...');
+    this.logger.log('Module destroying. Flushing remaining stats...');
     clearInterval(this.interval);
     await this.flushBuffer();
   }

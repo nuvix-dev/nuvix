@@ -12,28 +12,7 @@ export class StatsHook implements Hook {
   constructor(
     @InjectQueue(QueueFor.STATS)
     private readonly statsQueue: Queue<StatsQueueOptions, any, MetricFor>,
-  ) {}
-
-  async onRequest(
-    req: NuvixRequest,
-    reply: NuvixRes,
-    next: (err?: Error) => void,
-  ): Promise<unknown> {
-    const project: Document = req[PROJECT];
-    if (
-      project.isEmpty() ||
-      project.getId() === 'console' ||
-      Auth.isPrivilegedUser(Authorization.getRoles())
-    )
-      return;
-
-    await this.statsQueue.add(MetricFor.REQUESTS, {
-      value: 1,
-      project,
-    });
-
-    return;
-  }
+  ) { }
 
   async onResponse(
     req: NuvixRequest,
@@ -52,6 +31,7 @@ export class StatsHook implements Hook {
     const resBodySize: number = Number(reply.getHeader('Content-Length')) || 0;
 
     await this.statsQueue.addBulk([
+      { name: MetricFor.REQUESTS, data: { value: 1, project } },
       { name: MetricFor.INBOUND, data: { value: reqBodySize, project } },
       { name: MetricFor.OUTBOUND, data: { value: resBodySize, project } },
     ]);

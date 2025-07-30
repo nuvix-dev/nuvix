@@ -134,14 +134,10 @@ async function bootstrap() {
   });
 
   process.on('SIGINT', async () => {
-    Logger.log('SIGINT received, shutting down gracefully...');
-    await app.close();
-    process.exit(0);
+    Logger.warn('SIGINT received, shutting down gracefully...');
   });
   process.on('SIGTERM', async () => {
-    Logger.log('SIGTERM received, shutting down gracefully...');
-    await app.close();
-    process.exit(0);
+    Logger.warn('SIGTERM received, shutting down gracefully...');
   });
 
   app.useGlobalFilters(new ErrorFilter());

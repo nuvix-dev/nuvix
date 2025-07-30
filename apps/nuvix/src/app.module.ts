@@ -59,6 +59,7 @@ import { MessagingController } from './messaging/messaging.controller';
 import { DatabasesController } from './databases/databases.controller';
 
 import { Key } from '@nuvix/core/helper/key.helper';
+import { StatsQueue } from '@nuvix/core/resolvers/queues';
 
 @Module({
   imports: [
@@ -109,10 +110,10 @@ import { Key } from '@nuvix/core/helper/key.helper';
     MessagingModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MailsQueue, AuditsQueue],
+  providers: [AppService, MailsQueue, AuditsQueue, StatsQueue],
 })
 export class AppModule implements NestModule, OnModuleInit {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(private readonly jwtService: JwtService) { }
 
   onModuleInit() {
     Key.setJwtService(this.jwtService);
