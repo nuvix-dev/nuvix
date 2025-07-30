@@ -379,7 +379,7 @@ interface ErrorCode {
   publish?: boolean;
 }
 
-const errorCodes: Record<string, ErrorCode> = {
+export const errorCodes: Record<string, ErrorCode> = {
   [Exception.GENERAL_UNKNOWN]: {
     name: Exception.GENERAL_UNKNOWN,
     description:

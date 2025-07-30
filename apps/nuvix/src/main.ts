@@ -9,7 +9,6 @@ import { NuvixAdapter, NuvixFactory } from '@nuvix/core/server';
 import { AppModule } from './app.module';
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { config } from 'dotenv';
-import { HttpExceptionFilter } from '@nuvix/core/filters/http-exception.filter';
 import {
   ConsoleLogger,
   Logger,
@@ -26,7 +25,6 @@ import {
   SERVER_CONFIG,
 } from '@nuvix/utils/constants';
 import { Authorization, Role, storage } from '@nuvix/database';
-import { ErrorFilter } from '@nuvix/core/filters/globle-error.filter';
 import cookieParser from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
 import { openApiSetup } from '@nuvix/core/helper';
@@ -35,6 +33,7 @@ import path from 'path';
 import fs from 'fs/promises';
 import metadata from './metadata';
 import { SwaggerModule } from '@nestjs/swagger';
+import { ErrorFilter } from '@nuvix/core/filters';
 
 config({
   path: [
@@ -147,7 +146,7 @@ async function bootstrap() {
     process.exit(0);
   });
 
-  app.useGlobalFilters(new HttpExceptionFilter(), new ErrorFilter());
+  app.useGlobalFilters(new ErrorFilter());
   await SwaggerModule.loadPluginMetadata(metadata);
   openApiSetup(app);
 

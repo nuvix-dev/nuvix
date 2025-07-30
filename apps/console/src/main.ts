@@ -8,7 +8,6 @@ import { NuvixAdapter, NuvixFactory } from '@nuvix/core/server';
 import { AppModule } from './app.module';
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { config } from 'dotenv';
-import { HttpExceptionFilter } from '@nuvix/core/filters/http-exception.filter';
 import {
   ConsoleLogger,
   Logger,
@@ -24,12 +23,12 @@ import {
   SERVER_CONFIG,
 } from '@nuvix/utils/constants';
 import { Authorization, Role, storage } from '@nuvix/database';
-import { ErrorFilter } from '@nuvix/core/filters/globle-error.filter';
 import cookieParser from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
 import QueryString from 'qs';
 import path from 'path';
 import { initSetup } from './utils/initial-setup';
+import { ErrorFilter } from '@nuvix/core/filters';
 
 config({
   path: [
@@ -145,8 +144,7 @@ async function bootstrap() {
     process.exit(0);
   });
 
-  app.useGlobalFilters(new HttpExceptionFilter(), new ErrorFilter());
-
+  app.useGlobalFilters(new ErrorFilter());
   await initSetup();
 
   const port = parseInt(process.env.APP_CONSOLE_PORT, 10) || 4100;

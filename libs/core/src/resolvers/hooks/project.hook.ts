@@ -25,7 +25,6 @@ import type {
 } from '@nuvix/core/core.module';
 import { Exception } from '@nuvix/core/extend/exception';
 import { Client } from 'pg';
-import { DataSource } from '@nuvix/pg';
 import { setupDatabaseMeta } from '@nuvix/core/helper/db-meta.helper';
 import { Audit } from '@nuvix/audit';
 
@@ -38,7 +37,7 @@ export class ProjectHook implements Hook {
     @Inject(GET_PROJECT_PG) private readonly getProjectPg: GetProjectPG,
     @Inject(GET_PROJECT_DB)
     private readonly getProjectDb: GetProjectDbFn,
-  ) {}
+  ) { }
 
   async onRequest(req: NuvixRequest) {
     const params = new ParamsHelper(req);

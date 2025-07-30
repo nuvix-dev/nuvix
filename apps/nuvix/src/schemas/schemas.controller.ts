@@ -27,7 +27,6 @@ import {
 } from '@nuvix/core/resolvers/interceptors';
 import { CurrentSchema, Namespace, Scope, Sdk } from '@nuvix/core/decorators';
 import { DataSource } from '@nuvix/pg';
-import { ParserErrorFilter } from '@nuvix/core/filters/parser-error.filter';
 import { ParseDuplicatePipe } from '@nuvix/core/pipes';
 
 // Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
@@ -35,10 +34,9 @@ import { ParseDuplicatePipe } from '@nuvix/core/pipes';
 @UseGuards(ProjectGuard)
 @Namespace('schemas')
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
-@UseFilters(ParserErrorFilter)
 export class SchemasController {
   private readonly logger = new Logger(SchemasController.name);
-  constructor(private readonly schemasService: SchemasService) {}
+  constructor(private readonly schemasService: SchemasService) { }
 
   @Get([':tableId', 'tables/:tableId'])
   @Sdk({
@@ -134,7 +132,7 @@ export class SchemasController {
     columns?: string[],
     @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
     @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
-  ) {}
+  ) { }
 
   @Delete([':tableId', 'tables/:tableId'])
   async deleteTables(
