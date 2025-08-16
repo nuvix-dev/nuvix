@@ -17,8 +17,8 @@ import { Exception } from '@nuvix/core/extend/exception';
 import { Client } from 'pg';
 import { setupDatabaseMeta } from '@nuvix/core/helper/db-meta.helper';
 import { Audit } from '@nuvix/audit';
-import type { CoreService } from '@nuvix/core/core.service.js';
-import type { ConfigService } from '@nuvix/core/config.service.js';
+import { CoreService } from '@nuvix/core/core.service.js';
+import { AppConfigService } from '@nuvix/core/config.service.js';
 
 @Injectable()
 export class ProjectHook implements Hook {
@@ -26,7 +26,7 @@ export class ProjectHook implements Hook {
   private readonly db: Database;
   constructor(
     private readonly coreService: CoreService,
-    private readonly configService: ConfigService,
+    private readonly appConfig: AppConfigService,
   ) {
     this.db = coreService.getPlatformDb();
   }
@@ -54,7 +54,7 @@ export class ProjectHook implements Hook {
         host: '35.244.24.126',
         port: 6432,
         adminRole: 'nuvix_admin',
-        password: this.configService.getDatabaseConfig().postgres.password,
+        password: this.appConfig.getDatabaseConfig().postgres.password,
         userRole: 'postgres',
         userPassword: 'testpassword',
       });
@@ -63,7 +63,7 @@ export class ProjectHook implements Hook {
         const client = await this.coreService.createProjectDbClient(project.getId(), {
           database: dbOptions['name'],
           user: dbOptions['adminRole'],
-          password: this.configService.getDatabaseConfig().postgres.password as string,
+          password: this.appConfig.getDatabaseConfig().postgres.password as string,
           port: dbOptions['port'],
           host: dbOptions['host'],
         });

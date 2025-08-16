@@ -66,7 +66,7 @@ import { Audit } from '@nuvix/audit';
 import { CreateMfaChallengeDTO, VerifyMfaChallengeDTO } from './DTO/mfa.dto';
 import { CreatePushTargetDTO, UpdatePushTargetDTO } from './DTO/target.dto';
 import type { AuthenticatorsDoc, ChallengesDoc, IdentitiesDoc, MembershipsDoc, Sessions, SessionsDoc, TargetsDoc, Tokens, TokensDoc, UsersDoc } from '@nuvix/utils/types';
-import type { ConfigService, CoreService, Platform } from '@nuvix/core';
+import { AppConfigService, CoreService, Platform } from '@nuvix/core';
 
 @Injectable()
 @UseInterceptors(ResponseInterceptor)
@@ -77,7 +77,7 @@ export class AccountService {
   private readonly platform: Doc<Platform>;
   constructor(
     private readonly coreService: CoreService,
-    private readonly configService: ConfigService,
+    private readonly appConfig: AppConfigService,
     private readonly eventEmitter: EventEmitter2,
     private readonly jwtService: JwtService,
     @InjectQueue(QueueFor.MAILS)
@@ -244,7 +244,7 @@ export class AccountService {
     Authorization.setRole(Role.users().toString());
 
     const templatePath = path.join(
-      this.configService.assetConfig.templates,
+      this.appConfig.assetConfig.templates,
       'email-account-create.tpl'
     );
     const templateSource = await fs.readFile(templatePath, 'utf8');
@@ -794,7 +794,7 @@ export class AccountService {
       if (!providerInfo) {
         throw new Exception(
           Exception.PROJECT_PROVIDER_DISABLED,
-          `This provider is disabled. Please enable the provider from your ${this.configService.get('app').name} console to continue.`,
+          `This provider is disabled. Please enable the provider from your ${this.appConfig.get('app').name} console to continue.`,
         );
       }
 
@@ -1261,7 +1261,7 @@ export class AccountService {
 
       if (user.empty()) {
         const limit = this.platform.get('auths').limit ?? 0;
-        const appMaxUsers = this.configService.appLimits.users ?? 0;
+        const appMaxUsers = this.appConfig.appLimits.users ?? 0;
 
         if (limit !== 0) {
           const total = await this.db.count('users', [], appMaxUsers);
@@ -1602,7 +1602,7 @@ export class AccountService {
     response: NuvixRes;
     locale: LocaleTranslator;
   }) {
-    if (!this.configService.getSmtpConfig().host) {
+    if (!this.appConfig.getSmtpConfig().host) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP disabled');
     }
 
@@ -1626,7 +1626,7 @@ export class AccountService {
       user.setAll(result.toObject());
     } else {
       const limit = this.platform.get('auths')['limit'] ?? 0;
-      const appLimits = this.configService.appLimits;
+      const appLimits = this.appConfig.appLimits;
 
       if (limit !== 0) {
         const total = await this.db.count('users', [], appLimits.users ?? 0);
@@ -1717,7 +1717,7 @@ export class AccountService {
     const agentClient = detector.getClient();
     const agentDevice = detector.getDevice();
 
-    const templatePath = path.join(this.configService.assetConfig.templates, 'email-magic-url.tpl');
+    const templatePath = path.join(this.appConfig.assetConfig.templates, 'email-magic-url.tpl');
     const templateSource = await fs.readFile(templatePath, 'utf8');
     const template = Template.compile(templateSource);
 
@@ -1779,7 +1779,7 @@ export class AccountService {
     response: NuvixRes;
     locale: LocaleTranslator;
   }) {
-    if (!this.configService.getSmtpConfig().host) {
+    if (!this.appConfig.getSmtpConfig().host) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP disabled');
     }
 
@@ -1797,7 +1797,7 @@ export class AccountService {
       user.setAll(result.toObject());
     } else {
       const limit = this.platform.get('auths')['limit'] ?? 0;
-      const maxUsers = this.configService.appLimits.users ?? 0;
+      const maxUsers = this.appConfig.appLimits.users ?? 0;
 
       if (limit !== 0) {
         const total = await this.db.count('users', [], maxUsers);
@@ -1874,7 +1874,7 @@ export class AccountService {
     const agentClient = detector.getClient();
     const agentDevice = detector.getDevice();
 
-    const templatePath = path.join(this.configService.assetConfig.templates, 'email-otp.tpl');
+    const templatePath = path.join(this.appConfig.assetConfig.templates, 'email-otp.tpl');
     const templateSource = await fs.readFile(templatePath, 'utf8');
     const template = Template.compile(templateSource);
 
@@ -1927,7 +1927,7 @@ export class AccountService {
     session: SessionsDoc,
   ) {
     let subject: string = locale.getText('emails.sessionAlert.subject');
-    const templatePath = path.join(this.configService.assetConfig.templates, 'email-session-alert.tpl');
+    const templatePath = path.join(this.appConfig.assetConfig.templates, 'email-session-alert.tpl');
     const templateSource = await fs.readFile(templatePath, 'utf8');
     const template = Template.compile(templateSource);
 
@@ -2218,7 +2218,7 @@ export class AccountService {
     locale,
     input,
   }: WithReqRes<WithUser<WithLocale<{ input: CreateRecoveryDTO; }>>>) {
-    if (!this.configService.getSmtpConfig().host) {
+    if (!this.appConfig.getSmtpConfig().host) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP disabled');
     }
 
@@ -2277,7 +2277,7 @@ export class AccountService {
     let body = locale.getText('emails.recovery.body');
     let subject = locale.getText('emails.recovery.subject');
 
-    const templatePath = path.join(this.configService.assetConfig.templates, 'email-inner-base.tpl');
+    const templatePath = path.join(this.appConfig.assetConfig.templates, 'email-inner-base.tpl');
     const templateSource = await fs.readFile(templatePath, 'utf8');
     const template = Template.compile(templateSource);
 
@@ -2403,7 +2403,7 @@ export class AccountService {
     locale,
     url,
   }: WithReqRes<WithUser<WithLocale<{ url?: string; }>>>) {
-    if (!this.configService.getSmtpConfig().host) {
+    if (!this.appConfig.getSmtpConfig().host) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP Disabled');
     }
 
@@ -2452,7 +2452,7 @@ export class AccountService {
     let body = locale.getText('emails.verification.body');
     let subject = locale.getText('emails.verification.subject');
 
-    const templatePath = path.join(this.configService.assetConfig.templates, 'email-inner-base.tpl');
+    const templatePath = path.join(this.appConfig.assetConfig.templates, 'email-inner-base.tpl');
     const templateSource = await fs.readFile(templatePath, 'utf8');
     const template = Template.compile(templateSource);
 
@@ -2821,7 +2821,7 @@ export class AccountService {
 
     switch (factor) {
       case TOTP.PHONE:
-        if (!this.configService.get('sms').enabled) {
+        if (!this.appConfig.get('sms').enabled) {
           throw new Exception(
             Exception.GENERAL_PHONE_DISABLED,
             'Phone provider not configured',
@@ -2848,7 +2848,7 @@ export class AccountService {
         break;
 
       case TOTP.EMAIL:
-        if (!this.configService.getSmtpConfig().host) {
+        if (!this.appConfig.getSmtpConfig().host) {
           throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP disabled');
         }
         if (!user.get('email')) {
@@ -2867,7 +2867,7 @@ export class AccountService {
         const agentDevice = detector.getDevice();
 
         const templatePath = path.join(
-          this.configService.assetConfig.templates,
+          this.appConfig.assetConfig.templates,
           'email-mfa-challenge.tpl',
         );
         const templateSource = await fs.readFile(templatePath, 'utf8');
@@ -3140,7 +3140,7 @@ export class AccountService {
       const total = await this.db.count(
         'identities',
         filterQueries,
-        this.configService.appLimits.maxCount,
+        this.appConfig.appLimits.maxCount,
       );
 
       return new Doc({

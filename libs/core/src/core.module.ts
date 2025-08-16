@@ -22,6 +22,7 @@ import {
   GET_DEVICE_FOR_PROJECT,
   APP_STORAGE_UPLOADS,
   AUDITS_FOR_PLATFORM,
+  configuration,
 } from '@nuvix/utils';
 import { Adapter, Database, StructureValidator } from '@nuvix-tech/db';
 import { Context, DataSource } from '@nuvix/pg';
@@ -32,8 +33,9 @@ import { parse as parseArray } from 'postgres-array';
 import { filters, formats } from '@nuvix/utils/database';
 import { Device, Local } from '@nuvix/storage';
 import { Audit } from '@nuvix/audit';
-import { ConfigService } from './config.service.js';
+import { AppConfigService } from './config.service.js';
 import { CoreService } from './core.service.js';
+import { ConfigModule } from '@nestjs/config';
 
 export function configurePgTypeParsers() {
   const types = pg.types;
@@ -96,15 +98,21 @@ export interface GetProjectPGFnFn {
 
 @Global()
 @Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configuration]
+    }),
+  ],
   providers: [
     {
-      provide: ConfigService,
-      useClass: ConfigService,
+      provide: AppConfigService,
+      useClass: AppConfigService,
     },
     CoreService,
     {
       provide: GET_PROJECT_DB_CLIENT,
-      useFactory: (config: ConfigService): GetProjectDbClientFn => {
+      useFactory: (config: AppConfigService): GetProjectDbClientFn => {
         return async (name: string | 'root', options: PoolOptions) => {
           let databaseOptions: Partial<PoolOptions> & Record<string, any> = {};
           if (name === 'root') {
@@ -140,11 +148,11 @@ export interface GetProjectPGFnFn {
           return client;
         };
       },
-      inject: [ConfigService],
+      inject: [AppConfigService],
     },
     {
       provide: CACHE_DB,
-      useFactory: async (config: ConfigService) => {
+      useFactory: async (config: AppConfigService) => {
         const redisConfig = config.getRedisConfig();
         const connection = new IORedis({
           connectionName: CACHE_DB.toString(),
@@ -154,11 +162,11 @@ export interface GetProjectPGFnFn {
         });
         return connection;
       },
-      inject: [ConfigService],
+      inject: [AppConfigService],
     },
     {
       provide: CACHE,
-      useFactory: async (config: ConfigService, redis: IORedis) => {
+      useFactory: async (config: AppConfigService, redis: IORedis) => {
         const redisConfig = config.getRedisConfig();
         const adpter = new Redis({
           ...redisConfig,
@@ -169,11 +177,11 @@ export interface GetProjectPGFnFn {
         const cache = new Cache(adpter);
         return cache;
       },
-      inject: [ConfigService, CACHE_DB],
+      inject: [AppConfigService, CACHE_DB],
     },
     {
       provide: DB_FOR_PLATFORM,
-      useFactory: async (config: ConfigService, cache: Cache) => {
+      useFactory: async (config: AppConfigService, cache: Cache) => {
         const platformDbConfig = config.getDatabaseConfig().platform;
         const adapter = new Adapter({
           ...platformDbConfig,
@@ -185,7 +193,7 @@ export interface GetProjectPGFnFn {
         });
         return connection;
       },
-      inject: [ConfigService, CACHE],
+      inject: [AppConfigService, CACHE],
     },
     {
       provide: AUDITS_FOR_PLATFORM,
@@ -258,7 +266,8 @@ export interface GetProjectPGFnFn {
     },
   ],
   exports: [
-    ConfigService,
+    AppConfigService,
+    CoreService,
     GET_PROJECT_DB_CLIENT,
     DB_FOR_PLATFORM,
     AUDITS_FOR_PLATFORM,

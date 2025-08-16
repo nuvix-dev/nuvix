@@ -7,7 +7,7 @@ import {
 } from '@nuvix/utils';
 import { Hook } from '../../server/hooks/interface';
 import { ProjectsDoc } from '@nuvix/utils/types';
-import type { CoreService } from '@nuvix/core/core.service.js';
+import { CoreService } from '@nuvix/core/core.service.js';
 
 @Injectable()
 export class HostHook implements Hook {

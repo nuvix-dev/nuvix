@@ -10,7 +10,7 @@ import {
   PROJECT_PG,
 } from '@nuvix/utils';
 import type { ProjectsDoc } from '@nuvix/utils/types';
-import type { CoreService } from '@nuvix/core/core.service.js';
+import { CoreService } from '@nuvix/core/core.service.js';
 import type { Client } from 'pg';
 
 @Injectable()

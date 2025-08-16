@@ -4,7 +4,7 @@ import { Job } from 'bullmq';
 import { Logger } from '@nestjs/common';
 import { Database, Doc, DuplicateException } from '@nuvix-tech/db';
 import { QueueFor } from '@nuvix/utils';
-import type { CoreService } from '@nuvix/core/core.service.js';
+import { CoreService } from '@nuvix/core/core.service.js';
 import type { Projects, ProjectsDoc } from '@nuvix/utils/types';
 import collections from '@nuvix/utils/collections/index.js';
 

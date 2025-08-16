@@ -4,7 +4,7 @@ import {
 } from '@nuvix/utils';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import type { CoreService } from './core.service.js';
+import { CoreService } from './core.service.js';
 
 
 // TODO: we have to fully refactor this service to use the new database client and Queue system

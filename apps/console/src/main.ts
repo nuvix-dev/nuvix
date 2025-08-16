@@ -29,7 +29,7 @@ import QueryString from 'qs';
 import path from 'path';
 import { initSetup } from './utils/initial-setup';
 import { ErrorFilter } from '@nuvix/core/filters';
-import { ConfigService } from '@nuvix/core';
+import { AppConfigService } from '@nuvix/core';
 
 config({
   path: [
@@ -105,7 +105,7 @@ async function bootstrap() {
   );
 
   const fastify = adapter.getInstance();
-  const config = app.get(ConfigService);
+  const config = app.get(AppConfigService);
 
   fastify.addHook('onRequest', (req, res, done) => {
     res.header('X-Powered-By', 'Nuvix-Server');
@@ -135,9 +135,9 @@ async function bootstrap() {
   });
 
   app.useGlobalFilters(new ErrorFilter());
-  await initSetup(config as ConfigService);
+  await initSetup(config as AppConfigService);
 
-  const port = parseInt(config.get('APP_PLATFORM_PORT', '4100'), 10);
+  const port = parseInt(config.root.get('APP_PLATFORM_PORT', '4100'), 10);
   const host = '0.0.0.0';
   await app.listen(port, host);
 

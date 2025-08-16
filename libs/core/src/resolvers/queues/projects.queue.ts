@@ -13,9 +13,9 @@ import {
 import { DataSource } from '@nuvix/pg';
 import { Exception } from '@nuvix/core/extend/exception';
 import { Audit } from '@nuvix/audit';
-import type { CoreService } from '@nuvix/core/core.service.js';
+import { CoreService } from '@nuvix/core/core.service.js';
 import type { ProjectsDoc } from '@nuvix/utils/types';
-import type { ConfigService } from '@nuvix/core/config.service.js';
+import { AppConfigService } from '@nuvix/core/config.service.js';
 import collections from '@nuvix/utils/collections/index.js';
 
 @Processor(QueueFor.PROJECTS, { concurrency: 1000 })
@@ -25,7 +25,7 @@ export class ProjectsQueue extends Queue {
 
   constructor(
     private readonly coreService: CoreService,
-    private readonly configService: ConfigService,
+    private readonly appConfig: AppConfigService,
   ) {
     super();
     this.db = this.coreService.getPlatformDb();
@@ -59,7 +59,7 @@ export class ProjectsQueue extends Queue {
 
     const dbName = 'postgres';
     const client = await this.coreService.createProjectDbClient('root');
-    const databases = this.configService.getDatabaseConfig();
+    const databases = this.appConfig.getDatabaseConfig();
     let db: Database | undefined;
 
     const databaseConfig = {

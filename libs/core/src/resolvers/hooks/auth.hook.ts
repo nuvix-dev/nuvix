@@ -12,7 +12,7 @@ import {
 import { Hook } from '../../server/hooks/interface';
 import { Key } from '@nuvix/core/helper/key.helper';
 import { ProjectsDoc, SessionsDoc, UsersDoc } from '@nuvix/utils/types';
-import type { CoreService } from '@nuvix/core/core.service.js';
+import { CoreService } from '@nuvix/core/core.service.js';
 
 @Injectable()
 export class AuthHook implements Hook {

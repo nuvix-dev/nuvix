@@ -19,7 +19,7 @@ import {
 import { Auth } from '@nuvix/core/helper/auth.helper';
 import { TOTP } from '@nuvix/core/validators/MFA.validator';
 import { CreateOrgDTO, UpdateOrgDTO, UpdateTeamPrefsDTO } from './DTO/team.dto';
-import type { ConfigService, CoreService } from '@nuvix/core';
+import { AppConfigService, CoreService } from '@nuvix/core';
 import type { Organizations, OrganizationsDoc, UsersDoc } from '@nuvix/utils/types';
 
 @Injectable()
@@ -28,8 +28,8 @@ export class OrganizationsService {
 
   private readonly db: Database;
   constructor(
-    coreService: CoreService,
-    private readonly configService: ConfigService,
+    private readonly coreService: CoreService,
+    private readonly appConfig: AppConfigService,
   ) {
     this.db = coreService.getPlatformDb();
   }

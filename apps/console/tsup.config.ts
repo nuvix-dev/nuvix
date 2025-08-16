@@ -1,4 +1,4 @@
-import { defineConfig } from 'tsup'
+import { defineConfig } from 'tsup';
 
 export default defineConfig({
     entry: ['src/main.ts'],
@@ -6,12 +6,12 @@ export default defineConfig({
     dts: false,
     sourcemap: true,
     clean: true,
-    outDir: 'dist',
+    outDir: '../../dist/console',
     noExternal: [],
     splitting: false,
     minify: false,
-    target: 'es2023',
+    target: 'es2024',
     skipNodeModulesBundle: true,
     shims: true,
-    tsconfig: './tsconfig.app.json'
-})
+    tsconfig: './tsconfig.app.json',
+});

@@ -32,13 +32,15 @@ import { ProjectsController } from './projects/projects.controller';
 import { AuditHook } from '@nuvix/core/resolvers/hooks/audit.hook';
 import { AuditsQueue } from './resolvers/queues/audits.queue';
 import { Key } from '@nuvix/core/helper/key.helper';
-import { ConfigService } from '@nuvix/core';
+import { AppConfigService } from '@nuvix/core';
 
 @Module({
   imports: [
+    CoreModule,
     BullModule.forRootAsync({
-      useFactory(config: ConfigService) {
+      useFactory(config: AppConfigService) {
         const redisConfig = config.getRedisConfig();
+        console.log('Redis Config:', redisConfig);
         return {
           connection: {
             ...redisConfig,
@@ -53,7 +55,7 @@ import { ConfigService } from '@nuvix/core';
           prefix: 'nuvix', // TODO: we have to include a instance key that should be unique per app instance
         };
       },
-      imports: [ConfigService]
+      inject: [AppConfigService]
     }),
     BullModule.registerQueue(
       { name: QueueFor.MAILS },
@@ -68,7 +70,6 @@ import { ConfigService } from '@nuvix/core';
       secret: JWT_SECRET,
       global: true,
     }),
-    CoreModule,
     UsersModule,
     AccountModule,
     OrganizationsModule,

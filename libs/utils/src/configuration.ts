@@ -1,5 +1,7 @@
 import * as path from 'path';
 import { PROJECT_ROOT } from './constants';
+import { config } from 'dotenv';
+config();
 
 export default () => ({
     app: {

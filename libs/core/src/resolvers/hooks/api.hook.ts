@@ -15,8 +15,8 @@ import { Hook } from '../../server/hooks/interface';
 import { setupDatabaseMeta } from '@nuvix/core/helper/db-meta.helper';
 import { Key } from '@nuvix/core/helper/key.helper';
 import { KeysDoc, MembershipsDoc, ProjectsDoc, SessionsDoc, TeamsDoc, UsersDoc } from '@nuvix/utils/types';
-import type { CoreService } from '@nuvix/core/core.service.js';
-import type { ConfigService } from '@nuvix/core/config.service.js';
+import { CoreService } from '@nuvix/core/core.service.js';
+import { AppConfigService } from '@nuvix/core/config.service.js';
 
 @Injectable()
 export class ApiHook implements Hook {
@@ -24,7 +24,7 @@ export class ApiHook implements Hook {
   private readonly db: Database;
   constructor(
     private readonly coreService: CoreService,
-    private readonly configService: ConfigService,
+    private readonly appConfig: AppConfigService,
   ) {
     this.db = coreService.getPlatformDb();
   }
@@ -90,7 +90,7 @@ export class ApiHook implements Hook {
         const accessedAt = dbKey.get('accessedAt', 0);
 
         if (
-          new Date(Date.now() - this.configService.get('access').key * 1000) > new Date(accessedAt as string)
+          new Date(Date.now() - this.appConfig.get('access').key * 1000) > new Date(accessedAt as string)
         ) {
           dbKey.set('accessedAt', new Date());
           await this.db.updateDocument('keys', dbKey.getId(), dbKey);
@@ -157,7 +157,7 @@ export class ApiHook implements Hook {
     // Update project last activity
     if (!project.empty() && project.getId() !== 'console') {
       const accessedAt = project.get('accessedAt', 0);
-      if (new Date(Date.now() - this.configService.get('access').key * 1000) > new Date(accessedAt as string)) {
+      if (new Date(Date.now() - this.appConfig.get('access').key * 1000) > new Date(accessedAt as string)) {
         project.set('accessedAt', new Date());
         await Authorization.skip(async () => {
           await this.db.updateDocument('projects', project.getId(), project);

@@ -9,7 +9,7 @@ import { QueueFor } from '@nuvix/utils';
 import { Audit, type AuditCreateInput } from '@nuvix/audit';
 import { Job } from 'bullmq';
 import { Queue } from '@nuvix/core/resolvers/queues/queue';
-import type { CoreService } from '@nuvix/core';
+import { CoreService } from '@nuvix/core';
 import type { Users } from '@nuvix/utils/types';
 
 interface AuditLog extends AuditCreateInput {

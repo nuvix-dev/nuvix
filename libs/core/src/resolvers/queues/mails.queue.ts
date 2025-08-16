@@ -3,8 +3,6 @@ import { Queue } from './queue';
 import { Job } from 'bullmq';
 import { createTransport, Transporter } from 'nodemailer';
 import {
-  PROJECT_ROOT,
-  SEND_TYPE_EMAIL,
   QueueFor,
 } from '@nuvix/utils';
 import { Exception } from '@nuvix/core/extend/exception';
@@ -12,7 +10,7 @@ import * as fs from 'fs';
 import { Logger } from '@nestjs/common';
 import path from 'path';
 import * as Template from 'handlebars';
-import type { ConfigService } from '@nuvix/core/config.service.js';
+import { AppConfigService } from '@nuvix/core/config.service.js';
 
 @Processor(QueueFor.MAILS, { concurrency: 10000 })
 export class MailsQueue extends Queue {
@@ -20,10 +18,10 @@ export class MailsQueue extends Queue {
   private readonly transporter: Transporter;
 
   constructor(
-    private readonly configService: ConfigService,
+    private readonly appConfig: AppConfigService,
   ) {
     super();
-    const config = this.configService.getSmtpConfig();
+    const config = this.appConfig.getSmtpConfig();
 
     this.transporter = createTransport({
       host: config.host,
@@ -62,7 +60,7 @@ export class MailsQueue extends Queue {
     switch (job.name) {
       case MailJob.SEND_EMAIL:
         const { body, subject, server, variables } = job.data;
-        const config = this.configService.getSmtpConfig();
+        const config = this.appConfig.getSmtpConfig();
 
         if (!config.host && !server?.host)
           throw Error(
@@ -86,8 +84,8 @@ export class MailsQueue extends Queue {
         }
 
         const protocol =
-          this.configService.get('app').forceHttps ? 'https' : 'http';
-        const hostname = this.configService.get('app', 'localhost').domain;
+          this.appConfig.get('app').forceHttps ? 'https' : 'http';
+        const hostname = this.appConfig.get('app').domain;
         const templateVariables = {
           ...variables,
           host: `${protocol}://${hostname}`,
@@ -97,7 +95,7 @@ export class MailsQueue extends Queue {
         };
 
         if (!job.data.bodyTemplate) {
-          job.data.bodyTemplate = this.configService.assetConfig
+          job.data.bodyTemplate = this.appConfig.assetConfig
             .get('assets/locale/templates/email-base-styled.tpl');
         }
 

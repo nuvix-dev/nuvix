@@ -8,7 +8,7 @@ import {
 import { Job } from 'bullmq';
 import { Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Doc } from '@nuvix-tech/db';
-import type { CoreService } from '@nuvix/core/core.service.js';
+import { CoreService } from '@nuvix/core/core.service.js';
 import type { ProjectsDoc } from '@nuvix/utils/types';
 
 @Processor(QueueFor.STATS, {

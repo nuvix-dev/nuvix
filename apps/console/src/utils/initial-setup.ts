@@ -11,9 +11,9 @@ import {
 import collections from '@nuvix/utils/collections';
 import { Audit } from '@nuvix/audit';
 import { Client } from 'pg';
-import type { ConfigService } from '@nuvix/core';
+import { AppConfigService } from '@nuvix/core';
 
-export async function initSetup(config: ConfigService) {
+export async function initSetup(config: AppConfigService) {
   const logger = new Logger('Setup');
   try {
     const {

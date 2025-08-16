@@ -31,7 +31,7 @@ import {
 } from '@nuvix/utils';
 import { MessageStatus } from '@nuvix/core/messaging/status';
 import type { Messages, MessagesDoc, Projects, ProjectsDoc, ProvidersDoc, TargetsDoc } from '@nuvix/utils/types';
-import type { CoreService } from '@nuvix/core/core.service.js';
+import { CoreService } from '@nuvix/core/core.service.js';
 
 @Injectable()
 @Processor(QueueFor.MESSAGING, { concurrency: 10000 })

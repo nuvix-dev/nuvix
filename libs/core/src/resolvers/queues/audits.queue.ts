@@ -14,7 +14,7 @@ import {
 import { Doc } from '@nuvix-tech/db';
 import { Audit } from '@nuvix/audit';
 import { Job } from 'bullmq';
-import type { CoreService } from '@nuvix/core/core.service.js';
+import { CoreService } from '@nuvix/core/core.service.js';
 import type { ProjectsDoc, UsersDoc } from '@nuvix/utils/types';
 
 interface AuditLogsBuffer {

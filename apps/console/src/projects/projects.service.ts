@@ -44,7 +44,7 @@ import {
   ProjectJob,
   ProjectQueueOptions,
 } from '@nuvix/core/resolvers/queues/projects.queue';
-import type { ConfigService, CoreService } from '@nuvix/core';
+import { AppConfigService, CoreService } from '@nuvix/core';
 import type { Projects } from '@nuvix/utils/types';
 
 @Injectable()
@@ -54,7 +54,7 @@ export class ProjectService {
 
   constructor(
     private coreService: CoreService,
-    private readonly configService: ConfigService,
+    private readonly appConfig: AppConfigService,
     @InjectQueue(QueueFor.PROJECTS)
     private readonly projectQueue: Queue<ProjectQueueOptions, unknown, ProjectJob>,
     private readonly jwtService: JwtService,
@@ -124,7 +124,7 @@ export class ProjectService {
         auths: auths,
         services: defaultServices,
         accessedAt: new Date(),
-        version: this.configService.get('app').version,
+        version: this.appConfig.get('app').version,
         database: {
           password,
           // Will be set in the project queue

@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import type { ConfigService } from "./config.service.js";
+import { AppConfigService } from "./config.service.js";
 import { Client } from 'pg';
 import IORedis from 'ioredis';
 import { Cache, Redis } from '@nuvix/cache';
@@ -20,7 +20,7 @@ export class CoreService {
     private readonly cache: Cache;
     private readonly platformDb: Database;
     private readonly geoDb: Reader<CountryResponse>;
-    constructor(private readonly configService: ConfigService) {
+    constructor(private readonly appConfig: AppConfigService) {
         this.cache = this.createCache();
         this.platformDb = this.createPlatformDb();
         this.geoDb = this.createGeoDb();
@@ -44,7 +44,7 @@ export class CoreService {
         let databaseOptions: Partial<PoolOptions> & Record<string, any> = {};
         if (name === 'root') {
             databaseOptions = {
-                ...this.configService.getDatabaseConfig().postgres,
+                ...this.appConfig.getDatabaseConfig().postgres,
             };
         } else if (options) {
             databaseOptions = {
@@ -74,7 +74,7 @@ export class CoreService {
     };
 
     async createCacheDb() {
-        const redisConfig = this.configService.getRedisConfig();
+        const redisConfig = this.appConfig.getRedisConfig();
         const connection = new IORedis({
             connectionName: 'CACHE_DB',
             ...redisConfig,
@@ -88,7 +88,7 @@ export class CoreService {
         if (this.cache) {
             return this.cache;
         }
-        const redisConfig = this.configService.getRedisConfig();
+        const redisConfig = this.appConfig.getRedisConfig();
         const adapter = new Redis({
             ...redisConfig,
             username: redisConfig.user,
@@ -103,7 +103,7 @@ export class CoreService {
         if (this.platformDb) {
             return this.platformDb;
         }
-        const platformDbConfig = this.configService.getDatabaseConfig().platform;
+        const platformDbConfig = this.appConfig.getDatabaseConfig().platform;
         const adapter = new Adapter({
             ...platformDbConfig,
             database: platformDbConfig.name,
@@ -141,7 +141,7 @@ export class CoreService {
     };
 
     getProjectDevice(projectId: string) {
-        const store = new Local(path.join(this.configService.get('storage')['uploads'], projectId));
+        const store = new Local(path.join(this.appConfig.get('storage')['uploads'], projectId));
         return store;
     }
 
@@ -159,7 +159,7 @@ export class CoreService {
         try {
             const buffer = readFileSync(
                 path.resolve(
-                    this.configService.assetConfig.root,
+                    this.appConfig.assetConfig.root,
                     'assets/dbip/dbip-country-lite-2024-09.mmdb',
                 ),
             );
@@ -177,7 +177,7 @@ export class CoreService {
         const client = await this.createProjectDbClient(project.getId(), {
             database: dbOptions["name"],
             user: dbOptions["adminRole"],
-            password: dbOptions["adminPassword"] || this.configService.get('database')['postgres']['password'],
+            password: dbOptions["adminPassword"] || this.appConfig.get('database')['postgres']['password'],
             port: dbOptions["port"],
             host: dbOptions["host"],
         });

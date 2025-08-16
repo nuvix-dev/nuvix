@@ -13,7 +13,7 @@ import { Job } from 'bullmq';
 import { QueueFor } from '@nuvix/utils';
 import { Logger } from '@nestjs/common';
 import type { Attributes, AttributesDoc, Collections, CollectionsDoc, Indexes, IndexesDoc, Projects, ProjectsDoc } from '@nuvix/utils/types';
-import type { CoreService } from '@nuvix/core/core.service.js';
+import { CoreService } from '@nuvix/core/core.service.js';
 import { Audit } from '@nuvix/audit';
 
 @Processor(QueueFor.COLLECTIONS, { concurrency: 10000 })
