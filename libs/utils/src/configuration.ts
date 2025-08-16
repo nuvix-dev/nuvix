@@ -103,6 +103,10 @@ export default () => ({
         },
     },
 
+    sms: {
+        enabled: false,
+    },
+
     database: {
         postgres: {
             host: process.env['APP_POSTGRES_HOST'] ?? 'localhost',

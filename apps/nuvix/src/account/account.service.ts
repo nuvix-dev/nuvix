@@ -87,7 +87,7 @@ export class AccountService {
     private readonly mailsQueue: Queue<MailQueueOptions>,
     private eventEmitter: EventEmitter2,
     private readonly jwtService: JwtService,
-  ) { }
+  ) {}
 
   private readonly oauthDefaultSuccess = '/auth/oauth2/success';
   private readonly oauthDefaultFailure = '/auth/oauth2/failure';
@@ -149,7 +149,7 @@ export class AccountService {
 
     try {
       userId = userId === 'unique()' ? ID.unique() : userId;
-      user.setAttributes({
+      user.setAll({
         $id: userId,
         $permissions: [
           Permission.read(Role.any()),
@@ -238,7 +238,7 @@ export class AccountService {
   async updatePrefs(
     db: Database,
     user: Doc,
-    prefs: { [key: string]: any },
+    prefs: { [key: string]: any; },
   ) {
     user.set('prefs', prefs);
 
@@ -645,7 +645,7 @@ export class AccountService {
       throw new Exception(Exception.USER_BLOCKED);
     }
 
-    user.setAttributes(profile.toObject());
+    user.setAll(profile.toObject());
 
     const auths = project.get('auths', {});
     const duration = auths.duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG;
@@ -780,7 +780,7 @@ export class AccountService {
     }
 
     const userId = ID.unique();
-    user.setAttributes({
+    user.setAll({
       $id: userId,
       $permissions: [
         Permission.read(Role.any()),
@@ -1148,7 +1148,7 @@ export class AccountService {
           'users',
           session.get('userId'),
         );
-        user.setAttributes(foundUser.toObject());
+        user.setAll(foundUser.toObject());
       }
     }
 
@@ -1164,7 +1164,7 @@ export class AccountService {
         Query.equal('email', [email]),
       ]);
       if (!userWithEmail.empty()) {
-        user.setAttributes(userWithEmail.toObject());
+        user.setAll(userWithEmail.toObject());
       }
 
       if (user.empty()) {
@@ -1178,7 +1178,7 @@ export class AccountService {
             'users',
             identity.get('userId'),
           );
-          user.setAttributes(foundUser.toObject());
+          user.setAll(foundUser.toObject());
         }
       }
 
@@ -1201,7 +1201,7 @@ export class AccountService {
 
         try {
           const userId = ID.unique();
-          user.setAttributes({
+          user.setAll({
             $id: userId,
             $permissions: [
               Permission.read(Role.any()),
@@ -1571,7 +1571,7 @@ export class AccountService {
 
     const result = await db.findOne('users', [Query.equal('email', [email])]);
     if (!result.empty()) {
-      user.setAttributes(result.toObject());
+      user.setAll(result.toObject());
     } else {
       const limit = project.get('auths', {})['limit'] ?? 0;
 
@@ -1593,7 +1593,7 @@ export class AccountService {
 
       const finalUserId = userId === 'unique()' ? ID.unique() : userId;
 
-      user.setAttributes({
+      user.setAll({
         $id: finalUserId,
         $permissions: [
           Permission.read(Role.any()),
@@ -1792,7 +1792,7 @@ export class AccountService {
 
     const result = await db.findOne('users', [Query.equal('email', [email])]);
     if (!result.empty()) {
-      user.setAttributes(result.toObject());
+      user.setAll(result.toObject());
     } else {
       const limit = project.get('auths', {})['limit'] ?? 0;
 
@@ -1814,7 +1814,7 @@ export class AccountService {
 
       const finalUserId = userId === 'unique()' ? ID.unique() : userId;
 
-      user.setAttributes({
+      user.setAll({
         $id: finalUserId,
         $permissions: [
           Permission.read(Role.any()),
@@ -1997,7 +1997,7 @@ export class AccountService {
 
     const result = await db.findOne('users', [Query.equal('phone', [phone])]);
     if (!result.empty()) {
-      user.setAttributes(result.toObject());
+      user.setAll(result.toObject());
     } else {
       const limit = project.get('auths', {})['limit'] ?? 0;
 
@@ -2010,7 +2010,7 @@ export class AccountService {
       }
 
       const finalUserId = userId === 'unique()' ? ID.unique() : userId;
-      user.setAttributes({
+      user.setAll({
         $id: finalUserId,
         $permissions: [
           Permission.read(Role.any()),
@@ -2531,7 +2531,7 @@ export class AccountService {
       throw new Exception(Exception.USER_INVALID_TOKEN);
     }
 
-    user.setAttributes(userFromRequest.toObject());
+    user.setAll(userFromRequest.toObject());
 
     const duration =
       project.get('auths', {})['duration'] ??
@@ -2698,7 +2698,7 @@ export class AccountService {
     locale,
     input,
   }: WithDB<
-    WithReqRes<WithUser<WithProject<WithLocale<{ input: CreateRecoveryDTO }>>>>
+    WithReqRes<WithUser<WithProject<WithLocale<{ input: CreateRecoveryDTO; }>>>>
   >) {
     if (!APP_SMTP_HOST) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP disabled');
@@ -2713,7 +2713,7 @@ export class AccountService {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
 
-    user.setAttributes(profile.toObject());
+    user.setAll(profile.toObject());
 
     if (profile.get('status') === false) {
       throw new Exception(Exception.USER_BLOCKED);
@@ -2852,7 +2852,7 @@ export class AccountService {
     response,
     input,
   }: WithDB<
-    WithProject<WithUser<{ response: NuvixRes; input: UpdateRecoveryDTO }>>
+    WithProject<WithUser<{ response: NuvixRes; input: UpdateRecoveryDTO; }>>
   >) {
     const profile = await db.getDocument('users', input.userId);
 
@@ -2911,7 +2911,7 @@ export class AccountService {
         .set('emailVerification', true),
     );
 
-    user.setAttributes(updatedProfile.toObject());
+    user.setAll(updatedProfile.toObject());
 
     const recoveryDocument = await db.getDocument(
       'tokens',
@@ -2946,7 +2946,7 @@ export class AccountService {
     locale,
     project,
     url,
-  }: WithDB<WithReqRes<WithUser<WithProject<WithLocale<{ url: string }>>>>>) {
+  }: WithDB<WithReqRes<WithUser<WithProject<WithLocale<{ url: string; }>>>>>) {
     if (!APP_SMTP_HOST) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP Disabled');
     }
@@ -3088,7 +3088,7 @@ export class AccountService {
     response,
     userId,
     secret,
-  }: WithDB<WithUser<{ response: NuvixRes; userId: string; secret: string }>>) {
+  }: WithDB<WithUser<{ response: NuvixRes; userId: string; secret: string; }>>) {
     const profile = await Authorization.skip(
       async () => await db.getDocument('users', userId),
     );
@@ -3116,7 +3116,7 @@ export class AccountService {
       profile.set('emailVerification', true),
     );
 
-    user.setAttributes(updatedProfile.toObject());
+    user.setAll(updatedProfile.toObject());
 
     const verification = await db.getDocument('tokens', verifiedToken.getId());
 
@@ -3245,7 +3245,7 @@ export class AccountService {
     user,
     userId,
     secret,
-  }: WithDB<WithUser<{ userId: string; secret: string }>>) {
+  }: WithDB<WithUser<{ userId: string; secret: string; }>>) {
     const profile = await Authorization.skip(
       async () => await db.getDocument('users', userId),
     );
@@ -3273,7 +3273,7 @@ export class AccountService {
       profile.set('phoneVerification', true),
     );
 
-    user.setAttributes(updatedProfile.toObject());
+    user.setAll(updatedProfile.toObject());
 
     const verificationDocument = await db.getDocument(
       'tokens',
@@ -3303,7 +3303,7 @@ export class AccountService {
     user,
     mfa,
     session,
-  }: WithDB<WithUser<{ mfa: boolean; session?: Doc }>>) {
+  }: WithDB<WithUser<{ mfa: boolean; session?: Doc; }>>) {
     user.set('mfa', mfa);
 
     user = await db.updateDocument('users', user.getId(), user);
@@ -3374,7 +3374,7 @@ export class AccountService {
     user,
     type,
     project,
-  }: WithDB<WithUser<WithProject<{ type: string }>>>) {
+  }: WithDB<WithUser<WithProject<{ type: string; }>>>) {
     let otp: TOTP;
 
     switch (type) {
@@ -3439,7 +3439,7 @@ export class AccountService {
     user,
     session,
     db,
-  }: WithDB<WithUser<{ session: Doc; otp: string; type: string }>>) {
+  }: WithDB<WithUser<{ session: Doc; otp: string; type: string; }>>) {
     let authenticator: Doc | null = null;
 
     switch (type) {
@@ -3548,7 +3548,7 @@ export class AccountService {
     user,
     db,
     type,
-  }: WithDB<WithUser<{ type: string }>>) {
+  }: WithDB<WithUser<{ type: string; }>>) {
     const authenticator = (() => {
       switch (type) {
         case MfaType.TOTP:
@@ -3760,7 +3760,7 @@ export class AccountService {
     session,
     otp,
     challengeId,
-  }: WithDB<WithUser<VerifyMfaChallengeDTO & { session: Doc }>>) {
+  }: WithDB<WithUser<VerifyMfaChallengeDTO & { session: Doc; }>>) {
     const challenge = await db.getDocument('challenges', challengeId);
 
     if (challenge.empty()) {
@@ -3852,7 +3852,7 @@ export class AccountService {
     targetId,
     providerId,
     identifier,
-  }: WithDB<WithUser<CreatePushTargetDTO & { request: NuvixRequest }>>) {
+  }: WithDB<WithUser<CreatePushTargetDTO & { request: NuvixRequest; }>>) {
     const finalTargetId = targetId === 'unique()' ? ID.unique() : targetId;
 
     const provider = await Authorization.skip(
@@ -3924,7 +3924,7 @@ export class AccountService {
     targetId,
     identifier,
   }: WithDB<
-    WithUser<UpdatePushTargetDTO & { request: NuvixRequest; targetId: string }>
+    WithUser<UpdatePushTargetDTO & { request: NuvixRequest; targetId: string; }>
   >) {
     const target = await Authorization.skip(
       async () => await db.getDocument('targets', targetId),
@@ -3975,7 +3975,7 @@ export class AccountService {
     db,
     user,
     targetId,
-  }: WithDB<WithUser<{ targetId: string }>>) {
+  }: WithDB<WithUser<{ targetId: string; }>>) {
     const target = await Authorization.skip(
       async () => await db.getDocument('targets', targetId),
     );
@@ -4013,7 +4013,7 @@ export class AccountService {
     db,
     user,
     queries,
-  }: WithDB<WithUser<{ queries: Query[] }>>) {
+  }: WithDB<WithUser<{ queries: Query[]; }>>) {
     queries.push(Query.equal('userInternalId', [user.getSequence()]));
 
     /**
@@ -4067,7 +4067,7 @@ export class AccountService {
   /**
    * Delete Identity
    */
-  async deleteIdentity({ db, identityId }: WithDB<{ identityId: string }>) {
+  async deleteIdentity({ db, identityId }: WithDB<{ identityId: string; }>) {
     const identity = await db.getDocument('identities', identityId);
 
     if (identity.empty()) {
@@ -4086,11 +4086,11 @@ export class AccountService {
   }
 }
 
-type WithDB<T = unknown> = { db: Database } & T;
+type WithDB<T = unknown> = { db: Database; } & T;
 type WithReqRes<T = unknown> = {
   request: NuvixRequest;
   response: NuvixRes;
 } & T;
-type WithUser<T = unknown> = { user: Doc } & T;
-type WithProject<T = unknown> = { project: Doc } & T;
-type WithLocale<T = unknown> = { locale: LocaleTranslator } & T;
+type WithUser<T = unknown> = { user: Doc; } & T;
+type WithProject<T = unknown> = { project: Doc; } & T;
+type WithLocale<T = unknown> = { locale: LocaleTranslator; } & T;

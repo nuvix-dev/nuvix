@@ -27,6 +27,10 @@ export class ConfigService
         return this.get('smtp' as keyof K) as Configuration['smtp'];
     }
 
+    get appLimits(): Configuration['limits'] {
+        return this.get('limits' as keyof K) as Configuration['limits'];
+    }
+
     /**
      * Get a configuration value (either custom configuration or process environment variable)
      * based on property path (you can use dot notation to traverse nested object, e.g. "database.host").

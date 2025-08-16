@@ -1,6 +1,6 @@
 import { MfaType } from '@nuvix/core/validators';
 import { Challenge } from '../challenge';
-import { RecordDoc, UsersDoc } from '@nuvix/utils/types';
+import { UsersDoc, type ChallengesDoc } from '@nuvix/utils/types';
 
 export class Email extends Challenge {
   public static override verify(challenge: UsersDoc, otp: string): boolean {
@@ -8,7 +8,7 @@ export class Email extends Challenge {
   }
 
   public static override challenge(
-    challenge: RecordDoc<any>,
+    challenge: ChallengesDoc,
     user: UsersDoc,
     otp: string,
   ): boolean {

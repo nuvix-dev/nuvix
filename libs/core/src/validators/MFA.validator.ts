@@ -1,7 +1,7 @@
 import { totp } from 'otplib';
 import { Auth } from '../helper/auth.helper';
 import { Doc } from '@nuvix-tech/db';
-import { RecordDoc, UsersDoc } from '@nuvix/utils/types';
+import { UsersDoc, type AuthenticatorsDoc } from '@nuvix/utils/types';
 
 enum MfaType {
   TOTP = 'totp',
@@ -67,11 +67,11 @@ class TOTP extends Mfa {
     super(totp);
   }
 
-  public static getAuthenticatorFromUser(user: UsersDoc): RecordDoc | null {
+  public static getAuthenticatorFromUser(user: UsersDoc): AuthenticatorsDoc | null {
     const authenticators = user.get('authenticators', []);
     for (const authenticator of authenticators as Doc[]) {
       if (authenticator.get('type') === MfaType.TOTP) {
-        return authenticator;
+        return authenticator as AuthenticatorsDoc;
       }
     }
     return null;

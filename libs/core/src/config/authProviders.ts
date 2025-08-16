@@ -414,3 +414,10 @@ export const oAuthProvidersList = Object.entries(oAuthProviders)
   .map(([name]) => name) as (keyof typeof oAuthProviders)[];
 
 export type OAuthProviders = (typeof oAuthProvidersList)[number];
+
+export type OAuthProviderType = {
+  key: string;
+  enabled: boolean;
+  appId: string;
+  secret: string;
+}

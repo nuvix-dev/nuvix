@@ -12,6 +12,7 @@ import { readFileSync } from 'fs';
 import path from "path";
 import type { ProjectsDoc } from "@nuvix/utils/types";
 import { CORE_SCHEMA } from "@nuvix/utils";
+import type { OAuthProviderType } from "./config/authProviders.js";
 
 @Injectable()
 export class CoreService {
@@ -220,5 +221,8 @@ export interface Platform {
         limit?: number;
         personalDataCheck?: boolean;
         passwordHistory?: number;
+        duration?: number;
+        sessionAlerts?: boolean;
     };
+    oAuthProviders: OAuthProviderType[];
 }

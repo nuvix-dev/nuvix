@@ -7,8 +7,8 @@
         "@nestjs/common": "^11.1.3",
         "@nestjs/config": "^4.0.2",
         "@nestjs/core": "^11.1.3",
-        "@nuvix-tech/db": "^0.1.26-alpha.1",
-        "@nuvix/audit": "latest",
+        "@nuvix-tech/db": "^0.1.26-alpha.2",
+        "@nuvix/audit": "^1.0.2",
         "reflect-metadata": "^0.2.2",
         "rxjs": "^7.8.2",
       },
@@ -74,7 +74,6 @@
         "@nestjs/schedule": "^6.0.0",
         "@nestjs/swagger": "^11.2.0",
         "@nestjs/websockets": "^11.1.3",
-        "@nuvix/audit": "^1.0.0",
         "@nuvix/cache": "^1.0.3-alpha.1",
         "@nuvix/core": "workspace:*",
         "@nuvix/messaging": "^1.0.0",
@@ -764,9 +763,9 @@
 
     "@npmcli/move-file": ["@npmcli/move-file@1.1.2", "", { "dependencies": { "mkdirp": "^1.0.4", "rimraf": "^3.0.2" } }, "sha512-1SUf/Cg2GzGDyaf15aR9St9TWlb+XvbZXWpDx8YKs7MLzMH/BCeopv+y9vzrzgkfykCGuWOlSu3mZhj2+FQcrg=="],
 
-    "@nuvix-tech/db": ["@nuvix-tech/db@0.1.26-alpha.1", "https://npm.pkg.github.com/download/@nuvix-tech/db/0.1.26-alpha.1/5eeb40dce0ae763437862fbf607bfeaa26a6400f", { "dependencies": { "chalk": "^5.5.0" }, "bin": { "nuvix-db": "dist/cli/generate-types.js" } }, "sha512-P2QuoYeR6qXvBaILRH5GeaVwYNukIaQ+XNcUm2gGG3pj0cvp6JAuN0MVONGksR7bis6ARe5DXUlbdnpRbJedjA=="],
+    "@nuvix-tech/db": ["@nuvix-tech/db@0.1.26-alpha.2", "https://npm.pkg.github.com/download/@nuvix-tech/db/0.1.26-alpha.2/3bead6f4f4c94d934d818f0bd71924c86875b759", { "dependencies": { "chalk": "^5.5.0" }, "bin": { "nuvix-db": "dist/cli/generate-types.js" } }, "sha512-vNJNu89xvHlKg4xz04Mdv2p/VfGWJLfuczMhMEPL5RJXJ0KlopAZtJhcsETn4kYFCrSxoH9e5tsdE1qviVpaeA=="],
 
-    "@nuvix/audit": ["@nuvix/audit@1.0.1", "", { "peerDependencies": { "@nuvix-tech/db": "^0.1.1" } }, "sha512-gPHPMS06ua8uasDKrZwpIGgoCrKnyxl6B6mR+zC7tW7eIvBHJmU7gIkQ6VwwKO79XDc1zEj8NJu45MbvWjzSLA=="],
+    "@nuvix/audit": ["@nuvix/audit@1.0.2", "", { "peerDependencies": { "@nuvix-tech/db": "latest" } }, "sha512-t9KDd1JVNIJzFeSJeaFnUqrDT0pktjkkOUKvBlLQCWVLTfbnhmlot1ormoAC0gsVtntIg5dUEqmYNE6+lYnwiA=="],
 
     "@nuvix/cache": ["@nuvix/cache@1.0.3-alpha.1", "", { "dependencies": { "ioredis": "^5.6.0" }, "peerDependencies": { "@nuvix/telemetry": "^1.0.1" } }, "sha512-voH/sKDmYZx4i7kdatjBF1BoIjsp/jznekHb2AkF5QeMof9RSJFM0tTtiKZtjkeBItYTZ3WXEKiVYUC74o4ANA=="],
 
@@ -2827,6 +2826,8 @@
     "ansi-escapes/type-fest": ["type-fest@0.21.3", "", {}, "sha512-t0rzBq87m3fVcduHDUFhKmyyX+9eo6WQjZvf51Ea/M0Q7+T374Jp1aUiyUl0GKxp8M/OETVHSDvmkyPgvX+X2w=="],
 
     "anymatch/picomatch": ["picomatch@2.3.1", "", {}, "sha512-JU3teHTNjmE2VCGFzuY8EXzCDVwEqB2a8fsIvwaStHhAWJEeVd1o1QD80CU6+ZdEXXSLbSsuLwJjkCBWqRQUVA=="],
+
+    "api/@nuvix/audit": ["@nuvix/audit@1.0.1", "", { "peerDependencies": { "@nuvix-tech/db": "^0.1.1" } }, "sha512-gPHPMS06ua8uasDKrZwpIGgoCrKnyxl6B6mR+zC7tW7eIvBHJmU7gIkQ6VwwKO79XDc1zEj8NJu45MbvWjzSLA=="],
 
     "babel-plugin-istanbul/istanbul-lib-instrument": ["istanbul-lib-instrument@5.2.1", "", { "dependencies": { "@babel/core": "^7.12.3", "@babel/parser": "^7.14.7", "@istanbuljs/schema": "^0.1.2", "istanbul-lib-coverage": "^3.2.0", "semver": "^6.3.0" } }, "sha512-pzqtp31nLv/XFOzXGuvhCb8qhjmTVo5vjVk19XE4CRlSWz0KoeJ3bw9XsA7nOp9YBf4qHjwBxkDzKcME/J29Yg=="],
 
