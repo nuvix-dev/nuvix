@@ -6,7 +6,7 @@ export default defineConfig({
   dts: false,
   sourcemap: true,
   clean: true,
-  outDir: '../../dist/console',
+  outDir: '../../dist/platform',
   noExternal: [],
   splitting: false,
   minify: false,
