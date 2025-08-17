@@ -19,13 +19,13 @@ const loadEnvFile = envPath => {
 
 const shared = loadEnvFile('.env');
 const api = loadEnvFile('.env.api');
-const consoleEnv = loadEnvFile('.env.console');
+const consoleEnv = loadEnvFile('.env.platform');
 const extra = import.meta.env;
 
 export const apps = [
   {
     name: 'nuvix-api',
-    script: 'dist/apps/nuvix/main.mjs',
+    script: 'dist/api/main.js',
     watch: false,
     instances: 2, // `max` Scale to use all available CPUs
     exec_mode: 'cluster',
@@ -43,8 +43,8 @@ export const apps = [
     out_file: 'logs/nuvix-api-out.log',
   },
   {
-    name: 'nuvix-console',
-    script: 'dist/apps/console/main.mjs',
+    name: 'nuvix-platform',
+    script: 'dist/platform/main.mjs',
     watch: false,
     instances: 1,
     exec_mode: 'fork',
@@ -58,7 +58,7 @@ export const apps = [
       NODE_ENV: 'production',
     },
     merge_logs: true,
-    error_file: 'logs/nuvix-console-error.log',
-    out_file: 'logs/nuvix-console-out.log',
+    error_file: 'logs/nuvix-platform-error.log',
+    out_file: 'logs/nuvix-platform-out.log',
   },
 ];
