@@ -3,9 +3,9 @@ import BaseModel from './base.model';
 
 @Exclude()
 export class SchemaModel extends BaseModel {
-  @Expose() name: string;
+  @Expose() declare name: string;
 
   @Expose() description?: string;
 
-  @Expose() type: 'managed' | 'unmanaged' | 'document';
+  @Expose() declare type: 'managed' | 'unmanaged' | 'document';
 }

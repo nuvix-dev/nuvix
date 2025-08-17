@@ -6,25 +6,25 @@ export class KeyModel extends BaseModel {
   /**
    * Key name.
    */
-  @Expose() name: string;
+  @Expose() declare name: string;
   /**
    * Key expiration date in ISO 8601 format.
    */
-  @Expose() expire: string;
+  @Expose() declare expire: string;
   /**
    * Allowed permission scopes.
    */
-  @Expose() scopes: string[];
+  @Expose() declare scopes: string[];
   /**
    * Secret key.
    */
-  @Expose() secret: string;
+  @Expose() declare secret: string;
   /**
    * Most recent access date in ISO 8601 format. This attribute is only updated again after 24 hours.
    */
-  @Expose() accessedAt: string;
+  @Expose() declare accessedAt: string;
   /**
    * List of SDK user agents that used this key.
    */
-  @Expose() sdks: string[];
+  @Expose() declare sdks: string[];
 }

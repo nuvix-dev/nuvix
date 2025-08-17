@@ -42,15 +42,15 @@ export class HooksModule<
   private readonly exceptionFiltersCache = new WeakMap();
   private readonly logger = new Logger(HooksModule.name);
 
-  private injector: Injector;
-  private routerExceptionFilter: RouterExceptionFilters;
-  private routesMapper: RoutesMapper;
-  private resolver: MiddlewareResolver;
-  private container: NestContainer;
-  private httpAdapter: HttpServer;
-  private graphInspector: GraphInspector;
-  private appOptions: TAppOptions;
-  private routeInfoPathExtractor: RouteInfoPathExtractor;
+  declare private injector: Injector;
+  declare private routerExceptionFilter: RouterExceptionFilters;
+  declare private routesMapper: RoutesMapper;
+  declare private resolver: MiddlewareResolver;
+  declare private container: NestContainer;
+  declare private httpAdapter: HttpServer;
+  declare private graphInspector: GraphInspector;
+  declare private appOptions: TAppOptions;
+  declare private routeInfoPathExtractor: RouteInfoPathExtractor;
 
   public async register(
     HooksContainer: HooksContainer,
@@ -298,7 +298,7 @@ export class HooksModule<
             return proxy(req, res, next, ...rest);
           } catch (err) {
             let exceptionsHandler = this.exceptionFiltersCache.get(
-              instance[method],
+              instance[method]!,
             );
             if (!exceptionsHandler) {
               exceptionsHandler = this.routerExceptionFilter.create(
@@ -307,7 +307,7 @@ export class HooksModule<
                 undefined,
               );
               this.exceptionFiltersCache.set(
-                instance[method],
+                instance[method]!,
                 exceptionsHandler,
               );
             }
@@ -334,11 +334,11 @@ export class HooksModule<
   > {
     const exceptionsHandler = this.routerExceptionFilter.create(
       instance,
-      instance[method],
+      instance[method as keyof Hook] as any,
       undefined,
       contextId,
     );
-    const middleware = instance[method].bind(instance);
+    const middleware = instance[method as keyof Hook]!.bind(instance) as any;
     return this.routerProxy.createProxy(middleware, exceptionsHandler) as any;
   }
 
@@ -382,7 +382,7 @@ export class HooksModule<
 
   private getContextId(request: unknown, isTreeDurable: boolean): ContextId {
     const contextId = ContextIdFactory.getByRequest(request as object);
-    if (!request![REQUEST_CONTEXT_ID]) {
+    if (!request![REQUEST_CONTEXT_ID as keyof object]) {
       Object.defineProperty(request, REQUEST_CONTEXT_ID, {
         value: contextId,
         enumerable: false,

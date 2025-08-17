@@ -5,5 +5,5 @@ export class RoleIdParamDTO {
   @IsInt()
   @IsPositive()
   @Type(() => Number)
-  id: number;
+  declare id: number;
 }

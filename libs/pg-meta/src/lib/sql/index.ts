@@ -1,4 +1,4 @@
-import { ASSETS } from '@nuvix/utils/constants';
+import { ASSETS } from '@nuvix/utils';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 

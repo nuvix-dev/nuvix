@@ -1,8 +1,14 @@
 import * as crypto from 'crypto';
 import { createHash, randomBytes, createHmac, scryptSync } from 'crypto';
 import { Exception } from '../extend/exception';
-import { ENCRYPTION_KEY, SERVER_CONFIG } from '@nuvix/utils/constants';
-import { Authorization, Document, Roles, Role } from '@nuvix/database';
+import { ENCRYPTION_KEY, SERVER_CONFIG } from '@nuvix/utils';
+import { Authorization, Role, UserDimension } from '@nuvix-tech/db';
+import {
+  MembershipsDoc,
+  SessionsDoc,
+  TokensDoc,
+  UsersDoc,
+} from '@nuvix/utils/types';
 
 const algorithm = 'aes-256-cbc';
 const key = ENCRYPTION_KEY ? Buffer.from(ENCRYPTION_KEY, 'hex') : undefined;
@@ -257,18 +263,18 @@ export class Auth {
   }
 
   public static tokenVerify(
-    tokens: Document[],
+    tokens: TokensDoc[],
     type: number | null,
     secret: string,
-  ): Document | false {
+  ): TokensDoc | false {
     for (const token of tokens) {
       if (
-        token.getAttribute('secret') !== null &&
-        token.getAttribute('expire') !== null &&
-        token.getAttribute('type') !== null &&
-        (type === null || token.getAttribute('type') === type) &&
-        token.getAttribute('secret') === this.hash(secret) &&
-        new Date(token.getAttribute('expire')) >= new Date()
+        token.get('secret') !== null &&
+        token.get('expire') !== null &&
+        token.get('type') !== null &&
+        (type === null || token.get('type') === type) &&
+        token.get('secret') === this.hash(secret) &&
+        new Date(token.get('expire') as string) >= new Date()
       ) {
         return token;
       }
@@ -278,16 +284,16 @@ export class Auth {
   }
 
   public static sessionVerify(
-    sessions: Document[],
+    sessions: SessionsDoc[],
     secret: string,
   ): string | false {
     for (const session of sessions) {
       if (
-        session.getAttribute('secret') !== null &&
-        session.getAttribute('expire') !== null &&
-        session.getAttribute('provider') !== null &&
-        session.getAttribute('secret') === this.hash(secret) &&
-        new Date(session.getAttribute('expire')) >= new Date()
+        session.get('secret') !== null &&
+        session.get('expire') !== null &&
+        session.get('provider') !== null &&
+        session.get('secret') === this.hash(secret) &&
+        new Date(session.get('expire') as string) >= new Date()
       ) {
         return session.getId();
       }
@@ -308,7 +314,7 @@ export class Auth {
     return roles.includes(Auth.USER_ROLE_APPS);
   }
 
-  public static getRoles(user: Document): string[] {
+  public static getRoles(user: UsersDoc): string[] {
     const roles: string[] = [];
 
     if (
@@ -319,55 +325,51 @@ export class Auth {
         roles.push(Role.user(user.getId()).toString());
         roles.push(Role.users().toString());
 
-        const emailVerified = user.getAttribute('emailVerification', false);
-        const phoneVerified = user.getAttribute('phoneVerification', false);
+        const emailVerified = user.get('emailVerification', false);
+        const phoneVerified = user.get('phoneVerification', false);
 
         if (emailVerified || phoneVerified) {
           roles.push(
-            Role.user(user.getId(), Roles.DIMENSION_VERIFIED).toString(),
+            Role.user(user.getId(), UserDimension.VERIFIED).toString(),
           );
-          roles.push(Role.users(Roles.DIMENSION_VERIFIED).toString());
+          roles.push(Role.users(UserDimension.VERIFIED).toString());
         } else {
           roles.push(
-            Role.user(user.getId(), Roles.DIMENSION_UNVERIFIED).toString(),
+            Role.user(user.getId(), UserDimension.UNVERIFIED).toString(),
           );
-          roles.push(Role.users(Roles.DIMENSION_UNVERIFIED).toString());
+          roles.push(Role.users(UserDimension.UNVERIFIED).toString());
         }
       } else {
         return [Role.guests().toString()];
       }
     }
 
-    for (const node of user.getAttribute('memberships') || []) {
-      if (!node.getAttribute('confirm')) {
+    for (const node of (user.get('memberships') || []) as MembershipsDoc[]) {
+      if (!node.get('confirm')) {
         continue;
       }
 
-      if (node.getAttribute('$id') && node.getAttribute('teamId')) {
-        roles.push(Role.team(node.getAttribute('teamId')).toString());
+      if (node.getId() && node.get('teamId')) {
+        roles.push(Role.team(node.get('teamId')).toString());
         roles.push(Role.member(node.getId()).toString());
 
-        if (node.getAttribute('roles')) {
-          for (const nodeRole of node.getAttribute('roles')) {
-            roles.push(
-              Role.team(node.getAttribute('teamId'), nodeRole).toString(),
-            );
+        if (node.get('roles')) {
+          for (const nodeRole of node.get('roles')) {
+            roles.push(Role.team(node.get('teamId'), nodeRole).toString());
           }
         }
       }
     }
 
-    for (const label of user.getAttribute('labels', [])) {
+    for (const label of user.get('labels', [])) {
       roles.push(`label:${label}`);
     }
 
     return roles;
   }
 
-  public static isAnonymousUser(user: Document): boolean {
-    return (
-      user.getAttribute('email') === null && user.getAttribute('phone') === null
-    );
+  public static isAnonymousUser(user: UsersDoc): boolean {
+    return user.get('email') === null && user.get('phone') === null;
   }
 
   private static getBcrypt(): any {
@@ -417,7 +419,7 @@ export class Auth {
         'ENCRYPTION_KEY is required, make sure you have added in current environment.',
       );
     const textParts = text.split(':');
-    const iv = Buffer.from(textParts.shift(), 'hex');
+    const iv = Buffer.from(textParts.shift() as string, 'hex');
     const encryptedText = Buffer.from(textParts.join(':'), 'hex');
     const decipher = crypto.createDecipheriv(algorithm, key, iv);
     let decrypted = decipher.update(encryptedText);

@@ -36,7 +36,7 @@ export class LogModel extends BaseModel {
   /**
    * Log creation date in ISO 8601 format.
    */
-  @Expose() time: string; // No default value
+  @Expose() declare time: string; // No default value
 
   /**
    * Operating system code name.

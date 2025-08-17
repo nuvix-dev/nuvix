@@ -5,7 +5,7 @@ export class AppleOAuth2 extends OAuth2 {
   protected user: Record<string, any> = {};
   protected tokens: Record<string, any> = {};
   protected claims: Record<string, any> = {};
-  protected scopes: string[] = ['name', 'email'];
+  protected override scopes: string[] = ['name', 'email'];
 
   public getName(): string {
     return 'apple';
@@ -44,8 +44,8 @@ export class AppleOAuth2 extends OAuth2 {
       );
       this.tokens = response;
 
-      if (this.tokens.id_token) {
-        const parts = this.tokens.id_token.split('.');
+      if (this.tokens['id_token']) {
+        const parts = this.tokens['id_token'].split('.');
         if (parts.length > 1) {
           this.claims = JSON.parse(Buffer.from(parts[1], 'base64').toString());
         }
@@ -74,12 +74,12 @@ export class AppleOAuth2 extends OAuth2 {
     );
     this.tokens = response;
 
-    if (!this.tokens.refresh_token) {
-      this.tokens.refresh_token = refreshToken;
+    if (!this.tokens['refresh_token']) {
+      this.tokens['refresh_token'] = refreshToken;
     }
 
-    if (this.tokens.id_token) {
-      const parts = this.tokens.id_token.split('.');
+    if (this.tokens['id_token']) {
+      const parts = this.tokens['id_token'].split('.');
       if (parts.length > 1) {
         this.claims = JSON.parse(Buffer.from(parts[1], 'base64').toString());
       }
@@ -89,15 +89,15 @@ export class AppleOAuth2 extends OAuth2 {
   }
 
   public async getUserID(accessToken: string): Promise<string> {
-    return this.claims.sub || '';
+    return this.claims['sub'] || '';
   }
 
   public async getUserEmail(accessToken: string): Promise<string> {
-    return this.claims.email || '';
+    return this.claims['email'] || '';
   }
 
   public async isEmailVerified(accessToken: string): Promise<boolean> {
-    return Boolean(this.claims.email_verified);
+    return Boolean(this.claims['email_verified']);
   }
 
   public async getUserName(accessToken: string): Promise<string> {
@@ -112,9 +112,9 @@ export class AppleOAuth2 extends OAuth2 {
       throw new Error('Invalid secret');
     }
 
-    const keyfile = secret.p8 || '';
-    const keyID = secret.keyID || '';
-    const teamID = secret.teamID || '';
+    const keyfile = secret['p8'] || '';
+    const keyID = secret['keyID'] || '';
+    const teamID = secret['teamID'] || '';
     const bundleID = this.appID;
 
     const headers = {

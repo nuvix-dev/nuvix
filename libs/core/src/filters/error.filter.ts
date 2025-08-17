@@ -29,7 +29,9 @@ export class ErrorFilter implements ExceptionFilter {
       case exception instanceof BadRequestException:
         status = exception.getStatus();
         message =
-          exception.getResponse()['message'] ||
+          (typeof exception.getResponse() === 'object'
+            ? (exception.getResponse() as Record<string, any>)['message']
+            : exception.getResponse()) ||
           errorCodes[Exception.GENERAL_BAD_REQUEST]?.description;
         type = Exception.GENERAL_BAD_REQUEST;
         break;
@@ -40,7 +42,7 @@ export class ErrorFilter implements ExceptionFilter {
         break;
       default:
         status = 500;
-        message = errorCodes[Exception.GENERAL_SERVER_ERROR]?.description;
+        message = errorCodes[Exception.GENERAL_SERVER_ERROR]?.description!;
         type = Exception.GENERAL_SERVER_ERROR;
         break;
     }

@@ -31,12 +31,12 @@ export class MembershipModel extends BaseModel {
   /**
    * Date the user has been invited to join the team in ISO 8601 format.
    */
-  @Expose() invited: string; // No default value
+  @Expose() declare invited: string; // No default value
 
   /**
    * Date the user has accepted the invitation to join the team in ISO 8601 format.
    */
-  @Expose() joined: string; // No default value
+  @Expose() declare joined: string; // No default value
 
   /**
    * User confirmation status, true if the user has joined the team or false otherwise.

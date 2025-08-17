@@ -1,12 +1,12 @@
 import { authenticator } from 'otplib';
-import { Document } from '@nuvix/database';
-import { TOTP as TOTPType } from '@nuvix/core/validators';
+import { MfaType, TOTP as TOTPType } from '@nuvix/core/validators';
 import { Challenge } from '../challenge';
+import { RecordDoc, UsersDoc, type ChallengesDoc } from '@nuvix/utils/types';
 
 export class TOTP extends Challenge {
-  public static verify(user: Document, otp: string): boolean {
+  public static override verify(user: UsersDoc, otp: string): boolean {
     const authenticatorDoc = TOTPType.getAuthenticatorFromUser(user);
-    const data = authenticatorDoc.getAttribute('data');
+    const data = authenticatorDoc?.get('data') as unknown as { secret: string };
 
     return authenticator.verify({
       token: otp,
@@ -14,12 +14,12 @@ export class TOTP extends Challenge {
     });
   }
 
-  public static challenge(
-    challenge: Document,
-    user: Document,
+  public static override challenge(
+    challenge: ChallengesDoc,
+    user: UsersDoc,
     otp: string,
   ): boolean {
-    if (challenge.isSet('type') && challenge.getAttribute('type') === 'TOTP') {
+    if (challenge.has('type') && challenge.get('type') === MfaType.TOTP) {
       return this.verify(user, otp);
     }
 

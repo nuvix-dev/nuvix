@@ -32,7 +32,7 @@ export class SelectParser {
     if (depth < 0) {
       throw new Error('Depth cannot be negative');
     }
-    this.maxDepth = maxDepth;
+    maxDepth !== undefined && (this.maxDepth = maxDepth);
     this.depth = depth;
   }
 
@@ -61,7 +61,7 @@ export class SelectParser {
     let quoteChar: string | null = null;
 
     for (let i = 0; i < str.length; i++) {
-      const char = str[i];
+      const char = str[i]!;
 
       if (this.handleQuotes(char, inQuotes, quoteChar)) {
         const result = this.updateQuoteState(char, inQuotes, quoteChar);
@@ -176,7 +176,7 @@ export class SelectParser {
     return !!this.extractEmbedToken(token);
   }
 
-  private extractEmbedToken(token: string): string[] {
+  private extractEmbedToken(token: string): RegExpMatchArray | null {
     return token.match(
       /^(?:(\.{3})?)?(?:([^${:({]+):)?([^${:({]+){([^}]*)}(?:\((.*?)\))?$/s,
     );
@@ -205,14 +205,14 @@ export class SelectParser {
     let cast = outerCast;
 
     if (fnMatch) {
-      const fn = fnMatch[1];
+      const fn = fnMatch[1]!;
       if (!this.allowedAggregations.includes(fn)) {
         throw new Exception(
           Exception.GENERAL_PARSER_ERROR,
           `Unsupported aggregation function: ${fn}. Allowed functions are: ${this.allowedAggregations.join(', ')}`,
         );
       }
-      let arg = fnMatch[2].trim();
+      let arg = fnMatch[2]?.trim()!;
 
       // Support cast inside aggregation, e.g., sum(col::int)
       const { value: columnArg, cast: innerCast } = this.extractCast(arg);
@@ -307,6 +307,16 @@ export class SelectParser {
     }
     const match = this.extractEmbedToken(token);
 
+    if (!match) {
+      throw new Exception(
+        Exception.GENERAL_PARSER_ERROR,
+        `Invalid embed syntax: ${token}`,
+      ).addDetails({
+        hint: 'Ensure embed syntax is properly defined.',
+        detail: `Invalid embed in token: "${token}"`,
+      });
+    }
+
     const [
       _,
       flatten,
@@ -319,8 +329,8 @@ export class SelectParser {
     let resource: string;
     let cardinalityHint: 'one' | 'many' | undefined;
 
-    const parts = fullResourceString.split('.');
-    const lastPart = parts[parts.length - 1].trim();
+    const parts = fullResourceString?.split('.')!;
+    const lastPart = parts[parts.length - 1]!.trim();
 
     if (
       parts.length > 1 &&
@@ -349,7 +359,7 @@ export class SelectParser {
         detail: `Invalid resource name in token: "${token}"`,
       });
     } else {
-      resource = fullResourceString.trim();
+      resource = fullResourceString!.trim();
       cardinalityHint = undefined;
     }
 
@@ -402,8 +412,8 @@ export class SelectParser {
       type: 'embed',
       resource,
       mainTable: this.tableName,
-      joinType,
-      alias,
+      joinType: joinType!,
+      alias: alias!,
       constraint,
       select,
       shape,

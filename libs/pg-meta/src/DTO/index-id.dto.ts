@@ -5,5 +5,5 @@ export class IndexIdParamDTO {
   @IsInt()
   @IsPositive()
   @Type(() => Number)
-  id: number;
+  declare id: number;
 }

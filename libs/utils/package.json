@@ -1,0 +1,39 @@
+{
+  "name": "@nuvix/utils",
+  "version": "1.0.0",
+  "private": true,
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    },
+    "./query": {
+      "import": "./dist/query/index.js",
+      "types": "./dist/query/index.d.ts"
+    },
+    "./database": {
+      "import": "./dist/database/index.js",
+      "types": "./dist/database/index.d.ts"
+    },
+    "./collections": {
+      "import": "./dist/collections/index.js",
+      "types": "./dist/collections/index.d.ts"
+    },
+    "./auth": {
+      "import": "./dist/auth/index.js",
+      "types": "./dist/auth/index.d.ts"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "dev": "tsup --watch",
+    "lint": "eslint src/**/*.ts --fix",
+    "test": "jest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "typescript": "^5.8.3",
+    "tsup": "^8.5.0"
+  }
+}

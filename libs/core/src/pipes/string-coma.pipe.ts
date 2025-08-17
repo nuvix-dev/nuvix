@@ -4,7 +4,7 @@ import { Exception } from '../extend/exception';
 interface Options {}
 
 export class ParseComaStringPipe
-  implements PipeTransform<string | string[], string[]>
+  implements PipeTransform<string, string[] | undefined>
 {
   private readonly options: Options;
 
@@ -12,7 +12,7 @@ export class ParseComaStringPipe
     this.options = options;
   }
 
-  transform(value: any, metadata: ArgumentMetadata): string[] {
+  transform(value: any, metadata: ArgumentMetadata): string[] | undefined {
     if (metadata.type !== 'query' && metadata.type !== 'param') {
       throw new Exception(
         'GENERAL_QUERY_INVALID',

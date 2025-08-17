@@ -14,9 +14,9 @@ class ParamsHelper {
    * and can be accessed directly in query.
    * If the parameter is not found, it returns the default value.
    */
-  get<T extends null>(
+  get<T extends any = null>(
     param: string,
-    defaultValue: T = null,
+    defaultValue = null,
   ): T | string | string[] | undefined {
     let value: string | string[] | undefined;
     let headerParam = `x-nuvix-${param.toLowerCase()}`;
@@ -32,7 +32,7 @@ class ParamsHelper {
       return this.processValue(value);
     }
 
-    return defaultValue;
+    return defaultValue as T;
   }
 
   getFromHeaders(
@@ -53,10 +53,10 @@ class ParamsHelper {
 
   private processValue(value: string | string[]): string {
     if (Array.isArray(value)) {
-      return value[value.length - 1];
+      return value[value.length - 1]!;
     } else if (typeof value === 'string' && value.includes(',')) {
       const parts = value.split(',');
-      return parts[parts.length - 1];
+      return parts[parts.length - 1]!;
     } else {
       return value;
     }

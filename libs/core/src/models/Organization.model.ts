@@ -6,101 +6,101 @@ export class OrganizationModel extends BaseModel {
   /**
    * Team name.
    */
-  @Expose() name: string;
+  @Expose() declare name: string;
   /**
    * Total number of team members.
    */
-  @Expose() total: number;
+  @Expose() declare total: number;
   /**
    * Team preferences as a key-value object
    */
-  @Expose() prefs: object;
+  @Expose() declare prefs: object;
   /**
    * Project budget limit
    */
-  @Expose() billingBudget: number;
+  @Expose() declare billingBudget: number;
   /**
    * Project budget limit
    */
-  @Expose() budgetAlerts: string[];
+  @Expose() declare budgetAlerts: string[];
   /**
    * Billing plan selected. Can be one of `tier-0`, `tier-1` or `tier-2`.
    */
-  @Expose() billingPlan: string;
+  @Expose() declare billingPlan: string;
   /**
    * Billing email set for the organization.
    */
-  @Expose() billingEmail: string;
+  @Expose() declare billingEmail: string;
   /**
    * Billing cycle start date.
    */
-  @Expose() billingStartDate: string;
+  @Expose() declare billingStartDate: string;
   /**
    * Current invoice cycle start date.
    */
-  @Expose() billingCurrentInvoiceDate: string;
+  @Expose() declare billingCurrentInvoiceDate: string;
   /**
    * Next invoice cycle start date.
    */
-  @Expose() billingNextInvoiceDate: string;
+  @Expose() declare billingNextInvoiceDate: string;
   /**
    * Start date of trial.
    */
-  @Expose() billingTrialStartDate: string;
+  @Expose() declare billingTrialStartDate: string;
   /**
    * Number of trial days.
    */
-  @Expose() billingTrialDays: number;
+  @Expose() declare billingTrialDays: number;
   /**
    * Current active aggregation id.
    */
-  @Expose() billingAggregationId: string;
+  @Expose() declare billingAggregationId: string;
   /**
    * Default payment method.
    */
-  @Expose() paymentMethodId: string;
+  @Expose() declare paymentMethodId: string;
   /**
    * Default payment method.
    */
-  @Expose() billingAddressId: string;
+  @Expose() declare billingAddressId: string;
   /**
    * Backup payment method.
    */
-  @Expose() backupPaymentMethodId: string;
+  @Expose() declare backupPaymentMethodId: string;
   /**
    * Organization agreements
    */
-  @Expose() agreementBAA: string;
+  @Expose() declare agreementBAA: string;
   /**
    * Program manager&#039;s name.
    */
-  @Expose() programManagerName: string;
+  @Expose() declare programManagerName: string;
   /**
    * Program manager&#039;s calendar link.
    */
-  @Expose() programManagerCalendar: string;
+  @Expose() declare programManagerCalendar: string;
   /**
    * Program&#039;s discord channel name.
    */
-  @Expose() programDiscordChannelName: string;
+  @Expose() declare programDiscordChannelName: string;
   /**
    * Program&#039;s discord channel URL.
    */
-  @Expose() programDiscordChannelUrl: string;
+  @Expose() declare programDiscordChannelUrl: string;
   /**
    * Billing limits reached
    */
-  @Expose() billingLimits: object;
+  @Expose() declare billingLimits: object;
   /**
    * Billing plan downgrade
    */
-  @Expose() billingPlanDowngrade: object;
+  @Expose() declare billingPlanDowngrade: object;
   /**
    * Tax Id
    */
-  @Expose() billingTaxId: string;
+  @Expose() declare billingTaxId: string;
   /**
    * Marked for deletion
    */
-  @Expose() markedForDeletion: boolean;
+  @Expose() declare markedForDeletion: boolean;
 }

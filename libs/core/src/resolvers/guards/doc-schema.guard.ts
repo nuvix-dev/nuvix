@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { Database } from '@nuvix/database';
-import { CURRENT_SCHEMA_DB } from '@nuvix/utils/constants';
+import { Database } from '@nuvix-tech/db';
+import { CURRENT_SCHEMA_DB } from '@nuvix/utils';
 
 @Injectable()
 export class DocSchemaGuard implements CanActivate {

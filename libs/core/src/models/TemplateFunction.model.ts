@@ -9,11 +9,6 @@ export class TemplateFunctionModel extends BaseModel {
   @Expose() icon: string = ''; // Default to empty string
 
   /**
-   * Function Template ID.
-   */
-  @Expose() id: string = ''; // Default to empty string
-
-  /**
    * Function Template Name.
    */
   @Expose() name: string = ''; // Default to empty string

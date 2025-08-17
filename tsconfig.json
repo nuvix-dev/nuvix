@@ -1,42 +1,41 @@
 {
   "compilerOptions": {
-    "module": "ESNext",
+    /* === Module System === */
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "target": "esnext",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    /* === Output === */
+    "outDir": "./dist",
     "declaration": true,
     "removeComments": true,
-    "emitDecoratorMetadata": true,
-    "experimentalDecorators": true,
-    "allowSyntheticDefaultImports": true,
-    "moduleResolution": "bundler",
-    "target": "ES2023",
     "sourceMap": true,
-    "outDir": "./dist",
-    "baseUrl": "./",
-    "incremental": true,
+    /* === Decorators === */
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    /* === Strictness === */
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "noImplicitOverride": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noPropertyAccessFromIndexSignature": true,
+    "stripInternal": true,
+    /* === Performance === */
+    "incremental": false,
     "skipLibCheck": true,
-    "strictNullChecks": false,
-    "noImplicitAny": false,
-    "strictBindCallApply": false,
-    "forceConsistentCasingInFileNames": false,
-    "noFallthroughCasesInSwitch": false,
+    /* === Paths === */
+    "baseUrl": "./",
     "paths": {
-      "@nuvix/core": [
-        "libs/core/src"
-      ],
-      "@nuvix/core/*": [
-        "libs/core/src/*"
-      ],
-      "@nuvix/pg-meta": [
-        "libs/pg-meta/src"
-      ],
-      "@nuvix/pg-meta/*": [
-        "libs/pg-meta/src/*"
-      ],
-      "@nuvix/utils": [
-        "libs/utils/src"
-      ],
-      "@nuvix/utils/*": [
-        "libs/utils/src/*"
-      ]
+      "@nuvix/core": ["libs/core/src"],
+      "@nuvix/core/*": ["libs/core/src/*"],
+      "@nuvix/pg-meta": ["libs/pg-meta/src"],
+      "@nuvix/pg-meta/*": ["libs/pg-meta/src/*"],
+      "@nuvix/utils": ["libs/utils/src"],
+      "@nuvix/utils/types": ["libs/utils/types"],
+      "@nuvix/utils/*": ["libs/utils/src/*"]
     }
   }
 }

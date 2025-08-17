@@ -1,4 +1,4 @@
-import { PROJECT_ROOT } from '@nuvix/utils/constants';
+import { PROJECT_ROOT } from '@nuvix/utils';
 import * as path from 'path';
 
 const assetsPath = path.resolve(PROJECT_ROOT, 'assets/avatars/flags');

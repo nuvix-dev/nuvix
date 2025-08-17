@@ -4,7 +4,7 @@ import {
   Injectable,
   NestInterceptor,
 } from '@nestjs/common';
-import { Authorization } from '@nuvix/database';
+import { Authorization } from '@nuvix-tech/db';
 import { Observable } from 'rxjs';
 
 @Injectable()

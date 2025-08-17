@@ -261,8 +261,8 @@ export function transformPgError(
     code,
     details: {
       message: error.message,
-      detail: error.detail ?? null,
-      hint: error.hint ?? null,
+      detail: error.detail,
+      hint: error.hint,
       position: error.position,
       table: error.table,
       column: error.column,

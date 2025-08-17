@@ -1,5 +1,4 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { LOCALE } from '@nuvix/utils/constants';
 import { LocaleTranslator } from '../helper/locale.helper';
 
 export const Locale = createParamDecorator<any, any>(

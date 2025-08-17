@@ -1,18 +1,13 @@
-export class EmailValidator {
+import { Validator } from '@nuvix-tech/db';
+
+export class EmailValidator implements Validator {
   private allowEmpty: boolean;
 
   constructor(allowEmpty: boolean = false) {
     this.allowEmpty = allowEmpty;
   }
 
-  /**
-   * Get Description
-   *
-   * Returns validator description
-   *
-   * @return string
-   */
-  getDescription(): string {
+  get $description(): string {
     return 'Value must be a valid email address';
   }
 
@@ -24,7 +19,7 @@ export class EmailValidator {
    * @param value
    * @return boolean
    */
-  isValid(value: any): boolean {
+  $valid(value: any): boolean {
     if (this.allowEmpty && value.length === 0) {
       return true;
     }

@@ -3,8 +3,8 @@ import { Token, TokenType } from './tokenizer';
 import { Exception } from '@nuvix/core/extend/exception';
 
 export abstract class BaseParser {
-  protected tableName: string;
-  protected mainTable: string;
+  protected tableName!: string;
+  protected mainTable!: string;
   protected tokens: Token[] = [];
   protected current: number = 0;
 
@@ -34,7 +34,7 @@ export abstract class BaseParser {
   }
 
   protected peek(): Token {
-    return this.tokens[this.current];
+    return this.tokens[this.current]!; // Non-null assertion since we check isAtEnd() before calling this
   }
 
   protected peekNext(): Token | undefined {
@@ -43,7 +43,7 @@ export abstract class BaseParser {
   }
 
   protected previous(): Token {
-    return this.tokens[this.current - 1];
+    return this.tokens[this.current - 1]!;
   }
 
   protected consume(type: TokenType, message: string): Token {
@@ -52,12 +52,14 @@ export abstract class BaseParser {
   }
 
   protected throwError(message: string, token?: Token): never {
-    token = token ?? {
-      type: TokenType.IDENTIFIER,
-      value: undefined,
-      position: { line: 0, offset: 0, column: 0 },
-      length: 0,
-    };
+    token =
+      token ??
+      ({
+        type: TokenType.IDENTIFIER,
+        value: undefined,
+        position: { line: 0, offset: 0, column: 0 },
+        length: 0,
+      } as unknown as Token);
     const { line, column, offset } = token.position;
     const contextRadius = 20;
     const snippetStart = Math.max(0, offset - contextRadius);
@@ -195,7 +197,7 @@ export abstract class BaseParser {
 
     let result = '';
     for (let i = 0; i < field.length; i++) {
-      const part = field[i];
+      const part = field[i]!;
       if (typeof part === 'string') {
         result += part;
         if (i < field.length - 1 && typeof field[i + 1] === 'string') {

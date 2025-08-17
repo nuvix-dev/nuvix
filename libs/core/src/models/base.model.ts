@@ -1,4 +1,4 @@
-import { Permission } from '@nuvix/database';
+import { Permission } from '@nuvix-tech/db';
 import { Exclude, Expose } from 'class-transformer';
 
 @Exclude()
@@ -6,20 +6,20 @@ export default abstract class BaseModel {
   /**
    *  ID.
    */
-  @Expose() $id: string;
+  @Expose() declare $id: string;
   /**
    * User creation date in ISO 8601 format.
    */
-  @Expose() $createdAt: Date;
+  @Expose() declare $createdAt: Date;
   /**
    * User update date in ISO 8601 format.
    */
-  @Expose() $updatedAt: Date;
+  @Expose() declare $updatedAt: Date;
 
-  @Expose() $permissions: string[] | Permission[];
+  @Expose() declare $permissions: string[] | Permission[];
 
   @Exclude() _id: any;
-  @Exclude() id: string;
+  @Exclude() declare id: string;
   @Exclude() $collection: any;
 
   constructor(doc?: any) {
@@ -29,7 +29,7 @@ export default abstract class BaseModel {
 
 @Exclude()
 export abstract class BaseListModel {
-  @Expose() total: number;
+  @Expose() declare total: number;
 
   constructor() {}
 }

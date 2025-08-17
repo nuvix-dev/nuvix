@@ -33,7 +33,7 @@ export const apply = async ({
   columns
     .filter(c => c.table_id in columnsByTableId)
     .sort(({ name: a }, { name: b }) => a.localeCompare(b))
-    .forEach(c => columnsByTableId[c.table_id].push(c));
+    .forEach(c => columnsByTableId[c.table_id]?.push(c));
 
   let output = `
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
@@ -89,7 +89,7 @@ export type Database = {
                     table => `${JSON.stringify(table.name)}: {
                   Row: {
                     ${[
-                      ...columnsByTableId[table.id].map(
+                      ...columnsByTableId[table.id]!.map(
                         column =>
                           `${JSON.stringify(column.name)}: ${pgTypeToTsType(
                             column.format,
@@ -121,7 +121,7 @@ export type Database = {
                     ]}
                   }
                   Insert: {
-                    ${columnsByTableId[table.id].map(column => {
+                    ${columnsByTableId[table.id]!.map(column => {
                       let output = JSON.stringify(column.name);
 
                       if (column.identity_generation === 'ALWAYS') {
@@ -153,7 +153,7 @@ export type Database = {
                     })}
                   }
                   Update: {
-                    ${columnsByTableId[table.id].map(column => {
+                    ${columnsByTableId[table.id]!.map(column => {
                       let output = JSON.stringify(column.name);
 
                       if (column.identity_generation === 'ALWAYS') {
@@ -213,7 +213,7 @@ export type Database = {
                 : schemaViews.map(
                     view => `${JSON.stringify(view.name)}: {
                   Row: {
-                    ${columnsByTableId[view.id].map(
+                    ${columnsByTableId[view.id]!.map(
                       column =>
                         `${JSON.stringify(column.name)}: ${pgTypeToTsType(
                           column.format,
@@ -229,7 +229,7 @@ export type Database = {
                   ${
                     'is_updatable' in view && view.is_updatable
                       ? `Insert: {
-                           ${columnsByTableId[view.id].map(column => {
+                           ${columnsByTableId[view.id]!.map(column => {
                              let output = JSON.stringify(column.name);
 
                              if (!column.is_updatable) {
@@ -242,7 +242,7 @@ export type Database = {
                            })}
                          }
                          Update: {
-                           ${columnsByTableId[view.id].map(column => {
+                           ${columnsByTableId[view.id]!.map(column => {
                              let output = JSON.stringify(column.name);
 
                              if (!column.is_updatable) {
@@ -302,7 +302,7 @@ export type Database = {
               const schemaFunctionsGroupedByName = schemaFunctions.reduce(
                 (acc, curr) => {
                   acc[curr.name] ??= [];
-                  acc[curr.name].push(curr);
+                  acc[curr.name]!.push(curr);
                   return acc;
                 },
                 {} as Record<string, PostgresFunction[]>,
@@ -345,7 +345,7 @@ export type Database = {
                         .join(' | ')}
                       Returns: ${(() => {
                         // Case 1: `returns table`.
-                        const tableArgs = fns[0].args.filter(
+                        const tableArgs = fns[0]!.args.filter(
                           ({ mode }) => mode === 'table',
                         );
                         if (tableArgs.length > 0) {
@@ -377,11 +377,11 @@ export type Database = {
 
                         // Case 2: returns a relation's row type.
                         const relation = [...tables, ...views].find(
-                          ({ id }) => id === fns[0].return_type_relation_id,
+                          ({ id }) => id === fns[0]?.return_type_relation_id,
                         );
                         if (relation) {
                           return `{
-                            ${columnsByTableId[relation.id].map(
+                            ${columnsByTableId[relation.id]!.map(
                               column =>
                                 `${JSON.stringify(column.name)}: ${pgTypeToTsType(
                                   column.format,
@@ -398,7 +398,7 @@ export type Database = {
 
                         // Case 3: returns base/array/composite/enum type.
                         const type = types.find(
-                          ({ id }) => id === fns[0].return_type_id,
+                          ({ id }) => id === fns[0]?.return_type_id,
                         );
                         if (type) {
                           return pgTypeToTsType(type.name, {
@@ -410,7 +410,7 @@ export type Database = {
                         }
 
                         return 'unknown';
-                      })()}${fns[0].is_set_returning_function ? '[]' : ''}
+                      })()}${fns[0]?.is_set_returning_function ? '[]' : ''}
                     }`,
               );
             })()}

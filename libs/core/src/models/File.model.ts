@@ -4,11 +4,6 @@ import BaseModel from '@nuvix/core/models/base.model';
 @Exclude()
 export class FileModel extends BaseModel {
   /**
-   * File ID.
-   */
-  @Expose() id: string = '';
-
-  /**
    * Bucket ID.
    */
   @Expose() bucketId: string = '';

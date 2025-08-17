@@ -1,9 +1,6 @@
-import prettier from 'prettier';
 import type {
   PostgresColumn,
-  PostgresFunction,
   PostgresMaterializedView,
-  PostgresSchema,
   PostgresTable,
   PostgresType,
   PostgresView,
@@ -248,7 +245,7 @@ export const apply = async ({
   columns
     .filter(c => c.table_id in columnsByTableId)
     .sort(({ name: a }, { name: b }) => a.localeCompare(b))
-    .forEach(c => columnsByTableId[c.table_id].push(c));
+    .forEach(c => columnsByTableId[c.table_id]?.push(c));
 
   let output = [
     'import Foundation',
@@ -430,7 +427,7 @@ function formatForSwiftTypeName(name: string): string {
       .split(/[^a-zA-Z0-9]+/)
       .map(word => {
         if (word) {
-          return `${word[0].toUpperCase()}${word.slice(1)}`;
+          return `${word[0]?.toUpperCase()}${word.slice(1)}`;
         } else {
           return '';
         }

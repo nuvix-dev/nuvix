@@ -32,14 +32,14 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
     let joinAlias = tableAlias || tableName;
 
     if (tableName.includes('.')) {
-      const [_schema, _table] = tableName.split('.', 2);
-      if (!this.astBuilder.allowedSchemas.includes(_schema)) {
+      const [_schema, _table] = tableName.split('.', 2); // We have to think about schema, should we allow it?
+      if (_schema && !this.astBuilder.allowedSchemas.includes(_schema)) {
         throw new Exception(
           Exception.GENERAL_QUERY_BUILDER_ERROR,
           `Schema "${_schema}" is not allowed for join: ${tableName}`,
         );
       }
-      if (!tableAlias) {
+      if (!tableAlias && _table) {
         joinAlias = _table;
       }
     }
@@ -64,7 +64,7 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
         filterConstraints,
         selectFields,
         group,
-        order,
+        order ?? [],
       );
     } else {
       this._applyLateralJoin(
@@ -74,10 +74,10 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
         filterConstraints,
         selectFields,
         group,
-        order,
-        limit,
-        offset,
-        resultShape,
+        order ?? [],
+        limit as any,
+        offset ?? 0,
+        resultShape ?? 'array',
       );
     }
   }
@@ -99,7 +99,8 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
     const conditionSQL = conditionQueryBuilder.toSQL();
     const cleanedCondition = conditionSQL.sql.replace('select * where ', '');
 
-    this.astBuilder.qb[joinType + 'Join'](
+    (this.astBuilder.qb as any)[joinType + 'Join'](
+      // TODO: Fix type casting
       this.astBuilder.pg.alias(tableName, joinAlias),
       this.astBuilder.pg.raw(cleanedCondition, conditionSQL.bindings),
     );
@@ -153,7 +154,8 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
       resultShape,
     );
 
-    this.astBuilder.qb[joinType + 'Join'](
+    (this.astBuilder.qb as any)[joinType + 'Join'](
+      // TODO: Fix type casting
       this.astBuilder.pg.raw(
         `lateral (${lateralSelectContent})`,
         subQuerySQL.bindings,
@@ -207,7 +209,7 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
     queryBuilder: QueryBuilder,
   ): QueryBuilder {
     const astBuilder = new ASTToQueryBuilder(queryBuilder, this.astBuilder.pg);
-    astBuilder.applyFilters(expression, {});
+    astBuilder.applyFilters(expression as any, {});
     return queryBuilder;
   }
 }

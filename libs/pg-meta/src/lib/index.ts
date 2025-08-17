@@ -1,7 +1,7 @@
 export { default as PostgresMeta } from './PostgresMeta';
-export {
+export type {
   PostgresMetaOk,
-  PostgresMetaErr,
+  PostgresMetaError,
   PostgresMetaResult,
   PostgresColumn,
   PostgresConfig,

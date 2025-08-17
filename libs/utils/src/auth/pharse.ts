@@ -242,8 +242,6 @@ export class PhraseGenerator {
     // Generate a short random alphanumeric suffix (e.g., "a1b2")
     // This significantly increases the number of possible unique phrases and helps prevent collisions.
     const randomSuffix = Math.random().toString(36).substring(2, 6); // Gets 4 random alphanumeric characters
-
-    // Combine the parts into a single phrase
     const phrase = `${adjective} ${noun} ${descriptor}-${randomSuffix}`;
 
     return phrase;

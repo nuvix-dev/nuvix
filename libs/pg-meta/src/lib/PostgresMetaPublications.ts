@@ -102,7 +102,7 @@ export default class PostgresMetaPublications {
 
           const [schema, ...rest] = t.split('.');
           const table = rest.join('.');
-          return `${ident(schema)}.${ident(table)}`;
+          return `${ident(schema!)}.${ident(table)}`;
         })
         .join(',')}`;
     }
@@ -168,7 +168,7 @@ declare
 
                   const [schema, ...rest] = t.split('.');
                   const table = rest.join('.');
-                  return `${ident(schema)}.${ident(table)}`;
+                  return `${ident(schema!)}.${ident(table)}`;
                 })
                 .join(','),
         )

@@ -9,19 +9,11 @@ export class PersonalDataValidator extends PasswordValidator {
     private strict: boolean = false,
     allowEmpty: boolean = false,
   ) {
-    super(allowEmpty); // Call the base class constructor
+    super(allowEmpty);
   }
 
-  /**
-   * Get Description
-   *
-   * Returns validator description
-   *
-   * @return string
-   */
-  getDescription(): string {
-    return 'Password must not include any personal data like your name, email, phone number, etc.';
-  }
+  override $description: string =
+    'Password must not include any personal data like your name, email, phone number, etc.';
 
   /**
    * Is valid
@@ -30,8 +22,8 @@ export class PersonalDataValidator extends PasswordValidator {
    *
    * @return boolean
    */
-  isValid(password: string): boolean {
-    if (!super.isValid(password)) {
+  override $valid(password: string): boolean {
+    if (!super.$valid(password)) {
       return false;
     }
 
@@ -54,7 +46,7 @@ export class PersonalDataValidator extends PasswordValidator {
     if (
       this.email &&
       this.email.includes('@') &&
-      password.includes(this.email.split('@')[0])
+      password.includes(this.email.split('@')[0]!)
     ) {
       return false;
     }
@@ -72,27 +64,5 @@ export class PersonalDataValidator extends PasswordValidator {
     }
 
     return true;
-  }
-
-  /**
-   * Is array
-   *
-   * Function will return true if object is array.
-   *
-   * @return boolean
-   */
-  isArray(): boolean {
-    return false;
-  }
-
-  /**
-   * Get Type
-   *
-   * Returns validator type.
-   *
-   * @return string
-   */
-  getType(): string {
-    return 'string'; // Replace `self::TYPE_STRING` with 'string'
   }
 }

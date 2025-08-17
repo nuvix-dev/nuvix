@@ -1,16 +1,17 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
-import { Document } from '@nuvix/database';
-import { PROJECT, USER } from '@nuvix/utils/constants';
+import { Context } from '@nuvix/utils';
+import { ProjectsDoc, UsersDoc } from '@nuvix/utils/types';
+import { Doc } from '@nuvix-tech/db';
 
-export const User = createParamDecorator<any, Document | null>(
-  (data: unknown, ctx: ExecutionContext): Document => {
-    const request: Request = ctx.switchToHttp().getRequest();
+export const User = createParamDecorator<any, UsersDoc | null>(
+  (data: unknown, ctx: ExecutionContext): UsersDoc => {
+    const request: NuvixRequest = ctx.switchToHttp().getRequest();
 
-    const project: Document = request[PROJECT];
-    const user: Document = request[USER];
+    const project: ProjectsDoc = request[Context.Project];
+    const user: UsersDoc = request[Context.User];
 
-    if (project.isEmpty() || project.getId() === 'console' || user.isEmpty()) {
-      return new Document();
+    if (project.empty() || project.getId() === 'console' || user.empty()) {
+      return new Doc();
     }
 
     return user;

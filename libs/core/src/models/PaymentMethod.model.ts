@@ -6,61 +6,61 @@ export class PaymentMethodModel extends BaseModel {
   /**
    * Payment method ID from the payment provider
    */
-  @Expose() providerMethodId: string;
+  @Expose() declare providerMethodId: string;
   /**
    * Client secret hash for payment setup
    */
-  @Expose() clientSecret: string;
+  @Expose() declare clientSecret: string;
   /**
    * User ID from the payment provider.
    */
-  @Expose() providerUserId: string;
+  @Expose() declare providerUserId: string;
   /**
    * ID of the Team.
    */
-  @Expose() userId: string;
+  @Expose() declare userId: string;
   /**
    * Expiry month of the payment method.
    */
-  @Expose() expiryMonth: number;
+  @Expose() declare expiryMonth: number;
   /**
    * Expiry year of the payment method.
    */
-  @Expose() expiryYear: number;
+  @Expose() declare expiryYear: number;
   /**
    * Last 4 digit of the payment method
    */
-  @Expose() last4: string;
+  @Expose() declare last4: string;
   /**
    * Payment method brand
    */
-  @Expose() brand: string;
+  @Expose() declare brand: string;
   /**
    * Name of the owner
    */
-  @Expose() name: string;
+  @Expose() declare name: string;
   /**
    * Mandate ID of the payment method
    */
-  @Expose() mandateId: string;
+  @Expose() declare mandateId: string;
   /**
    * Country of the payment method
    */
-  @Expose() country: string;
+  @Expose() declare country: string;
   /**
    * Last payment error associated with the payment method.
    */
-  @Expose() lastError: string;
+  @Expose() declare lastError: string;
   /**
    * True when it&#039;s the default payment method.
    */
-  @Expose() default: boolean;
+  @Expose() declare default: boolean;
   /**
    * True when payment method has expired.
    */
-  @Expose() expired: boolean;
+  @Expose() declare expired: boolean;
   /**
    * True when payment method has failed to process multiple times.
    */
-  @Expose() failed: boolean;
+  @Expose() declare failed: boolean;
 }

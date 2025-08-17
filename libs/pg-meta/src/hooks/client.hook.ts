@@ -1,10 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Hook } from '@nuvix/core/server';
-import { PROJECT_DB_CLIENT, PROJECT } from '@nuvix/utils/constants';
+import { PROJECT_DB_CLIENT, Context } from '@nuvix/utils';
 
 import { CLIENT } from '../constants';
 import { PostgresMeta } from '../lib';
-import { Document } from '@nuvix/database';
+import { Doc } from '@nuvix-tech/db';
 import { Exception } from '@nuvix/core/extend/exception';
 import { Client } from 'pg';
 
@@ -13,9 +13,9 @@ export class ResolveClient implements Hook {
   private readonly logger = new Logger(ResolveClient.name);
 
   async preHandler(req: NuvixRequest) {
-    const project = req[PROJECT] as Document;
+    const project = req[Context.Project] as Doc;
 
-    if (project.isEmpty() || project.getId() === 'console') {
+    if (project.empty() || project.getId() === 'console') {
       throw new Exception(Exception.PROJECT_NOT_FOUND);
     }
 

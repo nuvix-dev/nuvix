@@ -19,7 +19,7 @@ export class PgMetaExceptionFilter implements ExceptionFilter {
       PgMetaExceptionFilter.name,
     );
     const errorCode = exception.extra?.errorCode ?? 'DEFAULT_ERROR_CODE';
-    const responseBody = {
+    const responseBody: Record<string, string | number | boolean> = {
       code: status,
       message: exception.message,
       type: errorCode,
@@ -30,17 +30,18 @@ export class PgMetaExceptionFilter implements ExceptionFilter {
     if (exception.extra) {
       if (exception.extra.formattedError)
         responseBody['formattedError'] = exception.extra.formattedError;
-      if (exception.extra.severity)
-        responseBody['severity'] = exception.extra.severity;
-      if (exception.extra.position)
-        responseBody['position'] = exception.extra.position;
-      if (exception.extra.routine)
-        responseBody['routine'] = exception.extra.routine;
-      if (exception.extra.hint) responseBody['hint'] = exception.extra.hint;
+      if (exception.extra['severity'])
+        responseBody['severity'] = exception.extra['severity'];
+      if (exception.extra['position'])
+        responseBody['position'] = exception.extra['position'];
+      if (exception.extra['routine'])
+        responseBody['routine'] = exception.extra['routine'];
+      if (exception.extra['hint'])
+        responseBody['hint'] = exception.extra['hint'];
     }
 
     // Add stack trace in non-production environments
-    if (process.env.NODE_ENV !== 'production' && exception.stack) {
+    if (process.env['NODE_ENV'] !== 'production' && exception.stack) {
       responseBody['stack'] = exception.stack;
     }
 

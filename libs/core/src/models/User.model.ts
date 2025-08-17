@@ -11,11 +11,11 @@ export class UserModel extends BaseModel {
   /**
    * User name.
    */
-  @Expose() name: string;
+  @Expose() declare name: string;
   /**
    * Hashed user password.
    */
-  @Expose() password?: string;
+  @Expose() declare password?: string;
   /**
    * Password hashing algorithm.
    */
@@ -27,11 +27,11 @@ export class UserModel extends BaseModel {
   /**
    * User registration date in ISO 8601 format.
    */
-  @Expose() registration: Date;
+  @Expose() declare registration: Date;
   /**
    * User status. Pass `true` for enabled and `false` for disabled.
    */
-  @Expose() status: boolean;
+  @Expose() declare status: boolean;
   /**
    * Labels for the user.
    */
@@ -39,11 +39,11 @@ export class UserModel extends BaseModel {
   /**
    * Password update time in ISO 8601 format.
    */
-  @Expose() passwordUpdate: Date;
+  @Expose() declare passwordUpdate: Date;
   /**
    * User email address.
    */
-  @Expose() email: string;
+  @Expose() declare email: string;
   /**
    * User phone number in E.164 format.
    */
@@ -51,29 +51,29 @@ export class UserModel extends BaseModel {
   /**
    * Email verification status.
    */
-  @Expose() emailVerification: boolean;
+  @Expose() declare emailVerification: boolean;
   /**
    * Phone verification status.
    */
-  @Expose() phoneVerification: boolean;
+  @Expose() declare phoneVerification: boolean;
   /**
    * Multi factor authentication status.
    */
-  @Expose() mfa: boolean;
+  @Expose() declare mfa: boolean;
   /**
    * User preferences as a key-value object
    */
-  @Expose() prefs: Preferences;
+  @Expose() declare prefs: Preferences;
   /**
    * A user-owned message receiver. A single user may have multiple e.g. emails, phones, and a browser. Each target is registered with a single provider.
    */
   @Type(() => TargetModel)
   @Expose()
-  targets: TargetModel[];
+  declare targets: TargetModel[];
   /**
    * Most recent access date in ISO 8601 format. This attribute is only updated again after 24 hours.
    */
-  @Expose() accessedAt: Date;
+  @Expose() declare accessedAt: Date;
 
   constructor(partial: Partial<UserModel | any>) {
     super();

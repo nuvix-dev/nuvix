@@ -29,10 +29,10 @@ import { DNS } from '@google-cloud/dns';
  */
 export class ClusterService {
   private readonly logger = new Logger(ClusterService.name);
-  private kubeClient: KubeConfig;
-  private coreV1Api: CoreV1Api;
-  private appsV1Api: AppsV1Api;
-  private networkingV1Api: NetworkingV1Api;
+  private kubeClient!: KubeConfig;
+  private coreV1Api!: CoreV1Api;
+  private appsV1Api!: AppsV1Api;
+  private networkingV1Api!: NetworkingV1Api;
   private auth: GoogleAuth;
   private dnsClient: DNS;
   private staticIp: string;
@@ -62,22 +62,22 @@ export class ClusterService {
 
     kubeconfig.loadFromClusterAndUser(
       {
-        name: clusterName,
+        name: clusterName as string,
         server: `https://gke-08671a5fef924341b319c8d5ed19a930c483-55770962934.asia-south1.gke.goog`,
         skipTLSVerify: true,
-        caData: cluster.masterAuth.clusterCaCertificate,
+        caData: cluster.masterAuth?.clusterCaCertificate ?? undefined,
       },
       {
         name: userName,
         token: await this.getGKEToken(),
-        certData: cluster.masterAuth.clientCertificate,
+        certData: cluster.masterAuth?.clientCertificate ?? undefined,
       },
     );
 
     kubeconfig.contexts = [
       {
         name: contextName,
-        cluster: clusterName,
+        cluster: clusterName as string,
         user: userName,
       },
     ];
@@ -96,7 +96,7 @@ export class ClusterService {
     const client = await this.auth.getClient();
     const token = await client.getAccessToken();
     this.logger.debug('See, this is the token:', token);
-    return token.token;
+    return token.token as string;
   }
 
   async deployProjectPod(
@@ -157,7 +157,7 @@ export class ClusterService {
         },
         status: 'deployed',
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `Failed to deploy StatefulSet for project ${projectId}:`,
         error,
@@ -184,7 +184,7 @@ export class ClusterService {
         });
         this.logger.log(`Existing StatefulSet ${statefulSetName} deleted`);
         await new Promise(resolve => setTimeout(resolve, 5000));
-      } catch (error) {
+      } catch (error: any) {
         if (error.response?.statusCode !== 404) {
           this.logger.warn(
             `Failed to delete existing StatefulSet: ${error.message}`,
@@ -199,12 +199,12 @@ export class ClusterService {
         });
         this.logger.log(`Existing PVC ${pvcName} deleted`);
         await new Promise(resolve => setTimeout(resolve, 3000));
-      } catch (error) {
+      } catch (error: any) {
         if (error.response?.statusCode !== 404) {
           this.logger.warn(`Failed to delete existing PVC: ${error.message}`);
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `Failed to cleanup existing StatefulSet for project ${projectId}:`,
         error,
@@ -237,7 +237,7 @@ export class ClusterService {
       this.logger.log(
         `ServiceAccount for project ${projectId} created successfully`,
       );
-    } catch (error) {
+    } catch (error: any) {
       if (error.code !== 409) {
         throw error;
       }
@@ -260,7 +260,7 @@ export class ClusterService {
 
       await this.coreV1Api.createNamespace({ body: namespaceManifest });
       this.logger.log(`Namespace ${namespace} created successfully`);
-    } catch (error) {
+    } catch (error: any) {
       if (error.code !== 409) {
         throw error;
       }
@@ -295,7 +295,7 @@ export class ClusterService {
       this.logger.log(
         `ConfigMap for project ${projectId} created successfully`,
       );
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === 409) {
         await this.coreV1Api.replaceNamespacedConfigMap({
           name: `${projectId}-pgcat-config`,
@@ -625,7 +625,7 @@ export class ClusterService {
         `StatefulSet for project ${projectId} created successfully`,
       );
       return statefulSet;
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === 409) {
         await this.appsV1Api.replaceNamespacedStatefulSet({
           name: `${projectId}-statefulset`,
@@ -774,7 +774,7 @@ export class ClusterService {
       );
 
       return response;
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === 409) {
         await this.coreV1Api.replaceNamespacedService({
           name: `${projectId}-service`,
@@ -857,7 +857,7 @@ export class ClusterService {
         body: ingressManifest,
       });
       this.logger.log(`Ingress for project ${projectId} created successfully`);
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === 409) {
         await this.networkingV1Api.replaceNamespacedIngress({
           name: `${projectId}-ingress`,
@@ -892,7 +892,7 @@ export class ClusterService {
     //     body: tcpConfigMap,
     //   });
     //   this.logger.log(`TCP ConfigMap for project ${projectId} created`);
-    // } catch (error) {
+    // } catch (error: any) {
     //   if (error instanceof ApiException && error.code === 409) {
     //     await this.coreV1Api.replaceNamespacedConfigMap({
     //       name: 'tcp-services',
@@ -930,7 +930,7 @@ export class ClusterService {
         const [_] = await zone[0].addRecords([record]);
         this.logger.log(`DNS record for ${subdomain} created successfully`);
       }
-    } catch (error) {
+    } catch (error: any) {
       if (error.code !== 409) {
         this.logger.error(`Failed to configure DNS for ${subdomain}:`, error);
         throw error;
@@ -971,7 +971,7 @@ export class ClusterService {
       this.logger.log(
         `PodDisruptionBudget for project ${projectId} created successfully`,
       );
-    } catch (error) {
+    } catch (error: any) {
       if (error.code !== 409) {
         this.logger.warn(
           `Failed to create PodDisruptionBudget for project ${projectId}:`,
@@ -1131,7 +1131,7 @@ export class ClusterService {
       this.logger.log(
         `All resources for project ${projectId} deleted successfully`,
       );
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `Failed to delete resources for project ${projectId}:`,
         error,
@@ -1157,7 +1157,7 @@ export class ClusterService {
       } else {
         this.logger.log(`DNS record for ${subdomain} not found`);
       }
-    } catch (error) {
+    } catch (error: any) {
       if (error.code !== 404) {
         this.logger.error(`Failed to delete DNS for ${subdomain}:`, error);
         throw error;
@@ -1193,7 +1193,7 @@ export class ClusterService {
         currentRevision: statefulSet.status?.currentRevision,
         updateRevision: statefulSet.status?.updateRevision,
       };
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(
         `Failed to get StatefulSet status for project ${projectId}:`,
         error,
@@ -1252,7 +1252,7 @@ const service = new ClusterService();
     try {
       await service.deleteNameSpace('test-project');
       Logger.log('Namespace deleted successfully');
-    } catch (error) {
+    } catch (error: any) {
       Logger.error('Error deleting namespace:', error);
     }
     Logger.log('Starting deployment...');
@@ -1272,11 +1272,11 @@ const service = new ClusterService();
       try {
         const status = await service.getStatefulSetStatus('test-project');
         Logger.log('StatefulSet Status:', status);
-      } catch (error) {
+      } catch (error: any) {
         Logger.error('Error getting status:', error);
       }
     }, 30000); // Check after 30 seconds
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error during operation:', error);
   }
 })();

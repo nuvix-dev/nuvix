@@ -1,7 +1,7 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
 import BaseModel from '@nuvix/core/models/base.model';
 import { IndexModel } from './Index.model';
-import { Database } from '@nuvix/database';
+import { AttributeType } from '@nuvix-tech/db';
 import {
   AttributeBooleanModel,
   AttributeDatetimeModel,
@@ -14,12 +14,7 @@ import {
   AttributeStringModel,
   AttributeURLModel,
 } from './Attributes.model';
-import {
-  APP_DATABASE_ATTRIBUTE_EMAIL,
-  APP_DATABASE_ATTRIBUTE_ENUM,
-  APP_DATABASE_ATTRIBUTE_IP,
-  APP_DATABASE_ATTRIBUTE_URL,
-} from '@nuvix/utils/constants';
+import { AttributeFormat } from '@nuvix/utils';
 
 @Exclude()
 export class CollectionModel extends BaseModel {
@@ -38,12 +33,12 @@ export class CollectionModel extends BaseModel {
    * When disabled, the collection is inaccessible to users,
    * but remains accessible to Server SDKs using API keys.
    */
-  @Expose() enabled: boolean;
+  @Expose() declare enabled: boolean;
 
   /**
    * Whether document-level permissions are enabled.
    */
-  @Expose() documentSecurity: boolean;
+  @Expose() declare documentSecurity: boolean;
 
   /**
    * Collection attributes.
@@ -53,25 +48,25 @@ export class CollectionModel extends BaseModel {
     console.log(obj);
     return (obj?.attributes ?? ([] as any[])).map((att: any) => {
       switch (att.type) {
-        case Database.VAR_BOOLEAN:
+        case AttributeType.Boolean:
           return new AttributeBooleanModel(att);
-        case Database.VAR_INTEGER:
+        case AttributeType.Integer:
           return new AttributeIntegerModel(att);
-        case Database.VAR_FLOAT:
+        case AttributeType.Float:
           return new AttributeFloatModel(att);
-        case Database.VAR_DATETIME:
+        case AttributeType.Timestamptz:
           return new AttributeDatetimeModel(att);
-        case Database.VAR_RELATIONSHIP:
+        case AttributeType.Relationship:
           return new AttributeRelationshipModel(att);
-        case Database.VAR_STRING:
+        case AttributeType.String:
           switch (att.format) {
-            case APP_DATABASE_ATTRIBUTE_EMAIL:
+            case AttributeFormat.EMAIL:
               return new AttributeEmailModel(att);
-            case APP_DATABASE_ATTRIBUTE_ENUM:
+            case AttributeFormat.ENUM:
               return new AttributeEnumModel(att);
-            case APP_DATABASE_ATTRIBUTE_IP:
+            case AttributeFormat.IP:
               return new AttributeIPModel(att);
-            case APP_DATABASE_ATTRIBUTE_URL:
+            case AttributeFormat.URL:
               return new AttributeURLModel(att);
             default:
               return new AttributeStringModel(att);

@@ -5,5 +5,5 @@ export class SchemaIdParamDTO {
   @IsInt()
   @IsPositive()
   @Type(() => Number)
-  id: number;
+  declare id: number;
 }

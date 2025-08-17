@@ -5,5 +5,5 @@
     "outDir": "../../dist/libs/pg-meta"
   },
   "include": ["src/**/*", "../../nuvix.d.ts"],
-  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
+  "exclude": ["node_modules", "dist", "test", "**/*.spec.ts"]
 }

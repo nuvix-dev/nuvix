@@ -4,11 +4,6 @@ import BaseModel from '@nuvix/core/models/base.model';
 @Exclude()
 export class ProviderRepositoryModel extends BaseModel {
   /**
-   * VCS (Version Control System) repository ID.
-   */
-  @Expose() id: string = ''; // Default to empty string
-
-  /**
    * VCS (Version Control System) repository name.
    */
   @Expose() name: string = ''; // Default to empty string

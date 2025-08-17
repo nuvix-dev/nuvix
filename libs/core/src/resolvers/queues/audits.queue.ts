@@ -1,27 +1,20 @@
 import { Processor } from '@nestjs/bullmq';
 import {
-  Inject,
   Injectable,
   Logger,
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
 import { Queue } from './queue';
-import {
-  APP_POSTGRES_PASSWORD,
-  AppMode,
-  CORE_SCHEMA,
-  GET_PROJECT_DB,
-  GET_PROJECT_DB_CLIENT,
-  QueueFor,
-} from '@nuvix/utils/constants';
-import { GetClientFn, GetProjectDbFn } from '@nuvix/core/core.module';
-import { Document } from '@nuvix/database';
+import { AppMode, CORE_SCHEMA, QueueFor } from '@nuvix/utils';
+import { Doc } from '@nuvix-tech/db';
 import { Audit } from '@nuvix/audit';
 import { Job } from 'bullmq';
+import { CoreService } from '@nuvix/core/core.service.js';
+import type { ProjectsDoc, UsersDoc } from '@nuvix/utils/types';
 
 interface AuditLogsBuffer {
-  project: Document;
+  project: ProjectsDoc;
   logs: AuditLog[];
 }
 
@@ -34,14 +27,10 @@ export class AuditsQueue
   private static readonly BATCH_SIZE = 1000; // Number of logs to process in one batch
   private static readonly BATCH_INTERVAL_MS = 1000; // Interval in milliseconds to flush
   private readonly logger = new Logger(AuditsQueue.name);
-  private buffer = new Map<string, AuditLogsBuffer>();
-  private interval: NodeJS.Timeout;
+  private buffer = new Map<number, AuditLogsBuffer>();
+  private interval!: NodeJS.Timeout;
 
-  constructor(
-    @Inject(GET_PROJECT_DB_CLIENT) private readonly getDbClient: GetClientFn,
-    @Inject(GET_PROJECT_DB)
-    private readonly getProjectDb: GetProjectDbFn,
-  ) {
+  constructor(private readonly coreService: CoreService) {
     super();
   }
 
@@ -74,19 +63,19 @@ export class AuditsQueue
       if (data.logs.length === 0) {
         continue;
       }
+      const { project, logs } = data;
 
-      let client:
-        | Awaited<ReturnType<typeof this.getDatabase>>['client']
-        | undefined;
+      const { client, dbForProject } =
+        await this.coreService.createProjectDatabase(project, {
+          schema: CORE_SCHEMA,
+        });
       try {
-        const { project, logs } = data;
-        const { client: _c, audits } = await this.getDatabase(project);
-        client = _c;
+        const audits = new Audit(dbForProject);
 
         this.logger.log(
           `Flushing ${logs.length} audit logs for project ${projectId}`,
         );
-        await audits.logBatch(logs);
+        await audits.logBatch(logs as any[]);
       } catch (error) {
         this.logger.error(
           `Error flushing audit logs for project ${projectId}:`,
@@ -100,30 +89,29 @@ export class AuditsQueue
         currentBuffer.logs.push(...data.logs);
         this.buffer.set(projectId, currentBuffer);
       } finally {
-        if (client) {
-          await this.releaseClient(client);
-        }
+        await this.coreService.releaseDatabaseClient(client);
       }
     }
   }
 
   async process(job: Job<AuditsQueueJobData>): Promise<void> {
     const { resource, mode, userAgent, ip, data } = job.data;
-    const project = new Document(job.data.project as object);
-    const user = new Document(job.data.user ?? {});
-    const projectId = project.getInternalId();
+    const project = new Doc(job.data.project as object);
+    const user = new Doc(job.data.user ?? {});
+    const projectId = project.getSequence();
+
     const log: AuditLog = {
-      userId: user.getInternalId(),
+      userId: user.getSequence(),
       event: job.name,
       resource,
       userAgent: userAgent || '',
       ip: ip || '',
-      location: '', // TODO: Implement location extraction logic
+      location: '', // Location can be derived from userAgent or IP if needed
       data: {
         userId: user.getId(),
-        userName: user.getAttribute('name') || '',
-        userEmail: user.getAttribute('email') || '',
-        userType: user.getAttribute('type') || '',
+        userName: user.get('name') || '',
+        userEmail: user.get('email') || '',
+        userType: user.get('type') || '',
         mode,
         data: data || {},
       },
@@ -132,11 +120,11 @@ export class AuditsQueue
 
     if (!this.buffer.has(projectId)) {
       this.buffer.set(projectId, {
-        project: new Document({
-          $id: projectId,
+        project: new Doc({
+          $id: project.getId(),
           $internalId: projectId,
-          database: project.getAttribute('database'),
-        }),
+          database: project.get('database'),
+        }) as unknown as ProjectsDoc,
         logs: [],
       });
     }
@@ -151,40 +139,11 @@ export class AuditsQueue
       this.startTimer(); // Restart the timer
     }
   }
-
-  private async getDatabase(project: Document) {
-    const dbOptions = project.getAttribute('database');
-    const client = await this.getDbClient(project.getId(), {
-      database: dbOptions.name,
-      user: dbOptions.adminRole,
-      password: APP_POSTGRES_PASSWORD,
-      port: dbOptions.port,
-      host: dbOptions.host,
-    });
-    const dbForProject = this.getProjectDb(client, project.getId());
-    dbForProject
-      .setDatabase(CORE_SCHEMA)
-      .setCacheName(`${project.getId()}:core`);
-    const audits = new Audit(dbForProject);
-    return { client, audits };
-  }
-
-  private async releaseClient(
-    client: Awaited<ReturnType<typeof this.getDatabase>>['client'],
-  ) {
-    try {
-      if (client) {
-        await client.end();
-      }
-    } catch (error) {
-      this.logger.error('Failed to release database client', error);
-    }
-  }
 }
 
 export type AuditsQueueJobData = {
-  project: Document | object;
-  user: Document | object;
+  project: ProjectsDoc | object;
+  user: UsersDoc | object;
   resource: string;
   mode: AppMode;
   userAgent?: string;
@@ -193,7 +152,7 @@ export type AuditsQueueJobData = {
 };
 
 interface AuditLog {
-  userId: string;
+  userId: number;
   event: string;
   resource: string;
   userAgent: string;

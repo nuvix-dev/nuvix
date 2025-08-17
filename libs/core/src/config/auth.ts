@@ -1,4 +1,4 @@
-import { APP_LIMIT_USER_SESSIONS_DEFAULT } from '@nuvix/utils/constants';
+import { APP_LIMIT_USER_SESSIONS_DEFAULT } from '@nuvix/utils';
 
 export interface AuthMethod {
   name: string;

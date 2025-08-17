@@ -1,10 +1,10 @@
-import { Document } from '@nuvix/database';
+import { ProjectsDoc } from '@nuvix/utils/types';
 import { Client } from 'pg';
 
 interface SetupDatabaseMeta {
   request?: NuvixRequest;
   res?: NuvixRes;
-  project?: Document;
+  project?: ProjectsDoc;
   extra?: Record<string, any>;
   extraPrefix?: string;
   client: Client;
@@ -26,7 +26,7 @@ export const setupDatabaseMeta = async ({
   if (request) {
     const headers: Record<string, string | string[]> = {};
     for (const [k, v] of Object.entries(request.headers ?? {})) {
-      headers[k.toLowerCase()] = v;
+      headers[k.toLowerCase()] = v!;
     }
 
     const requestMeta: [string, any][] = [
@@ -43,10 +43,10 @@ export const setupDatabaseMeta = async ({
     }
   }
 
-  if (project && !project.isEmpty()) {
+  if (project && !project.empty()) {
     const projectData = {
       id: project.getId(),
-      name: project.getAttribute('name'),
+      name: project.get('name'),
     };
     sqlChunks.push(
       `SET LOCAL app.project = ${escapeLiteral(JSON.stringify(projectData))};`,

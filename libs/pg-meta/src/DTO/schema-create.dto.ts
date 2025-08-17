@@ -2,7 +2,7 @@ import { IsString, IsOptional } from 'class-validator';
 
 export class SchemaCreateDTO {
   @IsString()
-  name: string;
+  declare name: string;
 
   @IsOptional()
   @IsString()

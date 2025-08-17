@@ -1,36 +1,31 @@
-import { Injectable, Logger, Inject } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { Authorization, Database, Document, Query } from '@nuvix/database';
+import { Authorization, Database, Doc, Query } from '@nuvix-tech/db';
 import { Exception } from '@nuvix/core/extend/exception';
 import { Auth } from '@nuvix/core/helper/auth.helper';
 import ParamsHelper from '@nuvix/core/helper/params.helper';
-import {
-  ApiKey,
-  AppMode,
-  CORE_SCHEMA_DB,
-  DB_FOR_PLATFORM,
-  PROJECT,
-  SESSION,
-  TEAM,
-  USER,
-} from '@nuvix/utils/constants';
+import { AppMode, Context, CORE_SCHEMA_DB } from '@nuvix/utils';
 import { Hook } from '../../server/hooks/interface';
 import { Key } from '@nuvix/core/helper/key.helper';
+import { ProjectsDoc, SessionsDoc, UsersDoc } from '@nuvix/utils/types';
+import { CoreService } from '@nuvix/core/core.service.js';
 
 @Injectable()
 export class AuthHook implements Hook {
   private readonly logger = new Logger(AuthHook.name);
-
+  private readonly dbForPlatform: Database;
   constructor(
-    @Inject(DB_FOR_PLATFORM) readonly dbForPlatform: Database,
+    readonly coreService: CoreService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) {
+    this.dbForPlatform = coreService.getPlatformDb();
+  }
 
   async onRequest(req: NuvixRequest, reply: NuvixRes): Promise<void> {
     const params = new ParamsHelper(req);
-    const project: Document = req[PROJECT];
-    const dbForProject = req[CORE_SCHEMA_DB];
-    const mode = req[AppMode._REQUEST];
+    const project = req[Context.Project] as ProjectsDoc;
+    const dbForProject = req[CORE_SCHEMA_DB] as Database;
+    const mode = req[Context.Mode] as AppMode;
 
     Authorization.setDefaultStatus(true);
 
@@ -54,7 +49,7 @@ export class AuthHook implements Hook {
       if (sessionHeader) {
         try {
           session = Auth.decodeSession(sessionHeader);
-        } catch (error) {
+        } catch (error: any) {
           this.logger.debug(
             'Failed to decode session from header',
             error.message,
@@ -71,7 +66,7 @@ export class AuthHook implements Hook {
           const fallback = JSON.parse(fallbackHeader);
           session = Auth.decodeSession(fallback[Auth.cookieName] || '');
         }
-      } catch (error) {
+      } catch (error: any) {
         this.logger.debug('Failed to parse fallback cookies', error.message);
       }
     } else {
@@ -83,10 +78,10 @@ export class AuthHook implements Hook {
 
     this.logger.debug(`Auth: ${Auth.unique}`);
 
-    let user: Document;
+    let user: UsersDoc;
     if (mode !== AppMode.ADMIN) {
-      if (project.isEmpty()) {
-        user = new Document();
+      if (project.empty()) {
+        user = new Doc();
       } else {
         if (project.getId() === 'console') {
           user = await this.dbForPlatform.getDocument('users', Auth.unique);
@@ -98,22 +93,19 @@ export class AuthHook implements Hook {
       user = await this.dbForPlatform.getDocument('users', Auth.unique);
     }
 
-    const sessionId = Auth.sessionVerify(
-      user.getAttribute('sessions', []),
-      Auth.secret,
-    );
+    const sessionId = Auth.sessionVerify(user.get('sessions', []), Auth.secret);
 
-    if (user.isEmpty() || !sessionId) {
-      user = new Document();
+    if (user.empty() || !sessionId) {
+      user = new Doc();
     }
 
     const authJWT = params.getFromHeaders('x-nuvix-jwt');
 
-    if (authJWT && !project.isEmpty() && project.getId() !== 'console') {
+    if (authJWT && !project.empty() && project.getId() !== 'console') {
       let payload: any;
       try {
         payload = await this.jwtService.verifyAsync(authJWT);
-      } catch (e) {
+      } catch (e: any) {
         throw new Exception(
           Exception.USER_JWT_INVALID,
           `Failed to verify JWT. ${e.message}`,
@@ -126,45 +118,54 @@ export class AuthHook implements Hook {
       }
 
       const jwtSessionId = payload?.sessionId || null;
-      if (jwtSessionId && !user.find('$id', jwtSessionId, 'sessions')) {
-        user = new Document();
+      if (
+        jwtSessionId &&
+        !user.findWhere(
+          'sessions',
+          (s: SessionsDoc) => s.getId() === jwtSessionId,
+        )
+      ) {
+        user = new Doc();
       }
     }
 
     const currentSession =
       user
-        .getAttribute('sessions', [])
-        .find((s: Document) => s.getId() === sessionId) ?? new Document();
+        .get('sessions', [])
+        .find((s: SessionsDoc) => s.getId() === sessionId) ?? new Doc();
 
-    if (!project.isEmpty()) {
+    if (!project.empty()) {
       const apiKey =
         params.getFromHeaders('x-nuvix-key') || params.getFromQuery('apiKey');
-      req[ApiKey._REQUEST] = apiKey ? await Key.decode(project, apiKey) : null;
+      req[Context.ApiKey] = apiKey ? await Key.decode(project, apiKey) : null;
 
-      let teamInternalId: string;
+      let teamInternalId!: number;
       if (project.getId() !== 'console') {
-        teamInternalId = project.getAttribute('teamInternalId');
+        teamInternalId = project.get('teamInternalId');
       } // TODO: we have to use another approch, or we should pass teamId in headers
-      else if (req.url.startsWith('/v1/projects/') && req.params['projectId']) {
+      else if (
+        req.url.startsWith('/v1/projects/') &&
+        (req.params as any)['projectId']
+      ) {
         const p = await Authorization.skip(
           async () =>
             await this.dbForPlatform.getDocument(
               'projects',
-              req.params['projectId'],
+              (req.params as any)['projectId'],
             ),
         );
-        teamInternalId = p.getAttribute('teamInternalId');
+        teamInternalId = p.get('teamInternalId');
       } else if (
         req.url.startsWith('/v1/projects') &&
         params.getFromQuery('teamId')
       ) {
-        const teamId = params.getFromQuery('teamId');
-        const team = await Authorization.skip(
-          async () => await this.dbForPlatform.getDocument('teams', teamId),
+        const teamId = params.getFromQuery('teamId') as string;
+        const team = await Authorization.skip(() =>
+          this.dbForPlatform.getDocument('teams', teamId),
         );
-        req[TEAM] = team;
+        req[Context.Team] = team;
       } else {
-        req[TEAM] = new Document();
+        req[Context.Team] = new Doc();
       }
 
       if (teamInternalId) {
@@ -174,12 +175,12 @@ export class AuthHook implements Hook {
               Query.equal('$internalId', [teamInternalId]),
             ]),
         );
-        req[TEAM] = team;
+        req[Context.Team] = team;
       }
     }
 
-    req[USER] = user;
-    req[SESSION] = currentSession;
+    req[Context.User] = user;
+    req[Context.Session] = currentSession;
     return;
   }
 }

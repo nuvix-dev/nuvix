@@ -13,10 +13,10 @@ type PrivilegeType =
 
 export class TablePrivilegeRevokeDTO {
   @IsInt()
-  relation_id: number;
+  declare relation_id: number;
 
   @IsString()
-  grantee: string;
+  declare grantee: string;
 
   @IsIn([
     'ALL',
@@ -29,5 +29,5 @@ export class TablePrivilegeRevokeDTO {
     'TRIGGER',
     'MAINTAIN',
   ])
-  privilege_type: PrivilegeType;
+  declare privilege_type: PrivilegeType;
 }

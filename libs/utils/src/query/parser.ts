@@ -1,8 +1,10 @@
 import { Logger } from '@nestjs/common';
 import { Exception } from '@nuvix/core/extend/exception';
 import type {
+  AndExpression,
   Condition,
   Expression,
+  OrExpression,
   ParserConfig,
   ParserResult,
 } from './types';
@@ -29,7 +31,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     this._validateConfig();
   }
 
-  static create<T>({
+  static create<T extends ParserResult>({
     tableName,
     mainTable,
   }: {
@@ -56,7 +58,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
         ...this.parseExpression(true),
         ...(this.extraData as T),
       };
-      return result;
+      return result as T & Expression;
     } catch (error) {
       if (error instanceof Exception) {
         throw error;
@@ -269,9 +271,12 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
 
     const filteredExpressions =
       expressions.length === 1 &&
-      (expressions[0]['and'] || expressions[0]['or'])
-        ? (expressions[0]['and'] ?? expressions[0]['or'])
+      ((expressions[0] as AndExpression)['and'] ||
+        (expressions[0] as OrExpression)['or'])
+        ? ((expressions[0] as AndExpression)['and'] ??
+          (expressions[0] as OrExpression)['or'])
         : expressions;
+
     return filteredExpressions;
   }
 

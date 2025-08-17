@@ -1,4 +1,6 @@
-export class URLValidator {
+import { Validator } from '@nuvix-tech/db';
+
+export class URLValidator implements Validator {
   private allowedSchemes: string[];
 
   constructor(allowedSchemes: string[] = []) {
@@ -12,7 +14,7 @@ export class URLValidator {
    *
    * @return string
    */
-  public getDescription(): string {
+  public get $description(): string {
     if (this.allowedSchemes.length > 0) {
       return `Value must be a valid URL with following schemes (${this.allowedSchemes.join(', ')})`;
     }
@@ -28,7 +30,7 @@ export class URLValidator {
    * @param  value
    * @return boolean
    */
-  public isValid(value: any): boolean {
+  public $valid(value: any): boolean {
     try {
       const url = new URL(value);
       if (

@@ -5,7 +5,7 @@ import {
   APP_AUTH_TYPE_JWT,
   APP_AUTH_TYPE_KEY,
   APP_AUTH_TYPE_SESSION,
-} from '@nuvix/utils/constants';
+} from '@nuvix/utils';
 import { HttpStatus } from '@nestjs/common';
 
 export const Namespace = Reflector.createDecorator<keyof typeof services>();

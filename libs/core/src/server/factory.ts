@@ -347,7 +347,7 @@ export class NuvixFactoryStatic {
   private createAdapterProxy<T>(app: NestApplication, adapter: HttpServer): T {
     const proxy = new Proxy(app, {
       get: (receiver: Record<string, any>, prop: string) => {
-        const mapToProxy = (result: unknown) => {
+        const mapToProxy = (result: unknown): any => {
           return result instanceof Promise
             ? result.then(mapToProxy)
             : result instanceof NestApplication

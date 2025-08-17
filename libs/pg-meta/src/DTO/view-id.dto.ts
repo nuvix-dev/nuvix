@@ -5,5 +5,5 @@ export class ViewIdParamDTO {
   @IsInt()
   @IsPositive()
   @Type(() => Number)
-  id: number;
+  declare id: number;
 }

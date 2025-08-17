@@ -23,7 +23,7 @@ export const apply = ({
     .reduce(
       (acc, curr) => {
         acc[curr.table_id] ??= [];
-        acc[curr.table_id].push(curr);
+        acc[curr.table_id]!.push(curr);
         return acc;
       },
       {} as Record<string, PostgresColumn[]>,
@@ -106,7 +106,7 @@ ${compositeTypes
 function formatForGoTypeName(name: string): string {
   return name
     .split(/[^a-zA-Z0-9]/)
-    .map(word => `${word[0].toUpperCase()}${word.slice(1)}`)
+    .map(word => `${word[0]?.toUpperCase()}${word.slice(1)}`)
     .join('');
 }
 

@@ -8,7 +8,7 @@ import {
 
 export class PublicationCreateDTO {
   @IsString()
-  name: string;
+  declare name: string;
 
   @IsOptional()
   @IsBoolean()

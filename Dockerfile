@@ -42,4 +42,4 @@ FROM base AS production
 WORKDIR /app
 
 # Run the production build command using Bun.
-RUN bun --bun run build nuvix console
+RUN bun turbo build --filter=@nuvix/api --filter=@nuvix/platform

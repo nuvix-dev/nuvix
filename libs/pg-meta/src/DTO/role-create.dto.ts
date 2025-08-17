@@ -9,7 +9,7 @@ import {
 
 export class RoleCreateDTO {
   @IsString()
-  name: string;
+  declare name: string;
 
   @IsOptional()
   @IsBoolean()

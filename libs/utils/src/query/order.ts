@@ -116,7 +116,7 @@ class OrderParser extends BaseParser {
           }
         } else if (token.type === TokenType.DOT) {
           // Skip dot if it's not part of a field path e.g. "field.asc.nullsfirst"
-          if (this.peekNext().type !== TokenType.IDENTIFIER) {
+          if (this.peekNext()?.type !== TokenType.IDENTIFIER) {
             // "field.asc."
             throw new Error(
               `Unexpected dot without identifier after: ${token.value}`,

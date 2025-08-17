@@ -1,20 +1,14 @@
-export class PhoneValidator {
+import type { Validator } from '@nuvix-tech/db';
+
+export class PhoneValidator implements Validator {
   private allowEmpty: boolean;
 
   constructor(allowEmpty: boolean = false) {
     this.allowEmpty = allowEmpty;
   }
 
-  /**
-   * Get Description.
-   *
-   * Returns validator description
-   *
-   * @return string
-   */
-  getDescription(): string {
-    return "Phone number must start with a '+' and can have a maximum of fifteen digits.";
-  }
+  $description: string =
+    "Phone number must start with a '+' and can have a maximum of fifteen digits.";
 
   /**
    * Is valid.
@@ -23,7 +17,7 @@ export class PhoneValidator {
    *
    * @return boolean
    */
-  isValid(value: any): boolean {
+  $valid(value: any): boolean {
     if (typeof value !== 'string') {
       return false;
     }

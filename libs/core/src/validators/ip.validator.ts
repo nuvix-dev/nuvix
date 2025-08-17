@@ -1,4 +1,6 @@
-export class IPValidator {
+import { Validator } from '@nuvix-tech/db';
+
+export class IPValidator implements Validator {
   static readonly ALL = 'all';
   static readonly V4 = 'ipv4';
   static readonly V6 = 'ipv6';
@@ -12,11 +14,9 @@ export class IPValidator {
     this.type = type;
   }
 
-  getDescription(): string {
-    return 'Value must be a valid IP address';
-  }
+  $description: string = 'Value must be a valid IP address';
 
-  isValid(value: any): boolean {
+  $valid(value: any): boolean {
     switch (this.type) {
       case IPValidator.ALL:
         return this.validateIP(value);

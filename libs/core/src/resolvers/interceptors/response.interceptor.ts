@@ -7,8 +7,6 @@ import {
   CallHandler,
   ExecutionContext,
   ClassSerializerContextOptions,
-  SetMetadata,
-  Type,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -16,7 +14,7 @@ import { isObject } from '@nestjs/common/utils/shared.utils';
 import { loadPackage } from '@nestjs/common/utils/load-package.util';
 import { ClassTransformOptions } from '@nestjs/common/interfaces/external/class-transform-options.interface';
 import { TransformerPackage } from '@nestjs/common/interfaces/external/transformer-package.interface';
-import { Document } from '@nuvix/database';
+import { Doc } from '@nuvix-tech/db';
 
 export const CLASS_SERIALIZER_OPTIONS = 'CLASS_SERIALIZER_OPTIONS';
 
@@ -87,7 +85,7 @@ export class ResponseInterceptor implements NestInterceptor {
       return response;
     }
 
-    if (response instanceof Document) {
+    if (response instanceof Doc) {
       response = response.toObject();
     }
 
@@ -98,7 +96,7 @@ export class ResponseInterceptor implements NestInterceptor {
 
     return Array.isArray(response)
       ? response.map(item => {
-          if (item instanceof Document) {
+          if (item instanceof Doc) {
             item = item.toObject();
           }
           return this.transformToPlain(item, options);
@@ -119,23 +117,21 @@ export class ResponseInterceptor implements NestInterceptor {
       const serializedResponse: PlainLiteralObject = {};
 
       for (const key of keys) {
-        if (Array.isArray(response[key])) {
-          serializedResponse[key] = response[key].map(item => {
-            if (item instanceof Document) {
+        const value = (response as PlainLiteralObject)[key];
+        if (Array.isArray(value)) {
+          serializedResponse[key] = value.map(item => {
+            if (item instanceof Doc) {
               item = item.toObject();
             }
             return this.transformToPlain(item, options);
           });
-        } else if (isObject(response[key])) {
-          if (response[key] instanceof Document) {
-            response[key] = response[key].toObject();
-          }
+        } else if (isObject(value)) {
           serializedResponse[key] = this.transformToPlain(
-            response[key],
+            value instanceof Doc ? value.toObject() : value,
             options,
           );
         } else {
-          serializedResponse[key] = response[key];
+          serializedResponse[key] = value;
         }
       }
 
@@ -145,15 +141,16 @@ export class ResponseInterceptor implements NestInterceptor {
     const serializedResponse: PlainLiteralObject = {};
 
     for (const key in response) {
-      if (Array.isArray(response[key])) {
-        serializedResponse[key] = response[key].map(item => {
-          if (item instanceof Document) {
+      const value = (response as PlainLiteralObject)[key];
+      if (Array.isArray(value)) {
+        serializedResponse[key] = value.map(item => {
+          if (item instanceof Doc) {
             item = item.toObject();
           }
           return this.transformToPlain(item, options);
         });
       } else {
-        serializedResponse[key] = response[key];
+        serializedResponse[key] = value;
       }
     }
 

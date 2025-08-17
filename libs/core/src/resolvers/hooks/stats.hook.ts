@@ -1,27 +1,28 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
 import { Hook } from '@nuvix/core/server';
-import { MetricFor, PROJECT, QueueFor } from '@nuvix/utils/constants';
+import { Context, MetricFor, QueueFor } from '@nuvix/utils';
 import { Queue } from 'bullmq';
 import { StatsQueueOptions } from '../queues';
-import { Authorization, Document } from '@nuvix/database';
+import { Authorization } from '@nuvix-tech/db';
 import { Auth } from '@nuvix/core/helper';
+import type { ProjectsDoc } from '@nuvix/utils/types';
 
 @Injectable()
 export class StatsHook implements Hook {
   constructor(
     @InjectQueue(QueueFor.STATS)
     private readonly statsQueue: Queue<StatsQueueOptions, any, MetricFor>,
-  ) { }
+  ) {}
 
   async onResponse(
     req: NuvixRequest,
     reply: NuvixRes,
     next: (err?: Error) => void,
   ): Promise<unknown> {
-    const project: Document = req[PROJECT];
+    const project: ProjectsDoc = req[Context.Project];
     if (
-      project.isEmpty() ||
+      project.empty() ||
       project.getId() === 'console' ||
       Auth.isPrivilegedUser(Authorization.getRoles())
     )

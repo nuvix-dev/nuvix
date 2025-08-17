@@ -1,18 +1,13 @@
-export class PasswordValidator {
+import type { Validator } from '@nuvix-tech/db';
+
+export class PasswordValidator implements Validator {
   private allowEmpty: boolean;
 
   constructor(allowEmpty: boolean = false) {
     this.allowEmpty = allowEmpty;
   }
 
-  /**
-   * Get Description
-   *
-   * Returns validator description
-   */
-  getDescription(): string {
-    return 'Password must be between 8 and 256 characters long.';
-  }
+  $description: string = 'Password must be between 8 and 256 characters long.';
 
   /**
    * Is Valid
@@ -21,7 +16,7 @@ export class PasswordValidator {
    *
    * @param value - The value to validate.
    */
-  isValid(value: unknown): boolean {
+  $valid(value: unknown): boolean {
     if (typeof value !== 'string') {
       return false;
     }
@@ -35,23 +30,5 @@ export class PasswordValidator {
     }
 
     return true;
-  }
-
-  /**
-   * Is Array
-   *
-   * Indicates if the validator works on arrays.
-   */
-  isArray(): boolean {
-    return false;
-  }
-
-  /**
-   * Get Type
-   *
-   * Returns validator type.
-   */
-  getType(): string {
-    return 'string'; // Equivalent to `self::TYPE_STRING` in PHP
   }
 }

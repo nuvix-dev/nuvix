@@ -1,6 +1,6 @@
 import { ArgumentMetadata, PipeTransform } from '@nestjs/common';
 import { Exception } from '../extend/exception';
-import { Query, QueryException } from '@nuvix/database';
+import { Query, QueryException } from '@nuvix-tech/db';
 
 interface Options {}
 
@@ -46,7 +46,7 @@ export class ParseQueryPipe
         Exception.GENERAL_QUERY_INVALID,
         error instanceof QueryException
           ? error.message
-          : `Failed to parse query: ${error.message ?? 'Unknown error'}`,
+          : `Failed to parse query: ${(error as Error)?.message ?? 'Unknown error'}`,
       );
     }
   }

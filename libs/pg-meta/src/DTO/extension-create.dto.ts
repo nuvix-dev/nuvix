@@ -2,7 +2,7 @@ import { IsOptional, IsString } from 'class-validator';
 
 export class ExtensionCreateDTO {
   @IsString()
-  name: string;
+  declare name: string;
 
   @IsOptional()
   @IsString()

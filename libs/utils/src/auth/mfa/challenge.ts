@@ -1,12 +1,12 @@
-import { Document } from '@nuvix/database';
+import { UsersDoc, type ChallengesDoc } from 'libs/utils/types';
 
 export abstract class Challenge {
-  public static verify(user: Document, otp: string): boolean {
+  public static verify(user: UsersDoc, otp: string): boolean {
     return false;
   }
   public static challenge(
-    challenge: Document,
-    user: Document,
+    challenge: ChallengesDoc,
+    user: UsersDoc,
     otp: string,
   ): boolean {
     return false;

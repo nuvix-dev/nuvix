@@ -4,21 +4,6 @@ import BaseModel from '@nuvix/core/models/base.model';
 @Exclude()
 export class IdentityModel extends BaseModel {
   /**
-   * Identity ID.
-   */
-  @Expose() id: string = '';
-
-  /**
-   * Identity creation date in ISO 8601 format.
-   */
-  @Expose() createdAt: string; // No default value
-
-  /**
-   * Identity update date in ISO 8601 format.
-   */
-  @Expose() updatedAt: string; // No default value
-
-  /**
    * User ID.
    */
   @Expose() userId: string = '';
@@ -46,7 +31,7 @@ export class IdentityModel extends BaseModel {
   /**
    * The date of when the access token expires in ISO 8601 format.
    */
-  @Expose() providerAccessTokenExpiry: string; // No default value
+  @Expose() declare providerAccessTokenExpiry: string; // No default value
 
   /**
    * Identity Provider Refresh Token.

@@ -8,13 +8,13 @@ import {
 
 export class ColumnCreateDTO {
   @IsString()
-  name: string;
+  declare name: string;
 
   @IsNumber()
-  table_id: number;
+  declare table_id: number;
 
   @IsString()
-  type: string;
+  declare type: string;
 
   @IsOptional()
   @IsBoolean()

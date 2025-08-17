@@ -11,7 +11,7 @@ export class MetricModel extends BaseModel {
   /**
    * The date at which this metric was aggregated in ISO 8601 format.
    */
-  @Expose() date: string; // No default value
+  @Expose() declare date: string; // No default value
 
   constructor(partial: Partial<MetricModel>) {
     super();

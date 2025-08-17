@@ -1,8 +1,8 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { Injectable } from '@nestjs/common';
 import { Hook } from '@nuvix/core/server';
-import { Document } from '@nuvix/database';
-import { PROJECT, QueueFor } from '@nuvix/utils/constants';
+import { Doc } from '@nuvix-tech/db';
+import { Context, QueueFor } from '@nuvix/utils';
 import type { Queue } from 'bullmq';
 
 @Injectable()
@@ -14,7 +14,7 @@ export class LogsHook implements Hook {
     reply: NuvixRes,
     next: (err?: Error) => void,
   ) {
-    const project = req[PROJECT] ?? new Document({ $id: 'console' });
+    const project = req[Context.Project] ?? new Doc({ $id: 'console' });
     // TODO: queue api logs
     return;
   }

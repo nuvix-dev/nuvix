@@ -1,88 +1,101 @@
-import { Authorization, Database, Document, Query } from '@nuvix/database';
+import {
+  AttributeType,
+  Authorization,
+  Database,
+  Doc,
+  Query,
+} from '@nuvix-tech/db';
 import {
   APP_LIMIT_SUBQUERY,
   APP_LIMIT_SUBSCRIBERS_SUBQUERY,
   APP_OPENSSL_KEY_1,
-} from '@nuvix/utils/constants';
+} from '../constants';
 import crypto from 'crypto';
 
-export const filters = {
+type SecondArgType = {
+  encode: (
+    value: any,
+    attribute: Doc<Record<string, any>>,
+    database: Database,
+  ) => any;
+  decode: (
+    value: any,
+    document: Doc<Record<string, any>>,
+    database: Database,
+  ) => any | Promise<any>;
+};
+
+export const filters: Record<string, SecondArgType> = {
   casting: {
-    serialize: (value: any) => {
+    encode: value => {
       return JSON.stringify({ value: value }, (key, value) => {
         return typeof value === 'number' && !isFinite(value)
           ? String(value)
           : value;
       });
     },
-    deserialize: (value: any) => {
+    decode: value => {
       if (value == null || value === undefined) {
         return null;
       }
 
-      return JSON.parse(value)?.value;
+      return JSON.parse(value as string)?.value;
     },
   },
   enum: {
-    serialize: ((value: any, attribute: Document) => {
-      if (attribute.isSet('elements')) {
-        attribute.removeAttribute('elements');
-      }
-
-      return value;
-    }) as any,
-    deserialize: ((value: any, attribute: Document) => {
-      const formatOptions = JSON.parse(
-        attribute.getAttribute('formatOptions', '[]'),
-      );
-      if (formatOptions.elements) {
-        attribute.setAttribute('elements', formatOptions.elements);
-      }
-
-      return value;
-    }) as any,
-  },
-  range: {
-    serialize: (value: any, attribute: Document) => {
-      if (attribute.isSet('min')) {
-        attribute.removeAttribute('min');
-      }
-      if (attribute.isSet('max')) {
-        attribute.removeAttribute('max');
+    encode: (value, attribute) => {
+      if (attribute.has('elements')) {
+        attribute.delete('elements');
       }
 
       return value;
     },
-    deserialize: (value: any, attribute: Document) => {
-      const formatOptions = JSON.parse(
-        attribute.getAttribute('formatOptions', '[]'),
-      );
+    decode: (value, attribute) => {
+      const formatOptions = attribute.get('formatOptions');
+      if (formatOptions.elements) {
+        attribute.set('elements', formatOptions.elements);
+      }
+
+      return value;
+    },
+  },
+  range: {
+    encode: (value, attribute) => {
+      if (attribute.has('min')) {
+        attribute.delete('min');
+      }
+      if (attribute.has('max')) {
+        attribute.delete('max');
+      }
+
+      return value;
+    },
+    decode: (value, attribute) => {
+      const formatOptions = attribute.get('formatOptions', {});
       if (formatOptions.min || formatOptions.max) {
-        attribute
-          .setAttribute('min', formatOptions.min)
-          .setAttribute('max', formatOptions.max);
+        attribute.set('min', formatOptions.min).set('max', formatOptions.max);
       }
 
       return value;
     },
   },
   subQueryAttributes: {
-    serialize: (value: any) => {
+    encode: _ => {
       return null;
     },
-    deserialize: async (value: any, document: Document, database: Database) => {
+    decode: async (_, document, database) => {
       const attributes = await database.find('attributes', [
-        Query.equal('collectionInternalId', [document.getInternalId()]),
-        Query.limit(database.getLimitForAttributes()),
+        Query.equal('collectionInternalId', [document.getSequence()]),
+        Query.limit(database.getAdapter().$limitForAttributes),
       ]);
 
       attributes.forEach(attribute => {
-        if (attribute.getAttribute('type') === Database.VAR_RELATIONSHIP) {
-          const options = attribute.getAttribute('options');
+        if (attribute.get('type') === AttributeType.Relationship) {
+          const options = attribute.get('options');
           Object.keys(options).forEach(key => {
-            attribute.setAttribute(key, options[key]);
+            attribute.set(key, options[key]);
           });
-          attribute.removeAttribute('options');
+          attribute.delete('options');
         }
       });
 
@@ -90,122 +103,122 @@ export const filters = {
     },
   },
   subQueryIndexes: {
-    serialize: (value: any) => {
+    encode: _ => {
       return null;
     },
-    deserialize: async (value: any, document: Document, database: Database) => {
+    decode: async (_, document, database) => {
       return await database.find('indexes', [
-        Query.equal('collectionInternalId', [document.getInternalId()]),
-        Query.limit(database.getLimitForIndexes()),
+        Query.equal('collectionInternalId', [document.getSequence()]),
+        Query.limit(database.getAdapter().$limitForIndexes),
       ]);
     },
   },
   subQueryPlatforms: {
-    serialize: (value: any) => {
+    encode: _ => {
       return null;
     },
-    deserialize: async (value: any, document: Document, database: Database) => {
-      return await database.find('platforms', [
-        Query.equal('projectInternalId', [document.getInternalId()]),
+    decode: (_, document, database) => {
+      return database.find('platforms', [
+        Query.equal('projectInternalId', [document.getSequence()]),
         Query.limit(APP_LIMIT_SUBQUERY),
       ]);
     },
   },
 
   subQueryKeys: {
-    serialize: (value: any) => {
+    encode: () => {
       return null;
     },
-    deserialize: async (value: any, document: Document, database: Database) => {
-      return await database.find('keys', [
-        Query.equal('projectInternalId', [document.getInternalId()]),
+    decode: (_, document, database) => {
+      return database.find('keys', [
+        Query.equal('projectInternalId', [document.getSequence()]),
         Query.limit(APP_LIMIT_SUBQUERY),
       ]);
     },
   },
   subQueryWebhooks: {
-    serialize: (value: any) => {
+    encode: () => {
       return null;
     },
-    deserialize: async (value: any, document: Document, database: Database) => {
-      return await database.find('webhooks', [
-        Query.equal('projectInternalId', [document.getInternalId()]),
+    decode: (_, document, database) => {
+      return database.find('webhooks', [
+        Query.equal('projectInternalId', [document.getSequence()]),
         Query.limit(APP_LIMIT_SUBQUERY),
       ]);
     },
   },
   subQuerySessions: {
-    serialize: (value: any) => {
+    encode: () => {
       return null;
     },
-    deserialize: async (value: any, document: Document, database: Database) => {
-      return await Authorization.skip(async () => {
-        return await database.find('sessions', [
-          Query.equal('userInternalId', [document.getInternalId()]),
+    decode: async (_, document, database) => {
+      return Authorization.skip(async () => {
+        return database.find('sessions', [
+          Query.equal('userInternalId', [document.getSequence()]),
           Query.limit(APP_LIMIT_SUBQUERY),
         ]);
       });
     },
   },
   subQueryTokens: {
-    serialize: (value: any) => {
+    encode: () => {
       return null;
     },
-    deserialize: async (value: any, document: Document, database: Database) => {
-      return await Authorization.skip(async () => {
-        return await database.find('tokens', [
-          Query.equal('userInternalId', [document.getInternalId()]),
+    decode: (_, document, database) => {
+      return Authorization.skip(() => {
+        return database.find('tokens', [
+          Query.equal('userInternalId', [document.getSequence()]),
           Query.limit(APP_LIMIT_SUBQUERY),
         ]);
       });
     },
   },
   subQueryChallenges: {
-    serialize: (value: any) => {
+    encode: () => {
       return null;
     },
-    deserialize: async (value: any, document: Document, database: Database) => {
-      return await Authorization.skip(async () => {
-        return await database.find('challenges', [
-          Query.equal('userInternalId', [document.getInternalId()]),
+    decode: (_, document, database) => {
+      return Authorization.skip(() => {
+        return database.find('challenges', [
+          Query.equal('userInternalId', [document.getSequence()]),
           Query.limit(APP_LIMIT_SUBQUERY),
         ]);
       });
     },
   },
   subQueryAuthenticators: {
-    serialize: (value: any) => {
+    encode: () => {
       return null;
     },
-    deserialize: async (value: any, document: Document, database: Database) => {
-      return await Authorization.skip(async () => {
-        return await database.find('authenticators', [
-          Query.equal('userInternalId', [document.getInternalId()]),
+    decode: (_, document, database) => {
+      return Authorization.skip(() => {
+        return database.find('authenticators', [
+          Query.equal('userInternalId', [document.getSequence()]),
           Query.limit(APP_LIMIT_SUBQUERY),
         ]);
       });
     },
   },
   subQueryMemberships: {
-    serialize: (value: any) => {
+    encode: () => {
       return null;
     },
-    deserialize: async (value: any, document: Document, database: Database) => {
-      return await Authorization.skip(async () => {
-        return await database.find('memberships', [
-          Query.equal('userInternalId', [document.getInternalId()]),
+    decode: (_, document, database) => {
+      return Authorization.skip(async () => {
+        return database.find('memberships', [
+          Query.equal('userInternalId', [document.getSequence()]),
           Query.limit(APP_LIMIT_SUBQUERY),
         ]);
       });
     },
   },
   subQueryVariables: {
-    serialize: (value: any) => {
+    encode: () => {
       return null;
     },
-    deserialize: async (value: any, document: Document, database: Database) => {
-      return await database.find('variables', [
-        Query.equal('resourceInternalId', [document.getInternalId()]),
+    decode: (_, document, database) => {
+      return database.find('variables', [
+        Query.equal('resourceInternalId', [document.getSequence()]),
         Query.equal('resourceType', ['function']),
         Query.limit(APP_LIMIT_SUBQUERY),
       ]);
@@ -213,7 +226,7 @@ export const filters = {
   },
 
   encrypt: {
-    serialize: (value: any) => {
+    encode: value => {
       const key = APP_OPENSSL_KEY_1;
       const iv = crypto.randomBytes(16);
       const cipher = crypto.createCipheriv('aes-128-gcm', key, iv);
@@ -229,7 +242,7 @@ export const filters = {
         version: '1',
       });
     },
-    deserialize: (value: any) => {
+    decode: (value: any) => {
       if (value === null) {
         return null;
       }
@@ -238,6 +251,7 @@ export const filters = {
       switch (value.version) {
         case '1':
           key = APP_OPENSSL_KEY_1;
+          break;
         default:
           key = APP_OPENSSL_KEY_1;
       }
@@ -253,10 +267,10 @@ export const filters = {
   },
 
   subQueryProjectVariables: {
-    serialize: (value: any) => {
+    encode: () => {
       return null;
     },
-    deserialize: async (value: any, document: Document, database: Database) => {
+    decode: async (_, __, database) => {
       return await database.find('variables', [
         Query.equal('resourceType', ['project']),
         Query.limit(APP_LIMIT_SUBQUERY),
@@ -264,101 +278,99 @@ export const filters = {
     },
   },
   userSearch: {
-    serialize: (value: any, user: Document) => {
+    encode: (_, user) => {
       const searchValues = [
         user.getId(),
-        user.getAttribute('email', ''),
-        user.getAttribute('name', ''),
-        user.getAttribute('phone', ''),
+        user.get('email', ''),
+        user.get('name', ''),
+        user.get('phone', ''),
       ];
 
-      user.getAttribute('labels', []).forEach((label: string) => {
+      user.get('labels', []).forEach((label: string) => {
         searchValues.push('label:' + label);
       });
 
       return searchValues.filter(Boolean).join(' ');
     },
-    deserialize: (value: any) => {
+    decode: value => {
       return value;
     },
   },
   subQueryTargets: {
-    serialize: (value: any) => {
+    encode: () => {
       return null;
     },
-    deserialize: async (value: any, document: Document, database: Database) => {
-      return await Authorization.skip(async () => {
-        return await database.find('targets', [
-          Query.equal('userInternalId', [document.getInternalId()]),
+    decode: (_, document, database) => {
+      return Authorization.skip(() => {
+        return database.find('targets', [
+          Query.equal('userInternalId', [document.getSequence()]),
           Query.limit(APP_LIMIT_SUBQUERY),
         ]);
       });
     },
   },
   subQueryTopicTargets: {
-    serialize: (value: any) => {
+    encode: () => {
       return null;
     },
-    deserialize: async (value: any, document: Document, database: Database) => {
+    decode: async (_, document, database) => {
       const targetIds = await Authorization.skip(async () => {
         const subscribers = await database.find('subscribers', [
-          Query.equal('topicInternalId', [document.getInternalId()]),
+          Query.equal('topicInternalId', [document.getSequence()]),
           Query.limit(APP_LIMIT_SUBSCRIBERS_SUBQUERY),
         ]);
-        return subscribers.map((subscriber: Document) =>
-          subscriber.getAttribute('targetInternalId'),
+        return subscribers.map(subscriber =>
+          subscriber.get('targetInternalId'),
         );
       });
 
       if (targetIds.length > 0) {
-        return await database.skipValidation(async () => {
-          return await database.find('targets', [
-            Query.equal('$internalId', targetIds),
-          ]);
-        });
+        return database.skipValidation(() =>
+          database.find('targets', [Query.equal('$internalId', targetIds)]),
+        );
       }
       return [];
     },
   },
   providerSearch: {
-    serialize: (value: any, provider: Document) => {
+    encode: (_, provider) => {
       const searchValues = [
         provider.getId(),
-        provider.getAttribute('name', ''),
-        provider.getAttribute('provider', ''),
-        provider.getAttribute('type', ''),
+        provider.get('name', ''),
+        provider.get('provider', ''),
+        provider.get('type', ''),
       ];
 
       return searchValues.filter(Boolean).join(' ');
     },
-    deserialize: (value: any) => {
+    decode: value => {
       return value;
     },
   },
   topicSearch: {
-    serialize: (value: any, topic: Document) => {
+    encode: (_, topic) => {
       const searchValues = [
         topic.getId(),
-        topic.getAttribute('name', ''),
-        topic.getAttribute('description', ''),
+        topic.get('name', ''),
+        topic.get('description', ''),
       ];
 
       return searchValues.filter(Boolean).join(' ');
     },
-    deserialize: (value: any) => {
+    decode: value => {
       return value;
     },
   },
   messageSearch: {
-    serialize: (value: any, message: Document) => {
+    encode: (_, message) => {
       const searchValues = [
         message.getId(),
-        message.getAttribute('description', ''),
-        message.getAttribute('status', ''),
+        message.get('description', ''),
+        message.get('status', ''),
       ];
 
-      const data = JSON.parse(message.getAttribute('data', '{}'));
-      const providerType = message.getAttribute('providerType', '');
+      const data = message.get('data', {});
+      const providerType = message.get('providerType', '');
 
       if (providerType === 'email') {
         searchValues.push(data.subject, 'email');
@@ -370,7 +382,7 @@ export const filters = {
 
       return searchValues.filter(Boolean).join(' ');
     },
-    deserialize: (value: any) => {
+    decode: (value: any) => {
       return value;
     },
   },

@@ -1,4 +1,4 @@
-import { Permission } from '@nuvix/database';
+import { Permission } from '@nuvix-tech/db';
 import { AuthProviderModel } from './AuthProvider.model';
 import BaseModel from './base.model';
 import { MockNumberModel } from './MockNumber.model';
@@ -17,47 +17,47 @@ export class ProjectModel extends BaseModel {
   /**
    * Project name.
    */
-  @Expose() name: string;
+  @Expose() declare name: string;
   /**
    * Project description.
    */
-  @Expose() description: string;
+  @Expose() declare description: string;
   /**
    * Project team ID.
    */
-  @Expose() teamId: string;
+  @Expose() declare teamId: string;
   /**
    * Project logo file ID.
    */
-  @Expose() logo: string;
+  @Expose() declare logo: string;
   /**
    * Project website URL.
    */
-  @Expose() url: string;
+  @Expose() declare url: string;
   /**
    * Company legal name.
    */
-  @Expose() legalName: string;
+  @Expose() declare legalName: string;
   /**
    * Country code in [ISO 3166-1](http://en.wikipedia.org/wiki/ISO_3166-1) two-character format.
    */
-  @Expose() legalCountry: string;
+  @Expose() declare legalCountry: string;
   /**
    * State name.
    */
-  @Expose() legalState: string;
+  @Expose() declare legalState: string;
   /**
    * City name.
    */
-  @Expose() legalCity: string;
+  @Expose() declare legalCity: string;
   /**
    * Company Address.
    */
-  @Expose() legalAddress: string;
+  @Expose() declare legalAddress: string;
   /**
    * Company Tax ID.
    */
-  @Expose() legalTaxId: string;
+  @Expose() declare legalTaxId: string;
   /**
    * Session duration in seconds.
    */
@@ -138,19 +138,19 @@ export class ProjectModel extends BaseModel {
   /**
    * List of Auth Providers.
    */
-  @Expose() oAuthProviders: AuthProviderModel[];
+  @Expose() declare oAuthProviders: AuthProviderModel[];
   /**
    * List of Platforms.
    */
-  @Expose() platforms: PlatformModel[];
+  @Expose() declare platforms: PlatformModel[];
   /**
    * List of Webhooks.
    */
-  @Expose() webhooks: WebhookModel[];
+  @Expose() declare webhooks: WebhookModel[];
   /**
    * List of API Keys.
    */
-  @Expose() keys: KeyModel[];
+  @Expose() declare keys: KeyModel[];
   /**
    * Status for custom SMTP
    */
@@ -217,11 +217,11 @@ export class ProjectModel extends BaseModel {
   /**
    * Number of times the ping was received for this project.
    */
-  @Expose() pingCount: number;
+  @Expose() declare pingCount: number;
   /**
    * Last ping datetime in ISO 8601 format.
    */
-  @Expose() pingedAt: string;
+  @Expose() declare pingedAt: string;
   /**
    * Email/Password auth method status
    */
@@ -351,10 +351,10 @@ export class ProjectModel extends BaseModel {
   /**
    * Project region
    */
-  @Expose() region: string;
+  @Expose() declare region: string;
 
-  @Expose() status: string;
-  @Expose() enabled: boolean;
+  @Expose() declare status: string;
+  @Expose() declare enabled: boolean;
 
   constructor() {
     super();

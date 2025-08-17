@@ -1,4 +1,6 @@
-export class WhiteList {
+import { Validator } from '@nuvix-tech/db';
+
+export class WhiteList implements Validator {
   private list: string[];
   private strict: boolean;
 
@@ -15,11 +17,11 @@ export class WhiteList {
     return this.list;
   }
 
-  getDescription(): string {
+  get $description(): string {
     return `Value must be one of (${this.list.join(', ')})`;
   }
 
-  isValid(value: any): boolean {
+  $valid(value: any): boolean {
     if (Array.isArray(value)) {
       return false;
     }

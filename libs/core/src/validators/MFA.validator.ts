@@ -1,8 +1,16 @@
 import { totp } from 'otplib';
 import { Auth } from '../helper/auth.helper';
-import { Document } from '@nuvix/database';
+import { Doc } from '@nuvix-tech/db';
+import { UsersDoc, type AuthenticatorsDoc } from '@nuvix/utils/types';
 
-abstract class MfaType {
+enum MfaType {
+  TOTP = 'totp',
+  EMAIL = 'email',
+  PHONE = 'phone',
+  RECOVERY_CODE = 'recoveryCode',
+}
+
+abstract class Mfa {
   protected instance: typeof totp;
 
   public static readonly TOTP = 'totp';
@@ -15,7 +23,7 @@ abstract class MfaType {
   }
 
   public setLabel(label: string): this {
-    this.instance.options.label = label;
+    this.instance.options['label'] = label;
     return this;
   }
 
@@ -24,16 +32,16 @@ abstract class MfaType {
   }
 
   public setIssuer(issuer: string): this {
-    this.instance.options.issuer = issuer;
+    this.instance.options['issuer'] = issuer;
     return this;
   }
 
   public getIssuer(): string | null {
-    return (this.instance.options.issuer as string) || null;
+    return (this.instance.options['issuer'] as string) || null;
   }
 
   public getSecret(): string {
-    return this.instance.options.secret as string;
+    return this.instance.options['secret'] as string;
   }
 
   public getProvisioningUri(): string {
@@ -54,16 +62,18 @@ abstract class MfaType {
   }
 }
 
-class TOTP extends MfaType {
+class TOTP extends Mfa {
   constructor() {
     super(totp);
   }
 
-  public static getAuthenticatorFromUser(user: Document): Document {
-    const authenticators = user.getAttribute('authenticators', []);
-    for (const authenticator of authenticators) {
-      if (authenticator.getAttribute('type') === MfaType.TOTP) {
-        return authenticator;
+  public static getAuthenticatorFromUser(
+    user: UsersDoc,
+  ): AuthenticatorsDoc | null {
+    const authenticators = user.get('authenticators', []);
+    for (const authenticator of authenticators as Doc[]) {
+      if (authenticator.get('type') === MfaType.TOTP) {
+        return authenticator as AuthenticatorsDoc;
       }
     }
     return null;

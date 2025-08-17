@@ -1,3 +1,5 @@
+import type configuration from './configuration.js';
+
 export interface ServerConfig {
   host: string;
   methods: string[];
@@ -10,3 +12,5 @@ export interface ServerConfig {
   maxAge?: number;
   cookieDomain?: string;
 }
+
+export type Configuration = ReturnType<typeof configuration>;

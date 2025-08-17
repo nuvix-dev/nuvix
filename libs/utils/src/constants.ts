@@ -54,87 +54,114 @@ function findProjectRoot(): string {
 export const PROJECT_ROOT = findProjectRoot();
 
 // Asset paths configuration
-export const ASSETS = {
-  ROOT: path.join(PROJECT_ROOT, process.env.ASSETS_ROOT || 'assets'),
-  IMAGES: path.join(PROJECT_ROOT, process.env.ASSETS_IMAGES || 'assets/images'),
-  FONTS: path.join(PROJECT_ROOT, process.env.ASSETS_FONTS || 'assets/fonts'),
+/**@deprecated */ export const ASSETS = {
+  ROOT: path.join(PROJECT_ROOT, process.env['ASSETS_ROOT'] || 'assets'),
+  IMAGES: path.join(
+    PROJECT_ROOT,
+    process.env['ASSETS_IMAGES'] || 'assets/images',
+  ),
+  FONTS: path.join(PROJECT_ROOT, process.env['ASSETS_FONTS'] || 'assets/fonts'),
   TEMPLATES: path.join(PROJECT_ROOT, 'assets/locale/templates'),
-  PUBLIC: path.join(PROJECT_ROOT, process.env.ASSETS_PUBLIC || 'public'),
+  PUBLIC: path.join(PROJECT_ROOT, process.env['ASSETS_PUBLIC'] || 'public'),
   get: (relativePath: string) => path.join(PROJECT_ROOT, relativePath),
 };
 
-export const JWT_SECRET = process.env.JWT_SECRET;
-export const PYTHON_API_URL = process.env.PYTHON_API_URL;
-export const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
-export const IS_PRODUCTION = process.env.NODE_ENV === 'production';
+export const JWT_SECRET = process.env['JWT_SECRET'];
+export const PYTHON_API_URL = process.env['PYTHON_API_URL'];
+export const ENCRYPTION_KEY = process.env['ENCRYPTION_KEY'];
+export const IS_PRODUCTION = process.env['NODE_ENV'] === 'production';
 
-export const APP_VERSION_STABLE = '1.0.0';
-export const APP_FUNCTION_SPECIFICATION_DEFAULT = 'default';
-export const APP_OPENSSL_KEY_1 = 'acd3462d9128abcd'; // 16-byte key for AES-128-GCM
+/**@deprecated */ export const APP_VERSION_STABLE = '1.0.0';
+/**@deprecated */ export const APP_FUNCTION_SPECIFICATION_DEFAULT = 'default';
+/**@deprecated */ export const APP_OPENSSL_KEY_1 = 'acd3462d9128abcd'; // 16-byte key for AES-128-GCM
 
-export const APP_REDIS_PORT = parseInt(
-  process.env.APP_REDIS_PORT ?? '6379',
+/**@deprecated */ export const APP_REDIS_PORT = parseInt(
+  process.env['APP_REDIS_PORT'] ?? '6379',
   10,
 );
-export const APP_REDIS_HOST = process.env.APP_REDIS_HOST;
-export const APP_REDIS_USER = process.env.APP_REDIS_USER;
-export const APP_REDIS_PASSWORD = process.env.APP_REDIS_PASSWORD;
-export const APP_REDIS_DB = parseInt(process.env.APP_REDIS_DB ?? '0', 10);
-export const APP_REDIS_SECURE = process.env.APP_REDIS_SECURE === 'true';
+/**@deprecated */ export const APP_REDIS_HOST = process.env['APP_REDIS_HOST'];
+/**@deprecated */ export const APP_REDIS_USER = process.env['APP_REDIS_USER'];
+/**@deprecated */ export const APP_REDIS_PASSWORD =
+  process.env['APP_REDIS_PASSWORD'];
+/**@deprecated */ export const APP_REDIS_DB = parseInt(
+  process.env['APP_REDIS_DB'] ?? '0',
+  10,
+);
+/**@deprecated */ export const APP_REDIS_SECURE =
+  process.env['APP_REDIS_SECURE'] === 'true';
 
 // Email Config
-export const APP_SMTP_HOST = process.env.APP_SMTP_HOST;
-export const APP_SMTP_PORT = parseInt(process.env.APP_SMTP_PORT ?? '587', 10);
-export const APP_SMTP_SECURE = process.env.APP_SMTP_SECURE === 'true';
-export const APP_SMTP_USER = process.env.APP_SMTP_USER;
-export const APP_SMTP_PASSWORD = process.env.APP_SMTP_PASSWORD;
-export const APP_SMTP_EMAIL_FROM = process.env.APP_SMTP_EMAIL_FROM;
-export const APP_SMTP_SENDER = process.env.APP_SMTP_SENDER;
-export const APP_SMTP_REPLY_TO = process.env.APP_SMTP_REPLY_TO;
-export const APP_SMTP_DKIM_DOMAIN = process.env.APP_SMTP_DKIM_DOMAIN;
-export const APP_SMTP_DKIM_KEY = process.env.APP_SMTP_DKIM_KEY;
-export const APP_SMTP_DKIM_PRIVATE_KEY = process.env.APP_SMTP_DKIM_PRIVATE_KEY;
+/**@deprecated */ export const APP_SMTP_HOST = process.env['APP_SMTP_HOST'];
+/**@deprecated */ export const APP_SMTP_PORT = parseInt(
+  process.env['APP_SMTP_PORT'] ?? '587',
+  10,
+);
+/**@deprecated */ export const APP_SMTP_SECURE =
+  process.env['APP_SMTP_SECURE'] === 'true';
+/**@deprecated */ export const APP_SMTP_USER = process.env['APP_SMTP_USER'];
+/**@deprecated */ export const APP_SMTP_PASSWORD =
+  process.env['APP_SMTP_PASSWORD'];
+/**@deprecated */ export const APP_SMTP_EMAIL_FROM =
+  process.env['APP_SMTP_EMAIL_FROM'];
+/**@deprecated */ export const APP_SMTP_SENDER = process.env['APP_SMTP_SENDER'];
+/**@deprecated */ export const APP_SMTP_REPLY_TO =
+  process.env['APP_SMTP_REPLY_TO'];
+/**@deprecated */ export const APP_SMTP_DKIM_DOMAIN =
+  process.env['APP_SMTP_DKIM_DOMAIN'];
+/**@deprecated */ export const APP_SMTP_DKIM_KEY =
+  process.env['APP_SMTP_DKIM_KEY'];
+/**@deprecated */ export const APP_SMTP_DKIM_PRIVATE_KEY =
+  process.env['APP_SMTP_DKIM_PRIVATE_KEY'];
 
 // Database Config
 // PostgreSQL
-export const APP_POSTGRES_HOST = process.env.APP_POSTGRES_HOST ?? 'localhost';
+export const APP_POSTGRES_HOST =
+  process.env['APP_POSTGRES_HOST'] ?? 'localhost';
 export const APP_POSTGRES_PORT = parseInt(
-  process.env.APP_POSTGRES_PORT ?? '5432',
+  process.env['APP_POSTGRES_PORT'] ?? '5432',
   10,
 );
-export const APP_POSTGRES_USER = process.env.APP_POSTGRES_USER;
-export const APP_POSTGRES_PASSWORD = process.env.APP_POSTGRES_PASSWORD;
-export const APP_POSTGRES_DB = process.env.APP_POSTGRES_DB;
-export const APP_POSTGRES_SSL = process.env.APP_POSTGRES_SSL === 'true';
-export const APP_POSTGRES_MAX_CONNECTIONS = parseInt(
-  process.env.APP_POSTGRES_MAX_CONNECTIONS ?? '100',
+/**@deprecated */ export const APP_POSTGRES_USER =
+  process.env['APP_POSTGRES_USER'];
+/**@deprecated */ export const APP_POSTGRES_PASSWORD =
+  process.env['APP_POSTGRES_PASSWORD'];
+/**@deprecated */ export const APP_POSTGRES_DB = process.env['APP_POSTGRES_DB'];
+/**@deprecated */ export const APP_POSTGRES_SSL =
+  process.env['APP_POSTGRES_SSL'] === 'true';
+/**@deprecated */ export const APP_POSTGRES_MAX_CONNECTIONS = parseInt(
+  process.env['APP_POSTGRES_MAX_CONNECTIONS'] ?? '100',
   10,
 );
-export const APP_SHARED_CLUSTER = true; // Multi-cluster mode not supported yet!
+/**@deprecated */ export const APP_SHARED_CLUSTER = true; // Multi-cluster mode not supported yet!
 // Console DB
-export const APP_DATABASE_HOST = process.env.APP_DATABASE_HOST ?? 'localhost';
-export const APP_DATABASE_USER = process.env.APP_DATABASE_USER;
-export const APP_DATABASE_PASSWORD = process.env.APP_DATABASE_PASSWORD;
-export const APP_DATABASE_NAME = process.env.APP_DATABASE_NAME;
-export const APP_DATABASE_PORT = parseInt(
-  process.env.APP_DATABASE_PORT ?? '3306',
+/**@deprecated */ export const APP_DATABASE_HOST =
+  process.env['APP_DATABASE_HOST'] ?? 'localhost';
+/**@deprecated */ export const APP_DATABASE_USER =
+  process.env['APP_DATABASE_USER'];
+/**@deprecated */ export const APP_DATABASE_PASSWORD =
+  process.env['APP_DATABASE_PASSWORD'];
+/**@deprecated */ export const APP_DATABASE_NAME =
+  process.env['APP_DATABASE_NAME'];
+/**@deprecated */ export const APP_DATABASE_PORT = parseInt(
+  process.env['APP_DATABASE_PORT'] ?? '3306',
   10,
 );
 
-export const APP_INTERNAL_POOL_API = process.env.APP_POOL_API;
+/**@deprecated */ export const APP_INTERNAL_POOL_API =
+  process.env['APP_POOL_API'];
 
-export const PROJECT = 'project';
-export const USER = 'user';
-export const TEAM = 'team';
-export const SESSION = 'session';
+/**@deprecated */ export const PROJECT = 'project';
+/**@deprecated */ export const USER = 'user';
+/**@deprecated */ export const TEAM = 'team';
+/**@deprecated */ export const SESSION = 'session';
 
-/** Symbol used to identify the database connection for the platform. */
+/**@deprecated Symbol used to identify the database connection for the platform. */
 export const DB_FOR_PLATFORM = Symbol('dbForPlatform');
-/** Symbol used to identify the operation for getting a project database client. */
+/**@deprecated Symbol used to identify the operation for getting a project database client. */
 export const GET_PROJECT_DB_CLIENT = Symbol('get-db-client');
-/** Symbol used to identify the operation for getting a project database. */
+/**@deprecated Symbol used to identify the operation for getting a project database. */
 export const GET_PROJECT_DB = Symbol('getProjectDb');
-/** Symbol used to identify the operation for getting a project PostgreSQL database. */
+/**@deprecated Symbol used to identify the operation for getting a project PostgreSQL database. */
 export const GET_PROJECT_PG = Symbol('getProjectPostgreDb');
 /** Symbol used to identify the project database client instance. */
 export const PROJECT_DB_CLIENT = Symbol('project-db-client');
@@ -142,22 +169,23 @@ export const PROJECT_DB_CLIENT = Symbol('project-db-client');
 export const PROJECT_DB = Symbol('project-db');
 /** Symbol used to identify the project PostgreSQL database instance. */
 export const PROJECT_PG = Symbol('project-pg');
-/** Symbol used to identify the cache database instance. */
+/**@deprecated Symbol used to identify the cache database instance. */
 export const CACHE_DB = Symbol('cacheDb');
-/** Symbol used to identify the geographic database instance. */
+/**@deprecated Symbol used to identify the geographic database instance. */
 export const GEO_DB = Symbol('geoDb');
-/** Symbol used to identify the operation for retrieving a device associated with a specific project. */
+/**@deprecated Symbol used to identify the operation for retrieving a device associated with a specific project. */
 export const GET_DEVICE_FOR_PROJECT = Symbol('getDeviceForProject');
 
-export const AUDITS_FOR_PLATFORM = Symbol('auditsForPlatform');
+/**@deprecated */ export const AUDITS_FOR_PLATFORM =
+  Symbol('auditsForPlatform');
 export const AUDITS_FOR_PROJECT = Symbol('auditsForProject');
 
-export const CACHE = 'cache';
+/** @deprecated */ export const CACHE = 'cache';
 export const IS_PUBLIC_KEY = 'isPublic';
-export const LOCALE = 'locale';
-export const API_KEY = 'apiKey';
-export const SCOPES = 'scopes';
-export const ROLE = 'role';
+/**@deprecated */ export const LOCALE = 'locale';
+/**@deprecated */ export const API_KEY = 'apiKey';
+/**@deprecated */ export const SCOPES = 'scopes';
+/**@deprecated */ export const ROLE = 'role';
 export const HOOKS = 'hooks';
 export const APP_COLOR = '#f67520';
 
@@ -167,8 +195,8 @@ export const CURRENT_SCHEMA_PG = Symbol('currentSchemaPg');
 
 export const INTERNAL_SCHEMAS = ['system', 'core'] as const;
 
-export const SYSTEM_SCHEMA = 'system' as const;
-export const CORE_SCHEMA = 'core' as const;
+/**@deprecated */ export const SYSTEM_SCHEMA = 'system' as const;
+/**@deprecated */ export const CORE_SCHEMA = 'core' as const;
 
 const allowedHeaders = [
   'Content-Type',
@@ -195,13 +223,13 @@ const allowedHeaders = [
   'x-nuvix-session',
 ];
 
-export const CONSOLE_CONFIG: any = {
+/**@deprecated */ export const CONSOLE_CONFIG: any = {
   auths: {},
 };
 export const SERVER_CONFIG: ServerConfig = {
-  host: process.env.APP_HOSTNAME ?? 'localhost',
+  host: process.env['APP_HOSTNAME'] ?? 'localhost',
   methods: ['GET', 'PUT', 'PATCH', 'POST', 'DELETE'],
-  allowedOrigins: (process.env.CORS_ORIGIN ?? '').split(',').map(origin => {
+  allowedOrigins: (process.env['CORS_ORIGIN'] ?? '').split(',').map(origin => {
     origin = origin.trim();
     // Convert wildcard subdomains to regex patterns
     if (origin.includes('*')) {
@@ -211,17 +239,19 @@ export const SERVER_CONFIG: ServerConfig = {
   }),
   allowedHeaders: [
     ...allowedHeaders,
-    ...(process.env.CORS_HEADERS ?? '').split(',').map(header => header.trim()),
+    ...(process.env['CORS_HEADERS'] ?? '')
+      .split(',')
+      .map(header => header.trim()),
   ],
   credentials: true,
   exposedHeaders: ['X-Nuvix-Session', 'X-Fallback-Cookies'],
-  functionsDomain: process.env.APP_DOMAIN_FUNCTION,
-  routerProtection: (process.env.APP_ROUTER_PROTECTION ?? 'true') === 'true',
-  cookieDomain: process.env.APP_COOKIE_DOMAIN,
+  functionsDomain: process.env['APP_DOMAIN_FUNCTION'] ?? '',
+  routerProtection: (process.env['APP_ROUTER_PROTECTION'] ?? 'true') === 'true',
+  cookieDomain: process.env['APP_COOKIE_DOMAIN'] ?? '',
 };
 
 export const LOG_LEVELS: { [key: string]: boolean } = (
-  process.env.APP_LOG_LEVELS ?? ''
+  process.env['APP_LOG_LEVELS'] ?? ''
 )
   .split(',')
   .map(level => level.trim())
@@ -246,97 +276,105 @@ export const APP_USERAGENT =
 /**@deprecated use `AppMode.DEFAULT` instead */
 export const APP_MODE_DEFAULT = 'default';
 /**@deprecated use `AppMode.ADMIN` instead */
-export const APP_MODE_ADMIN = 'admin';
-export const APP_PAGING_LIMIT = 12;
+/**@deprecated */ export const APP_MODE_ADMIN = 'admin';
+/**@deprecated */ export const APP_PAGING_LIMIT = 12;
 export const APP_MAX_COUNT = 1000;
 export const APP_LIMIT_COUNT = 5000;
-export const APP_LIMIT_USERS = 10_000;
-export const APP_LIMIT_USER_PASSWORD_HISTORY = 20;
-export const APP_LIMIT_USER_SESSIONS_MAX = 100;
-export const APP_LIMIT_USER_SESSIONS_DEFAULT = 10;
-export const APP_LIMIT_ANTIVIRUS = 20_000_000; //20MB
-export const APP_LIMIT_ENCRYPTION = 20_000_000; //20MB
-export const APP_LIMIT_COMPRESSION = 20_000_000; //20MB
+/**@deprecated */ export const APP_LIMIT_USERS = 10_000;
+/**@deprecated */ export const APP_LIMIT_USER_PASSWORD_HISTORY = 20;
+/**@deprecated */ export const APP_LIMIT_USER_SESSIONS_MAX = 100;
+/**@deprecated */ export const APP_LIMIT_USER_SESSIONS_DEFAULT = 10;
+/**@deprecated */ export const APP_LIMIT_ANTIVIRUS = 20_000_000; //20MB
+/**@deprecated */ export const APP_LIMIT_ENCRYPTION = 20_000_000; //20MB
+/**@deprecated */ export const APP_LIMIT_COMPRESSION = 20_000_000; //20MB
 export const APP_LIMIT_ARRAY_PARAMS_SIZE = 100; // Default maximum of how many elements can there be in API parameter that expects array value
 export const APP_LIMIT_ARRAY_LABELS_SIZE = 1000; // Default maximum of how many labels elements can there be in API parameter that expects array value
 export const APP_LIMIT_ARRAY_ELEMENT_SIZE = 4096; // Default maximum length of element in array parameter represented by maximum URL length.
-export const APP_LIMIT_SUBQUERY = 1000;
-export const APP_LIMIT_SUBSCRIBERS_SUBQUERY = 1_000_000;
-export const APP_LIMIT_WRITE_RATE_DEFAULT = 60; // Default maximum write rate per rate period
-export const APP_LIMIT_WRITE_RATE_PERIOD_DEFAULT = 60; // Default maximum write rate period in seconds
-export const APP_LIMIT_LIST_DEFAULT = 25; // Default maximum number of items to return in list API calls
-export const APP_KEY_ACCESS = 24 * 60 * 60; // 24 hours
-export const APP_USER_ACCESS = 24 * 60 * 60; // 24 hours
-export const APP_PROJECT_ACCESS = 24 * 60 * 60; // 24 hours
-export const APP_CACHE_UPDATE = 24 * 60 * 60; // 24 hours
-export const APP_CACHE_BUSTER = 4318;
-export const APP_DATABASE_ATTRIBUTE_EMAIL = 'email';
-export const APP_DATABASE_ATTRIBUTE_ENUM = 'enum';
-export const APP_DATABASE_ATTRIBUTE_IP = 'ip';
-export const APP_DATABASE_ATTRIBUTE_DATETIME = 'datetime';
-export const APP_DATABASE_ATTRIBUTE_URL = 'url';
-export const APP_DATABASE_ATTRIBUTE_INT_RANGE = 'intRange';
-export const APP_DATABASE_ATTRIBUTE_FLOAT_RANGE = 'floatRange';
+/**@deprecated */ export const APP_LIMIT_SUBQUERY = 1000;
+/**@deprecated */ export const APP_LIMIT_SUBSCRIBERS_SUBQUERY = 1_000_000;
+/**@deprecated */ export const APP_LIMIT_WRITE_RATE_DEFAULT = 60; // Default maximum write rate per rate period
+/**@deprecated */ export const APP_LIMIT_WRITE_RATE_PERIOD_DEFAULT = 60; // Default maximum write rate period in seconds
+/**@deprecated */ export const APP_LIMIT_LIST_DEFAULT = 25; // Default maximum number of items to return in list API calls
+/**@deprecated */ export const APP_KEY_ACCESS = 24 * 60 * 60; // 24 hours
+/**@deprecated */ export const APP_USER_ACCESS = 24 * 60 * 60; // 24 hours
+/**@deprecated */ export const APP_PROJECT_ACCESS = 24 * 60 * 60; // 24 hours
+/**@deprecated */ export const APP_CACHE_UPDATE = 24 * 60 * 60; // 24 hours
+/**@deprecated */ export const APP_CACHE_BUSTER = 4318;
+/**@deprecated */ export const APP_DATABASE_ATTRIBUTE_EMAIL = 'email';
+/**@deprecated */ export const APP_DATABASE_ATTRIBUTE_ENUM = 'enum';
+/**@deprecated */ export const APP_DATABASE_ATTRIBUTE_IP = 'ip';
+/**@deprecated */ export const APP_DATABASE_ATTRIBUTE_DATETIME = 'datetime';
+/**@deprecated */ export const APP_DATABASE_ATTRIBUTE_URL = 'url';
+/**@deprecated */ export const APP_DATABASE_ATTRIBUTE_INT_RANGE = 'intRange';
+/**@deprecated */ export const APP_DATABASE_ATTRIBUTE_FLOAT_RANGE =
+  'floatRange';
 export const APP_DATABASE_ATTRIBUTE_STRING_MAX_LENGTH = 1_073_741_824; // 2^32 bits / 4 bits per char
 export const APP_DATABASE_TIMEOUT_MILLISECONDS = 15_000;
 export const APP_STORAGE_UPLOADS = path.join(PROJECT_ROOT, 'storage/uploads');
-export const APP_STORAGE_FUNCTIONS = 'storage/functions';
-export const APP_STORAGE_BUILDS = 'storage/builds';
-export const APP_STORAGE_CACHE = 'storage/cache';
-export const APP_STORAGE_CERTIFICATES = 'storage/certificates';
-export const APP_STORAGE_CONFIG = 'storage/config';
+/**@deprecated */ export const APP_STORAGE_FUNCTIONS = 'storage/functions';
+/**@deprecated */ export const APP_STORAGE_BUILDS = 'storage/builds';
+/**@deprecated */ export const APP_STORAGE_CACHE = 'storage/cache';
+/**@deprecated */ export const APP_STORAGE_CERTIFICATES =
+  'storage/certificates';
+/**@deprecated */ export const APP_STORAGE_CONFIG = 'storage/config';
 export const APP_STORAGE_TEMP = path.join(PROJECT_ROOT, 'storage/tmp');
 export const APP_STORAGE_READ_BUFFER = 20 * (1000 * 1000); //20MB other names `APP_STORAGE_MEMORY_LIMIT`, `APP_STORAGE_MEMORY_BUFFER`, `APP_STORAGE_READ_LIMIT`, `APP_STORAGE_BUFFER_LIMIT`
 export const APP_STORAGE_MAX_SIZE = 5 * (1000 * 1000 * 1000); // 5GB
 export const APP_STORAGE_LIMIT = 10 * (1000 * 1000 * 1000); // 10GB
 export const APP_HOSTNAME_INTERNAL =
-  process.env.APP_HOSTNAME_INTERNAL ?? 'localhost';
+  process.env['APP_HOSTNAME_INTERNAL'] ?? 'localhost';
 // const APP_FUNCTION_SPECIFICATION_DEFAULT = Specification::S_05VCPU_512MB;
 export const APP_FUNCTION_CPUS_DEFAULT = 0.5;
 export const APP_FUNCTION_MEMORY_DEFAULT = 512;
 
 // Debug
-export const APP_DEBUG_COLORS = process.env.APP_DEBUG_COLORS === 'true';
-export const APP_DEBUG_FORMAT = process.env.APP_DEBUG_FORMAT === 'json';
+export const APP_DEBUG_COLORS = process.env['APP_DEBUG_COLORS'] === 'true';
+export const APP_DEBUG_FORMAT = process.env['APP_DEBUG_FORMAT'] === 'json';
 
-export const WORKER_TYPE_MAILS = 'mails';
-export const WORKER_TYPE_MESSAGING = 'messaging';
+/**@deprecated */ export const WORKER_TYPE_MAILS = 'mails';
+/**@deprecated */ export const WORKER_TYPE_MESSAGING = 'messaging';
 
 // Mails
-export const APP_SYSTEM_EMAIL_ADDRESS = 'app@nuvix.io';
-export const APP_SYSTEM_EMAIL_NAME = 'Nuvix';
-export const SEND_TYPE_EMAIL = 'sendEmail';
+/**@deprecated */ export const APP_SYSTEM_EMAIL_ADDRESS = 'app@nuvix.io';
+/**@deprecated */ export const APP_SYSTEM_EMAIL_NAME = 'Nuvix';
+/**@deprecated */ export const SEND_TYPE_EMAIL = 'sendEmail';
 
 // Database Reconnect
 export const DATABASE_RECONNECT_SLEEP = 2;
 export const DATABASE_RECONNECT_MAX_ATTEMPTS = 10;
 
 // Database Worker Types
-export const DATABASE_TYPE_CREATE_ATTRIBUTE = 'createAttribute' as const;
-export const DATABASE_TYPE_CREATE_INDEX = 'createIndex' as const;
-export const DATABASE_TYPE_DELETE_ATTRIBUTE = 'deleteAttribute' as const;
-export const DATABASE_TYPE_DELETE_INDEX = 'deleteIndex' as const;
-export const DATABASE_TYPE_DELETE_COLLECTION = 'deleteCollection' as const;
-export const DATABASE_TYPE_DELETE_DATABASE = 'deleteDatabase' as const;
+/**@deprecated */ export const DATABASE_TYPE_CREATE_ATTRIBUTE =
+  'createAttribute' as const;
+/**@deprecated */ export const DATABASE_TYPE_CREATE_INDEX =
+  'createIndex' as const;
+/**@deprecated */ export const DATABASE_TYPE_DELETE_ATTRIBUTE =
+  'deleteAttribute' as const;
+/**@deprecated */ export const DATABASE_TYPE_DELETE_INDEX =
+  'deleteIndex' as const;
+/**@deprecated */ export const DATABASE_TYPE_DELETE_COLLECTION =
+  'deleteCollection' as const;
+/**@deprecated */ export const DATABASE_TYPE_DELETE_DATABASE =
+  'deleteDatabase' as const;
 
 // Build Worker Types
 export const BUILD_TYPE_DEPLOYMENT = 'deployment';
 export const BUILD_TYPE_RETRY = 'retry';
 
 // Message types
-export const MESSAGE_SEND_TYPE_INTERNAL = 'internal' as const;
-export const MESSAGE_SEND_TYPE_EXTERNAL = 'external' as const;
+/**@deprecated */ export const MESSAGE_SEND_TYPE_INTERNAL = 'internal' as const;
+/**@deprecated */ export const MESSAGE_SEND_TYPE_EXTERNAL = 'external' as const;
 // Mail Types
-export const MAIL_TYPE_VERIFICATION = 'verification';
-export const MAIL_TYPE_MAGIC_SESSION = 'magicSession';
-export const MAIL_TYPE_RECOVERY = 'recovery';
-export const MAIL_TYPE_INVITATION = 'invitation';
-export const MAIL_TYPE_CERTIFICATE = 'certificate';
+/**@deprecated */ export const MAIL_TYPE_VERIFICATION = 'verification';
+/**@deprecated */ export const MAIL_TYPE_MAGIC_SESSION = 'magicSession';
+/**@deprecated */ export const MAIL_TYPE_RECOVERY = 'recovery';
+/**@deprecated */ export const MAIL_TYPE_INVITATION = 'invitation';
+/**@deprecated */ export const MAIL_TYPE_CERTIFICATE = 'certificate';
 // Auth Types
-export const APP_AUTH_TYPE_SESSION = 'Session';
-export const APP_AUTH_TYPE_JWT = 'JWT';
-export const APP_AUTH_TYPE_KEY = 'Key';
-export const APP_AUTH_TYPE_ADMIN = 'Admin';
+/**@deprecated */ export const APP_AUTH_TYPE_SESSION = 'Session';
+/**@deprecated */ export const APP_AUTH_TYPE_JWT = 'JWT';
+/**@deprecated */ export const APP_AUTH_TYPE_KEY = 'Key';
+/**@deprecated */ export const APP_AUTH_TYPE_ADMIN = 'Admin';
 // Response related
 export const MAX_OUTPUT_CHUNK_SIZE = 10 * 1024 * 1024; // 10MB
 // Function headers
@@ -366,29 +404,46 @@ export const WORKER_TYPE_USAGE = 'usage';
 
 // Events
 export const EVENT_DELIMITER = '.';
-export const EVENT_USER_CREATE = 'user' + EVENT_DELIMITER + 'create';
-export const EVENT_USER_DELETE = 'user' + EVENT_DELIMITER + 'delete';
-export const EVENT_USER_UPDATE = 'user' + EVENT_DELIMITER + 'update';
-
-export const EVENT_SESSION_CREATE = 'session' + EVENT_DELIMITER + 'create';
-export const EVENT_SESSION_DELETE = 'session' + EVENT_DELIMITER + 'delete';
-export const EVENT_SESSIONS_DELETE = 'sessions' + EVENT_DELIMITER + 'delete';
-export const EVENT_SESSION_UPDATE = 'session' + EVENT_DELIMITER + 'update';
+/**@deprecated */ export const EVENT_USER_CREATE =
+  'user' + EVENT_DELIMITER + 'create';
+/**@deprecated */ export const EVENT_USER_DELETE =
+  'user' + EVENT_DELIMITER + 'delete';
+/**@deprecated */ export const EVENT_USER_UPDATE =
+  'user' + EVENT_DELIMITER + 'update';
+/**@deprecated */ export const EVENT_SESSION_CREATE =
+  'session' + EVENT_DELIMITER + 'create';
+/**@deprecated */ export const EVENT_SESSION_DELETE =
+  'session' + EVENT_DELIMITER + 'delete';
+/**@deprecated */ export const EVENT_SESSIONS_DELETE =
+  'sessions' + EVENT_DELIMITER + 'delete';
+/**@deprecated */ export const EVENT_SESSION_UPDATE =
+  'session' + EVENT_DELIMITER + 'update';
 
 // CLOUD
-export const GOOGLE_CLOUD_API = process.env.GOOGLE_CLOUD_API;
+export const GOOGLE_CLOUD_API = process.env['GOOGLE_CLOUD_API'];
 
 // _REQUEST is used for inject in request
 export enum AppMode {
   ADMIN = 'admin',
   DEFAULT = 'default',
-  _REQUEST = 'mode',
+  /**@deprecated use Context.Mode */ _REQUEST = 'mode',
 }
 
 export enum ApiKey {
   STANDARD = 'standard',
   DYNAMIC = 'dynamic',
-  _REQUEST = 'apiKey',
+  /**@deprecated use Context.ApiKey*/ _REQUEST = 'apiKey',
+}
+
+export enum Schemas {
+  Core = 'core',
+  System = 'system',
+}
+
+export enum SchemaMeta {
+  collections = '_collections',
+  attributes = '_attributes',
+  indexes = '_indexes',
 }
 
 export enum QueueFor {
@@ -403,9 +458,14 @@ export enum QueueFor {
   LOGS = 'logs',
 }
 
-export enum Events {
+export enum AppEvents {
+  USER_CREATE = 'user' + EVENT_DELIMITER + 'create',
+  USER_DELETE = 'user' + EVENT_DELIMITER + 'delete',
+  USER_UPDATE = 'user' + EVENT_DELIMITER + 'update',
   SESSION_CREATE = 'session' + EVENT_DELIMITER + 'create',
   SESSION_DELETE = 'session' + EVENT_DELIMITER + 'delete',
+  SESSIONS_DELETE = 'sessions' + EVENT_DELIMITER + 'delete',
+  SESSION_UPDATE = 'session' + EVENT_DELIMITER + 'update',
 }
 
 export enum MetricFor {
@@ -473,6 +533,19 @@ export enum MessageType {
   SMS = 'sms',
 }
 
+export enum ScheduleResourceType {
+  MESSAGE = 'message',
+}
+
+export enum Status {
+  AVAILABLE = 'available',
+  FAILED = 'failed',
+  STUCK = 'stuck',
+  DELETED = 'deleted',
+  DELETING = 'deleting',
+  PENDING = 'pending',
+}
+
 export enum DeleteType {
   DATABASES = 'databases',
   DOCUMENT = 'document',
@@ -498,4 +571,25 @@ export enum DeleteType {
   TARGET = 'target',
   EXPIRED_TARGETS = 'invalid_targets',
   SESSION_TARGETS = 'session_targets',
+}
+
+export enum AttributeFormat {
+  EMAIL = 'email',
+  ENUM = 'enum',
+  IP = 'ip',
+  DATETIME = 'datetime',
+  URL = 'url',
+  INTEGER = 'integer',
+  FLOAT = 'float',
+}
+export enum Context {
+  Project = 'project',
+  User = 'user',
+  Team = 'team',
+  Session = 'session',
+  Locale = 'locale',
+  ApiKey = 'apiKey',
+  Scopes = 'scopes',
+  Role = 'role',
+  Mode = 'mode',
 }

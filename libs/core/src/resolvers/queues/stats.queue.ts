@@ -1,17 +1,11 @@
 import { Processor } from '@nestjs/bullmq';
 import { Queue } from './queue';
-import {
-  APP_POSTGRES_PASSWORD,
-  CORE_SCHEMA,
-  GET_PROJECT_DB,
-  GET_PROJECT_DB_CLIENT,
-  MetricFor,
-  QueueFor,
-} from '@nuvix/utils/constants';
+import { CORE_SCHEMA, MetricFor, QueueFor } from '@nuvix/utils';
 import { Job } from 'bullmq';
-import { Inject, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Document } from '@nuvix/database';
-import { GetClientFn, GetProjectDbFn } from '@nuvix/core/core.module';
+import { Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Doc } from '@nuvix-tech/db';
+import { CoreService } from '@nuvix/core/core.service.js';
+import type { ProjectsDoc } from '@nuvix/utils/types';
 
 @Processor(QueueFor.STATS, {
   concurrency: 10000,
@@ -20,14 +14,10 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
   private static readonly BATCH_SIZE = 1000;
   private static readonly BATCH_INTERVAL_MS = 1000;
   private readonly logger = new Logger(StatsQueue.name);
-  private buffer = new Map<string, StatsBuffer>();
-  private interval: NodeJS.Timeout;
+  private buffer = new Map<number, StatsBuffer>();
+  private interval!: NodeJS.Timeout;
 
-  constructor(
-    @Inject(GET_PROJECT_DB_CLIENT) private readonly getDbClient: GetClientFn,
-    @Inject(GET_PROJECT_DB)
-    private readonly getProjectDb: GetProjectDbFn,
-  ) {
+  constructor(private readonly coreService: CoreService) {
     super();
   }
 
@@ -61,14 +51,13 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
         continue;
       }
 
-      let client:
-        | Awaited<ReturnType<typeof this.getDatabase>>['client']
-        | undefined;
-      try {
-        const { project, keys } = data;
-        const { client: _c, dbForProject } = await this.getDatabase(project);
-        client = _c;
+      const { project, keys } = data;
+      const { client, dbForProject } =
+        await this.coreService.createProjectDatabase(project, {
+          schema: CORE_SCHEMA,
+        });
 
+      try {
         const entries = Object.entries(keys);
         this.logger.log(
           `Flushing ${entries.length} stats logs for project ${projectId}`,
@@ -91,9 +80,7 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
         // currentBuffer.keys.push(...data.logs);
         // this.buffer.set(projectId, currentBuffer);
       } finally {
-        if (client) {
-          await this.releaseClient(client);
-        }
+        await this.coreService.releaseDatabaseClient(client);
       }
     }
   }
@@ -101,24 +88,24 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
   async process(job: Job<StatsQueueOptions, any, MetricFor>): Promise<any> {
     const { value } = job.data;
     const matric = job.name;
-    const project = new Document(job.data.project);
-    const projectId = project.getInternalId();
+    const project = new Doc(job.data.project);
+    const projectId = project.getSequence();
 
     if (!this.buffer.has(projectId)) {
       this.buffer.set(projectId, {
-        project: new Document({
-          $id: projectId,
+        project: new Doc({
+          $id: project.getId(),
           $internalId: projectId,
-          database: project.getAttribute('database'),
-        }),
+          database: project.get('database'),
+        }) as unknown as ProjectsDoc,
         keys: {},
         receivedAt: new Date(),
       });
     }
 
-    const meta = this.buffer.get(projectId);
+    const meta = this.buffer.get(projectId)!;
     if (Object.hasOwn(meta.keys, matric)) {
-      meta.keys[matric] = meta.keys[matric] + value;
+      meta.keys[matric] = meta.keys[matric]! + value;
     } else {
       meta.keys[matric] = value;
     }
@@ -136,34 +123,6 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
 
     return;
   }
-
-  private async getDatabase(project: Document) {
-    const dbOptions = project.getAttribute('database');
-    const client = await this.getDbClient(project.getId(), {
-      database: dbOptions.name,
-      user: dbOptions.adminRole,
-      password: APP_POSTGRES_PASSWORD,
-      port: dbOptions.port,
-      host: dbOptions.host,
-    });
-    const dbForProject = this.getProjectDb(client, project.getId());
-    dbForProject
-      .setDatabase(CORE_SCHEMA)
-      .setCacheName(`${project.getId()}:core`);
-    return { client, dbForProject };
-  }
-
-  private async releaseClient(
-    client: Awaited<ReturnType<typeof this.getDatabase>>['client'],
-  ) {
-    try {
-      if (client) {
-        await client.end();
-      }
-    } catch (error) {
-      this.logger.error('Failed to release database client', error);
-    }
-  }
 }
 
 export interface StatsQueueOptions {
@@ -172,7 +131,7 @@ export interface StatsQueueOptions {
 }
 
 interface StatsBuffer {
-  project: Document;
+  project: ProjectsDoc;
   receivedAt: Date;
   keys: Record<string, number>;
 }

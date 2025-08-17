@@ -1,59 +1,32 @@
-import { Database, Document, DuplicateException } from '@nuvix/database';
-import { Redis } from 'ioredis';
-import { Queue } from 'bullmq';
-import {
-  CACHE_DB,
-  GET_PROJECT_DB,
-  // METRIC_BUCKET_ID_FILES,
-  // METRIC_BUCKET_ID_FILES_STORAGE,
-  // METRIC_BUCKETS,
-  // METRIC_COLLECTIONS,
-  // METRIC_DATABASE_ID_COLLECTION_ID_DOCUMENTS,
-  // METRIC_DATABASE_ID_COLLECTIONS,
-  // METRIC_DATABASE_ID_DOCUMENTS,
-  // METRIC_DATABASES,
-  // METRIC_DEPLOYMENTS,
-  // METRIC_DEPLOYMENTS_STORAGE,
-  // METRIC_DOCUMENTS,
-  // METRIC_FILES,
-  // METRIC_FILES_STORAGE,
-  // METRIC_FUNCTION_ID_DEPLOYMENTS,
-  // METRIC_FUNCTION_ID_DEPLOYMENTS_STORAGE,
-  // METRIC_FUNCTIONS,
-  // METRIC_SESSIONS,
-  // METRIC_TEAMS,
-  // METRIC_USERS,
-  GET_PROJECT_DB_CLIENT,
-} from '@nuvix/utils/constants';
+import { Database, Doc } from '@nuvix-tech/db';
+import {} from '@nuvix/utils';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
-import { GetProjectDbFn, GetClientFn } from './core.module';
+import { CoreService } from './core.service.js';
+
+// TODO: we have to fully refactor this service to use the new database client and Queue system
 
 @Injectable()
 export class ProjectUsageService {
   private readonly logger = new Logger(ProjectUsageService.name);
 
-  constructor(@Inject(CACHE_DB) private readonly cacheDb: Redis) {}
+  constructor(private readonly coreService: CoreService) {}
 
-  async addMetric(
-    metric: string,
-    value: number,
-    project?: Document,
-  ): Promise<this> {
+  async addMetric(metric: string, value: number, project?: Doc): Promise<this> {
     this.logger.log(`Adding metric ${metric} with value ${value}`);
-    const projectId = project?.getInternalId() ?? 'global';
+    const projectId = project?.getSequence() ?? 'global';
     const key = `project_usage:${projectId}`;
 
     // Keep track of all IDs to iterate over in cron later
-    await this.cacheDb.sadd('usage_project_ids', projectId);
+    // await this.cacheDb.sadd('usage_project_ids', projectId);
 
-    await this.cacheDb.hincrby(key, metric, value);
+    // await this.cacheDb.hincrby(key, metric, value);
     return this;
   }
 
-  reduce(document: Document): this {
+  reduce(document: Doc): this {
     this.logger.log(`Reducing metric ${document.getId()}`);
-    this._reduce(document);
+    // this._reduce(document);
     return this;
   }
 
@@ -61,85 +34,85 @@ export class ProjectUsageService {
   async saveMetrics(): Promise<void> {
     this.logger.log('Saving metrics to database');
 
-    const projectIds = await this.cacheDb.smembers('usage_project_ids');
-    if (!projectIds.length) {
-      this.logger.log('No metrics to save');
-      return;
-    }
+    // const projectIds = await this.cacheDb.smembers('usage_project_ids');
+    // if (!projectIds.length) {
+    //   this.logger.log('No metrics to save');
+    //   return;
+    // }
 
-    for (const projectId of projectIds) {
-      const usageData = await this.cacheDb.hgetall(
-        `project_usage:${projectId}`,
-      );
-      if (Object.keys(usageData).length > 0) {
-        try {
-          // const projectDb = await this.getProjectDb(projectId);
+    // for (const projectId of projectIds) {
+    //   const usageData = await this.cacheDb.hgetall(
+    //     `project_usage:${projectId}`,
+    //   );
+    //   if (Object.keys(usageData).length > 0) {
+    //     try {
+    //       // const projectDb = await this.getProjectDb(projectId);
 
-          for (const [key, value] of Object.entries(usageData)) {
-            if (!value) continue;
+    //       for (const [key, value] of Object.entries(usageData)) {
+    //         if (!value) continue;
 
-            const periods = [
-              { period: 'inf', format: undefined },
-              { period: '1h', format: 'YYYY-MM-DD-HH' },
-              { period: '1d', format: 'YYYY-MM-DD' },
-            ];
-            for (const { period, format } of periods) {
-              const time = period === 'inf' ? null : new Date().toISOString();
-              const id = `${period}_${key}_${projectId}`;
+    //         const periods = [
+    //           { period: 'inf', format: undefined },
+    //           { period: '1h', format: 'YYYY-MM-DD-HH' },
+    //           { period: '1d', format: 'YYYY-MM-DD' },
+    //         ];
+    //         for (const { period, format } of periods) {
+    //           const time = period === 'inf' ? null : new Date().toISOString();
+    //           const id = `${period}_${key}_${projectId}`;
 
-              // try {
-              //   await projectDb.createDocument(
-              //     'stats',
-              //     new Document({
-              //       $id: id,
-              //       period,
-              //       time,
-              //       metric: key,
-              //       value: Number(value),
-              //       region: process.env._APP_REGION || 'default',
-              //     }),
-              //   );
-              // } catch (error) {
-              //   if (error instanceof DuplicateException) {
-              //     const v = Number(value ?? 0);
-              //     if (v < 0) {
-              //       await projectDb.decreaseDocumentAttribute(
-              //         'stats',
-              //         id,
-              //         'value',
-              //         Math.abs(v),
-              //       );
-              //     } else {
-              //       await projectDb.increaseDocumentAttribute(
-              //         'stats',
-              //         id,
-              //         'value',
-              //         v,
-              //       );
-              //     }
-              //   } else {
-              //     this.logger.error(
-              //       `Failed to save metric ${key} for ${projectId}: ${error.message}`,
-              //     );
-              //   }
-              // }
-            }
-          }
+    // try {
+    //   await projectDb.createDocument(
+    //     'stats',
+    //     new Doc({
+    //       $id: id,
+    //       period,
+    //       time,
+    //       metric: key,
+    //       value: Number(value),
+    //       region: process.env._APP_REGION || 'default',
+    //     }),
+    //   );
+    // } catch (error) {
+    //   if (error instanceof DuplicateException) {
+    //     const v = Number(value ?? 0);
+    //     if (v < 0) {
+    //       await projectDb.decreaseDocumentAttribute(
+    //         'stats',
+    //         id,
+    //         'value',
+    //         Math.abs(v),
+    //       );
+    //     } else {
+    //       await projectDb.increaseDocumentAttribute(
+    //         'stats',
+    //         id,
+    //         'value',
+    //         v,
+    //       );
+    //     }
+    //   } else {
+    //     this.logger.error(
+    //       `Failed to save metric ${key} for ${projectId}: ${error.message}`,
+    //     );
+    //   }
+    // }
+    //         }
+    //       }
 
-          this.logger.log(`Metrics saved for project: ${projectId}`);
-        } catch (error) {
-          this.logger.error(
-            `Failed to save metrics for ${projectId}: ${error.message}`,
-          );
-        }
-      }
-      // await this.cacheDb.del(`project_usage:${projectId}`);
-    }
+    //       this.logger.log(`Metrics saved for project: ${projectId}`);
+    //     } catch (error) {
+    //       this.logger.error(
+    //         `Failed to save metrics for ${projectId}: ${error.message}`,
+    //       );
+    //     }
+    //   }
+    //   // await this.cacheDb.del(`project_usage:${projectId}`);
+    // }
 
-    await this.cacheDb.hset('project_usage', 'lastUpdate', Date.now());
+    // await this.cacheDb.hset('project_usage', 'lastUpdate', Date.now());
   }
 
-  private async _reduce(document: Document) {}
+  private async _reduce(document: Doc) {}
 
   async databaseListener({
     event,
@@ -151,9 +124,9 @@ export class ProjectUsageService {
       `Database listener called with event ${event} for document ${document.getId()}`,
     );
     let value = 1;
-    if (event === Database.EVENT_DOCUMENT_DELETE) {
-      value = -1;
-    }
+    // if (event === Database.EVENT_DOCUMENT_DELETE) {
+    //   value = -1;
+    // }
 
     const collection = document.getCollection().toLowerCase();
     // switch (true) {
@@ -227,7 +200,7 @@ export class ProjectUsageService {
     //     await this.addMetric(METRIC_FILES, value, project); // per project
     //     await this.addMetric(
     //       METRIC_FILES_STORAGE,
-    //       document.getAttribute('sizeOriginal') * value,
+    //       document.get('sizeOriginal') * value,
     //       project,
     //     ); // per project
     //     await this.addMetric(
@@ -243,7 +216,7 @@ export class ProjectUsageService {
     //         '{bucketInternalId}',
     //         bucketInternalId,
     //       ),
-    //       document.getAttribute('sizeOriginal') * value,
+    //       document.get('sizeOriginal') * value,
     //       project,
     //     ); // per bucket
     //     break;
@@ -257,16 +230,16 @@ export class ProjectUsageService {
     //     await this.addMetric(METRIC_DEPLOYMENTS, value, project); // per project
     //     await this.addMetric(
     //       METRIC_DEPLOYMENTS_STORAGE,
-    //       document.getAttribute('size') * value,
+    //       document.get('size') * value,
     //       project,
     //     ); // per project
     //     await this.addMetric(
     //       METRIC_FUNCTION_ID_DEPLOYMENTS.replace(
     //         '{resourceType}',
-    //         document.getAttribute('resourceType'),
+    //         document.get('resourceType'),
     //       ).replace(
     //         '{resourceInternalId}',
-    //         document.getAttribute('resourceInternalId'),
+    //         document.get('resourceInternalId'),
     //       ),
     //       value,
     //       project,
@@ -274,12 +247,12 @@ export class ProjectUsageService {
     //     await this.addMetric(
     //       METRIC_FUNCTION_ID_DEPLOYMENTS_STORAGE.replace(
     //         '{resourceType}',
-    //         document.getAttribute('resourceType'),
+    //         document.get('resourceType'),
     //       ).replace(
     //         '{resourceInternalId}',
-    //         document.getAttribute('resourceInternalId'),
+    //         document.get('resourceInternalId'),
     //       ),
-    //       document.getAttribute('size') * value,
+    //       document.get('size') * value,
     //       project,
     //     );
     //     break;
@@ -291,7 +264,7 @@ export class ProjectUsageService {
 
 interface DbListionerProps {
   event: string;
-  document: Document;
-  project: Document;
+  document: Doc;
+  project: Doc;
   dbForProject: Database;
 }

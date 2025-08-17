@@ -1,4 +1,3 @@
-import { oAuthProvidersList } from './config/authProviders';
 import { Exception } from './extend/exception';
 
 /**
@@ -95,7 +94,7 @@ export abstract class OAuth2 {
    */
   public async getAccessToken(code: string): Promise<string> {
     const tokens = await this.getTokens(code);
-    return tokens.access_token || '';
+    return tokens['access_token'] || '';
   }
 
   /**
@@ -103,7 +102,7 @@ export abstract class OAuth2 {
    */
   public async getRefreshToken(code: string): Promise<string> {
     const tokens = await this.getTokens(code);
-    return tokens.refresh_token || '';
+    return tokens['refresh_token'] || '';
   }
 
   /**
@@ -111,7 +110,7 @@ export abstract class OAuth2 {
    */
   public async getAccessTokenExpiry(code: string): Promise<number> {
     const tokens = await this.getTokens(code);
-    return tokens.expires_in || 0;
+    return tokens['expires_in'] || 0;
   }
 
   /**

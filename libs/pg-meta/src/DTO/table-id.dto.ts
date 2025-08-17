@@ -5,5 +5,5 @@ export class TableIdParamDTO {
   @IsInt()
   @IsPositive()
   @Type(() => Number)
-  id: number;
+  declare id: number;
 }

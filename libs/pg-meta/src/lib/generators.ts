@@ -30,7 +30,7 @@ export async function getGeneratorMetadata(
     includedSchemas: [],
     excludedSchemas: [],
   },
-): Promise<PostgresMetaResult<GeneratorMetadata>> {
+): Promise<PostgresMetaResult<GeneratorMetadata | null>> {
   const includedSchemas = filters.includedSchemas ?? [];
   const excludedSchemas = filters.excludedSchemas ?? [];
 

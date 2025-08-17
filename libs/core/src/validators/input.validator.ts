@@ -10,11 +10,11 @@ import { ValidateIf, isBoolean } from 'class-validator';
 export function IsUID(
   validationOptions?: ValidationOptions,
 ): PropertyDecorator {
-  return function (object: object, propertyName: string) {
+  return function (object: object, propertyName: string | Symbol) {
     registerDecorator({
       name: 'isUniqueID',
       target: object.constructor,
-      propertyName: propertyName,
+      propertyName: propertyName.toString(),
       options: validationOptions,
       validator: {
         validate(value: any) {
@@ -22,7 +22,7 @@ export function IsUID(
           return typeof value === 'string' && regex.test(value);
         },
         defaultMessage() {
-          return `${propertyName} must be either "unique()" or alphanumeric and can include period, hyphen, and underscore. Cannot start with a special character. Max length is 36 chars.`;
+          return `${propertyName} must be alphanumeric and can include period, hyphen, and underscore. Cannot start with a special character. Max length is 36 chars.`;
         },
       },
     });
@@ -38,11 +38,11 @@ export function IsUID(
 export function IsCustomID(
   validationOptions?: ValidationOptions,
 ): PropertyDecorator {
-  return function (object: object, propertyName: string) {
+  return function (object: object, propertyName: string | Symbol) {
     registerDecorator({
       name: 'isCustomID',
       target: object.constructor,
-      propertyName: propertyName,
+      propertyName: propertyName.toString(),
       options: validationOptions,
       validator: {
         validate(value: any) {
@@ -65,11 +65,11 @@ export function IsCustomID(
 export function IsKey(
   validationOptions?: ValidationOptions,
 ): PropertyDecorator {
-  return function (object: object, propertyName: string) {
+  return function (object: object, propertyName: string | Symbol) {
     registerDecorator({
       name: 'isKey',
       target: object.constructor,
-      propertyName: propertyName,
+      propertyName: propertyName.toString(),
       options: validationOptions,
       validator: {
         validate(value: any) {

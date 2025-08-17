@@ -15,9 +15,9 @@ const compat = new FlatCompat({
 });
 
 export default [
-    {
-      ignores: ['**/eslint.config.mjs'],
-    },
+  {
+    ignores: ['**/eslint.config.mjs'],
+  },
   ...compat.extends(
     'plugin:@typescript-eslint/recommended',
     'plugin:prettier/recommended',
@@ -34,7 +34,7 @@ export default [
       },
 
       parser: tsParser,
-      ecmaVersion: 5,
+      ecmaVersion: 2024,
       sourceType: 'module',
 
       parserOptions: {

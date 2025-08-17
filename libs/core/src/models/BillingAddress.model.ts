@@ -10,25 +10,25 @@ export class BillingAddressModel extends BaseModel {
   /**
    * Street address
    */
-  @Expose() streetAddress: string;
+  @Expose() declare streetAddress: string;
   /**
    * Address line 2
    */
-  @Expose() addressLine2: string;
+  @Expose() declare addressLine2: string;
   /**
    * Address country
    */
-  @Expose() country: string;
+  @Expose() declare country: string;
   /**
    * city
    */
-  @Expose() city: string;
+  @Expose() declare city: string;
   /**
    * state
    */
-  @Expose() state: string;
+  @Expose() declare state: string;
   /**
    * postal code
    */
-  @Expose() postalCode: string;
+  @Expose() declare postalCode: string;
 }

@@ -5,5 +5,5 @@ export class MaterializedViewIdParamDTO {
   @IsInt()
   @IsPositive()
   @Type(() => Number)
-  id: number;
+  declare id: number;
 }

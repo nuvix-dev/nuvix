@@ -22,39 +22,26 @@ import {
   Priority,
 } from '@nuvix/messaging';
 import { Device } from '@nuvix/storage';
-import { Database, Document, Query } from '@nuvix/database';
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import {
-  MESSAGE_TYPE_EMAIL,
-  MESSAGE_TYPE_PUSH,
-  MESSAGE_TYPE_SMS,
-  MESSAGE_SEND_TYPE_EXTERNAL,
-  APP_POSTGRES_PASSWORD,
-  GET_PROJECT_DB_CLIENT,
-  GET_PROJECT_DB,
-  CORE_SCHEMA,
-  GET_DEVICE_FOR_PROJECT,
-  QueueFor,
-} from '@nuvix/utils/constants';
+import { Database, Doc, Query } from '@nuvix-tech/db';
+import { Injectable, Logger } from '@nestjs/common';
+import { CORE_SCHEMA, QueueFor, MessageType } from '@nuvix/utils';
 import { MessageStatus } from '@nuvix/core/messaging/status';
-import {
-  GetProjectDbFn,
-  GetProjectDeviceFn,
-  GetClientFn,
-} from '@nuvix/core/core.module';
+import type {
+  Messages,
+  MessagesDoc,
+  Projects,
+  ProjectsDoc,
+  ProvidersDoc,
+  TargetsDoc,
+} from '@nuvix/utils/types';
+import { CoreService } from '@nuvix/core/core.service.js';
 
 @Injectable()
 @Processor(QueueFor.MESSAGING, { concurrency: 10000 })
 export class MessagingQueue extends Queue {
   private readonly logger = new Logger(MessagingQueue.name);
 
-  constructor(
-    @Inject(GET_PROJECT_DB_CLIENT) private readonly getPool: GetClientFn,
-    @Inject(GET_PROJECT_DB)
-    private readonly getProjectDb: GetProjectDbFn,
-    @Inject(GET_DEVICE_FOR_PROJECT)
-    private readonly getProjectDevice: GetProjectDeviceFn,
-  ) {
+  constructor(private readonly coreService: CoreService) {
     super();
   }
 
@@ -63,12 +50,17 @@ export class MessagingQueue extends Queue {
     token?: string,
   ): Promise<any> {
     switch (job.name) {
-      case MESSAGE_SEND_TYPE_EXTERNAL:
+      case MessagingJob.EXTERNAL:
         const data = job.data;
-        const project = new Document(data.project as object);
-        const message = new Document(data.message as object);
-        const { client, dbForProject } = await this.getDatabase(project);
-        const deviceForFiles = this.getProjectDevice(project.getId());
+        const project = new Doc(data.project as Projects);
+        const message = new Doc(data.message as Messages);
+        const { client, dbForProject } =
+          await this.coreService.createProjectDatabase(project, {
+            schema: CORE_SCHEMA,
+          });
+        const deviceForFiles = this.coreService.getProjectDevice(
+          project.getId(),
+        );
 
         try {
           await this.sendExternalMessage(
@@ -79,7 +71,7 @@ export class MessagingQueue extends Queue {
             undefined as any,
           );
         } finally {
-          await this.releaseClient(client);
+          await this.coreService.releaseDatabaseClient(client);
         }
         return {
           status: 'processed',
@@ -103,15 +95,15 @@ export class MessagingQueue extends Queue {
     );
   }
 
-  private getSmsAdapter(provider: Document): SMSAdapter | null {
-    const credentials = provider.getAttribute('credentials') || {};
+  private getSmsAdapter(provider: ProvidersDoc): SMSAdapter | null {
+    const credentials = provider.get('credentials', {}) as Record<string, any>;
 
-    switch (provider.getAttribute('provider')) {
+    switch (provider.get('provider')) {
       case 'twilio':
         return new Twilio(
           credentials['accountSid'] || '',
           credentials['authToken'] || '',
-          null,
+          undefined,
           credentials['messagingServiceSid'] || null,
         );
       case 'textmagic':
@@ -140,11 +132,11 @@ export class MessagingQueue extends Queue {
     }
   }
 
-  private getPushAdapter(provider: Document): PushAdapter | null {
-    const credentials = provider.getAttribute('credentials') || {};
-    const options = provider.getAttribute('options') || {};
+  private getPushAdapter(provider: ProvidersDoc): PushAdapter | null {
+    const credentials = provider.get('credentials', {}) as Record<string, any>;
+    const options = provider.get('options') || {};
 
-    switch (provider.getAttribute('provider')) {
+    switch (provider.get('provider')) {
       case 'apns':
         return new APNS(
           credentials['authKey'] || '',
@@ -160,12 +152,12 @@ export class MessagingQueue extends Queue {
     }
   }
 
-  private getEmailAdapter(provider: Document): EmailAdapter | null {
-    const credentials = provider.getAttribute('credentials') || {};
-    const options = provider.getAttribute('options') || {};
+  private getEmailAdapter(provider: ProvidersDoc): EmailAdapter | null {
+    const credentials = provider.get('credentials', {}) as Record<string, any>;
+    const options = provider.get('options') || {};
     const apiKey = credentials['apiKey'] || '';
 
-    switch (provider.getAttribute('provider')) {
+    switch (provider.get('provider')) {
       case 'smtp':
         return new SMTP(
           credentials['host'] || '',
@@ -191,21 +183,21 @@ export class MessagingQueue extends Queue {
 
   private async buildEmailMessage(
     dbForProject: Database,
-    message: Document,
-    provider: Document,
+    message: MessagesDoc,
+    provider: ProvidersDoc,
     deviceForFiles: Device,
-    project: Document,
+    project: ProjectsDoc,
   ): Promise<Email> {
-    const fromName = provider.getAttribute('options')?.fromName || null;
-    const fromEmail = provider.getAttribute('options')?.fromEmail || null;
-    const replyToEmail = provider.getAttribute('options')?.replyToEmail || null;
-    const replyToName = provider.getAttribute('options')?.replyToName || null;
-    const data = message.getAttribute('data') || {};
-    const ccTargets = data.cc || [];
-    const bccTargets = data.bcc || [];
+    const fromName = provider.get('options')?.['fromName'] || null;
+    const fromEmail = provider.get('options')?.['fromEmail'] || null;
+    const replyToEmail = provider.get('options')?.['replyToEmail'] || null;
+    const replyToName = provider.get('options')?.['replyToName'] || null;
+    const data = message.get('data') || {};
+    const ccTargets = data['cc'] || [];
+    const bccTargets = data['bcc'] || [];
     let cc: Array<{ email: string }> = [];
     let bcc: Array<{ email: string }> = [];
-    let attachments = data.attachments || [];
+    let attachments = data['attachments'] || [];
 
     if (ccTargets.length > 0) {
       const ccTargetDocs = await dbForProject.find('targets', [
@@ -213,7 +205,7 @@ export class MessagingQueue extends Queue {
         Query.limit(ccTargets.length),
       ]);
       for (const ccTarget of ccTargetDocs) {
-        cc.push({ email: ccTarget.getAttribute('identifier') });
+        cc.push({ email: ccTarget.get('identifier') });
       }
     }
 
@@ -223,7 +215,7 @@ export class MessagingQueue extends Queue {
         Query.limit(bccTargets.length),
       ]);
       for (const bccTarget of bccTargetDocs) {
-        bcc.push({ email: bccTarget.getAttribute('identifier') });
+        bcc.push({ email: bccTarget.get('identifier') });
       }
     }
 
@@ -234,30 +226,30 @@ export class MessagingQueue extends Queue {
         const fileId = attachment.fileId;
 
         const bucket = await dbForProject.getDocument('buckets', bucketId);
-        if (bucket.isEmpty()) {
+        if (bucket.empty()) {
           throw new Error(
             'Storage bucket with the requested ID could not be found',
           );
         }
 
         const file = await dbForProject.getDocument(
-          'bucket_' + bucket.getInternalId(),
+          'bucket_' + bucket.getSequence(),
           fileId,
         );
-        if (file.isEmpty()) {
+        if (file.empty()) {
           throw new Error(
             'Storage file with the requested ID could not be found',
           );
         }
 
-        const path = file.getAttribute('path', '');
+        const path = file.get('path', '');
 
         if (!(await deviceForFiles.exists(path))) {
           throw new Error('File not found in ' + path);
         }
 
         let contentType = 'text/plain';
-        const mimeType = file.getAttribute('mimeType');
+        const mimeType = file.get('mimeType');
         if (mimeType) {
           contentType = mimeType;
         }
@@ -269,18 +261,18 @@ export class MessagingQueue extends Queue {
         const fileData = await deviceForFiles.read(path);
 
         attachments[i] = new Attachment(
-          file.getAttribute('name'),
+          file.get('name'),
           fileData,
           contentType,
-          file.getAttribute('sizeOriginal'),
+          file.get('sizeOriginal'),
         );
       }
     }
 
-    const to = message.getAttribute('to');
-    const subject = data.subject;
-    const content = data.content;
-    const html = data.html || false;
+    const to = message.get('to') as string[];
+    const subject = data['subject'];
+    const content = data['content'];
+    const html = data['html'] || false;
 
     return new Email({
       to,
@@ -297,30 +289,30 @@ export class MessagingQueue extends Queue {
     });
   }
 
-  private buildSmsMessage(message: Document, provider: Document): SMS {
-    const to = message.getAttribute('to');
-    const content = message.getAttribute('data').content;
-    const from = provider.getAttribute('options').from;
+  private buildSmsMessage(message: MessagesDoc, provider: ProvidersDoc): SMS {
+    const to = message.get('to') as string[];
+    const content = message.get('data')['content'];
+    const from = provider.get('options')['from'];
 
     return new SMS(to, content, from);
   }
 
-  private buildPushMessage(message: Document): Push {
-    const data = message.getAttribute('data');
-    const to = message.getAttribute('to');
-    let title = data.title || null;
-    let body = data.body || null;
-    const messageData = data.data || null;
-    const action = data.action || null;
-    const image = data.image?.url || null;
-    const sound = data.sound || null;
-    const icon = data.icon || null;
-    const color = data.color || null;
-    const tag = data.tag || null;
-    const badge = data.badge || null;
-    const contentAvailable = data.contentAvailable || null;
-    const critical = data.critical || null;
-    let priority = data.priority || null;
+  private buildPushMessage(message: MessagesDoc): Push {
+    const data = message.get('data');
+    const to = message.get('to') as string[];
+    let title = data['title'] || null;
+    let body = data['body'] || null;
+    const messageData = data['data'] || null;
+    const action = data['action'] || null;
+    const image = data['image']?.url || null;
+    const sound = data['sound'] || null;
+    const icon = data['icon'] || null;
+    const color = data['color'] || null;
+    const tag = data['tag'] || null;
+    const badge = data['badge'] || null;
+    const contentAvailable = data['contentAvailable'] || null;
+    const critical = data['critical'] || null;
+    let priority = data['priority'] || null;
 
     if (title === '') {
       title = null;
@@ -352,17 +344,17 @@ export class MessagingQueue extends Queue {
 
   private async sendExternalMessage(
     dbForProject: Database,
-    message: Document,
+    message: MessagesDoc,
     deviceForFiles: Device,
-    project: Document,
-    queueForStatsUsage: any, // Replace with proper type
+    project: ProjectsDoc,
+    queueForStatsUsage: any,
   ): Promise<void> {
-    const topicIds = message.getAttribute('topics', []);
-    const targetIds = message.getAttribute('targets', []);
-    const userIds = message.getAttribute('users', []);
-    const providerType = message.getAttribute('providerType');
+    const topicIds = message.get('topics', []);
+    const targetIds = message.get('targets', []);
+    const userIds = message.get('users', []);
+    const providerType = message.get('providerType') as MessageType;
 
-    let allTargets: Document[] = [];
+    let allTargets: TargetsDoc[] = [];
 
     if (topicIds.length > 0) {
       const topics = await dbForProject.find('topics', [
@@ -370,12 +362,9 @@ export class MessagingQueue extends Queue {
         Query.limit(topicIds.length),
       ]);
       for (const topic of topics) {
-        const targets = topic
-          .getAttribute('targets')
-          .filter(
-            (target: Document) =>
-              target.getAttribute('providerType') === providerType,
-          );
+        const targets = (topic.get('targets') as TargetsDoc[]).filter(
+          target => target.get('providerType') === providerType,
+        );
         allTargets.push(...targets);
       }
     }
@@ -386,12 +375,9 @@ export class MessagingQueue extends Queue {
         Query.limit(userIds.length),
       ]);
       for (const user of users) {
-        const targets = user
-          .getAttribute('targets')
-          .filter(
-            (target: Document) =>
-              target.getAttribute('providerType') === providerType,
-          );
+        const targets = (user.get('targets') as TargetsDoc[]).filter(
+          target => target.get('providerType') === providerType,
+        );
         allTargets.push(...targets);
       }
     }
@@ -409,12 +395,11 @@ export class MessagingQueue extends Queue {
       await dbForProject.updateDocument(
         'messages',
         message.getId(),
-        message.setAttributes({
-          status: MessageStatus.FAILED,
-          deliveryErrors: ['No valid recipients found.'],
-        }),
+        message
+          .set('status', MessageStatus.FAILED)
+          .set('deliveryErrors', ['No valid recipients found.']),
       );
-      console.warn('No valid recipients found.');
+      this.logger.warn('No valid recipients found.');
       return;
     }
 
@@ -423,26 +408,25 @@ export class MessagingQueue extends Queue {
       Query.equal('type', [providerType]),
     ]);
 
-    if (defaultProvider.isEmpty()) {
+    if (defaultProvider.empty()) {
       await dbForProject.updateDocument(
         'messages',
         message.getId(),
-        message.setAttributes({
-          status: MessageStatus.FAILED,
-          deliveryErrors: ['No enabled provider found.'],
-        }),
+        message
+          .set('status', MessageStatus.FAILED)
+          .set('deliveryErrors', ['No enabled provider found.']),
       );
       console.warn('No enabled provider found.');
       return;
     }
 
     const identifiers: Record<string, Record<string, null>> = {};
-    const providers: Record<string, Document> = {
+    const providers: Record<string, ProvidersDoc> = {
       [defaultProvider.getId()]: defaultProvider,
     };
 
     for (const target of allTargets) {
-      let providerId = target.getAttribute('providerId');
+      let providerId = target.get('providerId');
       if (!providerId) {
         providerId = defaultProvider.getId();
       }
@@ -451,35 +435,35 @@ export class MessagingQueue extends Queue {
         if (!identifiers[providerId]) {
           identifiers[providerId] = {};
         }
-        identifiers[providerId][target.getAttribute('identifier')] = null;
+        identifiers[providerId]![target.get('identifier')] = null;
       }
     }
 
     const providerPromises = Object.keys(identifiers).map(async providerId => {
-      let provider: Document;
+      let provider: ProvidersDoc;
       if (providers[providerId]) {
         provider = providers[providerId];
       } else {
         provider = await dbForProject.getDocument('providers', providerId);
-        if (provider.isEmpty() || !provider.getAttribute('enabled')) {
+        if (provider.empty() || !provider.get('enabled')) {
           provider = defaultProvider;
         } else {
           providers[providerId] = provider;
         }
       }
 
-      const identifiersForProvider = identifiers[providerId];
+      const identifiersForProvider = identifiers[providerId]!;
 
-      let adapter: SMSAdapter | PushAdapter | EmailAdapter;
-      switch (provider.getAttribute('type')) {
-        case MESSAGE_TYPE_SMS:
-          adapter = this.getSmsAdapter(provider);
+      let adapter: SMSAdapter | PushAdapter | EmailAdapter | null = null;
+      switch (provider.get('type') as MessageType) {
+        case MessageType.EMAIL:
+          adapter = this.getEmailAdapter(provider);
           break;
-        case MESSAGE_TYPE_PUSH:
+        case MessageType.PUSH:
           adapter = this.getPushAdapter(provider);
           break;
-        case MESSAGE_TYPE_EMAIL:
-          adapter = this.getEmailAdapter(provider);
+        case MessageType.SMS:
+          adapter = this.getSmsAdapter(provider);
           break;
         default:
           throw new Error(
@@ -499,18 +483,12 @@ export class MessagingQueue extends Queue {
       const batchPromises = batches.map(async batch => {
         let deliveredTotal = 0;
         const deliveryErrors: string[] = [];
-        const messageData = message; // TODO: ----
-        messageData.setAttribute('to', batch);
+        const messageData: Doc<Messages & { to?: string }> = message; // TODO: ----
+        messageData.set('to', batch);
 
         let data: SMS | Push | Email;
-        switch (provider.getAttribute('type')) {
-          case MESSAGE_TYPE_SMS:
-            data = this.buildSmsMessage(messageData, provider);
-            break;
-          case MESSAGE_TYPE_PUSH:
-            data = this.buildPushMessage(messageData);
-            break;
-          case MESSAGE_TYPE_EMAIL:
+        switch (provider.get('type') as MessageType) {
+          case MessageType.EMAIL:
             data = await this.buildEmailMessage(
               dbForProject,
               messageData,
@@ -518,6 +496,12 @@ export class MessagingQueue extends Queue {
               deviceForFiles,
               project,
             );
+            break;
+          case MessageType.PUSH:
+            data = this.buildPushMessage(messageData);
+            break;
+          case MessageType.SMS:
+            data = this.buildSmsMessage(messageData, provider);
             break;
           default:
             throw new Error(
@@ -542,22 +526,22 @@ export class MessagingQueue extends Queue {
                 Query.equal('identifier', [result.recipient]),
               ]);
 
-              if (!target.isEmpty()) {
+              if (!target.empty()) {
                 await dbForProject.updateDocument(
                   'targets',
                   target.getId(),
-                  target.setAttribute('expired', true),
+                  target.set('expired', true),
                 );
               }
             }
           }
-        } catch (error) {
+        } catch (error: any) {
           deliveryErrors.push(
             `Failed sending to targets with error: ${error.message}`,
           );
         } finally {
           const errorTotal = deliveryErrors.length;
-          // Add stats usage metrics here if needed
+          // Add stats usage metrics
           // queueForStatsUsage...
 
           return {
@@ -584,25 +568,25 @@ export class MessagingQueue extends Queue {
       deliveryErrors.push('Unknown error');
     }
 
-    message.setAttribute('deliveryErrors', deliveryErrors);
+    message.set('deliveryErrors', deliveryErrors);
 
-    if (message.getAttribute('deliveryErrors').length > 0) {
-      message.setAttribute('status', MessageStatus.FAILED);
+    if (message.get('deliveryErrors').length > 0) {
+      message.set('status', MessageStatus.FAILED);
     } else {
-      message.setAttribute('status', MessageStatus.SENT);
+      message.set('status', MessageStatus.SENT);
     }
 
-    message.removeAttribute('to');
+    message.delete('to' as any); // Remove 'to' field as it is not needed anymore
 
     for (const provider of Object.values(providers)) {
-      message.setAttribute(
+      message.set(
         'search',
-        `${message.getAttribute('search')} ${provider.getAttribute('name')} ${provider.getAttribute('provider')} ${provider.getAttribute('type')}`,
+        `${message.get('search')} ${provider.get('name')} ${provider.get('provider')} ${provider.get('type')}`,
       );
     }
 
-    message.setAttribute('deliveredTotal', deliveredTotal);
-    message.setAttribute('deliveredAt', new Date().toISOString());
+    message.set('deliveredTotal', deliveredTotal);
+    message.set('deliveredAt', new Date().toISOString());
 
     await dbForProject.updateDocument('messages', message.getId(), message);
   }
@@ -614,37 +598,13 @@ export class MessagingQueue extends Queue {
     }
     return chunks;
   }
-
-  private async getDatabase(project: Document) {
-    const dbOptions = project.getAttribute('database');
-    const client = await this.getPool(project.getId(), {
-      database: dbOptions.name,
-      user: dbOptions.adminRole,
-      password: APP_POSTGRES_PASSWORD,
-      port: dbOptions.port,
-      host: dbOptions.host,
-    });
-    const dbForProject = this.getProjectDb(client, project.getId());
-    dbForProject.setDatabase(CORE_SCHEMA);
-    return { client, dbForProject };
-  }
-
-  private async releaseClient(
-    client: Awaited<ReturnType<typeof this.getDatabase>>['client'],
-  ) {
-    try {
-      if (client) {
-        await client.end();
-      }
-    } catch (error) {
-      this.logger.error('Failed to release database client', error);
-    }
-  }
 }
 
-export type MessagingJob = typeof MESSAGE_SEND_TYPE_EXTERNAL;
+export enum MessagingJob {
+  EXTERNAL = 'external',
+}
 
 export interface MessagingJobData {
-  message: Document | Object;
-  project: Document | Object;
+  message: MessagesDoc | Object;
+  project: ProjectsDoc | Object;
 }

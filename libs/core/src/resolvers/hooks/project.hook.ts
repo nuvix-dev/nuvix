@@ -1,43 +1,35 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { Authorization, Database, Document } from '@nuvix/database';
+import { Injectable, Logger } from '@nestjs/common';
+import { Authorization, Database, Doc } from '@nuvix-tech/db';
 import ParamsHelper from '@nuvix/core/helper/params.helper';
 
 import {
-  APP_POSTGRES_PASSWORD,
   CORE_SCHEMA,
   CORE_SCHEMA_DB,
-  DB_FOR_PLATFORM,
-  GET_PROJECT_DB,
-  GET_PROJECT_PG,
-  PROJECT,
-  PROJECT_DB,
-  PROJECT_DB_CLIENT,
-  PROJECT_PG,
-  GET_PROJECT_DB_CLIENT,
   AUDITS_FOR_PROJECT,
   AppMode,
-} from '@nuvix/utils/constants';
+  Context,
+  PROJECT_DB_CLIENT,
+  PROJECT_DB,
+  PROJECT_PG,
+} from '@nuvix/utils';
 import { Hook } from '../../server/hooks/interface';
-import type {
-  GetProjectDbFn,
-  GetProjectPG,
-  GetClientFn,
-} from '@nuvix/core/core.module';
 import { Exception } from '@nuvix/core/extend/exception';
 import { Client } from 'pg';
 import { setupDatabaseMeta } from '@nuvix/core/helper/db-meta.helper';
 import { Audit } from '@nuvix/audit';
+import { CoreService } from '@nuvix/core/core.service.js';
+import { AppConfigService } from '@nuvix/core/config.service.js';
 
 @Injectable()
 export class ProjectHook implements Hook {
   private readonly logger = new Logger(ProjectHook.name);
+  private readonly db: Database;
   constructor(
-    @Inject(DB_FOR_PLATFORM) private readonly db: Database,
-    @Inject(GET_PROJECT_DB_CLIENT) private readonly getPool: GetClientFn,
-    @Inject(GET_PROJECT_PG) private readonly getProjectPg: GetProjectPG,
-    @Inject(GET_PROJECT_DB)
-    private readonly getProjectDb: GetProjectDbFn,
-  ) {}
+    private readonly coreService: CoreService,
+    private readonly appConfig: AppConfigService,
+  ) {
+    this.db = coreService.getPlatformDb();
+  }
 
   async onRequest(req: NuvixRequest) {
     const params = new ParamsHelper(req);
@@ -45,37 +37,43 @@ export class ProjectHook implements Hook {
       params.getFromHeaders('x-nuvix-project') ||
       params.getFromQuery('project', 'console');
 
-    if (projectId === 'console') {
-      req[PROJECT] = new Document({ $id: 'console' });
+    if (!projectId || projectId === 'console') {
+      req[Context.Project] = new Doc({ $id: 'console' });
       return null;
     }
 
-    const project = await Authorization.skip(
-      async () => await this.db.getDocument('projects', projectId as string),
+    const project = await Authorization.skip(() =>
+      this.db.getDocument('projects', projectId),
     );
 
-    if (!project.isEmpty()) {
+    if (!project.empty()) {
       // For testing & demo purpose (until infra. setup)
-      project.setAttribute('database', {
-        ...project.getAttribute('database'),
+      project.set('database', {
+        ...(project.get('database') as unknown as Record<string, any>),
         name: 'postgres',
         host: '35.244.24.126',
         port: 6432,
         adminRole: 'nuvix_admin',
-        password: APP_POSTGRES_PASSWORD,
+        password: this.appConfig.getDatabaseConfig().postgres.password,
         userRole: 'postgres',
         userPassword: 'testpassword',
       });
       try {
-        const dbOptions = project.getAttribute('database');
-        const client = await this.getPool(project.getId(), {
-          database: dbOptions.name,
-          user: dbOptions.adminRole,
-          password: APP_POSTGRES_PASSWORD,
-          port: dbOptions.port,
-          host: dbOptions.host,
-          max: 10,
-        });
+        const dbOptions = project.get('database') as unknown as Record<
+          string,
+          any
+        >;
+        const client = await this.coreService.createProjectDbClient(
+          project.getId(),
+          {
+            database: dbOptions['name'],
+            user: dbOptions['adminRole'],
+            password: this.appConfig.getDatabaseConfig().postgres
+              .password as string,
+            port: dbOptions['port'],
+            host: dbOptions['host'],
+          },
+        );
         client.setMaxListeners(20);
         req[PROJECT_DB_CLIENT] = client;
 
@@ -85,10 +83,18 @@ export class ProjectHook implements Hook {
           request: req,
         });
 
-        req[PROJECT_DB] = this.getProjectDb(client, project.getId());
-        req[PROJECT_PG] = this.getProjectPg(client);
-        const coreDatabase = this.getProjectDb(client, project.getId());
-        coreDatabase.setDatabase(CORE_SCHEMA);
+        req[PROJECT_DB] = this.coreService.getProjectDb(
+          client,
+          project.getId(),
+        );
+        req[PROJECT_PG] = this.coreService.getProjectPg(client);
+        const coreDatabase = this.coreService.getProjectDb(
+          client,
+          project.getId(),
+        );
+        coreDatabase.setMeta({
+          schema: CORE_SCHEMA,
+        });
         req[CORE_SCHEMA_DB] = coreDatabase;
         req[AUDITS_FOR_PROJECT] = new Audit(coreDatabase);
       } catch (e) {
@@ -98,8 +104,8 @@ export class ProjectHook implements Hook {
       }
     }
 
-    req[PROJECT] = project;
-    req[AppMode._REQUEST] = params.get('mode') || AppMode.DEFAULT;
+    req[Context.Project] = project;
+    req[Context.Mode] = params.get('mode') || AppMode.DEFAULT;
     return null;
   }
 

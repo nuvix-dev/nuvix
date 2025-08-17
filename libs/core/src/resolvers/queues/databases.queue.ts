@@ -1,74 +1,66 @@
 import { OnWorkerEvent, Processor } from '@nestjs/bullmq';
 import { Queue } from './queue';
 import { Job } from 'bullmq';
-
-import { Inject, Logger } from '@nestjs/common';
-import { Database, Document, DuplicateException } from '@nuvix/database';
-import type { GetClientFn, GetProjectDbFn } from '@nuvix/core/core.module';
-import {
-  GET_PROJECT_DB_CLIENT,
-  GET_PROJECT_DB,
-  APP_POSTGRES_PASSWORD,
-  QueueFor,
-} from '@nuvix/utils/constants';
-import collections from '@nuvix/core/collections';
+import { Logger } from '@nestjs/common';
+import { Database, Doc, DuplicateException } from '@nuvix-tech/db';
+import { QueueFor } from '@nuvix/utils';
+import { CoreService } from '@nuvix/core/core.service.js';
+import type { Projects, ProjectsDoc } from '@nuvix/utils/types';
+import collections from '@nuvix/utils/collections/index.js';
 
 @Processor(QueueFor.DATABASES, { concurrency: 10000 })
 export class DatabasesQueue extends Queue {
   private readonly logger = new Logger(DatabasesQueue.name);
 
-  constructor(
-    @Inject(GET_PROJECT_DB_CLIENT) private readonly getDbClient: GetClientFn,
-    @Inject(GET_PROJECT_DB) private readonly getProjectDb: GetProjectDbFn,
-  ) {
+  constructor(private readonly coreService: CoreService) {
     super();
   }
 
   async process(
-    job: Job<SchemaQueueOptions, any, SchemaJobs>,
+    { data, name, ...job }: Job<SchemaQueueOptions, any, SchemaJob>,
     token?: string,
-  ): Promise<any> {
-    switch (job.name) {
-      case 'init_doc':
-        const project = new Document(job.data.project as object);
-        await this.initDocumentSchema(project, job.data.schema);
-        return {
-          success: true,
-        };
-      case 'process': // added case for 'process'
-        break; // added break statement
-      default: // noop
+  ): Promise<void> {
+    switch (name) {
+      case SchemaJob.INIT_DOC:
+        const project = new Doc(
+          data.project as unknown as Projects,
+        ) as ProjectsDoc;
+        await this.initDocumentSchema(project, data.schema);
+        return;
+      default:
+        throw Error(`Unknown job type: ${name}`);
     }
   }
 
   private async initDocumentSchema(
-    project: Document,
+    project: ProjectsDoc,
     schema: string,
   ): Promise<void> {
-    const { client, dbForProject } = await this.getDatabase(project, schema);
+    const { client, dbForProject } =
+      await this.coreService.createProjectDatabase(project, { schema });
 
     try {
       await dbForProject.create(schema);
 
-      for (const [key, collection] of Object.entries(collections.docSchema)) {
+      for (const [key, collection] of Object.entries(collections.database)) {
         if (collection['$collection'] !== Database.METADATA) {
           continue;
         }
 
         const attributes = collection['attributes'].map(
-          (attribute: any) => new Document(attribute),
+          attribute => new Doc(attribute),
         );
 
-        const indexes = collection['indexes'].map(
-          (index: any) => new Document(index),
+        const indexes = (collection['indexes'] ?? []).map(
+          index => new Doc(index),
         );
 
         try {
-          await dbForProject.createCollection(
-            collection.$id,
+          await dbForProject.createCollection({
+            id: collection.$id,
             attributes,
             indexes,
-          );
+          });
         } catch (error) {
           if (!(error instanceof DuplicateException)) {
             throw error;
@@ -76,7 +68,7 @@ export class DatabasesQueue extends Queue {
         }
       }
     } finally {
-      await this.releaseClient(client);
+      await this.coreService.releaseDatabaseClient(client);
     }
   }
 
@@ -96,38 +88,14 @@ export class DatabasesQueue extends Queue {
   onCompleted(job: Job) {
     this.logger.log(`Completed job ${job.id} of type ${job.name}...`);
   }
-
-  private async getDatabase(project: Document, database: string) {
-    const dbOptions = project.getAttribute('database');
-    const client = await this.getDbClient(project.getId(), {
-      database: dbOptions.name,
-      user: dbOptions.adminRole,
-      password: APP_POSTGRES_PASSWORD,
-      port: dbOptions.port,
-      host: dbOptions.host,
-      max: 2,
-    });
-    const dbForProject = this.getProjectDb(client, project.getId());
-    dbForProject
-      .setDatabase(database)
-      .setCacheName(`${project.getId()}:${database}`);
-    return { client, dbForProject };
-  }
-
-  private async releaseClient(
-    client: Awaited<ReturnType<typeof this.getDatabase>>['client'],
-  ) {
-    try {
-      if (client) await client.end();
-    } catch (error) {
-      this.logger.error('Failed to release database client', error);
-    }
-  }
 }
 
 export interface SchemaQueueOptions {
-  project: object | Document;
+  project: ProjectsDoc;
   schema: string;
 }
 
-export type SchemaJobs = 'init_doc' | 'process';
+export enum SchemaJob {
+  INIT_DOC = 'init_doc',
+  PROCESS = 'process',
+}

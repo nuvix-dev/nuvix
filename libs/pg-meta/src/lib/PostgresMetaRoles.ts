@@ -9,7 +9,7 @@ export function changeRoleConfig2Object(config: string[]) {
     return null;
   }
   return config.reduce((acc: any, cur) => {
-    const [key, value] = cur.split('=');
+    const [key, value] = cur.split('=') as [string, string];
     acc[key] = value;
     return acc;
   }, {});

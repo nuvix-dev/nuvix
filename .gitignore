@@ -5,6 +5,8 @@
 schema.gql
 .rollup.cache
 
+**/node_modules
+
 # Logs
 logs
 *.log
@@ -79,3 +81,9 @@ yarn.lock
 
 # Storage
 storage/uploads/*
+
+.turbo
+
+**/dist/*
+libs/utils/types/generated.ts
+apps/nuvix/src/metadata.ts

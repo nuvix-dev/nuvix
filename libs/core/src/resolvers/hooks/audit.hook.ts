@@ -3,11 +3,12 @@ import { Injectable, Logger } from '@nestjs/common';
 import { AuditEventType } from '@nuvix/core/decorators';
 import { Exception } from '@nuvix/core/extend/exception';
 import { Hook } from '@nuvix/core/server';
-import { Document } from '@nuvix/database';
-import { QueueFor, PROJECT, USER, AppMode } from '@nuvix/utils/constants';
+import { Doc } from '@nuvix-tech/db';
+import { QueueFor, AppMode, Context } from '@nuvix/utils';
 import { Queue } from 'bullmq';
 import { AuditsQueueJobData } from '../queues/audits.queue';
 import { Auth } from '@nuvix/core/helper';
+import { ProjectsDoc, UsersDoc } from '@nuvix/utils/types';
 
 @Injectable()
 export class AuditHook implements Hook {
@@ -18,15 +19,16 @@ export class AuditHook implements Hook {
   ) {}
 
   async preSerialization(req: NuvixRequest, reply: NuvixRes) {
-    const audit: AuditEventType | undefined =
-      req.routeOptions?.config?.['audit'];
+    const audit: AuditEventType | undefined = (
+      req.routeOptions?.config as any
+    )?.['audit']; // TODO: Improve type safety
     if (!audit || !audit.event || reply.statusCode >= 400) {
       return;
     }
 
     try {
-      const project = req[PROJECT] as Document;
-      const user = req[USER] as Document;
+      const project = req[Context.Project] as ProjectsDoc;
+      const user = req[Context.User] as UsersDoc;
       const res = req['hooks_args']?.['preSerialization']?.['args']?.[0];
       await this.handleAudit(req, res, { audit, user, project });
     } catch (e) {
@@ -45,8 +47,8 @@ export class AuditHook implements Hook {
       project,
     }: {
       audit: AuditEventType;
-      user: Document;
-      project: Document;
+      user: UsersDoc;
+      project: ProjectsDoc;
     },
   ) {
     const { event, meta } = audit;
@@ -66,17 +68,17 @@ export class AuditHook implements Hook {
     if (meta.userId && this.isMappingPart(meta.userId)) {
       meta.userId = this.mapValue(req, res, meta.userId);
     }
-    const mode = req[AppMode._REQUEST];
+    const mode = req[Context.Mode] as AppMode;
     this.logger.debug(`Mapped resource: ${resource}`, { userId: meta.userId });
-    if (!user || user.isEmpty()) {
-      user = new Document({
+    if (!user || user.empty()) {
+      user = new Doc({
         $id: '',
         status: true,
         type: Auth.ACTIVITY_TYPE_GUEST,
         email: 'guest.' + project.getId() + '@service.' + req.hostname,
         password: '',
         name: 'Guest',
-      });
+      }) as unknown as UsersDoc;
     }
 
     await this.auditsQueue.add(event, {
@@ -109,24 +111,27 @@ export class AuditHook implements Hook {
     path: string,
   ): any {
     path = path.slice(1, -1);
-    const [type, key] = path.split('.', 2);
-    let value: any;
+    const [type, key] = path.split('.', 2) as [string, string];
+    const params = req.params as Record<string, string>;
+    const query = req.query as Record<string, string>;
+    const reqBody = req.body as Record<string, any>;
+    let value: unknown;
 
     switch (type) {
       case 'req':
-        value = req.params?.[key] ?? req.query?.[key] ?? req.body?.[key];
+        value = params?.[key] ?? query?.[key] ?? reqBody?.[key];
         break;
       case 'res':
         value = res?.[key];
         break;
       case 'params':
-        value = req.params?.[key];
+        value = params?.[key];
         break;
       case 'query':
-        value = req.query?.[key];
+        value = query?.[key];
         break;
       case 'body':
-        value = req.body?.[key];
+        value = reqBody?.[key];
         break;
       default:
         value = 'Unknown';

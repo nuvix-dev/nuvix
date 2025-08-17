@@ -8,10 +8,10 @@ import {
 
 export class PolicyCreateDTO {
   @IsString()
-  name: string;
+  declare name: string;
 
   @IsString()
-  table: string;
+  declare table: string;
 
   @IsOptional()
   @IsString()

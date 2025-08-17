@@ -333,7 +333,7 @@ export class Tokenizer {
   }
 
   protected current(): string {
-    return this.position < this.input.length ? this.input[this.position] : '';
+    return this.position < this.input.length ? this.input[this.position]! : '';
   }
 
   protected peek(offset: number = 1): string {

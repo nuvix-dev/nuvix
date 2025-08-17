@@ -305,7 +305,7 @@ export class Exception extends HttpException {
     const messages = Object.values(error.errors)
       .map((val: any) => val.message)
       .join(', ');
-    return new Exception(null, `Validation failed: ${messages}`);
+    return new Exception(undefined, `Validation failed: ${messages}`);
   }
 
   protected type: string = '';
@@ -314,7 +314,7 @@ export class Exception extends HttpException {
 
   constructor(
     type: string = Exception.GENERAL_UNKNOWN,
-    message: string | null = null,
+    message: string | undefined = undefined,
     code: number | string | null = null,
     previous?: Error,
   ) {
@@ -325,12 +325,12 @@ export class Exception extends HttpException {
         : errorCode;
     const finalCode = parsedCode ?? 500;
 
-    super(message, finalCode as number);
+    super(message as string, finalCode as number);
 
     this.type = type;
     this.name = this.constructor.name;
 
-    super.message = message ?? errorCodes[type]?.description;
+    super.message = message ?? (errorCodes[type]?.description as string);
     this.publish = errorCodes[type]?.publish ?? this.getStatus() >= 500;
 
     if (previous) {
@@ -1059,7 +1059,7 @@ export const errorCodes: Record<string, ErrorCode> = {
   /** Documents */
   [Exception.DOCUMENT_NOT_FOUND]: {
     name: Exception.DOCUMENT_NOT_FOUND,
-    description: 'Document with the requested ID could not be found.',
+    description: 'Doc with the requested ID could not be found.',
     code: 404,
   },
   [Exception.DOCUMENT_INVALID_STRUCTURE]: {
@@ -1083,7 +1083,7 @@ export const errorCodes: Record<string, ErrorCode> = {
   [Exception.DOCUMENT_ALREADY_EXISTS]: {
     name: Exception.DOCUMENT_ALREADY_EXISTS,
     description:
-      'Document with the requested ID already exists. Try again with a different ID or use ID.unique() to generate a unique ID.',
+      'Doc with the requested ID already exists. Try again with a different ID or use ID.unique() to generate a unique ID.',
     code: 409,
   },
   [Exception.DOCUMENT_UPDATE_CONFLICT]: {
@@ -1094,7 +1094,7 @@ export const errorCodes: Record<string, ErrorCode> = {
   [Exception.DOCUMENT_DELETE_RESTRICTED]: {
     name: Exception.DOCUMENT_DELETE_RESTRICTED,
     description:
-      'Document cannot be deleted because it is referenced by another document.',
+      'Doc cannot be deleted because it is referenced by another document.',
     code: 403,
   },
 

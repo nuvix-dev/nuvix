@@ -1,6 +1,6 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 import ParamsHelper from '../helper/params.helper';
-import { APP_MODE_DEFAULT } from '@nuvix/utils/constants';
+import { AppMode } from '@nuvix/utils';
 
 export const Mode = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
@@ -10,7 +10,7 @@ export const Mode = createParamDecorator(
 
     const mode =
       params.getFromHeaders('x-nuvix-mode') ||
-      params.getFromQuery('mode', APP_MODE_DEFAULT);
+      params.getFromQuery('mode', AppMode.DEFAULT);
 
     return mode;
   },

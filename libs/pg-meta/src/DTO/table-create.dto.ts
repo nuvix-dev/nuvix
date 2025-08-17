@@ -2,7 +2,7 @@ import { IsBoolean, IsObject, IsOptional, IsString } from 'class-validator';
 
 export class TableCreateDTO {
   @IsString()
-  name: string;
+  declare name: string;
 
   @IsOptional()
   @IsString()

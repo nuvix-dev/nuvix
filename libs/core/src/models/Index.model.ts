@@ -1,4 +1,4 @@
-import { Permission } from '@nuvix/database';
+import { Permission } from '@nuvix-tech/db';
 import { Exclude, Expose } from 'class-transformer';
 import BaseModel from '@nuvix/core/models/base.model';
 

@@ -8,7 +8,7 @@ import {
 
 export class PolicyUpdateDTO {
   @IsString()
-  name: string;
+  declare name: string;
 
   @IsOptional()
   @IsString()

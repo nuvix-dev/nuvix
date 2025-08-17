@@ -23,7 +23,9 @@ export const MultipartParam = createParamDecorator(
   async (data: string, ctx: ExecutionContext) => {
     const request: NuvixRequest = ctx.switchToHttp().getRequest<NuvixRequest>();
 
-    const param = request.body[data] as MultipartValue;
+    const param = (request.body as Record<string, unknown>)[
+      data
+    ] as MultipartValue;
     return param ? param.value : undefined;
   },
 );

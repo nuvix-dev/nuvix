@@ -4,103 +4,99 @@ import BaseModel from './base.model';
 @Exclude()
 export class BillingPlanModel extends BaseModel {
   /**
-   * Plan ID.
-   */
-  @Expose() declare $id: string;
-  /**
    * Plan name
    */
-  @Expose() name: string;
+  @Expose() declare name: string;
   /**
    * Price
    */
-  @Expose() price: number;
+  @Expose() declare price: number;
   /**
    * Trial days
    */
-  @Expose() trial: number;
+  @Expose() declare trial: number;
   /**
    * Bandwidth
    */
-  @Expose() bandwidth: number;
+  @Expose() declare bandwidth: number;
   /**
    * Storage
    */
-  @Expose() storage: number;
+  @Expose() declare storage: number;
   /**
    * Members
    */
-  @Expose() members: number;
+  @Expose() declare members: number;
   /**
    * Webhooks
    */
-  @Expose() webhooks: number;
+  @Expose() declare webhooks: number;
   /**
    * Platofrms
    */
-  @Expose() platforms: number;
+  @Expose() declare platforms: number;
   /**
    * Users
    */
-  @Expose() users: number;
+  @Expose() declare users: number;
   /**
    * Teams
    */
-  @Expose() teams: number;
+  @Expose() declare teams: number;
   /**
    * Databases
    */
-  @Expose() databases: number;
+  @Expose() declare databases: number;
   /**
    * Buckets
    */
-  @Expose() buckets: number;
+  @Expose() declare buckets: number;
   /**
    * File size
    */
-  @Expose() fileSize: number;
+  @Expose() declare fileSize: number;
   /**
    * Functions
    */
-  @Expose() functions: number;
+  @Expose() declare functions: number;
   /**
    * Function executions
    */
-  @Expose() executions: number;
+  @Expose() declare executions: number;
   /**
    * Realtime connections
    */
-  @Expose() realtime: number;
+  @Expose() declare realtime: number;
   /**
    * Log days
    */
-  @Expose() logs: number;
+  @Expose() declare logs: number;
   /**
    * Additional resources
    */
-  @Expose() addons: object;
+  @Expose() declare addons: object;
   /**
    * Custom SMTP
    */
-  @Expose() customSmtp: boolean;
+  @Expose() declare customSmtp: boolean;
   /**
    * nuvix branding in email
    */
-  @Expose() emailBranding: boolean;
+  @Expose() declare emailBranding: boolean;
   /**
    * Does plan require payment method
    */
-  @Expose() requiresPaymentMethod: boolean;
+  @Expose() declare requiresPaymentMethod: boolean;
   /**
    * Does plan require billing address
    */
-  @Expose() requiresBillingAddress: boolean;
+  @Expose() declare requiresBillingAddress: boolean;
   /**
    * Is the billing plan available
    */
-  @Expose() isAvailable: boolean;
+  @Expose() declare isAvailable: boolean;
   /**
    * Can user change the plan themselves
    */
-  @Expose() selfService: boolean;
+  @Expose() declare selfService: boolean;
 }

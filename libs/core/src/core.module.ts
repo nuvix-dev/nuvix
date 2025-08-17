@@ -10,39 +10,21 @@ import * as fs from 'fs';
 import path from 'path';
 import IORedis from 'ioredis';
 
-// Services
 import {
   DB_FOR_PLATFORM,
   GEO_DB,
   CACHE_DB,
   CACHE,
-  APP_REDIS_PORT,
-  APP_REDIS_HOST,
-  APP_REDIS_USER,
-  APP_REDIS_PASSWORD,
-  APP_REDIS_DB,
-  APP_REDIS_SECURE,
   GET_PROJECT_DB,
   GET_PROJECT_DB_CLIENT,
   GET_PROJECT_PG,
   PROJECT_ROOT,
-  LOG_LEVELS,
-  APP_DATABASE_HOST,
-  APP_DATABASE_USER,
-  APP_DATABASE_PASSWORD,
-  APP_DATABASE_NAME,
-  APP_DATABASE_PORT,
-  APP_POSTGRES_HOST,
-  APP_POSTGRES_PORT,
-  APP_POSTGRES_DB,
-  APP_POSTGRES_USER,
-  APP_POSTGRES_PASSWORD,
-  APP_POSTGRES_SSL,
   GET_DEVICE_FOR_PROJECT,
   APP_STORAGE_UPLOADS,
   AUDITS_FOR_PLATFORM,
-} from '@nuvix/utils/constants';
-import { Database, MariaDB, Structure, PostgreDB } from '@nuvix/database';
+  configuration,
+} from '@nuvix/utils';
+import { Adapter, Database, StructureValidator } from '@nuvix-tech/db';
 import { Context, DataSource } from '@nuvix/pg';
 import { CountryResponse, Reader } from 'maxmind';
 import { Cache, Redis } from '@nuvix/cache';
@@ -51,6 +33,9 @@ import { parse as parseArray } from 'postgres-array';
 import { filters, formats } from '@nuvix/utils/database';
 import { Device, Local } from '@nuvix/storage';
 import { Audit } from '@nuvix/audit';
+import { AppConfigService } from './config.service.js';
+import { CoreService } from './core.service.js';
+import { ConfigModule } from '@nestjs/config';
 
 export function configurePgTypeParsers() {
   const types = pg.types;
@@ -79,15 +64,12 @@ export function configurePgTypeParsers() {
 
 configurePgTypeParsers();
 
-Object.keys(filters).forEach(key => {
-  Database.addFilter(key, {
-    encode: filters[key].serialize,
-    decode: filters[key].deserialize,
-  });
+Object.entries(filters).forEach(([key, filter]) => {
+  Database.addFilter(key, filter);
 });
 
-Object.keys(formats).forEach(key => {
-  Structure.addFormat(key, formats[key].create, formats[key].type);
+Object.entries(formats).forEach(([key, format]) => {
+  StructureValidator.addFormat(key, format);
 });
 
 interface PoolOptions {
@@ -96,48 +78,56 @@ interface PoolOptions {
   password: string;
   host: string;
   port?: number;
-  /**@deprecated No longer used */
-  max?: number;
-}
-export interface GetClientFn {
-  (name: string, options: PoolOptions): Promise<Client>;
-  (name: 'root', options?: Partial<PoolOptions>): Promise<Client>;
 }
 
 export interface GetProjectDeviceFn {
   (projectId: string): Device;
 }
-
+/**@deprecated */
 export type GetProjectDbFn = (pool: Client, projectId: string) => Database;
-
-export type GetProjectPG = (client: Client, context?: Context) => DataSource;
+/**@deprecated */
+export type GetProjectPGFn = (client: Client, context?: Context) => DataSource;
+/**@deprecated */
+export interface GetProjectDbClientFn {
+  (name: string | 'root', options: PoolOptions): Promise<Client>;
+}
+/**@deprecated */
+export interface GetProjectPGFnFn {
+  (client: Client, options?: unknown): DataSource;
+}
 
 @Global()
 @Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [configuration],
+    }),
+  ],
   providers: [
     {
+      provide: AppConfigService,
+      useClass: AppConfigService,
+    },
+    CoreService,
+    {
       provide: GET_PROJECT_DB_CLIENT,
-      useFactory: (): GetClientFn => {
+      useFactory: (config: AppConfigService): GetProjectDbClientFn => {
         return async (name: string | 'root', options: PoolOptions) => {
-          let databaseOptions = {};
+          let databaseOptions: Partial<PoolOptions> & Record<string, any> = {};
           if (name === 'root') {
             databaseOptions = {
-              host: APP_POSTGRES_HOST,
-              port: APP_POSTGRES_PORT,
-              database: APP_POSTGRES_DB,
-              user: APP_POSTGRES_USER,
-              password: APP_POSTGRES_PASSWORD,
-              ssl: APP_POSTGRES_SSL ? { rejectUnauthorized: false } : undefined,
+              ...config.getDatabaseConfig().postgres,
             };
           } else {
             databaseOptions = {
               host: options.host,
-              port: parseInt(options.port.toString() || '5432'),
+              port: parseInt(options.port?.toString() || '5432'),
               database: options.database,
               user: options.user,
               password: options.password,
               // TODO: Check later
-              ssl: APP_POSTGRES_SSL ? { rejectUnauthorized: false } : undefined,
+              ssl: true ? { rejectUnauthorized: false } : undefined,
             };
           }
 
@@ -158,60 +148,52 @@ export type GetProjectPG = (client: Client, context?: Context) => DataSource;
           return client;
         };
       },
+      inject: [AppConfigService],
     },
     {
       provide: CACHE_DB,
-      useFactory: async () => {
+      useFactory: async (config: AppConfigService) => {
+        const redisConfig = config.getRedisConfig();
         const connection = new IORedis({
           connectionName: CACHE_DB.toString(),
-          port: APP_REDIS_PORT,
-          host: APP_REDIS_HOST,
-          username: APP_REDIS_USER,
-          password: APP_REDIS_PASSWORD,
-          db: APP_REDIS_DB,
-          tls: APP_REDIS_SECURE ? {} : undefined,
+          ...redisConfig,
+          username: redisConfig.user,
+          tls: redisConfig.secure ? { rejectUnauthorized: false } : undefined,
         });
         return connection;
       },
-      inject: [],
+      inject: [AppConfigService],
     },
     {
       provide: CACHE,
-      useFactory: async (redis: IORedis) => {
+      useFactory: async (config: AppConfigService, redis: IORedis) => {
+        const redisConfig = config.getRedisConfig();
         const adpter = new Redis({
-          port: APP_REDIS_PORT,
-          host: APP_REDIS_HOST,
-          username: APP_REDIS_USER,
-          password: APP_REDIS_PASSWORD,
-          db: APP_REDIS_DB,
-          tls: APP_REDIS_SECURE,
+          ...redisConfig,
+          username: redisConfig.user,
+          tls: redisConfig.secure ? { rejectUnauthorized: false } : undefined,
           namespace: 'nuvix',
-        } as any);
+        });
         const cache = new Cache(adpter);
         return cache;
       },
-      inject: [CACHE_DB],
+      inject: [AppConfigService, CACHE_DB],
     },
     {
       provide: DB_FOR_PLATFORM,
-      useFactory: async (cache: Cache) => {
-        const adapter = new MariaDB({
-          connection: {
-            host: APP_DATABASE_HOST,
-            user: APP_DATABASE_USER,
-            password: APP_DATABASE_PASSWORD,
-            database: APP_DATABASE_NAME,
-            port: APP_DATABASE_PORT,
-          },
-          maxVarCharLimit: 5000,
+      useFactory: async (config: AppConfigService, cache: Cache) => {
+        const platformDbConfig = config.getDatabaseConfig().platform;
+        const adapter = new Adapter({
+          ...platformDbConfig,
+          database: platformDbConfig.name,
         });
-        adapter.init();
-        const connection = new Database(adapter, cache, {
-          logger: LOG_LEVELS,
-        }).setCacheName('console');
+        const connection = new Database(adapter, cache).setMeta({
+          schema: 'public',
+          // cacheId: 'platform', // Uncomment after implementing cache
+        });
         return connection;
       },
-      inject: [CACHE],
+      inject: [AppConfigService, CACHE],
     },
     {
       provide: AUDITS_FOR_PLATFORM,
@@ -222,16 +204,18 @@ export type GetProjectPG = (client: Client, context?: Context) => DataSource;
     },
     {
       provide: GET_PROJECT_DB,
-      useFactory: (cache: Cache) => {
+      useFactory: (cache: Cache): GetProjectDbFn => {
         return (client: Client, projectId: string) => {
-          const adapter = new PostgreDB({
-            connection: client as any, // #<PoolClient> until lib update
+          const adapter = new Adapter(client);
+          adapter.setMeta({
+            metadata: {
+              projectId: projectId,
+            },
           });
-          adapter.init();
-          adapter.setMetadata('projectId', projectId);
-          const connection = new Database(adapter, cache, {
-            logger: LOG_LEVELS,
-          }).setCacheName(`${projectId}:core`); // TODO: ------------
+          const connection = new Database(adapter, cache);
+          connection.setMeta({
+            // cacheId: `${projectId}:core`
+          });
           return connection;
         };
       },
@@ -248,7 +232,7 @@ export type GetProjectPG = (client: Client, context?: Context) => DataSource;
     },
     {
       provide: GET_PROJECT_PG,
-      useFactory: () => {
+      useFactory: (): GetProjectPGFn => {
         return (client: Client, ctx?: Context) => {
           ctx = ctx ?? new Context();
           const connection = new DataSource(
@@ -282,6 +266,8 @@ export type GetProjectPG = (client: Client, context?: Context) => DataSource;
     },
   ],
   exports: [
+    AppConfigService,
+    CoreService,
     GET_PROJECT_DB_CLIENT,
     DB_FOR_PLATFORM,
     AUDITS_FOR_PLATFORM,

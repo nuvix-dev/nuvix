@@ -146,7 +146,7 @@ WHERE
     is_unique?: boolean;
     comment?: string;
     check?: string;
-  }): Promise<PostgresMetaResult<PostgresColumn>> {
+  }): Promise<PostgresMetaResult<PostgresColumn | null>> {
     const { data, error } = await this.metaTables.retrieve({ id: table_id });
     if (error) {
       return { data: null, error };
@@ -230,7 +230,7 @@ COMMIT;`;
       comment?: string;
       check?: string | null;
     },
-  ): Promise<PostgresMetaResult<PostgresColumn>> {
+  ): Promise<PostgresMetaResult<PostgresColumn | null>> {
     const { data: old, error } = await this.retrieve({ id });
     if (error) {
       return { data: null, error };
@@ -409,10 +409,10 @@ COMMIT;`;
   async remove(
     id: string,
     { cascade = false } = {},
-  ): Promise<PostgresMetaResult<PostgresColumn>> {
+  ): Promise<PostgresMetaResult<PostgresColumn | null>> {
     const { data: column, error } = await this.retrieve({ id });
     if (error) {
-      return { data: null, error };
+      return { data: null, error: error };
     }
     const sql = `ALTER TABLE ${ident(column!.schema)}.${ident(column!.table)} DROP COLUMN ${ident(
       column!.name,

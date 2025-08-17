@@ -144,13 +144,13 @@ export const init: (config: PoolConfig | any) => {
               const lines = sql.split('\n');
               let currentOffset = 0;
               for (let i = 0; i < lines.length; i++) {
-                if (currentOffset + lines[i].length > position) {
-                  line = lines[i];
+                if (currentOffset + lines[i]!.length > position) {
+                  line = lines[i]!;
                   lineNumber = i + 1; // 1-based
                   lineOffset = position - currentOffset;
                   break;
                 }
-                currentOffset += lines[i].length + 1; // 1 extra offset for newline
+                currentOffset += lines[i]!.length + 1; // 1 extra offset for newline
               }
               formattedError += `LINE ${lineNumber}: ${line}\n${' '.repeat(5 + lineNumber.toString().length + 2 + lineOffset)}^\n`;
             }

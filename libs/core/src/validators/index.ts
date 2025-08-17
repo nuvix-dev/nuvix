@@ -6,3 +6,6 @@ export * from './phone.validator';
 export * from './input.validator';
 export * from './password-history.validator';
 export * from './personal-data.validator';
+export * from './url.validator';
+export * from './ip.validator';
+export * from './whitelist.validator';

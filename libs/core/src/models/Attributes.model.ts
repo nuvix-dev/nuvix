@@ -3,8 +3,8 @@ import { AttributeModel } from './Attribute.model';
 
 @Exclude()
 export class AttributeBooleanModel extends AttributeModel {
-  @Expose() key: string = ''; // Default to empty string
-  @Expose() type: string = 'boolean'; // Default to 'boolean'
+  @Expose() override key: string = ''; // Default to empty string
+  @Expose() override type: string = 'boolean'; // Default to 'boolean'
   @Expose() default: boolean | null = null; // Default to null
 
   constructor(partial: Partial<AttributeBooleanModel>) {
@@ -15,8 +15,8 @@ export class AttributeBooleanModel extends AttributeModel {
 
 @Exclude()
 export class AttributeDatetimeModel extends AttributeModel {
-  @Expose() key: string = ''; // Default to empty string
-  @Expose() type: string = 'datetime'; // Default to 'datetime'
+  @Expose() override key: string = ''; // Default to empty string
+  @Expose() override type: string = 'datetime'; // Default to 'datetime'
   @Expose() format: string = ''; // Default to empty string
   @Expose() default: string | null = null; // Default to null
 
@@ -28,8 +28,8 @@ export class AttributeDatetimeModel extends AttributeModel {
 
 @Exclude()
 export class AttributeEmailModel extends AttributeModel {
-  @Expose() key: string = ''; // Default to empty string
-  @Expose() type: string = 'string'; // Default to 'string'
+  @Expose() override key: string = ''; // Default to empty string
+  @Expose() override type: string = 'string'; // Default to 'string'
   @Expose() format: string = ''; // Default to empty string
   @Expose() default: string | null = null; // Default to null
 
@@ -41,8 +41,8 @@ export class AttributeEmailModel extends AttributeModel {
 
 @Exclude()
 export class AttributeEnumModel extends AttributeModel {
-  @Expose() key: string = ''; // Default to empty string
-  @Expose() type: string = 'string'; // Default to 'string'
+  @Expose() override key: string = ''; // Default to empty string
+  @Expose() override type: string = 'string'; // Default to 'string'
   @Expose() elements: string[] = []; // Default to empty array
   @Expose() format: string = ''; // Default to empty string
   @Expose() default: string | null = null; // Default to null
@@ -55,8 +55,8 @@ export class AttributeEnumModel extends AttributeModel {
 
 @Exclude()
 export class AttributeFloatModel extends AttributeModel {
-  @Expose() key: string = ''; // Default to empty string
-  @Expose() type: string = 'double'; // Default to 'double'
+  @Expose() override key: string = ''; // Default to empty string
+  @Expose() override type: string = 'double'; // Default to 'double'
   @Expose() min: number | null = null; // Default to null
   @Expose() max: number | null = null; // Default to null
   @Expose() default: number | null = null; // Default to null
@@ -69,8 +69,8 @@ export class AttributeFloatModel extends AttributeModel {
 
 @Exclude()
 export class AttributeIPModel extends AttributeModel {
-  @Expose() key: string = ''; // Default to empty string
-  @Expose() type: string = 'string'; // Default to 'string'
+  @Expose() override key: string = ''; // Default to empty string
+  @Expose() override type: string = 'string'; // Default to 'string'
   @Expose() format: string = ''; // Default to empty string
   @Expose() default: string | null = null; // Default to null
 
@@ -82,8 +82,8 @@ export class AttributeIPModel extends AttributeModel {
 
 @Exclude()
 export class AttributeIntegerModel extends AttributeModel {
-  @Expose() key: string = ''; // Default to empty string
-  @Expose() type: string = 'integer'; // Default to 'integer'
+  @Expose() override key: string = ''; // Default to empty string
+  @Expose() override type: string = 'integer'; // Default to 'integer'
   @Expose() min: number | null = null; // Default to null
   @Expose() max: number | null = null; // Default to null
   @Expose() default: number | null = null; // Default to null
@@ -122,8 +122,8 @@ export class AttributeRelationshipModel extends AttributeModel {
 
 @Exclude()
 export class AttributeStringModel extends AttributeModel {
-  @Expose() key: string = ''; // Default to empty string
-  @Expose() type: string = 'string'; // Default to 'string'
+  @Expose() override key: string = ''; // Default to empty string
+  @Expose() override type: string = 'string'; // Default to 'string'
   @Expose() size: number = 0; // Default to 0
   @Expose() default: string | null = null; // Default to null
 
@@ -135,8 +135,8 @@ export class AttributeStringModel extends AttributeModel {
 
 @Exclude()
 export class AttributeURLModel extends AttributeModel {
-  @Expose() key: string = ''; // Default to empty string
-  @Expose() type: string = 'string'; // Default to 'string'
+  @Expose() override key: string = ''; // Default to empty string
+  @Expose() override type: string = 'string'; // Default to 'string'
   @Expose() format: string = ''; // Default to empty string
   @Expose() default: string | null = null; // Default to null
 

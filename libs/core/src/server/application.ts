@@ -17,15 +17,17 @@ const { MicroservicesModule } = optionalRequire(
 // @ts-ignore
 export class NuvixApplication extends NestApplication {
   private readonly hooksModule: HooksModule;
-  private readonly middlewareContainer = new HooksContainer(this.container);
+  private override readonly middlewareContainer = new HooksContainer(
+    this.container,
+  );
   private override readonly microservicesModule =
     MicroservicesModule && new MicroservicesModule();
 
   constructor(
     container: NestContainer,
-    private readonly httpAdapter: HttpServer,
-    private readonly config: ApplicationConfig,
-    private readonly graphInspector: GraphInspector,
+    private override readonly httpAdapter: HttpServer,
+    private override readonly config: ApplicationConfig,
+    private override readonly graphInspector: GraphInspector,
     appOptions: NestApplicationOptions = {},
   ) {
     super(container, httpAdapter, config, graphInspector, appOptions);

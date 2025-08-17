@@ -4,16 +4,6 @@ import BaseModel from '@nuvix/core/models/base.model';
 @Exclude()
 export class MFAChallengeModel extends BaseModel {
   /**
-   * Token ID.
-   */
-  @Expose() id: string = '';
-
-  /**
-   * Token creation date in ISO 8601 format.
-   */
-  @Expose() createdAt: string; // No default value
-
-  /**
    * User ID.
    */
   @Expose() userId: string = '';
@@ -21,7 +11,7 @@ export class MFAChallengeModel extends BaseModel {
   /**
    * Token expiration date in ISO 8601 format.
    */
-  @Expose() expire: string; // No default value
+  @Expose() declare expire: string; // No default value
 
   constructor(partial: Partial<MFAChallengeModel>) {
     super();

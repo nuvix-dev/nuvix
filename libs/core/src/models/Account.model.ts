@@ -16,7 +16,7 @@ export class AccountModel extends UserModel {
    */
   declare hashOptions?: object;
 
-  mfaRecoveryCodes: string[];
+  declare mfaRecoveryCodes: string[];
 
   constructor(data: Partial<AccountModel>) {
     super(data);

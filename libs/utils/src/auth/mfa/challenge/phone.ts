@@ -1,18 +1,19 @@
-import { Document } from '@nuvix/database';
 import { Challenge } from '../challenge';
-import { TOTP as TOTPType } from '@nuvix/core/validators';
+import { MfaType } from '@nuvix/core/validators';
+import { UsersDoc, type ChallengesDoc } from '@nuvix/utils/types';
 
 export class Phone extends Challenge {
-  static verify(challenge: Document, otp: string): boolean {
-    return challenge.getAttribute('code') === otp;
+  static override verify(challenge: UsersDoc, otp: string): boolean {
+    return challenge.get('code') === otp;
   }
 
-  static challenge(challenge: Document, user: Document, otp: string): boolean {
-    if (
-      challenge.isSet('type') &&
-      challenge.getAttribute('type') === TOTPType.PHONE
-    ) {
-      return this.verify(challenge, otp);
+  static override challenge(
+    challenge: ChallengesDoc,
+    user: UsersDoc,
+    otp: string,
+  ): boolean {
+    if (challenge.has('type') && challenge.get('type') === MfaType.PHONE) {
+      return this.verify(challenge as UsersDoc, otp);
     }
     return false;
   }

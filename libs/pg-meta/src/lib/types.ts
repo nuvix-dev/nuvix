@@ -10,12 +10,12 @@ export interface PostgresMetaOk<T> {
   error?: null;
 }
 
-export interface PostgresMetaErr {
+export interface PostgresMetaError {
   data: null;
   error: Partial<DatabaseError> & { message: string; formattedError?: string };
 }
 
-export type PostgresMetaResult<T> = PostgresMetaOk<T>;
+export type PostgresMetaResult<T> = PostgresMetaOk<T> | PostgresMetaError;
 
 export const postgresColumnSchema = Type.Object({
   table_id: Type.Integer(),

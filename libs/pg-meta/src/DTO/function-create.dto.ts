@@ -9,10 +9,10 @@ import {
 
 export class FunctionCreateDTO {
   @IsString()
-  name: string;
+  declare name: string;
 
   @IsString()
-  definition: string;
+  declare definition: string;
 
   @IsOptional()
   @IsString()

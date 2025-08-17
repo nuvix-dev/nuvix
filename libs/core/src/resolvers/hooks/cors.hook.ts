@@ -1,12 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common';
-
-import { Document } from '@nuvix/database';
-import { PROJECT, SERVER_CONFIG } from '@nuvix/utils/constants';
+import { Context, SERVER_CONFIG } from '@nuvix/utils';
 import { Hook } from '../../server/hooks/interface';
 import {
   addOriginToVaryHeader,
   addAccessControlRequestHeadersToVaryHeader,
 } from '@nuvix/core/helper/vary.helper';
+import { ProjectsDoc } from '@nuvix/utils/types';
 
 interface CorsOptions {
   methods: string[];
@@ -29,7 +28,7 @@ export class CorsHook implements Hook {
     allowedHeaders: SERVER_CONFIG.allowedHeaders,
     exposedHeaders: SERVER_CONFIG.exposedHeaders,
     credentials: SERVER_CONFIG.credentials,
-    maxAge: SERVER_CONFIG.maxAge,
+    maxAge: SERVER_CONFIG.maxAge || 3600, // Default to 1 hour if not set
     preflight: true,
     strictPreflight: true,
   };
@@ -37,7 +36,7 @@ export class CorsHook implements Hook {
   async onRequest(req: NuvixRequest, reply: NuvixRes): Promise<void> {
     try {
       const hostname = req.hostname;
-      const project: Document = req[PROJECT];
+      const project = req[Context.Project] as ProjectsDoc;
       const isConsoleRequest =
         project.getId() === 'console' || hostname === SERVER_CONFIG.host;
 
@@ -52,13 +51,20 @@ export class CorsHook implements Hook {
       if (req.method.toUpperCase() === 'OPTIONS' && options.preflight) {
         this.handlePreflight(req, reply, options);
       }
-    } catch (error) {
+    } catch (error: any) {
       this.logger.error(`CORS setup failed: ${error.message}`);
       reply.status(500).send('Internal Server Error');
     }
   }
 
-  private determineOrigin(origin: string, isConsole: boolean): string | false {
+  private determineOrigin(
+    origin: string | undefined,
+    isConsole: boolean,
+  ): string | false {
+    if (!origin) {
+      this.logger.warn('CORS: No origin provided');
+      return false; // No origin provided
+    }
     if (isConsole) {
       return SERVER_CONFIG.allowedOrigins.includes(origin) ? origin : 'null';
     }
@@ -68,7 +74,7 @@ export class CorsHook implements Hook {
 
   private addCorsHeaders(
     reply: NuvixRes,
-    origin: string | false,
+    origin: string | undefined,
     options: CorsOptions,
   ) {
     if (origin) {

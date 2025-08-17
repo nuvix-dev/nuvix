@@ -1,21 +1,21 @@
 export interface SmtpConfig {
   host: string;
-  port: string;
-  user: string;
-  pass: string;
+  port: number;
+  username: string;
+  password: string;
   from: string;
-  enabled: boolean;
+  enabled?: boolean;
   senderName: string;
   senderEmail: string;
   replyTo: string;
-  secure: boolean;
+  secure: 'tls' | 'ssl' | false;
 }
 
 export const defaultSmtpConfig: SmtpConfig = {
   host: '',
-  port: '',
-  user: '',
-  pass: '',
+  port: 0,
+  username: '',
+  password: '',
   from: '',
   enabled: false,
   senderName: '',
