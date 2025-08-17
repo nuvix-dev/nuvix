@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import {
   CreateTeamDTO,
   UpdateTeamDTO,
@@ -15,9 +15,6 @@ import {
 import {
   APP_EMAIL_TEAM,
   APP_NAME,
-  APP_SMTP_HOST,
-  PROJECT_ROOT,
-  SEND_TYPE_EMAIL,
   QueueFor,
 } from '@nuvix/utils';
 import {
@@ -34,22 +31,26 @@ import { Auth } from '@nuvix/core/helper/auth.helper';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bullmq';
 import {
-  MailJobs,
+  MailJob,
   MailQueueOptions,
 } from '@nuvix/core/resolvers/queues/mails.queue';
 import { LocaleTranslator } from '@nuvix/core/helper/locale.helper';
 import { sprintf } from 'sprintf-js';
 import * as fs from 'fs';
 import * as Template from 'handlebars';
+import { AppConfigService } from '@nuvix/core';
+import type { Memberships, ProjectsDoc, UsersDoc } from '@nuvix/utils/types';
+import type { SmtpConfig } from '@nuvix/core/config/smtp.js';
 
 @Injectable()
 export class TeamsService {
   private logger: Logger = new Logger(TeamsService.name);
 
   constructor(
+    private readonly appConfig: AppConfigService,
     @InjectQueue(QueueFor.MAILS)
-    private readonly mailsQueue: Queue<MailQueueOptions, any, MailJobs>,
-  ) { }
+    private readonly mailsQueue: Queue<MailQueueOptions, any, MailJob>,
+  ) {}
 
   /**
    * Find all teams
@@ -57,27 +58,6 @@ export class TeamsService {
   async findAll(db: Database, queries: Query[], search?: string) {
     if (search) {
       queries.push(Query.search('search', search));
-    }
-
-    // Get cursor document if there was a cursor query
-    const cursor = queries.find(query =>
-      [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(
-        query.getMethod(),
-      ),
-    );
-
-    if (cursor) {
-      const teamId = cursor.getValue();
-      const cursorDocument = await db.getDocument('teams', teamId);
-
-      if (!cursorDocument) {
-        throw new Exception(
-          Exception.GENERAL_CURSOR_NOT_FOUND,
-          `Team '${teamId}' for the 'cursor' value not found.`,
-        );
-      }
-
-      cursor.setValue(cursorDocument);
     }
 
     const filterQueries = Query.groupByType(queries)['filters'];
@@ -95,7 +75,7 @@ export class TeamsService {
    */
   async create(
     db: Database,
-    user: Doc | null,
+    user: UsersDoc | null,
     input: CreateTeamDTO,
     mode: string,
   ) {
@@ -208,8 +188,7 @@ export class TeamsService {
       await db.deleteDocument('memberships', membership.getId());
     }
 
-    // Additional processing like queueing events could go here
-    return null;
+    return;
   }
 
   /**
@@ -241,14 +220,14 @@ export class TeamsService {
   /**
    * Set team preferences
    */
-  async setPrefs(db: Database, id: string, input: UpdateTeamPrefsDTO) {
+  async setPrefs(db: Database, id: string, { prefs }: UpdateTeamPrefsDTO) {
     const team = await db.getDocument('teams', id);
 
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND);
     }
 
-    team.set('prefs', input.prefs);
+    team.set('prefs', prefs);
     const updatedTeam = await db.updateDocument('teams', team.getId(), team);
 
     return updatedTeam.get('prefs');
@@ -261,8 +240,8 @@ export class TeamsService {
     db: Database,
     id: string,
     input: CreateMembershipDTO,
-    project: Doc,
-    user: Doc,
+    project: ProjectsDoc,
+    user: UsersDoc,
     locale: LocaleTranslator,
   ) {
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
@@ -287,7 +266,7 @@ export class TeamsService {
       );
     }
 
-    if (!isPrivilegedUser && !isAppUser && !APP_SMTP_HOST) {
+    if (!isPrivilegedUser && !isAppUser && !this.appConfig.getSmtpConfig().host) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED);
     }
 
@@ -298,7 +277,7 @@ export class TeamsService {
 
     let email = input.email ? input.email.trim().toLowerCase() : '';
     let name = input.name ? input.name.trim() : email;
-    let invitee: Doc | null = null;
+    let invitee: UsersDoc | null = null;
 
     if (input.userId) {
       invitee = await db.getDocument('users', input.userId);
@@ -386,11 +365,10 @@ export class TeamsService {
               Permission.update(Role.user(userId)),
               Permission.delete(Role.user(userId)),
             ],
-            email: email || null,
-            phone: input.phone || null,
+            email: email,
+            phone: input.phone,
             emailVerification: false,
             status: true,
-            passwordUpdate: null,
             registration: new Date(),
             reset: false,
             name: name,
@@ -419,7 +397,7 @@ export class TeamsService {
     const membershipId = ID.unique();
     const secret = Auth.tokenGenerator();
 
-    let membership = new Doc<any>({
+    let membership = new Doc<Memberships>({
       $id: membershipId,
       $permissions: [
         Permission.read(Role.any()),
@@ -443,7 +421,7 @@ export class TeamsService {
     if (isPrivilegedUser || isAppUser) {
       try {
         membership = await Authorization.skip(
-          async () => await db.createDocument('memberships', membership),
+          () => db.createDocument('memberships', membership),
         );
       } catch (error) {
         if (error instanceof DuplicateException) {
@@ -453,8 +431,8 @@ export class TeamsService {
       }
 
       await Authorization.skip(
-        async () =>
-          await db.increaseDocumentAttribute('teams', team.getId(), 'total', 1),
+        () =>
+          db.increaseDocumentAttribute('teams', team.getId(), 'total', 1),
       );
       await db.purgeCachedDocument('users', invitee.getId());
     } else {
@@ -467,7 +445,7 @@ export class TeamsService {
         throw error;
       }
 
-      const url = new URL(input.url);
+      const url = new URL(input.url || '');
       url.searchParams.append('membershipId', membership.getId());
       url.searchParams.append('userId', invitee.getId());
       url.searchParams.append('secret', secret);
@@ -487,8 +465,8 @@ export class TeamsService {
           project.get('templates', {})?.[
           'email.invitation-' + locale.default
           ] ?? {};
-        const templatePath =
-          PROJECT_ROOT + 'assets/locale/templates/email-inner-base.tpl';
+        const templatePath = this.appConfig.assetConfig.templates
+          + '/email-inner-base.tpl';
         const templateSource = fs.readFileSync(templatePath, 'utf8');
         const template = Template.compile(templateSource);
 
@@ -502,13 +480,14 @@ export class TeamsService {
 
         let body = template(emailData);
 
-        const smtp = project.get('smtp', {});
+        const smtp = project.get('smtp', {}) as SmtpConfig;
         const smtpEnabled = smtp['enabled'] ?? false;
+        const systemConfig = this.appConfig.get('system');
 
         let senderEmail =
-          process.env.APP_SYSTEM_EMAIL_ADDRESS || APP_EMAIL_TEAM;
+          systemConfig.emailAddress || APP_EMAIL_TEAM;
         let senderName =
-          process.env.APP_SYSTEM_EMAIL_NAME || APP_NAME + ' Server';
+          systemConfig.emailName || APP_NAME + ' Server';
         let replyTo = '';
 
         if (smtpEnabled) {
@@ -537,16 +516,17 @@ export class TeamsService {
           project: projectName,
         };
 
-        await this.mailsQueue.add(SEND_TYPE_EMAIL, {
+        await this.mailsQueue.add(MailJob.SEND_EMAIL, {
           email,
           subject,
           body,
           server: {
-            host: smtp['host'] || null,
-            port: smtp['port'] || null,
-            username: smtp['username'] || null,
-            password: smtp['password'] || null,
-            secure: smtp['secure'] ?? false,
+            host: smtp['host'],
+            port: smtp['port'],
+            username: smtp['username'],
+            password: smtp['password'],
+            secure: smtp['secure'],
+            from: senderEmail,
             replyTo,
             senderEmail,
             senderName,
@@ -581,30 +561,7 @@ export class TeamsService {
     if (search) {
       queries.push(Query.search('search', search));
     }
-
-    // Set internal queries
     queries.push(Query.equal('teamInternalId', [team.getSequence()]));
-
-    // Get cursor document if there was a cursor query
-    const cursor = queries.find(query =>
-      [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(
-        query.getMethod(),
-      ),
-    );
-
-    if (cursor) {
-      const membershipId = cursor.getValue();
-      const cursorDocument = await db.getDocument('memberships', membershipId);
-
-      if (!cursorDocument) {
-        throw new Exception(
-          Exception.GENERAL_CURSOR_NOT_FOUND,
-          `Membership '${membershipId}' for the 'cursor' value not found.`,
-        );
-      }
-
-      cursor.setValue(cursorDocument);
-    }
 
     const filterQueries = Query.groupByType(queries)['filters'];
     const memberships = await db.find('memberships', queries);

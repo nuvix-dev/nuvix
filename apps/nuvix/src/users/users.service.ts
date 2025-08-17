@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {  Injectable, Logger } from '@nestjs/common';
 import { Exception } from '@nuvix/core/extend/exception';
 import { ID } from '@nuvix/core/helper/ID.helper';
 import { PersonalDataValidator } from '@nuvix/core/validators/personal-data.validator';
@@ -14,7 +14,7 @@ import {
   UpdateUserPoneVerificationDTO,
   UpdateUserStatusDTO,
 } from './DTO/user.dto';
-import { APP_LIMIT_COUNT, GEO_DB } from '@nuvix/utils';
+import { APP_LIMIT_COUNT, MessageType } from '@nuvix/utils';
 import { Auth } from '@nuvix/core/helper/auth.helper';
 import { CreateTargetDTO, UpdateTargetDTO } from './DTO/target.dto';
 import { EmailValidator } from '@nuvix/core/validators/email.validator';
@@ -36,16 +36,21 @@ import {
 } from '@nuvix-tech/db';
 import { CountryResponse, Reader } from 'maxmind';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { CoreService } from '@nuvix/core';
+import type { MembershipsDoc, ProjectsDoc, ProvidersDoc, SessionsDoc, TargetsDoc, Tokens, Users, UsersDoc } from '@nuvix/utils/types';
 
 @Injectable()
 export class UsersService {
   private logger: Logger = new Logger(UsersService.name);
+  private readonly geoDb: Reader<CountryResponse>;
 
   constructor(
-    @Inject(GEO_DB) private readonly geoDb: Reader<CountryResponse>,
+    private readonly coreService: CoreService,
     private readonly jwtService: JwtService,
     private readonly event: EventEmitter2,
-  ) { }
+  ) {
+    this.geoDb = coreService.getGeoDb();
+  }
 
   /**
    * Find all users
@@ -54,28 +59,6 @@ export class UsersService {
     if (search) {
       queries.push(Query.search('search', search));
     }
-
-    // Find cursor query if it exists
-    const cursor = queries.find(query =>
-      [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(
-        query.getMethod(),
-      ),
-    );
-
-    if (cursor) {
-      const userId = cursor.getValue();
-      const cursorDocument = await db.getDocument('users', userId);
-
-      if (cursorDocument.empty()) {
-        throw new Exception(
-          Exception.GENERAL_CURSOR_NOT_FOUND,
-          `User '${userId}' for the 'cursor' value not found.`,
-        );
-      }
-
-      cursor.setValue(cursorDocument);
-    }
-
     const filterQueries = Query.groupByType(queries)['filters'];
 
     return {
@@ -113,7 +96,7 @@ export class UsersService {
   /**
    * Update user preferences
    */
-  async updatePrefs(db: Database, id: string, prefs: any) {
+  async updatePrefs(db: Database, id: string, prefs?: Record<string, any>) {
     const user = await db.getDocument('users', id);
 
     if (user.empty()) {
@@ -135,48 +118,47 @@ export class UsersService {
   /**
    * Update user status
    */
-  async updateStatus(db: Database, id: string, input: UpdateUserStatusDTO) {
+  async updateStatus(db: Database, id: string, { status }: UpdateUserStatusDTO) {
     const user = await db.getDocument('users', id);
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
 
-    return await db.updateDocument(
+    return db.updateDocument(
       'users',
       user.getId(),
-      user.set('status', input.status),
+      user.set('status', status),
     );
   }
 
   /**
    * Update user labels
    */
-  async updateLabels(db: Database, id: string, input: UpdateUserLabelDTO) {
+  async updateLabels(db: Database, id: string, { labels }: UpdateUserLabelDTO) {
     const user = await db.getDocument('users', id);
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
 
-    user.set('labels', Array.from(new Set(input.labels)));
+    user.set('labels', Array.from(new Set(labels)));
 
-    return await db.updateDocument('users', user.getId(), user);
+    return db.updateDocument('users', user.getId(), user);
   }
 
   /**
    * Update user name
    */
-  async updateName(db: Database, id: string, input: UpdateUserNameDTO) {
+  async updateName(db: Database, id: string, { name }: UpdateUserNameDTO) {
     const user = await db.getDocument('users', id);
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
 
-    user.set('name', input.name);
-
-    return await db.updateDocument('users', user.getId(), user);
+    user.set('name', name);
+    return db.updateDocument('users', user.getId(), user);
   }
 
   /**
@@ -185,8 +167,8 @@ export class UsersService {
   async updatePassword(
     db: Database,
     id: string,
-    input: UpdateUserPasswordDTO,
-    project: Doc,
+    { password }: UpdateUserPasswordDTO,
+    project: ProjectsDoc,
   ) {
     const user = await db.getDocument('users', id);
 
@@ -201,12 +183,12 @@ export class UsersService {
         user.get('name'),
         user.get('phone'),
       );
-      if (!personalDataValidator.isValid(input.password)) {
+      if (!personalDataValidator.$valid(password)) {
         throw new Exception(Exception.USER_PASSWORD_PERSONAL_DATA);
       }
     }
 
-    if (input.password.length === 0) {
+    if (password.length === 0) {
       const updatedUser = await db.updateDocument(
         'users',
         user.getId(),
@@ -225,7 +207,7 @@ export class UsersService {
     // hooks.trigger('passwordValidator', [db, project, input.password, user, true]);
 
     const newPassword = await Auth.passwordHash(
-      input.password,
+      password,
       Auth.DEFAULT_ALGO,
       Auth.DEFAULT_ALGO_OPTIONS,
     );
@@ -234,13 +216,13 @@ export class UsersService {
       project.get('auths', {})['passwordHistory'] ?? 0;
     let history = user.get('passwordHistory', []);
 
-    if (historyLimit > 0) {
+    if (newPassword && historyLimit > 0) {
       const validator = new PasswordHistoryValidator(
         history,
         user.get('hash'),
         user.get('hashOptions'),
       );
-      if (!validator.isValid(input.password)) {
+      if (!await validator.$valid(password)) {
         throw new Exception(Exception.USER_PASSWORD_RECENTLY_USED);
       }
 
@@ -293,18 +275,17 @@ export class UsersService {
     }
 
     const oldEmail = user.get('email');
-
     user.set('email', email).set('emailVerification', false);
 
     try {
       const updatedUser = await db.updateDocument('users', user.getId(), user);
-      const oldTarget = updatedUser.find<any>(
-        'identifier',
-        oldEmail,
+      const oldTarget = updatedUser.findWhere(
         'targets',
+        (t: TargetsDoc) => t.get('identifier') === oldEmail
       );
 
-      if (!oldTarget.empty()) {
+
+      if (oldTarget && !oldTarget.empty()) {
         if (email.length !== 0) {
           await db.updateDocument(
             'targets',
@@ -358,7 +339,6 @@ export class UsersService {
     }
 
     const oldPhone = user.get('phone');
-
     user.set('phone', phone).set('phoneVerification', false);
 
     if (phone.length !== 0) {
@@ -373,13 +353,12 @@ export class UsersService {
 
     try {
       const updatedUser = await db.updateDocument('users', user.getId(), user);
-      const oldTarget = updatedUser.find<any>(
-        'identifier',
-        oldPhone,
+      const oldTarget = updatedUser.findWhere(
         'targets',
+        (t: TargetsDoc) => t.get('identifier') === oldPhone
       );
 
-      if (!oldTarget.empty()) {
+      if (oldTarget && !oldTarget.empty()) {
         if (phone.length !== 0) {
           await db.updateDocument(
             'targets',
@@ -482,7 +461,8 @@ export class UsersService {
 
     user.set('mfa', mfa);
 
-    const updatedUser = await db.updateDocument('users', user.getId(), user);
+    const updatedUser =
+      await db.updateDocument('users', user.getId(), user);
 
     // TODO: Implement queue for events
     // queueForEvents.setParam('userId', updatedUser.getId());
@@ -493,7 +473,7 @@ export class UsersService {
   /**
    * Create a new user
    */
-  create(db: Database, createUserDTO: CreateUserDTO, project: Doc) {
+  create(db: Database, createUserDTO: CreateUserDTO, project: ProjectsDoc) {
     return this.createUser(
       db,
       'plaintext',
@@ -513,7 +493,7 @@ export class UsersService {
   createWithArgon2(
     db: Database,
     createUserDTO: CreateUserDTO,
-    project: Doc,
+    project: ProjectsDoc,
   ) {
     return this.createUser(
       db,
@@ -534,7 +514,7 @@ export class UsersService {
   createWithBcrypt(
     db: Database,
     createUserDTO: CreateUserDTO,
-    project: Doc,
+    project: ProjectsDoc,
   ) {
     return this.createUser(
       db,
@@ -552,7 +532,7 @@ export class UsersService {
   /**
    * Create a new user with md5
    */
-  createWithMd5(db: Database, createUserDTO: CreateUserDTO, project: Doc) {
+  createWithMd5(db: Database, createUserDTO: CreateUserDTO, project: ProjectsDoc) {
     return this.createUser(
       db,
       'md5',
@@ -572,7 +552,7 @@ export class UsersService {
   createWithSha(
     db: Database,
     createUserDTO: CreateUserWithShaDTO,
-    project: Doc,
+    project: ProjectsDoc,
   ) {
     let hashOptions = {};
     if (createUserDTO.passwordVersion) {
@@ -597,7 +577,7 @@ export class UsersService {
   createWithPhpass(
     db: Database,
     createUserDTO: CreateUserDTO,
-    project: Doc,
+    project: ProjectsDoc,
   ) {
     return this.createUser(
       db,
@@ -618,7 +598,7 @@ export class UsersService {
   createWithScrypt(
     db: Database,
     createUserDTO: CreateUserWithScryptDTO,
-    project: Doc,
+    project: ProjectsDoc,
   ) {
     const hashOptions = {
       salt: createUserDTO.passwordSalt,
@@ -646,7 +626,7 @@ export class UsersService {
   createWithScryptMod(
     db: Database,
     createUserDTO: CreateUserWithScryptModifedDTO,
-    project: Doc,
+    project: ProjectsDoc,
   ) {
     const hashOptions = {
       salt: createUserDTO.passwordSalt,
@@ -669,27 +649,26 @@ export class UsersService {
   /**
    * Create a new target
    */
-  async createTarget(db: Database, userId: string, input: CreateTargetDTO) {
-    const targetId =
-      input.targetId === 'unique()' ? ID.unique() : input.targetId;
+  async createTarget(db: Database, userId: string, { targetId, providerId, ...input }: CreateTargetDTO) {
+    targetId = targetId === 'unique()' ? ID.unique() : targetId;
 
-    let provider: Doc;
-    if (input.providerId) {
-      provider = await db.getDocument('providers', input.providerId);
+    let provider!: ProvidersDoc;
+    if (providerId) {
+      provider = await db.getDocument('providers', providerId);
     }
 
-    switch (input.providerType) {
-      case 'email':
-        if (!new EmailValidator().isValid(input.identifier)) {
+    switch (input.providerType as MessageType) {
+      case MessageType.EMAIL:
+        if (!new EmailValidator().$valid(input.identifier)) {
           throw new Exception(Exception.GENERAL_INVALID_EMAIL);
         }
         break;
-      case 'sms':
-        if (!new PhoneValidator().isValid(input.identifier)) {
+      case MessageType.PUSH:
+        break;
+      case MessageType.SMS:
+        if (!new PhoneValidator().$valid(input.identifier)) {
           throw new Exception(Exception.GENERAL_INVALID_PHONE);
         }
-        break;
-      case 'push':
         break;
       default:
         throw new Exception(Exception.PROVIDER_INCORRECT_TYPE);
@@ -717,13 +696,13 @@ export class UsersService {
             Permission.update(Role.user(user.getId())),
             Permission.delete(Role.user(user.getId())),
           ],
-          providerId: provider ? provider.getId() : null,
-          providerInternalId: provider ? provider.getSequence() : null,
+          providerId: provider?.getId(),
+          providerInternalId: provider?.getSequence(),
           providerType: input.providerType,
           userId: userId,
           userInternalId: user.getSequence(),
           identifier: input.identifier,
-          name: input.name || null,
+          name: input.name,
         }),
       );
 
@@ -751,29 +730,7 @@ export class UsersService {
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
-
     queries.push(Query.equal('userId', [userId]));
-
-    // Find cursor query if it exists
-    const cursor = queries.find(query =>
-      [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(
-        query.getMethod(),
-      ),
-    );
-
-    if (cursor) {
-      const targetId = cursor.getValue();
-      const cursorDocument = await db.getDocument('targets', targetId);
-
-      if (cursorDocument.empty()) {
-        throw new Exception(
-          Exception.GENERAL_CURSOR_NOT_FOUND,
-          `Target '${targetId}' for the 'cursor' value not found.`,
-        );
-      }
-
-      cursor.setValue(cursorDocument);
-    }
 
     return {
       targets: await db.find('targets', queries),
@@ -809,18 +766,18 @@ export class UsersService {
     if (input.identifier) {
       const providerType = target.get('providerType');
 
-      switch (providerType) {
-        case 'email':
-          if (!new EmailValidator().isValid(input.identifier)) {
+      switch (providerType as MessageType) {
+        case MessageType.EMAIL:
+          if (!new EmailValidator().$valid(input.identifier)) {
             throw new Exception(Exception.GENERAL_INVALID_EMAIL);
           }
           break;
-        case 'sms':
-          if (!new PhoneValidator().isValid(input.identifier)) {
+        case MessageType.PUSH:
+          break;
+        case MessageType.SMS:
+          if (!new PhoneValidator().$valid(input.identifier)) {
             throw new Exception(Exception.GENERAL_INVALID_PHONE);
           }
-          break;
-        case 'push':
           break;
         default:
           throw new Exception(Exception.PROVIDER_INCORRECT_TYPE);
@@ -929,7 +886,7 @@ export class UsersService {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
 
-    const sessions = user.get('sessions', []);
+    const sessions = user.get('sessions', []) as SessionsDoc[];
 
     for (const session of sessions) {
       const countryCode = session.get('countryCode', '');
@@ -955,7 +912,7 @@ export class UsersService {
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
-    const memberships = user.get('memberships', []);
+    const memberships = user.get('memberships', []) as MembershipsDoc[];
 
     for (const membership of memberships) {
       const team = await db.getDocument(
@@ -1035,7 +992,7 @@ export class UsersService {
       throw new Exception(Exception.USER_RECOVERY_CODES_ALREADY_EXISTS);
     }
 
-    const newRecoveryCodes = MfaType.generateBackupCodes();
+    const newRecoveryCodes = TOTP.generateBackupCodes();
     user.set('mfaRecoveryCodes', newRecoveryCodes);
     await db.updateDocument('users', user.getId(), user);
 
@@ -1062,7 +1019,7 @@ export class UsersService {
       throw new Exception(Exception.USER_RECOVERY_CODES_NOT_FOUND);
     }
 
-    const newRecoveryCodes = MfaType.generateBackupCodes();
+    const newRecoveryCodes = TOTP.generateBackupCodes();
     user.set('mfaRecoveryCodes', newRecoveryCodes);
     await db.updateDocument('users', user.getId(), user);
 
@@ -1116,7 +1073,7 @@ export class UsersService {
 
     // Get logs from audit service
     // const audit = new Audit(db);
-    const logs = []; //await audit.getLogsByUser(user.getSequence(), limit, offset);
+    const logs: any[] = []; //await audit.getLogsByUser(user.getSequence(), limit, offset);
     const output = [];
 
     for (const log of logs) {
@@ -1136,18 +1093,18 @@ export class UsersService {
           userName: log.data.userName || null,
           ip: log.ip,
           time: log.time,
-          osCode: os.osCode,
-          osName: os.osName,
-          osVersion: os.osVersion,
-          clientType: client.clientType,
-          clientCode: client.clientCode,
-          clientName: client.clientName,
-          clientVersion: client.clientVersion,
-          clientEngine: client.clientEngine,
-          clientEngineVersion: client.clientEngineVersion,
-          deviceName: device.deviceName,
-          deviceBrand: device.deviceBrand,
-          deviceModel: device.deviceModel,
+          osCode: os['osCode'],
+          osName: os['osName'],
+          osVersion: os['osVersion'],
+          clientType: client['clientType'],
+          clientCode: client['clientCode'],
+          clientName: client['clientName'],
+          clientVersion: client['clientVersion'],
+          clientEngine: client['clientEngine'],
+          clientEngineVersion: client['clientEngineVersion'],
+          deviceName: device['deviceName'],
+          deviceBrand: device['deviceBrand'],
+          deviceModel: device['deviceModel'],
           countryCode: '--', // TODO: Implement geodb lookup
           countryName: 'Unknown', // TODO: Implement locale translations
         }),
@@ -1164,35 +1121,11 @@ export class UsersService {
    * Get all identities
    */
   async getIdentities(db: Database, queries: Query[] = [], search?: string) {
-    // Handle search param if provided
     if (search) {
       queries.push(Query.search('search', search));
     }
 
-    // Find cursor query if it exists
-    const cursor = queries.find(query =>
-      [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(
-        query.getMethod(),
-      ),
-    );
-
-    if (cursor) {
-      const identityId = cursor.getValue();
-      const cursorDocument = await db.getDocument('identities', identityId);
-
-      if (cursorDocument.empty()) {
-        throw new Exception(
-          Exception.GENERAL_CURSOR_NOT_FOUND,
-          `User '${identityId}' for the 'cursor' value not found.`,
-        );
-      }
-
-      cursor.setValue(cursorDocument);
-    }
-
-    // Get filter queries
     const filterQueries = Query.groupByType(queries)['filters'];
-
     return {
       identities: await db.find('identities', queries),
       total: await db.count('identities', filterQueries, APP_LIMIT_COUNT),
@@ -1238,7 +1171,7 @@ export class UsersService {
     const secret = Auth.tokenGenerator(input.length);
     const expire = new Date(Date.now() + input.expire * 1000);
 
-    const token = new Doc({
+    const token = new Doc<Tokens>({
       $id: ID.unique(),
       $permissions: [
         Permission.read(Role.user(userId)),
@@ -1278,15 +1211,14 @@ export class UsersService {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
 
-    const sessions = user.get('sessions', []);
-    let session = new Doc();
+    const sessions = user.get('sessions', []) as SessionsDoc[];
+    let session: SessionsDoc = new Doc();
 
     if (input.sessionId === 'recent') {
       // Get most recent
       session =
-        sessions.length > 0 ? sessions[sessions.length - 1] : new Doc();
+        sessions.length > 0 ? sessions[sessions.length - 1]! : new Doc();
     } else {
-      // Find by ID
       for (const loopSession of sessions) {
         if (loopSession.getId() === input.sessionId) {
           session = loopSession;
@@ -1313,7 +1245,7 @@ export class UsersService {
     db: Database,
     userId: string,
     req: NuvixRequest,
-    project: Doc,
+    project: ProjectsDoc,
   ) {
     const user = await db.getDocument('users', userId);
 
@@ -1343,7 +1275,7 @@ export class UsersService {
       secret: Auth.hash(secret),
       userAgent: req.headers['user-agent'] || 'UNKNOWN',
       ip: req.ip,
-      countryCode: record ? record.country.iso_code.toLowerCase() : '',
+      countryCode: record?.country?.iso_code.toLowerCase(),
       expire: expire,
       ...detector.getOS(),
       ...detector.getClient(),
@@ -1405,7 +1337,7 @@ export class UsersService {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
 
-    const sessions = user.get('sessions', []);
+    const sessions = user.get('sessions', []) as SessionsDoc[];
 
     for (const session of sessions) {
       await db.deleteDocument('sessions', session.getId());
@@ -1463,13 +1395,13 @@ export class UsersService {
     password: string | null,
     phone: string | null,
     name: string,
-    project: Doc,
-  ): Promise<Doc> {
+    project: ProjectsDoc,
+  ): Promise<UsersDoc> {
     const plaintextPassword = password;
     const hashOptionsObject =
       typeof hashOptions === 'string' ? JSON.parse(hashOptions) : hashOptions;
     const auths = project.get('auths', {});
-    const passwordHistory = auths?.passwordHistory ?? 0;
+    const passwordHistory = auths?.['passwordHistory'] ?? 0;
 
     if (email) {
       email = email.toLowerCase();
@@ -1486,7 +1418,7 @@ export class UsersService {
     try {
       userId = userId === 'unique()' ? ID.unique() : ID.custom(userId);
 
-      if (auths?.personalDataCheck ?? false) {
+      if (auths?.['personalDataCheck'] ?? false) {
         const personalDataValidator = new PersonalDataValidator(
           userId,
           email,
@@ -1495,7 +1427,7 @@ export class UsersService {
           false, // strict
           true, // allowEmpty
         );
-        if (!personalDataValidator.isValid(plaintextPassword)) {
+        if (!personalDataValidator.$valid(plaintextPassword!)) {
           throw new Exception(Exception.USER_PASSWORD_PERSONAL_DATA);
         }
       }
@@ -1506,7 +1438,7 @@ export class UsersService {
           : password
         : null;
 
-      const user = new Doc<any>({
+      const user = new Doc<Users>({
         $id: userId,
         $permissions: [
           Permission.read(Role.any()),
@@ -1531,9 +1463,6 @@ export class UsersService {
         reset: false,
         name,
         prefs: {},
-        sessions: null,
-        tokens: null,
-        memberships: null,
         search: [userId, email, phone, name].filter(Boolean).join(' '),
       });
 
@@ -1565,10 +1494,9 @@ export class UsersService {
               Query.equal('identifier', [email]),
             ]);
             if (existingTarget) {
-              createdUser.set(
+              createdUser.append(
                 'targets',
                 existingTarget,
-                Doc.SET_TYPE_APPEND,
               );
             }
           } else throw error;
@@ -1601,10 +1529,9 @@ export class UsersService {
               Query.equal('identifier', [phone]),
             ]);
             if (existingTarget) {
-              createdUser.set(
+              createdUser.append(
                 'targets',
                 existingTarget,
-                Doc.SET_TYPE_APPEND,
               );
             }
           } else throw error;
@@ -1632,9 +1559,9 @@ export class UsersService {
       '7d': { limit: 7, period: '1d', factor: 86400 },
     };
 
-    const stats = {};
-    const usage = {};
-    const days = periods[range];
+    const stats: Record<string, any> = {};
+    const usage: Record<string, any> = {};
+    const days = periods[range as keyof typeof periods];
     const metrics = ['users', 'sessions'];
 
     // Skip authorization check as per PHP version
@@ -1655,7 +1582,7 @@ export class UsersService {
 
       stats[metric].data = {};
       for (const result of results) {
-        stats[metric].data[result.get('time')] = {
+        stats[metric].data[result.get('time') as string] = {
           value: result.get('value'),
         };
       }
@@ -1684,10 +1611,10 @@ export class UsersService {
 
     return new Doc({
       range: range,
-      usersTotal: usage[metrics[0]].total,
-      sessionsTotal: usage[metrics[1]].total,
-      users: usage[metrics[0]].data,
-      sessions: usage[metrics[1]].data,
+      usersTotal: usage[metrics[0]!].total,
+      sessionsTotal: usage[metrics[1]!].total,
+      users: usage[metrics[0]!].data,
+      sessions: usage[metrics[1]!].data,
     });
   }
 }

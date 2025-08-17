@@ -4,7 +4,7 @@ export interface SmtpConfig {
   username: string;
   password: string;
   from: string;
-  enabled: boolean;
+  enabled?: boolean;
   senderName: string;
   senderEmail: string;
   replyTo: string;

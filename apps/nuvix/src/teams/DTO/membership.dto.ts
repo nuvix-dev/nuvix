@@ -15,16 +15,16 @@ export class CreateMembershipDTO {
   @IsOptional()
   @IsEmail()
   @IsNotEmpty()
-  email: string;
+  email?: string;
 
   @IsOptional()
   @IsNotEmpty()
-  userId: string;
+  userId?: string;
 
   @IsOptional()
-  @IsPhoneNumber(null)
+  @IsPhoneNumber()
   @IsNotEmpty()
-  phone: string;
+  phone?: string;
 
   @IsArray()
   @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE)
@@ -34,28 +34,28 @@ export class CreateMembershipDTO {
   @IsOptional()
   @IsUrl()
   @IsNotEmpty()
-  url: string;
+  url?: string;
 
   @IsOptional()
   @IsString()
   @MaxLength(128)
   @IsNotEmpty()
-  name: string;
+  name?: string;
 }
 
 export class UpdateMembershipDTO {
   @IsArray()
   @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE)
   @IsString({ each: true })
-  roles: string[];
+  roles!: string[];
 }
 
 export class UpdateMembershipStatusDTO {
   @IsNotEmpty()
   @IsString()
-  userId: string;
+  userId!: string;
 
   @IsNotEmpty()
   @MaxLength(256)
-  secret: string;
+  secret!: string;
 }

@@ -50,13 +50,14 @@ import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard';
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor';
 import { CACHE } from '@nuvix/utils';
 import { Cache } from '@nuvix/cache';
+import type { ProjectsDoc } from '@nuvix/utils/types';
 
 @Namespace('users')
 @Controller({ version: ['1'], path: 'users' })
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Get()
   @Scope('users.read')
@@ -80,7 +81,7 @@ export class UsersController {
   async create(
     @ProjectDatabase() db: Database,
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: Doc,
+    @Project() project: ProjectsDoc,
   ) {
     return await this.usersService.create(db, createUserDTO, project);
   }
@@ -94,7 +95,7 @@ export class UsersController {
   async createWithArgon2(
     @ProjectDatabase() db: Database,
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: Doc,
+    @Project() project: ProjectsDoc,
   ) {
     return await this.usersService.createWithArgon2(db, createUserDTO, project);
   }
@@ -108,7 +109,7 @@ export class UsersController {
   async createWithBcrypt(
     @ProjectDatabase() db: Database,
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: Doc,
+    @Project() project: ProjectsDoc,
   ) {
     return await this.usersService.createWithBcrypt(db, createUserDTO, project);
   }
@@ -122,7 +123,7 @@ export class UsersController {
   async createWithMd5(
     @ProjectDatabase() db: Database,
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: Doc,
+    @Project() project: ProjectsDoc,
   ) {
     return await this.usersService.createWithMd5(db, createUserDTO, project);
   }
@@ -136,7 +137,7 @@ export class UsersController {
   async createWithSha(
     @ProjectDatabase() db: Database,
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: Doc,
+    @Project() project: ProjectsDoc,
   ) {
     return await this.usersService.createWithSha(db, createUserDTO, project);
   }
@@ -150,7 +151,7 @@ export class UsersController {
   async createWithPhpass(
     @ProjectDatabase() db: Database,
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: Doc,
+    @Project() project: ProjectsDoc,
   ) {
     return await this.usersService.createWithPhpass(db, createUserDTO, project);
   }
@@ -164,7 +165,7 @@ export class UsersController {
   async createWithScrypt(
     @ProjectDatabase() db: Database,
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: Doc,
+    @Project() project: ProjectsDoc,
   ) {
     return await this.usersService.createWithScrypt(db, createUserDTO, project);
   }
@@ -178,7 +179,7 @@ export class UsersController {
   async createWithScryptModified(
     @ProjectDatabase() db: Database,
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: Doc,
+    @Project() project: ProjectsDoc,
   ) {
     return await this.usersService.createWithScryptMod(
       db,
@@ -233,9 +234,9 @@ export class UsersController {
   async updatePrefs(
     @ProjectDatabase() db: Database,
     @Param('id') id: string,
-    @Body() input: UpdateUserPrefsDTO,
+    @Body() { prefs }: UpdateUserPrefsDTO,
   ) {
-    return await this.usersService.updatePrefs(db, id, input.prefs);
+    return await this.usersService.updatePrefs(db, id, prefs);
   }
 
   @Patch(':id/status')
@@ -277,7 +278,7 @@ export class UsersController {
     @ProjectDatabase() db: Database,
     @Param('id') id: string,
     @Body() input: UpdateUserPasswordDTO,
-    @Project() project: Doc,
+    @Project() project: ProjectsDoc,
   ) {
     return await this.usersService.updatePassword(db, id, input, project);
   }
@@ -360,7 +361,7 @@ export class UsersController {
     @ProjectDatabase() db: Database,
     @Param('id') id: string,
     @Req() req: any,
-    @Project() project: Doc,
+    @Project() project: ProjectsDoc,
   ): Promise<any> {
     return await this.usersService.createSession(db, id, req, project);
   }

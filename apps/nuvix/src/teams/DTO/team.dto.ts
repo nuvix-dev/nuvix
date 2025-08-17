@@ -12,13 +12,13 @@ import { APP_LIMIT_ARRAY_PARAMS_SIZE } from '@nuvix/utils';
 
 export class CreateTeamDTO {
   @IsCustomID()
-  teamId: string;
+  teamId!: string;
 
   @IsString()
   @Length(1, 128, {
     message: 'Team name must be between 1 and 128 characters long.',
   })
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsArray()
@@ -34,9 +34,9 @@ export class CreateTeamDTO {
 
 export class UpdateTeamDTO extends PartialType(
   OmitType(CreateTeamDTO, ['teamId', 'roles']),
-) { }
+) {}
 
 export class UpdateTeamPrefsDTO {
   @IsObject()
-  prefs?: { [key: string]: any };
+  prefs?: Record<string, any>;
 }

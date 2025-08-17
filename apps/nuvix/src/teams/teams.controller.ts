@@ -38,13 +38,14 @@ import {
 } from '@nuvix/core/decorators/project.decorator';
 import { Locale } from '@nuvix/core/decorators/locale.decorator';
 import { LocaleTranslator } from '@nuvix/core/helper/locale.helper';
+import type { ProjectsDoc, UsersDoc } from '@nuvix/utils/types';
 
 @Controller({ version: ['1'], path: 'teams' })
 @UseGuards(ProjectGuard)
 @Namespace('teams')
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class TeamsController {
-  constructor(private readonly teamsService: TeamsService) { }
+  constructor(private readonly teamsService: TeamsService) {}
 
   @Get()
   @Scope('teams.read')
@@ -119,9 +120,9 @@ export class TeamsController {
     @ProjectDatabase() db: Database,
     @Param('id') id: string,
     @Body() input: CreateMembershipDTO,
-    @Project() project: Doc,
+    @Project() project: ProjectsDoc,
     @Locale() locale: LocaleTranslator,
-    @User() user: Doc,
+    @User() user: UsersDoc,
   ) {
     return await this.teamsService.addMember(
       db,

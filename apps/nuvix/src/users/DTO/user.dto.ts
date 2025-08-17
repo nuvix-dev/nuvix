@@ -15,24 +15,24 @@ import { IsCustomID } from '@nuvix/core/validators/input.validator';
 export class CreateUserDTO {
   @IsOptional()
   @IsCustomID()
-  userId: string;
+  userId!: string;
 
   @IsOptional()
   @IsEmail()
-  email: string;
+  email!: string;
 
   @IsOptional()
-  @IsPhoneNumber(null)
-  phone: string;
+  @IsPhoneNumber()
+  phone!: string;
 
   @IsOptional()
   @Length(8)
-  password: string;
+  password!: string;
 
   @IsOptional()
   @IsString()
   @Length(1, 128)
-  name: string;
+  name!: string;
 }
 
 export class CreateUserWithShaDTO extends CreateUserDTO {
@@ -90,7 +90,7 @@ export class CreateUserWithScryptModifedDTO extends CreateUserDTO {
 export class UpdateUserStatusDTO {
   @IsNotEmpty()
   @IsBoolean()
-  status: boolean;
+  status!: boolean;
 }
 
 export class UpdateUserLabelDTO {
@@ -106,48 +106,46 @@ export class UpdateUserLabelDTO {
 export class UpdateUserPoneVerificationDTO {
   @IsNotEmpty()
   @IsBoolean()
-  phoneVerification: boolean;
+  phoneVerification!: boolean;
 }
 
 export class UpdateUserEmailVerificationDTO {
   @IsNotEmpty()
   @IsBoolean()
-  emailVerification: boolean;
+  emailVerification!: boolean;
 }
 
 export class UpdateUserNameDTO {
   @IsNotEmpty()
   @IsString()
   @Length(1, 128)
-  name: string;
+  name!: string;
 }
 
 export class UpdateUserPasswordDTO {
   @IsNotEmpty()
   @Length(8)
-  password: string;
+  password!: string;
 }
 
 export class UpdateUserEmailDTO {
-  @IsOptional()
   @IsEmail()
-  email?: string;
+  email!: string;
 }
 
 export class UpdateUserPhoneDTO {
-  @IsOptional()
-  @IsPhoneNumber(null)
-  phone?: string;
+  @IsPhoneNumber()
+  phone!: string;
 }
 
 export class UpdateUserPrefsDTO {
   @IsOptional()
   @IsObject()
-  prefs?: { [key: string]: any };
+  prefs?: Record<string, any>;
 }
 
 export class UpdateMfaStatusDTO {
   @IsNotEmpty()
   @IsBoolean()
-  mfa: boolean;
+  mfa!: boolean;
 }
