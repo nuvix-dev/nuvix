@@ -78,7 +78,7 @@ import {
 @UseGuards(ProjectGuard)
 @UseInterceptors(ApiInterceptor, ResponseInterceptor)
 export class MessagingController {
-  constructor(private readonly messagingService: MessagingService) { }
+  constructor(private readonly messagingService: MessagingService) {}
 
   @Post('providers/mailgun')
   @Scope('providers.create')

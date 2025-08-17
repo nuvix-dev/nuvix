@@ -5,11 +5,11 @@ import { IsString, IsBoolean, IsOptional, MaxLength } from 'class-validator';
 export class CreateApnsProviderDTO {
   @IsString()
   @IsCustomID()
-  providerId: string;
+  providerId!: string;
 
   @IsString()
   @MaxLength(128)
-  name: string;
+  name!: string;
 
   @IsString()
   @IsOptional()

@@ -13,7 +13,6 @@ import {
   ResponseInterceptor,
   ApiInterceptor,
 } from '@nuvix/core/resolvers/interceptors';
-import { Doc } from '@nuvix-tech/db';
 import { DataSource } from '@nuvix/pg';
 import { Models } from '@nuvix/core/helper';
 import {
@@ -26,12 +25,13 @@ import {
 
 // DTO's
 import { CreateDocumentSchema, CreateSchema } from './DTO/create-schema.dto';
+import type { ProjectsDoc } from '@nuvix/utils/types';
 
 @Controller({ version: ['1'], path: 'databases' })
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class DatabasesController {
-  constructor(private readonly databaseService: DatabasesService) { }
+  constructor(private readonly databaseService: DatabasesService) {}
 
   @Post('schemas/document')
   @Scope('schema.create')
@@ -40,7 +40,7 @@ export class DatabasesController {
   @ResModel(Models.SCHEMA)
   async createDocTypeSchema(
     @ProjectPg() pg: DataSource,
-    @Project() project: Doc,
+    @Project() project: ProjectsDoc,
     @Body() body: CreateDocumentSchema,
   ) {
     const result = await this.databaseService.createDocumentSchema(

@@ -12,11 +12,11 @@ import {
 
 export class CreateTopicDTO {
   @IsCustomID()
-  topicId: string;
+  topicId!: string;
 
   @IsString()
   @MaxLength(128)
-  name: string;
+  name!: string;
 
   // TODO: Add validation for subscribe
   @IsOptional()

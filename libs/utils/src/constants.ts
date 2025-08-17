@@ -527,6 +527,10 @@ export enum MessageType {
   SMS = 'sms',
 }
 
+export enum ScheduleResourceType {
+  MESSAGE = 'message',
+}
+
 export enum DeleteType {
   DATABASES = 'databases',
   DOCUMENT = 'document',

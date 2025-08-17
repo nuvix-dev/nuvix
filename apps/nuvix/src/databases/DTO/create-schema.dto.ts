@@ -13,7 +13,7 @@ export class CreateDocumentSchema {
   })
   @IsString()
   @IsNotEmpty()
-  name: string;
+  name!: string;
 
   @ApiProperty({
     description: 'Schema description',
@@ -36,5 +36,5 @@ export class CreateSchema extends CreateDocumentSchema {
   })
   @IsIn(['managed', 'unmanaged'])
   @IsNotEmpty()
-  type: 'managed' | 'unmanaged';
+  type: 'managed' | 'unmanaged' = 'managed';
 }

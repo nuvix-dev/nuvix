@@ -11,14 +11,14 @@ import {
 export class CreateSendgridProviderDTO {
   @IsString()
   @IsCustomID()
-  providerId: string;
+  providerId!: string;
 
   @IsString()
   @MaxLength(128)
-  name: string;
+  name!: string;
 
   @IsString()
-  apiKey: string;
+  apiKey!: string;
 
   @IsOptional()
   @IsString()

@@ -11,11 +11,11 @@ import {
 export class CreateMailgunProviderDTO {
   @IsString()
   @IsCustomID()
-  providerId: string;
+  providerId!: string;
 
   @IsString()
   @MaxLength(128)
-  name: string;
+  name!: string;
 
   @IsString()
   @IsOptional()

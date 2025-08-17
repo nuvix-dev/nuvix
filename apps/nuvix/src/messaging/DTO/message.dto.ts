@@ -15,15 +15,15 @@ import {
 
 export class CreateEmailMessageDTO {
   @IsCustomID()
-  messageId: string;
+  messageId!: string;
 
   @IsString()
   @MaxLength(998)
-  subject: string;
+  subject!: string;
 
   @IsString()
   @MaxLength(64230)
-  content: string;
+  content!: string;
 
   @IsOptional()
   @IsArray()
@@ -70,11 +70,11 @@ export class CreateEmailMessageDTO {
 
 export class CreateSmsMessageDTO {
   @IsCustomID()
-  messageId: string;
+  messageId!: string;
 
   @IsString()
   @MaxLength(64230)
-  content: string;
+  content!: string;
 
   @IsOptional()
   @IsArray()
@@ -102,7 +102,7 @@ export class CreateSmsMessageDTO {
 
 export class CreatePushMessageDTO {
   @IsCustomID()
-  messageId: string;
+  messageId!: string;
 
   @IsOptional()
   @IsString()

@@ -1,21 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Doc } from '@nuvix-tech/db';
 import { DataSource } from '@nuvix/pg';
 import { Exception } from '@nuvix/core/extend/exception';
 import { InjectQueue } from '@nestjs/bullmq';
 import { Queue } from 'bullmq';
 import {
-  SchemaJobs,
+  SchemaJob,
   SchemaQueueOptions,
 } from '@nuvix/core/resolvers/queues/databases.queue';
 import {
   INTERNAL_SCHEMAS,
-  SYSTEM_SCHEMA,
   QueueFor,
+  Schemas,
 } from '@nuvix/utils';
 
 // DTO's
 import { CreateDocumentSchema, CreateSchema } from './DTO/create-schema.dto';
+import type { ProjectsDoc } from '@nuvix/utils/types';
 
 @Injectable()
 export class DatabasesService {
@@ -23,12 +23,12 @@ export class DatabasesService {
 
   constructor(
     @InjectQueue(QueueFor.DATABASES)
-    private readonly databasesQueue: Queue<SchemaQueueOptions, any, SchemaJobs>,
-  ) { }
+    private readonly databasesQueue: Queue<SchemaQueueOptions, any, SchemaJob>,
+  ) {}
 
   public async createDocumentSchema(
     db: DataSource,
-    project: Doc,
+    project: ProjectsDoc,
     data: CreateDocumentSchema,
   ) {
     const isExists = await db.getSchema(data.name);
@@ -43,7 +43,7 @@ export class DatabasesService {
       data.description,
     );
 
-    await this.databasesQueue.add('init_doc', {
+    await this.databasesQueue.add(SchemaJob.INIT_DOC, {
       project: project,
       schema: schema.name,
     });
@@ -56,7 +56,7 @@ export class DatabasesService {
    */
   public async getSchemas(pg: DataSource) {
     const schemas = await pg
-      .table('schemas', { schema: SYSTEM_SCHEMA })
+      .table('schemas', { schema: Schemas.System })
       .select('name', 'description', 'type')
       .whereNotIn('name', INTERNAL_SCHEMAS);
 

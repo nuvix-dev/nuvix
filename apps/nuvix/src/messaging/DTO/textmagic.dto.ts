@@ -11,11 +11,11 @@ import {
 export class CreateTextmagicProviderDTO {
   @IsString()
   @IsCustomID()
-  providerId: string;
+  providerId!: string;
 
   @IsString()
   @MaxLength(128)
-  name: string;
+  name!: string;
 
   @IsPhoneNumber()
   @IsOptional()

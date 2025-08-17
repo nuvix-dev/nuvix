@@ -12,12 +12,12 @@ import {
 export class CreateFcmProviderDTO {
   @IsString()
   @IsCustomID()
-  providerId: string;
+  providerId!: string;
 
   @IsString()
   @IsNotEmpty()
   @MaxLength(128)
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsObject()

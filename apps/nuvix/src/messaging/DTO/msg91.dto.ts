@@ -5,11 +5,11 @@ import { IsString, IsBoolean, IsOptional, MaxLength } from 'class-validator';
 export class CreateMsg91ProviderDTO {
   @IsString()
   @IsCustomID()
-  providerId: string;
+  providerId!: string;
 
   @IsString()
   @MaxLength(128)
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsString()
@@ -26,6 +26,10 @@ export class CreateMsg91ProviderDTO {
   @IsOptional()
   @IsBoolean()
   enabled?: boolean;
+
+  @IsOptional()
+  @IsString()
+  from?: string;
 }
 
 export class UpdateMsg91ProviderDTO extends PartialType(

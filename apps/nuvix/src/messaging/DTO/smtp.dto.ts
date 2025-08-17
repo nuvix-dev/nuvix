@@ -15,14 +15,14 @@ import {
 export class CreateSMTPProviderDTO {
   @IsString()
   @IsCustomID()
-  providerId: string;
+  providerId!: string;
 
   @IsString()
   @MaxLength(128)
-  name: string;
+  name!: string;
 
   @IsString()
-  host: string;
+  host!: string;
 
   @IsOptional()
   @IsNumber()

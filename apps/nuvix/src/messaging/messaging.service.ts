@@ -1,10 +1,11 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import type {
   CreateApnsProvider,
   CreateEmailMessage,
   CreateFcmProvider,
   CreateMailgunProvider,
   CreateMsg91Provider,
+  CreateProviderInput,
   CreatePushMessage,
   CreateSendgridProvider,
   CreateSmsMessage,
@@ -37,26 +38,19 @@ import type {
 } from './messaging.types';
 import {
   Authorization,
-  CursorValidator,
   Database,
   Doc,
   DuplicateException,
   ID,
-  OrderException,
   Permission,
   Query,
   Role,
 } from '@nuvix-tech/db';
 import { Exception } from '@nuvix/core/extend/exception';
 import {
-  APP_DOMAIN,
-  APP_OPTIONS_FORCE_HTTPS,
-  DB_FOR_PLATFORM,
-  MESSAGE_SEND_TYPE_EXTERNAL,
-  MESSAGE_TYPE_EMAIL,
-  MESSAGE_TYPE_PUSH,
-  MESSAGE_TYPE_SMS,
+  MessageType,
   QueueFor,
+  ScheduleResourceType,
 } from '@nuvix/utils';
 import { MessageStatus } from '@nuvix/core/messaging/status';
 import { JwtService } from '@nestjs/jwt';
@@ -66,20 +60,27 @@ import {
   MessagingJob,
   MessagingJobData,
 } from '@nuvix/core/resolvers/queues/messaging.queue';
+import { CoreService, AppConfigService } from '@nuvix/core';
+import type { Messages, Providers, Schedules, Subscribers, Topics } from '@nuvix/utils/types';
 
 @Injectable()
 export class MessagingService {
+  private readonly dbForPlatform: Database;
+
   constructor(
-    @Inject(DB_FOR_PLATFORM) private readonly dbForPlatform: Database,
+    private readonly coreService: CoreService,
+    private readonly appConfig: AppConfigService,
+    private readonly jwtService: JwtService,
     @InjectQueue(QueueFor.MESSAGING)
     private readonly queue: Queue<MessagingJobData, any, MessagingJob>,
-    private readonly jwtService: JwtService,
-  ) { }
+  ) {
+    this.dbForPlatform = this.coreService.getPlatformDb();
+  }
 
   /**
    * Common method to create a provider.
    */
-  private async createProvider({
+  private async createProvider<T extends CreateProviderInput>({
     input,
     db,
     providerType,
@@ -88,15 +89,15 @@ export class MessagingService {
     optionFields,
     enabledCondition,
   }: {
-    input: any;
+    input: T;
     db: Database;
     providerType: string;
     messageType: string;
-    credentialFields: Record<string, string>;
-    optionFields: Record<string, string>;
+    credentialFields: Record<string, keyof typeof input>;
+    optionFields: Record<string, keyof typeof input>;
     enabledCondition: (
-      credentials: Record<string, any>,
-      options: Record<string, any>,
+      credentials: Record<string, keyof typeof input>,
+      options: Record<string, keyof typeof input>,
     ) => boolean;
   }) {
     const { providerId: inputProviderId, name, enabled: inputEnabled } = input;
@@ -106,24 +107,21 @@ export class MessagingService {
     const credentials: Record<string, any> = {};
     const options: Record<string, any> = {};
 
-    // Map credential fields
     Object.entries(credentialFields).forEach(([key, inputKey]) => {
-      if (input[inputKey]) {
-        credentials[key] = input[inputKey];
+      if (input[inputKey as keyof typeof input]) {
+        credentials[key] = input[inputKey as keyof typeof input];
       }
     });
-
-    // Map option fields
     Object.entries(optionFields).forEach(([key, inputKey]) => {
-      if (input[inputKey]) {
-        options[key] = input[inputKey];
+      if (input[inputKey as keyof typeof input]) {
+        options[key] = input[inputKey as keyof typeof input];
       }
     });
 
     const enabled =
       inputEnabled === true && enabledCondition(credentials, options);
 
-    const provider = new Doc({
+    const provider = new Doc<Providers>({
       $id: providerId,
       name,
       provider: providerType,
@@ -154,7 +152,7 @@ export class MessagingService {
       input,
       db,
       providerType: 'mailgun',
-      messageType: MESSAGE_TYPE_EMAIL,
+      messageType: MessageType.EMAIL,
       credentialFields: {
         isEuRegion: 'isEuRegion',
         apiKey: 'apiKey',
@@ -167,7 +165,7 @@ export class MessagingService {
         replyToEmail: 'replyToEmail',
       },
       enabledCondition: (credentials, options) =>
-        options.fromEmail &&
+        !!options['fromEmail'] &&
         credentials.hasOwnProperty('isEuRegion') &&
         credentials.hasOwnProperty('apiKey') &&
         credentials.hasOwnProperty('domain'),
@@ -182,7 +180,7 @@ export class MessagingService {
       input,
       db,
       providerType: 'sendgrid',
-      messageType: MESSAGE_TYPE_EMAIL,
+      messageType: MessageType.EMAIL,
       credentialFields: {
         apiKey: 'apiKey',
       },
@@ -193,7 +191,7 @@ export class MessagingService {
         replyToEmail: 'replyToEmail',
       },
       enabledCondition: (credentials, options) =>
-        options.fromEmail && credentials.hasOwnProperty('apiKey'),
+        !!options['fromEmail'] && credentials.hasOwnProperty('apiKey'),
     });
   }
 
@@ -205,7 +203,7 @@ export class MessagingService {
       input,
       db,
       providerType: 'smtp',
-      messageType: MESSAGE_TYPE_EMAIL,
+      messageType: MessageType.EMAIL,
       credentialFields: {
         port: 'port',
         username: 'username',
@@ -222,7 +220,7 @@ export class MessagingService {
         mailer: 'mailer',
       },
       enabledCondition: (credentials, options) =>
-        options.fromEmail && credentials.hasOwnProperty('host'),
+        !!options['fromEmail'] && credentials.hasOwnProperty('host'),
     });
   }
 
@@ -234,7 +232,7 @@ export class MessagingService {
       input,
       db,
       providerType: 'msg91',
-      messageType: MESSAGE_TYPE_SMS,
+      messageType: MessageType.SMS,
       credentialFields: {
         templateId: 'templateId',
         senderId: 'senderId',
@@ -258,7 +256,7 @@ export class MessagingService {
       input,
       db,
       providerType: 'telesign',
-      messageType: MESSAGE_TYPE_SMS,
+      messageType: MessageType.SMS,
       credentialFields: {
         customerId: 'customerId',
         apiKey: 'apiKey',
@@ -281,7 +279,7 @@ export class MessagingService {
       input,
       db,
       providerType: 'textmagic',
-      messageType: MESSAGE_TYPE_SMS,
+      messageType: MessageType.SMS,
       credentialFields: {
         username: 'username',
         apiKey: 'apiKey',
@@ -304,7 +302,7 @@ export class MessagingService {
       input,
       db,
       providerType: 'twilio',
-      messageType: MESSAGE_TYPE_SMS,
+      messageType: MessageType.SMS,
       credentialFields: {
         accountSid: 'accountSid',
         authToken: 'authToken',
@@ -327,7 +325,7 @@ export class MessagingService {
       input,
       db,
       providerType: 'vonage',
-      messageType: MESSAGE_TYPE_SMS,
+      messageType: MessageType.SMS,
       credentialFields: {
         apiKey: 'apiKey',
         apiSecret: 'apiSecret',
@@ -350,7 +348,7 @@ export class MessagingService {
       input,
       db,
       providerType: 'fcm',
-      messageType: MESSAGE_TYPE_PUSH,
+      messageType: MessageType.PUSH,
       credentialFields: {
         serviceAccountJSON: 'serviceAccountJSON',
       },
@@ -368,7 +366,7 @@ export class MessagingService {
       input,
       db,
       providerType: 'apns',
-      messageType: MESSAGE_TYPE_PUSH,
+      messageType: MessageType.PUSH,
       credentialFields: {
         authKey: 'authKey',
         authKeyId: 'authKeyId',
@@ -394,53 +392,13 @@ export class MessagingService {
       queries.push(Query.search('search', search));
     }
 
-    // Get cursor document if there was a cursor query
-    const cursor = queries.find(query =>
-      [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(
-        query.getMethod(),
-      ),
-    );
+    const providers = await db.find('providers', queries);
+    const total = await db.count('providers', queries);
 
-    if (cursor) {
-      const validator = new CursorValidator();
-      if (!validator.isValid(cursor)) {
-        throw new Exception(
-          Exception.GENERAL_QUERY_INVALID,
-          validator.getDescription(),
-        );
-      }
-
-      const providerId = cursor.getValue();
-      const cursorDocument = await Authorization.skip(
-        async () => await db.getDocument('providers', providerId),
-      );
-
-      if (cursorDocument.empty()) {
-        throw new Exception(
-          `Provider '${providerId}' for the 'cursor' value not found.`,
-        );
-      }
-
-      cursor.setValue(cursorDocument);
-    }
-
-    try {
-      const providers = await db.find('providers', queries);
-      const total = await db.count('providers', queries);
-
-      return {
-        providers,
-        total,
-      };
-    } catch (error) {
-      if (error instanceof OrderException) {
-        throw new Exception(
-          Exception.DATABASE_QUERY_ORDER_NULL,
-          `The order attribute '${(error as any).attribute}' had a null value. Cursor pagination requires all documents order attribute values are non-null.`,
-        );
-      }
-      throw error;
-    }
+    return {
+      providers,
+      total,
+    };
   }
 
   /**
@@ -459,7 +417,7 @@ export class MessagingService {
   /**
    * Common method to update a provider.
    */
-  private async updateProvider({
+  private async updateProvider<T extends Record<string, any>>({
     providerId,
     db,
     providerType,
@@ -471,12 +429,12 @@ export class MessagingService {
     providerId: string;
     db: Database;
     providerType: string;
-    updatedFields: Record<string, any>;
-    credentialFields: Record<string, string>;
-    optionFields: Record<string, string>;
+    updatedFields: T;
+    credentialFields: Record<string, keyof typeof updatedFields>;
+    optionFields: Record<string, keyof typeof updatedFields>;
     enabledCondition: (
-      credentials: Record<string, any>,
-      options: Record<string, any>,
+      credentials: Record<string, keyof typeof updatedFields>,
+      options: Record<string, keyof typeof updatedFields>,
     ) => boolean;
   }) {
     const provider = await db.getDocument('providers', providerId);
@@ -489,12 +447,12 @@ export class MessagingService {
       throw new Exception(Exception.PROVIDER_INCORRECT_TYPE);
     }
 
-    if (updatedFields.name) {
-      provider.set('name', updatedFields.name);
+    if (updatedFields['name']) {
+      provider.set('name', updatedFields['name']);
     }
 
     // Update credentials
-    const credentials = provider.get('credentials') || {};
+    const credentials = provider.get('credentials', {}) as Record<string, any>;
     Object.entries(credentialFields).forEach(([key, inputKey]) => {
       if (
         updatedFields[inputKey] !== undefined &&
@@ -518,8 +476,8 @@ export class MessagingService {
     provider.set('options', options);
 
     // Update enabled status
-    if (updatedFields.enabled !== undefined && updatedFields.enabled !== null) {
-      if (updatedFields.enabled) {
+    if (updatedFields['enabled'] !== undefined && updatedFields['enabled'] !== null) {
+      if (updatedFields['enabled']) {
         if (enabledCondition(credentials, options)) {
           provider.set('enabled', true);
         } else {
@@ -832,7 +790,7 @@ export class MessagingService {
     const { topicId: inputTopicId, name, subscribe } = input;
     const topicId = inputTopicId === 'unique()' ? ID.unique() : inputTopicId;
 
-    const topic = new Doc({
+    const topic = new Doc<Topics>({
       $id: topicId,
       name,
       subscribe,
@@ -859,54 +817,13 @@ export class MessagingService {
       queries.push(Query.search('search', search));
     }
 
-    // Get cursor document if there was a cursor query
-    const cursor = queries.find(query =>
-      [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(
-        query.getMethod(),
-      ),
-    );
+    const topics = await db.find('topics', queries);
+    const total = await db.count('topics', queries);
 
-    if (cursor) {
-      const validator = new CursorValidator();
-      if (!validator.isValid(cursor)) {
-        throw new Exception(
-          Exception.GENERAL_QUERY_INVALID,
-          validator.getDescription(),
-        );
-      }
-
-      const topicId = cursor.getValue();
-      const cursorDocument = await Authorization.skip(
-        async () => await db.getDocument('topics', topicId),
-      );
-
-      if (cursorDocument.empty()) {
-        throw new Exception(
-          Exception.GENERAL_CURSOR_NOT_FOUND,
-          `Topic '${topicId}' for the 'cursor' value not found.`,
-        );
-      }
-
-      cursor.setValue(cursorDocument);
-    }
-
-    try {
-      const topics = await db.find('topics', queries);
-      const total = await db.count('topics', queries);
-
-      return {
-        topics,
-        total,
-      };
-    } catch (error) {
-      if (error instanceof OrderException) {
-        throw new Exception(
-          Exception.DATABASE_QUERY_ORDER_NULL,
-          `The order attribute '${(error as any).attribute}' had a null value. Cursor pagination requires all documents order attribute values are non-null.`,
-        );
-      }
-      throw error;
-    }
+    return {
+      topics,
+      total,
+    };
   }
 
   /**
@@ -979,23 +896,23 @@ export class MessagingService {
       inputSubscriberId === 'unique()' ? ID.unique() : inputSubscriberId;
 
     const topic = await Authorization.skip(
-      async () => await db.getDocument('topics', topicId),
+      () => db.getDocument('topics', topicId),
     );
 
     if (topic.empty()) {
       throw new Exception(Exception.TOPIC_NOT_FOUND);
     }
 
-    const validator = new Authorization('subscribe');
-    if (!validator.isValid(topic.get('subscribe'))) {
+    const validator = new Authorization('subscribe' as any);
+    if (!validator.$valid(topic.get('subscribe'))) {
       throw new Exception(
         Exception.USER_UNAUTHORIZED,
-        validator.getDescription(),
+        validator.$description,
       );
     }
 
     const target = await Authorization.skip(
-      async () => await db.getDocument('targets', targetId),
+      () => db.getDocument('targets', targetId),
     );
 
     if (target.empty()) {
@@ -1003,10 +920,10 @@ export class MessagingService {
     }
 
     const user = await Authorization.skip(
-      async () => await db.getDocument('users', target.get('userId')),
+      () => db.getDocument('users', target.get('userId')),
     );
 
-    const subscriber = new Doc({
+    const subscriber = new Doc<Subscribers>({
       $id: subscriberId,
       $permissions: [
         Permission.read(Role.user(user.getId())),
@@ -1035,11 +952,11 @@ export class MessagingService {
 
       const totalAttribute = (() => {
         switch (target.get('providerType')) {
-          case MESSAGE_TYPE_EMAIL:
+          case MessageType.EMAIL:
             return 'emailTotal';
-          case MESSAGE_TYPE_SMS:
+          case MessageType.SMS:
             return 'smsTotal';
-          case MESSAGE_TYPE_PUSH:
+          case MessageType.PUSH:
             return 'pushTotal';
           default:
             throw new Exception(Exception.TARGET_PROVIDER_INVALID_TYPE);
@@ -1047,8 +964,8 @@ export class MessagingService {
       })();
 
       await Authorization.skip(
-        async () =>
-          await db.increaseDocumentAttribute('topics', topicId, totalAttribute),
+        () =>
+          db.increaseDocumentAttribute('topics', topicId, totalAttribute),
       );
 
       // TODO: queue for events
@@ -1078,7 +995,7 @@ export class MessagingService {
     }
 
     const topic = await Authorization.skip(
-      async () => await db.getDocument('topics', topicId),
+      () => db.getDocument('topics', topicId),
     );
 
     if (topic.empty()) {
@@ -1086,76 +1003,34 @@ export class MessagingService {
     }
 
     queries.push(Query.equal('topicInternalId', [topic.getSequence()]));
+    const subscribers = await db.find('subscribers', queries);
+    const total = await db.count('subscribers', queries);
 
-    // Get cursor document if there was a cursor query
-    const cursor = queries.find(query =>
-      [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(
-        query.getMethod(),
-      ),
+    // Batch process subscribers to add target and userName
+    const enrichedSubscribers = await Promise.all(
+      subscribers.map(async subscriber => {
+        const target = await Authorization.skip(
+          () =>
+            db.getDocument(
+              'targets',
+              subscriber.get('targetId'),
+            ),
+        );
+        const user = await Authorization.skip(
+          () =>
+            db.getDocument('users', target.get('userId')),
+        );
+
+        return subscriber
+          .set('target', target)
+          .set('userName', user.get('name'));
+      }),
     );
 
-    if (cursor) {
-      const validator = new CursorValidator();
-      if (!validator.isValid(cursor)) {
-        throw new Exception(
-          Exception.GENERAL_QUERY_INVALID,
-          validator.getDescription(),
-        );
-      }
-
-      const subscriberId = cursor.getValue();
-      const cursorDocument = await Authorization.skip(
-        async () => await db.getDocument('subscribers', subscriberId),
-      );
-
-      if (cursorDocument.empty()) {
-        throw new Exception(
-          Exception.GENERAL_CURSOR_NOT_FOUND,
-          `Subscriber '${subscriberId}' for the 'cursor' value not found.`,
-        );
-      }
-
-      cursor.setValue(cursorDocument);
-    }
-
-    try {
-      const subscribers = await db.find('subscribers', queries);
-      const total = await db.count('subscribers', queries);
-
-      // Batch process subscribers to add target and userName
-      const enrichedSubscribers = await Promise.all(
-        subscribers.map(async subscriber => {
-          const target = await Authorization.skip(
-            async () =>
-              await db.getDocument(
-                'targets',
-                subscriber.get('targetId'),
-              ),
-          );
-          const user = await Authorization.skip(
-            async () =>
-              await db.getDocument('users', target.get('userId')),
-          );
-
-          return subscriber
-            .set('target', target)
-            .set('userName', user.get('name'));
-        }),
-      );
-
-      return {
-        subscribers: enrichedSubscribers,
-        total,
-      };
-    } catch (error) {
-      if (error instanceof OrderException) {
-        throw new Exception(
-          Exception.DATABASE_QUERY_ORDER_NULL,
-          `The order attribute '${(error as any).attribute}' had a null value. Cursor pagination requires all documents order attribute values are non-null.`,
-        );
-      }
-      throw error;
-    }
+    return {
+      subscribers: enrichedSubscribers,
+      total,
+    };
   }
 
   /**
@@ -1163,7 +1038,7 @@ export class MessagingService {
    */
   async getSubscriber(db: Database, topicId: string, subscriberId: string) {
     const topic = await Authorization.skip(
-      async () => await db.getDocument('topics', topicId),
+      () => db.getDocument('topics', topicId),
     );
 
     if (topic.empty()) {
@@ -1180,11 +1055,11 @@ export class MessagingService {
     }
 
     const target = await Authorization.skip(
-      async () =>
-        await db.getDocument('targets', subscriber.get('targetId')),
+      () =>
+        db.getDocument('targets', subscriber.get('targetId')),
     );
     const user = await Authorization.skip(
-      async () => await db.getDocument('users', target.get('userId')),
+      () => db.getDocument('users', target.get('userId')),
     );
 
     subscriber
@@ -1199,7 +1074,7 @@ export class MessagingService {
    */
   async deleteSubscriber(db: Database, topicId: string, subscriberId: string) {
     const topic = await Authorization.skip(
-      async () => await db.getDocument('topics', topicId),
+      () => db.getDocument('topics', topicId),
     );
 
     if (topic.empty()) {
@@ -1224,11 +1099,11 @@ export class MessagingService {
 
     const totalAttribute = (() => {
       switch (target.get('providerType')) {
-        case MESSAGE_TYPE_EMAIL:
+        case MessageType.EMAIL:
           return 'emailTotal';
-        case MESSAGE_TYPE_SMS:
+        case MessageType.SMS:
           return 'smsTotal';
-        case MESSAGE_TYPE_PUSH:
+        case MessageType.PUSH:
           return 'pushTotal';
         default:
           throw new Exception(Exception.TARGET_PROVIDER_INVALID_TYPE);
@@ -1236,8 +1111,8 @@ export class MessagingService {
     })();
 
     await Authorization.skip(
-      async () =>
-        await db.decreaseDocumentAttribute(
+      () =>
+        db.decreaseDocumentAttribute(
           'topics',
           topicId,
           totalAttribute,
@@ -1297,11 +1172,11 @@ export class MessagingService {
     const mergedTargets = [...targets, ...cc, ...bcc];
 
     if (mergedTargets.length > 0) {
-      const foundTargets = await db.find('targets', [
-        Query.equal('$id', mergedTargets),
-        Query.equal('providerType', [MESSAGE_TYPE_EMAIL]),
-        Query.limit(mergedTargets.length),
-      ]);
+      const foundTargets = await db.find('targets',
+        qb => qb.equal('$id', ...mergedTargets)
+          .equal('providerType', MessageType.EMAIL)
+          .limit(mergedTargets.length)
+      );
 
       if (foundTargets.length !== mergedTargets.length) {
         throw new Exception(Exception.MESSAGE_TARGET_NOT_EMAIL);
@@ -1317,7 +1192,7 @@ export class MessagingService {
     const processedAttachments = [];
     if (attachments.length > 0) {
       for (const attachment of attachments) {
-        const [bucketId, fileId] = attachment.split(':');
+        const [bucketId, fileId] = attachment.split(':') as [string, string];
 
         const bucket = await db.getDocument('buckets', bucketId);
         if (bucket.empty()) {
@@ -1339,9 +1214,9 @@ export class MessagingService {
       }
     }
 
-    const message = new Doc({
+    const message = new Doc<Messages>({
       $id: messageId,
-      providerType: MESSAGE_TYPE_EMAIL,
+      providerType: MessageType.EMAIL,
       topics,
       users,
       targets,
@@ -1361,15 +1236,15 @@ export class MessagingService {
 
     switch (status) {
       case MessageStatus.PROCESSING:
-        await this.queue.add(MESSAGE_SEND_TYPE_EXTERNAL, {
+        await this.queue.add(MessagingJob.EXTERNAL, {
           project,
           message: createdMessage,
         });
         break;
       case MessageStatus.SCHEDULED:
-        const schedule = new Doc({
+        const schedule = new Doc<Schedules>({
           region: project.get('region'),
-          resourceType: 'message',
+          resourceType: ScheduleResourceType.MESSAGE,
           resourceId: createdMessage.getId(),
           resourceInternalId: createdMessage.getSequence(),
           resourceUpdatedAt: new Date().toISOString(),
@@ -1433,11 +1308,11 @@ export class MessagingService {
     }
 
     if (targets.length > 0) {
-      const foundTargets = await db.find('targets', [
-        Query.equal('$id', targets),
-        Query.equal('providerType', [MESSAGE_TYPE_SMS]),
-        Query.limit(targets.length),
-      ]);
+      const foundTargets = await db.find('targets',
+        qb => qb.equal('$id', ...targets)
+          .equal('providerType', MessageType.SMS)
+          .limit(targets.length)
+      );
 
       if (foundTargets.length !== targets.length) {
         throw new Exception(Exception.MESSAGE_TARGET_NOT_SMS);
@@ -1452,7 +1327,7 @@ export class MessagingService {
 
     const message = new Doc({
       $id: messageId,
-      providerType: MESSAGE_TYPE_SMS,
+      providerType: MessageType.SMS,
       topics,
       users,
       targets,
@@ -1467,15 +1342,15 @@ export class MessagingService {
 
     switch (status) {
       case MessageStatus.PROCESSING:
-        await this.queue.add(MESSAGE_SEND_TYPE_EXTERNAL, {
+        await this.queue.add(MessagingJob.EXTERNAL, {
           project,
           message: createdMessage,
         });
         break;
       case MessageStatus.SCHEDULED:
-        const schedule = new Doc({
+        const schedule = new Doc<Schedules>({
           region: project.get('region'),
-          resourceType: 'message',
+          resourceType: ScheduleResourceType.MESSAGE,
           resourceId: createdMessage.getId(),
           resourceInternalId: createdMessage.getSequence(),
           resourceUpdatedAt: new Date().toISOString(),
@@ -1551,11 +1426,11 @@ export class MessagingService {
     }
 
     if (targets.length > 0) {
-      const foundTargets = await db.find('targets', [
-        Query.equal('$id', targets),
-        Query.equal('providerType', [MESSAGE_TYPE_PUSH]),
-        Query.limit(targets.length),
-      ]);
+      const foundTargets = await db.find('targets',
+        qb => qb.equal('$id', ...targets)
+          .equal('providerType', MessageType.PUSH)
+          .limit(targets.length)
+      );
 
       if (foundTargets.length !== targets.length) {
         throw new Exception(Exception.MESSAGE_TARGET_NOT_PUSH);
@@ -1570,7 +1445,7 @@ export class MessagingService {
 
     let processedImage: any = null;
     if (image) {
-      const [bucketId, fileId] = image.split(':');
+      const [bucketId, fileId] = image.split(':') as [string, string];
 
       const bucket = await db.getDocument('buckets', bucketId);
       if (bucket.empty()) {
@@ -1590,18 +1465,19 @@ export class MessagingService {
         throw new Exception(Exception.STORAGE_FILE_TYPE_UNSUPPORTED);
       }
 
-      const host = APP_DOMAIN || 'localhost';
-      const protocol = APP_OPTIONS_FORCE_HTTPS ? 'https' : 'http';
-
+      const host = this.appConfig.get('app').domain || 'localhost';
+      const protocol = this.appConfig.get('app').forceHttps ? 'https' : 'http';
       const scheduleTime = scheduledAt;
+
+      // Set expiry to 15 days from now
       let expiry: number;
       if (scheduleTime) {
         const expiryDate = new Date(scheduleTime);
-        expiryDate.setDate(expiryDate.getDate() + 15); // Add 15 days
+        expiryDate.setDate(expiryDate.getDate() + 15);
         expiry = Math.floor(expiryDate.getTime() / 1000);
       } else {
         const expiryDate = new Date();
-        expiryDate.setDate(expiryDate.getDate() + 15); // Add 15 days
+        expiryDate.setDate(expiryDate.getDate() + 15);
         expiry = Math.floor(expiryDate.getTime() / 1000);
       }
 
@@ -1626,23 +1502,23 @@ export class MessagingService {
 
     const pushData: Record<string, any> = {};
 
-    if (title) pushData.title = title;
-    if (body) pushData.body = body;
-    if (data) pushData.data = data;
-    if (action) pushData.action = action;
-    if (processedImage) pushData.image = processedImage;
-    if (icon) pushData.icon = icon;
-    if (sound) pushData.sound = sound;
-    if (color) pushData.color = color;
-    if (tag) pushData.tag = tag;
-    if (badge >= 0) pushData.badge = badge;
-    if (contentAvailable) pushData.contentAvailable = true;
-    if (critical) pushData.critical = true;
-    if (priority) pushData.priority = priority;
+    if (title) pushData['title'] = title;
+    if (body) pushData['body'] = body;
+    if (data) pushData['data'] = data;
+    if (action) pushData['action'] = action;
+    if (processedImage) pushData['image'] = processedImage;
+    if (icon) pushData['icon'] = icon;
+    if (sound) pushData['sound'] = sound;
+    if (color) pushData['color'] = color;
+    if (tag) pushData['tag'] = tag;
+    if (badge >= 0) pushData['badge'] = badge;
+    if (contentAvailable) pushData['contentAvailable'] = true;
+    if (critical) pushData['critical'] = true;
+    if (priority) pushData['priority'] = priority;
 
-    const message = new Doc({
+    const message = new Doc<Messages>({
       $id: messageId,
-      providerType: MESSAGE_TYPE_PUSH,
+      providerType: MessageType.PUSH,
       topics,
       users,
       targets,
@@ -1655,7 +1531,7 @@ export class MessagingService {
 
     switch (status) {
       case MessageStatus.PROCESSING:
-        await this.queue.add(MESSAGE_SEND_TYPE_EXTERNAL, {
+        await this.queue.add(MessagingJob.EXTERNAL, {
           project,
           message: createdMessage,
         });
@@ -1663,7 +1539,7 @@ export class MessagingService {
       case MessageStatus.SCHEDULED:
         const schedule = new Doc({
           region: project.get('region'),
-          resourceType: 'message',
+          resourceType: ScheduleResourceType.MESSAGE,
           resourceId: createdMessage.getId(),
           resourceInternalId: createdMessage.getSequence(),
           resourceUpdatedAt: new Date().toISOString(),
@@ -1698,54 +1574,13 @@ export class MessagingService {
       queries.push(Query.search('search', search));
     }
 
-    // Get cursor document if there was a cursor query
-    const cursor = queries.find(query =>
-      [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(
-        query.getMethod(),
-      ),
-    );
+    const messages = await db.find('messages', queries);
+    const total = await db.count('messages', queries);
 
-    if (cursor) {
-      const validator = new CursorValidator();
-      if (!validator.isValid(cursor)) {
-        throw new Exception(
-          Exception.GENERAL_QUERY_INVALID,
-          validator.getDescription(),
-        );
-      }
-
-      const messageId = cursor.getValue();
-      const cursorDocument = await Authorization.skip(
-        async () => await db.getDocument('messages', messageId),
-      );
-
-      if (cursorDocument.empty()) {
-        throw new Exception(
-          Exception.GENERAL_CURSOR_NOT_FOUND,
-          `Message '${messageId}' for the 'cursor' value not found.`,
-        );
-      }
-
-      cursor.setValue(cursorDocument);
-    }
-
-    try {
-      const messages = await db.find('messages', queries);
-      const total = await db.count('messages', queries);
-
-      return {
-        messages,
-        total,
-      };
-    } catch (error) {
-      if (error instanceof OrderException) {
-        throw new Exception(
-          Exception.DATABASE_QUERY_ORDER_NULL,
-          `The order attribute '${(error as any).attribute}' had a null value. Cursor pagination requires all documents order attribute values are non-null.`,
-        );
-      }
-      throw error;
-    }
+    return {
+      messages,
+      total,
+    };
   }
 
   /**
@@ -1772,7 +1607,6 @@ export class MessagingService {
     }
 
     const targetIDs = message.get('targets');
-
     if (!targetIDs || targetIDs.length === 0) {
       return {
         targets: [],
@@ -1781,53 +1615,13 @@ export class MessagingService {
     }
 
     queries.push(Query.equal('$id', targetIDs));
+    const targets = await db.find('targets', queries);
+    const total = await db.count('targets', queries);
 
-    // Get cursor document if there was a cursor query
-    const cursor = queries.find(query =>
-      [Query.TYPE_CURSOR_AFTER, Query.TYPE_CURSOR_BEFORE].includes(
-        query.getMethod(),
-      ),
-    );
-
-    if (cursor) {
-      const validator = new CursorValidator();
-      if (!validator.isValid(cursor)) {
-        throw new Exception(
-          Exception.GENERAL_QUERY_INVALID,
-          validator.getDescription(),
-        );
-      }
-
-      const targetId = cursor.getValue();
-      const cursorDocument = await db.getDocument('targets', targetId);
-
-      if (cursorDocument.empty()) {
-        throw new Exception(
-          Exception.GENERAL_CURSOR_NOT_FOUND,
-          `Target '${targetId}' for the 'cursor' value not found.`,
-        );
-      }
-
-      cursor.setValue(cursorDocument);
-    }
-
-    try {
-      const targets = await db.find('targets', queries);
-      const total = await db.count('targets', queries);
-
-      return {
-        targets,
-        total,
-      };
-    } catch (error) {
-      if (error instanceof OrderException) {
-        throw new Exception(
-          Exception.DATABASE_QUERY_ORDER_NULL,
-          `The order attribute '${(error as any).attribute}' had a null value. Cursor pagination requires all documents order attribute values are non-null.`,
-        );
-      }
-      throw error;
-    }
+    return {
+      targets,
+      total,
+    };
   }
 
   /**
@@ -1886,13 +1680,12 @@ export class MessagingService {
       throw new Exception(Exception.MESSAGE_MISSING_SCHEDULE);
     }
 
-    if (currentScheduledAt && new Date(currentScheduledAt) < new Date()) {
+    if (currentScheduledAt && new Date(currentScheduledAt as string) < new Date()) {
       throw new Exception(Exception.MESSAGE_ALREADY_SCHEDULED);
     }
 
-    // Handle schedule creation
     if (!currentScheduledAt && input.scheduledAt) {
-      const schedule = new Doc({
+      const schedule = new Doc<Schedules>({
         region: project.get('region'),
         resourceType: 'message',
         resourceId: message.getId(),
@@ -1910,7 +1703,6 @@ export class MessagingService {
       message.set('scheduleId', createdSchedule.getId());
     }
 
-    // Handle schedule updates
     if (currentScheduledAt) {
       const schedule = await this.dbForPlatform.getDocument(
         'schedules',
@@ -1956,17 +1748,17 @@ export class MessagingService {
     const data = message.get('data');
 
     if (input.subject !== undefined) {
-      data.subject = input.subject;
+      data['subject'] = input.subject;
     }
 
     if (input.content !== undefined) {
-      data.content = input.content;
+      data['content'] = input.content;
     }
 
     if (input.attachments !== undefined) {
       const processedAttachments = [];
       for (const attachment of input.attachments) {
-        const [bucketId, fileId] = attachment.split(':');
+        const [bucketId, fileId] = attachment.split(':') as [string, string];
 
         const bucket = await db.getDocument('buckets', bucketId);
         if (bucket.empty()) {
@@ -1986,23 +1778,22 @@ export class MessagingService {
           fileId,
         });
       }
-      data.attachments = processedAttachments;
+      data['attachments'] = processedAttachments;
     }
 
     if (input.html !== undefined) {
-      data.html = input.html;
+      data['html'] = input.html;
     }
 
     if (input.cc !== undefined) {
-      data.cc = input.cc;
+      data['cc'] = input.cc;
     }
 
     if (input.bcc !== undefined) {
-      data.bcc = input.bcc;
+      data['bcc'] = input.bcc;
     }
 
     message.set('data', data);
-
     if (status) {
       message.set('status', status);
     }
@@ -2014,7 +1805,7 @@ export class MessagingService {
     );
 
     if (status === MessageStatus.PROCESSING) {
-      await this.queue.add(MESSAGE_SEND_TYPE_EXTERNAL, {
+      await this.queue.add(MessagingJob.EXTERNAL, {
         project,
         message: updatedMessage,
       });
@@ -2076,13 +1867,12 @@ export class MessagingService {
       throw new Exception(Exception.MESSAGE_MISSING_SCHEDULE);
     }
 
-    if (currentScheduledAt && new Date(currentScheduledAt) < new Date()) {
+    if (currentScheduledAt && new Date(currentScheduledAt as string) < new Date()) {
       throw new Exception(Exception.MESSAGE_ALREADY_SCHEDULED);
     }
 
-    // Handle schedule creation
     if (!currentScheduledAt && input.scheduledAt) {
-      const schedule = new Doc({
+      const schedule = new Doc<Schedules>({
         region: project.get('region'),
         resourceType: 'message',
         resourceId: message.getId(),
@@ -2100,7 +1890,6 @@ export class MessagingService {
       message.set('scheduleId', createdSchedule.getId());
     }
 
-    // Handle schedule updates
     if (currentScheduledAt) {
       const schedule = await this.dbForPlatform.getDocument(
         'schedules',
@@ -2146,7 +1935,7 @@ export class MessagingService {
     const data = message.get('data');
 
     if (input.content !== undefined) {
-      data.content = input.content;
+      data['content'] = input.content;
     }
 
     message.set('data', data);
@@ -2162,7 +1951,7 @@ export class MessagingService {
     );
 
     if (status === MessageStatus.PROCESSING) {
-      await this.queue.add(MESSAGE_SEND_TYPE_EXTERNAL, {
+      await this.queue.add(MessagingJob.EXTERNAL, {
         project,
         message: updatedMessage,
       });
@@ -2229,13 +2018,12 @@ export class MessagingService {
       throw new Exception(Exception.MESSAGE_MISSING_SCHEDULE);
     }
 
-    if (currentScheduledAt && new Date(currentScheduledAt) < new Date()) {
+    if (currentScheduledAt && new Date(currentScheduledAt as string) < new Date()) {
       throw new Exception(Exception.MESSAGE_ALREADY_SCHEDULED);
     }
 
-    // Handle schedule creation
     if (!currentScheduledAt && input.scheduledAt) {
-      const schedule = new Doc({
+      const schedule = new Doc<Schedules>({
         region: project.get('region'),
         resourceType: 'message',
         resourceId: message.getId(),
@@ -2297,57 +2085,56 @@ export class MessagingService {
     }
 
     const pushData = message.get('data');
-
     if (input.title !== undefined) {
-      pushData.title = input.title;
+      pushData['title'] = input.title;
     }
 
     if (input.body !== undefined) {
-      pushData.body = input.body;
+      pushData['body'] = input.body;
     }
 
     if (input.data !== undefined) {
-      pushData.data = input.data;
+      pushData['data'] = input.data;
     }
 
     if (input.action !== undefined) {
-      pushData.action = input.action;
+      pushData['action'] = input.action;
     }
 
     if (input.icon !== undefined) {
-      pushData.icon = input.icon;
+      pushData['icon'] = input.icon;
     }
 
     if (input.sound !== undefined) {
-      pushData.sound = input.sound;
+      pushData['sound'] = input.sound;
     }
 
     if (input.color !== undefined) {
-      pushData.color = input.color;
+      pushData['color'] = input.color;
     }
 
     if (input.tag !== undefined) {
-      pushData.tag = input.tag;
+      pushData['tag'] = input.tag;
     }
 
     if (input.badge !== undefined) {
-      pushData.badge = input.badge;
+      pushData['badge'] = input.badge;
     }
 
     if (input.contentAvailable !== undefined) {
-      pushData.contentAvailable = input.contentAvailable;
+      pushData['contentAvailable'] = input.contentAvailable;
     }
 
     if (input.critical !== undefined) {
-      pushData.critical = input.critical;
+      pushData['critical'] = input.critical;
     }
 
     if (input.priority !== undefined) {
-      pushData.priority = input.priority;
+      pushData['priority'] = input.priority;
     }
 
     if (input.image !== undefined) {
-      const [bucketId, fileId] = input.image.split(':');
+      const [bucketId, fileId] = input.image.split(':') as [string, string];
 
       const bucket = await db.getDocument('buckets', bucketId);
       if (bucket.empty()) {
@@ -2367,13 +2154,13 @@ export class MessagingService {
         throw new Exception(Exception.STORAGE_FILE_TYPE_UNSUPPORTED);
       }
 
-      const host = APP_DOMAIN || 'localhost';
-      const protocol = APP_OPTIONS_FORCE_HTTPS ? 'https' : 'http';
+      const host = this.appConfig.get('app').domain || 'localhost';
+      const protocol = this.appConfig.get('app').forceHttps ? 'https' : 'http';
 
       const scheduleTime = currentScheduledAt || input.scheduledAt;
       let expiry: number;
       if (scheduleTime) {
-        const expiryDate = new Date(scheduleTime);
+        const expiryDate = new Date(scheduleTime as string);
         expiryDate.setDate(expiryDate.getDate() + 15);
         expiry = Math.floor(expiryDate.getTime() / 1000);
       } else {
@@ -2394,7 +2181,7 @@ export class MessagingService {
         },
       );
 
-      pushData.image = {
+      pushData['image'] = {
         bucketId: bucket.getId(),
         fileId: file.getId(),
         url: `${protocol}://${host}/v1/storage/buckets/${bucket.getId()}/files/${file.getId()}/push?project=${project.getId()}&jwt=${jwt}`,
@@ -2414,7 +2201,7 @@ export class MessagingService {
     );
 
     if (status === MessageStatus.PROCESSING) {
-      await this.queue.add(MESSAGE_SEND_TYPE_EXTERNAL, {
+      await this.queue.add(MessagingJob.EXTERNAL, {
         project,
         message: updatedMessage,
       });
@@ -2443,8 +2230,7 @@ export class MessagingService {
         const scheduledAt = message.get('scheduledAt');
 
         const now = new Date();
-        const scheduledDate = new Date(scheduledAt);
-
+        const scheduledDate = new Date(scheduledAt as string);
         if (now > scheduledDate) {
           throw new Exception(Exception.MESSAGE_ALREADY_SCHEDULED);
         }

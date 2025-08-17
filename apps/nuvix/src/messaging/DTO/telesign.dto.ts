@@ -11,11 +11,11 @@ import {
 export class CreateTelesignProviderDTO {
   @IsString()
   @IsCustomID()
-  providerId: string;
+  providerId!: string;
 
   @IsString()
   @MaxLength(128)
-  name: string;
+  name!: string;
 
   @IsOptional()
   @IsPhoneNumber()
