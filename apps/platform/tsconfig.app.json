@@ -4,14 +4,6 @@
     "declaration": false,
     "outDir": "./dist"
   },
-  "include": [
-    "src/**/*",
-    "../../nuvix.d.ts"
-  ],
-  "exclude": [
-    "node_modules",
-    "dist",
-    "test",
-    "**/*spec.ts"
-  ]
+  "include": ["src/**/*", "../../nuvix.d.ts"],
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
 }

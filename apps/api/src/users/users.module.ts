@@ -14,4 +14,4 @@ import { JWT_SECRET } from '@nuvix/utils';
     }),
   ],
 })
-export class UsersModule { }
+export class UsersModule {}

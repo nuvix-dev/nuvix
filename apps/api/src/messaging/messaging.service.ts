@@ -47,11 +47,7 @@ import {
   Role,
 } from '@nuvix-tech/db';
 import { Exception } from '@nuvix/core/extend/exception';
-import {
-  MessageType,
-  QueueFor,
-  ScheduleResourceType,
-} from '@nuvix/utils';
+import { MessageType, QueueFor, ScheduleResourceType } from '@nuvix/utils';
 import { MessageStatus } from '@nuvix/core/messaging/status';
 import { JwtService } from '@nestjs/jwt';
 import { InjectQueue } from '@nestjs/bullmq';
@@ -61,7 +57,13 @@ import {
   MessagingJobData,
 } from '@nuvix/core/resolvers/queues/messaging.queue';
 import { CoreService, AppConfigService } from '@nuvix/core';
-import type { Messages, Providers, Schedules, Subscribers, Topics } from '@nuvix/utils/types';
+import type {
+  Messages,
+  Providers,
+  Schedules,
+  Subscribers,
+  Topics,
+} from '@nuvix/utils/types';
 
 @Injectable()
 export class MessagingService {
@@ -476,7 +478,10 @@ export class MessagingService {
     provider.set('options', options);
 
     // Update enabled status
-    if (updatedFields['enabled'] !== undefined && updatedFields['enabled'] !== null) {
+    if (
+      updatedFields['enabled'] !== undefined &&
+      updatedFields['enabled'] !== null
+    ) {
       if (updatedFields['enabled']) {
         if (enabledCondition(credentials, options)) {
           provider.set('enabled', true);
@@ -895,8 +900,8 @@ export class MessagingService {
     const subscriberId =
       inputSubscriberId === 'unique()' ? ID.unique() : inputSubscriberId;
 
-    const topic = await Authorization.skip(
-      () => db.getDocument('topics', topicId),
+    const topic = await Authorization.skip(() =>
+      db.getDocument('topics', topicId),
     );
 
     if (topic.empty()) {
@@ -905,22 +910,19 @@ export class MessagingService {
 
     const validator = new Authorization('subscribe' as any);
     if (!validator.$valid(topic.get('subscribe'))) {
-      throw new Exception(
-        Exception.USER_UNAUTHORIZED,
-        validator.$description,
-      );
+      throw new Exception(Exception.USER_UNAUTHORIZED, validator.$description);
     }
 
-    const target = await Authorization.skip(
-      () => db.getDocument('targets', targetId),
+    const target = await Authorization.skip(() =>
+      db.getDocument('targets', targetId),
     );
 
     if (target.empty()) {
       throw new Exception(Exception.USER_TARGET_NOT_FOUND);
     }
 
-    const user = await Authorization.skip(
-      () => db.getDocument('users', target.get('userId')),
+    const user = await Authorization.skip(() =>
+      db.getDocument('users', target.get('userId')),
     );
 
     const subscriber = new Doc<Subscribers>({
@@ -963,9 +965,8 @@ export class MessagingService {
         }
       })();
 
-      await Authorization.skip(
-        () =>
-          db.increaseDocumentAttribute('topics', topicId, totalAttribute),
+      await Authorization.skip(() =>
+        db.increaseDocumentAttribute('topics', topicId, totalAttribute),
       );
 
       // TODO: queue for events
@@ -973,9 +974,7 @@ export class MessagingService {
       //   .setParam('topicId', topic.getId())
       //   .setParam('subscriberId', createdSubscriber.getId());
 
-      createdSubscriber
-        .set('target', target)
-        .set('userName', user.get('name'));
+      createdSubscriber.set('target', target).set('userName', user.get('name'));
 
       return createdSubscriber;
     } catch (error) {
@@ -994,8 +993,8 @@ export class MessagingService {
       queries.push(Query.search('search', search));
     }
 
-    const topic = await Authorization.skip(
-      () => db.getDocument('topics', topicId),
+    const topic = await Authorization.skip(() =>
+      db.getDocument('topics', topicId),
     );
 
     if (topic.empty()) {
@@ -1009,16 +1008,11 @@ export class MessagingService {
     // Batch process subscribers to add target and userName
     const enrichedSubscribers = await Promise.all(
       subscribers.map(async subscriber => {
-        const target = await Authorization.skip(
-          () =>
-            db.getDocument(
-              'targets',
-              subscriber.get('targetId'),
-            ),
+        const target = await Authorization.skip(() =>
+          db.getDocument('targets', subscriber.get('targetId')),
         );
-        const user = await Authorization.skip(
-          () =>
-            db.getDocument('users', target.get('userId')),
+        const user = await Authorization.skip(() =>
+          db.getDocument('users', target.get('userId')),
         );
 
         return subscriber
@@ -1037,8 +1031,8 @@ export class MessagingService {
    * Get Subscriber
    */
   async getSubscriber(db: Database, topicId: string, subscriberId: string) {
-    const topic = await Authorization.skip(
-      () => db.getDocument('topics', topicId),
+    const topic = await Authorization.skip(() =>
+      db.getDocument('topics', topicId),
     );
 
     if (topic.empty()) {
@@ -1047,24 +1041,18 @@ export class MessagingService {
 
     const subscriber = await db.getDocument('subscribers', subscriberId);
 
-    if (
-      subscriber.empty() ||
-      subscriber.get('topicId') !== topicId
-    ) {
+    if (subscriber.empty() || subscriber.get('topicId') !== topicId) {
       throw new Exception(Exception.SUBSCRIBER_NOT_FOUND);
     }
 
-    const target = await Authorization.skip(
-      () =>
-        db.getDocument('targets', subscriber.get('targetId')),
+    const target = await Authorization.skip(() =>
+      db.getDocument('targets', subscriber.get('targetId')),
     );
-    const user = await Authorization.skip(
-      () => db.getDocument('users', target.get('userId')),
+    const user = await Authorization.skip(() =>
+      db.getDocument('users', target.get('userId')),
     );
 
-    subscriber
-      .set('target', target)
-      .set('userName', user.get('name'));
+    subscriber.set('target', target).set('userName', user.get('name'));
 
     return subscriber;
   }
@@ -1073,8 +1061,8 @@ export class MessagingService {
    * Deletes a subscriber.
    */
   async deleteSubscriber(db: Database, topicId: string, subscriberId: string) {
-    const topic = await Authorization.skip(
-      () => db.getDocument('topics', topicId),
+    const topic = await Authorization.skip(() =>
+      db.getDocument('topics', topicId),
     );
 
     if (topic.empty()) {
@@ -1083,17 +1071,11 @@ export class MessagingService {
 
     const subscriber = await db.getDocument('subscribers', subscriberId);
 
-    if (
-      subscriber.empty() ||
-      subscriber.get('topicId') !== topicId
-    ) {
+    if (subscriber.empty() || subscriber.get('topicId') !== topicId) {
       throw new Exception(Exception.SUBSCRIBER_NOT_FOUND);
     }
 
-    const target = await db.getDocument(
-      'targets',
-      subscriber.get('targetId'),
-    );
+    const target = await db.getDocument('targets', subscriber.get('targetId'));
 
     await db.deleteDocument('subscribers', subscriberId);
 
@@ -1110,14 +1092,8 @@ export class MessagingService {
       }
     })();
 
-    await Authorization.skip(
-      () =>
-        db.decreaseDocumentAttribute(
-          'topics',
-          topicId,
-          totalAttribute,
-          0,
-        ),
+    await Authorization.skip(() =>
+      db.decreaseDocumentAttribute('topics', topicId, totalAttribute, 0),
     );
 
     // TODO: queue for events
@@ -1172,10 +1148,11 @@ export class MessagingService {
     const mergedTargets = [...targets, ...cc, ...bcc];
 
     if (mergedTargets.length > 0) {
-      const foundTargets = await db.find('targets',
-        qb => qb.equal('$id', ...mergedTargets)
+      const foundTargets = await db.find('targets', qb =>
+        qb
+          .equal('$id', ...mergedTargets)
           .equal('providerType', MessageType.EMAIL)
-          .limit(mergedTargets.length)
+          .limit(mergedTargets.length),
       );
 
       if (foundTargets.length !== mergedTargets.length) {
@@ -1308,10 +1285,11 @@ export class MessagingService {
     }
 
     if (targets.length > 0) {
-      const foundTargets = await db.find('targets',
-        qb => qb.equal('$id', ...targets)
+      const foundTargets = await db.find('targets', qb =>
+        qb
+          .equal('$id', ...targets)
           .equal('providerType', MessageType.SMS)
-          .limit(targets.length)
+          .limit(targets.length),
       );
 
       if (foundTargets.length !== targets.length) {
@@ -1426,10 +1404,11 @@ export class MessagingService {
     }
 
     if (targets.length > 0) {
-      const foundTargets = await db.find('targets',
-        qb => qb.equal('$id', ...targets)
+      const foundTargets = await db.find('targets', qb =>
+        qb
+          .equal('$id', ...targets)
           .equal('providerType', MessageType.PUSH)
-          .limit(targets.length)
+          .limit(targets.length),
       );
 
       if (foundTargets.length !== targets.length) {
@@ -1680,7 +1659,10 @@ export class MessagingService {
       throw new Exception(Exception.MESSAGE_MISSING_SCHEDULE);
     }
 
-    if (currentScheduledAt && new Date(currentScheduledAt as string) < new Date()) {
+    if (
+      currentScheduledAt &&
+      new Date(currentScheduledAt as string) < new Date()
+    ) {
       throw new Exception(Exception.MESSAGE_ALREADY_SCHEDULED);
     }
 
@@ -1867,7 +1849,10 @@ export class MessagingService {
       throw new Exception(Exception.MESSAGE_MISSING_SCHEDULE);
     }
 
-    if (currentScheduledAt && new Date(currentScheduledAt as string) < new Date()) {
+    if (
+      currentScheduledAt &&
+      new Date(currentScheduledAt as string) < new Date()
+    ) {
       throw new Exception(Exception.MESSAGE_ALREADY_SCHEDULED);
     }
 
@@ -2018,7 +2003,10 @@ export class MessagingService {
       throw new Exception(Exception.MESSAGE_MISSING_SCHEDULE);
     }
 
-    if (currentScheduledAt && new Date(currentScheduledAt as string) < new Date()) {
+    if (
+      currentScheduledAt &&
+      new Date(currentScheduledAt as string) < new Date()
+    ) {
       throw new Exception(Exception.MESSAGE_ALREADY_SCHEDULED);
     }
 

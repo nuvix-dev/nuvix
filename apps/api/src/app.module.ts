@@ -8,10 +8,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MailsQueue } from '@nuvix/core/resolvers/queues/mails.queue';
 import { AuditsQueue } from '@nuvix/core/resolvers/queues/audits.queue';
-import {
-  JWT_SECRET,
-  QueueFor,
-} from '@nuvix/utils';
+import { JWT_SECRET, QueueFor } from '@nuvix/utils';
 // Hooks
 import {
   ApiHook,
@@ -66,8 +63,8 @@ import { AppConfigService } from '@nuvix/core';
             ...redisConfig,
             tls: redisConfig.secure
               ? {
-                rejectUnauthorized: false,
-              }
+                  rejectUnauthorized: false,
+                }
               : undefined,
             enableOfflineQueue: false, // Disable offline queue to avoid job accumulation when Redis is down
             enableReadyCheck: true,

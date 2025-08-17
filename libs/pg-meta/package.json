@@ -1,19 +1,19 @@
 {
-    "name": "@nuvix/pg-meta",
-    "version": "1.0.0",
-    "private": true,
-    "scripts": {
-        "dev": "tsup --watch",
-        "lint": "eslint src/**/*.ts --fix",
-        "test": "jest",
-        "typecheck": "tsc --noEmit"
-    },
-    "dependencies": {},
-    "devDependencies": {
-        "@types/node": "^22.15.30",
-        "typescript": "^5.8.3",
-        "tsup": "^8.5.0",
-        "pg": "^8.16.0",
-        "@types/pg": "^8.15.4"
-    }
+  "name": "@nuvix/pg-meta",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsup --watch",
+    "lint": "eslint src/**/*.ts --fix",
+    "test": "jest",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "typescript": "^5.8.3",
+    "tsup": "^8.5.0",
+    "pg": "^8.16.0",
+    "@types/pg": "^8.15.4"
+  }
 }

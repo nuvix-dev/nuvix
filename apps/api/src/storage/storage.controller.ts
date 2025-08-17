@@ -33,9 +33,7 @@ import { UpdateFileDTO } from './DTO/file.dto';
 import { CreateBucketDTO, UpdateBucketDTO } from './DTO/bucket.dto';
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor';
 import { ParseDuplicatePipe } from '@nuvix/core/pipes/duplicate.pipe';
-import {
-  type SavedMultipartFile,
-} from '@fastify/multipart';
+import { type SavedMultipartFile } from '@fastify/multipart';
 import { User } from '@nuvix/core/decorators/project-user.decorator';
 import { Exception } from '@nuvix/core/extend/exception';
 

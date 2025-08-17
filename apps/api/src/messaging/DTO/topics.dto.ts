@@ -29,4 +29,4 @@ export class CreateTopicDTO {
 
 export class UpdateTopicDTO extends PartialType(
   OmitType(CreateTopicDTO, ['topicId']),
-) { }
+) {}

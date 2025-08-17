@@ -100,7 +100,10 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
   /**
    *apply select nodes to QueryBuilder select clauses
    */
-  applySelect(selectNodes: SelectNode[] = [], queryBuilder = this.qb): QueryBuilder {
+  applySelect(
+    selectNodes: SelectNode[] = [],
+    queryBuilder = this.qb,
+  ): QueryBuilder {
     if (!selectNodes || selectNodes.length === 0) {
       return queryBuilder;
     }

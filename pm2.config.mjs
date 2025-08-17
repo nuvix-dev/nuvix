@@ -2,7 +2,7 @@ import { parse } from 'dotenv';
 import { existsSync, readFileSync } from 'fs';
 import { resolve } from 'path';
 
-const loadEnvFile = (envPath) => {
+const loadEnvFile = envPath => {
   const fullPath = resolve(process.cwd(), envPath);
   try {
     if (existsSync(fullPath)) {
@@ -30,7 +30,7 @@ export const apps = [
     instances: 2, // `max` Scale to use all available CPUs
     exec_mode: 'cluster',
     autorestart: true,
-    interpreter: "bun",
+    interpreter: 'bun',
     max_memory_restart: '2G', // Restart if memory exceeds 2GB
     env: {
       ...extra,
@@ -48,7 +48,7 @@ export const apps = [
     watch: false,
     instances: 1,
     exec_mode: 'fork',
-    interpreter: "bun",
+    interpreter: 'bun',
     autorestart: true,
     max_memory_restart: '1G', // Restart if memory exceeds 1GB
     env: {

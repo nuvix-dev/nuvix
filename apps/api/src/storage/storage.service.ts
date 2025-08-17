@@ -64,7 +64,10 @@ export class StorageService {
   /**
    * Create bucket.
    */
-  async createBucket(db: Database, { bucketId, permissions: _perms, ...data }: CreateBucketDTO) {
+  async createBucket(
+    db: Database,
+    { bucketId, permissions: _perms, ...data }: CreateBucketDTO,
+  ) {
     bucketId = bucketId === 'unique()' ? ID.unique() : bucketId;
     const permissions = Permission.aggregate(_perms ?? []);
 
@@ -78,11 +81,9 @@ export class StorageService {
       }
 
       const attributes = filesCollection.attributes.map(
-        (attribute) => new Doc(attribute),
+        attribute => new Doc(attribute),
       );
-      const indexes = filesCollection.indexes?.map(
-        (index) => new Doc(index),
-      );
+      const indexes = filesCollection.indexes?.map(index => new Doc(index));
 
       await db.createDocument(
         'buckets',
@@ -126,8 +127,7 @@ export class StorageService {
   async getBucket(db: Database, id: string) {
     const bucket = await db.getDocument('buckets', id);
 
-    if (bucket.empty())
-      throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
+    if (bucket.empty()) throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
 
     return bucket;
   }
@@ -146,14 +146,11 @@ export class StorageService {
       input.permissions ?? bucket.getPermissions(),
     )!;
     const maximumFileSize =
-      input.maximumFileSize ??
-      bucket.get('maximumFileSize', APP_LIMIT_COUNT);
+      input.maximumFileSize ?? bucket.get('maximumFileSize', APP_LIMIT_COUNT);
     const allowedFileExtensions =
-      input.allowedFileExtensions ??
-      bucket.get('allowedFileExtensions', []);
+      input.allowedFileExtensions ?? bucket.get('allowedFileExtensions', []);
     const enabled = input.enabled ?? bucket.get('enabled', true);
-    const encryption =
-      input.encryption ?? bucket.get('encryption', true);
+    const encryption = input.encryption ?? bucket.get('encryption', true);
     const antivirus = input.antivirus ?? bucket.get('antivirus', true);
 
     const updatedBucket = await db.updateDocument(
@@ -237,7 +234,10 @@ export class StorageService {
     }
 
     const filterQueries = Query.groupByType(queries).filters;
-    const files = db.find(this.getCollectionName(bucket.getSequence()), queries);
+    const files = db.find(
+      this.getCollectionName(bucket.getSequence()),
+      queries,
+    );
 
     const total = await db.count(
       this.getCollectionName(bucket.getSequence()),
@@ -297,8 +297,8 @@ export class StorageService {
     if (!permissions || permissions.length === 0) {
       permissions = user.getId()
         ? allowedPermissions.map(permission =>
-          new Permission(permission, Role.user(user.getId())).toString(),
-        )
+            new Permission(permission, Role.user(user.getId())).toString(),
+          )
         : [];
     }
 
@@ -358,7 +358,9 @@ export class StorageService {
       const [, start, end, size] = match.map(Number);
       const headerFileId = request.headers['x-nuvix-id'];
       if (headerFileId) {
-        fileId = (Array.isArray(headerFileId) ? headerFileId[0] : headerFileId) as string;
+        fileId = (
+          Array.isArray(headerFileId) ? headerFileId[0] : headerFileId
+        ) as string;
         if (!/^(?:[a-zA-Z0-9][a-zA-Z0-9._-]{0,35})$/.test(fileId)) {
           throw new Exception(
             Exception.INVALID_PARAMS,
@@ -368,8 +370,12 @@ export class StorageService {
       }
 
       if (
-        (start === undefined || end === undefined || size === undefined)
-        || (start > end || end >= size || start < 0)
+        start === undefined ||
+        end === undefined ||
+        size === undefined ||
+        start > end ||
+        end >= size ||
+        start < 0
       ) {
         throw new Exception(
           Exception.STORAGE_INVALID_CONTENT_RANGE,
@@ -384,10 +390,7 @@ export class StorageService {
       finalFileSize = size;
     }
 
-    const allowedFileExtensions = bucket.get(
-      'allowedFileExtensions',
-      [],
-    );
+    const allowedFileExtensions = bucket.get('allowedFileExtensions', []);
     const fileExtValidator = new FileExt(allowedFileExtensions);
     if (allowedFileExtensions.length && !fileExtValidator.isValid(fileName)) {
       throw new Exception(
@@ -566,12 +569,19 @@ export class StorageService {
     }
 
     // TODO: i think i should recheck the logic
-    const file =
-      (fileSecurity && !valid
-        ? await db.getDocument(this.getCollectionName(bucket.getSequence()), fileId)
+    const file = (
+      fileSecurity && !valid
+        ? await db.getDocument(
+            this.getCollectionName(bucket.getSequence()),
+            fileId,
+          )
         : await Authorization.skip(() =>
-          db.getDocument(this.getCollectionName(bucket.getSequence()), fileId),
-        )) as FilesDoc;
+            db.getDocument(
+              this.getCollectionName(bucket.getSequence()),
+              fileId,
+            ),
+          )
+    ) as FilesDoc;
 
     if (file.empty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -629,11 +639,17 @@ export class StorageService {
 
     const file =
       fileSecurity && !valid
-        ? await db.getDocument(this.getCollectionName(bucket.getSequence()), fileId)
+        ? await db.getDocument(
+            this.getCollectionName(bucket.getSequence()),
+            fileId,
+          )
         : await Authorization.skip(
-          async () =>
-            await db.getDocument(this.getCollectionName(bucket.getSequence()), fileId),
-        );
+            async () =>
+              await db.getDocument(
+                this.getCollectionName(bucket.getSequence()),
+                fileId,
+              ),
+          );
 
     if (file.empty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -768,10 +784,16 @@ export class StorageService {
 
     const file =
       fileSecurity && !valid
-        ? await db.getDocument(this.getCollectionName(bucket.getSequence()), fileId)
+        ? await db.getDocument(
+            this.getCollectionName(bucket.getSequence()),
+            fileId,
+          )
         : await Authorization.skip(() =>
-          db.getDocument(this.getCollectionName(bucket.getSequence()), fileId),
-        );
+            db.getDocument(
+              this.getCollectionName(bucket.getSequence()),
+              fileId,
+            ),
+          );
 
     if (file.empty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -802,7 +824,10 @@ export class StorageService {
         throw new Exception(Exception.STORAGE_INVALID_RANGE);
       }
 
-      const [rangeStart, rangeEnd] = range.split('-').map(Number) as [number, number];
+      const [rangeStart, rangeEnd] = range.split('-').map(Number) as [
+        number,
+        number,
+      ];
       start = rangeStart;
       end = rangeEnd || end;
 
@@ -900,10 +925,16 @@ export class StorageService {
 
     const file =
       fileSecurity && !valid
-        ? await db.getDocument(this.getCollectionName(bucket.getSequence()), fileId)
+        ? await db.getDocument(
+            this.getCollectionName(bucket.getSequence()),
+            fileId,
+          )
         : await Authorization.skip(() =>
-          db.getDocument(this.getCollectionName(bucket.getSequence()), fileId),
-        );
+            db.getDocument(
+              this.getCollectionName(bucket.getSequence()),
+              fileId,
+            ),
+          );
 
     if (file.empty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -934,7 +965,10 @@ export class StorageService {
         throw new Exception(Exception.STORAGE_INVALID_RANGE);
       }
 
-      const [rangeStart, rangeEnd] = range.split('-').map(Number) as [number, number];
+      const [rangeStart, rangeEnd] = range.split('-').map(Number) as [
+        number,
+        number,
+      ];
       start = rangeStart;
       end = rangeEnd || end;
 
@@ -1183,7 +1217,11 @@ export class StorageService {
       );
     } else {
       return await Authorization.skip(() =>
-        db.updateDocument(this.getCollectionName(bucket.getSequence()), fileId, file),
+        db.updateDocument(
+          this.getCollectionName(bucket.getSequence()),
+          fileId,
+          file,
+        ),
       );
     }
   }
@@ -1234,9 +1272,7 @@ export class StorageService {
     const filePath = file.get('path');
     let deviceDeleted = false;
 
-    if (
-      file.get('chunksTotal') !== file.get('chunksUploaded')
-    ) {
+    if (file.get('chunksTotal') !== file.get('chunksUploaded')) {
       deviceDeleted = await deviceForFiles.abort(
         filePath,
         file.get('metadata', {})['uploadId'] ?? '',
@@ -1248,14 +1284,17 @@ export class StorageService {
     if (deviceDeleted) {
       const deleted =
         fileSecurity && !valid
-          ? await db.deleteDocument(this.getCollectionName(bucket.getSequence()), fileId)
+          ? await db.deleteDocument(
+              this.getCollectionName(bucket.getSequence()),
+              fileId,
+            )
           : await Authorization.skip(
-            async () =>
-              await db.deleteDocument(
-                this.getCollectionName(bucket.getSequence()),
-                fileId,
-              ),
-          );
+              async () =>
+                await db.deleteDocument(
+                  this.getCollectionName(bucket.getSequence()),
+                  fileId,
+                ),
+            );
 
       if (!deleted) {
         throw new Exception(
@@ -1341,7 +1380,11 @@ export class StorageService {
   /**
    * Get Storage Usage of bucket.
    */
-  async getBucketStorageUsage(db: Database, bucketId: string, range: string = '7d') {
+  async getBucketStorageUsage(
+    db: Database,
+    bucketId: string,
+    range: string = '7d',
+  ) {
     const bucket = await db.getDocument('buckets', bucketId);
 
     if (bucket.empty()) {

@@ -16,7 +16,8 @@ export class CreateFolderDTO {
   @IsString()
   @Length(1, 255)
   @Matches(/^[a-zA-Z0-9-_]+$/, {
-    message: 'Folder name can only contain letters, numbers, dashes, and underscores',
+    message:
+      'Folder name can only contain letters, numbers, dashes, and underscores',
   })
   name!: string;
 
@@ -45,7 +46,8 @@ export class UploadFileDTO {
   @IsString()
   @Length(1, 255)
   @Matches(/^[a-zA-Z0-9-_]+$/, {
-    message: 'File name can only contain letters, numbers, dashes, and underscores',
+    message:
+      'File name can only contain letters, numbers, dashes, and underscores',
   })
   name!: string;
 

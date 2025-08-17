@@ -29,27 +29,13 @@
     /* === Paths === */
     "baseUrl": "./",
     "paths": {
-      "@nuvix/core": [
-        "libs/core/src"
-      ],
-      "@nuvix/core/*": [
-        "libs/core/src/*"
-      ],
-      "@nuvix/pg-meta": [
-        "libs/pg-meta/src"
-      ],
-      "@nuvix/pg-meta/*": [
-        "libs/pg-meta/src/*"
-      ],
-      "@nuvix/utils": [
-        "libs/utils/src"
-      ],
-      "@nuvix/utils/types": [
-        "libs/utils/types"
-      ],
-      "@nuvix/utils/*": [
-        "libs/utils/src/*"
-      ]
+      "@nuvix/core": ["libs/core/src"],
+      "@nuvix/core/*": ["libs/core/src/*"],
+      "@nuvix/pg-meta": ["libs/pg-meta/src"],
+      "@nuvix/pg-meta/*": ["libs/pg-meta/src/*"],
+      "@nuvix/utils": ["libs/utils/src"],
+      "@nuvix/utils/types": ["libs/utils/types"],
+      "@nuvix/utils/*": ["libs/utils/src/*"]
     }
   }
 }

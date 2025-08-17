@@ -1,17 +1,16 @@
 {
-    "name": "@nuvix/core",
-    "version": "1.0.0",
-    "private": true,
-
-    "scripts": {
-        "dev": "tsup --watch",
-        "lint": "eslint src/**/*.ts --fix",
-        "test": "jest",
-        "typecheck": "tsc --noEmit"
-    },
-    "devDependencies": {
-        "@types/node": "^22.15.30",
-        "typescript": "^5.8.3",
-        "tsup": "^8.5.0"
-    }
+  "name": "@nuvix/core",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsup --watch",
+    "lint": "eslint src/**/*.ts --fix",
+    "test": "jest",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.30",
+    "typescript": "^5.8.3",
+    "tsup": "^8.5.0"
+  }
 }

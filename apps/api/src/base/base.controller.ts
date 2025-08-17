@@ -7,7 +7,10 @@ import { Queue } from 'bullmq';
 
 @Controller({ version: ['1'] })
 export class BaseController {
-  constructor(@InjectQueue(QueueFor.MAILS) private readonly mailQueue: Queue<MailQueueOptions, unknown, MailJob>) {}
+  constructor(
+    @InjectQueue(QueueFor.MAILS)
+    private readonly mailQueue: Queue<MailQueueOptions, unknown, MailJob>,
+  ) {}
 
   @All('health/version')
   @Public()

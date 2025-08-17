@@ -36,7 +36,10 @@ import { Exception } from '@nuvix/core/extend/exception';
 import usageConfig from '@nuvix/core/config/usage';
 
 // DTOs
-import type { CreateCollectionDTO, UpdateCollectionDTO } from './DTO/collection.dto';
+import type {
+  CreateCollectionDTO,
+  UpdateCollectionDTO,
+} from './DTO/collection.dto';
 import type {
   CreateBooleanAttributeDTO,
   CreateDatetimeAttributeDTO,
@@ -62,8 +65,18 @@ import type {
 import type { CreateDocumentDTO, UpdateDocumentDTO } from './DTO/document.dto';
 import type { CreateIndexDTO } from './DTO/indexes.dto';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { CollectionsJob, CollectionsJobData } from '@nuvix/core/resolvers/queues';
-import type { Attributes, AttributesDoc, CollectionsDoc, Indexes, IndexesDoc, ProjectsDoc } from '@nuvix/utils/types';
+import {
+  CollectionsJob,
+  CollectionsJobData,
+} from '@nuvix/core/resolvers/queues';
+import type {
+  Attributes,
+  AttributesDoc,
+  CollectionsDoc,
+  Indexes,
+  IndexesDoc,
+  ProjectsDoc,
+} from '@nuvix/utils/types';
 
 @Injectable()
 export class CollectionsService {
@@ -71,7 +84,11 @@ export class CollectionsService {
 
   constructor(
     @InjectQueue(QueueFor.COLLECTIONS)
-    private readonly collectionsQueue: Queue<CollectionsJobData, unknown, CollectionsJob>,
+    private readonly collectionsQueue: Queue<
+      CollectionsJobData,
+      unknown,
+      CollectionsJob
+    >,
     private readonly event: EventEmitter2,
   ) {}
 
@@ -106,12 +123,15 @@ export class CollectionsService {
         }),
       );
 
-      const collection = await db.getDocument(SchemaMeta.collections, collectionId);
+      const collection = await db.getDocument(
+        SchemaMeta.collections,
+        collectionId,
+      );
 
       await db.createCollection({
         id: collection.getId(),
         permissions,
-        documentSecurity, // TODO: we will support enabled directly in lib, so we will pass that here also 
+        documentSecurity, // TODO: we will support enabled directly in lib, so we will pass that here also
       });
 
       this.event.emit(
@@ -140,7 +160,11 @@ export class CollectionsService {
 
     const filterQueries = Query.groupByType(queries).filters;
     const collections = await db.find(SchemaMeta.collections, queries);
-    const total = await db.count(SchemaMeta.collections, filterQueries, APP_LIMIT_COUNT);
+    const total = await db.count(
+      SchemaMeta.collections,
+      filterQueries,
+      APP_LIMIT_COUNT,
+    );
 
     return {
       collections,
@@ -152,7 +176,10 @@ export class CollectionsService {
    * Find one collection.
    */
   async getCollection(db: Database, collectionId: string) {
-    const collection = await db.getDocument(SchemaMeta.collections, collectionId);
+    const collection = await db.getDocument(
+      SchemaMeta.collections,
+      collectionId,
+    );
 
     if (collection.empty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -187,14 +214,17 @@ export class CollectionsService {
     const { name, documentSecurity } = input;
     let { permissions, enabled } = input;
 
-    const collection = await db.getDocument(SchemaMeta.collections, collectionId);
+    const collection = await db.getDocument(
+      SchemaMeta.collections,
+      collectionId,
+    );
     if (collection.empty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     }
 
     if (permissions) {
       permissions = Permission.aggregate(permissions) ?? [];
-    };
+    }
     enabled = enabled ?? collection.get('enabled');
 
     const updatedCollection = await db.updateDocument(
@@ -208,14 +238,12 @@ export class CollectionsService {
         .set('search', `${collectionId} ${name}`),
     );
 
-    await db.updateCollection(
-      {
-        id: collection.getId(),
-        permissions: permissions ?? collection.get('$permissions'),
-        documentSecurity: documentSecurity ?? collection.get('documentSecurity'),
-        // TODO: same here like in create collection
-      }
-    );
+    await db.updateCollection({
+      id: collection.getId(),
+      permissions: permissions ?? collection.get('$permissions'),
+      documentSecurity: documentSecurity ?? collection.get('documentSecurity'),
+      // TODO: same here like in create collection
+    });
 
     this.event.emit(
       `schema.${db.schema}.collection.${collectionId}.updated`,
@@ -232,7 +260,10 @@ export class CollectionsService {
     collectionId: string,
     project: ProjectsDoc,
   ) {
-    const collection = await db.getDocument(SchemaMeta.collections, collectionId);
+    const collection = await db.getDocument(
+      SchemaMeta.collections,
+      collectionId,
+    );
 
     if (collection.empty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -260,7 +291,10 @@ export class CollectionsService {
    * Get attributes for a collection.
    */
   async getAttributes(db: Database, collectionId: string, queries: Query[]) {
-    const collection = await db.getDocument(SchemaMeta.collections, collectionId);
+    const collection = await db.getDocument(
+      SchemaMeta.collections,
+      collectionId,
+    );
 
     if (collection.empty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -271,7 +305,11 @@ export class CollectionsService {
 
     const filterQueries = Query.groupByType(queries).filters;
     const attributes = await db.find(SchemaMeta.attributes, queries);
-    const total = await db.count(SchemaMeta.attributes, filterQueries, APP_LIMIT_COUNT);
+    const total = await db.count(
+      SchemaMeta.attributes,
+      filterQueries,
+      APP_LIMIT_COUNT,
+    );
 
     return {
       attributes,
@@ -283,24 +321,19 @@ export class CollectionsService {
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
     const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
 
-    const collection = await Authorization.skip(
-      () => db.getDocument(SchemaMeta.collections, collectionId),
+    const collection = await Authorization.skip(() =>
+      db.getDocument(SchemaMeta.collections, collectionId),
     );
 
     if (
       collection.empty() ||
-      (!collection.get('enabled', false) &&
-        !isAPIKey &&
-        !isPrivilegedUser)
+      (!collection.get('enabled', false) && !isAPIKey && !isPrivilegedUser)
     ) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
-    } // TODO: skip enabled check in lib 
+    } // TODO: skip enabled check in lib
 
     const filterQueries = Query.groupByType(queries).filters;
-    const documents = await db.find(
-      collection.getId(),
-      queries,
-    );
+    const documents = await db.find(collection.getId(), queries);
     const total = await db.count(
       collection.getId(),
       filterQueries,
@@ -482,7 +515,11 @@ export class CollectionsService {
       );
     }
 
-    const validator = new RangeValidator(minValue, maxValue, NumericType.INTEGER);
+    const validator = new RangeValidator(
+      minValue,
+      maxValue,
+      NumericType.INTEGER,
+    );
 
     if (defaultValue !== null && !validator.$valid(defaultValue)) {
       throw new Exception(
@@ -643,7 +680,10 @@ export class CollectionsService {
     const { key, type, twoWay, twoWayKey, onDelete, relatedCollectionId } =
       input;
 
-    const collection = await db.getDocument(SchemaMeta.collections, collectionId);
+    const collection = await db.getDocument(
+      SchemaMeta.collections,
+      collectionId,
+    );
     if (collection.empty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     }
@@ -678,9 +718,9 @@ export class CollectionsService {
 
       if (
         attribute.get('options')?.['twoWayKey']?.toLowerCase() ===
-        twoWayKey?.toLowerCase() &&
+          twoWayKey?.toLowerCase() &&
         attribute.get('options')?.['relatedCollection'] ===
-        relatedCollection.getId()
+          relatedCollection.getId()
       ) {
         throw new Exception(
           Exception.ATTRIBUTE_ALREADY_EXISTS,
@@ -693,9 +733,9 @@ export class CollectionsService {
       if (
         type === RelationType.ManyToMany &&
         attribute.get('options')?.['relationType'] ===
-        RelationType.ManyToMany &&
+          RelationType.ManyToMany &&
         attribute.get('options')?.['relatedCollection'] ===
-        relatedCollection.getId()
+          relatedCollection.getId()
       ) {
         throw new Exception(
           Exception.ATTRIBUTE_ALREADY_EXISTS,
@@ -728,7 +768,10 @@ export class CollectionsService {
    * Get an attribute.
    */
   async getAttribute(db: Database, collectionId: string, key: string) {
-    const collection = await db.getDocument(SchemaMeta.collections, collectionId);
+    const collection = await db.getDocument(
+      SchemaMeta.collections,
+      collectionId,
+    );
 
     if (collection.empty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -1038,7 +1081,10 @@ export class CollectionsService {
     const defaultValue = attribute.get('default', null);
     const options = attribute.get('options', {});
 
-    const collection = await db.getDocument(SchemaMeta.collections, collectionId);
+    const collection = await db.getDocument(
+      SchemaMeta.collections,
+      collectionId,
+    );
 
     if (collection.empty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -1159,9 +1205,7 @@ export class CollectionsService {
       }
 
       db.purgeCachedDocument(SchemaMeta.collections, relatedCollection.getId());
-      db.purgeCachedCollection(
-        relatedCollection.getId(),
-      );
+      db.purgeCachedCollection(relatedCollection.getId());
     }
 
     await this.collectionsQueue.add(CollectionsJob.CREATE_ATTRIBUTE, {
@@ -1206,7 +1250,10 @@ export class CollectionsService {
     options: Record<string, any>;
     newKey?: string;
   }) {
-    const collection = await db.getDocument(SchemaMeta.collections, collectionId);
+    const collection = await db.getDocument(
+      SchemaMeta.collections,
+      collectionId,
+    );
 
     if (collection.empty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -1255,9 +1302,7 @@ export class CollectionsService {
       );
     }
 
-    attribute
-      .set('default', defaultValue)
-      .set('required', required);
+    attribute.set('default', defaultValue).set('required', required);
 
     if (size !== undefined && size !== null) {
       attribute.set('size', size);
@@ -1267,8 +1312,10 @@ export class CollectionsService {
       case AttributeFormat.INTEGER:
       case AttributeFormat.FLOAT:
         if (
-          min !== undefined && max !== undefined
-          && min !== null && max !== null
+          min !== undefined &&
+          max !== undefined &&
+          min !== null &&
+          max !== null
         ) {
           if (min > max) {
             throw new Exception(
@@ -1278,8 +1325,7 @@ export class CollectionsService {
           }
 
           const validator =
-            attribute.get('format') ===
-              AttributeFormat.INTEGER
+            attribute.get('format') === AttributeFormat.INTEGER
               ? new RangeValidator(min, max, NumericType.INTEGER)
               : new RangeValidator(min, max, NumericType.FLOAT);
 
@@ -1337,7 +1383,7 @@ export class CollectionsService {
         collectionId: collection.getId(),
         id: key,
         newKey,
-        onDelete: primaryDocumentOptions['onDelete']
+        onDelete: primaryDocumentOptions['onDelete'],
       });
 
       if (primaryDocumentOptions['twoWay']) {
@@ -1348,7 +1394,10 @@ export class CollectionsService {
 
         const relatedAttribute = await db.getDocument(
           SchemaMeta.attributes,
-          this.getRelatedAttrId(relatedCollection.getSequence(), primaryDocumentOptions['twoWayKey']),
+          this.getRelatedAttrId(
+            relatedCollection.getSequence(),
+            primaryDocumentOptions['twoWayKey'],
+          ),
         );
 
         if (newKey && newKey !== key) {
@@ -1366,7 +1415,10 @@ export class CollectionsService {
           relatedAttribute,
         );
 
-        db.purgeCachedDocument(SchemaMeta.collections, relatedCollection.getId());
+        db.purgeCachedDocument(
+          SchemaMeta.collections,
+          relatedCollection.getId(),
+        );
       }
     } else {
       try {
@@ -1427,7 +1479,10 @@ export class CollectionsService {
     key: string,
     project: ProjectsDoc,
   ) {
-    const collection = await db.getDocument(SchemaMeta.collections, collectionId);
+    const collection = await db.getDocument(
+      SchemaMeta.collections,
+      collectionId,
+    );
 
     if (collection.empty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -1468,7 +1523,10 @@ export class CollectionsService {
 
         const relatedAttribute = await db.getDocument(
           SchemaMeta.attributes,
-          this.getRelatedAttrId(relatedCollection.getSequence(), options['twoWayKey']),
+          this.getRelatedAttrId(
+            relatedCollection.getSequence(),
+            options['twoWayKey'],
+          ),
         );
         if (relatedAttribute.empty()) {
           throw new Exception(Exception.ATTRIBUTE_NOT_FOUND);
@@ -1482,10 +1540,11 @@ export class CollectionsService {
           );
         }
 
-        db.purgeCachedDocument(SchemaMeta.collections, options['relatedCollection']);
-        db.purgeCachedCollection(
-          relatedCollection.getId(),
+        db.purgeCachedDocument(
+          SchemaMeta.collections,
+          options['relatedCollection'],
         );
+        db.purgeCachedCollection(relatedCollection.getId());
       }
     }
 
@@ -1510,7 +1569,10 @@ export class CollectionsService {
   ) {
     const { key, type, attributes, orders } = input;
 
-    const collection = await db.getDocument(SchemaMeta.collections, collectionId);
+    const collection = await db.getDocument(
+      SchemaMeta.collections,
+      collectionId,
+    );
 
     if (collection.empty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -1530,9 +1592,9 @@ export class CollectionsService {
       );
     }
 
-    const oldAttributes = (collection
-      .get('attributes') as AttributesDoc[])
-      .map((a) => a.toObject());
+    const oldAttributes = (collection.get('attributes') as AttributesDoc[]).map(
+      a => a.toObject(),
+    );
 
     oldAttributes.push(
       {
@@ -1555,9 +1617,7 @@ export class CollectionsService {
     );
 
     for (const [i, attribute] of attributes.entries()) {
-      const attributeIndex = oldAttributes.findIndex(
-        (a) => a.key === attribute,
-      );
+      const attributeIndex = oldAttributes.findIndex(a => a.key === attribute);
 
       if (attributeIndex === -1) {
         throw new Exception(
@@ -1635,7 +1695,10 @@ export class CollectionsService {
    * Get all indexes.
    */
   async getIndexes(db: Database, collectionId: string, queries: Query[]) {
-    const collection = await db.getDocument(SchemaMeta.collections, collectionId);
+    const collection = await db.getDocument(
+      SchemaMeta.collections,
+      collectionId,
+    );
 
     if (collection.empty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -1646,7 +1709,11 @@ export class CollectionsService {
 
     const filterQueries = Query.groupByType(queries).filters;
     const indexes = await db.find(SchemaMeta.indexes, queries);
-    const total = await db.count(SchemaMeta.indexes, filterQueries, APP_LIMIT_COUNT);
+    const total = await db.count(
+      SchemaMeta.indexes,
+      filterQueries,
+      APP_LIMIT_COUNT,
+    );
 
     return {
       indexes,
@@ -1658,13 +1725,17 @@ export class CollectionsService {
    * Get an index.
    */
   async getIndex(db: Database, collectionId: string, key: string) {
-    const collection = await db.getDocument(SchemaMeta.collections, collectionId);
+    const collection = await db.getDocument(
+      SchemaMeta.collections,
+      collectionId,
+    );
 
     if (collection.empty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     }
-    const index = collection.findWhere('indexes',
-      (i: IndexesDoc) => i.get('key') === key
+    const index = collection.findWhere(
+      'indexes',
+      (i: IndexesDoc) => i.get('key') === key,
     );
 
     if (!index) {
@@ -1683,7 +1754,10 @@ export class CollectionsService {
     key: string,
     project: ProjectsDoc,
   ) {
-    const collection = await db.getDocument(SchemaMeta.collections, collectionId);
+    const collection = await db.getDocument(
+      SchemaMeta.collections,
+      collectionId,
+    );
 
     if (collection.empty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
@@ -1731,18 +1805,16 @@ export class CollectionsService {
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
     const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
 
-    const collection = await Authorization.skip(
-      () => db.getDocument(SchemaMeta.collections, collectionId),
+    const collection = await Authorization.skip(() =>
+      db.getDocument(SchemaMeta.collections, collectionId),
     );
 
     if (
       collection.empty() ||
-      (!collection.get('enabled', false) &&
-        !isAPIKey &&
-        !isPrivilegedUser)
+      (!collection.get('enabled', false) && !isAPIKey && !isPrivilegedUser)
     ) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
-    } // TODO: disbale check is lib 
+    } // TODO: disbale check is lib
 
     const allowedPermissions = [
       PermissionType.Read,
@@ -1769,10 +1841,7 @@ export class CollectionsService {
       document: Doc,
       permission: PermissionType,
     ) => {
-      const documentSecurity = collection.get(
-        'documentSecurity',
-        false,
-      );
+      const documentSecurity = collection.get('documentSecurity', false);
       const validator = new Authorization(permission);
       const valid = validator.$valid(
         collection.getPermissionsByType(permission),
@@ -1829,15 +1898,13 @@ export class CollectionsService {
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
     const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
 
-    const collection = await Authorization.skip(
-      () => db.getDocument(SchemaMeta.collections, collectionId),
+    const collection = await Authorization.skip(() =>
+      db.getDocument(SchemaMeta.collections, collectionId),
     );
 
     if (
       collection.empty() ||
-      (!collection.get('enabled', false) &&
-        !isAPIKey &&
-        !isPrivilegedUser)
+      (!collection.get('enabled', false) && !isAPIKey && !isPrivilegedUser)
     ) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     } // TODO: disbale check in lib
@@ -1891,7 +1958,7 @@ export class CollectionsService {
     { data, permissions }: UpdateDocumentDTO,
     mode: string,
   ) {
-    // TODO: permissions can be undefined and we have to make sure like is user can update permission 
+    // TODO: permissions can be undefined and we have to make sure like is user can update permission
     // based on metadata
     if (!data && !permissions) {
       throw new Exception(Exception.DOCUMENT_MISSING_PAYLOAD);
@@ -1900,25 +1967,19 @@ export class CollectionsService {
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
     const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
 
-    const collection = await Authorization.skip(
-      () => db.getDocument(SchemaMeta.collections, collectionId),
+    const collection = await Authorization.skip(() =>
+      db.getDocument(SchemaMeta.collections, collectionId),
     );
 
     if (
       collection.empty() ||
-      (!collection.get('enabled', false) &&
-        !isAPIKey &&
-        !isPrivilegedUser)
+      (!collection.get('enabled', false) && !isAPIKey && !isPrivilegedUser)
     ) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     } // skip enabled check in lib also
 
-    const document = await Authorization.skip(
-      () =>
-        db.getDocument(
-          collection.getId(),
-          documentId,
-        ),
+    const document = await Authorization.skip(() =>
+      db.getDocument(collection.getId(), documentId),
     );
 
     if (document.empty()) {
@@ -1977,36 +2038,27 @@ export class CollectionsService {
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
     const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
 
-    const collection = await Authorization.skip(
-      () => db.getDocument(SchemaMeta.collections, collectionId),
+    const collection = await Authorization.skip(() =>
+      db.getDocument(SchemaMeta.collections, collectionId),
     );
 
     if (
       collection.empty() ||
-      (!collection.get('enabled', false) &&
-        !isAPIKey &&
-        !isPrivilegedUser)
+      (!collection.get('enabled', false) && !isAPIKey && !isPrivilegedUser)
     ) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     } // TODO: disbale check in lib
 
-    const document = await Authorization.skip(
-      async () =>
-        db.getDocument(
-          collection.getId(),
-          documentId,
-        ),
+    const document = await Authorization.skip(async () =>
+      db.getDocument(collection.getId(), documentId),
     );
 
     if (document.empty()) {
       throw new Exception(Exception.DOCUMENT_NOT_FOUND);
     }
 
-    await db.withRequestTimestamp(timestamp ?? null,
-      async () => db.deleteDocument(
-        collection.getId(),
-        documentId,
-      )
+    await db.withRequestTimestamp(timestamp ?? null, async () =>
+      db.deleteDocument(collection.getId(), documentId),
     );
 
     return;

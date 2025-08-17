@@ -1,4 +1,4 @@
-import {  Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Exception } from '@nuvix/core/extend/exception';
 import { ID } from '@nuvix/core/helper/ID.helper';
 import { PersonalDataValidator } from '@nuvix/core/validators/personal-data.validator';
@@ -37,7 +37,16 @@ import {
 import { CountryResponse, Reader } from 'maxmind';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { CoreService } from '@nuvix/core';
-import type { MembershipsDoc, ProjectsDoc, ProvidersDoc, SessionsDoc, TargetsDoc, Tokens, Users, UsersDoc } from '@nuvix/utils/types';
+import type {
+  MembershipsDoc,
+  ProjectsDoc,
+  ProvidersDoc,
+  SessionsDoc,
+  TargetsDoc,
+  Tokens,
+  Users,
+  UsersDoc,
+} from '@nuvix/utils/types';
 
 @Injectable()
 export class UsersService {
@@ -118,18 +127,18 @@ export class UsersService {
   /**
    * Update user status
    */
-  async updateStatus(db: Database, id: string, { status }: UpdateUserStatusDTO) {
+  async updateStatus(
+    db: Database,
+    id: string,
+    { status }: UpdateUserStatusDTO,
+  ) {
     const user = await db.getDocument('users', id);
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
 
-    return db.updateDocument(
-      'users',
-      user.getId(),
-      user.set('status', status),
-    );
+    return db.updateDocument('users', user.getId(), user.set('status', status));
   }
 
   /**
@@ -192,9 +201,7 @@ export class UsersService {
       const updatedUser = await db.updateDocument(
         'users',
         user.getId(),
-        user
-          .set('password', '')
-          .set('passwordUpdate', new Date()),
+        user.set('password', '').set('passwordUpdate', new Date()),
       );
 
       // TODO: Implement queue for events
@@ -212,8 +219,7 @@ export class UsersService {
       Auth.DEFAULT_ALGO_OPTIONS,
     );
 
-    const historyLimit =
-      project.get('auths', {})['passwordHistory'] ?? 0;
+    const historyLimit = project.get('auths', {})['passwordHistory'] ?? 0;
     let history = user.get('passwordHistory', []);
 
     if (newPassword && historyLimit > 0) {
@@ -222,7 +228,7 @@ export class UsersService {
         user.get('hash'),
         user.get('hashOptions'),
       );
-      if (!await validator.$valid(password)) {
+      if (!(await validator.$valid(password))) {
         throw new Exception(Exception.USER_PASSWORD_RECENTLY_USED);
       }
 
@@ -281,9 +287,8 @@ export class UsersService {
       const updatedUser = await db.updateDocument('users', user.getId(), user);
       const oldTarget = updatedUser.findWhere(
         'targets',
-        (t: TargetsDoc) => t.get('identifier') === oldEmail
+        (t: TargetsDoc) => t.get('identifier') === oldEmail,
       );
-
 
       if (oldTarget && !oldTarget.empty()) {
         if (email.length !== 0) {
@@ -355,7 +360,7 @@ export class UsersService {
       const updatedUser = await db.updateDocument('users', user.getId(), user);
       const oldTarget = updatedUser.findWhere(
         'targets',
-        (t: TargetsDoc) => t.get('identifier') === oldPhone
+        (t: TargetsDoc) => t.get('identifier') === oldPhone,
       );
 
       if (oldTarget && !oldTarget.empty()) {
@@ -461,8 +466,7 @@ export class UsersService {
 
     user.set('mfa', mfa);
 
-    const updatedUser =
-      await db.updateDocument('users', user.getId(), user);
+    const updatedUser = await db.updateDocument('users', user.getId(), user);
 
     // TODO: Implement queue for events
     // queueForEvents.setParam('userId', updatedUser.getId());
@@ -532,7 +536,11 @@ export class UsersService {
   /**
    * Create a new user with md5
    */
-  createWithMd5(db: Database, createUserDTO: CreateUserDTO, project: ProjectsDoc) {
+  createWithMd5(
+    db: Database,
+    createUserDTO: CreateUserDTO,
+    project: ProjectsDoc,
+  ) {
     return this.createUser(
       db,
       'md5',
@@ -649,7 +657,11 @@ export class UsersService {
   /**
    * Create a new target
    */
-  async createTarget(db: Database, userId: string, { targetId, providerId, ...input }: CreateTargetDTO) {
+  async createTarget(
+    db: Database,
+    userId: string,
+    { targetId, providerId, ...input }: CreateTargetDTO,
+  ) {
     targetId = targetId === 'unique()' ? ID.unique() : targetId;
 
     let provider!: ProvidersDoc;
@@ -793,9 +805,7 @@ export class UsersService {
         throw new Exception(Exception.PROVIDER_NOT_FOUND);
       }
 
-      if (
-        provider.get('type') !== target.get('providerType')
-      ) {
+      if (provider.get('type') !== target.get('providerType')) {
         throw new Exception(Exception.PROVIDER_INCORRECT_TYPE);
       }
 
@@ -915,10 +925,7 @@ export class UsersService {
     const memberships = user.get('memberships', []) as MembershipsDoc[];
 
     for (const membership of memberships) {
-      const team = await db.getDocument(
-        'teams',
-        membership.get('teamId'),
-      );
+      const team = await db.getDocument('teams', membership.get('teamId'));
 
       membership
         .set('teamName', team.get('name'))
@@ -947,11 +954,9 @@ export class UsersService {
     return new Doc({
       [MfaType.TOTP]: totp !== null && totp.get('verified', false),
       [MfaType.EMAIL]:
-        user.get('email', false) &&
-        user.get('emailVerification', false),
+        user.get('email', false) && user.get('emailVerification', false),
       [MfaType.PHONE]:
-        user.get('phone', false) &&
-        user.get('phoneVerification', false),
+        user.get('phone', false) && user.get('phoneVerification', false),
     });
   }
 
@@ -1258,8 +1263,7 @@ export class UsersService {
     const record = this.geoDb.get(req.ip);
 
     const duration =
-      project.get('auths', {})['duration'] ??
-      Auth.TOKEN_EXPIRATION_LOGIN_LONG;
+      project.get('auths', {})['duration'] ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG;
     const expire = new Date(Date.now() + duration * 1000);
 
     const session = new Doc<any>({
@@ -1286,9 +1290,7 @@ export class UsersService {
     const countryName = 'Unknown';
 
     const createdSession = await db.createDocument('sessions', session);
-    createdSession
-      .set('secret', secret)
-      .set('countryName', countryName);
+    createdSession.set('secret', secret).set('countryName', countryName);
 
     // TODO: Implement queue for events
     // queueForEvents
@@ -1494,10 +1496,7 @@ export class UsersService {
               Query.equal('identifier', [email]),
             ]);
             if (existingTarget) {
-              createdUser.append(
-                'targets',
-                existingTarget,
-              );
+              createdUser.append('targets', existingTarget);
             }
           } else throw error;
         }
@@ -1529,10 +1528,7 @@ export class UsersService {
               Query.equal('identifier', [phone]),
             ]);
             if (existingTarget) {
-              createdUser.append(
-                'targets',
-                existingTarget,
-              );
+              createdUser.append('targets', existingTarget);
             }
           } else throw error;
         }

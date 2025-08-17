@@ -7,11 +7,7 @@ import {
   SchemaJob,
   SchemaQueueOptions,
 } from '@nuvix/core/resolvers/queues/databases.queue';
-import {
-  INTERNAL_SCHEMAS,
-  QueueFor,
-  Schemas,
-} from '@nuvix/utils';
+import { INTERNAL_SCHEMAS, QueueFor, Schemas } from '@nuvix/utils';
 
 // DTO's
 import { CreateDocumentSchema, CreateSchema } from './DTO/create-schema.dto';

@@ -12,11 +12,7 @@ import {
   UpdateMembershipDTO,
   UpdateMembershipStatusDTO,
 } from './DTO/membership.dto';
-import {
-  APP_EMAIL_TEAM,
-  APP_NAME,
-  QueueFor,
-} from '@nuvix/utils';
+import { APP_EMAIL_TEAM, APP_NAME, QueueFor } from '@nuvix/utils';
 import {
   Authorization,
   AuthorizationException,
@@ -266,7 +262,11 @@ export class TeamsService {
       );
     }
 
-    if (!isPrivilegedUser && !isAppUser && !this.appConfig.getSmtpConfig().host) {
+    if (
+      !isPrivilegedUser &&
+      !isAppUser &&
+      !this.appConfig.getSmtpConfig().host
+    ) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED);
     }
 
@@ -318,11 +318,7 @@ export class TeamsService {
       invitee = await db.findOne('users', [
         Query.equal('phone', [input.phone]),
       ]);
-      if (
-        !invitee.empty() &&
-        email &&
-        invitee.get('email') !== email
-      ) {
+      if (!invitee.empty() && email && invitee.get('email') !== email) {
         throw new Exception(
           Exception.USER_ALREADY_EXISTS,
           'Given phone and email do not match',
@@ -420,8 +416,8 @@ export class TeamsService {
 
     if (isPrivilegedUser || isAppUser) {
       try {
-        membership = await Authorization.skip(
-          () => db.createDocument('memberships', membership),
+        membership = await Authorization.skip(() =>
+          db.createDocument('memberships', membership),
         );
       } catch (error) {
         if (error instanceof DuplicateException) {
@@ -430,9 +426,8 @@ export class TeamsService {
         throw error;
       }
 
-      await Authorization.skip(
-        () =>
-          db.increaseDocumentAttribute('teams', team.getId(), 'total', 1),
+      await Authorization.skip(() =>
+        db.increaseDocumentAttribute('teams', team.getId(), 'total', 1),
       );
       await db.purgeCachedDocument('users', invitee.getId());
     } else {
@@ -463,10 +458,10 @@ export class TeamsService {
         );
         const customTemplate =
           project.get('templates', {})?.[
-          'email.invitation-' + locale.default
+            'email.invitation-' + locale.default
           ] ?? {};
-        const templatePath = this.appConfig.assetConfig.templates
-          + '/email-inner-base.tpl';
+        const templatePath =
+          this.appConfig.assetConfig.templates + '/email-inner-base.tpl';
         const templateSource = fs.readFileSync(templatePath, 'utf8');
         const template = Template.compile(templateSource);
 
@@ -484,10 +479,8 @@ export class TeamsService {
         const smtpEnabled = smtp['enabled'] ?? false;
         const systemConfig = this.appConfig.get('system');
 
-        let senderEmail =
-          systemConfig.emailAddress || APP_EMAIL_TEAM;
-        let senderName =
-          systemConfig.emailName || APP_NAME + ' Server';
+        let senderEmail = systemConfig.emailAddress || APP_EMAIL_TEAM;
+        let senderName = systemConfig.emailName || APP_NAME + ' Server';
         let replyTo = '';
 
         if (smtpEnabled) {
@@ -570,21 +563,16 @@ export class TeamsService {
     const validMemberships = memberships
       .filter(membership => membership.get('userId'))
       .map(async membership => {
-        const user = await db.getDocument(
-          'users',
-          membership.get('userId'),
-        );
+        const user = await db.getDocument('users', membership.get('userId'));
 
         let mfa = user.get('mfa', false);
         if (mfa) {
           const totp = TOTP.getAuthenticatorFromUser(user);
           const totpEnabled = totp && totp.get('verified', false);
           const emailEnabled =
-            user.get('email') &&
-            user.get('emailVerification');
+            user.get('email') && user.get('emailVerification');
           const phoneEnabled =
-            user.get('phone') &&
-            user.get('phoneVerification');
+            user.get('phone') && user.get('phoneVerification');
 
           if (!totpEnabled && !emailEnabled && !phoneEnabled) {
             mfa = false;
@@ -620,19 +608,14 @@ export class TeamsService {
       throw new Exception(Exception.MEMBERSHIP_NOT_FOUND);
     }
 
-    const user = await db.getDocument(
-      'users',
-      membership.get('userId'),
-    );
+    const user = await db.getDocument('users', membership.get('userId'));
 
     let mfa = user.get('mfa', false);
     if (mfa) {
       const totp = TOTP.getAuthenticatorFromUser(user);
       const totpEnabled = totp && totp.get('verified', false);
-      const emailEnabled =
-        user.get('email') && user.get('emailVerification');
-      const phoneEnabled =
-        user.get('phone') && user.get('phoneVerification');
+      const emailEnabled = user.get('email') && user.get('emailVerification');
+      const phoneEnabled = user.get('phone') && user.get('phoneVerification');
 
       if (!totpEnabled && !emailEnabled && !phoneEnabled) {
         mfa = false;
@@ -667,10 +650,7 @@ export class TeamsService {
       throw new Exception(Exception.MEMBERSHIP_NOT_FOUND);
     }
 
-    const user = await db.getDocument(
-      'users',
-      membership.get('userId'),
-    );
+    const user = await db.getDocument('users', membership.get('userId'));
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
@@ -730,10 +710,7 @@ export class TeamsService {
       throw new Exception(Exception.MEMBERSHIP_NOT_FOUND);
     }
 
-    const user = await db.getDocument(
-      'users',
-      membership.get('userId'),
-    );
+    const user = await db.getDocument('users', membership.get('userId'));
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND);
     }

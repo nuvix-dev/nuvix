@@ -46,11 +46,10 @@ export class SchemasService {
           error?.status,
         );
       }
-      throw new Exception(error.type, error.message, error.status)
-        .addDetails({
-          hint: error.details.hint,
-          detail: error.details.detail,
-        });
+      throw new Exception(error.type, error.message, error.status).addDetails({
+        hint: error.details.hint,
+        detail: error.details.detail,
+      });
     }
   }
 
@@ -109,11 +108,10 @@ export class SchemasService {
           error?.status,
         );
       }
-      throw new Exception(error.type, error.message, error.status)
-        .addDetails({
-          hint: error.details.hint,
-          detail: error.details.detail,
-        });
+      throw new Exception(error.type, error.message, error.status).addDetails({
+        hint: error.details.hint,
+        detail: error.details.detail,
+      });
     }
   }
 
@@ -182,11 +180,10 @@ export class SchemasService {
           error?.status,
         );
       }
-      throw new Exception(error.type, error.message, error.status)
-        .addDetails({
-          hint: error.details.hint,
-          detail: error.details.detail,
-        });
+      throw new Exception(error.type, error.message, error.status).addDetails({
+        hint: error.details.hint,
+        detail: error.details.detail,
+      });
     }
   }
 
@@ -224,11 +221,10 @@ export class SchemasService {
           error?.status,
         );
       }
-      throw new Exception(error.type, error.message, error.status)
-        .addDetails({
-          hint: error.details.hint,
-          detail: error.details.detail,
-        });
+      throw new Exception(error.type, error.message, error.status).addDetails({
+        hint: error.details.hint,
+        detail: error.details.detail,
+      });
     }
   }
 
@@ -276,11 +272,10 @@ export class SchemasService {
           error?.status,
         );
       }
-      throw new Exception(error.type, error.message, error.status)
-        .addDetails({
-          hint: error.details.hint,
-          detail: error.details.detail,
-        });
+      throw new Exception(error.type, error.message, error.status).addDetails({
+        hint: error.details.hint,
+        detail: error.details.detail,
+      });
     }
   }
 

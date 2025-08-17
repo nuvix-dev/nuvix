@@ -9,4 +9,4 @@ import { QueueFor } from '@nuvix/utils';
   controllers: [TeamsController],
   providers: [TeamsService],
 })
-export class TeamsModule { }
+export class TeamsModule {}

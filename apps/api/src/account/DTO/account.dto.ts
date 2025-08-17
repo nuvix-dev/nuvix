@@ -29,7 +29,7 @@ export class CreateAccountDTO {
 
 export class UpdatePrefsDTO {
   @IsObject()
-  prefs!: { [key: string]: any; };
+  prefs!: { [key: string]: any };
 }
 
 export class UpdateEmailDTO {

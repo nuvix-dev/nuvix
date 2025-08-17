@@ -11,9 +11,16 @@ services:
     networks:
       - nuvix
     ports:
-      - "3306:3306"
+      - '3306:3306'
     healthcheck:
-      test: [ "CMD", "mariadb-admin", "ping", "--silent", "--password=${APP_DATABASE_PASSWORD}" ]
+      test:
+        [
+          'CMD',
+          'mariadb-admin',
+          'ping',
+          '--silent',
+          '--password=${APP_DATABASE_PASSWORD}',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -22,17 +29,17 @@ services:
   redis:
     image: redis:7.2
     container_name: redis
-    command: [ "redis-server", "/usr/local/etc/redis/redis.conf" ]
+    command: ['redis-server', '/usr/local/etc/redis/redis.conf']
     volumes:
       - ./configs/redis.conf:/usr/local/etc/redis/redis.conf
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - '6379:6379'
     restart: unless-stopped
     networks:
       - nuvix
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: ['CMD', 'redis-cli', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
@@ -44,7 +51,7 @@ services:
       dockerfile: Dockerfile
       target: production
     container_name: nuvix-api
-    command: [ "bun", "dist/apps/nuvix/main.mjs" ]
+    command: ['bun', 'dist/apps/nuvix/main.mjs']
     env_file:
       - .env
       - .env.api
@@ -62,10 +69,10 @@ services:
       - caddy
     restart: unless-stopped
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "5"
+        max-size: '10m'
+        max-file: '5'
 
   console-api:
     build:
@@ -73,7 +80,7 @@ services:
       dockerfile: Dockerfile
       target: production
     container_name: console-api
-    command: [ "bun", "dist/apps/console/main.mjs" ]
+    command: ['bun', 'dist/apps/console/main.mjs']
     env_file:
       - .env
       - .env.console
@@ -91,18 +98,18 @@ services:
       - caddy
     restart: unless-stopped
     logging:
-      driver: "json-file"
+      driver: 'json-file'
       options:
-        max-size: "10m"
-        max-file: "5"
+        max-size: '10m'
+        max-file: '5'
 
   caddy:
     image: caddy:2
     container_name: nuvix-caddy
     restart: unless-stopped
     ports:
-      - "443:443"
-      - "443:443/udp"
+      - '443:443'
+      - '443:443/udp'
     volumes:
       - ./configs/Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data

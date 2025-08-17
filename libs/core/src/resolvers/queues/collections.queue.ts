@@ -181,21 +181,18 @@ export class CollectionsQueue extends Queue {
               break;
             default:
               if (
-                !(await dbForProject.createAttribute(
-                  collection.getId(),
-                  {
-                    $id: key,
-                    key,
-                    type,
-                    size,
-                    required,
-                    default: defaultValue,
-                    array,
-                    format,
-                    formatOptions,
-                    filters,
-                  },
-                ))
+                !(await dbForProject.createAttribute(collection.getId(), {
+                  $id: key,
+                  key,
+                  type,
+                  size,
+                  required,
+                  default: defaultValue,
+                  array,
+                  format,
+                  formatOptions,
+                  filters,
+                }))
               ) {
                 throw new DatabaseException('Failed to create Attribute');
               }
@@ -239,7 +236,10 @@ export class CollectionsQueue extends Queue {
           );
         }
 
-        await dbForProject.purgeCachedDocument(SchemaMeta.collections, collectionId);
+        await dbForProject.purgeCachedDocument(
+          SchemaMeta.collections,
+          collectionId,
+        );
       });
     } finally {
       await this.coreService.releaseDatabaseClient(client);
@@ -321,16 +321,16 @@ export class CollectionsQueue extends Queue {
                 throw new DatabaseException('Failed to delete Relationship');
               }
             } else if (
-              !(await dbForProject.deleteAttribute(
-                collection.getId(),
-                key,
-              ))
+              !(await dbForProject.deleteAttribute(collection.getId(), key))
             ) {
               throw new DatabaseException('Failed to delete Attribute');
             }
           }
 
-          await dbForProject.deleteDocument(SchemaMeta.attributes, attribute.getId());
+          await dbForProject.deleteDocument(
+            SchemaMeta.attributes,
+            attribute.getId(),
+          );
 
           if (relatedAttribute && !relatedAttribute.empty()) {
             await dbForProject.deleteDocument(
@@ -376,7 +376,10 @@ export class CollectionsQueue extends Queue {
             if (orders[found]) orders.splice(found, 1);
 
             if (attributes.length === 0) {
-              await dbForProject.deleteDocument(SchemaMeta.indexes, index.getId());
+              await dbForProject.deleteDocument(
+                SchemaMeta.indexes,
+                index.getId(),
+              );
             } else {
               index.set('attributes', attributes);
               index.set('orders', orders);
@@ -386,9 +389,9 @@ export class CollectionsQueue extends Queue {
                 if (
                   existing.get('key') !== index.get('key') &&
                   existing.get('attributes').toString() ===
-                  index.get('attributes').toString() &&
+                    index.get('attributes').toString() &&
                   existing.get('orders').toString() ===
-                  index.get('orders').toString()
+                    index.get('orders').toString()
                 ) {
                   exists = true;
                   break;
@@ -416,10 +419,11 @@ export class CollectionsQueue extends Queue {
           }
         }
 
-        await dbForProject.purgeCachedDocument(SchemaMeta.collections, collectionId);
-        await dbForProject.purgeCachedCollection(
-          collection.getId(),
+        await dbForProject.purgeCachedDocument(
+          SchemaMeta.collections,
+          collectionId,
         );
+        await dbForProject.purgeCachedCollection(collection.getId());
 
         if (
           relatedCollection &&
@@ -431,9 +435,7 @@ export class CollectionsQueue extends Queue {
             SchemaMeta.collections,
             relatedCollection.getId(),
           );
-          await dbForProject.purgeCachedCollection(
-            relatedCollection.getId(),
-          );
+          await dbForProject.purgeCachedCollection(relatedCollection.getId());
         }
       });
     } finally {
@@ -506,7 +508,10 @@ export class CollectionsQueue extends Queue {
           // this.trigger(database, collection, index, projectDoc, projectId, events);
         }
 
-        await dbForProject.purgeCachedDocument(SchemaMeta.collections, collectionId);
+        await dbForProject.purgeCachedDocument(
+          SchemaMeta.collections,
+          collectionId,
+        );
       });
     } finally {
       await this.coreService.releaseDatabaseClient(client);
@@ -556,10 +561,7 @@ export class CollectionsQueue extends Queue {
         try {
           if (
             status !== Status.FAILED &&
-            !(await dbForProject.deleteIndex(
-              collection.getId(),
-              key,
-            ))
+            !(await dbForProject.deleteIndex(collection.getId(), key))
           ) {
             throw new DatabaseException('Failed to delete index');
           }
@@ -615,7 +617,7 @@ export class CollectionsQueue extends Queue {
             qb
               .equal('type', AttributeType.Relationship)
               .equal('collectionInternalId', collectionInternalId)
-              .equal('options->>relatedCollection' as any, collection.getId())
+              .equal('options->>relatedCollection' as any, collection.getId()),
         );
 
         for (const relationship of relationships) {
