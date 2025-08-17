@@ -84,7 +84,7 @@ export async function initSetup(config: AppConfigService) {
       );
       if (
         defaultBucket.empty() &&
-        !(await dbForPlatform.exists(dbForPlatform.database, 'bucket_1'))
+        !(await dbForPlatform.exists(dbForPlatform.schema, 'bucket_1'))
       ) {
         logger.log('Creating default bucket...');
 
@@ -132,7 +132,7 @@ export async function initSetup(config: AppConfigService) {
         });
       }
       if (
-        !(await dbForPlatform.exists(dbForPlatform.database, Audit.COLLECTION))
+        !(await dbForPlatform.exists(dbForPlatform.schema, Audit.COLLECTION))
       ) {
         logger.log('Creating Audit Collection.');
         await new Audit(dbForPlatform).setup();

@@ -44,7 +44,7 @@ export const apps = [
   },
   {
     name: 'nuvix-platform',
-    script: 'dist/platform/main.mjs',
+    script: 'dist/platform/main.js',
     watch: false,
     instances: 1,
     exec_mode: 'fork',
