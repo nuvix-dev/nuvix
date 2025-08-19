@@ -151,8 +151,8 @@ export const filters: Record<string, SecondArgType> = {
     encode: () => {
       return null;
     },
-    decode: async (_, document, database) => {
-      return Authorization.skip(async () => {
+    decode: (_, document, database) => {
+      return Authorization.skip(() => {
         return database.find('sessions', [
           Query.equal('userInternalId', [document.getSequence()]),
           Query.limit(APP_LIMIT_SUBQUERY),

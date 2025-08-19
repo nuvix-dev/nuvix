@@ -74,6 +74,7 @@ export class AuditHook implements Hook {
       user = new Doc({
         $id: '',
         status: true,
+        $sequence: -1,
         type: Auth.ACTIVITY_TYPE_GUEST,
         email: 'guest.' + project.getId() + '@service.' + req.hostname,
         password: '',
