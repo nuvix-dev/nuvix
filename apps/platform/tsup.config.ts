@@ -16,6 +16,5 @@ export default defineConfig(options => {
     shims: true,
     tsconfig: './tsconfig.app.json',
     plugins: [],
-    watch: ['src/**', '../../libs/**'],
   };
 });
