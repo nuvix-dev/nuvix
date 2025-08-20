@@ -6,7 +6,6 @@ import { QueueFor } from '@nuvix/utils';
 import { Exception } from '@nuvix/core/extend/exception';
 import * as fs from 'fs';
 import { Logger } from '@nestjs/common';
-import path from 'path';
 import * as Template from 'handlebars';
 import { AppConfigService } from '@nuvix/core/config.service.js';
 import type { SmtpConfig } from '@nuvix/core/config/smtp.js';

@@ -7,9 +7,13 @@ import {
   Logger,
 } from '@nestjs/common';
 import { errorCodes, Exception } from '../extend/exception';
+import { AppConfigService } from '../config.service';
 
 @Catch()
 export class ErrorFilter implements ExceptionFilter {
+  private readonly logger = new Logger(ErrorFilter.name);
+  constructor(private readonly appConfig: AppConfigService) {}
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<NuvixRes>();
@@ -48,7 +52,9 @@ export class ErrorFilter implements ExceptionFilter {
         break;
     }
 
-    Logger.error(exception);
+    if (!this.appConfig.get('app').isProduction && status >= 500) {
+      this.logger.error(exception);
+    }
 
     response.status(status).send({
       code: status,

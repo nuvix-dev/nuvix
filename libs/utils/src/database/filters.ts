@@ -26,6 +26,21 @@ type SecondArgType = {
 };
 
 export const filters: Record<string, SecondArgType> = {
+  json: {
+    encode(value) {
+      if (value !== null) {
+        return JSON.stringify(value);
+      }
+      return null;
+    },
+    decode(value) {
+      if (typeof value === 'string') {
+        return JSON.parse(value);
+      } else {
+        return value;
+      }
+    },
+  },
   casting: {
     encode: value => {
       return JSON.stringify({ value: value }, (key, value) => {

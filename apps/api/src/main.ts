@@ -149,7 +149,7 @@ async function bootstrap() {
     Logger.warn('SIGTERM received, shutting down gracefully...');
   });
 
-  app.useGlobalFilters(new ErrorFilter());
+  app.useGlobalFilters(new ErrorFilter(config));
   await SwaggerModule.loadPluginMetadata(metadata);
   openApiSetup(app);
 

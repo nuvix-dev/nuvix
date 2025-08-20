@@ -68,7 +68,6 @@ export class AuditsQueue
 
     try {
       this.logger.log(`Flushing ${logsToFlush.length} audit logs`);
-      this.logger.debug(logsToFlush, '<-------------------------!');
       await this.audit.logBatch(logsToFlush);
     } catch (error) {
       this.logger.error('Error flushing audit logs:', error);

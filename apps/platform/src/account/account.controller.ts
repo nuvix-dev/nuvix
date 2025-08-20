@@ -131,8 +131,8 @@ export class AccountController {
   @AuditEvent('session.delete', 'user/{user.$id}')
   async deleteSessions(
     @User() user: UsersDoc,
-    @Req() request: any,
-    @Res({ passthrough: true }) response: any,
+    @Req() request: NuvixRequest,
+    @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
   ) {
     return await this.accountService.deleteSessions(
@@ -161,9 +161,13 @@ export class AccountController {
   async deleteSession(
     @User() user: UsersDoc,
     @Param('id') id: string,
-    @Req() request: any,
-    @Res({ passthrough: true }) response: any,
+    @Req() request: NuvixRequest,
+    @Res({ passthrough: true }) response: NuvixRes,
+    @Session() session: SessionsDoc,
   ) {
+    if (id === 'current') {
+      id = session.getId();
+    }
     return await this.accountService.deleteSession(user, id, request, response);
   }
 

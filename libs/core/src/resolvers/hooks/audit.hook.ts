@@ -53,7 +53,6 @@ export class AuditHook implements Hook {
   ) {
     const { event, meta } = audit;
 
-    this.logger.debug(`Handling audit event: ${event}`, { meta });
     try {
       res = typeof res === 'string' ? JSON.parse(res) : res;
     } catch {
@@ -69,7 +68,6 @@ export class AuditHook implements Hook {
       meta.userId = this.mapValue(req, res, meta.userId);
     }
     const mode = req[Context.Mode] as AppMode;
-    this.logger.debug(`Mapped resource: ${resource}`, { userId: meta.userId });
     if (!user || user.empty()) {
       user = new Doc({
         $id: '',

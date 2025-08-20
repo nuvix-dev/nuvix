@@ -9,6 +9,8 @@ import {
   TokensDoc,
   UsersDoc,
 } from '@nuvix/utils/types';
+import { hash, verify } from 'argon2';
+import { Logger } from '@nestjs/common';
 
 const algorithm = 'aes-256-cbc';
 const key = ENCRYPTION_KEY ? Buffer.from(ENCRYPTION_KEY, 'hex') : undefined;
@@ -25,15 +27,14 @@ export class Auth {
     'plaintext',
   ];
 
-  // public static readonly DEFAULT_ALGO = 'argon2';
-  // public static readonly DEFAULT_ALGO_OPTIONS = {
-  //   type: 'argon2',
-  //   memoryCost: 2048,
-  //   timeCost: 4,
-  //   threads: 3,
-  // };
-  public static readonly DEFAULT_ALGO = 'bcrypt';
-  public static readonly DEFAULT_ALGO_OPTIONS = { saltRounds: 10 };
+  public static readonly DEFAULT_ALGO = 'argon2';
+  public static readonly DEFAULT_ALGO_OPTIONS = {
+    type: 'argon2',
+    hashLength: 32,
+    timeCost: 3,
+    memoryCost: 1 << 16,
+    parallelism: 4,
+  };
 
   // User Roles
   public static readonly USER_ROLE_ANY = 'any';
@@ -156,13 +157,16 @@ export class Auth {
 
     switch (algo) {
       case 'argon2':
-        return (await this.getArgon2().hash(string, { ...options })).toString(
-          'hex',
-        );
-
+        const aOptions = {
+          hashLength: options['hashLength'],
+          timeCost: options['timeCost'],
+          memoryCost: options['memoryCost'],
+          parallelism: options['parallelism'],
+        };
+        return await hash(string, { raw: false, ...aOptions });
       case 'bcrypt':
         const saltRounds = options.saltRounds || 10;
-        return await this.getBcrypt().hash(string, saltRounds);
+        return (await this.getBcrypt()).hash(string, saltRounds);
       case 'md5':
         return createHash('md5').update(string).digest('hex');
 
@@ -209,10 +213,10 @@ export class Auth {
 
     switch (algo) {
       case 'argon2':
-        return await this.getArgon2().verify(hash, plain, { ...options });
+        return await verify(hash, plain, { ...options });
 
       case 'bcrypt':
-        return await this.getBcrypt().compare(plain, hash);
+        return (await this.getBcrypt()).compare(plain, hash);
 
       case 'md5':
       case 'sha':
@@ -372,31 +376,15 @@ export class Auth {
     return user.get('email') === null && user.get('phone') === null;
   }
 
-  private static getBcrypt(): any {
+  private static async getBcrypt() {
     try {
-      // Try to load native bcrypt and check if it is supported
-      const bcrypt = require('bcrypt');
-      bcrypt.hashSync('test', 10); // Test if native bcrypt is working
-      console.log('Using native bcrypt.');
+      const bcrypt = await import('bcrypt');
       return bcrypt;
     } catch (error) {
-      console.warn('Native bcrypt not available, falling back to bcryptjs.');
+      Logger.warn(error);
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
-        'Native bcrypt is not available on the server.',
-      );
-      // return require('bcryptjs'); // Fallback to bcryptjs if native bcrypt fails
-    }
-  }
-
-  private static getArgon2() {
-    try {
-      const argon2 = require('argon2');
-      return argon2;
-    } catch (e) {
-      throw new Exception(
-        Exception.GENERAL_SERVER_ERROR,
-        'Argon2 library is not available on the server.',
+        'bcrypt is not available on the server.',
       );
     }
   }

@@ -134,7 +134,7 @@ async function bootstrap() {
     Logger.warn('SIGTERM received, shutting down gracefully...');
   });
 
-  app.useGlobalFilters(new ErrorFilter());
+  app.useGlobalFilters(new ErrorFilter(config));
   await initSetup(config as AppConfigService);
 
   const port = parseInt(config.root.get('APP_PLATFORM_PORT', '4100'), 10);
