@@ -399,8 +399,10 @@ export class MessagingService {
       queries.push(Query.search('search', search));
     }
 
+    const { filters } = Query.groupByType(queries);
+
     const providers = await db.find('providers', queries);
-    const total = await db.count('providers', queries);
+    const total = await db.count('providers', filters);
 
     return {
       providers,
@@ -827,8 +829,10 @@ export class MessagingService {
       queries.push(Query.search('search', search));
     }
 
+    const { filters } = Query.groupByType(queries);
+
     const topics = await db.find('topics', queries);
-    const total = await db.count('topics', queries);
+    const total = await db.count('topics', filters);
 
     return {
       topics,
@@ -1008,9 +1012,11 @@ export class MessagingService {
       throw new Exception(Exception.TOPIC_NOT_FOUND);
     }
 
+    const { filters } = Query.groupByType(queries);
+
     queries.push(Query.equal('topicInternalId', [topic.getSequence()]));
     const subscribers = await db.find('subscribers', queries);
-    const total = await db.count('subscribers', queries);
+    const total = await db.count('subscribers', filters);
 
     // Batch process subscribers to add target and userName
     const enrichedSubscribers = await Promise.all(
@@ -1576,8 +1582,10 @@ export class MessagingService {
       queries.push(Query.search('search', search));
     }
 
+    const { filters } = Query.groupByType(queries);
+
     const messages = await db.find('messages', queries);
-    const total = await db.count('messages', queries);
+    const total = await db.count('messages', filters);
 
     return {
       messages,
@@ -1616,10 +1624,12 @@ export class MessagingService {
       };
     }
 
+    const { filters } = Query.groupByType(queries);
+
     queries.push(Query.equal('$id', targetIDs));
     const { targets, total } = await db.withSchema(Schemas.Auth, async () => {
       const targets = await db.find('targets', queries);
-      const total = await db.count('targets', queries);
+      const total = await db.count('targets', filters);
       return { targets, total };
     });
 
