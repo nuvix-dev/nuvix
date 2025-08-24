@@ -40,7 +40,7 @@ export default class PostgresMetaTriggers {
     if (offset) {
       sql = `${sql} OFFSET ${offset}`;
     }
-    return await this.query(sql);
+    return this.query(sql);
   }
 
   async retrieve({
@@ -171,7 +171,7 @@ export default class PostgresMetaTriggers {
       return { data: null, error };
     }
 
-    return await this.retrieve({
+    return this.retrieve({
       name,
       table,
       schema,
@@ -217,8 +217,8 @@ export default class PostgresMetaTriggers {
     const nameSql =
       name && name !== old!.name
         ? `ALTER TRIGGER ${ident(old!.name)} ON ${ident(old!.schema)}.${ident(
-            old!.table,
-          )} RENAME TO ${ident(name)};`
+          old!.table,
+        )} RENAME TO ${ident(name)};`
         : '';
 
     // updateNameSql must be last
@@ -230,7 +230,7 @@ export default class PostgresMetaTriggers {
         return { data: null, error };
       }
     }
-    return await this.retrieve({ id });
+    return this.retrieve({ id });
   }
 
   async remove(
@@ -244,9 +244,8 @@ export default class PostgresMetaTriggers {
     }
 
     const { name, schema, table } = triggerRecord!;
-    const sql = `DROP TRIGGER ${ident(name)} ON ${ident(schema)}.${ident(table)} ${
-      cascade ? 'CASCADE' : ''
-    };`;
+    const sql = `DROP TRIGGER ${ident(name)} ON ${ident(schema)}.${ident(table)} ${cascade ? 'CASCADE' : ''
+      };`;
 
     {
       const { error } = await this.query(sql);

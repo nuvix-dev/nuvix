@@ -40,7 +40,7 @@ export default class PostgresMetaFunctions {
     if (offset) {
       sql = `${sql} OFFSET ${offset}`;
     }
-    return await this.query(sql);
+    return this.query(sql);
   }
 
   async retrieve({

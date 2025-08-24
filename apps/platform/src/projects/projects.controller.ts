@@ -97,7 +97,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() updateProjectDTO: UpdateProjectDTO,
   ) {
-    return await this.projectService.update(id, updateProjectDTO);
+    return this.projectService.update(id, updateProjectDTO);
   }
 
   @Delete(':id')
@@ -126,7 +126,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() input: CreatePlatformDTO,
   ) {
-    return await this.projectService.createPlatform(id, input);
+    return this.projectService.createPlatform(id, input);
   }
 
   @Get(':id/platforms/:platformId')
@@ -135,7 +135,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Param('platformId') platformId: string,
   ) {
-    return await this.projectService.getPlatform(id, platformId);
+    return this.projectService.getPlatform(id, platformId);
   }
 
   @Put(':id/platforms/:platformId')
@@ -145,7 +145,7 @@ export class ProjectsController {
     @Param('platformId') platformId: string,
     @Body() input: UpdatePlatformDTO,
   ) {
-    return await this.projectService.updatePlatform(id, platformId, input);
+    return this.projectService.updatePlatform(id, platformId, input);
   }
 
   @Delete(':id/platforms/:platformId')
@@ -154,7 +154,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Param('platformId') platformId: string,
   ): Promise<{}> {
-    return await this.projectService.deletePlatform(id, platformId);
+    return this.projectService.deletePlatform(id, platformId);
   }
 
   @Get(':id/keys')
@@ -174,7 +174,7 @@ export class ProjectsController {
   @Get(':id/keys/:keyId')
   @ResModel(Models.KEY)
   async getKey(@Param('id') id: string, @Param('keyId') keyId: string) {
-    return await this.projectService.getKey(id, keyId);
+    return this.projectService.getKey(id, keyId);
   }
 
   @Put(':id/keys/:keyId')
@@ -184,7 +184,7 @@ export class ProjectsController {
     @Param('keyId') keyId: string,
     @Body() input: UpdateKeyDTO,
   ) {
-    return await this.projectService.updateKey(id, keyId, input);
+    return this.projectService.updateKey(id, keyId, input);
   }
 
   @Delete(':id/keys/:keyId')
@@ -193,7 +193,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Param('keyId') keyId: string,
   ): Promise<{}> {
-    return await this.projectService.deleteKey(id, keyId);
+    return this.projectService.deleteKey(id, keyId);
   }
 
   @Get(':id/webhooks')
@@ -219,7 +219,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Param('webhookId') webhookId: string,
   ) {
-    return await this.projectService.getWebhook(id, webhookId);
+    return this.projectService.getWebhook(id, webhookId);
   }
 
   @Put(':id/webhooks/:webhookId')
@@ -229,7 +229,7 @@ export class ProjectsController {
     @Param('webhookId') webhookId: string,
     @Body() input: UpdateWebhookDTO,
   ) {
-    return await this.projectService.updateWebhook(id, webhookId, input);
+    return this.projectService.updateWebhook(id, webhookId, input);
   }
 
   @Patch(':id/webhooks/:webhookId/signature')
@@ -238,7 +238,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Param('webhookId') webhookId: string,
   ) {
-    return await this.projectService.updateWebhookSignature(id, webhookId);
+    return this.projectService.updateWebhookSignature(id, webhookId);
   }
 
   @Delete(':id/webhooks/:webhookId')
@@ -246,7 +246,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Param('webhookId') webhookId: string,
   ): Promise<{}> {
-    return await this.projectService.deleteWebhook(id, webhookId);
+    return this.projectService.deleteWebhook(id, webhookId);
   }
 
   @Patch([':id/organization', ':id/team'])
@@ -255,7 +255,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() updateProjectTeamDTO: UpdateProjectTeamDTO,
   ) {
-    return await this.projectService.updateProjectOrganization(
+    return this.projectService.updateProjectOrganization(
       id,
       updateProjectTeamDTO,
     );
@@ -267,19 +267,19 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() input: UpdateProjectServiceDTO,
   ) {
-    return await this.projectService.updateServiceStatus(id, input);
+    return this.projectService.updateServiceStatus(id, input);
   }
 
   @Patch(':id/api')
   @ResModel(Models.PROJECT)
   async updateApi(@Param('id') id: string, @Body() input: ProjectApiStatusDTO) {
-    return await this.projectService.updateApiStatus(id, input);
+    return this.projectService.updateApiStatus(id, input);
   }
 
   @Patch(':id/oauth2')
   @ResModel(Models.PROJECT)
   async updateOAuth2(@Param('id') id: string, @Body() input: oAuth2DTO) {
-    return await this.projectService.updateOAuth2(id, input);
+    return this.projectService.updateOAuth2(id, input);
   }
 
   @Patch(':id/service/all')
@@ -288,7 +288,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() input: UpdateProjectAllServiceDTO,
   ) {
-    return await this.projectService.updateAllServiceStatus(id, input.status);
+    return this.projectService.updateAllServiceStatus(id, input.status);
   }
 
   @Patch(':id/api/all')
@@ -297,7 +297,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() input: ProjectApiStatusAllDTO,
   ) {
-    return await this.projectService.updateAllApiStatus(id, input.status);
+    return this.projectService.updateAllApiStatus(id, input.status);
   }
 
   @Patch(':id/auth/session-alerts')
@@ -306,13 +306,13 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() input: AuthSessionAlertsDTO,
   ) {
-    return await this.projectService.updateSessionAlerts(id, input.alerts);
+    return this.projectService.updateSessionAlerts(id, input.alerts);
   }
 
   @Patch(':id/auth/limit')
   @ResModel(Models.PROJECT)
   async updateAuthLimit(@Param('id') id: string, @Body() input: AuthLimitDTO) {
-    return await this.projectService.updateAuthLimit(id, input.limit);
+    return this.projectService.updateAuthLimit(id, input.limit);
   }
 
   @Patch(':id/auth/duration')
@@ -321,7 +321,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() input: AuthDurationDTO,
   ) {
-    return await this.projectService.updateSessionDuration(id, input.duration);
+    return this.projectService.updateSessionDuration(id, input.duration);
   }
 
   @Patch(':id/auth/password-history')
@@ -330,7 +330,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() input: AuthPasswordHistoryDTO,
   ) {
-    return await this.projectService.updatePasswordHistory(id, input.limit);
+    return this.projectService.updatePasswordHistory(id, input.limit);
   }
 
   @Patch(':id/auth/password-dictionary')
@@ -339,7 +339,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() input: AuthPasswordDictionaryDTO,
   ) {
-    return await this.projectService.updatePasswordDictionary(
+    return this.projectService.updatePasswordDictionary(
       id,
       input.enabled,
     );
@@ -351,7 +351,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() input: AuthPersonalDataDTO,
   ) {
-    return await this.projectService.updatePersonalData(id, input.enabled);
+    return this.projectService.updatePersonalData(id, input.enabled);
   }
 
   @Patch(':id/auth/max-sessions')
@@ -360,7 +360,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() input: AuthMaxSessionsDTO,
   ) {
-    return await this.projectService.updateMaxSessions(id, input.limit);
+    return this.projectService.updateMaxSessions(id, input.limit);
   }
 
   @Patch(':id/auth/mock-numbers')
@@ -369,7 +369,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() input: AuthMockNumbersDTO,
   ) {
-    return await this.projectService.updateMockNumbers(id, input);
+    return this.projectService.updateMockNumbers(id, input);
   }
 
   @Patch(':id/auth/:method')
@@ -383,13 +383,13 @@ export class ProjectsController {
       !Object.keys(authMethods).concat('memberships-privacy').includes(method)
     )
       throw new Exception(Exception.INVALID_PARAMS, 'Invalid auth method');
-    return await this.projectService.updateAuthMethod(id, method, input.status);
+    return this.projectService.updateAuthMethod(id, method, input.status);
   }
 
   @Patch(':id/smtp')
   @ResModel(Models.PROJECT)
   async updateSMTP(@Param('id') id: string, @Body() input: UpdateSmtpDTO) {
-    return await this.projectService.updateSMTP(id, input);
+    return this.projectService.updateSMTP(id, input);
   }
 
   @Post(':id/smtp/tests')
@@ -397,7 +397,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() input: SmtpTestsDTO,
   ): Promise<void> {
-    return await this.projectService.testSMTP(id, input);
+    return this.projectService.testSMTP(id, input);
   }
 
   @Get(':id/templates/sms/:type/:locale')

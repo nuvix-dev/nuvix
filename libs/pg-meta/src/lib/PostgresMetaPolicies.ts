@@ -40,7 +40,7 @@ export default class PostgresMetaPolicies {
     if (offset) {
       sql = `${sql} OFFSET ${offset}`;
     }
-    return await this.query(sql);
+    return this.query(sql);
   }
 
   async retrieve({
@@ -129,7 +129,7 @@ CREATE POLICY ${ident(name)} ON ${ident(schema)}.${ident(table)}
     if (error) {
       return { data: null, error };
     }
-    return await this.retrieve({ name, table, schema });
+    return this.retrieve({ name, table, schema });
   }
 
   async update(
@@ -169,7 +169,7 @@ CREATE POLICY ${ident(name)} ON ${ident(schema)}.${ident(table)}
         return { data: null, error };
       }
     }
-    return await this.retrieve({ id });
+    return this.retrieve({ id });
   }
 
   async remove(id: number): Promise<PostgresMetaResult<PostgresPolicy>> {

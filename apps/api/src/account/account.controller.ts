@@ -110,7 +110,7 @@ export class AccountController {
     @User() user: UsersDoc,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.accountService.createAccount(
+    return this.accountService.createAccount(
       db,
       input.userId,
       input.email,
@@ -140,7 +140,7 @@ export class AccountController {
   @ResModel(Models.NONE)
   @AuditEvent('user.delete', 'user/{res.$id}')
   async deleteAccount(@ProjectDatabase() db: Database, @User() user: UsersDoc) {
-    return await this.accountService.deleteAccount(db, user);
+    return this.accountService.deleteAccount(db, user);
   }
 
   @Get('sessions')
@@ -152,7 +152,7 @@ export class AccountController {
     @User() user: UsersDoc,
     @Locale() locale: LocaleTranslator,
   ) {
-    return await this.accountService.getSessions(user, locale);
+    return this.accountService.getSessions(user, locale);
   }
 
   @Delete('sessions')
@@ -168,7 +168,7 @@ export class AccountController {
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
   ) {
-    return await this.accountService.deleteSessions(
+    return this.accountService.deleteSessions(
       db,
       user,
       locale,
@@ -187,7 +187,7 @@ export class AccountController {
     @Param('id') sessionId: string,
     @Locale() locale: LocaleTranslator,
   ) {
-    return await this.accountService.getSession(user, sessionId, locale);
+    return this.accountService.getSession(user, sessionId, locale);
   }
 
   @Delete('sessions/:id')
@@ -204,7 +204,7 @@ export class AccountController {
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
   ) {
-    return await this.accountService.deleteSession(
+    return this.accountService.deleteSession(
       db,
       user,
       id,
@@ -226,7 +226,7 @@ export class AccountController {
     @Param('id') id: string,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.accountService.updateSession(db, user, id, project);
+    return this.accountService.updateSession(db, user, id, project);
   }
 
   @Public()
@@ -248,7 +248,7 @@ export class AccountController {
     @Locale() locale: LocaleTranslator,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.accountService.createEmailSession(
+    return this.accountService.createEmailSession(
       db,
       user,
       input,
@@ -278,7 +278,7 @@ export class AccountController {
     @Locale() locale: LocaleTranslator,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.accountService.createAnonymousSession({
+    return this.accountService.createAnonymousSession({
       user,
       request,
       response,
@@ -308,7 +308,7 @@ export class AccountController {
     @Locale() locale: LocaleTranslator,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.accountService.createSession({
+    return this.accountService.createSession({
       user,
       input,
       request,
@@ -332,7 +332,7 @@ export class AccountController {
     @Param() { provider }: ProviderParamDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.accountService.createOAuth2Session({
+    return this.accountService.createOAuth2Session({
       input,
       request,
       response,
@@ -431,7 +431,7 @@ export class AccountController {
     @Param() { provider }: ProviderParamDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.accountService.createOAuth2Token({
+    return this.accountService.createOAuth2Token({
       input,
       request,
       response,
@@ -459,7 +459,7 @@ export class AccountController {
     @Locale() locale: LocaleTranslator,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.accountService.createMagicURLToken({
+    return this.accountService.createMagicURLToken({
       db: db,
       user,
       input,
@@ -490,7 +490,7 @@ export class AccountController {
     @ProjectDatabase() db: Database,
     @Locale() locale: LocaleTranslator,
   ) {
-    return await this.accountService.createEmailToken({
+    return this.accountService.createEmailToken({
       input,
       request,
       response,
@@ -520,7 +520,7 @@ export class AccountController {
     @Locale() locale: LocaleTranslator,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.accountService.createSession({
+    return this.accountService.createSession({
       user,
       input,
       request,
@@ -551,7 +551,7 @@ export class AccountController {
     @Locale() locale: LocaleTranslator,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.accountService.createSession({
+    return this.accountService.createSession({
       user,
       input,
       request,
@@ -582,7 +582,7 @@ export class AccountController {
     @Locale() locale: LocaleTranslator,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.accountService.createPhoneToken({
+    return this.accountService.createPhoneToken({
       db: db,
       user,
       input,
@@ -604,7 +604,7 @@ export class AccountController {
     @User() user: UsersDoc,
     @Res({ passthrough: true }) response: NuvixRes,
   ) {
-    return await this.accountService.createJWT(user, response);
+    return this.accountService.createJWT(user, response);
   }
 
   @Get('prefs')
@@ -627,7 +627,7 @@ export class AccountController {
     @User() user: UsersDoc,
     @Body() input: UpdatePrefsDTO,
   ) {
-    return await this.accountService.updatePrefs(db, user, input.prefs);
+    return this.accountService.updatePrefs(db, user, input.prefs);
   }
 
   @Patch('name')
@@ -642,7 +642,7 @@ export class AccountController {
     @User() user: UsersDoc,
     @Body() { name }: UpdateNameDTO,
   ) {
-    return await this.accountService.updateName(db, name, user);
+    return this.accountService.updateName(db, name, user);
   }
 
   @Patch('password')
@@ -658,7 +658,7 @@ export class AccountController {
     @Body() { password, oldPassword }: UpdatePasswordDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.accountService.updatePassword({
+    return this.accountService.updatePassword({
       db: db,
       password,
       oldPassword,
@@ -678,7 +678,7 @@ export class AccountController {
     @User() user: UsersDoc,
     @Body() updateEmailDTO: UpdateEmailDTO,
   ) {
-    return await this.accountService.updateEmail(db, user, updateEmailDTO);
+    return this.accountService.updateEmail(db, user, updateEmailDTO);
   }
 
   @Patch('phone')
@@ -694,7 +694,7 @@ export class AccountController {
     @Body() { password, phone }: UpdatePhoneDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.accountService.updatePhone({
+    return this.accountService.updatePhone({
       db: db,
       password,
       phone,
@@ -716,7 +716,7 @@ export class AccountController {
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
   ) {
-    return await this.accountService.updateStatus({
+    return this.accountService.updateStatus({
       db: db,
       user,
       request,
@@ -740,7 +740,7 @@ export class AccountController {
     @Req() request: NuvixRequest,
     @Res() response: NuvixRes,
   ) {
-    return await this.accountService.createRecovery({
+    return this.accountService.createRecovery({
       db,
       user,
       input,
@@ -767,7 +767,7 @@ export class AccountController {
     @Res() response: NuvixRes,
   ) {
     // TODO: validate newPassword with password dictionry
-    return await this.accountService.updateRecovery({
+    return this.accountService.updateRecovery({
       db,
       user,
       input,

@@ -56,7 +56,7 @@ WHERE
     if (offset) {
       sql += ` OFFSET ${offset}`;
     }
-    return await this.query(sql);
+    return this.query(sql);
   }
 
   async retrieve({
@@ -200,7 +200,7 @@ COMMIT;`;
         return { data: null, error };
       }
     }
-    return await this.retrieve({ name, table, schema });
+    return this.retrieve({ name, table, schema });
   }
 
   async update(
@@ -240,15 +240,15 @@ COMMIT;`;
       name === undefined || name === old!.name
         ? ''
         : `ALTER TABLE ${ident(old!.schema)}.${ident(old!.table)} RENAME COLUMN ${ident(
-            old!.name,
-          )} TO ${ident(name)};`;
+          old!.name,
+        )} TO ${ident(name)};`;
     // We use USING to allow implicit conversion of incompatible types (e.g. int4 -> text).
     const typeSql =
       type === undefined
         ? ''
         : `ALTER TABLE ${ident(old!.schema)}.${ident(old!.table)} ALTER COLUMN ${ident(
-            old!.name,
-          )} SET DATA TYPE ${typeIdent(type)} USING ${ident(old!.name)}::${typeIdent(type)};`;
+          old!.name,
+        )} SET DATA TYPE ${typeIdent(type)} USING ${ident(old!.name)}::${typeIdent(type)};`;
 
     let defaultValueSql: string;
     if (drop_default) {
@@ -296,11 +296,11 @@ COMMIT;`;
     } else {
       isNullableSql = is_nullable
         ? `ALTER TABLE ${ident(old!.schema)}.${ident(old!.table)} ALTER COLUMN ${ident(
-            old!.name,
-          )} DROP NOT NULL;`
+          old!.name,
+        )} DROP NOT NULL;`
         : `ALTER TABLE ${ident(old!.schema)}.${ident(old!.table)} ALTER COLUMN ${ident(
-            old!.name,
-          )} SET NOT NULL;`;
+          old!.name,
+        )} SET NOT NULL;`;
     }
     let isUniqueSql = '';
     if (old!.is_unique === true && is_unique === false) {
@@ -317,8 +317,8 @@ BEGIN
       AND conkey[1] = ${literal(old!.ordinal_position)}
   LOOP
     EXECUTE ${literal(
-      `ALTER TABLE ${ident(old!.schema)}.${ident(old!.table)} DROP CONSTRAINT `,
-    )} || quote_ident(r.conname);
+        `ALTER TABLE ${ident(old!.schema)}.${ident(old!.table)} DROP CONSTRAINT `,
+      )} || quote_ident(r.conname);
   END LOOP;
 END
 $$;
@@ -332,8 +332,8 @@ $$;
       comment === undefined
         ? ''
         : `COMMENT ON COLUMN ${ident(old!.schema)}.${ident(old!.table)}.${ident(
-            old!.name,
-          )} IS ${literal(comment)};`;
+          old!.name,
+        )} IS ${literal(comment)};`;
 
     const checkSql =
       check === undefined
@@ -354,29 +354,28 @@ BEGIN
 
   IF v_conname IS NOT NULL THEN
     EXECUTE format('ALTER TABLE ${ident(old!.schema)}.${ident(
-      old!.table,
-    )} DROP CONSTRAINT %s', v_conname);
+          old!.table,
+        )} DROP CONSTRAINT %s', v_conname);
   END IF;
 
-  ${
-    check !== null
-      ? `
+  ${check !== null
+          ? `
   ALTER TABLE ${ident(old!.schema)}.${ident(old!.table)} ADD CONSTRAINT ${ident(
-    `${old!.table}_${old!.name}_check`,
-  )} CHECK (${check});
+            `${old!.table}_${old!.name}_check`,
+          )} CHECK (${check});
 
   SELECT conkey into v_conkey FROM pg_constraint WHERE conname = ${literal(
-    `${old!.table}_${old!.name}_check`,
-  )};
+            `${old!.table}_${old!.name}_check`,
+          )};
 
   ASSERT v_conkey IS NOT NULL, 'error creating column constraint: check condition must refer to this column';
   ASSERT cardinality(v_conkey) = 1, 'error creating column constraint: check condition cannot refer to multiple columns';
   ASSERT v_conkey[1] = ${literal(
-    old!.ordinal_position,
-  )}, 'error creating column constraint: check condition cannot refer to other columns';
+            old!.ordinal_position,
+          )}, 'error creating column constraint: check condition cannot refer to other columns';
   `
-      : ''
-  }
+          : ''
+        }
 END
 $$;
 `;
@@ -403,7 +402,7 @@ COMMIT;`;
         return { data: null, error };
       }
     }
-    return await this.retrieve({ id });
+    return this.retrieve({ id });
   }
 
   async remove(

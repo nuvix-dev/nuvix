@@ -297,8 +297,8 @@ export class StorageService {
     if (!permissions || permissions.length === 0) {
       permissions = user.getId()
         ? allowedPermissions.map(permission =>
-            new Permission(permission, Role.user(user.getId())).toString(),
-          )
+          new Permission(permission, Role.user(user.getId())).toString(),
+        )
         : [];
     }
 
@@ -572,15 +572,15 @@ export class StorageService {
     const file = (
       fileSecurity && !valid
         ? await db.getDocument(
+          this.getCollectionName(bucket.getSequence()),
+          fileId,
+        )
+        : await Authorization.skip(() =>
+          db.getDocument(
             this.getCollectionName(bucket.getSequence()),
             fileId,
-          )
-        : await Authorization.skip(() =>
-            db.getDocument(
-              this.getCollectionName(bucket.getSequence()),
-              fileId,
-            ),
-          )
+          ),
+        )
     ) as FilesDoc;
 
     if (file.empty()) {
@@ -640,16 +640,16 @@ export class StorageService {
     const file =
       fileSecurity && !valid
         ? await db.getDocument(
-            this.getCollectionName(bucket.getSequence()),
-            fileId,
-          )
+          this.getCollectionName(bucket.getSequence()),
+          fileId,
+        )
         : await Authorization.skip(
-            async () =>
-              await db.getDocument(
-                this.getCollectionName(bucket.getSequence()),
-                fileId,
-              ),
-          );
+          async () =>
+            await db.getDocument(
+              this.getCollectionName(bucket.getSequence()),
+              fileId,
+            ),
+        );
 
     if (file.empty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -785,15 +785,15 @@ export class StorageService {
     const file =
       fileSecurity && !valid
         ? await db.getDocument(
+          this.getCollectionName(bucket.getSequence()),
+          fileId,
+        )
+        : await Authorization.skip(() =>
+          db.getDocument(
             this.getCollectionName(bucket.getSequence()),
             fileId,
-          )
-        : await Authorization.skip(() =>
-            db.getDocument(
-              this.getCollectionName(bucket.getSequence()),
-              fileId,
-            ),
-          );
+          ),
+        );
 
     if (file.empty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -926,15 +926,15 @@ export class StorageService {
     const file =
       fileSecurity && !valid
         ? await db.getDocument(
+          this.getCollectionName(bucket.getSequence()),
+          fileId,
+        )
+        : await Authorization.skip(() =>
+          db.getDocument(
             this.getCollectionName(bucket.getSequence()),
             fileId,
-          )
-        : await Authorization.skip(() =>
-            db.getDocument(
-              this.getCollectionName(bucket.getSequence()),
-              fileId,
-            ),
-          );
+          ),
+        );
 
     if (file.empty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -1210,13 +1210,13 @@ export class StorageService {
     }
 
     if (fileSecurity && !valid) {
-      return await db.updateDocument(
+      return db.updateDocument(
         this.getCollectionName(bucket.getSequence()),
         fileId,
         file,
       );
     } else {
-      return await Authorization.skip(() =>
+      return Authorization.skip(() =>
         db.updateDocument(
           this.getCollectionName(bucket.getSequence()),
           fileId,
@@ -1285,16 +1285,16 @@ export class StorageService {
       const deleted =
         fileSecurity && !valid
           ? await db.deleteDocument(
-              this.getCollectionName(bucket.getSequence()),
-              fileId,
-            )
+            this.getCollectionName(bucket.getSequence()),
+            fileId,
+          )
           : await Authorization.skip(
-              async () =>
-                await db.deleteDocument(
-                  this.getCollectionName(bucket.getSequence()),
-                  fileId,
-                ),
-            );
+            async () =>
+              await db.deleteDocument(
+                this.getCollectionName(bucket.getSequence()),
+                fileId,
+              ),
+          );
 
       if (!deleted) {
         throw new Exception(

@@ -67,7 +67,7 @@ export class CollectionsController {
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.collectionsService.getCollections(db, queries, search);
+    return this.collectionsService.getCollections(db, queries, search);
   }
 
   @Post()
@@ -76,7 +76,7 @@ export class CollectionsController {
     @CurrentDatabase() db: Database,
     @Body() createCollectionDTO: CreateCollectionDTO,
   ) {
-    return await this.collectionsService.createCollection(
+    return this.collectionsService.createCollection(
       db,
       createCollectionDTO,
     );
@@ -89,7 +89,7 @@ export class CollectionsController {
     @Param('collectionId') collectionId: string,
     @Query('range') range?: string,
   ) {
-    return await this.collectionsService.getCollectionUsage(
+    return this.collectionsService.getCollectionUsage(
       db,
       collectionId,
       range,
@@ -102,7 +102,7 @@ export class CollectionsController {
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
   ) {
-    return await this.collectionsService.getCollection(db, collectionId);
+    return this.collectionsService.getCollection(db, collectionId);
   }
 
   @Get(':collectionId/logs')
@@ -112,7 +112,7 @@ export class CollectionsController {
     @Param('collectionId') collectionId: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
   ) {
-    return await this.collectionsService.getCollectionLogs(
+    return this.collectionsService.getCollectionLogs(
       db,
       collectionId,
       queries,
@@ -126,7 +126,7 @@ export class CollectionsController {
     @Param('collectionId') collectionId: string,
     @Body() updateCollectionDTO: UpdateCollectionDTO,
   ) {
-    return await this.collectionsService.updateCollection(
+    return this.collectionsService.updateCollection(
       db,
       collectionId,
       updateCollectionDTO,
@@ -140,7 +140,7 @@ export class CollectionsController {
     @Param('collectionId') collectionId: string,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.collectionsService.removeCollection(
+    return this.collectionsService.removeCollection(
       db,
       collectionId,
       project,
@@ -154,7 +154,7 @@ export class CollectionsController {
     @Param('collectionId') collectionId: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
   ) {
-    return await this.collectionsService.getDocuments(
+    return this.collectionsService.getDocuments(
       db,
       collectionId,
       queries,
@@ -168,7 +168,7 @@ export class CollectionsController {
     @Param('collectionId') collectionId: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
   ) {
-    return await this.collectionsService.getAttributes(
+    return this.collectionsService.getAttributes(
       db,
       collectionId,
       queries,
@@ -183,7 +183,7 @@ export class CollectionsController {
     @Body() createAttributeDTO: CreateStringAttributeDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.collectionsService.createStringAttribute(
+    return this.collectionsService.createStringAttribute(
       db,
       collectionId,
       createAttributeDTO,
@@ -199,7 +199,7 @@ export class CollectionsController {
     @Body() createAttributeDTO: CreateEmailAttributeDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.collectionsService.createEmailAttribute(
+    return this.collectionsService.createEmailAttribute(
       db,
       collectionId,
       createAttributeDTO,
@@ -215,7 +215,7 @@ export class CollectionsController {
     @Body() createAttributeDTO: CreateEnumAttributeDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.collectionsService.createEnumAttribute(
+    return this.collectionsService.createEnumAttribute(
       db,
       collectionId,
       createAttributeDTO,
@@ -231,7 +231,7 @@ export class CollectionsController {
     @Body() createAttributeDTO: CreateIpAttributeDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.collectionsService.createIPAttribute(
+    return this.collectionsService.createIPAttribute(
       db,
       collectionId,
       createAttributeDTO,
@@ -247,7 +247,7 @@ export class CollectionsController {
     @Body() createAttributeDTO: CreateURLAttributeDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.collectionsService.createURLAttribute(
+    return this.collectionsService.createURLAttribute(
       db,
       collectionId,
       createAttributeDTO,
@@ -263,7 +263,7 @@ export class CollectionsController {
     @Body() createAttributeDTO: CreateIntegerAttributeDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.collectionsService.createIntegerAttribute(
+    return this.collectionsService.createIntegerAttribute(
       db,
       collectionId,
       createAttributeDTO,
@@ -279,7 +279,7 @@ export class CollectionsController {
     @Body() createAttributeDTO: CreateFloatAttributeDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.collectionsService.createFloatAttribute(
+    return this.collectionsService.createFloatAttribute(
       db,
       collectionId,
       createAttributeDTO,
@@ -295,7 +295,7 @@ export class CollectionsController {
     @Body() createAttributeDTO: CreateBooleanAttributeDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.collectionsService.createBooleanAttribute(
+    return this.collectionsService.createBooleanAttribute(
       db,
       collectionId,
       createAttributeDTO,
@@ -311,7 +311,7 @@ export class CollectionsController {
     @Body() createAttributeDTO: CreateDatetimeAttributeDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.collectionsService.createDateAttribute(
+    return this.collectionsService.createDateAttribute(
       db,
       collectionId,
       createAttributeDTO,
@@ -327,7 +327,7 @@ export class CollectionsController {
     @Body() createAttributeDTO: CreateRelationAttributeDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.collectionsService.createRelationshipAttribute(
+    return this.collectionsService.createRelationshipAttribute(
       db,
       collectionId,
       createAttributeDTO,
@@ -342,7 +342,7 @@ export class CollectionsController {
     @Param('collectionId') collectionId: string,
     @Param('attributeId') attributeId: string,
   ) {
-    return await this.collectionsService.getAttribute(
+    return this.collectionsService.getAttribute(
       db,
       collectionId,
       attributeId,
@@ -357,7 +357,7 @@ export class CollectionsController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateStringAttributeDTO,
   ) {
-    return await this.collectionsService.updateStringAttribute(
+    return this.collectionsService.updateStringAttribute(
       db,
       collectionId,
       attributeId,
@@ -373,7 +373,7 @@ export class CollectionsController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateEmailAttributeDTO,
   ) {
-    return await this.collectionsService.updateEmailAttribute(
+    return this.collectionsService.updateEmailAttribute(
       db,
       collectionId,
       attributeId,
@@ -389,7 +389,7 @@ export class CollectionsController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateEnumAttributeDTO,
   ) {
-    return await this.collectionsService.updateEnumAttribute(
+    return this.collectionsService.updateEnumAttribute(
       db,
       collectionId,
       attributeId,
@@ -405,7 +405,7 @@ export class CollectionsController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateIpAttributeDTO,
   ) {
-    return await this.collectionsService.updateIPAttribute(
+    return this.collectionsService.updateIPAttribute(
       db,
       collectionId,
       attributeId,
@@ -421,7 +421,7 @@ export class CollectionsController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateURLAttributeDTO,
   ) {
-    return await this.collectionsService.updateURLAttribute(
+    return this.collectionsService.updateURLAttribute(
       db,
       collectionId,
       attributeId,
@@ -437,7 +437,7 @@ export class CollectionsController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateIntegerAttributeDTO,
   ) {
-    return await this.collectionsService.updateIntegerAttribute(
+    return this.collectionsService.updateIntegerAttribute(
       db,
       collectionId,
       attributeId,
@@ -453,7 +453,7 @@ export class CollectionsController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateFloatAttributeDTO,
   ) {
-    return await this.collectionsService.updateFloatAttribute(
+    return this.collectionsService.updateFloatAttribute(
       db,
       collectionId,
       attributeId,
@@ -469,7 +469,7 @@ export class CollectionsController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateBooleanAttributeDTO,
   ) {
-    return await this.collectionsService.updateBooleanAttribute(
+    return this.collectionsService.updateBooleanAttribute(
       db,
       collectionId,
       attributeId,
@@ -485,7 +485,7 @@ export class CollectionsController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateDatetimeAttributeDTO,
   ) {
-    return await this.collectionsService.updateDateAttribute(
+    return this.collectionsService.updateDateAttribute(
       db,
       collectionId,
       attributeId,
@@ -501,7 +501,7 @@ export class CollectionsController {
     @Param('attributeId') attributeId: string,
     @Body() updateAttributeDTO: UpdateRelationAttributeDTO,
   ) {
-    return await this.collectionsService.updateRelationshipAttribute(
+    return this.collectionsService.updateRelationshipAttribute(
       db,
       collectionId,
       attributeId,
@@ -517,7 +517,7 @@ export class CollectionsController {
     @Param('attributeId') attributeId: string,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.collectionsService.deleteAttribute(
+    return this.collectionsService.deleteAttribute(
       db,
       collectionId,
       attributeId,
@@ -533,7 +533,7 @@ export class CollectionsController {
     @Body() input: CreateIndexDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.collectionsService.createIndex(
+    return this.collectionsService.createIndex(
       db,
       collectionId,
       input,
@@ -548,7 +548,7 @@ export class CollectionsController {
     @Param('collectionId') collectionId: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
   ) {
-    return await this.collectionsService.getIndexes(db, collectionId, queries);
+    return this.collectionsService.getIndexes(db, collectionId, queries);
   }
 
   @Get(':collectionId/indexes/:indexId')
@@ -558,7 +558,7 @@ export class CollectionsController {
     @Param('collectionId') collectionId: string,
     @Param('indexId') indexId: string,
   ) {
-    return await this.collectionsService.getIndex(db, collectionId, indexId);
+    return this.collectionsService.getIndex(db, collectionId, indexId);
   }
 
   @Delete(':collectionId/indexes/:indexId')
@@ -569,7 +569,7 @@ export class CollectionsController {
     @Param('indexId') indexId: string,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.collectionsService.deleteIndex(
+    return this.collectionsService.deleteIndex(
       db,
       collectionId,
       indexId,
@@ -585,7 +585,7 @@ export class CollectionsController {
     @Body() document: CreateDocumentDTO,
     @Mode() mode: string,
   ) {
-    return await this.collectionsService.createDocument(
+    return this.collectionsService.createDocument(
       db,
       collectionId,
       document,
@@ -601,7 +601,7 @@ export class CollectionsController {
     @Param('documentId') documentId: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
   ) {
-    return await this.collectionsService.getDocument(
+    return this.collectionsService.getDocument(
       db,
       collectionId,
       documentId,
@@ -617,7 +617,7 @@ export class CollectionsController {
     @Param('documentId') documentId: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
   ) {
-    return await this.collectionsService.getDocumentLogs(
+    return this.collectionsService.getDocumentLogs(
       db,
       collectionId,
       documentId,
@@ -634,7 +634,7 @@ export class CollectionsController {
     @Body() document: UpdateDocumentDTO,
     @Mode() mode: string,
   ) {
-    return await this.collectionsService.updateDocument(
+    return this.collectionsService.updateDocument(
       db,
       collectionId,
       documentId,
@@ -651,7 +651,7 @@ export class CollectionsController {
     @Param('documentId') documentId: string,
     @Mode() mode: string,
   ) {
-    return await this.collectionsService.deleteDocument(
+    return this.collectionsService.deleteDocument(
       db,
       collectionId,
       documentId,

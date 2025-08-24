@@ -24,7 +24,7 @@ export default class PostgresMetaExtensions {
     if (offset) {
       sql = `${sql} OFFSET ${offset}`;
     }
-    return await this.query(sql);
+    return this.query(sql);
   }
 
   async retrieve({
@@ -63,7 +63,7 @@ CREATE EXTENSION ${ident(name)}
     if (error) {
       return { data: null, error };
     }
-    return await this.retrieve({ name });
+    return this.retrieve({ name });
   }
 
   async update(
@@ -80,9 +80,8 @@ CREATE EXTENSION ${ident(name)}
   ): Promise<PostgresMetaResult<PostgresExtension>> {
     let updateSql = '';
     if (update) {
-      updateSql = `ALTER EXTENSION ${ident(name)} UPDATE ${
-        version === undefined ? '' : `TO ${literal(version)}`
-      };`;
+      updateSql = `ALTER EXTENSION ${ident(name)} UPDATE ${version === undefined ? '' : `TO ${literal(version)}`
+        };`;
     }
     const schemaSql =
       schema === undefined
@@ -94,7 +93,7 @@ CREATE EXTENSION ${ident(name)}
     if (error) {
       return { data: null, error };
     }
-    return await this.retrieve({ name });
+    return this.retrieve({ name });
   }
 
   async remove(

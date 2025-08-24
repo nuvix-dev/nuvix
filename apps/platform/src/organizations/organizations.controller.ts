@@ -40,43 +40,43 @@ export class OrganizationsController {
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.organizationsService.findAll(queries, search);
+    return this.organizationsService.findAll(queries, search);
   }
 
   @Post()
   @ResModel(Models.ORGANIZATION)
   async create(@User() user: UsersDoc, @Body() input: CreateOrgDTO) {
-    return await this.organizationsService.create(user, input);
+    return this.organizationsService.create(user, input);
   }
 
   @Get(':id')
   @ResModel(Models.ORGANIZATION)
   async findOne(@Param('id') id: string) {
-    return await this.organizationsService.findOne(id);
+    return this.organizationsService.findOne(id);
   }
 
   @Put(':id')
   @ResModel(Models.ORGANIZATION)
   async update(@Param('id') id: string, @Body() input: UpdateOrgDTO) {
-    return await this.organizationsService.update(id, input);
+    return this.organizationsService.update(id, input);
   }
 
   @Delete(':id')
   @ResModel({ type: Models.NONE })
   async remove(@Param('id') id: string) {
-    return await this.organizationsService.remove(id);
+    return this.organizationsService.remove(id);
   }
 
   @Get(':id/prefs')
   @ResModel(Models.PREFERENCES)
   async getPrefs(@Param('id') id: string) {
-    return await this.organizationsService.getPrefs(id);
+    return this.organizationsService.getPrefs(id);
   }
 
   @Put(':id/prefs')
   @ResModel(Models.PREFERENCES)
   async setPrefs(@Param('id') id: string, @Body() input: UpdateTeamPrefsDTO) {
-    return await this.organizationsService.setPrefs(id, input);
+    return this.organizationsService.setPrefs(id, input);
   }
 
   @Get(':id/logs')
@@ -103,7 +103,7 @@ export class OrganizationsController {
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.organizationsService.getMembers(id, queries, search);
+    return this.organizationsService.getMembers(id, queries, search);
   }
 
   @Post(':id/memberships')
@@ -112,7 +112,7 @@ export class OrganizationsController {
     @Param('id') id: string,
     @Body() input: CreateMembershipDTO,
   ) {
-    return await this.organizationsService.addMember(id, input);
+    return this.organizationsService.addMember(id, input);
   }
 
   @Get(':id/memberships/:membershipId')
@@ -121,7 +121,7 @@ export class OrganizationsController {
     @Param('id') id: string,
     @Param('membershipId') membershipId: string,
   ) {
-    return await this.organizationsService.getMember(id, membershipId);
+    return this.organizationsService.getMember(id, membershipId);
   }
 
   @Patch(':id/memberships/:membershipId')
@@ -131,7 +131,7 @@ export class OrganizationsController {
     @Param('membershipId') membershipId: string,
     @Body() input: UpdateMembershipDTO,
   ) {
-    return await this.organizationsService.updateMember(
+    return this.organizationsService.updateMember(
       id,
       membershipId,
       input,
@@ -144,7 +144,7 @@ export class OrganizationsController {
     @Param('id') id: string,
     @Param('membershipId') membershipId: string,
   ) {
-    return await this.organizationsService.deleteMember(id, membershipId);
+    return this.organizationsService.deleteMember(id, membershipId);
   }
 
   @Get(':id/roles')
@@ -175,7 +175,7 @@ export class OrganizationsController {
   @Get(':id/plan')
   @ResModel(Models.BILLING_PLAN)
   async getPlan(@Param('id') id: string) {
-    return await this.organizationsService.billingPlan(id);
+    return this.organizationsService.billingPlan(id);
   }
 
   @Get(':id/usage')

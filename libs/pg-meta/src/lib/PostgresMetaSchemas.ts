@@ -32,7 +32,7 @@ export default class PostgresMetaSchemas {
     if (offset) {
       sql = `${sql} OFFSET ${offset}`;
     }
-    return await this.query(sql);
+    return this.query(sql);
   }
 
   async retrieve({
@@ -86,7 +86,7 @@ export default class PostgresMetaSchemas {
     if (error) {
       return { data: null, error };
     }
-    return await this.retrieve({ name });
+    return this.retrieve({ name });
   }
 
   async update(
@@ -112,7 +112,7 @@ export default class PostgresMetaSchemas {
         return { data: null, error };
       }
     }
-    return await this.retrieve({ id });
+    return this.retrieve({ id });
   }
 
   async remove(

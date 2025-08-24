@@ -163,7 +163,7 @@ export class Auth {
           memoryCost: options['memoryCost'],
           parallelism: options['parallelism'],
         };
-        return await hash(string, { raw: false, ...aOptions });
+        return hash(string, { raw: false, ...aOptions });
       case 'bcrypt':
         const saltRounds = options.saltRounds || 10;
         return (await this.getBcrypt()).hash(string, saltRounds);
@@ -213,7 +213,7 @@ export class Auth {
 
     switch (algo) {
       case 'argon2':
-        return await verify(hash, plain, { ...options });
+        return verify(hash, plain, { ...options });
 
       case 'bcrypt':
         return (await this.getBcrypt()).compare(plain, hash);

@@ -71,8 +71,8 @@ export class NuvixAdapter extends FastifyAdapter {
         typeof args[args.length - 1] === 'function'
           ? args[args.length - 1]
           : (e: Error) => {
-              if (e) throw e;
-            };
+            if (e) throw e;
+          };
       const extra = args.slice(2, -1);
 
       if (extra.length) {
@@ -87,10 +87,10 @@ export class NuvixAdapter extends FastifyAdapter {
         case 'onSend':
         case 'onError':
           // These hooks have (request, reply, payload, done) signature
-          return await callback(request, reply, nextFn, ...extra);
+          return callback(request, reply, nextFn, ...extra);
         default:
           // Most hooks have (request, reply, done) signature
-          return await callback(request, reply, nextFn);
+          return callback(request, reply, nextFn);
       }
     });
   }

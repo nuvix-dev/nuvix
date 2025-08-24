@@ -46,7 +46,7 @@ from table_privileges
     if (offset) {
       sql += ` offset ${offset}`;
     }
-    return await this.query(sql);
+    return this.query(sql);
   }
 
   async retrieve({
@@ -116,13 +116,12 @@ where table_privileges.schema = ${literal(schema)}
 do $$
 begin
 ${grants
-  .map(
-    ({ privilege_type, relation_id, grantee, is_grantable }) =>
-      `execute format('grant ${privilege_type} on table %s to ${
-        grantee.toLowerCase() === 'public' ? 'public' : ident(grantee)
-      } ${is_grantable ? 'with grant option' : ''}', ${relation_id}::regclass);`,
-  )
-  .join('\n')}
+        .map(
+          ({ privilege_type, relation_id, grantee, is_grantable }) =>
+            `execute format('grant ${privilege_type} on table %s to ${grantee.toLowerCase() === 'public' ? 'public' : ident(grantee)
+            } ${is_grantable ? 'with grant option' : ''}', ${relation_id}::regclass);`,
+        )
+        .join('\n')}
 end $$;
 `;
     const { data, error } = await this.query(sql);
@@ -140,7 +139,7 @@ select *
 from table_privileges
 where relation_id in (${relationIds.map(literal).join(',')})
 `;
-    return await this.query(sql);
+    return this.query(sql);
   }
 
   async revoke(
@@ -150,11 +149,11 @@ where relation_id in (${relationIds.map(literal).join(',')})
 do $$
 begin
 ${revokes
-  .map(
-    revoke =>
-      `execute format('revoke ${revoke.privilege_type} on table %s from ${revoke.grantee}', ${revoke.relation_id}::regclass);`,
-  )
-  .join('\n')}
+        .map(
+          revoke =>
+            `execute format('revoke ${revoke.privilege_type} on table %s from ${revoke.grantee}', ${revoke.relation_id}::regclass);`,
+        )
+        .join('\n')}
 end $$;
 `;
     const { data, error } = await this.query(sql);
@@ -172,6 +171,6 @@ select *
 from table_privileges
 where relation_id in (${relationIds.map(literal).join(',')})
 `;
-    return await this.query(sql);
+    return this.query(sql);
   }
 }

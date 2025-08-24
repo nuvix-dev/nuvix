@@ -36,7 +36,7 @@ export class SchemasService {
 
     this.logger.debug(qb.toSQL());
     try {
-      return await qb;
+      return qb;
     } catch (e) {
       const error = transformPgError(e);
       if (!error || error.status >= 500) {
@@ -262,7 +262,7 @@ export class SchemasService {
     this.logger.debug(qb.toSQL());
 
     try {
-      return await qb;
+      return qb;
     } catch (e) {
       const error = transformPgError(e);
       if (!error || error.status >= 500) {

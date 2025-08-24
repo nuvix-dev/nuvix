@@ -22,6 +22,6 @@ export default class PostgresMetaConfig {
     if (offset) {
       sql = `${sql} OFFSET ${offset}`;
     }
-    return await this.query(sql);
+    return this.query(sql);
   }
 }

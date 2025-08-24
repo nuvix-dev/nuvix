@@ -55,7 +55,7 @@ export class TeamsController {
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.teamsService.findAll(db, queries, search);
+    return this.teamsService.findAll(db, queries, search);
   }
 
   @Post()
@@ -66,13 +66,13 @@ export class TeamsController {
     @Body() input: CreateTeamDTO,
     @Mode() mode: string,
   ) {
-    return await this.teamsService.create(db, user, input, mode);
+    return this.teamsService.create(db, user, input, mode);
   }
 
   @Get(':id')
   @ResModel({ type: Models.TEAM })
   async findOne(@ProjectDatabase() db: Database, @Param('id') id: string) {
-    return await this.teamsService.findOne(db, id);
+    return this.teamsService.findOne(db, id);
   }
 
   @Put(':id')
@@ -82,18 +82,18 @@ export class TeamsController {
     @Param('id') id: string,
     @Body() input: UpdateTeamDTO,
   ) {
-    return await this.teamsService.update(db, id, input);
+    return this.teamsService.update(db, id, input);
   }
 
   @Delete(':id')
   @ResModel({ type: Models.NONE })
   async remove(@ProjectDatabase() db: Database, @Param('id') id: string) {
-    return await this.teamsService.remove(db, id);
+    return this.teamsService.remove(db, id);
   }
 
   @Get(':id/prefs')
   async getPrefs(@ProjectDatabase() db: Database, @Param('id') id: string) {
-    return await this.teamsService.getPrefs(db, id);
+    return this.teamsService.getPrefs(db, id);
   }
 
   @Put(':id/prefs')
@@ -102,7 +102,7 @@ export class TeamsController {
     @Param('id') id: string,
     @Body() input: UpdateTeamPrefsDTO,
   ) {
-    return await this.teamsService.setPrefs(db, id, input);
+    return this.teamsService.setPrefs(db, id, input);
   }
 
   @Get(':id/logs')
@@ -124,7 +124,7 @@ export class TeamsController {
     @Locale() locale: LocaleTranslator,
     @User() user: UsersDoc,
   ) {
-    return await this.teamsService.addMember(
+    return this.teamsService.addMember(
       db,
       id,
       input,
@@ -142,7 +142,7 @@ export class TeamsController {
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.teamsService.getMembers(db, id, queries, search);
+    return this.teamsService.getMembers(db, id, queries, search);
   }
 
   @Get(':id/memberships/:memberId')
@@ -152,7 +152,7 @@ export class TeamsController {
     @Param('id') id: string,
     @Param('memberId') memberId: string,
   ) {
-    return await this.teamsService.getMember(db, id, memberId);
+    return this.teamsService.getMember(db, id, memberId);
   }
 
   @Patch(':id/memberships/:memberId')
@@ -163,7 +163,7 @@ export class TeamsController {
     @Param('memberId') memberId: string,
     @Body() input: UpdateMembershipDTO,
   ) {
-    return await this.teamsService.updateMember(db, id, memberId, input);
+    return this.teamsService.updateMember(db, id, memberId, input);
   }
 
   @Patch(':id/memberships/:memberId/status')
@@ -174,7 +174,7 @@ export class TeamsController {
     @Param('memberId') memberId: string,
     @Body() input: UpdateMembershipStatusDTO,
   ) {
-    return await this.teamsService.updateMemberStatus(db, id, memberId, input);
+    return this.teamsService.updateMemberStatus(db, id, memberId, input);
   }
 
   @Delete(':id/memberships/:memberId')
@@ -184,6 +184,6 @@ export class TeamsController {
     @Param('id') id: string,
     @Param('memberId') memberId: string,
   ) {
-    return await this.teamsService.deleteMember(db, id, memberId);
+    return this.teamsService.deleteMember(db, id, memberId);
   }
 }

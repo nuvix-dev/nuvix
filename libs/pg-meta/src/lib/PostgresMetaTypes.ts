@@ -65,6 +65,6 @@ export default class PostgresMetaTypes {
     if (offset) {
       sql += ` offset ${offset}`;
     }
-    return await this.query(sql);
+    return this.query(sql);
   }
 }

@@ -183,7 +183,7 @@ COMMIT;`;
     if (error) {
       return { data: null, error };
     }
-    return await this.retrieve({ name });
+    return this.retrieve({ name });
   }
 
   async update(
@@ -294,7 +294,7 @@ COMMIT;`;
         return { data: null, error };
       }
     }
-    return await this.retrieve({ id });
+    return this.retrieve({ id });
   }
 
   async remove(id: number): Promise<PostgresMetaResult<PostgresRole>> {

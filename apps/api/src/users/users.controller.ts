@@ -69,7 +69,7 @@ export class UsersController {
     @Query('queries', ParseQueryPipe) queries?: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.usersService.findAll(db, queries, search);
+    return this.usersService.findAll(db, queries, search);
   }
 
   @Post()
@@ -83,7 +83,7 @@ export class UsersController {
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.usersService.create(db, createUserDTO, project);
+    return this.usersService.create(db, createUserDTO, project);
   }
 
   @Post('argon2')
@@ -97,7 +97,7 @@ export class UsersController {
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.usersService.createWithArgon2(db, createUserDTO, project);
+    return this.usersService.createWithArgon2(db, createUserDTO, project);
   }
 
   @Post('bcrypt')
@@ -111,7 +111,7 @@ export class UsersController {
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.usersService.createWithBcrypt(db, createUserDTO, project);
+    return this.usersService.createWithBcrypt(db, createUserDTO, project);
   }
 
   @Post('md5')
@@ -125,7 +125,7 @@ export class UsersController {
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.usersService.createWithMd5(db, createUserDTO, project);
+    return this.usersService.createWithMd5(db, createUserDTO, project);
   }
 
   @Post('sha')
@@ -139,7 +139,7 @@ export class UsersController {
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.usersService.createWithSha(db, createUserDTO, project);
+    return this.usersService.createWithSha(db, createUserDTO, project);
   }
 
   @Post('phpass')
@@ -153,7 +153,7 @@ export class UsersController {
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.usersService.createWithPhpass(db, createUserDTO, project);
+    return this.usersService.createWithPhpass(db, createUserDTO, project);
   }
 
   @Post('scrypt')
@@ -167,7 +167,7 @@ export class UsersController {
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.usersService.createWithScrypt(db, createUserDTO, project);
+    return this.usersService.createWithScrypt(db, createUserDTO, project);
   }
 
   @Post('scrypt-modified')
@@ -181,7 +181,7 @@ export class UsersController {
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.usersService.createWithScryptMod(
+    return this.usersService.createWithScryptMod(
       db,
       createUserDTO,
       project,
@@ -191,7 +191,7 @@ export class UsersController {
   @Get('usage')
   @ResModel({ type: Models.USAGE_USERS })
   async getUsage(@ProjectDatabase() db: Database) {
-    return await this.usersService.getUsage(db);
+    return this.usersService.getUsage(db);
   }
 
   @Get('identities')
@@ -202,7 +202,7 @@ export class UsersController {
     @Query('queries', ParseQueryPipe) queries?: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.usersService.getIdentities(db, queries, search);
+    return this.usersService.getIdentities(db, queries, search);
   }
 
   @Delete('identities/:id')
@@ -211,21 +211,21 @@ export class UsersController {
     @ProjectDatabase() db: Database,
     @Param('id') id: string,
   ) {
-    return await this.usersService.deleteIdentity(db, id);
+    return this.usersService.deleteIdentity(db, id);
   }
 
   @Get(':id')
   @Scope('users.read')
   @ResModel(Models.USER)
   async findOne(@ProjectDatabase() db: Database, @Param('id') id: string) {
-    return await this.usersService.findOne(db, id);
+    return this.usersService.findOne(db, id);
   }
 
   @Get(':id/prefs')
   @Scope('users.read')
   @ResModel(Models.PREFERENCES)
   async getPrefs(@ProjectDatabase() db: Database, @Param('id') id: string) {
-    return await this.usersService.getPrefs(db, id);
+    return this.usersService.getPrefs(db, id);
   }
 
   @Patch(':id/prefs')
@@ -236,7 +236,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body() { prefs }: UpdateUserPrefsDTO,
   ) {
-    return await this.usersService.updatePrefs(db, id, prefs);
+    return this.usersService.updatePrefs(db, id, prefs);
   }
 
   @Patch(':id/status')
@@ -247,7 +247,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body() status: UpdateUserStatusDTO,
   ) {
-    return await this.usersService.updateStatus(db, id, status);
+    return this.usersService.updateStatus(db, id, status);
   }
 
   @Put(':id/labels')
@@ -258,7 +258,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body() input: UpdateUserLabelDTO,
   ) {
-    return await this.usersService.updateLabels(db, id, input);
+    return this.usersService.updateLabels(db, id, input);
   }
 
   @Patch(':id/name')
@@ -269,7 +269,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body() input: UpdateUserNameDTO,
   ) {
-    return await this.usersService.updateName(db, id, input);
+    return this.usersService.updateName(db, id, input);
   }
 
   @Patch(':id/password')
@@ -280,7 +280,7 @@ export class UsersController {
     @Body() input: UpdateUserPasswordDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return await this.usersService.updatePassword(db, id, input, project);
+    return this.usersService.updatePassword(db, id, input, project);
   }
 
   @Patch(':id/email')
@@ -290,7 +290,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body() input: UpdateUserEmailDTO,
   ) {
-    return await this.usersService.updateEmail(db, id, input.email);
+    return this.usersService.updateEmail(db, id, input.email);
   }
 
   @Patch(':id/phone')
@@ -300,7 +300,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body() input: UpdateUserPhoneDTO,
   ) {
-    return await this.usersService.updatePhone(db, id, input.phone);
+    return this.usersService.updatePhone(db, id, input.phone);
   }
 
   @Patch(':id/mfa')
@@ -310,7 +310,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body() input: UpdateMfaStatusDTO,
   ) {
-    return await this.usersService.updateMfaStatus(db, id, input.mfa);
+    return this.usersService.updateMfaStatus(db, id, input.mfa);
   }
 
   @Post(':id/targets')
@@ -324,7 +324,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body() createTargetDTO: CreateTargetDTO,
   ): Promise<any> {
-    return await this.usersService.createTarget(db, id, createTargetDTO);
+    return this.usersService.createTarget(db, id, createTargetDTO);
   }
 
   @Get(':id/targets')
@@ -333,7 +333,7 @@ export class UsersController {
     @ProjectDatabase() db: Database,
     @Param('id') id: string,
   ): Promise<any> {
-    return await this.usersService.getTargets(db, id);
+    return this.usersService.getTargets(db, id);
   }
 
   @Post(':id/jwts')
@@ -343,7 +343,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body() input: CreateJwtDTO,
   ): Promise<any> {
-    return await this.usersService.createJwt(db, id, input);
+    return this.usersService.createJwt(db, id, input);
   }
 
   @Get(':id/sessions')
@@ -352,7 +352,7 @@ export class UsersController {
     @ProjectDatabase() db: Database,
     @Param('id') id: string,
   ): Promise<any> {
-    return await this.usersService.getSessions(db, id);
+    return this.usersService.getSessions(db, id);
   }
 
   @Post(':id/sessions')
@@ -363,7 +363,7 @@ export class UsersController {
     @Req() req: any,
     @Project() project: ProjectsDoc,
   ): Promise<any> {
-    return await this.usersService.createSession(db, id, req, project);
+    return this.usersService.createSession(db, id, req, project);
   }
 
   @Delete(':id/sessions')
@@ -371,7 +371,7 @@ export class UsersController {
     @ProjectDatabase() db: Database,
     @Param('id') id: string,
   ) {
-    return await this.usersService.deleteSessions(db, id);
+    return this.usersService.deleteSessions(db, id);
   }
 
   @Get(':id/memberships')
@@ -380,7 +380,7 @@ export class UsersController {
     @ProjectDatabase() db: Database,
     @Param('id') id: string,
   ): Promise<any> {
-    return await this.usersService.getMemberships(db, id);
+    return this.usersService.getMemberships(db, id);
   }
 
   @Post(':id/tokens')
@@ -391,7 +391,7 @@ export class UsersController {
     @Body() input: CreateTokenDTO,
     @Req() req: NuvixRequest,
   ): Promise<any> {
-    return await this.usersService.createToken(db, id, input, req);
+    return this.usersService.createToken(db, id, input, req);
   }
 
   @Get(':id/logs')
@@ -401,7 +401,7 @@ export class UsersController {
     @Param('id') id: string,
     @Query('queries') queries: Queries[],
   ): Promise<any> {
-    return await this.usersService.getLogs(db, id, queries);
+    return this.usersService.getLogs(db, id, queries);
   }
 
   @Patch(':id/verification')
@@ -411,7 +411,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body() input: UpdateUserEmailVerificationDTO,
   ) {
-    return await this.usersService.updateEmailVerification(db, id, input);
+    return this.usersService.updateEmailVerification(db, id, input);
   }
 
   @Patch(':id/verification/phone')
@@ -421,7 +421,7 @@ export class UsersController {
     @Param('id') id: string,
     @Body() input: UpdateUserPoneVerificationDTO,
   ) {
-    return await this.usersService.updatePhoneVerification(db, id, input);
+    return this.usersService.updatePhoneVerification(db, id, input);
   }
 
   @Get(':id/targets/:targetId')
@@ -431,7 +431,7 @@ export class UsersController {
     @Param('id') id: string,
     @Param('targetId') targetId: string,
   ): Promise<any> {
-    return await this.usersService.getTarget(db, id, targetId);
+    return this.usersService.getTarget(db, id, targetId);
   }
 
   @Patch(':id/targets/:targetId')
@@ -442,7 +442,7 @@ export class UsersController {
     @Param('targetId') targetId: string,
     @Body() input: UpdateTargetDTO,
   ): Promise<any> {
-    return await this.usersService.updateTarget(db, id, targetId, input);
+    return this.usersService.updateTarget(db, id, targetId, input);
   }
 
   @Get(':id/mfa/factors')
@@ -451,7 +451,7 @@ export class UsersController {
     @ProjectDatabase() db: Database,
     @Param('id') id: string,
   ) {
-    return await this.usersService.getMfaFactors(db, id);
+    return this.usersService.getMfaFactors(db, id);
   }
 
   @Get(':id/mfa/recovery-codes')
@@ -460,7 +460,7 @@ export class UsersController {
     @ProjectDatabase() db: Database,
     @Param('id') id: string,
   ) {
-    return await this.usersService.getMfaRecoveryCodes(db, id);
+    return this.usersService.getMfaRecoveryCodes(db, id);
   }
 
   @Patch(':id/mfa/recovery-codes')
@@ -469,7 +469,7 @@ export class UsersController {
     @ProjectDatabase() db: Database,
     @Param('id') id: string,
   ) {
-    return await this.usersService.generateMfaRecoveryCodes(db, id);
+    return this.usersService.generateMfaRecoveryCodes(db, id);
   }
 
   @Put(':id/mfa/recovery-codes')
@@ -478,7 +478,7 @@ export class UsersController {
     @ProjectDatabase() db: Database,
     @Param('id') id: string,
   ) {
-    return await this.usersService.regenerateMfaRecoveryCodes(db, id);
+    return this.usersService.regenerateMfaRecoveryCodes(db, id);
   }
 
   @Delete(':id/mfa/authenticators/:type')
@@ -487,7 +487,7 @@ export class UsersController {
     @Param('id') id: string,
     @Param('type') type: string,
   ) {
-    return await this.usersService.deleteMfaAuthenticator(db, id, type);
+    return this.usersService.deleteMfaAuthenticator(db, id, type);
   }
 
   @Delete(':id/session/:sessionId')
@@ -496,7 +496,7 @@ export class UsersController {
     @Param('id') id: string,
     @Param('sessionId') sessionId: string,
   ) {
-    return await this.usersService.deleteSession(db, id, sessionId);
+    return this.usersService.deleteSession(db, id, sessionId);
   }
 
   @Delete(':id/targets/:targetId')
@@ -505,11 +505,11 @@ export class UsersController {
     @Param('id') id: string,
     @Param('targetId') targetId: string,
   ) {
-    return await this.usersService.deleteTarget(db, id, targetId);
+    return this.usersService.deleteTarget(db, id, targetId);
   }
 
   @Delete(':id')
   async remove(@ProjectDatabase() db: Database, @Param('id') id: string) {
-    return await this.usersService.remove(db, id);
+    return this.usersService.remove(db, id);
   }
 }

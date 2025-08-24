@@ -789,7 +789,7 @@ export class ClusterService {
         this.logger.log(
           `Services for project ${projectId} updated successfully`,
         );
-        return await this.coreV1Api.readNamespacedService({
+        return this.coreV1Api.readNamespacedService({
           name: `${projectId}-service`,
           namespace: namespace,
         });

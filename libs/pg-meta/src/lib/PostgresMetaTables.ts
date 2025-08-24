@@ -21,7 +21,7 @@ export default class PostgresMetaTables {
     limit?: number;
     offset?: number;
     includeColumns: false;
-  }): Promise<PostgresMetaResult<(PostgresTable & { columns: never })[]>>;
+  }): Promise<PostgresMetaResult<(PostgresTable & { columns: never; })[]>>;
   async list(options?: {
     includeSystemSchemas?: boolean;
     includedSchemas?: string[];
@@ -29,7 +29,7 @@ export default class PostgresMetaTables {
     limit?: number;
     offset?: number;
     includeColumns?: boolean;
-  }): Promise<PostgresMetaResult<(PostgresTable & { columns: unknown[] })[]>>;
+  }): Promise<PostgresMetaResult<(PostgresTable & { columns: unknown[]; })[]>>;
   async list({
     includeSystemSchemas = false,
     includedSchemas,
@@ -60,7 +60,7 @@ export default class PostgresMetaTables {
     if (offset) {
       sql += ` offset ${offset}`;
     }
-    return await this.query(sql);
+    return this.query(sql);
   }
 
   async retrieve({
@@ -130,7 +130,7 @@ export default class PostgresMetaTables {
     if (error) {
       return { data: null, error };
     }
-    return await this.retrieve({ name, schema });
+    return this.retrieve({ name, schema });
   }
 
   async update(
@@ -228,7 +228,7 @@ COMMIT;`;
         return { data: null, error };
       }
     }
-    return await this.retrieve({ id });
+    return this.retrieve({ id });
   }
 
   async remove(
@@ -239,9 +239,8 @@ COMMIT;`;
     if (error) {
       return { data: null, error };
     }
-    const sql = `DROP TABLE ${ident(table!.schema)}.${ident(table!.name)} ${
-      cascade ? 'CASCADE' : 'RESTRICT'
-    };`;
+    const sql = `DROP TABLE ${ident(table!.schema)}.${ident(table!.name)} ${cascade ? 'CASCADE' : 'RESTRICT'
+      };`;
     {
       const { error } = await this.query(sql);
       if (error) {

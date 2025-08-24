@@ -36,7 +36,7 @@ import { Hook, HookMethods } from './interface';
 
 export class HooksModule<
   TAppOptions extends
-    NestApplicationContextOptions = NestApplicationContextOptions,
+  NestApplicationContextOptions = NestApplicationContextOptions,
 > {
   private readonly routerProxy = new RouterProxy();
   private readonly exceptionFiltersCache = new WeakMap();
@@ -361,16 +361,16 @@ export class HooksModule<
     const middlewareFunction = isMethodAll
       ? proxy
       : async <TRequest, TResponse>(
-          req: TRequest,
-          res: TResponse,
-          next: VoidFunction,
-          ...rest: any
-        ) => {
-          if (applicationRef.getRequestMethod?.(req) === requestMethod) {
-            return await proxy(req, res, next, ...rest);
-          }
-          return Promise.resolve();
-        };
+        req: TRequest,
+        res: TResponse,
+        next: VoidFunction,
+        ...rest: any
+      ) => {
+        if (applicationRef.getRequestMethod?.(req) === requestMethod) {
+          return proxy(req, res, next, ...rest);
+        }
+        return Promise.resolve();
+      };
     const pathsToApplyMiddleware = [] as string[];
     paths.some(path => path.match(/^\/?$/))
       ? pathsToApplyMiddleware.push('/')

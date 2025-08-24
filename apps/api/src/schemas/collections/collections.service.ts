@@ -387,7 +387,7 @@ export class CollectionsService {
       filters,
     });
 
-    return await this.createAttribute(db, collectionId, attribute, project);
+    return this.createAttribute(db, collectionId, attribute, project);
   }
 
   /**
@@ -411,7 +411,7 @@ export class CollectionsService {
       format: AttributeFormat.EMAIL,
     });
 
-    return await this.createAttribute(db, collectionId, attribute, project);
+    return this.createAttribute(db, collectionId, attribute, project);
   }
 
   /**
@@ -443,7 +443,7 @@ export class CollectionsService {
       formatOptions: { elements },
     });
 
-    return await this.createAttribute(db, collectionId, attribute, project);
+    return this.createAttribute(db, collectionId, attribute, project);
   }
 
   /**
@@ -467,7 +467,7 @@ export class CollectionsService {
       format: AttributeFormat.IP,
     });
 
-    return await this.createAttribute(db, collectionId, attribute, project);
+    return this.createAttribute(db, collectionId, attribute, project);
   }
 
   /**
@@ -491,7 +491,7 @@ export class CollectionsService {
       format: AttributeFormat.URL,
     });
 
-    return await this.createAttribute(db, collectionId, attribute, project);
+    return this.createAttribute(db, collectionId, attribute, project);
   }
 
   /**
@@ -718,9 +718,9 @@ export class CollectionsService {
 
       if (
         attribute.get('options')?.['twoWayKey']?.toLowerCase() ===
-          twoWayKey?.toLowerCase() &&
+        twoWayKey?.toLowerCase() &&
         attribute.get('options')?.['relatedCollection'] ===
-          relatedCollection.getId()
+        relatedCollection.getId()
       ) {
         throw new Exception(
           Exception.ATTRIBUTE_ALREADY_EXISTS,
@@ -733,9 +733,9 @@ export class CollectionsService {
       if (
         type === RelationType.ManyToMany &&
         attribute.get('options')?.['relationType'] ===
-          RelationType.ManyToMany &&
+        RelationType.ManyToMany &&
         attribute.get('options')?.['relatedCollection'] ===
-          relatedCollection.getId()
+        relatedCollection.getId()
       ) {
         throw new Exception(
           Exception.ATTRIBUTE_ALREADY_EXISTS,
@@ -884,7 +884,7 @@ export class CollectionsService {
   ) {
     const { required, default: defaultValue, newKey } = input;
 
-    return await this.updateAttribute({
+    return this.updateAttribute({
       db,
       collectionId,
       key,
@@ -908,7 +908,7 @@ export class CollectionsService {
   ) {
     const { required, default: defaultValue, newKey } = input;
 
-    return await this.updateAttribute({
+    return this.updateAttribute({
       db,
       collectionId,
       key,
@@ -1019,7 +1019,7 @@ export class CollectionsService {
   ) {
     const { required, default: defaultValue, newKey } = input;
 
-    return await this.updateAttribute({
+    return this.updateAttribute({
       db,
       collectionId,
       key,

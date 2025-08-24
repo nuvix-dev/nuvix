@@ -51,7 +51,7 @@ export class StorageController {
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.storageService.getBuckets(db, queries, search);
+    return this.storageService.getBuckets(db, queries, search);
   }
 
   @Post('buckets')
@@ -60,13 +60,13 @@ export class StorageController {
     @ProjectDatabase() db: Database,
     @Body() createBucketDTO: CreateBucketDTO,
   ) {
-    return await this.storageService.createBucket(db, createBucketDTO);
+    return this.storageService.createBucket(db, createBucketDTO);
   }
 
   @Get('buckets/:id')
   @ResModel(Models.BUCKET)
   async getBucket(@ProjectDatabase() db: Database, @Param('id') id: string) {
-    return await this.storageService.getBucket(db, id);
+    return this.storageService.getBucket(db, id);
   }
 
   @Put('buckets/:id')
@@ -76,13 +76,13 @@ export class StorageController {
     @Param('id') id: string,
     @Body() createBucketDTO: UpdateBucketDTO,
   ) {
-    return await this.storageService.updateBucket(db, id, createBucketDTO);
+    return this.storageService.updateBucket(db, id, createBucketDTO);
   }
 
   @Delete('buckets/:id')
   @ResModel(Models.NONE)
   async deleteBucket(@ProjectDatabase() db: Database, @Param('id') id: string) {
-    return await this.storageService.deleteBucket(db, id);
+    return this.storageService.deleteBucket(db, id);
   }
 
   @Get('buckets/:id/files')
@@ -93,7 +93,7 @@ export class StorageController {
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.storageService.getFiles(db, id, queries, search);
+    return this.storageService.getFiles(db, id, queries, search);
   }
 
   // @Get('buckets/:id/objects')
@@ -105,7 +105,7 @@ export class StorageController {
   //   @Query('search') search?: string,
   //   @Query('path') path?: string,
   // ) {
-  //   return await this.storageService.getObjects(db, id, queries, search, path);
+  //   return this.storageService.getObjects(db, id, queries, search, path);
   // }
 
   // @Post('buckets/:id/objects')
@@ -119,7 +119,7 @@ export class StorageController {
   //   @Body() createObjectDTO: CreateBucketDTO,
   //   @User() user: Doc,
   // ) {
-  //   return await this.storageService.createFolder(
+  //   return this.storageService.createFolder(
   //     db,
   //     user,
   //     id,
@@ -142,7 +142,7 @@ export class StorageController {
   //   @Req() req: NuvixRequest,
   //   @User() user: Doc,
   // ) {
-  //   return await this.storageService.uploadFile(
+  //   return this.storageService.uploadFile(
   //     db,
   //     id,
   //     { fileId, permissions, name },
@@ -166,7 +166,7 @@ export class StorageController {
   ) {
     if (!fileId)
       throw new Exception(Exception.INVALID_PARAMS, 'fileId is required');
-    return await this.storageService.createFile(
+    return this.storageService.createFile(
       db,
       id,
       { fileId, permissions },
@@ -184,7 +184,7 @@ export class StorageController {
     @Param('id') id: string,
     @Param('fileId') fileId: string,
   ) {
-    return await this.storageService.getFile(db, id, fileId);
+    return this.storageService.getFile(db, id, fileId);
   }
 
   @Get('buckets/:id/files/:fileId/preview')
@@ -221,7 +221,7 @@ export class StorageController {
     @Query('background', ParseDuplicatePipe) background?: string,
     @Query('output', ParseDuplicatePipe) output?: string,
   ) {
-    return await this.storageService.previewFile(
+    return this.storageService.previewFile(
       db,
       id,
       fileId,
@@ -251,7 +251,7 @@ export class StorageController {
     @Res({ passthrough: true }) res: any,
     @Project() project: Doc,
   ) {
-    return await this.storageService.downloadFile(
+    return this.storageService.downloadFile(
       db,
       id,
       fileId,
@@ -270,7 +270,7 @@ export class StorageController {
     @Res({ passthrough: true }) res: any,
     @Project() project: Doc,
   ) {
-    return await this.storageService.viewFile(
+    return this.storageService.viewFile(
       db,
       id,
       fileId,
@@ -290,7 +290,7 @@ export class StorageController {
     @Res({ passthrough: true }) res: any,
     @Project() project: Doc,
   ) {
-    return await this.storageService.getFileForPushNotification(
+    return this.storageService.getFileForPushNotification(
       db,
       id,
       fileId,
@@ -309,7 +309,7 @@ export class StorageController {
     @Param('fileId') fileId: string,
     @Body() updateFileDTO: UpdateFileDTO,
   ) {
-    return await this.storageService.updateFile(db, id, fileId, updateFileDTO);
+    return this.storageService.updateFile(db, id, fileId, updateFileDTO);
   }
 
   @Delete('buckets/:id/files/:fileId')
@@ -320,7 +320,7 @@ export class StorageController {
     @Param('fileId') fileId: string,
     @Project() project: Doc,
   ) {
-    return await this.storageService.deleteFile(db, id, fileId, project);
+    return this.storageService.deleteFile(db, id, fileId, project);
   }
 
   @Get('usage')
@@ -329,7 +329,7 @@ export class StorageController {
     @ProjectDatabase() db: Database,
     @Query('range') range?: string,
   ) {
-    return await this.storageService.getStorageUsage(db, range);
+    return this.storageService.getStorageUsage(db, range);
   }
 
   @Get(':id/usage')
@@ -339,6 +339,6 @@ export class StorageController {
     @Param('id') id: string,
     @Query('range') range?: string,
   ) {
-    return await this.storageService.getBucketStorageUsage(db, id, range);
+    return this.storageService.getBucketStorageUsage(db, id, range);
   }
 }

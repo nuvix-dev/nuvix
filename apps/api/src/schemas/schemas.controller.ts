@@ -54,7 +54,7 @@ export class SchemasController {
     @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
     offset?: number,
   ) {
-    return await this.schemasService.select({
+    return this.schemasService.select({
       table,
       pg,
       limit,
@@ -78,7 +78,7 @@ export class SchemasController {
     )
     columns?: string[],
   ) {
-    return await this.schemasService.insert({
+    return this.schemasService.insert({
       pg,
       schema,
       table,
@@ -147,7 +147,7 @@ export class SchemasController {
     @Query('force', ParseDuplicatePipe, new ParseBoolPipe({ optional: true }))
     force: boolean = false,
   ) {
-    return await this.schemasService.delete({
+    return this.schemasService.delete({
       pg,
       schema,
       table,
@@ -175,7 +175,7 @@ export class SchemasController {
     offset?: number,
     @Body() args: Record<string, any> = {},
   ) {
-    return await this.schemasService.callFunction({
+    return this.schemasService.callFunction({
       pg,
       schema,
       functionName,

@@ -94,7 +94,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: CreateMailgunProviderDTO,
   ) {
-    return await this.messagingService.createMailgunProvider({
+    return this.messagingService.createMailgunProvider({
       db,
       input,
     });
@@ -114,7 +114,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: CreateSendgridProviderDTO,
   ) {
-    return await this.messagingService.createSendGridProvider({
+    return this.messagingService.createSendGridProvider({
       db,
       input,
     });
@@ -134,7 +134,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: CreateSMTPProviderDTO,
   ) {
-    return await this.messagingService.createSmtpProvider({
+    return this.messagingService.createSmtpProvider({
       db,
       input,
     });
@@ -154,7 +154,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: CreateMsg91ProviderDTO,
   ) {
-    return await this.messagingService.createMsg91Provider({
+    return this.messagingService.createMsg91Provider({
       db,
       input,
     });
@@ -174,7 +174,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: CreateTelesignProviderDTO,
   ) {
-    return await this.messagingService.createTelesignProvider({
+    return this.messagingService.createTelesignProvider({
       db,
       input,
     });
@@ -194,7 +194,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: CreateTextmagicProviderDTO,
   ) {
-    return await this.messagingService.createTextMagicProvider({
+    return this.messagingService.createTextMagicProvider({
       db,
       input,
     });
@@ -214,7 +214,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: CreateTwilioProviderDTO,
   ) {
-    return await this.messagingService.createTwilioProvider({
+    return this.messagingService.createTwilioProvider({
       db,
       input,
     });
@@ -234,7 +234,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: CreateVonageProviderDTO,
   ) {
-    return await this.messagingService.createVonageProvider({
+    return this.messagingService.createVonageProvider({
       db,
       input,
     });
@@ -254,7 +254,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: CreateFcmProviderDTO,
   ) {
-    return await this.messagingService.createFcmProvider({
+    return this.messagingService.createFcmProvider({
       db,
       input,
     });
@@ -274,7 +274,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: CreateApnsProviderDTO,
   ) {
-    return await this.messagingService.createApnsProvider({
+    return this.messagingService.createApnsProvider({
       db,
       input,
     });
@@ -294,7 +294,7 @@ export class MessagingController {
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.messagingService.listProviders({
+    return this.messagingService.listProviders({
       db,
       queries,
       search,
@@ -314,7 +314,7 @@ export class MessagingController {
     @Param('providerId') providerId: string,
     @ProjectDatabase() db: Database,
   ) {
-    return await this.messagingService.getProvider(db, providerId);
+    return this.messagingService.getProvider(db, providerId);
   }
 
   @Patch('providers/mailgun/:providerId')
@@ -332,7 +332,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: UpdateMailgunProviderDTO,
   ) {
-    return await this.messagingService.updateMailgunProvider({
+    return this.messagingService.updateMailgunProvider({
       db,
       providerId,
       input,
@@ -354,7 +354,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: UpdateSendgridProviderDTO,
   ) {
-    return await this.messagingService.updateSendGridProvider({
+    return this.messagingService.updateSendGridProvider({
       db,
       providerId,
       input,
@@ -376,7 +376,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: UpdateSMTPProviderDTO,
   ) {
-    return await this.messagingService.updateSmtpProvider({
+    return this.messagingService.updateSmtpProvider({
       db,
       providerId,
       input,
@@ -398,7 +398,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: UpdateMsg91ProviderDTO,
   ) {
-    return await this.messagingService.updateMsg91Provider({
+    return this.messagingService.updateMsg91Provider({
       db,
       providerId,
       input,
@@ -420,7 +420,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: UpdateTelesignProviderDTO,
   ) {
-    return await this.messagingService.updateTelesignProvider({
+    return this.messagingService.updateTelesignProvider({
       db,
       providerId,
       input,
@@ -442,7 +442,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: UpdateTextmagicProviderDTO,
   ) {
-    return await this.messagingService.updateTextMagicProvider({
+    return this.messagingService.updateTextMagicProvider({
       db,
       providerId,
       input,
@@ -464,7 +464,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: UpdateTwilioProviderDTO,
   ) {
-    return await this.messagingService.updateTwilioProvider({
+    return this.messagingService.updateTwilioProvider({
       db,
       providerId,
       input,
@@ -486,7 +486,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: UpdateVonageProviderDTO,
   ) {
-    return await this.messagingService.updateVonageProvider({
+    return this.messagingService.updateVonageProvider({
       db,
       providerId,
       input,
@@ -508,7 +508,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: UpdateFcmProviderDTO,
   ) {
-    return await this.messagingService.updateFcmProvider({
+    return this.messagingService.updateFcmProvider({
       db,
       providerId,
       input,
@@ -530,7 +530,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: UpdateApnsProviderDTO,
   ) {
-    return await this.messagingService.updateApnsProvider({
+    return this.messagingService.updateApnsProvider({
       db,
       providerId,
       input,
@@ -551,7 +551,7 @@ export class MessagingController {
     @Param('providerId') providerId: string,
     @ProjectDatabase() db: Database,
   ) {
-    return await this.messagingService.deleteProvider(db, providerId);
+    return this.messagingService.deleteProvider(db, providerId);
   }
 
   @Post('topics')
@@ -568,7 +568,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: CreateTopicDTO,
   ) {
-    return await this.messagingService.createTopic({
+    return this.messagingService.createTopic({
       db,
       input,
     });
@@ -588,7 +588,7 @@ export class MessagingController {
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.messagingService.listTopics({
+    return this.messagingService.listTopics({
       db,
       queries,
       search,
@@ -608,7 +608,7 @@ export class MessagingController {
     @Param('topicId') topicId: string,
     @ProjectDatabase() db: Database,
   ) {
-    return await this.messagingService.getTopic(db, topicId);
+    return this.messagingService.getTopic(db, topicId);
   }
 
   @Patch('topics/:topicId')
@@ -626,7 +626,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: UpdateTopicDTO,
   ) {
-    return await this.messagingService.updateTopic({
+    return this.messagingService.updateTopic({
       db,
       topicId,
       input,
@@ -647,7 +647,7 @@ export class MessagingController {
     @Param('topicId') topicId: string,
     @ProjectDatabase() db: Database,
   ) {
-    return await this.messagingService.deleteTopic(db, topicId);
+    return this.messagingService.deleteTopic(db, topicId);
   }
 
   @Post('topics/:topicId/subscribers')
@@ -665,7 +665,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Body() input: CreateSubscriberDTO,
   ) {
-    return await this.messagingService.createSubscriber({
+    return this.messagingService.createSubscriber({
       db,
       topicId,
       input,
@@ -687,7 +687,7 @@ export class MessagingController {
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.messagingService.listSubscribers({
+    return this.messagingService.listSubscribers({
       db,
       topicId,
       queries,
@@ -709,7 +709,7 @@ export class MessagingController {
     @Param('subscriberId') subscriberId: string,
     @ProjectDatabase() db: Database,
   ) {
-    return await this.messagingService.getSubscriber(db, topicId, subscriberId);
+    return this.messagingService.getSubscriber(db, topicId, subscriberId);
   }
 
   @Delete('topics/:topicId/subscribers/:subscriberId')
@@ -727,7 +727,7 @@ export class MessagingController {
     @Param('subscriberId') subscriberId: string,
     @ProjectDatabase() db: Database,
   ) {
-    return await this.messagingService.deleteSubscriber(
+    return this.messagingService.deleteSubscriber(
       db,
       topicId,
       subscriberId,
@@ -749,7 +749,7 @@ export class MessagingController {
     @Body() input: CreateEmailMessageDTO,
     @Project() project: Doc,
   ) {
-    return await this.messagingService.createEmailMessage({
+    return this.messagingService.createEmailMessage({
       db,
       input,
       project,
@@ -771,7 +771,7 @@ export class MessagingController {
     @Body() input: CreateSmsMessageDTO,
     @Project() project: Doc,
   ) {
-    return await this.messagingService.createSmsMessage({
+    return this.messagingService.createSmsMessage({
       db,
       input,
       project,
@@ -793,7 +793,7 @@ export class MessagingController {
     @Body() input: CreatePushMessageDTO,
     @Project() project: Doc,
   ) {
-    return await this.messagingService.createPushMessage({
+    return this.messagingService.createPushMessage({
       db,
       input,
       project,
@@ -814,7 +814,7 @@ export class MessagingController {
     @Query('queries', ParseQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
-    return await this.messagingService.listMessages({
+    return this.messagingService.listMessages({
       db,
       queries,
       search,
@@ -834,7 +834,7 @@ export class MessagingController {
     @Param('messageId') messageId: string,
     @ProjectDatabase() db: Database,
   ) {
-    return await this.messagingService.getMessage(db, messageId);
+    return this.messagingService.getMessage(db, messageId);
   }
 
   @Get('messages/:messageId/targets')
@@ -851,7 +851,7 @@ export class MessagingController {
     @ProjectDatabase() db: Database,
     @Query('queries', ParseQueryPipe) queries: Queries[],
   ) {
-    return await this.messagingService.listTargets({
+    return this.messagingService.listTargets({
       db,
       messageId,
       queries,
@@ -874,7 +874,7 @@ export class MessagingController {
     @Body() input: UpdateEmailMessageDTO,
     @Project() project: Doc,
   ) {
-    return await this.messagingService.updateEmailMessage({
+    return this.messagingService.updateEmailMessage({
       db,
       messageId,
       input,
@@ -898,7 +898,7 @@ export class MessagingController {
     @Body() input: UpdateSmsMessageDTO,
     @Project() project: Doc,
   ) {
-    return await this.messagingService.updateSmsMessage({
+    return this.messagingService.updateSmsMessage({
       db,
       messageId,
       input,
@@ -922,7 +922,7 @@ export class MessagingController {
     @Body() input: UpdatePushMessageDTO,
     @Project() project: Doc,
   ) {
-    return await this.messagingService.updatePushMessage({
+    return this.messagingService.updatePushMessage({
       db,
       messageId,
       input,
@@ -944,6 +944,6 @@ export class MessagingController {
     @Param('messageId') messageId: string,
     @ProjectDatabase() db: Database,
   ) {
-    return await this.messagingService.deleteMessage(db, messageId);
+    return this.messagingService.deleteMessage(db, messageId);
   }
 }

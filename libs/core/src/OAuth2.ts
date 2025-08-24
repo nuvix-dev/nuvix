@@ -145,7 +145,7 @@ export abstract class OAuth2 {
       throw new OAuth2Error(await response.json(), response.status);
     }
 
-    return await response.json();
+    return response.json();
   }
 }
 

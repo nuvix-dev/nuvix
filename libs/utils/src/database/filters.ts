@@ -95,9 +95,7 @@ export const filters: Record<string, SecondArgType> = {
     },
   },
   subQueryAttributes: {
-    encode: _ => {
-      return null;
-    },
+    encode: () => null,
     decode: async (_, document, database) => {
       const attributes = await database.find('attributes', [
         Query.equal('collectionInternalId', [document.getSequence()]),
@@ -118,20 +116,16 @@ export const filters: Record<string, SecondArgType> = {
     },
   },
   subQueryIndexes: {
-    encode: _ => {
-      return null;
-    },
+    encode: () => null,
     decode: async (_, document, database) => {
-      return await database.find('indexes', [
+      return database.find('indexes', [
         Query.equal('collectionInternalId', [document.getSequence()]),
         Query.limit(database.getAdapter().$limitForIndexes),
       ]);
     },
   },
   subQueryPlatforms: {
-    encode: _ => {
-      return null;
-    },
+    encode: () => null,
     decode: (_, document, database) => {
       return database.find('platforms', [
         Query.equal('projectInternalId', [document.getSequence()]),
@@ -286,7 +280,7 @@ export const filters: Record<string, SecondArgType> = {
       return null;
     },
     decode: async (_, __, database) => {
-      return await database.find('variables', [
+      return database.find('variables', [
         Query.equal('resourceType', ['project']),
         Query.limit(APP_LIMIT_SUBQUERY),
       ]);
