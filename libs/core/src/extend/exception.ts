@@ -313,11 +313,29 @@ export class Exception extends HttpException {
   protected details: Record<string, any> = {};
 
   constructor(
+    message: string,
+  );
+  constructor(
+    type?: string,
+    message?: string,
+    code?: number | string | null,
+    previous?: Error,
+  );
+  constructor(
     type: string = Exception.GENERAL_UNKNOWN,
     message: string | undefined = undefined,
     code: number | string | null = null,
     previous?: Error,
   ) {
+    // If caller used the single-string overload or supplied a string that looks
+    // like a human-readable message (contains spaces, uppercase letters or any
+    // characters other than lowercase letters, digits and underscores),
+    // treat that string as the message and fall back to a default error type.
+    if ((message === undefined || message === null) && !/^[a-z0-9_]+$/.test(type)) {
+      message = type;
+      type = Exception.GENERAL_UNKNOWN;
+    }
+
     const errorCode = code ?? errorCodes[type]?.code;
     const parsedCode =
       typeof errorCode === 'string' && !isNaN(Number(errorCode))

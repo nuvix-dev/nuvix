@@ -3,15 +3,11 @@ import { Queue } from './queue';
 import { Job } from 'bullmq';
 
 import { Logger } from '@nestjs/common';
-import { Database, Doc, DuplicateException } from '@nuvix-tech/db';
+import { Database, Doc, DuplicateException, type Collection } from '@nuvix-tech/db';
 import {
-  INTERNAL_SCHEMAS,
-  SYSTEM_SCHEMA,
-  CORE_SCHEMA,
   QueueFor,
   Schemas,
 } from '@nuvix/utils';
-import { DataSource } from '@nuvix/pg';
 import { Exception } from '@nuvix/core/extend/exception';
 import { Audit } from '@nuvix/audit';
 import { CoreService } from '@nuvix/core/core.service.js';
@@ -61,7 +57,6 @@ export class ProjectsQueue extends Queue {
     const dbName = 'postgres';
     const client = await this.coreService.createProjectDbClient('root');
     const databases = this.appConfig.getDatabaseConfig();
-    let db: Database | undefined;
 
     const databaseConfig = {
       ...(project.get('database', {}) as Record<string, any>),
@@ -81,8 +76,6 @@ export class ProjectsQueue extends Queue {
         project.set('database', databaseConfig).set('status', 'active'),
       );
       await this.db.getCache().flush();
-
-      const dataSource = new DataSource(client);
       try {
         // Until infrastructure setup, we use the root client to initialize the project (test only)
         this.logger.log(
@@ -94,60 +87,47 @@ export class ProjectsQueue extends Queue {
       }
 
       // Setup database and collections
-      db = this.coreService.getProjectDb(client, project.getId()); // until infrastructure setup
-      db.setMeta({ schema: Schemas.Core });
-      await db.create(Schemas.Core);
+      // until infrastructure setup is done, we use the root client to initialize the project (test only)
+      const coreSchema = this.coreService.getProjectDb(client, project.getId());
+      coreSchema.setMeta({ schema: Schemas.Core });
+      await coreSchema.create(Schemas.Core);
+
+      const authSchema = this.coreService.getProjectDb(client, project.getId());
+      authSchema.setMeta({ schema: Schemas.Auth });
+      await authSchema.create(Schemas.Auth);
       // TODO: flush cache to ensure schema is recognized (after lib update)
 
+      const authCollections = Object.entries(collections.auth) ?? [];
       const $collections = Object.entries(collections.project) ?? [];
-      let successfulCollections = 0;
-      let failedCollections = 0;
-
-      this.logger.log(
-        `Found ${$collections.length} collections to process for project ${project.getId()}`,
+      let { failed } = await this.createCollections(
+        authSchema,
+        authCollections,
+        project,
       );
 
-      for (const [_, collection] of $collections) {
-        if (collection['$collection'] !== Database.METADATA) {
-          continue;
-        }
-
-        try {
-          const attributes =
-            collection['attributes'].map(attribute => new Doc(attribute)) || [];
-
-          const indexes =
-            collection['indexes']?.map(index => new Doc(index)) || [];
-
-          this.logger.log(
-            `Creating collection ${collection.$id} in schema ${CORE_SCHEMA} for project ${project.getId()}`,
-          );
-
-          await db.createCollection({
-            id: collection.$id,
-            attributes,
-            indexes,
-          });
-          successfulCollections++;
-        } catch (error: any) {
-          if (error instanceof DuplicateException) {
-            this.logger.warn(
-              `Collection ${collection.$id} already exists in schema ${CORE_SCHEMA} for project ${project.getId()}`,
-            );
-            successfulCollections++;
-          } else {
-            this.logger.error(
-              `Failed to create collection ${collection.$id} in schema ${CORE_SCHEMA} for project ${project.getId()}: ${error.message}`,
-            );
-            failedCollections++;
-            throw error;
-          }
-        }
+      if (failed > 0) {
+        this.logger.error(
+          `Failed to create some auth collections for project ${project.getId()}: ${failed} failed`,
+        );
+        throw new Exception(
+          `Failed to create some auth collections for project ${project.getId()}: ${failed} failed`,
+        );
       }
-      await new Audit(db).setup();
 
+      ({ failed } = await this.createCollections(coreSchema, $collections, project));
+
+      if (failed > 0) {
+        this.logger.error(
+          `Failed to create some core collections for project ${project.getId()}: ${failed} failed`,
+        );
+        throw new Exception(
+          `Failed to create some core collections for project ${project.getId()}: ${failed} failed`,
+        );
+      }
+
+      await new Audit(coreSchema).setup();
       this.logger.log(
-        `Collection creation completed: ${successfulCollections} successful, ${failedCollections} failed for project ${project.getId()}`,
+        `Project ${project.getId()} initialized with database ${dbName} at ${databaseConfig.host}:${databaseConfig.port}`,
       );
     } catch (error: any) {
       this.logger.error(
@@ -159,10 +139,90 @@ export class ProjectsQueue extends Queue {
     } finally {
       this.coreService.releaseDatabaseClient(client);
       // TODO: we have to release db client in new infrastructure
-      this.logger.log(
-        `Project ${project.getId()} initialization completed with database ${dbName} at ${databaseConfig.host}:${databaseConfig.port}`,
-      );
     }
+  }
+
+  private async createCollections(
+    db: Database,
+    collections: [string, Collection][],
+    project: ProjectsDoc,
+  ): Promise<{ successful: number; failed: number; }> {
+    let successfulCollections = 0;
+    let failedCollections = 0;
+
+    this.logger.log(
+      `Found ${collections.length} collections to process for project ${project.getId()}`,
+    );
+
+    const maxRetries = 3;
+    const baseDelayMs = 200;
+
+    for (const [_, collection] of collections) {
+      if (collection['$collection'] !== Database.METADATA) {
+        continue;
+      }
+
+      const colId = collection.$id;
+
+      const attributes =
+        (collection['attributes'] || []).map((attribute) => new Doc(attribute)) || [];
+      const indexes = (collection['indexes'] || []).map((index) => new Doc(index)) || [];
+
+      this.logger.log(
+        `Creating collection ${colId} in schema ${db.schema} for project ${project.getId()}`,
+      );
+
+      let lastError: any = null;
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          await db.createCollection({
+            id: colId,
+            attributes,
+            indexes,
+          });
+
+          successfulCollections++;
+          lastError = null;
+          break; // created successfully
+        } catch (err: any) {
+          lastError = err;
+
+          // Treat duplicate as success (idempotent)
+          if (err instanceof DuplicateException) {
+            this.logger.warn(
+              `Collection ${colId} already exists in schema ${db.schema} for project ${project.getId()}`,
+            );
+            successfulCollections++;
+            lastError = null;
+            break;
+          }
+
+          // If we can retry, wait with exponential backoff
+          if (attempt < maxRetries) {
+            const delay = baseDelayMs * Math.pow(2, attempt - 1);
+            this.logger.warn(
+              `Attempt ${attempt} failed creating collection ${colId} for project ${project.getId()}. Retrying in ${delay}ms. Error: ${err?.message ?? err}`,
+            );
+            await new Promise((res) => setTimeout(res, delay));
+            continue;
+          }
+
+          // final failure after retries
+          this.logger.error(
+            `Failed to create collection ${colId} in schema ${db.schema} for project ${project.getId()}: ${err?.message ?? err}`,
+          );
+        }
+      }
+
+      if (lastError) {
+        failedCollections++;
+        // preserve original behavior of bubbling up fatal errors
+        throw lastError;
+      }
+    }
+
+    return { successful: successfulCollections, failed: failedCollections };
   }
 
   @OnWorkerEvent('active')
