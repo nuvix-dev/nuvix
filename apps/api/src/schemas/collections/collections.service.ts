@@ -718,9 +718,9 @@ export class CollectionsService {
 
       if (
         attribute.get('options')?.['twoWayKey']?.toLowerCase() ===
-        twoWayKey?.toLowerCase() &&
+          twoWayKey?.toLowerCase() &&
         attribute.get('options')?.['relatedCollection'] ===
-        relatedCollection.getId()
+          relatedCollection.getId()
       ) {
         throw new Exception(
           Exception.ATTRIBUTE_ALREADY_EXISTS,
@@ -733,9 +733,9 @@ export class CollectionsService {
       if (
         type === RelationType.ManyToMany &&
         attribute.get('options')?.['relationType'] ===
-        RelationType.ManyToMany &&
+          RelationType.ManyToMany &&
         attribute.get('options')?.['relatedCollection'] ===
-        relatedCollection.getId()
+          relatedCollection.getId()
       ) {
         throw new Exception(
           Exception.ATTRIBUTE_ALREADY_EXISTS,

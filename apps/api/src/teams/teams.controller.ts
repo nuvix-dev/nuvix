@@ -124,14 +124,7 @@ export class TeamsController {
     @Locale() locale: LocaleTranslator,
     @User() user: UsersDoc,
   ) {
-    return this.teamsService.addMember(
-      db,
-      id,
-      input,
-      project,
-      user,
-      locale,
-    );
+    return this.teamsService.addMember(db, id, input, project, user, locale);
   }
 
   @Get(':id/memberships')

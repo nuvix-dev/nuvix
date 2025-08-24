@@ -9,6 +9,7 @@ import {
   SYSTEM_SCHEMA,
   CORE_SCHEMA,
   QueueFor,
+  Schemas,
 } from '@nuvix/utils';
 import { DataSource } from '@nuvix/pg';
 import { Exception } from '@nuvix/core/extend/exception';
@@ -81,10 +82,9 @@ export class ProjectsQueue extends Queue {
       );
       await this.db.getCache().flush();
 
-      const dataSource = new DataSource(client as any);
+      const dataSource = new DataSource(client);
       try {
         // Until infrastructure setup, we use the root client to initialize the project (test only)
-        await dataSource.init();
         this.logger.log(
           `Data source initialized for project ${project.getId()}`,
         );
@@ -93,27 +93,10 @@ export class ProjectsQueue extends Queue {
         throw new Exception('Failed to initialize data source');
       }
 
-      // Create core schema
-      try {
-        await dataSource.createSchema(
-          CORE_SCHEMA,
-          'document',
-          'This schema is used to store and manage core data and documents.',
-        );
-        this.logger.log(
-          `Schema ${CORE_SCHEMA} created successfully for project ${project.getId()}`,
-        );
-      } catch (error: any) {
-        this.logger.error(
-          `Failed to create schema ${CORE_SCHEMA}: ${error.message}`,
-        );
-        throw new Exception('Failed to create schemas and set permissions');
-      }
-
       // Setup database and collections
       db = this.coreService.getProjectDb(client, project.getId()); // until infrastructure setup
-      db.setMeta({ schema: CORE_SCHEMA });
-      await db.create(CORE_SCHEMA);
+      db.setMeta({ schema: Schemas.Core });
+      await db.create(Schemas.Core);
       // TODO: flush cache to ensure schema is recognized (after lib update)
 
       const $collections = Object.entries(collections.project) ?? [];

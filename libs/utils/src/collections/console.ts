@@ -6,205 +6,11 @@ import {
   IndexType,
   Order,
 } from '@nuvix-tech/db';
-import { commonCollections } from './common';
-import { APP_DATABASE_ATTRIBUTE_EMAIL } from '../constants';
+import { authCollections, commonCollections } from './common';
+import { AttributeFormat } from '../constants.js';
 
 export const consoleCollections: Record<string, Collection> = {
-  teams: {
-    $collection: ID.custom(Database.METADATA),
-    $id: ID.custom('teams'),
-    name: 'Teams',
-    attributes: [
-      {
-        $id: ID.custom('name'),
-        key: 'name',
-        type: AttributeType.String,
-        size: 128,
-        default: null,
-      },
-      {
-        $id: ID.custom('total'),
-        key: 'total',
-        type: AttributeType.Integer,
-        size: 4,
-        default: null,
-      },
-      {
-        $id: ID.custom('search'),
-        key: 'search',
-        type: AttributeType.String,
-        size: 16384,
-        default: null,
-      },
-      {
-        $id: ID.custom('prefs'),
-        key: 'prefs',
-        type: AttributeType.Json,
-        default: {},
-      },
-      {
-        $id: ID.custom('budgetAlerts'),
-        key: 'budgetAlerts',
-        type: AttributeType.String,
-        size: 1000,
-        default: [],
-        array: true,
-      },
-      {
-        $id: ID.custom('billingPlan'),
-        key: 'billingPlan',
-        type: AttributeType.String,
-        size: 255,
-        default: null,
-      },
-      {
-        $id: ID.custom('billingEmail'),
-        key: 'billingEmail',
-        type: AttributeType.String,
-        size: 326,
-        default: null,
-      },
-      {
-        $id: ID.custom('billingStartDate'),
-        key: 'billingStartDate',
-        type: AttributeType.Timestamptz,
-        default: null,
-      },
-      {
-        $id: ID.custom('billingCurrentInvoiceDate'),
-        key: 'billingCurrentInvoiceDate',
-        type: AttributeType.Timestamptz,
-        default: null,
-      },
-      {
-        $id: ID.custom('billingNextInvoiceDate'),
-        key: 'billingNextInvoiceDate',
-        type: AttributeType.Timestamptz,
-        default: null,
-      },
-      {
-        $id: ID.custom('billingTrialStartDate'),
-        key: 'billingTrialStartDate',
-        type: AttributeType.Timestamptz,
-        default: null,
-      },
-      {
-        $id: ID.custom('billingTrialDays'),
-        key: 'billingTrialDays',
-        type: AttributeType.Integer,
-        default: 0,
-      },
-      {
-        $id: ID.custom('billingAggregationId'),
-        key: 'billingAggregationId',
-        type: AttributeType.String,
-        size: 255,
-        default: null,
-      },
-      {
-        $id: ID.custom('paymentMethodId'),
-        key: 'paymentMethodId',
-        type: AttributeType.String,
-        size: 255,
-        default: null,
-      },
-      {
-        $id: ID.custom('billingAddressId'),
-        key: 'billingAddressId',
-        type: AttributeType.String,
-        size: 255,
-        default: null,
-      },
-      {
-        $id: ID.custom('backupPaymentMethodId'),
-        key: 'backupPaymentMethodId',
-        type: AttributeType.String,
-        size: 255,
-        default: null,
-      },
-      {
-        $id: ID.custom('agreementBAA'),
-        key: 'agreementBAA',
-        size: 1000,
-        type: AttributeType.String,
-        default: null,
-      },
-      {
-        $id: ID.custom('programManagerName'),
-        key: 'programManagerName',
-        type: AttributeType.String,
-        size: 255,
-        default: null,
-      },
-      {
-        $id: ID.custom('programManagerCalendar'),
-        key: 'programManagerCalendar',
-        type: AttributeType.String,
-        size: 1000,
-        default: null,
-      },
-      {
-        $id: ID.custom('programDiscordChannelName'),
-        key: 'programDiscordChannelName',
-        type: AttributeType.String,
-        size: 255,
-        default: null,
-      },
-      {
-        $id: ID.custom('programDiscordChannelUrl'),
-        key: 'programDiscordChannelUrl',
-        type: AttributeType.String,
-        size: 500,
-        default: null,
-      },
-      {
-        $id: ID.custom('billingLimits'),
-        key: 'billingLimits',
-        type: AttributeType.Json,
-        default: {},
-      },
-      {
-        $id: ID.custom('billingPlanDowngrade'),
-        key: 'billingPlanDowngrade',
-        type: AttributeType.Json,
-        default: {},
-      },
-      {
-        $id: ID.custom('billingTaxId'),
-        key: 'billingTaxId',
-        type: AttributeType.String,
-        size: 255,
-        default: null,
-      },
-      {
-        $id: ID.custom('markedForDeletion'),
-        key: 'markedForDeletion',
-        type: AttributeType.Boolean,
-        required: true,
-        default: false,
-      },
-    ],
-    indexes: [
-      {
-        $id: ID.custom('_key_search'),
-        type: IndexType.FullText,
-        attributes: ['search'],
-        orders: [],
-      },
-      {
-        $id: ID.custom('_key_name'),
-        type: IndexType.Key,
-        attributes: ['name'],
-        orders: [Order.Asc],
-      },
-      {
-        $id: ID.custom('_key_total'),
-        type: IndexType.Key,
-        attributes: ['total'],
-        orders: [Order.Asc],
-      },
-    ],
-  },
+  ...authCollections('platform'),
 
   billings: {
     $collection: ID.custom(Database.METADATA),
@@ -1944,7 +1750,7 @@ export const consoleCollections: Record<string, Collection> = {
         $id: ID.custom('email'),
         key: 'email',
         type: AttributeType.String,
-        format: APP_DATABASE_ATTRIBUTE_EMAIL,
+        format: AttributeFormat.EMAIL,
         size: 2000,
         required: true,
         default: null,
@@ -1986,5 +1792,5 @@ export const consoleCollections: Record<string, Collection> = {
     ],
   },
 
-  ...commonCollections,
+  ...commonCollections('platform'),
 };

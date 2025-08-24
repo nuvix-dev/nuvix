@@ -18,7 +18,7 @@ export default class PostgresMetaForeignTables {
     offset?: number;
     includeColumns: false;
   }): Promise<
-    PostgresMetaResult<(PostgresForeignTable & { columns: never; })[]>
+    PostgresMetaResult<(PostgresForeignTable & { columns: never })[]>
   >;
   async list(options?: {
     includedSchemas?: string[];
@@ -27,7 +27,7 @@ export default class PostgresMetaForeignTables {
     offset?: number;
     includeColumns?: boolean;
   }): Promise<
-    PostgresMetaResult<(PostgresForeignTable & { columns: unknown[]; })[]>
+    PostgresMetaResult<(PostgresForeignTable & { columns: unknown[] })[]>
   >;
   async list({
     includedSchemas,
@@ -120,8 +120,9 @@ with foreign_tables as (${foreignTablesSql})
   ${includeColumns ? `, columns as (${columnsSql})` : ''}
 select
   *
-  ${includeColumns
-    ? `, ${coalesceRowsToArray('columns', 'columns.table_id = foreign_tables.id')}`
-    : ''
+  ${
+    includeColumns
+      ? `, ${coalesceRowsToArray('columns', 'columns.table_id = foreign_tables.id')}`
+      : ''
   }
 from foreign_tables`;

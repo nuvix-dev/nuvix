@@ -727,11 +727,7 @@ export class MessagingController {
     @Param('subscriberId') subscriberId: string,
     @ProjectDatabase() db: Database,
   ) {
-    return this.messagingService.deleteSubscriber(
-      db,
-      topicId,
-      subscriberId,
-    );
+    return this.messagingService.deleteSubscriber(db, topicId, subscriberId);
   }
 
   @Post('messages/email')

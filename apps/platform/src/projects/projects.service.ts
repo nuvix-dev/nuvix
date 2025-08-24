@@ -136,7 +136,7 @@ export class ProjectService {
         version: this.appConfig.get('app').version,
         database: {
           password,
-          // Will be set in the project queue
+          // Will set in the project queue
           // name
           // host, port,
         } as any,
@@ -791,7 +791,7 @@ export class ProjectService {
     }
 
     const servicesObj: Record<string, boolean> = {};
-    Object.entries(services).forEach(([_, value]) => {
+    Object.entries(services).forEach(([, value]) => {
       if (value.optional) {
         servicesObj[value.key] = status;
       }

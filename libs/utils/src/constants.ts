@@ -436,6 +436,7 @@ export enum ApiKey {
 }
 
 export enum Schemas {
+  Auth = 'auth',
   Core = 'core',
   System = 'system',
 }

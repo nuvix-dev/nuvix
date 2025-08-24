@@ -19,7 +19,7 @@ export default class PostgresMetaViews {
     limit?: number;
     offset?: number;
     includeColumns: false;
-  }): Promise<PostgresMetaResult<(PostgresView & { columns: never; })[]>>;
+  }): Promise<PostgresMetaResult<(PostgresView & { columns: never })[]>>;
   async list(options?: {
     includeSystemSchemas?: boolean;
     includedSchemas?: string[];
@@ -27,7 +27,7 @@ export default class PostgresMetaViews {
     limit?: number;
     offset?: number;
     includeColumns?: boolean;
-  }): Promise<PostgresMetaResult<(PostgresView & { columns: unknown[]; })[]>>;
+  }): Promise<PostgresMetaResult<(PostgresView & { columns: unknown[] })[]>>;
   async list({
     includeSystemSchemas = false,
     includedSchemas,

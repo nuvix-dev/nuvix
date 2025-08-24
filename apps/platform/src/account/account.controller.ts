@@ -135,12 +135,7 @@ export class AccountController {
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
   ) {
-    return this.accountService.deleteSessions(
-      user,
-      locale,
-      request,
-      response,
-    );
+    return this.accountService.deleteSessions(user, locale, request, response);
   }
 
   @Get('sessions/:id')

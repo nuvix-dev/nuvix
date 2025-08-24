@@ -76,10 +76,7 @@ export class CollectionsController {
     @CurrentDatabase() db: Database,
     @Body() createCollectionDTO: CreateCollectionDTO,
   ) {
-    return this.collectionsService.createCollection(
-      db,
-      createCollectionDTO,
-    );
+    return this.collectionsService.createCollection(db, createCollectionDTO);
   }
 
   @Get(':collectionId/usage')
@@ -89,11 +86,7 @@ export class CollectionsController {
     @Param('collectionId') collectionId: string,
     @Query('range') range?: string,
   ) {
-    return this.collectionsService.getCollectionUsage(
-      db,
-      collectionId,
-      range,
-    );
+    return this.collectionsService.getCollectionUsage(db, collectionId, range);
   }
 
   @Get(':collectionId')
@@ -112,11 +105,7 @@ export class CollectionsController {
     @Param('collectionId') collectionId: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
   ) {
-    return this.collectionsService.getCollectionLogs(
-      db,
-      collectionId,
-      queries,
-    );
+    return this.collectionsService.getCollectionLogs(db, collectionId, queries);
   }
 
   @Put(':collectionId')
@@ -140,11 +129,7 @@ export class CollectionsController {
     @Param('collectionId') collectionId: string,
     @Project() project: ProjectsDoc,
   ) {
-    return this.collectionsService.removeCollection(
-      db,
-      collectionId,
-      project,
-    );
+    return this.collectionsService.removeCollection(db, collectionId, project);
   }
 
   @Get(':collectionId/documents')
@@ -154,11 +139,7 @@ export class CollectionsController {
     @Param('collectionId') collectionId: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
   ) {
-    return this.collectionsService.getDocuments(
-      db,
-      collectionId,
-      queries,
-    );
+    return this.collectionsService.getDocuments(db, collectionId, queries);
   }
 
   @Get(':collectionId/attributes')
@@ -168,11 +149,7 @@ export class CollectionsController {
     @Param('collectionId') collectionId: string,
     @Query('queries', ParseQueryPipe) queries: Queries[],
   ) {
-    return this.collectionsService.getAttributes(
-      db,
-      collectionId,
-      queries,
-    );
+    return this.collectionsService.getAttributes(db, collectionId, queries);
   }
 
   @Post(':collectionId/attributes/string')
@@ -342,11 +319,7 @@ export class CollectionsController {
     @Param('collectionId') collectionId: string,
     @Param('attributeId') attributeId: string,
   ) {
-    return this.collectionsService.getAttribute(
-      db,
-      collectionId,
-      attributeId,
-    );
+    return this.collectionsService.getAttribute(db, collectionId, attributeId);
   }
 
   @Patch(':collectionId/attributes/string/:attributeId')

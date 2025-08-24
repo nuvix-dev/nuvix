@@ -1,31 +1,23 @@
 import {
   AttributeType,
   Authorization,
-  Database,
   Doc,
   Query,
+  Filter,
+  FilterValue,
 } from '@nuvix-tech/db';
 import {
   APP_LIMIT_SUBQUERY,
   APP_LIMIT_SUBSCRIBERS_SUBQUERY,
   APP_OPENSSL_KEY_1,
+  Schemas,
 } from '../constants';
 import crypto from 'crypto';
 
-type SecondArgType = {
-  encode: (
-    value: any,
-    attribute: Doc<Record<string, any>>,
-    database: Database,
-  ) => any;
-  decode: (
-    value: any,
-    document: Doc<Record<string, any>>,
-    database: Database,
-  ) => any | Promise<any>;
-};
-
-export const filters: Record<string, SecondArgType> = {
+export const filters: Record<
+  string,
+  Filter<FilterValue, FilterValue, Doc<Record<string, any>>>
+> = {
   json: {
     encode(value) {
       if (value !== null) {
@@ -239,7 +231,7 @@ export const filters: Record<string, SecondArgType> = {
       const key = APP_OPENSSL_KEY_1;
       const iv = crypto.randomBytes(16);
       const cipher = crypto.createCipheriv('aes-128-gcm', key, iv);
-      let encrypted = cipher.update(value, 'utf8', 'hex');
+      let encrypted = cipher.update(value as string, 'utf8', 'hex');
       encrypted += cipher.final('hex');
       const tag = cipher.getAuthTag();
 
@@ -319,9 +311,7 @@ export const filters: Record<string, SecondArgType> = {
     },
   },
   subQueryTopicTargets: {
-    encode: () => {
-      return null;
-    },
+    encode: () => null,
     decode: async (_, document, database) => {
       const targetIds = await Authorization.skip(async () => {
         const subscribers = await database.find('subscribers', [
@@ -336,6 +326,29 @@ export const filters: Record<string, SecondArgType> = {
       if (targetIds.length > 0) {
         return database.skipValidation(() =>
           database.find('targets', [Query.equal('$sequence', targetIds)]),
+        );
+      }
+      return [];
+    },
+  },
+  subQueryProjectTopicTargets: {
+    encode: () => null,
+    decode: async (_, document, database) => {
+      const targetIds = await Authorization.skip(async () => {
+        const subscribers = await database.find('subscribers', [
+          Query.equal('topicInternalId', [document.getSequence()]),
+          Query.limit(APP_LIMIT_SUBSCRIBERS_SUBQUERY),
+        ]);
+        return subscribers.map(subscriber =>
+          subscriber.get('targetInternalId'),
+        );
+      });
+
+      if (targetIds.length > 0) {
+        return database.skipValidation(() =>
+          database.withSchema(Schemas.Auth, () =>
+            database.find('targets', [Query.equal('$sequence', targetIds)]),
+          ),
         );
       }
       return [];

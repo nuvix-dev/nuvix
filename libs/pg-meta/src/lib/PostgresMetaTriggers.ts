@@ -217,8 +217,8 @@ export default class PostgresMetaTriggers {
     const nameSql =
       name && name !== old!.name
         ? `ALTER TRIGGER ${ident(old!.name)} ON ${ident(old!.schema)}.${ident(
-          old!.table,
-        )} RENAME TO ${ident(name)};`
+            old!.table,
+          )} RENAME TO ${ident(name)};`
         : '';
 
     // updateNameSql must be last
@@ -244,8 +244,9 @@ export default class PostgresMetaTriggers {
     }
 
     const { name, schema, table } = triggerRecord!;
-    const sql = `DROP TRIGGER ${ident(name)} ON ${ident(schema)}.${ident(table)} ${cascade ? 'CASCADE' : ''
-      };`;
+    const sql = `DROP TRIGGER ${ident(name)} ON ${ident(schema)}.${ident(table)} ${
+      cascade ? 'CASCADE' : ''
+    };`;
 
     {
       const { error } = await this.query(sql);

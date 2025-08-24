@@ -181,11 +181,7 @@ export class UsersController {
     @Body() createUserDTO: CreateUserDTO,
     @Project() project: ProjectsDoc,
   ) {
-    return this.usersService.createWithScryptMod(
-      db,
-      createUserDTO,
-      project,
-    );
+    return this.usersService.createWithScryptMod(db, createUserDTO, project);
   }
 
   @Get('usage')

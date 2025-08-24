@@ -131,11 +131,7 @@ export class OrganizationsController {
     @Param('membershipId') membershipId: string,
     @Body() input: UpdateMembershipDTO,
   ) {
-    return this.organizationsService.updateMember(
-      id,
-      membershipId,
-      input,
-    );
+    return this.organizationsService.updateMember(id, membershipId, input);
   }
 
   @Delete(':id/memberships/:membershipId')

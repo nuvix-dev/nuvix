@@ -57,22 +57,23 @@ declare
   col record;
 begin
 ${grants
-        .map(({ privilege_type, column_id, grantee, is_grantable }) => {
-          const [relationId, columnNumber] = column_id.split('.');
-          return `
+  .map(({ privilege_type, column_id, grantee, is_grantable }) => {
+    const [relationId, columnNumber] = column_id.split('.');
+    return `
 select *
 from pg_attribute a
 where a.attrelid = ${literal(relationId)}
   and a.attnum = ${literal(columnNumber)}
 into col;
 execute format(
-  'grant ${privilege_type} (%I) on %s to ${grantee.toLowerCase() === 'public' ? 'public' : ident(grantee)
-            } ${is_grantable ? 'with grant option' : ''}',
+  'grant ${privilege_type} (%I) on %s to ${
+    grantee.toLowerCase() === 'public' ? 'public' : ident(grantee)
+  } ${is_grantable ? 'with grant option' : ''}',
   col.attname,
   col.attrelid::regclass
 );`;
-        })
-        .join('\n')}
+  })
+  .join('\n')}
 end $$;
 `;
     const { data, error } = await this.query(sql);
@@ -100,22 +101,23 @@ declare
   col record;
 begin
 ${revokes
-        .map(({ privilege_type, column_id, grantee }) => {
-          const [relationId, columnNumber] = column_id.split('.');
-          return `
+  .map(({ privilege_type, column_id, grantee }) => {
+    const [relationId, columnNumber] = column_id.split('.');
+    return `
 select *
 from pg_attribute a
 where a.attrelid = ${literal(relationId)}
   and a.attnum = ${literal(columnNumber)}
 into col;
 execute format(
-  'revoke ${privilege_type} (%I) on %s from ${grantee.toLowerCase() === 'public' ? 'public' : ident(grantee)
-            }',
+  'revoke ${privilege_type} (%I) on %s from ${
+    grantee.toLowerCase() === 'public' ? 'public' : ident(grantee)
+  }',
   col.attname,
   col.attrelid::regclass
 );`;
-        })
-        .join('\n')}
+  })
+  .join('\n')}
 end $$;
 `;
     const { data, error } = await this.query(sql);

@@ -18,7 +18,7 @@ export default class PostgresMetaMaterializedViews {
     offset?: number;
     includeColumns: true;
   }): Promise<
-    PostgresMetaResult<(PostgresMaterializedView & { columns: unknown[]; })[]>
+    PostgresMetaResult<(PostgresMaterializedView & { columns: unknown[] })[]>
   >;
   async list(options?: {
     includedSchemas?: string[];
@@ -27,7 +27,7 @@ export default class PostgresMetaMaterializedViews {
     offset?: number;
     includeColumns?: boolean;
   }): Promise<
-    PostgresMetaResult<(PostgresMaterializedView & { columns: never; })[]>
+    PostgresMetaResult<(PostgresMaterializedView & { columns: never })[]>
   >;
   async list({
     includedSchemas,
@@ -124,8 +124,9 @@ with materialized_views as (${materializedViewsSql})
   ${includeColumns ? `, columns as (${columnsSql})` : ''}
 select
   *
-  ${includeColumns
-    ? `, ${coalesceRowsToArray('columns', 'columns.table_id = materialized_views.id')}`
-    : ''
+  ${
+    includeColumns
+      ? `, ${coalesceRowsToArray('columns', 'columns.table_id = materialized_views.id')}`
+      : ''
   }
 from materialized_views`;

@@ -251,14 +251,7 @@ export class StorageController {
     @Res({ passthrough: true }) res: any,
     @Project() project: Doc,
   ) {
-    return this.storageService.downloadFile(
-      db,
-      id,
-      fileId,
-      res,
-      req,
-      project,
-    );
+    return this.storageService.downloadFile(db, id, fileId, res, req, project);
   }
 
   @Get('buckets/:id/files/:fileId/view')
@@ -270,14 +263,7 @@ export class StorageController {
     @Res({ passthrough: true }) res: any,
     @Project() project: Doc,
   ) {
-    return this.storageService.viewFile(
-      db,
-      id,
-      fileId,
-      res,
-      req,
-      project,
-    );
+    return this.storageService.viewFile(db, id, fileId, res, req, project);
   }
 
   @Get('buckets/:id/files/:fileId/push')

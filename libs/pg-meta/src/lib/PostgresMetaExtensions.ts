@@ -80,8 +80,9 @@ CREATE EXTENSION ${ident(name)}
   ): Promise<PostgresMetaResult<PostgresExtension>> {
     let updateSql = '';
     if (update) {
-      updateSql = `ALTER EXTENSION ${ident(name)} UPDATE ${version === undefined ? '' : `TO ${literal(version)}`
-        };`;
+      updateSql = `ALTER EXTENSION ${ident(name)} UPDATE ${
+        version === undefined ? '' : `TO ${literal(version)}`
+      };`;
     }
     const schemaSql =
       schema === undefined

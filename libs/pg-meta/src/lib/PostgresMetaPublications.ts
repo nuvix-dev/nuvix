@@ -154,24 +154,25 @@ declare
   new_publish_update bool := ${publish_update ?? null};
   new_publish_delete bool := ${publish_delete ?? null};
   new_publish_truncate bool := ${publish_truncate ?? null};
-  new_tables text := ${tables === undefined
-        ? null
-        : literal(
+  new_tables text := ${
+    tables === undefined
+      ? null
+      : literal(
           tables === null
             ? 'all tables'
             : tables
-              .map(t => {
-                if (!t.includes('.')) {
-                  return ident(t);
-                }
+                .map(t => {
+                  if (!t.includes('.')) {
+                    return ident(t);
+                  }
 
-                const [schema, ...rest] = t.split('.');
-                const table = rest.join('.');
-                return `${ident(schema!)}.${ident(table)}`;
-              })
-              .join(','),
+                  const [schema, ...rest] = t.split('.');
+                  const table = rest.join('.');
+                  return `${ident(schema!)}.${ident(table)}`;
+                })
+                .join(','),
         )
-      };
+  };
 begin
   select * into old from pg_publication where oid = id;
   if old is null then

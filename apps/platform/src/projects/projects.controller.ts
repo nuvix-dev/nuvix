@@ -339,10 +339,7 @@ export class ProjectsController {
     @Param('id') id: string,
     @Body() input: AuthPasswordDictionaryDTO,
   ) {
-    return this.projectService.updatePasswordDictionary(
-      id,
-      input.enabled,
-    );
+    return this.projectService.updatePasswordDictionary(id, input.enabled);
   }
 
   @Patch(':id/auth/personal-data')

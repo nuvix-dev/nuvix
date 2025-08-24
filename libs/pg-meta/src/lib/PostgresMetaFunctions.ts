@@ -148,28 +148,28 @@ export default class PostgresMetaFunctions {
     const updateDefinitionSql =
       typeof definition === 'string'
         ? this.generateCreateFunctionSql(
-          {
-            ...currentFunc!,
-            definition,
-            args,
-            config_params: currentFunc!.config_params ?? {},
-          },
-          { replace: true },
-        )
+            {
+              ...currentFunc!,
+              definition,
+              args,
+              config_params: currentFunc!.config_params ?? {},
+            },
+            { replace: true },
+          )
         : '';
 
     const updateNameSql =
       name && name !== currentFunc!.name
         ? `ALTER FUNCTION ${ident(currentFunc!.schema)}.${ident(
-          currentFunc!.name,
-        )}(${identityArgs}) RENAME TO ${ident(name)};`
+            currentFunc!.name,
+          )}(${identityArgs}) RENAME TO ${ident(name)};`
         : '';
 
     const updateSchemaSql =
       schema && schema !== currentFunc!.schema
         ? `ALTER FUNCTION ${ident(currentFunc!.schema)}.${ident(
-          name || currentFunc!.name,
-        )}(${identityArgs})  SET SCHEMA ${ident(schema)};`
+            name || currentFunc!.name,
+          )}(${identityArgs})  SET SCHEMA ${ident(schema)};`
         : '';
 
     const sql = `
@@ -185,8 +185,9 @@ export default class PostgresMetaFunctions {
             AND f.name = ${literal(currentFunc!.name)}
             AND f.identity_argument_types = ${literal(identityArgs)}
           ) != ${id} THEN
-            RAISE EXCEPTION 'Cannot find function "${currentFunc!.schema}"."${currentFunc!.name
-      }"(${identityArgs})';
+            RAISE EXCEPTION 'Cannot find function "${currentFunc!.schema}"."${
+              currentFunc!.name
+            }"(${identityArgs})';
           END IF;
         END IF;
 
@@ -243,7 +244,8 @@ export default class PostgresMetaFunctions {
     { replace = false } = {},
   ): string {
     return `
-      CREATE ${replace ? 'OR REPLACE' : ''} FUNCTION ${ident(schema!)}.${ident(name!)}(${args?.join(', ') || ''
+      CREATE ${replace ? 'OR REPLACE' : ''} FUNCTION ${ident(schema!)}.${ident(name!)}(${
+        args?.join(', ') || ''
       })
       RETURNS ${return_type}
       AS ${literal(definition)}
@@ -251,14 +253,15 @@ export default class PostgresMetaFunctions {
       ${behavior}
       CALLED ON NULL INPUT
       ${security_definer ? 'SECURITY DEFINER' : 'SECURITY INVOKER'}
-      ${config_params
-        ? Object.entries(config_params)
-          .map(
-            ([param, value]: string[]) =>
-              `SET ${param} ${value?.[0] === 'FROM CURRENT' ? 'FROM CURRENT' : 'TO ' + value}`,
-          )
-          .join('\n')
-        : ''
+      ${
+        config_params
+          ? Object.entries(config_params)
+              .map(
+                ([param, value]: string[]) =>
+                  `SET ${param} ${value?.[0] === 'FROM CURRENT' ? 'FROM CURRENT' : 'TO ' + value}`,
+              )
+              .join('\n')
+          : ''
       };
     `;
   }
@@ -274,7 +277,8 @@ export default class PostgresMetaFunctions {
   }): string {
     return `${enrichedFunctionsSql} JOIN pg_proc AS p ON id = p.oid WHERE schema = ${literal(
       schema,
-    )} AND name = ${literal(name)} AND p.proargtypes::text = ${args.length
+    )} AND name = ${literal(name)} AND p.proargtypes::text = ${
+      args.length
         ? `(
           SELECT STRING_AGG(type_oid::text, ' ') FROM (
             SELECT (
@@ -295,7 +299,7 @@ export default class PostgresMetaFunctions {
           ) args
     )`
         : literal('')
-      }`;
+    }`;
   }
 }
 
