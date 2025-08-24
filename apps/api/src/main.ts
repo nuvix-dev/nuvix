@@ -77,9 +77,7 @@ async function bootstrap() {
 
   app.enableShutdownHooks();
   app.enableVersioning();
-  // @ts-ignore
   app.register(cookieParser);
-  // @ts-ignore
   app.register(fastifyMultipart, {
     limits: {
       fileSize: 50 * 1024 * 1024, // 50MB

@@ -66,15 +66,6 @@ async function bootstrap() {
     preflightContinue: false,
   });
 
-  // @ts-ignore
-  adapter.register(cookieParser);
-  // @ts-ignore
-  adapter.register(fastifyMultipart, {
-    limits: {
-      fileSize: 50 * 1024 * 1024, // 50MB
-    },
-  });
-
   const app = await NuvixFactory.create<NestFastifyApplication>(
     AppModule,
     adapter,
@@ -91,6 +82,13 @@ async function bootstrap() {
       autoFlushLogs: true,
     },
   );
+
+  app.register(cookieParser);
+  app.register(fastifyMultipart, {
+    limits: {
+      fileSize: 50 * 1024 * 1024, // 50MB
+    },
+  });
 
   app.enableShutdownHooks();
   app.useGlobalPipes(

@@ -97,7 +97,7 @@ export class PgMetaController {
 
   @Post('query/deparse')
   async deparse(@Body() body: DeparseDTO) {
-    const { data } = Parser.Deparse(body.ast);
+    const { data } = await Parser.Deparse(body.ast);
     return data;
   }
 

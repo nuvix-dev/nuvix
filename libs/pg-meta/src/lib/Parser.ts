@@ -32,9 +32,9 @@ interface ParseReturnValues {
 /**
  * Deparses an AST into SQL string.
  */
-export function Deparse(parsedSql: object): DeparseReturnValues {
+export async function Deparse(parsedSql: object): Promise<DeparseReturnValues> {
   try {
-    const data = deparse(parsedSql, {});
+    const data = await deparse(parsedSql, {});
     return { data, error: null };
   } catch (error: any) {
     throw new PgMetaException(error.message);
