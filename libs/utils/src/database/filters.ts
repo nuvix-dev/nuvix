@@ -10,6 +10,7 @@ import {
   APP_LIMIT_SUBQUERY,
   APP_LIMIT_SUBSCRIBERS_SUBQUERY,
   APP_OPENSSL_KEY_1,
+  SchemaMeta,
   Schemas,
 } from '../constants';
 import crypto from 'crypto';
@@ -89,7 +90,7 @@ export const filters: Record<
   subQueryAttributes: {
     encode: () => null,
     decode: async (_, document, database) => {
-      const attributes = await database.find('attributes', [
+      const attributes = await database.find(SchemaMeta.attributes, [
         Query.equal('collectionInternalId', [document.getSequence()]),
         Query.limit(database.getAdapter().$limitForAttributes),
       ]);
@@ -110,7 +111,7 @@ export const filters: Record<
   subQueryIndexes: {
     encode: () => null,
     decode: async (_, document, database) => {
-      return database.find('indexes', [
+      return database.find(SchemaMeta.indexes, [
         Query.equal('collectionInternalId', [document.getSequence()]),
         Query.limit(database.getAdapter().$limitForIndexes),
       ]);

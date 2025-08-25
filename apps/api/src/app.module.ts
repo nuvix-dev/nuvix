@@ -51,6 +51,7 @@ import { DatabasesController } from './databases/databases.controller';
 import { Key } from '@nuvix/core/helper/key.helper';
 import { StatsQueue } from '@nuvix/core/resolvers/queues';
 import { AppConfigService } from '@nuvix/core';
+import { CollectionsController } from './schemas/collections/collections.controller';
 
 @Module({
   imports: [
@@ -130,6 +131,7 @@ export class AppModule implements NestModule, OnModuleInit {
         SchemasController,
         StorageController,
         MessagingController,
+        CollectionsController,
       )
       .apply(AuthHook, ApiHook, StatsHook)
       .forRoutes(
@@ -143,6 +145,7 @@ export class AppModule implements NestModule, OnModuleInit {
         SchemasController,
         StorageController,
         MessagingController,
+        CollectionsController,
       )
       .apply(AuditHook)
       .forRoutes(
@@ -154,6 +157,7 @@ export class AppModule implements NestModule, OnModuleInit {
         SchemasController,
         StorageController,
         MessagingController,
+        CollectionsController,
       );
   }
 }
