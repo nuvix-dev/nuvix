@@ -8,19 +8,18 @@ export class DocumentModel extends BaseModel {
   /**
    * Collection ID.
    */
-  @Expose() collectionId: string = '';
+  @Expose() declare $collection: string;
 
   /**
    * Database ID.
    */
-  @Expose() databaseId: string = '';
+  @Expose() declare $schema: string;
 
   /**
    * Runtime.
    */
-  @Expose() runtime: string = '';
+  @Expose() declare runtime: string;
 
-  @Exclude() $internalId: any;
-  @Exclude() $tenant: any;
-  @Exclude() declare $collection: any;
+  @Exclude() $internalId?: number;
+  @Exclude() $tenant?: number;
 }

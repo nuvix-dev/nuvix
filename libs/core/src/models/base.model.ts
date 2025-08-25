@@ -18,9 +18,7 @@ export default abstract class BaseModel {
 
   @Expose() declare $permissions: string[] | Permission[];
 
-  @Exclude() _id: any;
-  @Exclude() declare id: string;
-  @Exclude() $collection: any;
+  @Exclude() $collection?: string;
 
   constructor(doc?: any) {
     Object.assign(this, doc);

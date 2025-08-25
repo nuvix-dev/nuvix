@@ -45,7 +45,6 @@ export class CollectionModel extends BaseModel {
    */
   @Expose()
   @Transform(({ obj }) => {
-    console.log(obj);
     return (obj?.attributes ?? ([] as any[])).map((att: any) => {
       switch (att.type) {
         case AttributeType.Boolean:

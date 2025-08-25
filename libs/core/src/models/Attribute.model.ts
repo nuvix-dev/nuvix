@@ -1,8 +1,9 @@
 import { Exclude, Expose } from 'class-transformer';
 import BaseModel from '@nuvix/core/models/base.model';
+import type { Attributes } from '@nuvix/utils/types';
 
 @Exclude()
-export class AttributeModel extends BaseModel {
+export class AttributeModel extends BaseModel implements Partial<Attributes> {
   @Exclude() declare $id: string;
   @Exclude() declare $permissions: string[] | any[];
   /**
@@ -34,12 +35,6 @@ export class AttributeModel extends BaseModel {
    * Is attribute an array?
    */
   @Expose() array: boolean = false;
-
-  // @Expose() format: string;
-  // @Expose() default: any | null;
-  // @Expose() elements: string[];
-  // @Expose() min: number | null;
-  // @Expose() max: number | null;
 
   constructor(partial: Partial<AttributeModel>) {
     super();

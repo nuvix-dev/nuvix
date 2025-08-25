@@ -1330,7 +1330,7 @@ export class MessagingService {
       }
     }
 
-    const message = new Doc({
+    const message = new Doc<Messages>({
       $id: messageId,
       providerType: MessageType.SMS,
       topics,
