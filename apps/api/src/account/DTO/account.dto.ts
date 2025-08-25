@@ -44,6 +44,7 @@ export class UpdateEmailDTO {
 export class UpdatePasswordDTO {
   @IsNotEmpty()
   @IsString()
+  @Length(8, 256, { message: 'Password must be between 8 and 256 characters.' })
   password!: string;
 
   @IsNotEmpty()

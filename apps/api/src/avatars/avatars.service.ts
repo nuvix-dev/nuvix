@@ -24,7 +24,7 @@ export class AvatarsService {
         registerFont(fontPath, { family: 'Varela' });
         this.logger.log(`Font registered from: ${fontPath}`);
       } else {
-        this.logger.error(`Font file not found at: ${fontPath}`);
+        this.logger.warn(`Font file not found at: ${fontPath}`);
       }
     } catch (error: any) {
       this.logger.error(`Error registering font: ${error.message}`);

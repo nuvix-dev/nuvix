@@ -1,7 +1,14 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { SchemaType } from '@nuvix/utils';
+import {
+  IsIn,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+} from 'class-validator';
 
-export class CreateDocumentSchema {
+export class CreateSchema {
   @ApiProperty({
     description: 'Schema name',
     example: 'my_schema',
@@ -9,10 +16,14 @@ export class CreateDocumentSchema {
     required: true,
     minLength: 1,
     maxLength: 255,
-    pattern: '^[a-zA-Z0-9_]+$',
+    pattern: '^[a-z][a-z0-9_]{0,254}$',
   })
   @IsString()
   @IsNotEmpty()
+  @Matches(/^[a-z][a-z0-9_]{0,254}$/, {
+    message:
+      'name must start with a lowercase letter, may contain lowercase letters, numbers and underscores, and must not start with an underscore',
+  })
   name!: string;
 
   @ApiProperty({
@@ -26,15 +37,13 @@ export class CreateDocumentSchema {
   @IsString()
   @IsOptional()
   description?: string;
-}
 
-export class CreateSchema extends CreateDocumentSchema {
   @ApiProperty({
-    description: 'Schema type, either managed or unmanaged',
-    enum: ['managed', 'unmanaged'],
+    description: 'Schema type, either managed, unmanaged or document',
+    enum: [Object.values(SchemaType)],
     example: 'managed',
   })
-  @IsIn(['managed', 'unmanaged'])
+  @IsIn([Object.values(SchemaType)])
   @IsNotEmpty()
-  type: 'managed' | 'unmanaged' = 'managed';
+  type: SchemaType = SchemaType.Managed;
 }

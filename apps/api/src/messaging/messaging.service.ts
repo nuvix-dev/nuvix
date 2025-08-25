@@ -360,7 +360,7 @@ export class MessagingService {
         serviceAccountJSON: 'serviceAccountJSON',
       },
       optionFields: {},
-      enabledCondition: (credentials, options) =>
+      enabledCondition: credentials =>
         credentials.hasOwnProperty('serviceAccountJSON'),
     });
   }
@@ -383,7 +383,7 @@ export class MessagingService {
       optionFields: {
         sandbox: 'sandbox',
       },
-      enabledCondition: (credentials, options) =>
+      enabledCondition: credentials =>
         credentials.hasOwnProperty('authKey') &&
         credentials.hasOwnProperty('authKeyId') &&
         credentials.hasOwnProperty('teamId') &&
@@ -746,7 +746,7 @@ export class MessagingService {
         serviceAccountJSON: 'serviceAccountJSON',
       },
       optionFields: {},
-      enabledCondition: (credentials, options) =>
+      enabledCondition: credentials =>
         credentials.hasOwnProperty('serviceAccountJSON'),
     });
   }
@@ -769,7 +769,7 @@ export class MessagingService {
       optionFields: {
         sandbox: 'sandbox',
       },
-      enabledCondition: (credentials, options) =>
+      enabledCondition: credentials =>
         credentials.hasOwnProperty('authKey') &&
         credentials.hasOwnProperty('authKeyId') &&
         credentials.hasOwnProperty('teamId') &&
@@ -2262,7 +2262,7 @@ export class MessagingService {
         if (scheduleId) {
           try {
             await this.dbForPlatform.deleteDocument('schedules', scheduleId);
-          } catch (error) {
+          } catch {
             // Ignore
           }
         }

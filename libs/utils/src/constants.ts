@@ -442,6 +442,12 @@ export enum Schemas {
   System = 'system',
 }
 
+export enum SchemaType {
+  Managed = 'managed',
+  UnMnanaged = 'unmanaged',
+  Document = 'document',
+}
+
 export enum SchemaMeta {
   collections = '_collections',
   attributes = '_attributes',
@@ -535,6 +541,22 @@ export enum MessageType {
   SMS = 'sms',
 }
 
+export enum MessageProvider {
+  // push
+  FCM = 'fcm',
+  APNS = 'apns',
+  // sms
+  TELESIGN = 'telesign',
+  TEXTMAGIC = 'textmagic',
+  TWILIO = 'twilio',
+  VONAGE = 'vonage',
+  MSG91 = 'msg91',
+  // mail
+  MAILGUN = 'mailgun',
+  SENDGRID = 'sendgrid',
+  SMTP = 'smtp',
+}
+
 export enum ScheduleResourceType {
   MESSAGE = 'message',
 }
@@ -546,6 +568,7 @@ export enum Status {
   DELETED = 'deleted',
   DELETING = 'deleting',
   PENDING = 'pending',
+  PROCESSING = 'processing',
 }
 
 export enum DeleteType {

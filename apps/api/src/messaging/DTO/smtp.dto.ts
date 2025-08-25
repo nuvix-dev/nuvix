@@ -41,7 +41,7 @@ export class CreateSMTPProviderDTO {
   @IsOptional()
   @IsString()
   @IsIn(['none', 'ssl', 'tls'])
-  encryption?: string;
+  encryption?: string = 'none';
 
   @IsOptional()
   @IsBoolean()

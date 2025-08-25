@@ -24,9 +24,10 @@ import {
 import { Device } from '@nuvix/storage';
 import { Database, Doc, Query } from '@nuvix-tech/db';
 import { Injectable, Logger } from '@nestjs/common';
-import { Schemas, QueueFor, MessageType } from '@nuvix/utils';
+import { Schemas, QueueFor, MessageType, MessageProvider } from '@nuvix/utils';
 import { MessageStatus } from '@nuvix/core/messaging/status';
 import type {
+  Files,
   Messages,
   MessagesDoc,
   Projects,
@@ -45,10 +46,7 @@ export class MessagingQueue extends Queue {
     super();
   }
 
-  async process(
-    job: Job<MessagingJobData, any, MessagingJob>,
-    token?: string,
-  ): Promise<any> {
+  async process(job: Job<MessagingJobData, any, MessagingJob>): Promise<any> {
     switch (job.name) {
       case MessagingJob.EXTERNAL:
         const data = job.data;
@@ -98,34 +96,34 @@ export class MessagingQueue extends Queue {
   private getSmsAdapter(provider: ProvidersDoc): SMSAdapter | null {
     const credentials = provider.get('credentials', {}) as Record<string, any>;
 
-    switch (provider.get('provider')) {
-      case 'twilio':
+    switch (provider.get('provider') as MessageProvider) {
+      case MessageProvider.TELESIGN:
+        return new Telesign(
+          credentials['customerId'] || '',
+          credentials['apiKey'] || '',
+        );
+      case MessageProvider.TEXTMAGIC:
+        return new TextMagic(
+          credentials['username'] || '',
+          credentials['apiKey'] || '',
+        );
+      case MessageProvider.TWILIO:
         return new Twilio(
           credentials['accountSid'] || '',
           credentials['authToken'] || '',
           undefined,
           credentials['messagingServiceSid'] || null,
         );
-      case 'textmagic':
-        return new TextMagic(
-          credentials['username'] || '',
+      case MessageProvider.VONAGE:
+        return new Vonage(
           credentials['apiKey'] || '',
+          credentials['apiSecret'] || '',
         );
-      case 'telesign':
-        return new Telesign(
-          credentials['customerId'] || '',
-          credentials['apiKey'] || '',
-        );
-      case 'msg91':
+      case MessageProvider.MSG91:
         return new Msg91(
           credentials['senderId'] || '',
           credentials['authKey'] || '',
           credentials['templateId'] || '',
-        );
-      case 'vonage':
-        return new Vonage(
-          credentials['apiKey'] || '',
-          credentials['apiSecret'] || '',
         );
       default:
         return null;
@@ -136,8 +134,8 @@ export class MessagingQueue extends Queue {
     const credentials = provider.get('credentials', {}) as Record<string, any>;
     const options = provider.get('options') || {};
 
-    switch (provider.get('provider')) {
-      case 'apns':
+    switch (provider.get('provider') as MessageProvider) {
+      case MessageProvider.APNS:
         return new APNS(
           credentials['authKey'] || '',
           credentials['authKeyId'] || '',
@@ -145,7 +143,7 @@ export class MessagingQueue extends Queue {
           credentials['bundleId'] || '',
           options['sandbox'] || false,
         );
-      case 'fcm':
+      case MessageProvider.FCM:
         return new FCM(JSON.stringify(credentials['serviceAccountJSON']));
       default:
         return null;
@@ -157,24 +155,24 @@ export class MessagingQueue extends Queue {
     const options = provider.get('options') || {};
     const apiKey = credentials['apiKey'] || '';
 
-    switch (provider.get('provider')) {
-      case 'smtp':
+    switch (provider.get('provider') as MessageProvider) {
+      case MessageProvider.SMTP:
         return new SMTP(
-          credentials['host'] || '',
-          credentials['port'] || 25,
-          credentials['username'] || '',
-          credentials['password'] || '',
+          credentials['host'] ?? '',
+          credentials['port'] ?? 25,
+          credentials['username'] ?? '',
+          credentials['password'] ?? '',
+          options['autoTLS'] ?? false,
           options['encryption'] || '',
-          options['autoTLS'] || false,
           options['mailer'] || '',
         );
-      case 'mailgun':
+      case MessageProvider.MAILGUN:
         return new Mailgun(
           apiKey,
           credentials['domain'] || '',
           credentials['isEuRegion'] || false,
         );
-      case 'sendgrid':
+      case MessageProvider.SENDGRID:
         return new Sendgrid(apiKey);
       default:
         return null;
@@ -186,6 +184,7 @@ export class MessagingQueue extends Queue {
     message: MessagesDoc,
     provider: ProvidersDoc,
     deviceForFiles: Device,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     project: ProjectsDoc,
   ): Promise<Email> {
     const fromName = provider.get('options')?.['fromName'] || null;
@@ -195,9 +194,9 @@ export class MessagingQueue extends Queue {
     const data = message.get('data') || {};
     const ccTargets = data['cc'] || [];
     const bccTargets = data['bcc'] || [];
-    let cc: Array<{ email: string }> = [];
-    let bcc: Array<{ email: string }> = [];
-    let attachments = data['attachments'] || [];
+    const cc: Array<{ email: string }> = [];
+    const bcc: Array<{ email: string }> = [];
+    const attachments = data['attachments'] || [];
 
     if (ccTargets.length > 0) {
       const ccTargetDocs = await dbForProject.withSchema(Schemas.Auth, () =>
@@ -236,7 +235,7 @@ export class MessagingQueue extends Queue {
           );
         }
 
-        const file = await dbForProject.getDocument(
+        const file = await dbForProject.getDocument<Files>(
           'bucket_' + bucket.getSequence(),
           fileId,
         );
@@ -351,6 +350,7 @@ export class MessagingQueue extends Queue {
     message: MessagesDoc,
     deviceForFiles: Device,
     project: ProjectsDoc,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     queueForStatsUsage: any,
   ): Promise<void> {
     const topicIds = message.get('topics', []);
@@ -358,7 +358,7 @@ export class MessagingQueue extends Queue {
     const userIds = message.get('users', []);
     const providerType = message.get('providerType') as MessageType;
 
-    let allTargets: TargetsDoc[] = [];
+    const allTargets: TargetsDoc[] = [];
 
     if (topicIds.length > 0) {
       const topics = await dbForProject.find('topics', [
@@ -548,7 +548,7 @@ export class MessagingQueue extends Queue {
             `Failed sending to targets with error: ${error.message}`,
           );
         } finally {
-          const errorTotal = deliveryErrors.length;
+          // const errorTotal = deliveryErrors.length;
           // Add stats usage metrics
           // queueForStatsUsage...
 

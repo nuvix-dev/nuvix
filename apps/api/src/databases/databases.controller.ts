@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  HttpStatus,
   Param,
   Post,
   UseGuards,
@@ -18,14 +19,15 @@ import { Models } from '@nuvix/core/helper';
 import {
   Project,
   ProjectPg,
-  Label,
   ResModel,
   Scope,
+  Sdk,
 } from '@nuvix/core/decorators';
 
 // DTO's
-import { CreateDocumentSchema, CreateSchema } from './DTO/create-schema.dto';
+import { CreateSchema } from './DTO/create-schema.dto';
 import type { ProjectsDoc } from '@nuvix/utils/types';
+import { SchemaType } from '@nuvix/utils';
 
 @Controller({ version: ['1'], path: 'databases' })
 @UseGuards(ProjectGuard)
@@ -33,28 +35,12 @@ import type { ProjectsDoc } from '@nuvix/utils/types';
 export class DatabasesController {
   constructor(private readonly databaseService: DatabasesService) {}
 
-  @Post('schemas/document')
-  @Scope('schema.create')
-  @Label('res.type', 'JSON')
-  @Label('res.status', 'CREATED')
-  @ResModel(Models.SCHEMA)
-  async createDocTypeSchema(
-    @ProjectPg() pg: DataSource,
-    @Project() project: ProjectsDoc,
-    @Body() body: CreateDocumentSchema,
-  ) {
-    const result = await this.databaseService.createDocumentSchema(
-      pg,
-      project,
-      body,
-    );
-    return result;
-  }
-
   @Get('schemas')
   @Scope('schema.read')
-  @Label('res.type', 'JSON')
-  @Label('res.status', 'OK')
+  @Sdk({
+    name: 'listSchemas',
+    code: HttpStatus.OK,
+  })
   @ResModel(Models.SCHEMA, { list: true })
   async getSchemas(@ProjectPg() pg: DataSource) {
     const schemas = await this.databaseService.getSchemas(pg);
@@ -63,18 +49,28 @@ export class DatabasesController {
 
   @Post('schemas')
   @Scope('schema.create')
-  @Label('res.type', 'JSON')
-  @Label('res.status', 'CREATED')
+  @Sdk({
+    name: 'createSchema',
+    code: HttpStatus.CREATED,
+  })
   @ResModel(Models.SCHEMA)
-  async createSchema(@ProjectPg() pg: DataSource, @Body() body: CreateSchema) {
-    const result = await this.databaseService.createSchema(pg, body);
+  async createSchema(
+    @ProjectPg() pg: DataSource,
+    @Body() body: CreateSchema,
+    @Project() project: ProjectsDoc,
+  ) {
+    const result = await (body.type !== SchemaType.Document
+      ? this.databaseService.createSchema(pg, body)
+      : this.databaseService.createDocumentSchema(pg, project, body));
     return result;
   }
 
   @Get('schemas/:schemaId')
   @Scope('schema.read')
-  @Label('res.type', 'JSON')
-  @Label('res.status', 'OK')
+  @Sdk({
+    name: 'getSchema',
+    code: HttpStatus.OK,
+  })
   @ResModel(Models.SCHEMA)
   async getSchema(@ProjectPg() pg: DataSource, @Param('schemaId') id: string) {
     const result = await this.databaseService.getSchema(pg, id);

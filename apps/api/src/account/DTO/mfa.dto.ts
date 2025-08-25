@@ -1,4 +1,4 @@
-import { IsCustomID, IsUID, TOTP } from '@nuvix/core/validators';
+import { IsUID, TOTP } from '@nuvix/core/validators';
 import {
   IsBoolean,
   IsNotEmpty,

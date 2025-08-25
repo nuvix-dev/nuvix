@@ -1,4 +1,3 @@
-// TODO: remove this module
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { DatabasesService } from './databases.service';
 import { DatabasesController } from './databases.controller';
