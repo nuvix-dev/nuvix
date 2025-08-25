@@ -28,7 +28,7 @@ import {
   UpdateMembershipStatusDTO,
 } from './DTO/membership.dto';
 import { ParseQueryPipe } from '@nuvix/core/pipes/query.pipe';
-import { Database, Doc, Query as Queries } from '@nuvix-tech/db';
+import { Database, Query as Queries } from '@nuvix-tech/db';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard';
 import { Mode } from '@nuvix/core/decorators/mode.decorator';
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor';

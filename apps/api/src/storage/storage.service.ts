@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger, StreamableFile } from '@nestjs/common';
+import { Injectable, Logger, StreamableFile } from '@nestjs/common';
 import {
   Authorization,
   Database,
@@ -293,7 +293,8 @@ export class StorageService {
       input.permissions ?? [],
       allowedPermissions,
     );
-    // TODO: i saw their is a issue (perms related), recheck
+
+    const roles = Authorization.getRoles();
     if (!permissions || permissions.length === 0) {
       permissions = user.getId()
         ? allowedPermissions.map(permission =>
@@ -302,8 +303,7 @@ export class StorageService {
         : [];
     }
 
-    const roles = Authorization.getRoles();
-    if (!Auth.isAppUser(roles) && !Auth.isPrivilegedUser(roles)) {
+    if (!isAPIKey && !isPrivilegedUser) {
       permissions.forEach(permission => {
         const parsedPermission = Permission.parse(permission);
         if (!Authorization.isRole(parsedPermission.toString())) {
@@ -407,7 +407,7 @@ export class StorageService {
       );
     }
 
-    let _path = deviceForFiles.getPath(
+    const _path = deviceForFiles.getPath(
       path.join(bucket.getId(), fileId + '.' + fileExt),
     );
 
@@ -672,7 +672,7 @@ export class StorageService {
 
     // Unsupported file types or files larger then 10 MB
     if (!mimeType.startsWith('image/') || size / 1024 > 10 * 1024) {
-      let path = logos[mimeType as keyof typeof logos] ?? logos.default;
+      const path = logos[mimeType as keyof typeof logos] ?? logos.default;
       const buffer = await deviceForFiles.read(path);
       return new StreamableFile(buffer, {
         type: `image/png`,

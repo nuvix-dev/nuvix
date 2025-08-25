@@ -10,6 +10,7 @@ import {
   IsOptional,
 } from 'class-validator';
 import { APP_LIMIT_ARRAY_PARAMS_SIZE } from '@nuvix/utils';
+import { IsUID } from '@nuvix/core/validators/input.validator.js';
 
 export class CreateMembershipDTO {
   @IsOptional()
@@ -18,7 +19,7 @@ export class CreateMembershipDTO {
   email?: string;
 
   @IsOptional()
-  @IsNotEmpty()
+  @IsUID()
   userId?: string;
 
   @IsOptional()

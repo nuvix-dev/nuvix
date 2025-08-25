@@ -15,14 +15,14 @@ import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response
 import { CollectionsService } from './collections.service';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard';
 import { Models } from '@nuvix/core/helper/response.helper';
-import type { Database, Doc, Query as Queries } from '@nuvix-tech/db';
+import type { Database, Query as Queries } from '@nuvix-tech/db';
 import { Mode } from '@nuvix/core/decorators/mode.decorator';
 import { ParseQueryPipe } from '@nuvix/core/pipes/query.pipe';
 import {
   CurrentDatabase,
   Project,
 } from '@nuvix/core/decorators/project.decorator';
-import { ResModel } from '@nuvix/core/decorators';
+import { ResModel, User } from '@nuvix/core/decorators';
 
 // DTOs
 import { CreateCollectionDTO, UpdateCollectionDTO } from './DTO/collection.dto';
@@ -52,7 +52,7 @@ import { CreateDocumentDTO, UpdateDocumentDTO } from './DTO/document.dto';
 import { CreateIndexDTO } from './DTO/indexes.dto';
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor';
 import { DocSchemaGuard } from '@nuvix/core/resolvers/guards';
-import type { ProjectsDoc } from '@nuvix/utils/types';
+import type { ProjectsDoc, UsersDoc } from '@nuvix/utils/types';
 
 @Controller({ version: ['1'], path: 'schemas/:schemaId/collections' })
 @UseGuards(ProjectGuard, DocSchemaGuard)
@@ -556,13 +556,13 @@ export class CollectionsController {
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Body() document: CreateDocumentDTO,
-    @Mode() mode: string,
+    @User() user: UsersDoc,
   ) {
     return this.collectionsService.createDocument(
       db,
       collectionId,
       document,
-      mode,
+      user,
     );
   }
 

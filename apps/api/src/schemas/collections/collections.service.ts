@@ -21,6 +21,8 @@ import {
   RelationType,
   RelationSide,
   PermissionType,
+  Role,
+  PermissionsValidator,
 } from '@nuvix-tech/db';
 import {
   APP_LIMIT_COUNT,
@@ -76,6 +78,7 @@ import type {
   Indexes,
   IndexesDoc,
   ProjectsDoc,
+  UsersDoc,
 } from '@nuvix/utils/types';
 
 @Injectable()
@@ -131,7 +134,7 @@ export class CollectionsService {
       await db.createCollection({
         id: collection.getId(),
         permissions,
-        documentSecurity, // TODO: we will support enabled directly in lib, so we will pass that here also
+        documentSecurity, // TODO: we will support `enabled` directly in lib, so we will pass that here also
       });
 
       this.event.emit(
@@ -192,8 +195,11 @@ export class CollectionsService {
    * Get logs for a collection.
    */
   async getCollectionLogs(
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     db: Database,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     collectionId: string,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     queries: Query[],
   ) {
     // TODO: Implement collection logs
@@ -240,8 +246,9 @@ export class CollectionsService {
 
     await db.updateCollection({
       id: collection.getId(),
-      permissions: permissions ?? collection.get('$permissions'),
-      documentSecurity: documentSecurity ?? collection.get('documentSecurity'),
+      permissions: permissions ?? updatedCollection.get('$permissions'),
+      documentSecurity:
+        documentSecurity ?? updatedCollection.get('documentSecurity'),
       // TODO: same here like in create collection
     });
 
@@ -1449,7 +1456,7 @@ export class CollectionsService {
 
       try {
         attribute = await db.createDocument(SchemaMeta.attributes, attribute);
-      } catch (error) {
+      } catch {
         attribute = await db.createDocument(SchemaMeta.attributes, original);
       }
     } else {
@@ -1800,7 +1807,7 @@ export class CollectionsService {
     db: Database,
     collectionId: string,
     { documentId, permissions, data }: CreateDocumentDTO,
-    mode: string,
+    user: UsersDoc,
   ) {
     const isAPIKey = Auth.isAppUser(Authorization.getRoles());
     const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
@@ -1836,35 +1843,16 @@ export class CollectionsService {
     data['$permissions'] = aggregatedPermissions;
 
     const document = new Doc(data);
-    // Recheck & remove the below commeted code
-    // const checkPermissions = async (
-    //   collection: CollectionsDoc,
-    //   document: Doc,
-    //   permission: PermissionType,
-    // ) => {
-    //   const documentSecurity = collection.get('documentSecurity', false);
-    //   const validator = new Authorization(permission);
-    //   const valid = validator.$valid(
-    //     collection.getPermissionsByType(permission),
-    //   );
 
-    //   if (
-    //     (permission === PermissionType.Update && !documentSecurity) ||
-    //     !valid
-    //   ) {
-    //     throw new Exception(Exception.USER_UNAUTHORIZED);
-    //   }
-
-    //   if (permission === PermissionType.Update) {
-    //     const validUpdate = validator.$valid(document.getUpdate());
-    //     if (documentSecurity && !validUpdate) {
-    //       throw new Exception(Exception.USER_UNAUTHORIZED);
-    //     }
-    //   }
-    // };
-
-    // I DON"T THINK WE NEED TO DO IT, because our lib do very well
-    // await checkPermissions(collection, document, PermissionType.Update);
+    this.setPermissions(
+      document,
+      permissions,
+      user,
+      isAPIKey,
+      isPrivilegedUser,
+      false,
+    );
+    this.checkPermissions(collection, document, PermissionType.Update);
 
     try {
       const createdDocument = await db.createDocument(
@@ -1885,6 +1873,95 @@ export class CollectionsService {
       }
       throw error;
     }
+  }
+
+  private checkPermissions(
+    collection: CollectionsDoc,
+    document: Doc,
+    permission: PermissionType,
+  ) {
+    const documentSecurity = collection.get('documentSecurity', false);
+    const validator = new Authorization(permission);
+    const valid = validator.$valid(collection.getPermissionsByType(permission));
+
+    if ((permission === PermissionType.Update && !documentSecurity) || !valid) {
+      throw new Exception(Exception.USER_UNAUTHORIZED);
+    }
+
+    if (permission === PermissionType.Update) {
+      const validUpdate = validator.$valid(document.getUpdate());
+      if (documentSecurity && !validUpdate) {
+        throw new Exception(Exception.USER_UNAUTHORIZED);
+      }
+    }
+  }
+
+  private setPermissions(
+    document: Doc,
+    permissions: string[] | null,
+    user: UsersDoc,
+    isAPIKey: boolean,
+    isPrivilegedUser: boolean,
+    isBulk: boolean,
+  ): void {
+    const allowedPermissions = [
+      PermissionType.Read,
+      PermissionType.Update,
+      PermissionType.Delete,
+    ];
+
+    // If bulk, we need to validate permissions explicitly per document
+    if (isBulk) {
+      permissions = (document.getPermissions() as string[] | null) ?? null;
+      if (permissions && permissions.length > 0) {
+        const validator = new PermissionsValidator();
+        if (!validator.$valid(permissions)) {
+          throw new Exception(
+            Exception.GENERAL_BAD_REQUEST,
+            validator.$description,
+          );
+        }
+      }
+    }
+
+    permissions = Permission.aggregate(permissions, allowedPermissions);
+
+    // Add permissions for current user if none were provided
+    if (permissions === null) {
+      permissions = [];
+      if (user.getId()) {
+        for (const perm of allowedPermissions) {
+          permissions.push(
+            new Permission(perm, Role.user(user.getId())).toString(),
+          );
+        }
+      }
+    }
+
+    // Users can only manage their own roles, API keys and Admin users can manage any
+    if (!isAPIKey && !isPrivilegedUser) {
+      for (const type of Database.PERMISSIONS) {
+        for (const p of permissions) {
+          const parsed = Permission.parse(p);
+          if (parsed.getPermission() !== type) continue;
+
+          const role = new Role(
+            parsed.getRole(),
+            parsed.getIdentifier(),
+            parsed.getDimension(),
+          ).toString();
+
+          if (!Authorization.isRole(role)) {
+            throw new Exception(
+              Exception.USER_UNAUTHORIZED,
+              `Permissions must be one of: (${Authorization.getRoles().join(', ')})`,
+            );
+          }
+        }
+      }
+    }
+
+    document.set('$permissions', permissions);
   }
 
   /**
