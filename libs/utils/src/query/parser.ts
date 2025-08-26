@@ -345,7 +345,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     operator: AllowedOperators,
     args: any[],
   ): Condition {
-    let _field =
+    const _field =
       typeof field === 'string' ? this.parseFieldString(field) : field;
 
     return {

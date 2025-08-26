@@ -889,7 +889,7 @@ export class AccountService {
     }
 
     const appId = providerInfo.appId ?? '';
-    let appSecret = providerInfo.secret ?? '';
+    const appSecret = providerInfo.secret ?? '';
 
     // if (appSecret && typeof appSecret === 'object' && appSecret.version) {
     //   // TODO: Handle encrypted app secret
@@ -961,7 +961,7 @@ export class AccountService {
     const validateURL = new URLValidator();
     const providerInfo = this.getProviderConfig(project, provider);
     const appId = providerInfo.appId ?? '';
-    let appSecret = providerInfo.secret ?? '';
+    const appSecret = providerInfo.secret ?? '';
     const providerEnabled = providerInfo.enabled ?? false;
 
     const AuthClass = await getOAuth2Class(provider);
@@ -1448,7 +1448,7 @@ export class AccountService {
     }
 
     const appId = providerInfo.appId ?? '';
-    let appSecret = providerInfo.secret ?? '';
+    const appSecret = providerInfo.secret ?? '';
 
     // if (appSecret && typeof appSecret === 'object' && appSecret.version) {
     //   // TODO: Handle encrypted app secret decryption

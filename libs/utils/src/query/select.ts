@@ -212,7 +212,7 @@ export class SelectParser {
           `Unsupported aggregation function: ${fn}. Allowed functions are: ${this.allowedAggregations.join(', ')}`,
         );
       }
-      let arg = fnMatch[2]?.trim()!;
+      const arg = fnMatch[2]?.trim()!;
 
       // Support cast inside aggregation, e.g., sum(col::int)
       const { value: columnArg, cast: innerCast } = this.extractCast(arg);
