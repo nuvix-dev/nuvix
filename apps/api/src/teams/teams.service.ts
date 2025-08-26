@@ -73,11 +73,7 @@ export class TeamsService {
     db: Database,
     user: UsersDoc | null,
     input: CreateTeamDTO,
-    mode: string,
   ) {
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-    const isAppUser = Auth.isAppUser(Authorization.getRoles());
-
     const teamId = input.teamId == 'unique()' ? ID.unique() : input.teamId;
 
     const team = await db
@@ -91,7 +87,7 @@ export class TeamsService {
             Permission.delete(Role.team(teamId, 'owner')),
           ],
           name: input.name,
-          total: isPrivilegedUser || isAppUser ? 0 : 1,
+          total: Auth.isTrustedActor ? 0 : 1,
           prefs: {},
           search: [teamId, input.name].join(' '),
         }),
@@ -103,7 +99,7 @@ export class TeamsService {
         throw error;
       });
 
-    if (!isPrivilegedUser && !isAppUser && user && mode !== 'admin') {
+    if (!Auth.isTrustedActor && user) {
       // Don't add user on server mode
       if (!input.roles.includes('owner')) {
         input.roles.push('owner');
@@ -240,20 +236,15 @@ export class TeamsService {
     user: UsersDoc,
     locale: LocaleTranslator,
   ) {
-    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-
     const url = input.url ? input.url.trim() : '';
     if (!url) {
-      if (!isAPIKey && !isPrivilegedUser) {
+      if (!Auth.isTrustedActor) {
         throw new Exception(
           Exception.GENERAL_ARGUMENT_INVALID,
           'URL is required',
         );
       }
     }
-
-    const isAppUser = Auth.isAppUser(Authorization.getRoles());
 
     if (!input.userId && !input.email && !input.phone) {
       throw new Exception(
@@ -263,8 +254,7 @@ export class TeamsService {
     }
 
     if (
-      !isPrivilegedUser &&
-      !isAppUser &&
+      !Auth.isTrustedActor &&
       !this.appConfig.getSmtpConfig().host
     ) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED);
@@ -332,12 +322,12 @@ export class TeamsService {
 
       // Check user limit if not privileged or app user
       const limit = project.get('auths', {})['limit'] ?? 0;
-      if (!isPrivilegedUser && !isAppUser && limit !== 0) {
+      if (!Auth.isTrustedActor && limit !== 0) {
         const total = await db.count('users', []);
         if (total >= limit) {
           throw new Exception(
             Exception.USER_COUNT_EXCEEDED,
-            'Project registration is restricted. Contact your administrator for more information.',
+            'User registration is restricted. Contact your administrator for more information.',
           );
         }
       }
@@ -383,7 +373,7 @@ export class TeamsService {
 
     const isOwner = Authorization.isRole('team:' + team.getId() + '/owner');
 
-    if (!isOwner && !isPrivilegedUser && !isAppUser) {
+    if (!isOwner && !Auth.isTrustedActor) {
       throw new Exception(
         Exception.USER_UNAUTHORIZED,
         'User is not allowed to send invitations for this team',
@@ -408,13 +398,13 @@ export class TeamsService {
       teamInternalId: team.getSequence(),
       roles: input.roles,
       invited: new Date(),
-      joined: isPrivilegedUser || isAppUser ? new Date() : null,
-      confirm: isPrivilegedUser || isAppUser,
+      joined: Auth.isTrustedActor ? new Date() : null,
+      confirm: Auth.isTrustedActor,
       secret: Auth.hash(secret),
       search: [membershipId, invitee.getId()].join(' '),
     });
 
-    if (isPrivilegedUser || isAppUser) {
+    if (Auth.isTrustedActor) {
       try {
         membership = await Authorization.skip(() =>
           db.createDocument('memberships', membership),
@@ -458,7 +448,7 @@ export class TeamsService {
         );
         const customTemplate =
           project.get('templates', {})?.[
-            'email.invitation-' + locale.default
+          'email.invitation-' + locale.default
           ] ?? {};
         const templatePath =
           this.appConfig.assetConfig.templates + '/email-inner-base.tpl';
@@ -654,12 +644,9 @@ export class TeamsService {
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
-
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-    const isAppUser = Auth.isAppUser(Authorization.getRoles());
     const isOwner = Authorization.isRole(`team:${team.getId()}/owner`);
 
-    if (!isOwner && !isPrivilegedUser && !isAppUser) {
+    if (!isOwner && !Auth.isTrustedActor) {
       throw new Exception(
         Exception.USER_UNAUTHORIZED,
         'User is not allowed to modify roles',

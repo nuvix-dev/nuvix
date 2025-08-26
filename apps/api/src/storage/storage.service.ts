@@ -212,12 +212,9 @@ export class StorageService {
   ) {
     const bucket = await db.getDocument('buckets', bucketId);
 
-    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-
     if (
       bucket.empty() ||
-      (!bucket.get('enabled') && !isAPIKey && !isPrivilegedUser)
+      (!bucket.get('enabled') && !Auth.isTrustedActor)
     ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
     }
@@ -268,12 +265,9 @@ export class StorageService {
       db.getDocument('buckets', bucketId),
     );
 
-    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-
     if (
       bucket.empty() ||
-      (!bucket.get('enabled') && !isAPIKey && !isPrivilegedUser)
+      (!bucket.get('enabled') && !Auth.isTrustedActor)
     ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
     }
@@ -298,12 +292,12 @@ export class StorageService {
     if (!permissions || permissions.length === 0) {
       permissions = user.getId()
         ? allowedPermissions.map(permission =>
-            new Permission(permission, Role.user(user.getId())).toString(),
-          )
+          new Permission(permission, Role.user(user.getId())).toString(),
+        )
         : [];
     }
 
-    if (!isAPIKey && !isPrivilegedUser) {
+    if (!Auth.isTrustedActor) {
       permissions.forEach(permission => {
         const parsedPermission = Permission.parse(permission);
         if (!Authorization.isRole(parsedPermission.toString())) {
@@ -551,12 +545,9 @@ export class StorageService {
       db.getDocument('buckets', bucketId),
     );
 
-    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-
     if (
       bucket.empty() ||
-      (!bucket.get('enabled') && !isAPIKey && !isPrivilegedUser)
+      (!bucket.get('enabled') && !Auth.isTrustedActor)
     ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
     }
@@ -572,15 +563,15 @@ export class StorageService {
     const file = (
       fileSecurity && !valid
         ? await db.getDocument(
+          this.getCollectionName(bucket.getSequence()),
+          fileId,
+        )
+        : await Authorization.skip(() =>
+          db.getDocument(
             this.getCollectionName(bucket.getSequence()),
             fileId,
-          )
-        : await Authorization.skip(() =>
-            db.getDocument(
-              this.getCollectionName(bucket.getSequence()),
-              fileId,
-            ),
-          )
+          ),
+        )
     ) as FilesDoc;
 
     if (file.empty()) {
@@ -620,12 +611,9 @@ export class StorageService {
       async () => await db.getDocument('buckets', bucketId),
     );
 
-    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-
     if (
       bucket.empty() ||
-      (!bucket.get('enabled') && !isAPIKey && !isPrivilegedUser)
+      (!bucket.get('enabled') && !Auth.isTrustedActor)
     ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
     }
@@ -640,16 +628,16 @@ export class StorageService {
     const file =
       fileSecurity && !valid
         ? await db.getDocument(
-            this.getCollectionName(bucket.getSequence()),
-            fileId,
-          )
+          this.getCollectionName(bucket.getSequence()),
+          fileId,
+        )
         : await Authorization.skip(
-            async () =>
-              await db.getDocument(
-                this.getCollectionName(bucket.getSequence()),
-                fileId,
-              ),
-          );
+          async () =>
+            await db.getDocument(
+              this.getCollectionName(bucket.getSequence()),
+              fileId,
+            ),
+        );
 
     if (file.empty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -765,12 +753,9 @@ export class StorageService {
       db.getDocument('buckets', bucketId),
     );
 
-    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-
     if (
       bucket.empty() ||
-      (!bucket.get('enabled') && !isAPIKey && !isPrivilegedUser)
+      (!bucket.get('enabled') && !Auth.isTrustedActor)
     ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
     }
@@ -785,15 +770,15 @@ export class StorageService {
     const file =
       fileSecurity && !valid
         ? await db.getDocument(
+          this.getCollectionName(bucket.getSequence()),
+          fileId,
+        )
+        : await Authorization.skip(() =>
+          db.getDocument(
             this.getCollectionName(bucket.getSequence()),
             fileId,
-          )
-        : await Authorization.skip(() =>
-            db.getDocument(
-              this.getCollectionName(bucket.getSequence()),
-              fileId,
-            ),
-          );
+          ),
+        );
 
     if (file.empty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -906,12 +891,9 @@ export class StorageService {
       db.getDocument('buckets', bucketId),
     );
 
-    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-
     if (
       bucket.empty() ||
-      (!bucket.get('enabled') && !isAPIKey && !isPrivilegedUser)
+      (!bucket.get('enabled') && !Auth.isTrustedActor)
     ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
     }
@@ -926,15 +908,15 @@ export class StorageService {
     const file =
       fileSecurity && !valid
         ? await db.getDocument(
+          this.getCollectionName(bucket.getSequence()),
+          fileId,
+        )
+        : await Authorization.skip(() =>
+          db.getDocument(
             this.getCollectionName(bucket.getSequence()),
             fileId,
-          )
-        : await Authorization.skip(() =>
-            db.getDocument(
-              this.getCollectionName(bucket.getSequence()),
-              fileId,
-            ),
-          );
+          ),
+        );
 
     if (file.empty()) {
       throw new Exception(Exception.STORAGE_FILE_NOT_FOUND);
@@ -1060,12 +1042,9 @@ export class StorageService {
       throw new Exception(Exception.USER_UNAUTHORIZED);
     }
 
-    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-
     if (
       bucket.empty() ||
-      (!bucket.get('enabled') && !isAPIKey && !isPrivilegedUser)
+      (!bucket.get('enabled') && !Auth.isTrustedActor)
     ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
     }
@@ -1151,12 +1130,9 @@ export class StorageService {
       db.getDocument('buckets', bucketId),
     );
 
-    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-
     if (
       bucket.empty() ||
-      (!bucket.get('enabled') && !isAPIKey && !isPrivilegedUser)
+      (!bucket.get('enabled') && !Auth.isTrustedActor)
     ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
     }
@@ -1184,8 +1160,7 @@ export class StorageService {
 
     const roles = Authorization.getRoles();
     if (
-      !Auth.isAppUser(roles) &&
-      !Auth.isPrivilegedUser(roles) &&
+      !Auth.isTrustedActor &&
       permissions
     ) {
       permissions.forEach(permission => {
@@ -1240,12 +1215,9 @@ export class StorageService {
       db.getDocument('buckets', bucketId),
     );
 
-    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-
     if (
       bucket.empty() ||
-      (!bucket.get('enabled') && !isAPIKey && !isPrivilegedUser)
+      (!bucket.get('enabled') && !Auth.isTrustedActor)
     ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND);
     }
@@ -1285,16 +1257,16 @@ export class StorageService {
       const deleted =
         fileSecurity && !valid
           ? await db.deleteDocument(
-              this.getCollectionName(bucket.getSequence()),
-              fileId,
-            )
+            this.getCollectionName(bucket.getSequence()),
+            fileId,
+          )
           : await Authorization.skip(
-              async () =>
-                await db.deleteDocument(
-                  this.getCollectionName(bucket.getSequence()),
-                  fileId,
-                ),
-            );
+            async () =>
+              await db.deleteDocument(
+                this.getCollectionName(bucket.getSequence()),
+                fileId,
+              ),
+          );
 
       if (!deleted) {
         throw new Exception(

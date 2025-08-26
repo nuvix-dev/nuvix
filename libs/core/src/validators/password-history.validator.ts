@@ -1,6 +1,7 @@
 import type { Validator } from '@nuvix-tech/db';
 import { Auth } from '../helper/auth.helper';
 import { PasswordValidator } from './password.validator';
+import type { HashAlgorithm } from '@nuvix/utils';
 
 export class PasswordHistoryValidator implements Validator {
   private history: string[];
@@ -28,7 +29,7 @@ export class PasswordHistoryValidator implements Validator {
     for (const hash of this.history) {
       if (
         hash &&
-        (await Auth.passwordVerify(value, hash, this.algo, this.algoOptions))
+        (await Auth.passwordVerify(value, hash, this.algo as HashAlgorithm, this.algoOptions))
       ) {
         return false;
       }

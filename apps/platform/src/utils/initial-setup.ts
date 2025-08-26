@@ -41,7 +41,6 @@ export async function initSetup(config: AppConfigService) {
     dbForPlatform.setMeta({
       schema: 'public',
       sharedTables: false,
-      database: name,
       namespace: 'platform',
     });
 

@@ -4,7 +4,7 @@ import { AuditEventType } from '@nuvix/core/decorators';
 import { Exception } from '@nuvix/core/extend/exception';
 import { Hook } from '@nuvix/core/server';
 import { Doc } from '@nuvix-tech/db';
-import { QueueFor, AppMode, Context } from '@nuvix/utils';
+import { QueueFor, AppMode, Context, AuthActivity } from '@nuvix/utils';
 import { Queue } from 'bullmq';
 import { AuditsQueueJobData } from '../queues/audits.queue';
 import { Auth } from '@nuvix/core/helper';
@@ -73,7 +73,7 @@ export class AuditHook implements Hook {
         $id: '',
         status: true,
         $sequence: -1,
-        type: Auth.ACTIVITY_TYPE_GUEST,
+        type: AuthActivity.GUEST,
         email: 'guest.' + project.getId() + '@service.' + req.hostname,
         password: '',
         name: 'Guest',

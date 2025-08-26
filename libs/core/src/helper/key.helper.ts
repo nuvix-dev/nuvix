@@ -1,7 +1,7 @@
 import { ApiKey } from '@nuvix/utils';
 import { Auth } from './auth.helper';
 import { roles } from '../config/roles';
-import { Doc } from '@nuvix-tech/db';
+import { Doc, RoleName } from '@nuvix-tech/db';
 import { JwtService } from '@nestjs/jwt';
 import { KeysDoc, ProjectsDoc } from '@nuvix/utils/types';
 
@@ -76,15 +76,15 @@ export class Key {
       secret = key;
     }
 
-    const role = Auth.USER_ROLE_APPS;
-    let scopes = roles[Auth.USER_ROLE_APPS]?.scopes ?? [];
+    const role = 'apps';
+    let scopes = roles[role]?.scopes ?? [];
     let expired = false;
 
     const guestKey = new Key(
       project.getId(),
       type,
-      Auth.USER_ROLE_GUESTS,
-      roles[Auth.USER_ROLE_GUESTS]?.scopes ?? [],
+      RoleName.GUESTS,
+      roles[RoleName.GUESTS]?.scopes ?? [],
       'UNKNOWN',
       key,
     );

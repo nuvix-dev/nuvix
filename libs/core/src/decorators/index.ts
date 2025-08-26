@@ -8,5 +8,5 @@ export * from './project.decorator';
 export * from './res-model.decorator';
 export * from './scope.decorator';
 export * from './sdk.decorator';
-export { User as Auth } from './project-user.decorator';
+export { User as AuthUser } from './project-user.decorator';
 export * from './user.decorator';

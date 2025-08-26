@@ -1,4 +1,3 @@
-import { Auth } from '../helper/auth.helper';
 import { scopes } from './scopes';
 
 const member = [
@@ -143,8 +142,9 @@ const _admins = [
 
 const admins = [..._admins, ...Object.keys(scopes)];
 
+// TODO: THIS SHOULD BE DYNAMIC, we have to store in database
 export const roles = {
-  [Auth.USER_ROLE_GUESTS]: {
+  guests: {
     label: 'Guests',
     scopes: [
       'global',
@@ -170,23 +170,23 @@ export const roles = {
       'execution.delete',
     ],
   },
-  [Auth.USER_ROLE_USERS]: {
+  users: {
     label: 'Users',
     scopes: member,
   },
-  [Auth.USER_ROLE_ADMIN]: {
-    label: 'Admin',
-    scopes: admins,
-  },
-  [Auth.USER_ROLE_DEVELOPER]: {
-    label: 'Developer',
-    scopes: admins,
-  },
-  [Auth.USER_ROLE_OWNER]: {
+  // [Auth.USER_ROLE_ADMIN]: {
+  //   label: 'Admin',
+  //   scopes: admins,
+  // },
+  // [Auth.USER_ROLE_DEVELOPER]: {
+  //   label: 'Developer',
+  //   scopes: admins,
+  // },
+  owner: {
     label: 'Owner',
     scopes: [...admins, ...member],
   },
-  [Auth.USER_ROLE_APPS]: {
+  apps: {
     label: 'Applications',
     scopes: ['global', 'health.read', 'graphql'],
   },

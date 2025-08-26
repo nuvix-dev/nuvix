@@ -31,7 +31,6 @@ export class CreateMembershipDTO {
   @IsString({ each: true })
   declare roles: string[];
 
-  @IsOptional()
   @IsUrl()
   @IsNotEmpty()
   declare url: string;

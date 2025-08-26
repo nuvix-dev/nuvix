@@ -64,9 +64,8 @@ export class TeamsController {
     @AuthDatabase() db: Database,
     @User() user: any,
     @Body() input: CreateTeamDTO,
-    @Mode() mode: string,
   ) {
-    return this.teamsService.create(db, user, input, mode);
+    return this.teamsService.create(db, user, input);
   }
 
   @Get(':id')

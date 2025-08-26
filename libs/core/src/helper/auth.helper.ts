@@ -1,8 +1,8 @@
 import * as crypto from 'crypto';
 import { createHash, randomBytes, createHmac, scryptSync } from 'crypto';
 import { Exception } from '../extend/exception';
-import { ENCRYPTION_KEY, SERVER_CONFIG } from '@nuvix/utils';
-import { Authorization, Role, UserDimension } from '@nuvix-tech/db';
+import { ENCRYPTION_KEY, HashAlgorithm, SERVER_CONFIG, TokenType, SessionProvider } from '@nuvix/utils';
+import { Role, UserDimension } from '@nuvix-tech/db';
 import {
   MembershipsDoc,
   SessionsDoc,
@@ -16,59 +16,18 @@ const algorithm = 'aes-256-cbc';
 const key = ENCRYPTION_KEY ? Buffer.from(ENCRYPTION_KEY, 'hex') : undefined;
 
 export class Auth {
-  public static readonly SUPPORTED_ALGOS = [
-    'argon2',
-    'bcrypt',
-    'md5',
-    'sha',
-    'phpass',
-    'scrypt',
-    'scryptMod',
-    'plaintext',
-  ];
+  private static _isTrustedActor: boolean = false;
+  private static _isPlatformActor: boolean = false;
+  public static readonly SUPPORTED_ALGOS = Object.values(HashAlgorithm);
 
-  public static readonly DEFAULT_ALGO = 'argon2';
+  public static readonly DEFAULT_ALGO = HashAlgorithm.ARGON2;
   public static readonly DEFAULT_ALGO_OPTIONS = {
-    type: 'argon2',
+    type: HashAlgorithm.ARGON2,
     hashLength: 32,
     timeCost: 3,
     memoryCost: 1 << 16,
     parallelism: 4,
   };
-
-  // User Roles
-  public static readonly USER_ROLE_ANY = 'any';
-  public static readonly USER_ROLE_GUESTS = 'guests';
-  public static readonly USER_ROLE_USERS = 'users';
-  public static readonly USER_ROLE_ADMIN = 'admin';
-  public static readonly USER_ROLE_DEVELOPER = 'developer';
-  public static readonly USER_ROLE_OWNER = 'owner';
-  public static readonly USER_ROLE_APPS = 'apps';
-  public static readonly USER_ROLE_SYSTEM = 'system';
-
-  // Activity associated with user or the app.
-  public static readonly ACTIVITY_TYPE_APP = 'app';
-  public static readonly ACTIVITY_TYPE_USER = 'user';
-  public static readonly ACTIVITY_TYPE_GUEST = 'guest';
-
-  // Token Types
-  public static readonly TOKEN_TYPE_VERIFICATION = 2;
-  public static readonly TOKEN_TYPE_RECOVERY = 3;
-  public static readonly TOKEN_TYPE_INVITE = 4;
-  public static readonly TOKEN_TYPE_MAGIC_URL = 5;
-  public static readonly TOKEN_TYPE_PHONE = 6;
-  public static readonly TOKEN_TYPE_OAUTH2 = 7;
-  public static readonly TOKEN_TYPE_GENERIC = 8;
-  public static readonly TOKEN_TYPE_EMAIL = 9; // OTP
-
-  // Session Providers
-  public static readonly SESSION_PROVIDER_EMAIL = 'email';
-  public static readonly SESSION_PROVIDER_ANONYMOUS = 'anonymous';
-  public static readonly SESSION_PROVIDER_MAGIC_URL = 'magic-url';
-  public static readonly SESSION_PROVIDER_PHONE = 'phone';
-  public static readonly SESSION_PROVIDER_OAUTH2 = 'oauth2';
-  public static readonly SESSION_PROVIDER_TOKEN = 'token';
-  public static readonly SESSION_PROVIDER_SERVER = 'server';
 
   // Token Expiration times
   public static readonly TOKEN_EXPIRATION_LOGIN_LONG = 31536000; // 1 year
@@ -102,20 +61,22 @@ export class Auth {
     return Buffer.from(JSON.stringify({ id, secret })).toString('base64');
   }
 
-  public static getSessionProviderByTokenType(type: number): string {
+  public static getSessionProviderByTokenType(type: TokenType): SessionProvider {
     switch (type) {
-      case Auth.TOKEN_TYPE_VERIFICATION:
-      case Auth.TOKEN_TYPE_RECOVERY:
-      case Auth.TOKEN_TYPE_INVITE:
-        return Auth.SESSION_PROVIDER_EMAIL;
-      case Auth.TOKEN_TYPE_MAGIC_URL:
-        return Auth.SESSION_PROVIDER_MAGIC_URL;
-      case Auth.TOKEN_TYPE_PHONE:
-        return Auth.SESSION_PROVIDER_PHONE;
-      case Auth.TOKEN_TYPE_OAUTH2:
-        return Auth.SESSION_PROVIDER_OAUTH2;
+      case TokenType.VERIFICATION:
+      case TokenType.RECOVERY:
+      case TokenType.INVITE:
+        return SessionProvider.EMAIL;
+      case TokenType.MAGIC_URL:
+        return SessionProvider.MAGIC_URL;
+      case TokenType.PHONE:
+        return SessionProvider.PHONE;
+      case TokenType.OAUTH2:
+        return SessionProvider.OAUTH2;
+      case TokenType.GENERIC:
+      case TokenType.EMAIL:
       default:
-        return Auth.SESSION_PROVIDER_TOKEN;
+        return SessionProvider.TOKEN;
     }
   }
 
@@ -143,10 +104,10 @@ export class Auth {
    */
   public static async passwordHash(
     string: string,
-    algo: string,
+    algo: HashAlgorithm,
     options: any = {},
   ): Promise<string | null> {
-    if (algo === 'plaintext') {
+    if (algo === HashAlgorithm.PLAINTEXT) {
       algo = Auth.DEFAULT_ALGO;
       options = Auth.DEFAULT_ALGO_OPTIONS;
     }
@@ -156,7 +117,7 @@ export class Auth {
     }
 
     switch (algo) {
-      case 'argon2':
+      case HashAlgorithm.ARGON2:
         const aOptions = {
           hashLength: options['hashLength'],
           timeCost: options['timeCost'],
@@ -164,27 +125,27 @@ export class Auth {
           parallelism: options['parallelism'],
         };
         return hash(string, { raw: false, ...aOptions });
-      case 'bcrypt':
+      case HashAlgorithm.BCRYPT:
         const saltRounds = options.saltRounds || 10;
         return (await this.getBcrypt()).hash(string, saltRounds);
-      case 'md5':
+      case HashAlgorithm.MD5:
         return createHash('md5').update(string).digest('hex');
 
-      case 'sha':
+      case HashAlgorithm.SHA:
         return createHash('sha256').update(string).digest('hex');
 
-      case 'phpass':
+      case HashAlgorithm.PHPASS:
         // Basic phpass implementation (insecure, for legacy systems only)
         const salt = options.salt || randomBytes(6).toString('base64');
         return createHmac('sha1', salt).update(string).digest('base64');
-      case 'scrypt':
+      case HashAlgorithm.SCRYPT:
         const scryptSalt = options.salt || randomBytes(16);
         const scryptOptions = { N: 16384, r: 8, p: 1, ...options };
         return scryptSync(string, scryptSalt, 64, scryptOptions).toString(
           'hex',
         );
 
-      case 'scryptMod':
+      case HashAlgorithm.SCRYPT_MOD:
         const modSalt = options.salt || randomBytes(16);
         return createHmac('sha256', modSalt).update(string).digest('hex');
 
@@ -199,10 +160,10 @@ export class Auth {
   public static async passwordVerify(
     plain: string,
     hash: string,
-    algo: string,
+    algo: HashAlgorithm,
     options: any = {},
   ): Promise<boolean> {
-    if (algo === 'plaintext') {
+    if (algo === HashAlgorithm.PLAINTEXT) {
       algo = Auth.DEFAULT_ALGO;
       options = Auth.DEFAULT_ALGO_OPTIONS;
     }
@@ -212,23 +173,24 @@ export class Auth {
     }
 
     switch (algo) {
-      case 'argon2':
+      case HashAlgorithm.ARGON2:
         return verify(hash, plain, { ...options });
 
-      case 'bcrypt':
+      case HashAlgorithm.BCRYPT:
         return (await this.getBcrypt()).compare(plain, hash);
 
-      case 'md5':
-      case 'sha':
+      case HashAlgorithm.MD5:
+      case HashAlgorithm.SHA:
         const generatedHash = await this.passwordHash(plain, algo, options);
         return generatedHash === hash;
 
-      case 'phpass':
-        const salt = hash.slice(0, 6); // Assuming the first 6 characters are the salt
+      case HashAlgorithm.PHPASS:
+        // TODO: recheck or remove
+        const salt = hash.slice(0, 6);
         return createHmac('sha1', salt).update(plain).digest('base64') === hash;
 
-      case 'scrypt':
-      case 'scryptMod':
+      case HashAlgorithm.SCRYPT:
+      case HashAlgorithm.SCRYPT_MOD:
         const scryptGeneratedHash = await this.passwordHash(
           plain,
           algo,
@@ -257,6 +219,7 @@ export class Auth {
   }
 
   public static codeGenerator(length: number = 6): string {
+    // TODO: we have to use another better & secure approch e.g. crypto
     let value = '';
 
     for (let i = 0; i < length; i++) {
@@ -268,7 +231,7 @@ export class Auth {
 
   public static tokenVerify(
     tokens: TokensDoc[],
-    type: number | null,
+    type: TokenType | null,
     secret: string,
   ): TokensDoc | false {
     for (const token of tokens) {
@@ -306,46 +269,45 @@ export class Auth {
     return false;
   }
 
-  public static isPrivilegedUser(roles: string[]): boolean {
-    return (
-      roles.includes(Auth.USER_ROLE_OWNER) ||
-      roles.includes(Auth.USER_ROLE_DEVELOPER) ||
-      roles.includes(Auth.USER_ROLE_ADMIN)
-    );
+  public static get isTrustedActor(): boolean {
+    return this._isTrustedActor;
   }
 
-  public static isAppUser(roles: string[]): boolean {
-    return roles.includes(Auth.USER_ROLE_APPS);
+  public static get isPlatformActor(): boolean {
+    return this._isPlatformActor;
+  }
+
+  public static setTrustedActor(value: boolean) {
+    this._isTrustedActor = value;
+  }
+
+  public static setPlatformActor(value: boolean) {
+    this._isPlatformActor = value;
   }
 
   public static getRoles(user: UsersDoc): string[] {
     const roles: string[] = [];
 
-    if (
-      !this.isPrivilegedUser(Authorization.getRoles()) &&
-      !this.isAppUser(Authorization.getRoles())
-    ) {
-      if (user.getId()) {
-        roles.push(Role.user(user.getId()).toString());
-        roles.push(Role.users().toString());
+    if (user.getId()) {
+      roles.push(Role.user(user.getId()).toString());
+      roles.push(Role.users().toString());
 
-        const emailVerified = user.get('emailVerification', false);
-        const phoneVerified = user.get('phoneVerification', false);
+      const emailVerified = user.get('emailVerification', false);
+      const phoneVerified = user.get('phoneVerification', false);
 
-        if (emailVerified || phoneVerified) {
-          roles.push(
-            Role.user(user.getId(), UserDimension.VERIFIED).toString(),
-          );
-          roles.push(Role.users(UserDimension.VERIFIED).toString());
-        } else {
-          roles.push(
-            Role.user(user.getId(), UserDimension.UNVERIFIED).toString(),
-          );
-          roles.push(Role.users(UserDimension.UNVERIFIED).toString());
-        }
+      if (emailVerified || phoneVerified) {
+        roles.push(
+          Role.user(user.getId(), UserDimension.VERIFIED).toString(),
+        );
+        roles.push(Role.users(UserDimension.VERIFIED).toString());
       } else {
-        return [Role.guests().toString()];
+        roles.push(
+          Role.user(user.getId(), UserDimension.UNVERIFIED).toString(),
+        );
+        roles.push(Role.users(UserDimension.UNVERIFIED).toString());
       }
+    } else {
+      return [Role.guests().toString()];
     }
 
     for (const node of (user.get('memberships') || []) as MembershipsDoc[]) {

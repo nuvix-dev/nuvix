@@ -4,7 +4,6 @@ import { Hook } from '@nuvix/core/server';
 import { Context, MetricFor, QueueFor } from '@nuvix/utils';
 import { Queue } from 'bullmq';
 import { StatsQueueOptions } from '../queues';
-import { Authorization } from '@nuvix-tech/db';
 import { Auth } from '@nuvix/core/helper';
 import type { ProjectsDoc } from '@nuvix/utils/types';
 
@@ -24,7 +23,7 @@ export class StatsHook implements Hook {
     if (
       project.empty() ||
       project.getId() === 'console' ||
-      Auth.isPrivilegedUser(Authorization.getRoles())
+      Auth.isPlatformActor
     )
       return;
 

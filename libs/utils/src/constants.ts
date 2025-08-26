@@ -84,18 +84,18 @@ export const IS_PRODUCTION = process.env['NODE_ENV'] === 'production';
 /**@deprecated */ export const APP_REDIS_PASSWORD =
   process.env['APP_REDIS_PASSWORD'];
 /**@deprecated */ export const APP_REDIS_DB = parseInt(
-  process.env['APP_REDIS_DB'] ?? '0',
-  10,
-);
+    process.env['APP_REDIS_DB'] ?? '0',
+    10,
+  );
 /**@deprecated */ export const APP_REDIS_SECURE =
   process.env['APP_REDIS_SECURE'] === 'true';
 
 // Email Config
 /**@deprecated */ export const APP_SMTP_HOST = process.env['APP_SMTP_HOST'];
 /**@deprecated */ export const APP_SMTP_PORT = parseInt(
-  process.env['APP_SMTP_PORT'] ?? '587',
-  10,
-);
+    process.env['APP_SMTP_PORT'] ?? '587',
+    10,
+  );
 /**@deprecated */ export const APP_SMTP_SECURE =
   process.env['APP_SMTP_SECURE'] === 'true';
 /**@deprecated */ export const APP_SMTP_USER = process.env['APP_SMTP_USER'];
@@ -129,9 +129,9 @@ export const APP_POSTGRES_PORT = parseInt(
 /**@deprecated */ export const APP_POSTGRES_SSL =
   process.env['APP_POSTGRES_SSL'] === 'true';
 /**@deprecated */ export const APP_POSTGRES_MAX_CONNECTIONS = parseInt(
-  process.env['APP_POSTGRES_MAX_CONNECTIONS'] ?? '100',
-  10,
-);
+    process.env['APP_POSTGRES_MAX_CONNECTIONS'] ?? '100',
+    10,
+  );
 /**@deprecated */ export const APP_SHARED_CLUSTER = true; // Multi-cluster mode not supported yet!
 // Console DB
 /**@deprecated */ export const APP_DATABASE_HOST =
@@ -143,9 +143,9 @@ export const APP_POSTGRES_PORT = parseInt(
 /**@deprecated */ export const APP_DATABASE_NAME =
   process.env['APP_DATABASE_NAME'];
 /**@deprecated */ export const APP_DATABASE_PORT = parseInt(
-  process.env['APP_DATABASE_PORT'] ?? '3306',
-  10,
-);
+    process.env['APP_DATABASE_PORT'] ?? '3306',
+    10,
+  );
 
 /**@deprecated */ export const APP_INTERNAL_POOL_API =
   process.env['APP_POOL_API'];
@@ -251,7 +251,7 @@ export const SERVER_CONFIG: ServerConfig = {
   cookieDomain: process.env['APP_COOKIE_DOMAIN'] ?? '',
 };
 
-export const LOG_LEVELS: { [key: string]: boolean } = (
+export const LOG_LEVELS: { [key: string]: boolean; } = (
   process.env['APP_LOG_LEVELS'] ?? ''
 )
   .split(',')
@@ -262,7 +262,7 @@ export const LOG_LEVELS: { [key: string]: boolean } = (
       acc[level.toLowerCase()] = true;
       return acc;
     },
-    {} as { [key: string]: boolean },
+    {} as { [key: string]: boolean; },
   );
 
 // APP
@@ -607,6 +607,7 @@ export enum AttributeFormat {
   INTEGER = 'integer',
   FLOAT = 'float',
 }
+
 export enum Context {
   Project = 'project',
   User = 'user',
@@ -617,4 +618,48 @@ export enum Context {
   Scopes = 'scopes',
   Role = 'role',
   Mode = 'mode',
+}
+
+export enum HashAlgorithm {
+  ARGON2 = 'argon2',
+  BCRYPT = 'bcrypt',
+  MD5 = 'md5',
+  SHA = 'sha',
+  /**@deprecated - use modern algos instead */PHPASS = 'phpass',
+  SCRYPT = 'scrypt',
+  SCRYPT_MOD = 'scryptMod',
+  PLAINTEXT = 'plaintext',
+}
+
+export enum AuthActivity {
+  APP = 'app',
+  USER = 'user',
+  GUEST = 'guest',
+}
+
+export enum SessionProvider {
+  EMAIL = 'email',
+  ANONYMOUS = 'anonymous',
+  MAGIC_URL = 'magic-url',
+  PHONE = 'phone',
+  OAUTH2 = 'oauth2',
+  TOKEN = 'token',
+  SERVER = 'server',
+}
+
+export enum TokenType {
+  VERIFICATION = 2,
+  RECOVERY = 3,
+  INVITE = 4,
+  MAGIC_URL = 5,
+  PHONE = 6,
+  OAUTH2 = 7,
+  GENERIC = 8,
+  EMAIL = 9, // OTP
+}
+
+export enum AuthFactor {
+  EMAIL = 'email',
+  PHONE = 'phone',
+  TOKEN = 'token',
 }

@@ -38,10 +38,7 @@ export class ApiInterceptor implements NestInterceptor {
       if (
         namespace in project.get('services', {}) &&
         !project.get('services', {})[namespace] &&
-        !(
-          Auth.isPrivilegedUser(Authorization.getRoles()) ||
-          Auth.isAppUser(Authorization.getRoles())
-        )
+        !Auth.isTrustedActor
       ) {
         throw new Exception(Exception.GENERAL_SERVICE_DISABLED);
       }

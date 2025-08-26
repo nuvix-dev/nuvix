@@ -14,7 +14,7 @@ import {
   UpdateUserPoneVerificationDTO,
   UpdateUserStatusDTO,
 } from './DTO/user.dto';
-import { APP_LIMIT_COUNT, MessageType } from '@nuvix/utils';
+import { APP_LIMIT_COUNT, HashAlgorithm, MessageType, SessionProvider, TokenType } from '@nuvix/utils';
 import { Auth } from '@nuvix/core/helper/auth.helper';
 import { CreateTargetDTO, UpdateTargetDTO } from './DTO/target.dto';
 import { EmailValidator } from '@nuvix/core/validators/email.validator';
@@ -1185,7 +1185,7 @@ export class UsersService {
       ],
       userId: user.getId(),
       userInternalId: user.getSequence(),
-      type: Auth.TOKEN_TYPE_GENERIC,
+      type: TokenType.GENERIC,
       secret: Auth.hash(secret),
       expire: expire,
       userAgent: req.headers['user-agent'] || 'UNKNOWN',
@@ -1275,7 +1275,7 @@ export class UsersService {
       ],
       userId: user.getId(),
       userInternalId: user.getSequence(),
-      provider: Auth.SESSION_PROVIDER_SERVER,
+      provider: SessionProvider.SERVER,
       secret: Auth.hash(secret),
       userAgent: req.headers['user-agent'] || 'UNKNOWN',
       ip: req.ip,
@@ -1435,7 +1435,7 @@ export class UsersService {
       }
 
       password = password
-        ? hash === 'plaintext'
+        ? hash === HashAlgorithm.PLAINTEXT
           ? await Auth.passwordHash(password, hash, hashOptionsObject)
           : password
         : null;
@@ -1456,9 +1456,9 @@ export class UsersService {
         password,
         passwordHistory: !password || passwordHistory === 0 ? [] : [password],
         passwordUpdate: password ? new Date() : null,
-        hash: hash === 'plaintext' ? Auth.DEFAULT_ALGO : hash,
+        hash: hash === HashAlgorithm.PLAINTEXT ? Auth.DEFAULT_ALGO : hash,
         hashOptions:
-          hash === 'plaintext'
+          hash === HashAlgorithm.PLAINTEXT
             ? Auth.DEFAULT_ALGO_OPTIONS
             : { ...hashOptionsObject, type: hash },
         registration: new Date(),

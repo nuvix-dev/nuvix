@@ -134,7 +134,8 @@ export class CollectionsService {
       await db.createCollection({
         id: collection.getId(),
         permissions,
-        documentSecurity, // TODO: we will support `enabled` directly in lib, so we will pass that here also
+        documentSecurity,
+        enabled,
       });
 
       this.event.emit(
@@ -249,7 +250,7 @@ export class CollectionsService {
       permissions: permissions ?? updatedCollection.get('$permissions'),
       documentSecurity:
         documentSecurity ?? updatedCollection.get('documentSecurity'),
-      // TODO: same here like in create collection
+      enabled: updatedCollection.get('enabled'),
     });
 
     this.event.emit(
@@ -325,22 +326,19 @@ export class CollectionsService {
   }
 
   async getDocuments(db: Database, collectionId: string, queries: Query[]) {
-    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-
     const collection = await Authorization.skip(() =>
       db.getDocument(SchemaMeta.collections, collectionId),
     );
 
-    if (
-      collection.empty() ||
-      (!collection.get('enabled', false) && !isAPIKey && !isPrivilegedUser)
-    ) {
+    if (collection.empty()) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
-    } // TODO: skip enabled check in lib
+    }
 
     const filterQueries = Query.groupByType(queries).filters;
-    const documents = await db.find(collection.getId(), queries);
+    const documents = await db.withCollectionEnabledValidation(
+      !Auth.isTrustedActor,
+      () => db.find(collection.getId(), queries)
+    );
     const total = await db.count(
       collection.getId(),
       filterQueries,
@@ -725,9 +723,9 @@ export class CollectionsService {
 
       if (
         attribute.get('options')?.['twoWayKey']?.toLowerCase() ===
-          twoWayKey?.toLowerCase() &&
+        twoWayKey?.toLowerCase() &&
         attribute.get('options')?.['relatedCollection'] ===
-          relatedCollection.getId()
+        relatedCollection.getId()
       ) {
         throw new Exception(
           Exception.ATTRIBUTE_ALREADY_EXISTS,
@@ -740,9 +738,9 @@ export class CollectionsService {
       if (
         type === RelationType.ManyToMany &&
         attribute.get('options')?.['relationType'] ===
-          RelationType.ManyToMany &&
+        RelationType.ManyToMany &&
         attribute.get('options')?.['relatedCollection'] ===
-          relatedCollection.getId()
+        relatedCollection.getId()
       ) {
         throw new Exception(
           Exception.ATTRIBUTE_ALREADY_EXISTS,
@@ -1809,19 +1807,16 @@ export class CollectionsService {
     { documentId, permissions, data }: CreateDocumentDTO,
     user: UsersDoc,
   ) {
-    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-
     const collection = await Authorization.skip(() =>
       db.getDocument(SchemaMeta.collections, collectionId),
     );
 
     if (
       collection.empty() ||
-      (!collection.get('enabled', false) && !isAPIKey && !isPrivilegedUser)
+      (!collection.get('enabled', false) && !Auth.isTrustedActor)
     ) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
-    } // TODO: disbale check is lib
+    }
 
     const allowedPermissions = [
       PermissionType.Read,
@@ -1848,17 +1843,16 @@ export class CollectionsService {
       document,
       permissions,
       user,
-      isAPIKey,
-      isPrivilegedUser,
       false,
     );
     this.checkPermissions(collection, document, PermissionType.Update);
 
     try {
-      const createdDocument = await db.createDocument(
-        collection.getId(),
-        document,
-      );
+      const createdDocument = await db.withCollectionEnabledValidation(false,
+        () => db.createDocument(
+          collection.getId(),
+          document,
+        ));
 
       return createdDocument;
     } catch (error) {
@@ -1900,8 +1894,6 @@ export class CollectionsService {
     document: Doc,
     permissions: string[] | null,
     user: UsersDoc,
-    isAPIKey: boolean,
-    isPrivilegedUser: boolean,
     isBulk: boolean,
   ): void {
     const allowedPermissions = [
@@ -1939,7 +1931,7 @@ export class CollectionsService {
     }
 
     // Users can only manage their own roles, API keys and Admin users can manage any
-    if (!isAPIKey && !isPrivilegedUser) {
+    if (!Auth.isTrustedActor) {
       for (const type of Database.PERMISSIONS) {
         for (const p of permissions) {
           const parsed = Permission.parse(p);
@@ -1973,16 +1965,13 @@ export class CollectionsService {
     documentId: string,
     queries: Query[],
   ) {
-    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-
     const collection = await Authorization.skip(() =>
       db.getDocument(SchemaMeta.collections, collectionId),
     );
 
     if (
       collection.empty() ||
-      (!collection.get('enabled', false) && !isAPIKey && !isPrivilegedUser)
+      (!collection.get('enabled', false) && !Auth.isTrustedActor)
     ) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     } // TODO: disbale check in lib
@@ -2042,16 +2031,13 @@ export class CollectionsService {
       throw new Exception(Exception.DOCUMENT_MISSING_PAYLOAD);
     }
 
-    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-
     const collection = await Authorization.skip(() =>
       db.getDocument(SchemaMeta.collections, collectionId),
     );
 
     if (
       collection.empty() ||
-      (!collection.get('enabled', false) && !isAPIKey && !isPrivilegedUser)
+      (!collection.get('enabled', false) && !Auth.isTrustedActor)
     ) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     } // skip enabled check in lib also
@@ -2113,16 +2099,13 @@ export class CollectionsService {
     mode: string,
     timestamp?: Date,
   ) {
-    const isAPIKey = Auth.isAppUser(Authorization.getRoles());
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-
     const collection = await Authorization.skip(() =>
       db.getDocument(SchemaMeta.collections, collectionId),
     );
 
     if (
       collection.empty() ||
-      (!collection.get('enabled', false) && !isAPIKey && !isPrivilegedUser)
+      (!collection.get('enabled', false) && !Auth.isTrustedActor)
     ) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND);
     } // TODO: disbale check in lib

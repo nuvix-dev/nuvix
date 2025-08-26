@@ -232,9 +232,6 @@ export class OrganizationsService {
    * Add a member to the team
    */
   async addMember(id: string, input: CreateMembershipDTO) {
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-    const isAppUser = Auth.isAppUser(Authorization.getRoles());
-
     if (!input.userId && !input.email && !input.phone) {
       throw new Exception(
         Exception.GENERAL_ARGUMENT_INVALID,
@@ -344,22 +341,11 @@ export class OrganizationsService {
         teamInternalId: team.getSequence(),
         roles: input.roles,
         invited: new Date(),
-        joined: isPrivilegedUser || isAppUser ? new Date() : undefined,
-        confirm: isPrivilegedUser || isAppUser,
+        confirm: false,
         secret: Auth.hash(secret),
         search: [membershipId, invitee.getId()].join(' '),
       }),
     );
-
-    if (isPrivilegedUser || isAppUser) {
-      await this.db.increaseDocumentAttribute(
-        'teams',
-        team.getId(),
-        'total',
-        1,
-      );
-      await this.db.purgeCachedDocument('users', invitee.getId());
-    }
 
     membership
       .set('teamName', team.get('name'))
@@ -484,11 +470,9 @@ export class OrganizationsService {
       throw new Exception(Exception.USER_NOT_FOUND);
     }
 
-    const isPrivilegedUser = Auth.isPrivilegedUser(Authorization.getRoles());
-    const isAppUser = Auth.isAppUser(Authorization.getRoles());
     const isOwner = Authorization.isRole(`team:${team.getId()}/owner`);
 
-    if (!isOwner && !isPrivilegedUser && !isAppUser) {
+    if (!isOwner) {
       throw new Exception(
         Exception.USER_UNAUTHORIZED,
         'User is not allowed to modify roles',

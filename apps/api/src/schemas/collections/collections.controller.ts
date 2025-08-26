@@ -22,7 +22,7 @@ import {
   CurrentDatabase,
   Project,
 } from '@nuvix/core/decorators/project.decorator';
-import { ResModel, User } from '@nuvix/core/decorators';
+import { ResModel, AuthUser as User } from '@nuvix/core/decorators';
 
 // DTOs
 import { CreateCollectionDTO, UpdateCollectionDTO } from './DTO/collection.dto';
