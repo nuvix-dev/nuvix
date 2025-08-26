@@ -69,11 +69,7 @@ export class TeamsService {
   /**
    * Create a new team
    */
-  async create(
-    db: Database,
-    user: UsersDoc | null,
-    input: CreateTeamDTO,
-  ) {
+  async create(db: Database, user: UsersDoc | null, input: CreateTeamDTO) {
     const teamId = input.teamId == 'unique()' ? ID.unique() : input.teamId;
 
     const team = await db
@@ -253,10 +249,7 @@ export class TeamsService {
       );
     }
 
-    if (
-      !Auth.isTrustedActor &&
-      !this.appConfig.getSmtpConfig().host
-    ) {
+    if (!Auth.isTrustedActor && !this.appConfig.getSmtpConfig().host) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED);
     }
 
@@ -448,7 +441,7 @@ export class TeamsService {
         );
         const customTemplate =
           project.get('templates', {})?.[
-          'email.invitation-' + locale.default
+            'email.invitation-' + locale.default
           ] ?? {};
         const templatePath =
           this.appConfig.assetConfig.templates + '/email-inner-base.tpl';

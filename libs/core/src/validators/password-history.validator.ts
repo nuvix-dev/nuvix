@@ -29,7 +29,12 @@ export class PasswordHistoryValidator implements Validator {
     for (const hash of this.history) {
       if (
         hash &&
-        (await Auth.passwordVerify(value, hash, this.algo as HashAlgorithm, this.algoOptions))
+        (await Auth.passwordVerify(
+          value,
+          hash,
+          this.algo as HashAlgorithm,
+          this.algoOptions,
+        ))
       ) {
         return false;
       }

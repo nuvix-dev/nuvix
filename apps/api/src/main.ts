@@ -35,6 +35,7 @@ import { SwaggerModule } from '@nestjs/swagger';
 import { ErrorFilter } from '@nuvix/core/filters';
 import { AppConfigService } from '@nuvix/core';
 import { openApiSetup } from './core';
+import { Auth } from '@nuvix/core/helper/auth.helper.js';
 
 config({
   path: [
@@ -138,6 +139,8 @@ async function bootstrap() {
       Authorization.setDefaultStatus(true); // Set per-request default status
       Authorization.cleanRoles(); // Reset roles per request
       Authorization.setRole(Role.any().toString());
+      Auth.setPlatformActor(false);
+      Auth.setTrustedActor(false);
       done();
     });
   });

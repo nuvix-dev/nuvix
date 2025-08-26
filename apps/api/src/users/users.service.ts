@@ -14,7 +14,13 @@ import {
   UpdateUserPoneVerificationDTO,
   UpdateUserStatusDTO,
 } from './DTO/user.dto';
-import { APP_LIMIT_COUNT, HashAlgorithm, MessageType, SessionProvider, TokenType } from '@nuvix/utils';
+import {
+  APP_LIMIT_COUNT,
+  HashAlgorithm,
+  MessageType,
+  SessionProvider,
+  TokenType,
+} from '@nuvix/utils';
 import { Auth } from '@nuvix/core/helper/auth.helper';
 import { CreateTargetDTO, UpdateTargetDTO } from './DTO/target.dto';
 import { EmailValidator } from '@nuvix/core/validators/email.validator';

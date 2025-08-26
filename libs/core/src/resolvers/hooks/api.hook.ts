@@ -1,6 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Authorization, Database, Doc, Role } from '@nuvix-tech/db';
-import { ApiKey, AppMode, AuthActivity, Context, PROJECT_DB_CLIENT } from '@nuvix/utils';
+import {
+  ApiKey,
+  AppMode,
+  AuthActivity,
+  Context,
+  PROJECT_DB_CLIENT,
+} from '@nuvix/utils';
 import { Exception } from '@nuvix/core/extend/exception';
 import { Auth } from '@nuvix/core/helper/auth.helper';
 import { roles } from '@nuvix/core/config/roles';
@@ -67,6 +73,7 @@ export class ApiHook implements Hook {
 
       // Disable authorization checks for API keys
       Authorization.setDefaultStatus(false);
+      Auth.setTrustedActor(true);
 
       if (apiKey.getRole() === 'apps') {
         user = new Doc({
@@ -148,6 +155,8 @@ export class ApiHook implements Hook {
       }
 
       Authorization.setDefaultStatus(false); // Cancel security segmentation for admin users.
+      Auth.setPlatformActor(true); // current user is platform user
+      if (project.getId() !== 'console') Auth.setTrustedActor(true);
     }
 
     Authorization.setRole(role);

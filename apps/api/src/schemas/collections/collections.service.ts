@@ -337,7 +337,7 @@ export class CollectionsService {
     const filterQueries = Query.groupByType(queries).filters;
     const documents = await db.withCollectionEnabledValidation(
       !Auth.isTrustedActor,
-      () => db.find(collection.getId(), queries)
+      () => db.find(collection.getId(), queries),
     );
     const total = await db.count(
       collection.getId(),
@@ -723,9 +723,9 @@ export class CollectionsService {
 
       if (
         attribute.get('options')?.['twoWayKey']?.toLowerCase() ===
-        twoWayKey?.toLowerCase() &&
+          twoWayKey?.toLowerCase() &&
         attribute.get('options')?.['relatedCollection'] ===
-        relatedCollection.getId()
+          relatedCollection.getId()
       ) {
         throw new Exception(
           Exception.ATTRIBUTE_ALREADY_EXISTS,
@@ -738,9 +738,9 @@ export class CollectionsService {
       if (
         type === RelationType.ManyToMany &&
         attribute.get('options')?.['relationType'] ===
-        RelationType.ManyToMany &&
+          RelationType.ManyToMany &&
         attribute.get('options')?.['relatedCollection'] ===
-        relatedCollection.getId()
+          relatedCollection.getId()
       ) {
         throw new Exception(
           Exception.ATTRIBUTE_ALREADY_EXISTS,
@@ -1839,20 +1839,14 @@ export class CollectionsService {
 
     const document = new Doc(data);
 
-    this.setPermissions(
-      document,
-      permissions,
-      user,
-      false,
-    );
+    this.setPermissions(document, permissions, user, false);
     this.checkPermissions(collection, document, PermissionType.Update);
 
     try {
-      const createdDocument = await db.withCollectionEnabledValidation(false,
-        () => db.createDocument(
-          collection.getId(),
-          document,
-        ));
+      const createdDocument = await db.withCollectionEnabledValidation(
+        false,
+        () => db.createDocument(collection.getId(), document),
+      );
 
       return createdDocument;
     } catch (error) {

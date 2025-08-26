@@ -1,7 +1,13 @@
 import * as crypto from 'crypto';
 import { createHash, randomBytes, createHmac, scryptSync } from 'crypto';
 import { Exception } from '../extend/exception';
-import { ENCRYPTION_KEY, HashAlgorithm, SERVER_CONFIG, TokenType, SessionProvider } from '@nuvix/utils';
+import {
+  ENCRYPTION_KEY,
+  HashAlgorithm,
+  SERVER_CONFIG,
+  TokenType,
+  SessionProvider,
+} from '@nuvix/utils';
 import { Role, UserDimension } from '@nuvix-tech/db';
 import {
   MembershipsDoc,
@@ -61,7 +67,9 @@ export class Auth {
     return Buffer.from(JSON.stringify({ id, secret })).toString('base64');
   }
 
-  public static getSessionProviderByTokenType(type: TokenType): SessionProvider {
+  public static getSessionProviderByTokenType(
+    type: TokenType,
+  ): SessionProvider {
     switch (type) {
       case TokenType.VERIFICATION:
       case TokenType.RECOVERY:
@@ -296,9 +304,7 @@ export class Auth {
       const phoneVerified = user.get('phoneVerification', false);
 
       if (emailVerified || phoneVerified) {
-        roles.push(
-          Role.user(user.getId(), UserDimension.VERIFIED).toString(),
-        );
+        roles.push(Role.user(user.getId(), UserDimension.VERIFIED).toString());
         roles.push(Role.users(UserDimension.VERIFIED).toString());
       } else {
         roles.push(

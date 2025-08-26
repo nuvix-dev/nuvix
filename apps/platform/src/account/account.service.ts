@@ -16,7 +16,16 @@ import { Exception } from '@nuvix/core/extend/exception';
 import { Auth } from '@nuvix/core/helper/auth.helper';
 import { Detector } from '@nuvix/core/helper/detector.helper';
 import { PersonalDataValidator } from '@nuvix/core/validators/personal-data.validator';
-import { QueueFor, AppEvents, APP_NAME, MessageType, type HashAlgorithm, SessionProvider, TokenType, AuthFactor } from '@nuvix/utils';
+import {
+  QueueFor,
+  AppEvents,
+  APP_NAME,
+  MessageType,
+  type HashAlgorithm,
+  SessionProvider,
+  TokenType,
+  AuthFactor,
+} from '@nuvix/utils';
 import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor';
 import {
   UpdateEmailDTO,
@@ -1117,7 +1126,7 @@ export class AccountService {
     let name!: string;
     const nameOAuth = await oauth2.getUserName(accessToken);
     const userParam = JSON.parse(
-      (request.query as { user: string; })['user'] || '{}',
+      (request.query as { user: string })['user'] || '{}',
     );
     if (nameOAuth) {
       name = nameOAuth;
@@ -2052,9 +2061,7 @@ export class AccountService {
     await this.db.purgeCachedDocument('users', user.getId());
 
     if (
-      [TokenType.MAGIC_URL, TokenType.EMAIL].includes(
-        verifiedToken.get('type'),
-      )
+      [TokenType.MAGIC_URL, TokenType.EMAIL].includes(verifiedToken.get('type'))
     ) {
       user.set('emailVerification', true);
     }
@@ -2072,10 +2079,9 @@ export class AccountService {
       );
     }
 
-    const isAllowedTokenType = ![
-      TokenType.MAGIC_URL,
-      TokenType.EMAIL,
-    ].includes(verifiedToken.get('type'));
+    const isAllowedTokenType = ![TokenType.MAGIC_URL, TokenType.EMAIL].includes(
+      verifiedToken.get('type'),
+    );
     const hasUserEmail = user.get('email', false) !== false;
     const isSessionAlertsEnabled =
       this.platform.get('auths').sessionAlerts ?? false;
@@ -2165,7 +2171,7 @@ export class AccountService {
     user,
     locale,
     input,
-  }: WithReqRes<WithUser<WithLocale<{ input: CreateRecoveryDTO; }>>>) {
+  }: WithReqRes<WithUser<WithLocale<{ input: CreateRecoveryDTO }>>>) {
     if (!this.appConfig.getSmtpConfig().host) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP disabled');
     }
@@ -2269,7 +2275,7 @@ export class AccountService {
     user,
     response,
     input,
-  }: WithUser<{ response: NuvixRes; input: UpdateRecoveryDTO; }>) {
+  }: WithUser<{ response: NuvixRes; input: UpdateRecoveryDTO }>) {
     const profile = await this.db.getDocument('users', input.userId);
 
     if (profile.empty()) {
@@ -2353,7 +2359,7 @@ export class AccountService {
     response,
     locale,
     url,
-  }: WithReqRes<WithUser<WithLocale<{ url?: string; }>>>) {
+  }: WithReqRes<WithUser<WithLocale<{ url?: string }>>>) {
     if (!this.appConfig.getSmtpConfig().host) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP Disabled');
     }
@@ -2447,7 +2453,7 @@ export class AccountService {
     response,
     userId,
     secret,
-  }: WithUser<{ response: NuvixRes; userId: string; secret: string; }>) {
+  }: WithUser<{ response: NuvixRes; userId: string; secret: string }>) {
     const profile = await Authorization.skip(() =>
       this.db.getDocument('users', userId),
     );
@@ -2499,7 +2505,7 @@ export class AccountService {
     user,
     mfa,
     session,
-  }: WithUser<{ mfa: boolean; session?: SessionsDoc; }>) {
+  }: WithUser<{ mfa: boolean; session?: SessionsDoc }>) {
     user.set('mfa', mfa);
 
     user = await this.db.updateDocument('users', user.getId(), user);
@@ -2552,7 +2558,7 @@ export class AccountService {
   /**
    * Create authenticator
    */
-  async createMfaAuthenticator({ user, type }: WithUser<{ type: string; }>) {
+  async createMfaAuthenticator({ user, type }: WithUser<{ type: string }>) {
     let otp: TOTP;
 
     switch (type) {
@@ -2613,7 +2619,7 @@ export class AccountService {
     otp,
     user,
     session,
-  }: WithUser<{ session: SessionsDoc; otp: string; type: string; }>) {
+  }: WithUser<{ session: SessionsDoc; otp: string; type: string }>) {
     let authenticator: AuthenticatorsDoc | null = null;
 
     switch (type) {
@@ -2709,7 +2715,7 @@ export class AccountService {
   /**
    * Delete Authenticator
    */
-  async deleteMfaAuthenticator({ user, type }: WithUser<{ type: string; }>) {
+  async deleteMfaAuthenticator({ user, type }: WithUser<{ type: string }>) {
     const authenticator = (() => {
       switch (type) {
         case MfaType.TOTP:
@@ -2857,7 +2863,7 @@ export class AccountService {
     session,
     otp,
     challengeId,
-  }: WithUser<VerifyMfaChallengeDTO & { session: SessionsDoc; }>) {
+  }: WithUser<VerifyMfaChallengeDTO & { session: SessionsDoc }>) {
     const challenge = await this.db.getDocument('challenges', challengeId);
 
     if (challenge.empty()) {
@@ -2938,7 +2944,7 @@ export class AccountService {
     targetId,
     providerId,
     identifier,
-  }: WithUser<CreatePushTargetDTO & { request: NuvixRequest; }>) {
+  }: WithUser<CreatePushTargetDTO & { request: NuvixRequest }>) {
     const finalTargetId = targetId === 'unique()' ? ID.unique() : targetId;
 
     const provider = await Authorization.skip(() =>
@@ -3000,7 +3006,7 @@ export class AccountService {
     targetId,
     identifier,
   }: WithUser<
-    UpdatePushTargetDTO & { request: NuvixRequest; targetId: string; }
+    UpdatePushTargetDTO & { request: NuvixRequest; targetId: string }
   >) {
     const target = await Authorization.skip(() =>
       this.db.getDocument('targets', targetId),
@@ -3036,7 +3042,7 @@ export class AccountService {
   /**
    * Delete Push Target
    */
-  async deletePushTarget({ user, targetId }: WithUser<{ targetId: string; }>) {
+  async deletePushTarget({ user, targetId }: WithUser<{ targetId: string }>) {
     const target = await Authorization.skip(() =>
       this.db.getDocument('targets', targetId),
     );
@@ -3063,7 +3069,7 @@ export class AccountService {
   /**
    * Get Identities
    */
-  async getIdentities({ user, queries }: WithUser<{ queries: Query[]; }>) {
+  async getIdentities({ user, queries }: WithUser<{ queries: Query[] }>) {
     queries.push(Query.equal('userInternalId', [user.getSequence()]));
 
     const filterQueries = Query.groupByType(queries)['filters'];
@@ -3093,7 +3099,7 @@ export class AccountService {
   /**
    * Delete Identity
    */
-  async deleteIdentity({ identityId }: { identityId: string; }) {
+  async deleteIdentity({ identityId }: { identityId: string }) {
     const identity = await this.db.getDocument('identities', identityId);
 
     if (identity.empty()) {
@@ -3123,5 +3129,5 @@ type WithReqRes<T = unknown> = {
   request: NuvixRequest;
   response: NuvixRes;
 } & T;
-type WithUser<T = unknown> = { user: UsersDoc; } & T;
-type WithLocale<T = unknown> = { locale: LocaleTranslator; } & T;
+type WithUser<T = unknown> = { user: UsersDoc } & T;
+type WithLocale<T = unknown> = { locale: LocaleTranslator } & T;
