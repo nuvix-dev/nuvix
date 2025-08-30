@@ -10,7 +10,7 @@ import {
 interface Options {
   validators?: BaseValidator[];
   maxLength?: number;
-  validate?: boolean
+  validate?: boolean;
 }
 
 export class ParseQueryPipe
@@ -56,12 +56,9 @@ export class ParseQueryPipe
     const queries = Array.isArray(value) ? value : [value];
 
     try {
-      const parsedQueries =  Query.parseQueries(queries);
+      const parsedQueries = Query.parseQueries(queries);
       if (!this.$valid(parsedQueries)) {
-        throw new Exception(
-          Exception.GENERAL_QUERY_INVALID,
-          this.$description
-        );
+        throw new Exception(Exception.GENERAL_QUERY_INVALID, this.$description);
       }
       return queries;
     } catch (error) {
