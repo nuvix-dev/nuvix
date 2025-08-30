@@ -55,6 +55,7 @@ import type { Query as Queries } from '@nuvix-tech/db';
 import { AuthGuard } from '@nuvix/core/resolvers/guards/auth.guard';
 import { ConsoleInterceptor } from '@nuvix/core/resolvers/interceptors/console.interceptor';
 import { ResModel, Scope } from '@nuvix/core/decorators';
+import { ProjectsQueryPipe } from '@nuvix/core/pipes/queries';
 
 @Controller({ version: ['1'], path: 'projects' })
 @UseGuards(AuthGuard)
@@ -74,7 +75,7 @@ export class ProjectsController {
   @Scope('project.read')
   @ResModel(Models.PROJECT, { list: true })
   async findAll(
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', ProjectsQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
     const data = await this.projectService.findAll(queries, search);

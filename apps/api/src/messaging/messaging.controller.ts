@@ -73,6 +73,13 @@ import {
   UpdateSmsMessageDTO,
 } from './DTO/message.dto';
 import type { ProjectsDoc } from '@nuvix/utils/types';
+import {
+  MessagesQueryPipe,
+  ProvidersQueryPipe,
+  SubscribersQueryPipe,
+  TargetsQueryPipe,
+  TopicsQueryPipe,
+} from '@nuvix/core/pipes/queries';
 
 @Controller({ path: 'messaging', version: ['1'] })
 @Namespace('messaging')
@@ -292,7 +299,7 @@ export class MessagingController {
   })
   async listProviders(
     @ProjectDatabase() db: Database,
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', ProvidersQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
     return this.messagingService.listProviders({
@@ -586,7 +593,7 @@ export class MessagingController {
   })
   async listTopics(
     @ProjectDatabase() db: Database,
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', TopicsQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
     return this.messagingService.listTopics({
@@ -685,7 +692,7 @@ export class MessagingController {
   async listSubscribers(
     @Param('topicId') topicId: string,
     @ProjectDatabase() db: Database,
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', SubscribersQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
     return this.messagingService.listSubscribers({
@@ -808,7 +815,7 @@ export class MessagingController {
   })
   async listMessages(
     @ProjectDatabase() db: Database,
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', MessagesQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
     return this.messagingService.listMessages({
@@ -846,7 +853,7 @@ export class MessagingController {
   async listTargets(
     @Param('messageId') messageId: string,
     @ProjectDatabase() db: Database,
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', TargetsQueryPipe) queries: Queries[],
   ) {
     return this.messagingService.listTargets({
       db,

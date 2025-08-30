@@ -53,6 +53,11 @@ import { CreateIndexDTO } from './DTO/indexes.dto';
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor';
 import { DocSchemaGuard } from '@nuvix/core/resolvers/guards';
 import type { ProjectsDoc, UsersDoc } from '@nuvix/utils/types';
+import {
+  AttributesQueryPipe,
+  CollectionsQueryPipe,
+  IndexesQueryPipe,
+} from '@nuvix/core/pipes/queries';
 
 @Controller({ version: ['1'], path: 'schemas/:schemaId/collections' })
 @UseGuards(ProjectGuard, DocSchemaGuard)
@@ -64,7 +69,7 @@ export class CollectionsController {
   @ResModel({ type: Models.COLLECTION, list: true })
   async findCollections(
     @CurrentDatabase() db: Database,
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', CollectionsQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
     return this.collectionsService.getCollections(db, queries, search);
@@ -137,7 +142,8 @@ export class CollectionsController {
   async findDocuments(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', new ParseQueryPipe({ validate: false }))
+    queries: Queries[],
   ) {
     return this.collectionsService.getDocuments(db, collectionId, queries);
   }
@@ -147,7 +153,7 @@ export class CollectionsController {
   async findAttributes(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', AttributesQueryPipe) queries: Queries[],
   ) {
     return this.collectionsService.getAttributes(db, collectionId, queries);
   }
@@ -519,7 +525,7 @@ export class CollectionsController {
   async findIndexes(
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', IndexesQueryPipe) queries: Queries[],
   ) {
     return this.collectionsService.getIndexes(db, collectionId, queries);
   }
@@ -572,7 +578,8 @@ export class CollectionsController {
     @CurrentDatabase() db: Database,
     @Param('collectionId') collectionId: string,
     @Param('documentId') documentId: string,
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', new ParseQueryPipe({ validate: false }))
+    queries: Queries[],
   ) {
     return this.collectionsService.getDocument(
       db,

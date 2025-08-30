@@ -7,7 +7,7 @@ import {
   SchemaJob,
   SchemaQueueOptions,
 } from '@nuvix/core/resolvers/queues/databases.queue';
-import { QueueFor, Schemas } from '@nuvix/utils';
+import { QueueFor, Schemas, type SchemaType } from '@nuvix/utils';
 
 // DTO's
 import { CreateSchema } from './DTO/create-schema.dto';
@@ -50,12 +50,17 @@ export class DatabasesService {
   /**
    * @description Get all schemas
    */
-  public async getSchemas(pg: DataSource) {
-    const schemas = await pg
+  public async getSchemas(pg: DataSource, type?: SchemaType) {
+    let qb = pg
       .table('schemas', { schema: Schemas.System })
       .select('name', 'description', 'type')
       .whereNotIn('name', Object.values(Schemas));
 
+    if (type) {
+      qb.where('type', '=', type);
+    }
+
+    const schemas = await qb;
     return {
       schemas: schemas,
       total: schemas.length,

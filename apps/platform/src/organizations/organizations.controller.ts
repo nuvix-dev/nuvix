@@ -24,6 +24,10 @@ import { ConsoleInterceptor } from '@nuvix/core/resolvers/interceptors/console.i
 import { ResModel } from '@nuvix/core/decorators';
 import { roles } from '@nuvix/core/config/roles';
 import type { UsersDoc } from '@nuvix/utils/types';
+import {
+  MembershipsQueryPipe,
+  TeamsQueryPipe,
+} from '@nuvix/core/pipes/queries';
 
 @Controller({
   version: ['1'],
@@ -37,7 +41,7 @@ export class OrganizationsController {
   @Get()
   @ResModel({ type: Models.ORGANIZATION, list: true })
   async findOrganizations(
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', TeamsQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
     return this.organizationsService.findAll(queries, search);
@@ -100,7 +104,7 @@ export class OrganizationsController {
   @ResModel({ type: Models.MEMBERSHIP, list: true })
   async getMemberships(
     @Param('id') id: string,
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', MembershipsQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
     return this.organizationsService.getMembers(id, queries, search);

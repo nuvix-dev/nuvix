@@ -18,7 +18,6 @@ import {
 import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor';
 import { StorageService } from './storage.service';
 import { Models } from '@nuvix/core/helper/response.helper';
-import { ParseQueryPipe } from '@nuvix/core/pipes/query.pipe';
 import { Database, Doc, Query as Queries } from '@nuvix-tech/db';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard';
 import {
@@ -36,6 +35,7 @@ import { ParseDuplicatePipe } from '@nuvix/core/pipes/duplicate.pipe';
 import { type SavedMultipartFile } from '@fastify/multipart';
 import { User } from '@nuvix/core/decorators/project-user.decorator';
 import { Exception } from '@nuvix/core/extend/exception';
+import { BucketsQueryPipe, FilesQueryPipe } from '@nuvix/core/pipes/queries';
 
 @Controller({ version: ['1'], path: 'storage' })
 @UseGuards(ProjectGuard)
@@ -48,7 +48,7 @@ export class StorageController {
   @ResModel({ type: Models.BUCKET, list: true })
   async getBuckets(
     @ProjectDatabase() db: Database,
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', BucketsQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
     return this.storageService.getBuckets(db, queries, search);
@@ -90,7 +90,7 @@ export class StorageController {
   async getFiles(
     @ProjectDatabase() db: Database,
     @Param('id') id: string,
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', FilesQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
     return this.storageService.getFiles(db, id, queries, search);

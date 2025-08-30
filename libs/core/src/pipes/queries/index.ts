@@ -13,6 +13,7 @@ export { Indexes as IndexesQueryPipe } from './indexes';
 export { Installations as InstallationsQueryPipe } from './installations';
 export { Logs as LogsQueryPipe } from './logs';
 export { Memberships as MembershipsQueryPipe } from './memberships';
+export { Messages as MessagesQueryPipe} from './messages';
 export { Migrations as MigrationsQueryPipe } from './migrations';
 export { Projects as ProjectsQueryPipe } from './projects';
 export { Providers as ProvidersQueryPipe } from './providers';

@@ -38,7 +38,6 @@ import { User } from '@nuvix/core/decorators/project-user.decorator';
 import { Exception } from '@nuvix/core/extend/exception';
 import { LocaleTranslator } from '@nuvix/core/helper/locale.helper';
 import { Models } from '@nuvix/core/helper/response.helper';
-import { ParseQueryPipe } from '@nuvix/core/pipes';
 
 import { Public } from '@nuvix/core/resolvers/guards/auth.guard';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards';
@@ -87,6 +86,7 @@ import {
   UpdatePhoneVerificationDTO,
 } from './DTO/verification.dto';
 import type { ProjectsDoc, SessionsDoc, UsersDoc } from '@nuvix/utils/types';
+import { IdentitiesQueryPipe } from '@nuvix/core/pipes/queries';
 
 @Controller({ version: ['1'], path: 'account' })
 @UseGuards(ProjectGuard)
@@ -1169,7 +1169,7 @@ export class AccountController {
     name: 'getIdentities',
   })
   async getIdentities(
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', IdentitiesQueryPipe) queries: Queries[],
     @User() user: UsersDoc,
     @AuthDatabase() db: Database,
   ) {

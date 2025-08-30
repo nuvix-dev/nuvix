@@ -39,6 +39,10 @@ import {
 import { Locale } from '@nuvix/core/decorators/locale.decorator';
 import { LocaleTranslator } from '@nuvix/core/helper/locale.helper';
 import type { ProjectsDoc, UsersDoc } from '@nuvix/utils/types';
+import {
+  MembershipsQueryPipe,
+  TeamsQueryPipe,
+} from '@nuvix/core/pipes/queries';
 
 @Controller({ version: ['1'], path: 'teams' })
 @UseGuards(ProjectGuard)
@@ -52,7 +56,7 @@ export class TeamsController {
   @ResModel({ type: Models.TEAM, list: true })
   async findAll(
     @AuthDatabase() db: Database,
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', TeamsQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
     return this.teamsService.findAll(db, queries, search);
@@ -131,7 +135,7 @@ export class TeamsController {
   async getMembers(
     @AuthDatabase() db: Database,
     @Param('id') id: string,
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', MembershipsQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
     return this.teamsService.getMembers(db, id, queries, search);

@@ -67,6 +67,7 @@ import {
   UpdateEmailVerificationDTO,
 } from './DTO/verification.dto';
 import type { SessionsDoc, UsersDoc } from '@nuvix/utils/types';
+import { IdentitiesQueryPipe } from '@nuvix/core/pipes/queries';
 
 @Controller({ version: ['1'], path: 'account' })
 @UseGuards(AuthGuard)
@@ -756,7 +757,7 @@ export class AccountController {
   @Scope('account')
   @ResModel(Models.IDENTITY, { list: true })
   async getIdentities(
-    @Query('queries', ParseQueryPipe) queries: Queries[],
+    @Query('queries', IdentitiesQueryPipe) queries: Queries[],
     @User() user: UsersDoc,
   ) {
     return this.accountService.getIdentities({ user, queries });

@@ -5,6 +5,7 @@ import {
   HttpStatus,
   Param,
   Post,
+  Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
@@ -42,8 +43,11 @@ export class DatabasesController {
     code: HttpStatus.OK,
   })
   @ResModel(Models.SCHEMA, { list: true })
-  async getSchemas(@ProjectPg() pg: DataSource) {
-    const schemas = await this.databaseService.getSchemas(pg);
+  async getSchemas(
+    @ProjectPg() pg: DataSource,
+    @Query('type') type?: SchemaType,
+  ) {
+    const schemas = await this.databaseService.getSchemas(pg, type);
     return schemas;
   }
 

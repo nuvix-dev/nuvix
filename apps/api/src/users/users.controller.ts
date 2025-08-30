@@ -48,6 +48,7 @@ import type { Database, Doc, Query as Queries } from '@nuvix-tech/db';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard';
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor';
 import type { ProjectsDoc } from '@nuvix/utils/types';
+import { IdentitiesQueryPipe, UsersQueryPipe } from '@nuvix/core/pipes/queries';
 
 @Namespace('users')
 @Controller({ version: ['1'], path: 'users' })
@@ -63,7 +64,7 @@ export class UsersController {
   @ResModel(Models.USER, { list: true })
   async findAll(
     @AuthDatabase() db: Database,
-    @Query('queries', ParseQueryPipe) queries?: Queries[],
+    @Query('queries', UsersQueryPipe) queries?: Queries[],
     @Query('search') search?: string,
   ) {
     return this.usersService.findAll(db, queries, search);
@@ -192,7 +193,7 @@ export class UsersController {
   @ResModel({ type: Models.IDENTITY, list: true })
   async getIdentities(
     @AuthDatabase() db: Database,
-    @Query('queries', ParseQueryPipe) queries?: Queries[],
+    @Query('queries', IdentitiesQueryPipe) queries?: Queries[],
     @Query('search') search?: string,
   ) {
     return this.usersService.getIdentities(db, queries, search);
