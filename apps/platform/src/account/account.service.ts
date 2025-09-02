@@ -602,7 +602,6 @@ export class AccountService {
 
       session.set('countryName', countryName);
       session.set('current', current === session.getId());
-      session.set('secret', '');
 
       return session;
     });
@@ -682,8 +681,7 @@ export class AccountService {
 
         session
           .set('current', session.get('secret') === Auth.hash(Auth.secret))
-          .set('countryName', countryName)
-          .set('secret', '');
+          .set('countryName', countryName);
 
         return session;
       }
@@ -902,7 +900,7 @@ export class AccountService {
     createdSession
       .set('current', true)
       .set('countryName', countryName)
-      .set('secret', '');
+      .set('secret', Auth.encodeSession(user.getId(), secret));
 
     if (this.platform.get('auths').sessionAlerts ?? false) {
       const sessionCount = await this.db.count('sessions', qb =>
@@ -2127,8 +2125,7 @@ export class AccountService {
     createdSession
       .set('current', true)
       .set('countryName', countryName)
-      .set('expire', expire)
-      .set('secret', '');
+      .set('expire', expire);
 
     return createdSession;
   }

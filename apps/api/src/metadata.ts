@@ -1094,6 +1094,7 @@ export default async () => {
               getBucket: {},
               updateBucket: {},
               deleteBucket: {},
+              getFiles: {},
               createFile: { type: Object },
               getFile: { type: Object },
               previewFile: {},
