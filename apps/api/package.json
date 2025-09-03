@@ -23,7 +23,6 @@
   "dependencies": {
     "@apollo/server": "^4.12.2",
     "@nestjs/apollo": "^13.1.0",
-    "@nestjs/axios": "^4.0.0",
     "@nestjs/graphql": "^13.1.0",
     "@nuvix/core": "workspace:*",
     "@nuvix/utils": "workspace:*",

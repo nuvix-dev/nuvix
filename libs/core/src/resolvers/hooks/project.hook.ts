@@ -13,6 +13,7 @@ import {
   PROJECT_PG,
   type DatabaseConfig,
   DatabaseRole,
+  DEFAULT_DATABASE,
 } from '@nuvix/utils';
 import { Hook } from '../../server/hooks/interface';
 import { Exception } from '@nuvix/core/extend/exception';
@@ -40,6 +41,7 @@ export class ProjectHook implements Hook {
     const projectId =
       params.getFromHeaders('x-nuvix-project') ||
       params.getFromQuery('project', 'console');
+    const devKey = params.getFromHeaders('x-dev-key');
 
     if (!projectId || projectId === 'console') {
       req[Context.Project] = new Doc({ $id: 'console' });
@@ -51,33 +53,46 @@ export class ProjectHook implements Hook {
     );
 
     if (!project.empty()) {
-      // we have to remove sensitive info
-      const dbConfig = this.appConfig.getDatabaseConfig().postgres;
-      project.set('database', {
-        ...(project.get('database') as unknown as Record<string, any>),
-        name: dbConfig.database,
-        host: dbConfig.host,
-        port: 6432,
-        adminRole: 'nuvix_admin',
-        password: dbConfig.password,
-        userRole: 'postgres',
-        userPassword: 'testpassword',
-      });
-      // also setup dev db if project env is dev
-      // then we need to get data from dev key vault
-      // this will done using cloudflare tunnel
+      const environment = project.get('environment');
+
+      if (environment === 'dev') {
+        const envToken = await Authorization.skip(
+          () => this.db.findOne('envtokens',
+            qb => {
+              qb = qb.equal('projectInternalId', project.getSequence());
+              return devKey ? qb.equal('token', devKey) : qb;
+            }
+          )
+        );
+
+        if (envToken.empty()) {
+          throw new Exception(Exception.GENERAL_BAD_REQUEST, 'Invalid environment token. Please ensure dev mode is properly configured and the token is correct.');
+        }
+
+        const dbConfig = project.get('database') as unknown as DatabaseConfig;
+        const metadata = envToken.get('metadata');
+
+        if (!metadata['host'] || !metadata['port'])
+          throw new Exception(Exception.GENERAL_UNKNOWN, 'Missing required metadata: host or port for dev environment.');
+
+        dbConfig.pool['host'] = metadata['host'];
+        dbConfig.pool['port'] = metadata['pool_port'];
+        dbConfig.postgres['host'] = metadata['host'];
+        dbConfig.postgres['port'] = metadata['port'];
+
+        project.set('database', dbConfig);
+      }
+
       try {
-        // I will back here
         const dbOptions = project.get('database') as unknown as DatabaseConfig;
         const client = await this.coreService.createProjectDbClient(
           project.getId(),
           {
-            database: dbOptions['name'],
-            user: dbOptions['adminRole'],
-            password: this.appConfig.getDatabaseConfig().postgres
-              .password as string,
-            port: dbOptions['port'],
-            host: dbOptions['host'],
+            database: DEFAULT_DATABASE,
+            user: this.dbRole,
+            password: dbOptions.pool.password, // TODO: we have to use here admin password for admin
+            port: dbOptions.pool.port || dbOptions.postgres.port,
+            host: dbOptions.pool.host,
           },
         );
         client.setMaxListeners(20);
@@ -104,7 +119,9 @@ export class ProjectHook implements Hook {
       } catch (e) {
         // TODO: improve the error handling
         this.logger.error('Something went wrong while connecting database.', e);
-        throw new Exception(Exception.GENERAL_SERVER_ERROR);
+        throw new Exception(Exception.GENERAL_SERVER_ERROR,
+          'Database connection faild.'
+        );
       }
     }
 

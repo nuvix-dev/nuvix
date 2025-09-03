@@ -20,11 +20,13 @@ export type DatabaseConfig = {
     host: string;
     port: number;
     database: string;
+    password: string;
     // ssl
   };
   pool: {
     host: string;
     port: number;
     database: string;
+    password: string;
   };
 };

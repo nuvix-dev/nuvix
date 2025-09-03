@@ -1,15 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { Doc } from '@nuvix-tech/db';
-import { Hook } from '@nuvix/core/server';
-import { Context } from '@nuvix/utils';
+import { Injectable } from '@nestjs/common';
+import { ProjectHook as BaseProjectHook } from '@nuvix/core/resolvers';
+import { DatabaseRole } from '@nuvix/utils';
 
 @Injectable()
-export class ProjectHook implements Hook {
-  private readonly logger = new Logger(ProjectHook.name);
-  constructor() {}
-
-  async onRequest(req: NuvixRequest, reply: NuvixRes) {
-    req[Context.Project] = new Doc({ $id: 'console' });
-    return null;
-  }
+export class ProjectHook extends BaseProjectHook {
+  protected override dbRole: DatabaseRole = DatabaseRole.POSTGRES;
 }

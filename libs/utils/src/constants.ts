@@ -188,6 +188,7 @@ export const IS_PUBLIC_KEY = 'isPublic';
 /**@deprecated */ export const ROLE = 'role';
 export const HOOKS = 'hooks';
 export const APP_COLOR = '#f67520';
+export const DEFAULT_DATABASE = 'postgres';
 
 export const CORE_SCHEMA_DB = Symbol('coreSchemaDb');
 export const AUTH_SCHEMA_DB = Symbol('authSchemaDb');

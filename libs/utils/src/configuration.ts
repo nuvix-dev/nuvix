@@ -222,5 +222,10 @@ export default () => ({
         return acc;
       },
       {} as { [key: string]: boolean },
-    ),
+  ),
+  
+  cloudflare: {
+    accountId: process.env['APP_CLOUDFLARE_ACCOUNT_ID'],
+    apiKey: process.env['APP_CLOUDFLARE_API_TOKEN'],
+  }
 });

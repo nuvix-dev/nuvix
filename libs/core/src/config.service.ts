@@ -26,6 +26,10 @@ export class AppConfigService {
     return this.get('limits') as Configuration['limits'];
   }
 
+  getCloudflareConfig(): Configuration['cloudflare'] {
+    return this.get('cloudflare') as Configuration['cloudflare'];
+  }
+
   get<T extends keyof Configuration>(propertyPath: T): Configuration[T] {
     return this.configService.get(propertyPath) as any;
   }

@@ -19,7 +19,6 @@ import { JwtModule, JwtService } from '@nestjs/jwt';
 import { JWT_SECRET, QueueFor } from '@nuvix/utils';
 import { HostHook, AuthHook, ApiHook } from '@nuvix/core/resolvers/hooks';
 import { ProjectHook } from './resolvers/hooks/project.hook';
-import { ProjectHook as RequestProjectHook } from '@nuvix/core/resolvers/hooks';
 import { PgMetaController, PgMetaModule } from '@nuvix/pg-meta';
 import { UsersController } from './users/users.controller';
 import { AccountController } from './account/account.controller';
@@ -95,8 +94,6 @@ export class AppModule implements NestModule, OnModuleInit {
         ProjectsController,
         PgMetaController,
       )
-      .apply(RequestProjectHook)
-      .forRoutes(PgMetaController)
       .apply(HostHook)
       .forRoutes(
         UsersController,
