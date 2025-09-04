@@ -434,6 +434,7 @@ export enum AppMode {
 export enum ApiKey {
   STANDARD = 'standard',
   DYNAMIC = 'dynamic',
+  DEV = 'dev',
   /**@deprecated use Context.ApiKey*/ _REQUEST = 'apiKey',
 }
 

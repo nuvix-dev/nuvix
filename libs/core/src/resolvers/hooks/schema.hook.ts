@@ -6,10 +6,11 @@ import {
   Context,
   CURRENT_SCHEMA_DB,
   CURRENT_SCHEMA_PG,
+  DatabaseRole,
   PROJECT_DB_CLIENT,
   PROJECT_PG,
 } from '@nuvix/utils';
-import type { ProjectsDoc } from '@nuvix/utils/types';
+import type { ProjectsDoc, UsersDoc } from '@nuvix/utils/types';
 import { CoreService } from '@nuvix/core/core.service.js';
 import type { Client } from 'pg';
 
@@ -22,12 +23,25 @@ export class SchemaHook implements Hook {
     if (project.empty() || project.getId() === 'console') {
       throw new Exception(Exception.PROJECT_NOT_FOUND);
     }
-
+    const user: UsersDoc = request[Context.User];
+    let role = DatabaseRole.POSTGRES;
     const client = request[PROJECT_DB_CLIENT] as Client;
     const pg = request[PROJECT_PG] as DataSource;
 
+    if (user.empty()) {
+      role = DatabaseRole.ANON;
+    } else {
+      role = DatabaseRole.AUTHENTICATED;
+    }
+
+    try {
+      await client.query(`SET ROLE ${role}`);
+    } catch (e) {
+      throw new Exception(Exception.GENERAL_SERVER_ERROR, 'Unable to set request role.'); // TODO: improve message
+    }
+
     const schemaId =
-      (request.params as { schemaId: string | undefined }).schemaId ?? 'public';
+      (request.params as { schemaId: string | undefined; }).schemaId ?? 'public';
     if (schemaId === undefined) return;
     const schema = await pg.getSchema(schemaId);
     // TODO: we have to throw error if schema not enabled based on app mode

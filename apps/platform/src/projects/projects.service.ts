@@ -5,7 +5,7 @@ import {
   UpdateProjectTeamDTO,
 } from './DTO/update-project.dto';
 import { Exception } from '@nuvix/core/extend/exception';
-import { ApiKey, APP_MAX_COUNT, QueueFor } from '@nuvix/utils';
+import { ApiKey, APP_MAX_COUNT, DatabaseRole, DEFAULT_DATABASE, QueueFor, type DatabaseConfig } from '@nuvix/utils';
 import authMethods, {
   AuthMethod,
   defaultAuthConfig,
@@ -44,7 +44,8 @@ import {
   ProjectQueueOptions,
 } from '@nuvix/core/resolvers/queues/projects.queue';
 import { AppConfigService, CoreService } from '@nuvix/core';
-import type { Projects } from '@nuvix/utils/types';
+import type { EnvironmentTokens, Projects } from '@nuvix/utils/types';
+import type { CreateEnvTokenDTO } from './DTO/env-token.dto';
 
 @Injectable()
 export class ProjectService {
@@ -217,6 +218,114 @@ export class ProjectService {
     );
 
     return project;
+  }
+
+  /**
+   * Create an environment token for a project.
+   */
+  async createEnvToken({ projectId, name, url, metadata }: CreateEnvTokenDTO, req: NuvixRequest) {
+    const project = await this.db.getDocument('projects', projectId);
+
+    if (project.empty())
+      throw new Exception(Exception.PROJECT_NOT_FOUND);
+
+    if (project.get('environment') !== 'dev')
+      throw new Exception(Exception.GENERAL_BAD_REQUEST, 'Env tokens can only be created for dev projects');
+
+    // url must be in format tcp://example:port
+    const { host, port } = await this.validateDbUrl(project, url);
+
+    const token = new Doc<EnvironmentTokens>({
+      name: name || `Env Token #${ID.unique(1).slice(0, 7)}`,
+      projectId: project.getId(),
+      projectInternalId: project.getSequence(),
+      token: ApiKey.DEV + '_' + randomBytes(128).toString('hex'),
+      metadata: { ...metadata, host, port, pool_port: port, requestIp: req.ip },
+      $permissions: [
+        Permission.read(Role.team(project.get('teamId'))),
+        Permission.update(Role.team(project.get('teamId'), 'owner')),
+        Permission.delete(Role.team(project.get('teamId'), 'owner')),
+      ]
+    });
+
+    const createdToken = await this.db.createDocument('environmentTokens', token);
+
+    // if this is the first token, then we need to initialize the project
+    // const tokens = await this.db.find('environmentTokens',
+    //   qb => qb.equal('projectInternalId', project.getSequence())
+    // );
+
+    // if (tokens.length === 1) {
+    await this.projectQueue.add(ProjectJob.DEV_INIT, {
+      project,
+      dbConfig: {
+        host,
+        port,
+      }
+    });
+    // }
+
+    return createdToken;
+  }
+
+  /**
+   * Update an environment token for a project.
+   */
+  async updateEnvToken(projectId: string, tokenId: string, url: string) {
+    const project = await this.db.getDocument('projects', projectId);
+    if (project.empty())
+      throw new Exception(Exception.PROJECT_NOT_FOUND);
+
+    const token = await this.db.findOne('environmentTokens',
+      qb => qb.equal('$id', tokenId).equal('projectInternalId', project.getSequence())
+    );
+
+    if (token.empty())
+      throw new Exception(Exception.GENERAL_NOT_FOUND, 'Token not found');
+
+    const { host, port } = await this.validateDbUrl(project, url);
+
+    token.set('metadata', { ...token.get('metadata', {}), host, port, pool_port: port });
+    return this.db.updateDocument('environmentTokens', token.getId(), token);
+  }
+
+  async listEnvTokens() {
+    return {
+      projects: await this.db.find('envtokens'),
+      total: await this.db.count('envtokens', undefined, APP_MAX_COUNT),
+    };
+  };
+
+  async validateDbUrl(project: Doc<Projects>, url: string) {
+    let host: string, port: number;
+    try {
+      const urlObj = new URL(url);
+      if (urlObj.protocol !== 'tcp:' && urlObj.protocol !== 'tls:')
+        throw new Exception(Exception.GENERAL_BAD_REQUEST, 'URL protocol must be tcp');
+      host = urlObj.hostname;
+      port = parseInt(urlObj.port, 10);
+      if (!host || !port || port <= 0 || port > 65535) {
+        throw new Exception(Exception.GENERAL_BAD_REQUEST, 'Invalid URL');
+      }
+    } catch (e) {
+      if (e instanceof Exception) throw e;
+      throw new Exception(Exception.GENERAL_BAD_REQUEST, 'Invalid URL');
+    }
+
+    try {
+      const client = await this.coreService.createProjectDbClient(project.getId(), {
+        host, port,
+        database: DEFAULT_DATABASE,
+        user: DatabaseRole.ADMIN,
+        password: (project.get('database') as unknown as DatabaseConfig)?.pool?.password,
+      });
+      await client.query('SELECT 1;');
+      await client.end();
+    } catch (e: any) {
+      throw new Exception(Exception.GENERAL_UNKNOWN, `Database connection failed. ${e?.message}`);
+    }
+
+    return { host, port };
   }
 
   /**
@@ -1097,7 +1206,7 @@ export class ProjectService {
       throw new Exception(Exception.PROJECT_NOT_FOUND);
     }
 
-    const uniqueNumbers: { [key: string]: string } = {};
+    const uniqueNumbers: { [key: string]: string; } = {};
     input.numbers.forEach(number => {
       if (uniqueNumbers[number.phone]) {
         throw new Exception(
@@ -1161,19 +1270,19 @@ export class ProjectService {
 
     const smtp = input.enabled
       ? {
-          enabled: input.enabled,
-          senderName: input.senderName,
-          senderEmail: input.senderEmail,
-          replyTo: input.replyTo,
-          host: input.host,
-          port: input.port,
-          username: input.username,
-          password: input.password,
-          secure: input.secure,
-        }
+        enabled: input.enabled,
+        senderName: input.senderName,
+        senderEmail: input.senderEmail,
+        replyTo: input.replyTo,
+        host: input.host,
+        port: input.port,
+        username: input.username,
+        password: input.password,
+        secure: input.secure,
+      }
       : {
-          enabled: false,
-        };
+        enabled: false,
+      };
 
     project = await this.db.updateDocument(
       'projects',

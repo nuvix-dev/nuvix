@@ -104,6 +104,7 @@ import { KeyModel } from '../models/Key.model';
 import { ProjectModel } from '../models/Project.model';
 import { SchemaModel } from '../models/Schema.model';
 import { ObjectModel } from '../models/Object.model';
+import { EnvToken } from '../models/EnvToken.model';
 
 /**
  * The `Response` class provides a collection of static properties representing various models used in the application.
@@ -238,6 +239,7 @@ export class Models {
   public static VCS = 'vcs';
   public static SMS_TEMPLATE = TemplateSMSModel;
   public static EMAIL_TEMPLATE = TemplateEmailModel;
+  public static ENV_TOKEN = EnvToken;
 
   // Health
   public static HEALTH_STATUS = HealthStatusModel;

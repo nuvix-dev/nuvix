@@ -9,7 +9,7 @@ import {
   DuplicateException,
   type Collection,
 } from '@nuvix-tech/db';
-import { QueueFor, Schemas } from '@nuvix/utils';
+import { DatabaseRole, DEFAULT_DATABASE, QueueFor, Schemas, type DatabaseConfig } from '@nuvix/utils';
 import { Exception } from '@nuvix/core/extend/exception';
 import { Audit } from '@nuvix/audit';
 import { CoreService } from '@nuvix/core/core.service.js';
@@ -34,11 +34,15 @@ export class ProjectsQueue extends Queue {
     job: Job<ProjectQueueOptions, any, ProjectJob>,
     token?: string,
   ): Promise<any> {
+    const project = new Doc(job.data.project) as unknown as ProjectsDoc;
     switch (job.name) {
       case ProjectJob.INIT:
-        const project = new Doc(job.data.project) as unknown as ProjectsDoc;
         await this.initProject(project);
-        return;
+        return { success: true };
+      case ProjectJob.DEV_INIT:
+        if (!job.data.dbConfig) throw Error('Db config is required in dev env.');
+        await this.devInit(project, job.data.dbConfig);
+        return { success: true };
       default:
         this.logger.warn(
           `Unknown job type ${job.name} for project ${job.data.project}`,
@@ -56,6 +60,8 @@ export class ProjectsQueue extends Queue {
       return;
     }
 
+    // Must update,
+    // we have to init new database instance & all here for project then do the setup 
     const dbName = 'postgres';
     const client = await this.coreService.createProjectDbClient('root');
     const databases = this.appConfig.getDatabaseConfig();
@@ -147,8 +153,106 @@ export class ProjectsQueue extends Queue {
         `Failed to initialize project ${project.getId()}: ${error.message}`,
       );
     } finally {
-      this.coreService.releaseDatabaseClient(client);
+      await this.coreService.releaseDatabaseClient(client);
       // TODO: we have to release db client in new infrastructure
+    }
+  }
+
+  private async devInit(project: ProjectsDoc, dbConfig: Record<string, any>): Promise<void> {
+    if (project.get('status') === 'active') {
+      this.logger.warn(
+        `Project ${project.getId()} is already initialized, skipping...`,
+      );
+      return;
+    }
+
+    const dbName = DEFAULT_DATABASE;
+    const databaseConfig = {
+      password: (project.get('database') as unknown as DatabaseConfig).pool.password,
+      database: dbName,
+      host: dbConfig['host'],
+      port: dbConfig['port'],
+      user: DatabaseRole.ADMIN,
+    };
+
+    const client = await this.coreService.createProjectDbClient(project.getId(), {
+      ...databaseConfig,
+    });
+
+    try {
+      await this.db.getCache().flush();
+
+      // Setup database and collections
+      const coreSchema = this.coreService.getProjectDb(client, {
+        projectId: project.getId(),
+        schema: Schemas.Core,
+      });
+      try {
+        await coreSchema.create(Schemas.Core);
+      } catch (e) {
+        if (!(e instanceof DuplicateException)) throw e;
+      }
+
+      const authSchema = this.coreService.getProjectDb(client, {
+        projectId: project.getId(),
+        schema: Schemas.Auth,
+      });
+      try {
+        await authSchema.create(Schemas.Auth);
+      } catch (e) {
+        if (!(e instanceof DuplicateException)) throw e;
+      }
+      // TODO: flush cache to ensure schema is recognized (after lib update)
+
+      const authCollections = Object.entries(collections.auth) ?? [];
+      const $collections = Object.entries(collections.project) ?? [];
+      let { failed } = await this.createCollections(
+        authSchema,
+        authCollections,
+        project,
+      );
+
+      if (failed > 0) {
+        this.logger.error(
+          `Failed to create some auth collections for project ${project.getId()}: ${failed} failed`,
+        );
+        throw new Exception(
+          `Failed to create some auth collections for project ${project.getId()}: ${failed} failed`,
+        );
+      }
+
+      ({ failed } = await this.createCollections(
+        coreSchema,
+        $collections,
+        project,
+      ));
+
+      if (failed > 0) {
+        this.logger.error(
+          `Failed to create some core collections for project ${project.getId()}: ${failed} failed`,
+        );
+        throw new Exception(
+          `Failed to create some core collections for project ${project.getId()}: ${failed} failed`,
+        );
+      }
+
+      try {
+        await new Audit(coreSchema).setup();
+      } catch (e) {
+        if (!(e instanceof DuplicateException)) throw e;
+      }
+      this.logger.log(
+        `Project ${project.getId()} initialized with database ${dbName} at ${databaseConfig.host}:${databaseConfig.port}`,
+      );
+    } catch (error: any) {
+      this.logger.error(
+        `Failed to initialize project ${project.getId()}: ${error.message}`,
+      );
+      throw new Exception(
+        `Failed to initialize project ${project.getId()}: ${error.message}`,
+      );
+    } finally {
+      await this.coreService.releaseDatabaseClient(client);
     }
   }
 
@@ -156,7 +260,7 @@ export class ProjectsQueue extends Queue {
     db: Database,
     collections: [string, Collection][],
     project: ProjectsDoc,
-  ): Promise<{ successful: number; failed: number }> {
+  ): Promise<{ successful: number; failed: number; }> {
     let successfulCollections = 0;
     let failedCollections = 0;
 
@@ -252,8 +356,10 @@ export class ProjectsQueue extends Queue {
 
 export interface ProjectQueueOptions {
   project: ProjectsDoc;
+  dbConfig?: Record<string, any>;
 }
 
 export enum ProjectJob {
   INIT = 'init',
+  DEV_INIT = 'dev',
 }

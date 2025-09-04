@@ -55,6 +55,7 @@ import { AuthGuard } from '@nuvix/core/resolvers/guards/auth.guard';
 import { ConsoleInterceptor } from '@nuvix/core/resolvers/interceptors/console.interceptor';
 import { ResModel, Scope } from '@nuvix/core/decorators';
 import { ProjectsQueryPipe } from '@nuvix/core/pipes/queries';
+import { CreateEnvTokenDTO } from './DTO/env-token.dto';
 
 @Controller({ version: ['1'], path: 'projects' })
 @UseGuards(AuthGuard)
@@ -79,6 +80,31 @@ export class ProjectsController {
   ) {
     const data = await this.projectService.findAll(queries, search);
     return data;
+  }
+
+  @Get('env_tokens')
+  @Scope('project.read')
+  @ResModel(Models.ENV_TOKEN, { list: true })
+  async listEnvTokens() {
+    return this.projectService.listEnvTokens();
+  }
+
+  @Post('env_tokens')
+  @Scope('project.read')
+  @ResModel(Models.ENV_TOKEN)
+  async createEnvToken(@Body() body: CreateEnvTokenDTO, @Req() req: NuvixRequest) {
+    return this.projectService.createEnvToken(body, req);
+  }
+
+  @Patch('env_tokens/:tokenId')
+  @Scope('project.read')
+  @ResModel(Models.ENV_TOKEN)
+  async updateEnvToken(
+    @Param('tokenId') tokenId: string,
+    @Body('url') url: string,
+    @Body('projectId') projectId: string,
+  ) {
+    return this.projectService.updateEnvToken(projectId, tokenId, url);
   }
 
   @Get(':id')

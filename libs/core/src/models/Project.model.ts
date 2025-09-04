@@ -35,30 +35,6 @@ export class ProjectModel extends BaseModel {
    */
   @Expose() declare url: string;
   /**
-   * Company legal name.
-   */
-  @Expose() declare legalName: string;
-  /**
-   * Country code in [ISO 3166-1](http://en.wikipedia.org/wiki/ISO_3166-1) two-character format.
-   */
-  @Expose() declare legalCountry: string;
-  /**
-   * State name.
-   */
-  @Expose() declare legalState: string;
-  /**
-   * City name.
-   */
-  @Expose() declare legalCity: string;
-  /**
-   * Company Address.
-   */
-  @Expose() declare legalAddress: string;
-  /**
-   * Company Tax ID.
-   */
-  @Expose() declare legalTaxId: string;
-  /**
    * Session duration in seconds.
    */
   @Expose()
@@ -352,9 +328,40 @@ export class ProjectModel extends BaseModel {
    * Project region
    */
   @Expose() declare region: string;
-
+  /**
+   * Project status
+   */
   @Expose() declare status: string;
+  /**
+   * Is project enabled
+   */
   @Expose() declare enabled: boolean;
+  /**
+   * Environment 
+   */
+  @Expose() declare environment: string;
+  /**
+   * Database
+   */
+  @Transform(({ value }) => {
+    if (!value) return {};
+    const dbConfig = {
+      postgres: {
+        host: value['postgres']['host'] || 'localhost',
+        port: value['postgres']['port'] || 5432,
+        database: value['postgres']['database'] || 'postgres',
+        user: value['postgres']['user'] || 'postgres',
+      },
+      pool: {
+        host: value['pool']['host'] || 'localhost',
+        port: value['pool']['port'] || 6432,
+        database: value['pool']['database'] || 'postgres',
+        user: value['pool']['user'] || 'postgres',
+      }
+    };
+    return dbConfig;
+  })
+  @Expose() declare database: Record<string, any>;
 
   constructor() {
     super();
