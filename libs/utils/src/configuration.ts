@@ -41,7 +41,8 @@ export default () => ({
     ),
     templates: path.join(PROJECT_ROOT, 'assets/locale/templates'),
     public: path.join(PROJECT_ROOT, process.env['ASSETS_PUBLIC'] || 'public'),
-    get: (...relativePath: string[]) => path.join(PROJECT_ROOT, ...relativePath),
+    get: (...relativePath: string[]) =>
+      path.join(PROJECT_ROOT, ...relativePath),
   },
 
   security: {
