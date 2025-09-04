@@ -29,6 +29,8 @@ import { AuditHook } from '@nuvix/core/resolvers/hooks/audit.hook';
 import { AuditsQueue } from './resolvers/queues/audits.queue';
 import { Key } from '@nuvix/core/helper/key.helper';
 import { AppConfigService } from '@nuvix/core';
+import { CliModule } from './cli/cli.module';
+import { CliController } from './cli/cli.controller';
 
 @Module({
   imports: [
@@ -72,6 +74,7 @@ import { AppConfigService } from '@nuvix/core';
     OrganizationsModule,
     ProjectModule,
     PgMetaModule,
+    CliModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailsQueue, AuditsQueue],
@@ -93,6 +96,7 @@ export class AppModule implements NestModule, OnModuleInit {
         ProjectController,
         ProjectsController,
         PgMetaController,
+        CliController,
       )
       .apply(HostHook)
       .forRoutes(
@@ -102,6 +106,7 @@ export class AppModule implements NestModule, OnModuleInit {
         ProjectController,
         ProjectsController,
         PgMetaController,
+        CliController,
       )
       .apply(AuthHook, ApiHook, AuditHook)
       .forRoutes(
@@ -111,6 +116,7 @@ export class AppModule implements NestModule, OnModuleInit {
         ProjectController,
         ProjectsController,
         PgMetaController,
+        CliController,
       );
   }
 }

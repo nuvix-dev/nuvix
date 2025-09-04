@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: ravikan6/postgres
+    container_name: nuvix-postgres
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - nuvix-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nuvix_admin -d postgres -h localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+
+  pgcat:
+    image: ghcr.io/postgresml/pgcat:4a7a6a8e7a78354b889002a4db118a8e2f2d6d79
+    container_name: nuvix-pgcat
+    ports:
+      - "6432:6432"
+      - "9930:9930"
+    volumes:
+      - ./pgcat.toml:/etc/pgcat/pgcat.toml:ro
+    networks:
+      - nuvix-network
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 6432"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    command: ["pgcat", "/etc/pgcat/pgcat.toml"]
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  nuvix-network:
+    driver: bridge
