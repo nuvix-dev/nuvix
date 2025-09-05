@@ -20,7 +20,13 @@ import { AccountService } from './account.service';
 import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor';
 import { Models } from '@nuvix/core/helper/response.helper';
 import { User } from '@nuvix/core/decorators/user.decorator';
-import { AuditEvent, Locale, ResModel, Scope } from '@nuvix/core/decorators';
+import {
+  AuditEvent,
+  Locale,
+  ResModel,
+  Scope,
+  Throttle,
+} from '@nuvix/core/decorators';
 import { Query as Queries } from '@nuvix-tech/db';
 
 import { AuthGuard, Public } from '@nuvix/core/resolvers/guards/auth.guard';

@@ -277,10 +277,12 @@ export class Auth {
     return false;
   }
 
+  // Trusted Actor (e.g. internal services) can bypass certain checks
   public static get isTrustedActor(): boolean {
     return this._isTrustedActor;
   }
 
+  // Platform Actor (e.g. platform level services) can bypass certain checks
   public static get isPlatformActor(): boolean {
     return this._isPlatformActor;
   }

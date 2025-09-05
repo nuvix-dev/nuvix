@@ -1,14 +1,15 @@
+import { Exception } from '@nuvix/core/extend/exception';
 import { DatabaseError } from 'pg';
 
 type PgErrorType =
-  | 'DATABASE_CONFLICT'
-  | 'DATABASE_VALIDATION'
-  | 'DATABASE_AUTH'
-  | 'DATABASE_FORBIDDEN'
-  | 'DATABASE_NOT_FOUND'
-  | 'DATABASE_UNAVAILABLE'
-  | 'DATABASE_INTERNAL'
-  | 'DATABASE_UNKNOWN';
+  | 'database_conflict'
+  | 'database_validation'
+  | 'database_auth'
+  | 'database_forbidden'
+  | typeof Exception.GENERAL_NOT_FOUND
+  | 'database_unavailable'
+  | 'database_internal'
+  | 'database_unknown';
 
 interface PgTransformedError {
   status: number;
@@ -47,7 +48,7 @@ const errorMapArray: [string, ErrorMapEntry][] = [
     '23505',
     {
       status: 409,
-      type: 'DATABASE_CONFLICT',
+      type: 'database_conflict',
       message: 'The record already exists.',
     },
   ], // unique_violation
@@ -55,7 +56,7 @@ const errorMapArray: [string, ErrorMapEntry][] = [
     '23503',
     {
       status: 409,
-      type: 'DATABASE_CONFLICT',
+      type: 'database_conflict',
       message: 'The operation violates a foreign key constraint.',
     },
   ], // foreign_key_violation
@@ -63,7 +64,7 @@ const errorMapArray: [string, ErrorMapEntry][] = [
     '23502',
     {
       status: 400,
-      type: 'DATABASE_VALIDATION',
+      type: 'database_validation',
       message: 'A required value is missing or null.',
     },
   ], // not_null_violation
@@ -71,7 +72,7 @@ const errorMapArray: [string, ErrorMapEntry][] = [
     '23514',
     {
       status: 400,
-      type: 'DATABASE_VALIDATION',
+      type: 'database_validation',
       message: 'A value violates a check constraint.',
     },
   ], // check_violation
@@ -83,12 +84,12 @@ const errorMapArray: [string, ErrorMapEntry][] = [
       authed
         ? {
             status: 403,
-            type: 'DATABASE_FORBIDDEN',
+            type: 'database_forbidden',
             message: 'You do not have permission to perform this action.',
           }
         : {
             status: 401,
-            type: 'DATABASE_AUTH',
+            type: 'database_auth',
             message: 'Authentication is required to perform this action.',
           },
   ], // insufficient_privilege
@@ -98,7 +99,7 @@ const errorMapArray: [string, ErrorMapEntry][] = [
     '22P02',
     {
       status: 400,
-      type: 'DATABASE_VALIDATION',
+      type: 'database_validation',
       message: 'An invalid value was provided for a column.',
     },
   ], // invalid_text_representation
@@ -106,7 +107,7 @@ const errorMapArray: [string, ErrorMapEntry][] = [
     '42P01',
     {
       status: 404,
-      type: 'DATABASE_NOT_FOUND',
+      type: Exception.GENERAL_NOT_FOUND,
       message: 'The requested table was not found.',
     },
   ], // undefined_table
@@ -114,7 +115,7 @@ const errorMapArray: [string, ErrorMapEntry][] = [
     '42703',
     {
       status: 400,
-      type: 'DATABASE_VALIDATION',
+      type: 'database_validation',
       message: 'The requested column does not exist.',
     },
   ], // undefined_column
@@ -122,7 +123,7 @@ const errorMapArray: [string, ErrorMapEntry][] = [
     'P0001',
     {
       status: 400,
-      type: 'DATABASE_VALIDATION',
+      type: 'database_validation',
       message: err => safeMessage('A database check failed.', err.detail),
     },
   ], // raise_exception
@@ -130,7 +131,7 @@ const errorMapArray: [string, ErrorMapEntry][] = [
     '57P01',
     {
       status: 503,
-      type: 'DATABASE_UNAVAILABLE',
+      type: 'database_unavailable',
       message:
         'The database is currently undergoing maintenance. Please try again later.',
     },
@@ -148,7 +149,7 @@ const CLASS_ERROR_MAP: Map<
     '08',
     {
       status: 503,
-      type: 'DATABASE_UNAVAILABLE',
+      type: 'database_unavailable',
       message: 'Connection Exception.',
     },
   ],
@@ -156,7 +157,7 @@ const CLASS_ERROR_MAP: Map<
     '22',
     {
       status: 400,
-      type: 'DATABASE_VALIDATION',
+      type: 'database_validation',
       message: 'Data Exception: Invalid data format.',
     },
   ],
@@ -164,7 +165,7 @@ const CLASS_ERROR_MAP: Map<
     '25',
     {
       status: 500,
-      type: 'DATABASE_INTERNAL',
+      type: 'database_internal',
       message: 'Invalid Transaction State.',
     },
   ],
@@ -172,7 +173,7 @@ const CLASS_ERROR_MAP: Map<
     '40',
     {
       status: 409,
-      type: 'DATABASE_CONFLICT',
+      type: 'database_conflict',
       message:
         'Transaction Rollback: A conflict occurred that requires the transaction to be retried.',
     },
@@ -181,7 +182,7 @@ const CLASS_ERROR_MAP: Map<
     '42',
     {
       status: 400,
-      type: 'DATABASE_VALIDATION',
+      type: 'database_validation',
       message: 'Syntax Error or Access Rule Violation.',
     },
   ],
@@ -189,7 +190,7 @@ const CLASS_ERROR_MAP: Map<
     '53',
     {
       status: 503,
-      type: 'DATABASE_UNAVAILABLE',
+      type: 'database_unavailable',
       message: 'Insufficient Resources.',
     },
   ],
@@ -197,7 +198,7 @@ const CLASS_ERROR_MAP: Map<
     '54',
     {
       status: 500,
-      type: 'DATABASE_INTERNAL',
+      type: 'database_internal',
       message: 'Program Limit Exceeded.',
     },
   ],
@@ -205,13 +206,13 @@ const CLASS_ERROR_MAP: Map<
     '57',
     {
       status: 500,
-      type: 'DATABASE_INTERNAL',
+      type: 'database_internal',
       message: 'Operator Intervention.',
     },
   ],
   [
     'XX',
-    { status: 500, type: 'DATABASE_INTERNAL', message: 'Internal Error.' },
+    { status: 500, type: 'database_internal', message: 'Internal Error.' },
   ],
 ]);
 
@@ -251,7 +252,7 @@ export function transformPgError(
     // Fallback for any unhandled PostgreSQL error
     result = {
       status: 500,
-      type: 'DATABASE_UNKNOWN',
+      type: 'database_unknown',
       message: 'An unexpected database error occurred.',
     };
   }

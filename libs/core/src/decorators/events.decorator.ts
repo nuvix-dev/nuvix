@@ -1,5 +1,6 @@
 import { Reflector } from '@nestjs/core';
 import { RouteConfig } from '@nestjs/platform-fastify';
+import { RouteContext } from '@nuvix/utils';
 
 type EventActions = 'create' | 'update' | 'delete';
 
@@ -61,7 +62,7 @@ export const AuditEvent = (
   meta: _AuditEvent | ResourcePath,
 ) =>
   RouteConfig({
-    audit: {
+    [RouteContext.AUDIT]: {
       event,
       meta: typeof meta === 'string' ? { resource: meta } : meta,
     },

@@ -40,5 +40,5 @@ export interface CallFunction {
   url: string;
   limit?: number;
   offset?: number;
-  args?: Record<string, string | number | boolean | null>;
+  args?: Record<string, string | number | boolean | null> | any[];
 }

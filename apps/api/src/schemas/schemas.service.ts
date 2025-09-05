@@ -12,6 +12,7 @@ import { OrderParser } from '@nuvix/utils/query/order';
 import { ASTToQueryBuilder } from '@nuvix/utils/query/builder';
 import { Exception } from '@nuvix/core/extend/exception';
 import { transformPgError } from '@nuvix/utils/database/pg-error';
+import { Raw } from '@nuvix/pg';
 
 @Injectable()
 export class SchemasService {
@@ -35,22 +36,8 @@ export class SchemasService {
     });
 
     this.logger.debug(qb.toSQL());
-    try {
-      return qb;
-    } catch (e) {
-      const error = transformPgError(e);
-      if (!error || error.status >= 500) {
-        throw new Exception(
-          error?.type ?? Exception.GENERAL_SERVER_ERROR,
-          error?.message ?? 'Database error',
-          error?.status,
-        );
-      }
-      throw new Exception(error.type, error.message, error.status).addDetails({
-        hint: error.details.hint,
-        detail: error.details.detail,
-      });
-    }
+
+    return qb.catch(e => this.processError(e));
   }
 
   async insert({ pg, table, input, columns, schema, url }: Insert) {
@@ -95,24 +82,9 @@ export class SchemasService {
     astToQueryBuilder.applyReturning(select);
     qb.insert(data);
 
-    this.logger.debug(qb.toSQL());
-
-    try {
-      return pg.withTransaction(async () => await qb);
-    } catch (e) {
-      const error = transformPgError(e);
-      if (!error || error.status >= 500) {
-        throw new Exception(
-          error?.type ?? Exception.GENERAL_SERVER_ERROR,
-          error?.message ?? 'Database error',
-          error?.status,
-        );
-      }
-      throw new Exception(error.type, error.message, error.status).addDetails({
-        hint: error.details.hint,
-        detail: error.details.detail,
-      });
-    }
+    return pg
+      .withTransaction(async () => await qb)
+      .catch(e => this.processError(e));
   }
 
   async update({
@@ -167,24 +139,9 @@ export class SchemasService {
     });
     qb.update(data);
 
-    this.logger.debug(qb.toSQL());
-
-    try {
-      return pg.withTransaction(async () => await qb);
-    } catch (e) {
-      const error = transformPgError(e);
-      if (!error || error.status >= 500) {
-        throw new Exception(
-          error?.type ?? Exception.GENERAL_SERVER_ERROR,
-          error?.message ?? 'Database error',
-          error?.status,
-        );
-      }
-      throw new Exception(error.type, error.message, error.status).addDetails({
-        hint: error.details.hint,
-        detail: error.details.detail,
-      });
-    }
+    return pg
+      .withTransaction(async () => await qb)
+      .catch(e => this.processError(e));
   }
 
   async delete({ pg, table, schema, url, limit, offset, force }: Delete) {
@@ -208,24 +165,10 @@ export class SchemasService {
       offset,
     });
     qb.delete();
-    this.logger.debug(qb.toSQL());
 
-    try {
-      return pg.withTransaction(async () => await qb);
-    } catch (e) {
-      const error = transformPgError(e);
-      if (!error || error.status >= 500) {
-        throw new Exception(
-          error?.type ?? Exception.GENERAL_SERVER_ERROR,
-          error?.message ?? 'Database error',
-          error?.status,
-        );
-      }
-      throw new Exception(error.type, error.message, error.status).addDetails({
-        hint: error.details.hint,
-        detail: error.details.detail,
-      });
-    }
+    return pg
+      .withTransaction(async () => await qb)
+      .catch(e => this.processError(e));
   }
 
   async callFunction({
@@ -237,16 +180,24 @@ export class SchemasService {
     offset,
     args,
   }: CallFunction) {
-    const _argNames = Object.keys(args || {});
-    const _values = Object.values(args || {});
+    let placeholder: string;
+    let values: any[];
 
-    const placeholder = _argNames.map(n => `${n}:= ?`).join(', ');
-    const _raw = pg.raw(`??.??(${placeholder})`, [
-      schema,
-      functionName,
-      ..._values,
-    ]);
-    const qb = pg.queryBuilder().table(_raw as any);
+    if (Array.isArray(args)) {
+      // Handle array args (unnamed parameters)
+      placeholder = args.map(() => '?').join(', ');
+      values = [schema, functionName, ...args];
+    } else {
+      // Handle object args (named parameters)
+      const _argNames = Object.keys(args || {});
+      const _values = Object.values(args || {});
+      placeholder = _argNames.map(n => `${n}:= ?`).join(', ');
+      values = [schema, functionName, ..._values];
+    }
+
+    const raw = new Raw(pg);
+    raw.set(`??.??(${placeholder})`, values);
+    const qb = pg.queryBuilder().table(raw as any);
 
     const astToQueryBuilder = new ASTToQueryBuilder(qb, pg);
 
@@ -259,24 +210,25 @@ export class SchemasService {
       limit,
       offset,
     });
+
     this.logger.debug(qb.toSQL());
 
-    try {
-      return qb;
-    } catch (e) {
-      const error = transformPgError(e);
-      if (!error || error.status >= 500) {
-        throw new Exception(
-          error?.type ?? Exception.GENERAL_SERVER_ERROR,
-          error?.message ?? 'Database error',
-          error?.status,
-        );
-      }
-      throw new Exception(error.type, error.message, error.status).addDetails({
-        hint: error.details.hint,
-        detail: error.details.detail,
-      });
+    return qb.catch(e => this.processError(e));
+  }
+
+  private processError(e: unknown) {
+    const error = transformPgError(e);
+    if (!error || error.status >= 500) {
+      throw new Exception(
+        error?.type ?? Exception.GENERAL_SERVER_ERROR,
+        error?.message ?? 'Database error',
+        error?.status,
+      );
     }
+    throw new Exception(error.type, error.message, error.status).addDetails({
+      hint: error.details.hint,
+      detail: error.details.detail,
+    });
   }
 
   private getParamsFromUrl(

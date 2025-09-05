@@ -78,7 +78,7 @@ export class CoreService {
     return client;
   }
 
-  async createCacheDb() {
+  createCacheDb() {
     const redisConfig = this.appConfig.getRedisConfig();
     const connection = new IORedis({
       connectionName: 'CACHE_DB',

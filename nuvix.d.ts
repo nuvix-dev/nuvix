@@ -4,16 +4,29 @@ import type {
   FastifyRequest,
   RequestRouteOptions,
   SchemaCompiler,
+  FastifyContextConfig,
+  FastifyRouteConfig,
 } from 'fastify';
 import type { Entities } from '@nuvix-tech/db';
 import type { Entities as NuvixEntities } from '@nuvix/utils/types';
+import type { RouteContext, ThrottleOptions } from '@nuvix/utils';
+import type { AuditEventType } from '@nuvix/core/decorators';
 
 declare module 'fastify' {
+  interface FastifyContextConfig {
+    [RouteContext.AUDIT]?: AuditEventType;
+    [RouteContext.RATE_LIMIT]?: ThrottleOptions;
+  }
+
+  interface FastifyRouteConfig {
+
+  }
+
   interface FastifyRequest {
     routeOptions: RequestRouteOptions<
       {
         hooks?: {
-          [key: string]: { args: Array<any> };
+          [key: string]: { args: Array<any>; };
         };
       },
       SchemaCompiler
@@ -21,6 +34,11 @@ declare module 'fastify' {
     domainVerification: boolean;
     // Allow storing hooks arguments and other arbitrary properties
     hooks_args: Record<string, any>;
+    rate_limit?: {
+      limit: number;
+      remaining: number;
+      reset: number; // timestamp
+    }
     // Index signature to allow bracket notation access with string keys
     [key: string | symbol]: any;
   }

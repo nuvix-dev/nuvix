@@ -9,10 +9,13 @@ import {
   DatabaseRole,
   PROJECT_DB_CLIENT,
   PROJECT_PG,
+  Schemas,
+  type Schema,
 } from '@nuvix/utils';
 import type { ProjectsDoc, UsersDoc } from '@nuvix/utils/types';
 import { CoreService } from '@nuvix/core/core.service.js';
 import type { Client } from 'pg';
+import { Auth } from '@nuvix/core/helper';
 
 @Injectable()
 export class SchemaHook implements Hook {
@@ -43,12 +46,23 @@ export class SchemaHook implements Hook {
       ); // TODO: improve message
     }
 
-    const schemaId =
-      (request.params as { schemaId: string | undefined }).schemaId ?? 'public';
+    const schemaId = (request.params as { schemaId: string | undefined })
+      .schemaId;
     if (schemaId === undefined) return;
-    const schema = await pg.getSchema(schemaId);
-    // TODO: we have to throw error if schema not enabled based on app mode
+    const schema = await pg
+      .table<Schema>('schemas')
+      .withSchema(Schemas.System)
+      .where('name', schemaId)
+      .first();
+
     if (schema) {
+      if (!Auth.isTrustedActor) {
+        if (!schema.enabled) {
+          throw new Exception(Exception.SCHEMA_NOT_FOUND);
+        }
+        // TODO: Check if schema is publicly accessible
+      }
+
       const pg = this.coreService.getProjectPg(
         client,
         new DataSourceContext({

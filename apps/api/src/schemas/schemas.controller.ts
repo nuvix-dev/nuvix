@@ -4,6 +4,7 @@ import {
   Delete,
   Get,
   Head,
+  HttpCode,
   HttpStatus,
   Logger,
   Param,
@@ -163,7 +164,8 @@ export class SchemasController {
 
   // }
 
-  @Post(['fn/:functionId', 'functions/:functionId'])
+  @Post(['fn/:functionId', 'rpc/:functionId'])
+  @HttpCode(HttpStatus.OK)
   async callFunction(
     @Param('functionId') functionName: string,
     @CurrentSchema() pg: DataSource,
@@ -173,7 +175,7 @@ export class SchemasController {
     limit?: number,
     @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
     offset?: number,
-    @Body() args: Record<string, any> = {},
+    @Body() args: Record<string, any> | any[] = [],
   ) {
     return this.schemasService.callFunction({
       pg,

@@ -673,3 +673,8 @@ export enum DatabaseRole {
   ANON = 'anon',
   AUTHENTICATED = 'authenticated',
 }
+
+export enum RouteContext {
+  AUDIT = 'audit',
+  RATE_LIMIT = 'rateLimit',
+}

@@ -36,6 +36,7 @@ import { Audit } from '@nuvix/audit';
 import { AppConfigService } from './config.service.js';
 import { CoreService } from './core.service.js';
 import { ConfigModule } from '@nestjs/config';
+import { RatelimitService } from './rate-limit.service.js';
 
 export function configurePgTypeParsers() {
   const types = pg.types;
@@ -110,6 +111,7 @@ export interface GetProjectPGFnFn {
       useClass: AppConfigService,
     },
     CoreService,
+    RatelimitService,
     {
       provide: GET_PROJECT_DB_CLIENT,
       useFactory: (config: AppConfigService): GetProjectDbClientFn => {
@@ -268,6 +270,7 @@ export interface GetProjectPGFnFn {
   exports: [
     AppConfigService,
     CoreService,
+    RatelimitService,
     GET_PROJECT_DB_CLIENT,
     DB_FOR_PLATFORM,
     AUDITS_FOR_PLATFORM,
