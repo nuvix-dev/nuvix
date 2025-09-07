@@ -43,8 +43,7 @@ import {
 
 import { CreateTokenDTO } from './DTO/token.dto';
 import { CreateJwtDTO } from './DTO/jwt.dto';
-import { ParseQueryPipe } from '@nuvix/core/pipes/query.pipe';
-import type { Database, Doc, Query as Queries } from '@nuvix-tech/db';
+import type { Database, Query as Queries } from '@nuvix-tech/db';
 import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard';
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor';
 import type { ProjectsDoc } from '@nuvix/utils/types';

@@ -71,10 +71,10 @@ import { apply as applySwiftTemplate } from './templates/swift';
 import { PgMetaExceptionFilter } from './extra/exception.filter';
 import { ParseComaStringPipe } from '@nuvix/core/pipes/string-coma.pipe';
 import { Exception } from '@nuvix/core/extend/exception';
-import { ProjectGuard } from '@nuvix/core/resolvers/guards';
+import { AuthGuard, ProjectGuard } from '@nuvix/core/resolvers/guards';
 
 @Controller({ path: 'database', version: ['1'] })
-@UseGuards(ProjectGuard)
+@UseGuards(ProjectGuard, AuthGuard)
 @UseFilters(PgMetaExceptionFilter)
 export class PgMetaController {
   @Post('query')
