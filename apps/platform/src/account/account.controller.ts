@@ -30,7 +30,6 @@ import {
 import { Query as Queries } from '@nuvix-tech/db';
 
 import { AuthGuard, Public } from '@nuvix/core/resolvers/guards/auth.guard';
-import { ParseQueryPipe } from '@nuvix/core/pipes/query.pipe';
 import { ConsoleInterceptor } from '@nuvix/core/resolvers/interceptors/console.interceptor';
 import { Exception } from '@nuvix/core/extend/exception';
 import { LocaleTranslator } from '@nuvix/core/helper';
@@ -84,7 +83,7 @@ export class AccountController {
   @Public()
   @Post()
   @Scope('sessions.create')
-  @ResModel(Models.USER)
+  @ResModel(Models.ACCOUNT)
   @Throttle(10)
   @AuditEvent('user.create', {
     resource: 'user/{res.$id}',
@@ -107,7 +106,7 @@ export class AccountController {
 
   @Get()
   @Scope('account')
-  @ResModel(Models.USER)
+  @ResModel(Models.ACCOUNT)
   async getAccount(@User() user: UsersDoc) {
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND);
@@ -412,7 +411,7 @@ export class AccountController {
 
   @Patch('name')
   @Scope('account')
-  @ResModel(Models.USER)
+  @ResModel(Models.ACCOUNT)
   @AuditEvent('user.update', 'user/{res.$id}')
   async updateName(@User() user: UsersDoc, @Body() { name }: UpdateNameDTO) {
     return this.accountService.updateName(user, name);
@@ -420,7 +419,7 @@ export class AccountController {
 
   @Patch('password')
   @Scope('account')
-  @ResModel(Models.USER)
+  @ResModel(Models.ACCOUNT)
   @AuditEvent('user.update', 'user/{res.$id}')
   async updatePassword(
     @User() user: UsersDoc,
@@ -431,7 +430,7 @@ export class AccountController {
 
   @Patch('email')
   @Scope('account')
-  @ResModel(Models.USER)
+  @ResModel(Models.ACCOUNT)
   @AuditEvent('user.update', 'user/{res.$id}')
   async updateEmail(
     @User() user: UsersDoc,
@@ -442,7 +441,7 @@ export class AccountController {
 
   @Patch('status')
   @Scope('account')
-  @ResModel(Models.USER)
+  @ResModel(Models.ACCOUNT)
   @AuditEvent('user.update', 'user/{res.$id}')
   async updateStatus(
     @User() user: UsersDoc,
@@ -599,7 +598,7 @@ export class AccountController {
     resource: 'user/{res.$id}',
     userId: '{res.$id}',
   })
-  @ResModel(Models.USER)
+  @ResModel(Models.ACCOUNT)
   async verifyMfaAuthenticator(
     @Param() { type }: MfaAuthenticatorTypeParamDTO,
     @Body() { otp }: VerifyMfaAuthenticatorDTO,

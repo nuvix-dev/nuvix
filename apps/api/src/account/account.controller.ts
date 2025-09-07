@@ -100,7 +100,7 @@ export class AccountController {
   @Scope('sessions.create')
   @Label('res.status', 'CREATED')
   @Label('res.type', 'JSON')
-  @ResModel(Models.USER)
+  @ResModel(Models.ACCOUNT)
   @Throttle(10)
   @AuditEvent('user.create', {
     resource: 'user/{res.$id}',
@@ -127,7 +127,7 @@ export class AccountController {
   @Scope('account')
   @Label('res.status', 'OK')
   @Label('res.type', 'JSON')
-  @ResModel(Models.USER)
+  @ResModel(Models.ACCOUNT)
   async getAccount(@User() user: UsersDoc) {
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND);
@@ -687,7 +687,7 @@ export class AccountController {
 
   @Patch('name')
   @Scope('account')
-  @ResModel(Models.USER)
+  @ResModel(Models.ACCOUNT)
   @AuditEvent('user.update', 'user/{res.$id}')
   @Sdk({
     name: 'updateName',
@@ -703,7 +703,7 @@ export class AccountController {
   @Patch('password')
   @Scope('account')
   @Throttle(10)
-  @ResModel(Models.USER)
+  @ResModel(Models.ACCOUNT)
   @AuditEvent('user.update', 'user/{res.$id}')
   @Sdk({
     name: 'updatePassword',
@@ -727,7 +727,7 @@ export class AccountController {
   @Scope('account')
   @Label('res.status', 'OK')
   @Label('res.type', 'JSON')
-  @ResModel(Models.USER)
+  @ResModel(Models.ACCOUNT)
   @AuditEvent('user.update', 'user/{res.$id}')
   async updateEmail(
     @AuthDatabase() db: Database,
@@ -739,7 +739,7 @@ export class AccountController {
 
   @Patch('phone')
   @Scope('account')
-  @ResModel(Models.USER)
+  @ResModel(Models.ACCOUNT)
   @AuditEvent('user.update', 'user/{res.$id}')
   @Sdk({
     name: 'updatePhone',
@@ -761,7 +761,7 @@ export class AccountController {
 
   @Patch('status')
   @Scope('account')
-  @ResModel(Models.USER)
+  @ResModel(Models.ACCOUNT)
   @AuditEvent('user.update', 'user/{res.$id}')
   @Sdk({
     name: 'updateStatus',
@@ -1029,7 +1029,7 @@ export class AccountController {
     resource: 'user/{res.$id}',
     userId: '{res.$id}',
   })
-  @ResModel(Models.USER)
+  @ResModel(Models.ACCOUNT)
   @Sdk({
     name: 'updateMfaAuthenticator',
   })

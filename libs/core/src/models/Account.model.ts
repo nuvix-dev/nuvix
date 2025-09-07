@@ -6,17 +6,17 @@ export class AccountModel extends UserModel {
   /**
    * Hashed user password.
    */
-  declare password?: string;
+  @Exclude() declare password?: string;
   /**
    * Password hashing algorithm.
    */
-  declare hash?: string;
+  @Exclude() declare hash?: string;
   /**
    * Password hashing algorithm configuration.
    */
-  declare hashOptions?: object;
+  @Exclude() declare hashOptions?: object;
 
-  declare mfaRecoveryCodes: string[];
+  @Exclude() declare mfaRecoveryCodes: string[];
 
   constructor(data: Partial<AccountModel>) {
     super(data);
