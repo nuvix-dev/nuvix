@@ -1,11 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Context, SERVER_CONFIG } from '@nuvix/utils';
+import { Context } from '@nuvix/utils';
 import { Hook } from '../../server/hooks/interface';
 import {
   addOriginToVaryHeader,
   addAccessControlRequestHeadersToVaryHeader,
 } from '@nuvix/core/helper/vary.helper';
 import { ProjectsDoc } from '@nuvix/utils/types';
+import { AppConfigService } from '@nuvix/core/config.service';
+import { Origin } from '@nuvix/core/validators/network/origin';
 
 interface CorsOptions {
   methods: string[];
@@ -23,26 +25,28 @@ interface CorsOptions {
 export class CorsHook implements Hook {
   private readonly logger = new Logger(CorsHook.name);
 
-  private readonly defaultOptions: CorsOptions = {
-    methods: SERVER_CONFIG.methods,
-    allowedHeaders: SERVER_CONFIG.allowedHeaders,
-    exposedHeaders: SERVER_CONFIG.exposedHeaders,
-    credentials: SERVER_CONFIG.credentials,
-    maxAge: SERVER_CONFIG.maxAge || 3600, // Default to 1 hour if not set
-    preflight: true,
-    strictPreflight: true,
-  };
+  constructor(private readonly appConfig: AppConfigService) {}
+
+  private get defaultOptions(): CorsOptions {
+    const config = this.appConfig.get('server');
+    return {
+      methods: config.methods,
+      allowedHeaders: config.allowedHeaders,
+      exposedHeaders: config.exposedHeaders,
+      credentials: config.credentials,
+      maxAge: 3600,
+      preflight: true,
+      strictPreflight: true,
+    };
+  }
 
   async onRequest(req: NuvixRequest, reply: NuvixRes): Promise<void> {
     try {
       const host = req.host;
       const project = req[Context.Project] as ProjectsDoc;
-      const isConsoleRequest =
-        project.getId() === 'console' || host === SERVER_CONFIG.host;
 
       const origin = req.headers.origin;
-      this.logger.log(`Origin: ${origin}`);
-      const validOrigin = this.determineOrigin(origin, isConsoleRequest);
+      const validOrigin = this.determineOrigin(origin, project, host);
       const options = { ...this.defaultOptions, origin: validOrigin };
 
       this.addCorsHeaders(reply, origin, options);
@@ -59,17 +63,95 @@ export class CorsHook implements Hook {
 
   private determineOrigin(
     origin: string | undefined,
-    isConsole: boolean,
+    project: ProjectsDoc,
+    host: string,
   ): string | false {
+    const serverConfig = this.appConfig.get('server');
+    const isConsoleRequest =
+      project.getId() === 'console' || host === serverConfig.host;
+
+    if (!origin) return false; // No origin provided
+
+    if (isConsoleRequest) {
+      return this.matchOrigin(
+        origin,
+        this.appConfig.get('server').allowedOrigins,
+        host,
+      )
+        ? host
+        : false;
+    }
+
+    const validator = new Origin(project.get('platforms', []));
+    if (validator.$valid(origin)) {
+      return host; // TODO: validate against project-specific allowed origins
+    }
+
+    return false;
+  }
+
+  private matchOrigin(
+    origin: string,
+    allowedOrigins: string[],
+    requestHost: string,
+  ): boolean {
     if (!origin) {
-      this.logger.warn('CORS: No origin provided');
-      return false; // No origin provided
+      return false;
     }
-    if (isConsole) {
-      return SERVER_CONFIG.allowedOrigins.includes(origin) ? origin : 'null';
+
+    // Allow all origins if wildcard is present
+    if (allowedOrigins.includes('*')) {
+      return true;
     }
-    // TODO: handle dynamic CORS validation
-    return false; // Default fallback when not a console request
+
+    // Exact match
+    if (allowedOrigins.includes(origin)) {
+      return true;
+    }
+
+    try {
+      const originUrl = new URL(origin);
+      const originHostname = originUrl.hostname;
+
+      // Check if origin hostname matches request host
+      if (originHostname === requestHost) {
+        return true;
+      }
+
+      // Check wildcard patterns
+      for (const allowedOrigin of allowedOrigins) {
+        if (allowedOrigin.startsWith('*.')) {
+          const wildcardDomain = allowedOrigin.slice(2); // Remove '*.'
+
+          // Check if origin ends with the wildcard domain
+          if (originHostname.endsWith(wildcardDomain)) {
+            // Ensure it's a proper subdomain match (not partial match)
+            const beforeDomain = originHostname.slice(
+              0,
+              -wildcardDomain.length,
+            );
+            if (beforeDomain === '' || beforeDomain.endsWith('.')) {
+              return true;
+            }
+          }
+        } else if (allowedOrigin.includes('*')) {
+          // Handle other wildcard patterns using regex
+          const regexPattern = allowedOrigin
+            .replace(/[.*+?^${}()|[\]\\]/g, '\\$&') // Escape special chars
+            .replace(/\\\*/g, '.*'); // Replace escaped * with .*
+
+          const regex = new RegExp(`^${regexPattern}$`, 'i');
+          if (regex.test(origin)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    } catch (error) {
+      this.logger.warn(`Invalid origin URL: ${origin}`);
+      return false;
+    }
   }
 
   private addCorsHeaders(
@@ -79,10 +161,6 @@ export class CorsHook implements Hook {
   ) {
     if (origin) {
       reply.raw.setHeader('Access-Control-Allow-Origin', origin);
-    } else {
-      this.logger.log(
-        'CORS: Origin not allowed, skipping Access-Control-Allow-Origin header',
-      );
     }
 
     if (options.credentials) {
@@ -113,7 +191,10 @@ export class CorsHook implements Hook {
     options: typeof this.defaultOptions,
   ) {
     const origin = req.headers.origin;
-    if (!origin || !SERVER_CONFIG.allowedOrigins.includes(origin)) {
+    if (
+      !origin ||
+      !this.appConfig.get('server').allowedOrigins.includes(origin)
+    ) {
       reply
         .status(403)
         .header('Content-Type', 'text/plain')

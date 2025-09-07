@@ -55,8 +55,9 @@ export class ProjectHook implements Hook {
 
     if (!project.empty()) {
       const environment = project.get('environment');
+      const isdevProject = this.appConfig.get('app').devProject === projectId;
 
-      if (environment === 'dev') {
+      if (environment === 'dev' && !isdevProject) {
         const envToken = await Authorization.skip(() =>
           this.db.findOne('envtokens', qb => {
             qb = qb.equal('projectInternalId', project.getSequence());
@@ -84,6 +85,18 @@ export class ProjectHook implements Hook {
         dbConfig.pool['port'] = metadata['pool_port'];
         dbConfig.postgres['host'] = metadata['host'];
         dbConfig.postgres['port'] = metadata['port'];
+
+        project.set('database', dbConfig);
+      } else if (isdevProject) {
+        // Override the DB config for dev project to always use the main config
+        // this is for easier local development and testing
+        const dbOptions = this.appConfig.getDatabaseConfig().postgres;
+        const dbConfig = project.get('database') as unknown as DatabaseConfig;
+
+        dbConfig.postgres.host = dbOptions.host;
+        dbConfig.postgres.port = dbOptions.port;
+        dbConfig.pool.host = dbOptions.host;
+        dbConfig.pool.port = dbOptions.port;
 
         project.set('database', dbConfig);
       }

@@ -20,7 +20,6 @@ import {
   IS_PRODUCTION,
   LOG_LEVELS,
   PROJECT_ROOT,
-  SERVER_CONFIG,
 } from '@nuvix/utils';
 import { Authorization, Role, storage } from '@nuvix-tech/db';
 import cookieParser from '@fastify/cookie';
@@ -56,16 +55,6 @@ async function bootstrap() {
       safe: true,
       level: 'error',
     },
-  });
-
-  adapter.enableCors({
-    origin: SERVER_CONFIG.allowedOrigins,
-    methods: SERVER_CONFIG.methods,
-    allowedHeaders: SERVER_CONFIG.allowedHeaders,
-    exposedHeaders: SERVER_CONFIG.exposedHeaders,
-    maxAge: SERVER_CONFIG.maxAge,
-    credentials: SERVER_CONFIG.credentials,
-    preflightContinue: false,
   });
 
   const app = await NuvixFactory.create<NestFastifyApplication>(

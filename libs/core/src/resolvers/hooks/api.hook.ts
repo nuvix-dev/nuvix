@@ -84,7 +84,6 @@ export class ApiHook implements Hook {
           password: '',
           name: apiKey.getName(),
         }) as unknown as UsersDoc;
-        // $queueForAudits -> setUser($user);
       }
 
       if (apiKey.getType() === ApiKey.STANDARD) {

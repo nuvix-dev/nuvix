@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Authorization, Database, Query } from '@nuvix-tech/db';
 import { Exception } from '@nuvix/core/extend/exception';
-import { Context, SERVER_CONFIG } from '@nuvix/utils';
+import { Context } from '@nuvix/utils';
 import { Hook } from '../../server/hooks/interface';
 import { ProjectsDoc } from '@nuvix/utils/types';
 import { CoreService } from '@nuvix/core/core.service.js';
@@ -19,6 +19,10 @@ export class HostHook implements Hook {
   }
 
   async onRequest(req: NuvixRequest, reply: NuvixRes): Promise<void> {
+    if (!this.appConfig.get('app').isProduction) {
+      return;
+    }
+
     const serverConfig = this.appConfig.get('server');
     const host = req.host ?? serverConfig.host;
     const project = req[Context.Project] as ProjectsDoc;

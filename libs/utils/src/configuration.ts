@@ -27,6 +27,7 @@ export default () => ({
         (process.env['APP_PROJECTS_ALLOWED_PROD_CREATE'] ?? 'false') === 'true',
       disabled: (process.env['APP_PROJECTS_DISABLED'] ?? 'false') === 'true',
     },
+    devProject: process.env['APP_DEV_PROJECT'],
   },
 
   assets: {
@@ -55,13 +56,7 @@ export default () => ({
     methods: ['GET', 'PUT', 'PATCH', 'POST', 'DELETE'],
     allowedOrigins: (process.env['CORS_ORIGIN'] ?? '')
       .split(',')
-      .map(origin => {
-        origin = origin.trim();
-        if (origin.includes('*')) {
-          return new RegExp('^' + origin.replace(/\*/g, '.*') + '$');
-        }
-        return origin;
-      }),
+      .map(origin => origin.trim()),
     allowedHeaders: [
       'Content-Type',
       'Content-Length',

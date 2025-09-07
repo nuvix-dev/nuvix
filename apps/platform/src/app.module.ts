@@ -17,7 +17,12 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 import { JWT_SECRET, QueueFor } from '@nuvix/utils';
-import { HostHook, AuthHook, ApiHook } from '@nuvix/core/resolvers/hooks';
+import {
+  HostHook,
+  AuthHook,
+  ApiHook,
+  CorsHook,
+} from '@nuvix/core/resolvers/hooks';
 import { ProjectHook } from './resolvers/hooks/project.hook';
 import { PgMetaController, PgMetaModule } from '@nuvix/pg-meta';
 import { UsersController } from './users/users.controller';
@@ -51,7 +56,7 @@ import { CliController } from './cli/cli.controller';
             removeOnComplete: true,
             removeOnFail: true,
           },
-          prefix: 'nuvix', // TODO: we have to include a instance key that should be unique per app instance
+          prefix: 'nuvix', // TODO: we have to include a instance key that must be unique per app instance
         };
       },
       inject: [AppConfigService],
@@ -98,16 +103,8 @@ export class AppModule implements NestModule, OnModuleInit {
         PgMetaController,
         CliController,
       )
-      .apply(HostHook)
-      .forRoutes(
-        UsersController,
-        AccountController,
-        OrganizationsController,
-        ProjectController,
-        ProjectsController,
-        PgMetaController,
-        CliController,
-      )
+      .apply(CorsHook, HostHook)
+      .forRoutes('*')
       .apply(AuthHook, ApiHook, AuditHook)
       .forRoutes(
         UsersController,
