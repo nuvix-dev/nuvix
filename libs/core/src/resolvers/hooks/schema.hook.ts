@@ -3,6 +3,7 @@ import { DataSource, Context as DataSourceContext } from '@nuvix/pg';
 import { Exception } from '@nuvix/core/extend/exception';
 import { Hook } from '@nuvix/core/server';
 import {
+  AppMode,
   Context,
   CURRENT_SCHEMA_DB,
   CURRENT_SCHEMA_PG,
@@ -27,6 +28,7 @@ export class SchemaHook implements Hook {
       throw new Exception(Exception.PROJECT_NOT_FOUND);
     }
     const user: UsersDoc = request[Context.User];
+    const mode: AppMode = request[Context.Mode];
     let role = DatabaseRole.POSTGRES;
     const client = request[PROJECT_DB_CLIENT] as Client;
     const pg = request[PROJECT_PG] as DataSource;
@@ -37,13 +39,15 @@ export class SchemaHook implements Hook {
       role = DatabaseRole.AUTHENTICATED;
     }
 
-    try {
-      await client.query(`SET ROLE ${role}`);
-    } catch (e) {
-      throw new Exception(
-        Exception.GENERAL_SERVER_ERROR,
-        'Unable to set request role.',
-      ); // TODO: improve message
+    if (mode !== AppMode.ADMIN) {
+      try {
+        await client.query(`SET ROLE ${role}`);
+      } catch (e) {
+        throw new Exception(
+          Exception.GENERAL_SERVER_ERROR,
+          'Unable to set request role.',
+        ); // TODO: improve message
+      }
     }
 
     const schemaId = (request.params as { schemaId: string | undefined })
