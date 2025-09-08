@@ -55,7 +55,7 @@ async function bootstrap() {
       },
       exposeHeadRoutes: false,
       logger: {
-        enabled: true,
+        enabled: false,
         edgeLimit: 100,
         msgPrefix: '[Nuvix] ',
         safe: true,
@@ -146,7 +146,9 @@ async function bootstrap() {
     try {
       // @ts-expect-error -- Ignore
       return (await import('./metadata')).default;
-    } catch { return {}; }
+    } catch {
+      return {};
+    }
   });
   openApiSetup(app);
 

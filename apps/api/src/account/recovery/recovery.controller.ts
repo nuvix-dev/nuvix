@@ -24,7 +24,7 @@ import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.intercept
 import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor';
 import { CreateRecoveryDTO, UpdateRecoveryDTO } from './DTO/recovery.dto';
 import type { ProjectsDoc, UsersDoc } from '@nuvix/utils/types';
-import type { RecoveryService } from './recovery.service';
+import { RecoveryService } from './recovery.service';
 
 @Controller({ version: ['1'], path: 'account/recovery' })
 @UseGuards(ProjectGuard)

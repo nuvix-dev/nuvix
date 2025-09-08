@@ -20,7 +20,13 @@ import { TargetsService } from './targets/targets.service';
 import { ApiHook, AuditHook, AuthHook, StatsHook } from '@nuvix/core/resolvers';
 
 @Module({
-  imports: [BullModule.registerQueue({ name: QueueFor.MAILS })],
+  imports: [
+    BullModule.registerQueue(
+      { name: QueueFor.MAILS },
+      { name: QueueFor.STATS },
+      { name: QueueFor.AUDITS },
+    ),
+  ],
   controllers: [
     AccountController,
     IdentityController,
