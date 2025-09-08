@@ -39,17 +39,6 @@ export class SchemaHook implements Hook {
       role = DatabaseRole.AUTHENTICATED;
     }
 
-    if (mode !== AppMode.ADMIN) {
-      try {
-        await client.query(`SET ROLE ${role}`);
-      } catch (e) {
-        throw new Exception(
-          Exception.GENERAL_SERVER_ERROR,
-          'Unable to set request role.',
-        ); // TODO: improve message
-      }
-    }
-
     const schemaId = (request.params as { schemaId: string | undefined })
       .schemaId;
     if (schemaId === undefined) return;
@@ -80,6 +69,17 @@ export class SchemaHook implements Hook {
           schema: schema.name,
         });
         request[CURRENT_SCHEMA_DB] = db;
+      } else {
+        if (mode !== AppMode.ADMIN) {
+          try {
+            await client.query(`SET ROLE ${role}`);
+          } catch (e) {
+            throw new Exception(
+              Exception.GENERAL_SERVER_ERROR,
+              'Unable to set request role.',
+            ); // TODO: improve message
+          }
+        }
       }
     } else {
       throw new Exception(Exception.SCHEMA_NOT_FOUND);
