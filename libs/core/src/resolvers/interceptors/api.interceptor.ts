@@ -5,7 +5,7 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
-import { Context, CORE_SCHEMA_DB, MetricFor } from '@nuvix/utils';
+import { Context, CORE_SCHEMA_DB, MetricFor, QueueFor } from '@nuvix/utils';
 import { Authorization, Database, Events, Doc } from '@nuvix-tech/db';
 import { Reflector } from '@nestjs/core';
 import { Auth } from '../../helper/auth.helper';
@@ -16,11 +16,13 @@ import { Scopes } from '@nuvix/core/config/roles';
 import type { ProjectsDoc, SessionsDoc, UsersDoc } from '@nuvix/utils/types';
 import type { Queue } from 'bullmq';
 import { StatsQueueJob, type StatsQueueOptions } from '../queues';
+import { InjectQueue } from '@nestjs/bullmq';
 
 @Injectable()
 export class ApiInterceptor implements NestInterceptor {
   constructor(
     private readonly reflector: Reflector,
+    @InjectQueue(QueueFor.STATS)
     private readonly statsQueue: Queue<
       StatsQueueOptions,
       unknown,

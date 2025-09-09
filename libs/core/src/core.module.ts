@@ -23,6 +23,7 @@ import {
   APP_STORAGE_UPLOADS,
   AUDITS_FOR_PLATFORM,
   configuration,
+  QueueFor,
 } from '@nuvix/utils';
 import { Adapter, Database, StructureValidator } from '@nuvix-tech/db';
 import { Context, DataSource } from '@nuvix/pg';
@@ -37,6 +38,7 @@ import { AppConfigService } from './config.service.js';
 import { CoreService } from './core.service.js';
 import { ConfigModule } from '@nestjs/config';
 import { RatelimitService } from './rate-limit.service.js';
+import { BullModule } from '@nestjs/bullmq';
 
 export function configurePgTypeParsers() {
   const types = pg.types;
@@ -104,6 +106,11 @@ export interface GetProjectPGFnFn {
       isGlobal: true,
       load: [configuration],
     }),
+    BullModule.registerQueue(
+      { name: QueueFor.MAILS },
+      { name: QueueFor.STATS },
+      { name: QueueFor.AUDITS },
+    ),
   ],
   providers: [
     {

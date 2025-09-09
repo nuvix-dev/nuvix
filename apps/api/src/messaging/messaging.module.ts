@@ -7,9 +7,12 @@ import { QueueFor } from '@nuvix/utils';
 
 @Module({
   imports: [
-    BullModule.registerQueue({
-      name: QueueFor.MESSAGING,
-    }),
+    BullModule.registerQueue(
+      {
+        name: QueueFor.MESSAGING,
+      },
+      { name: QueueFor.STATS },
+    ),
   ],
   controllers: [MessagingController],
   providers: [MessagingService, MessagingQueue],

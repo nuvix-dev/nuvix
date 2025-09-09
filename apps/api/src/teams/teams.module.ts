@@ -5,7 +5,12 @@ import { BullModule } from '@nestjs/bullmq';
 import { QueueFor } from '@nuvix/utils';
 
 @Module({
-  imports: [BullModule.registerQueue({ name: QueueFor.MAILS })],
+  imports: [
+    BullModule.registerQueue(
+      { name: QueueFor.MAILS },
+      { name: QueueFor.STATS },
+    ),
+  ],
   controllers: [TeamsController],
   providers: [TeamsService],
 })

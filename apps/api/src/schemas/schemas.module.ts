@@ -4,9 +4,14 @@ import { SchemasController } from './schemas.controller';
 import { SchemaHook } from '@nuvix/core/resolvers/hooks/schema.hook';
 import { CollectionsModule } from './collections/collections.module';
 import { CollectionsController } from './collections/collections.controller';
+import { BullModule } from '@nestjs/bullmq';
+import { QueueFor } from '@nuvix/utils';
 
 @Module({
-  imports: [CollectionsModule],
+  imports: [
+    CollectionsModule,
+    BullModule.registerQueue({ name: QueueFor.STATS }),
+  ],
   controllers: [SchemasController],
   providers: [SchemasService],
 })

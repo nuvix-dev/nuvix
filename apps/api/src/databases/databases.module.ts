@@ -9,13 +9,16 @@ import { QueueFor } from '@nuvix/utils';
   controllers: [DatabasesController],
   providers: [DatabasesService, DatabasesQueue],
   imports: [
-    BullModule.registerQueue({
-      name: QueueFor.DATABASES,
-      defaultJobOptions: {
-        removeOnComplete: true,
-        attempts: 2,
+    BullModule.registerQueue(
+      {
+        name: QueueFor.DATABASES,
+        defaultJobOptions: {
+          removeOnComplete: true,
+          attempts: 2,
+        },
       },
-    }),
+      { name: QueueFor.STATS },
+    ),
   ],
 })
 export class DatabasesModule {}

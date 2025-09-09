@@ -7,9 +7,12 @@ import { CollectionsService } from './collections.service';
 
 @Module({
   imports: [
-    BullModule.registerQueue({
-      name: QueueFor.COLLECTIONS,
-    }),
+    BullModule.registerQueue(
+      {
+        name: QueueFor.COLLECTIONS,
+      },
+      { name: QueueFor.STATS },
+    ),
   ],
   controllers: [CollectionsController],
   providers: [CollectionsService, CollectionsQueue],
