@@ -21,7 +21,6 @@ import {
   ApiHook,
   AuditHook,
   AuthHook,
-  CorsHook,
   HostHook,
   ProjectHook,
   StatsHook,
@@ -55,7 +54,7 @@ import {
 export class AccountModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(ProjectHook, HostHook, CorsHook)
+      .apply(ProjectHook, HostHook)
       .forRoutes(
         AccountController,
         IdentityController,

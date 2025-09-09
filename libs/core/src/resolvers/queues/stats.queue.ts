@@ -19,7 +19,7 @@ import { AppConfigService } from '@nuvix/core/config.service';
 })
 export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
   private static readonly BATCH_SIZE = 1000;
-  private static readonly BATCH_INTERVAL_MS = 1000;
+  private static readonly BATCH_INTERVAL_MS = 5000;
   private readonly logger = new Logger(StatsQueue.name);
   private buffer = new Map<number, StatsBuffer>();
   private interval!: NodeJS.Timeout;

@@ -230,6 +230,18 @@ export class CoreService implements OnModuleDestroy {
     return { client, dbForProject };
   }
 
+  async createProjectPgClient(project: ProjectsDoc) {
+    const dbOptions = project.get('database') as unknown as DatabaseConfig;
+    const client = await this.createProjectDbClient(project.getId(), {
+      database: DEFAULT_DATABASE,
+      user: DatabaseRole.ADMIN,
+      password: dbOptions?.pool?.password,
+      port: dbOptions?.pool?.port,
+      host: dbOptions?.pool?.host,
+    });
+    return client;
+  }
+
   async releaseDatabaseClient(client?: Client) {
     try {
       if (client) {

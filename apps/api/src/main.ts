@@ -34,6 +34,7 @@ import { ErrorFilter } from '@nuvix/core/filters';
 import { AppConfigService } from '@nuvix/core';
 import { openApiSetup } from './core';
 import { Auth } from '@nuvix/core/helper/auth.helper.js';
+import * as crypto from 'crypto';
 
 config({
   path: [
@@ -95,6 +96,9 @@ async function bootstrap() {
   );
 
   const fastify = app.getHttpAdapter().getInstance();
+  fastify.setGenReqId((_req: any) => {
+    return crypto.randomUUID() as string;
+  });
   const config = app.get(AppConfigService);
 
   fastify.addHook('onRequest', (req, res, done) => {

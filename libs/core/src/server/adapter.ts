@@ -46,52 +46,68 @@ export class NuvixAdapter extends FastifyAdapter {
     };
   }
 
+  private hookRegistry = new Map<
+    string, // key = hookName + normalizedPath
+    Function[]
+  >();
+
   private applyHook(
     regexp: RegExp,
     hookName: (typeof HookMethods)[number],
     callback: Function,
     normalizedPath: string,
   ) {
-    // Register a hook for the specific lifecycle hook
-    this.instance.addHook(hookName, async (...args: any[]) => {
-      const request: NuvixRequest = args[0];
-      const reply: NuvixRes = args[1];
+    const key = `${hookName}:${normalizedPath}`;
+    if (!this.hookRegistry.has(key)) {
+      this.hookRegistry.set(key, []);
+      // Register a single Fastify hook for this key
+      this.instance.addHook(hookName, async (...args: any[]) => {
+        const request: NuvixRequest = args[0];
+        const reply: NuvixRes = args[1];
 
-      const queryParamsIndex = request.originalUrl.indexOf('?');
-      const pathname =
-        queryParamsIndex >= 0
-          ? request.originalUrl.slice(0, queryParamsIndex)
-          : request.originalUrl;
+        const queryParamsIndex = request.originalUrl.indexOf('?');
+        const pathname =
+          queryParamsIndex >= 0
+            ? request.originalUrl.slice(0, queryParamsIndex)
+            : request.originalUrl;
 
-      if (!regexp.exec(pathname + '/') && normalizedPath) {
-        return Promise.resolve();
-      }
+        // Match the path
+        if (!regexp.exec(pathname + '/') && normalizedPath) {
+          return Promise.resolve();
+        }
 
-      const nextFn =
-        typeof args[args.length - 1] === 'function'
-          ? args[args.length - 1]
-          : (e: Error) => {
-              if (e) throw e;
-            };
-      const extra = args.slice(2, -1);
+        const nextFn =
+          typeof args[args.length - 1] === 'function'
+            ? args[args.length - 1]
+            : (e: Error) => {
+                if (e) throw e;
+              };
 
-      if (extra.length) {
-        request['hooks_args'] = {
-          ...request['hooks_args'],
-          [hookName]: { args: extra },
-        };
-      }
-      // TODO: handle sync hooks
-      switch (hookName) {
-        case 'preSerialization':
-        case 'onSend':
-        case 'onError':
-          // These hooks have (request, reply, payload, done) signature
-          return callback(request, reply, nextFn, ...extra);
-        default:
-          // Most hooks have (request, reply, done) signature
-          return callback(request, reply, nextFn);
-      }
-    });
+        const extra = args.slice(2, -1);
+        if (extra.length) {
+          request['hooks_args'] = {
+            ...request['hooks_args'],
+            [hookName]: { args: extra },
+          };
+        }
+
+        // Execute all registered callbacks in order
+        const fns = this.hookRegistry.get(key) ?? [];
+        for (const fn of fns) {
+          switch (hookName) {
+            case 'preSerialization':
+            case 'onSend':
+            case 'onError':
+              await fn(request, reply, nextFn, ...extra);
+              break;
+            default:
+              await fn(request, reply, nextFn);
+          }
+        }
+      });
+    }
+
+    // Add callback to the stack
+    this.hookRegistry.get(key)!.push(callback);
   }
 }

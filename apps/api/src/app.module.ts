@@ -51,6 +51,8 @@ import { CollectionsController } from './schemas/collections/collections.control
 import { Key } from '@nuvix/core/helper/key.helper';
 import { StatsQueue } from '@nuvix/core/resolvers/queues';
 import { AppConfigService } from '@nuvix/core';
+import { LogsHook } from '@nuvix/core/resolvers';
+import { ApiLogsQueue } from '@nuvix/core/resolvers/queues/logs.queue';
 
 @Module({
   imports: [
@@ -85,6 +87,7 @@ import { AppConfigService } from '@nuvix/core';
       { name: QueueFor.MAILS },
       { name: QueueFor.STATS },
       { name: QueueFor.AUDITS },
+      { name: QueueFor.LOGS },
     ),
     EventEmitterModule.forRoot({
       global: true,
@@ -107,7 +110,7 @@ import { AppConfigService } from '@nuvix/core';
     MessagingModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MailsQueue, AuditsQueue, StatsQueue],
+  providers: [AppService, MailsQueue, AuditsQueue, StatsQueue, ApiLogsQueue],
 })
 export class AppModule implements NestModule, OnModuleInit {
   constructor(private readonly jwtService: JwtService) {}
@@ -118,7 +121,7 @@ export class AppModule implements NestModule, OnModuleInit {
 
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(ProjectHook, HostHook, CorsHook)
+      .apply(ProjectHook, HostHook)
       .forRoutes(
         BaseController,
         UsersController,
@@ -131,6 +134,8 @@ export class AppModule implements NestModule, OnModuleInit {
         MessagingController,
         CollectionsController,
       )
+      .apply(CorsHook)
+      .forRoutes('*')
       .apply(AuthHook, ApiHook, StatsHook)
       .forRoutes(
         BaseController,
@@ -154,6 +159,8 @@ export class AppModule implements NestModule, OnModuleInit {
         StorageController,
         MessagingController,
         CollectionsController,
-      );
+      )
+      .apply(LogsHook)
+      .forRoutes('*');
   }
 }

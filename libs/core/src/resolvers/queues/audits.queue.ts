@@ -25,7 +25,7 @@ export class AuditsQueue
   implements OnModuleInit, OnModuleDestroy
 {
   private static readonly BATCH_SIZE = 1000; // Number of logs to process in one batch
-  private static readonly BATCH_INTERVAL_MS = 1000; // Interval in milliseconds to flush
+  private static readonly BATCH_INTERVAL_MS = 3000; // Interval in milliseconds to flush
   private readonly logger = new Logger(AuditsQueue.name);
   private buffer = new Map<number, AuditLogsBuffer>();
   private interval!: NodeJS.Timeout;

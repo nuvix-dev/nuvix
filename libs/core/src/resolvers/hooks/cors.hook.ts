@@ -43,7 +43,7 @@ export class CorsHook implements Hook {
   async onRequest(req: NuvixRequest, reply: NuvixRes): Promise<void> {
     try {
       const host = req.host;
-      const project = req[Context.Project] as ProjectsDoc;
+      const project: ProjectsDoc | null = req[Context.Project] ?? null;
 
       const origin = req.headers.origin;
       const validOrigin = this.determineOrigin(origin, project, host);
@@ -63,10 +63,12 @@ export class CorsHook implements Hook {
 
   private determineOrigin(
     origin: string | undefined,
-    project: ProjectsDoc,
+    project: ProjectsDoc | null,
     host: string,
   ): string | false {
     const serverConfig = this.appConfig.get('server');
+    if (!project || project.empty()) return false;
+
     const isConsoleRequest =
       project.getId() === 'console' || host === serverConfig.host;
 
@@ -159,8 +161,10 @@ export class CorsHook implements Hook {
     origin: string | undefined,
     options: CorsOptions,
   ) {
-    if (origin) {
+    if (options.origin && origin) {
       reply.raw.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+      reply.raw.setHeader('Access-Control-Allow-Origin', 'null');
     }
 
     if (options.credentials) {

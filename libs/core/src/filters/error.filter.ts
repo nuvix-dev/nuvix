@@ -117,8 +117,14 @@ export class ErrorFilter implements ExceptionFilter {
 
     message ??= (exception as any)?.message;
 
-    if (!this.appConfig.get('app').isProduction && status >= 500) {
+    if (status >= 500) {
       this.logger.error(exception);
+    }
+
+    request['error'] = { message, type, ...extra };
+
+    if (!this.appConfig.get('app').isProduction) {
+      extra['exception'] = (exception as any)?.stack;
     }
 
     response.status(status).send({
