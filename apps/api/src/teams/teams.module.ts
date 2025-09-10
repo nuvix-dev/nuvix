@@ -16,6 +16,7 @@ import { MembershipsService } from './memberships/memberships.service';
     BullModule.registerQueue(
       { name: QueueFor.MAILS },
       { name: QueueFor.STATS },
+      { name: QueueFor.AUDITS },
     ),
   ],
   controllers: [TeamsController, MembershipsController],

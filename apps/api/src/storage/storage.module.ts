@@ -12,7 +12,12 @@ import { FilesController } from './files/files.controller';
 import { FilesService } from './files/files.service';
 
 @Module({
-  imports: [BullModule.registerQueue({ name: QueueFor.STATS })],
+  imports: [
+    BullModule.registerQueue(
+      { name: QueueFor.STATS },
+      { name: QueueFor.AUDITS },
+    ),
+  ],
   controllers: [StorageController, FilesController],
   providers: [StorageService, FilesService],
 })

@@ -10,7 +10,10 @@ import { AuthHook, ApiHook, StatsHook, AuditHook } from '@nuvix/core/resolvers';
 @Module({
   imports: [
     CollectionsModule,
-    BullModule.registerQueue({ name: QueueFor.STATS }),
+    BullModule.registerQueue(
+      { name: QueueFor.STATS },
+      { name: QueueFor.AUDITS },
+    ),
   ],
   controllers: [SchemasController],
   providers: [SchemasService],

@@ -29,6 +29,7 @@ import { DocumentsService } from './documents/documents.service';
         name: QueueFor.COLLECTIONS,
       },
       { name: QueueFor.STATS },
+      { name: QueueFor.AUDITS },
     ),
   ],
   controllers: [

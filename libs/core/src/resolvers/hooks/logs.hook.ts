@@ -27,8 +27,8 @@ export class LogsHook implements Hook {
     const user = req[Context.User] ?? new Doc();
 
     if (
-      project.empty() ||
-      project.getId() === 'console' ||
+      project?.empty() ||
+      project?.getId() === 'console' ||
       Auth.isPlatformActor
     )
       return next();

@@ -19,11 +19,12 @@ import {
   APP_DEBUG_COLORS,
   APP_DEBUG_FORMAT,
   APP_STORAGE_TEMP,
+  Context,
   IS_PRODUCTION,
   LOG_LEVELS,
   PROJECT_ROOT,
 } from '@nuvix/utils';
-import { Authorization, Role, storage } from '@nuvix-tech/db';
+import { Authorization, Doc, Role, storage } from '@nuvix-tech/db';
 import cookieParser from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
 import QueryString from 'qs';
@@ -129,6 +130,7 @@ async function bootstrap() {
 
     req['hooks_args'] = { onRequest: { sizeRef: () => size } };
     storage.run(new Map(), () => {
+      req[Context.Project] = new Doc();
       Authorization.setDefaultStatus(true); // Set per-request default status
       Authorization.cleanRoles(); // Reset roles per request
       Authorization.setRole(Role.any().toString());

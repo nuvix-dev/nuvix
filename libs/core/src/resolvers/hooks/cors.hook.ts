@@ -77,8 +77,8 @@ export class CorsHook implements Hook {
     const serverConfig = this.appConfig.get('server');
     const isConsoleRequest =
       !project ||
-      project.empty() ||
-      project.getId() === 'console' ||
+      project?.empty() ||
+      project?.getId() === 'console' ||
       host === serverConfig.host;
 
     if (isConsoleRequest) {

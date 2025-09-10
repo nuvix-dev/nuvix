@@ -25,7 +25,10 @@ import { TargetsService } from './targets/targets.service';
   ],
   providers: [UsersService, SessionsService, TargetsService, MfaService],
   imports: [
-    BullModule.registerQueue({ name: QueueFor.STATS }),
+    BullModule.registerQueue(
+      { name: QueueFor.STATS },
+      { name: QueueFor.AUDITS },
+    ),
     JwtModule.register({
       secret: JWT_SECRET,
       signOptions: { expiresIn: '15m' },

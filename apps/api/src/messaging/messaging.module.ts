@@ -23,6 +23,7 @@ import { SubscribersService } from './topics/subscribers/subscribers.service';
         name: QueueFor.MESSAGING,
       },
       { name: QueueFor.STATS },
+      { name: QueueFor.AUDITS },
     ),
   ],
   controllers: [
