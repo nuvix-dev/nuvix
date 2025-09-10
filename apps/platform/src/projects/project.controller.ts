@@ -93,11 +93,9 @@ export class ProjectController {
             .limit(limit)
             .orderDesc('time'),
         );
-        console.log('results', results);
         stats[metric] = {};
         for (const result of results) {
           const time = result.get('time') as string;
-          console.log('time', time);
           const formatDate = StatsQueue.formatDate(period, new Date(time))!;
           stats[metric][formatDate] = {
             value: result.get('value'),

@@ -34,7 +34,7 @@ import { Auth } from '@nuvix/core/helper/auth.helper.js';
 config({
   path: [
     path.resolve(process.cwd(), '.env'),
-    path.resolve(process.cwd(), '.env.console'),
+    path.resolve(process.cwd(), '.env.platform'),
   ],
 });
 

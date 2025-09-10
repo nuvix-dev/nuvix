@@ -93,7 +93,7 @@ export class AppModule implements NestModule, OnModuleInit {
 
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(ProjectHook, CorsHook, HostHook)
+      .apply(ProjectHook, HostHook, CorsHook)
       .forRoutes('*')
       .apply(AuthHook, ApiHook, AuditHook)
       .forRoutes(
