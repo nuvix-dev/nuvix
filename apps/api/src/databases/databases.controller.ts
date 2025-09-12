@@ -18,6 +18,7 @@ import {
 import { DataSource } from '@nuvix/pg';
 import { Models } from '@nuvix/core/helper';
 import {
+  Namespace,
   Project,
   ProjectPg,
   ResModel,
@@ -31,8 +32,9 @@ import type { ProjectsDoc } from '@nuvix/utils/types';
 import { SchemaType } from '@nuvix/utils';
 import { ApiQuery } from '@nestjs/swagger';
 
-@Controller({ version: ['1'], path: 'databases' })
+@Controller({ version: ['1'], path: ['databases', 'database'] })
 @UseGuards(ProjectGuard)
+@Namespace('database')
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class DatabasesController {
   constructor(private readonly databaseService: DatabasesService) {}

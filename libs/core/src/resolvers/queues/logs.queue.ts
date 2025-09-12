@@ -132,6 +132,7 @@ export interface ApiLog {
   timestamp: Date;
   client_ip?: string;
   user_agent?: string;
+  resource: string;
   url?: string;
   latency_ms?: number;
   region?: string;

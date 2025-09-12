@@ -1,27 +1,9 @@
-// Define the interface for the service structure
-interface Service {
-  key: string;
-  name: string;
-  subtitle: string;
-  description: string;
-  controller: string;
-  sdk: boolean;
-  docs: boolean;
-  docsUrl: string;
-  tests: boolean;
-  optional: boolean;
-  icon: string;
-  globalAttributes?: string[]; // Optional property for global attributes
-}
-
 export const services = {
   account: {
     key: 'account',
     name: 'Account',
     subtitle:
       'The Account service allows you to authenticate and manage a user account.',
-    description: '/docs/services/account.md',
-    controller: 'api/account.php',
     sdk: true,
     docs: true,
     docsUrl: 'https://nuvix.io/docs/client/account',
@@ -34,8 +16,6 @@ export const services = {
     name: 'Avatars',
     subtitle:
       'The Avatars service aims to help you complete everyday tasks related to your app image, icons, and avatars.',
-    description: '/docs/services/avatars.md',
-    controller: 'api/avatars.php',
     sdk: true,
     docs: true,
     docsUrl: 'https://nuvix.io/docs/client/avatars',
@@ -48,23 +28,30 @@ export const services = {
     name: 'Schemas',
     subtitle:
       'The Schemas service allows you to create structured collections of documents, query and filter lists of documents',
-    description: '/docs/services/databases.md',
-    controller: 'api/databases.php',
     sdk: true,
     docs: true,
     docsUrl: 'https://nuvix.io/docs/client/databases',
     tests: false,
     optional: true,
     icon: '/images/services/databases.png',
-    globalAttributes: ['databaseId'],
+  },
+  database: {
+    key: 'database',
+    name: 'Database',
+    subtitle:
+      'The Database service allows you to create schemas and manage your database.',
+    sdk: true,
+    docs: true,
+    docsUrl: 'https://nuvix.io/docs/client/databases',
+    tests: false,
+    optional: true,
+    icon: '/images/services/databases.png',
   },
   locale: {
     key: 'locale',
     name: 'Locale',
     subtitle:
       "The Locale service allows you to customize your app based on your users' location.",
-    description: '/docs/services/locale.md',
-    controller: 'api/locale.php',
     sdk: true,
     docs: true,
     docsUrl: 'https://nuvix.io/docs/client/locale',
@@ -77,8 +64,6 @@ export const services = {
     name: 'Health',
     subtitle:
       "The Health service allows you to both validate and monitor your nuvix server's health.",
-    description: '/docs/services/health.md',
-    controller: 'api/health.php',
     sdk: true,
     docs: true,
     docsUrl: 'https://nuvix.io/docs/server/health',
@@ -91,8 +76,6 @@ export const services = {
     name: 'Projects',
     subtitle:
       'The Project service allows you to manage all the projects in your nuvix server.',
-    description: '',
-    controller: 'api/projects.php',
     sdk: true,
     docs: true,
     docsUrl: '',
@@ -105,8 +88,6 @@ export const services = {
     name: 'Project',
     subtitle:
       'The Project service allows you to manage all the projects in your nuvix server.',
-    description: '',
-    controller: 'api/project.php',
     sdk: true,
     docs: true,
     docsUrl: '',
@@ -118,8 +99,6 @@ export const services = {
     key: 'storage',
     name: 'Storage',
     subtitle: 'The Storage service allows you to manage your project files.',
-    description: '/docs/services/storage.md',
-    controller: 'api/storage.php',
     sdk: true,
     docs: true,
     docsUrl: 'https://nuvix.io/docs/client/storage',
@@ -132,8 +111,6 @@ export const services = {
     name: 'Teams',
     subtitle:
       'The Teams service allows you to group users of your project and to enable them to share read and write access to your project resources',
-    description: '/docs/services/teams.md',
-    controller: 'api/teams.php',
     sdk: true,
     docs: true,
     docsUrl: 'https://nuvix.io/docs/client/teams',
@@ -145,8 +122,6 @@ export const services = {
     key: 'users',
     name: 'Users',
     subtitle: 'The Users service allows you to manage your project users.',
-    description: '/docs/services/users.md',
-    controller: 'api/users.php',
     sdk: true,
     docs: true,
     docsUrl: 'https://nuvix.io/docs/server/users',
@@ -159,8 +134,6 @@ export const services = {
     name: 'VCS',
     subtitle:
       'The VCS service allows you to interact with providers like GitHub, GitLab etc.',
-    description: '',
-    controller: 'api/vcs.php',
     sdk: false,
     docs: false,
     docsUrl: '',
@@ -173,8 +146,6 @@ export const services = {
     name: 'Functions',
     subtitle:
       'The Functions Service allows you view, create and manage your Cloud Functions.',
-    description: '/docs/services/functions.md',
-    controller: 'api/functions.php',
     sdk: true,
     docs: true,
     docsUrl: 'https://nuvix.io/docs/functions',
@@ -187,8 +158,6 @@ export const services = {
     name: 'Proxy',
     subtitle:
       'The Proxy Service allows you to configure actions for your domains beyond DNS configuration.',
-    description: '/docs/services/proxy.md',
-    controller: 'api/proxy.php',
     sdk: true,
     docs: true,
     docsUrl: 'https://nuvix.io/docs/proxy',
@@ -200,8 +169,6 @@ export const services = {
     key: 'mock',
     name: 'Mock',
     subtitle: '',
-    description: '',
-    controller: 'mock.php',
     sdk: false,
     docs: false,
     docsUrl: '',
@@ -214,8 +181,6 @@ export const services = {
     name: 'GraphQL',
     subtitle:
       'The GraphQL API allows you to query and mutate your nuvix server using GraphQL.',
-    description: '/docs/services/graphql.md',
-    controller: 'api/graphql.php',
     sdk: true,
     docs: true,
     docsUrl: 'https://nuvix.io/docs/graphql',
@@ -228,8 +193,6 @@ export const services = {
     name: 'Console',
     subtitle:
       'The Console service allows you to interact with console relevant informations.',
-    description: '',
-    controller: 'api/console.php',
     sdk: true,
     docs: true,
     docsUrl: '',
@@ -242,8 +205,6 @@ export const services = {
     name: 'Migrations',
     subtitle:
       'The Migrations service allows you to migrate third-party data to your nuvix project.',
-    description: '/docs/services/migrations.md',
-    controller: 'api/migrations.php',
     sdk: true,
     docs: true,
     docsUrl: 'https://nuvix.io/docs/migrations',
@@ -256,8 +217,6 @@ export const services = {
     name: 'Messaging',
     subtitle:
       'The Messaging service allows you to send messages to any provider type (SMTP, push notification, SMS, etc.).',
-    description: '/docs/services/messaging.md',
-    controller: 'api/messaging.php',
     sdk: true,
     docs: true,
     docsUrl: 'https://nuvix.io/docs/server/messaging',
@@ -265,4 +224,4 @@ export const services = {
     optional: true,
     icon: '/images/services/messaging.png',
   },
-};
+} as const;

@@ -25,6 +25,7 @@ import {
 } from '@nuvix/utils/types';
 import { CoreService } from '@nuvix/core/core.service.js';
 import { AppConfigService } from '@nuvix/core/config.service.js';
+import { AuthType } from '@nuvix/core/decorators';
 
 @Injectable()
 export class ApiHook implements Hook {
@@ -34,7 +35,7 @@ export class ApiHook implements Hook {
     private readonly coreService: CoreService,
     private readonly appConfig: AppConfigService,
   ) {
-    this.db = coreService.getPlatformDb();
+    this.db = this.coreService.getPlatformDb();
   }
 
   async onRequest(req: NuvixRequest, reply: NuvixRes): Promise<void> {
@@ -74,6 +75,9 @@ export class ApiHook implements Hook {
       // Disable authorization checks for API keys
       Authorization.setDefaultStatus(false);
       Auth.setTrustedActor(true);
+
+      // Set auth type to key
+      req[Context.AuthType] = AuthType.KEY;
 
       if (apiKey.getRole() === 'apps') {
         user = new Doc({
@@ -155,7 +159,12 @@ export class ApiHook implements Hook {
 
       Authorization.setDefaultStatus(false); // Cancel security segmentation for admin users.
       Auth.setPlatformActor(true); // current user is platform user
-      if (project.getId() !== 'console') Auth.setTrustedActor(true);
+      if (project.empty() || project.getId() !== 'console') {
+        Auth.setTrustedActor(true);
+
+        // Set auth type to admin
+        req[Context.AuthType] = AuthType.ADMIN;
+      }
     }
 
     Authorization.setRole(role);

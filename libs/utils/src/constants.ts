@@ -373,10 +373,10 @@ export const BUILD_TYPE_RETRY = 'retry';
 /**@deprecated */ export const MAIL_TYPE_INVITATION = 'invitation';
 /**@deprecated */ export const MAIL_TYPE_CERTIFICATE = 'certificate';
 // Auth Types
-/**@deprecated */ export const APP_AUTH_TYPE_SESSION = 'Session';
-/**@deprecated */ export const APP_AUTH_TYPE_JWT = 'JWT';
-/**@deprecated */ export const APP_AUTH_TYPE_KEY = 'Key';
-/**@deprecated */ export const APP_AUTH_TYPE_ADMIN = 'Admin';
+export const APP_AUTH_TYPE_SESSION = 'Session';
+export const APP_AUTH_TYPE_JWT = 'JWT';
+export const APP_AUTH_TYPE_KEY = 'Key';
+export const APP_AUTH_TYPE_ADMIN = 'Admin';
 // Response related
 export const MAX_OUTPUT_CHUNK_SIZE = 10 * 1024 * 1024; // 10MB
 // Function headers
@@ -620,6 +620,8 @@ export enum Context {
   Scopes = 'scopes',
   Role = 'role',
   Mode = 'mode',
+  AuthType = 'authType',
+  Namespace = 'namespace',
 }
 
 export enum HashAlgorithm {
@@ -677,6 +679,7 @@ export enum DatabaseRole {
 export enum RouteContext {
   AUDIT = 'audit',
   RATE_LIMIT = 'rateLimit',
+  SKIP_LOGGING = 'skipLogging',
 }
 
 export enum MetricPeriod {

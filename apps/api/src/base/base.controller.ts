@@ -1,10 +1,22 @@
 import { InjectQueue } from '@nestjs/bullmq';
-import { All, Controller, Get, Query, Res } from '@nestjs/common';
+import { All, Controller, Get, Query, Req, Res } from '@nestjs/common';
+import { RouteConfig } from '@nestjs/platform-fastify';
 import { ProjectPg } from '@nuvix/core/decorators';
+import { Exception } from '@nuvix/core/extend/exception';
 import { Public } from '@nuvix/core/resolvers/guards/auth.guard';
 import { MailJob, type MailQueueOptions } from '@nuvix/core/resolvers/index.js';
 import type { DataSource } from '@nuvix/pg';
-import { QueueFor, Schemas } from '@nuvix/utils';
+import { QueueFor, RouteContext, Schemas } from '@nuvix/utils';
+import {
+  ASTToQueryBuilder,
+  OrderParser,
+  Parser,
+  SelectParser,
+  type Expression,
+  type ParsedOrdering,
+  type ParserResult,
+  type SelectNode,
+} from '@nuvix/utils/query';
 import { Queue } from 'bullmq';
 
 @Controller({ version: ['1'] })
@@ -201,7 +213,54 @@ export class BaseController {
   }
 
   @Get('logs')
-  getLogs(@Query('lines') lines = 100, @ProjectPg() dataSource: DataSource) {
-    return dataSource.table('api_logs').withSchema(Schemas.System);
+  @RouteConfig({
+    [RouteContext.SKIP_LOGGING]: true,
+  })
+  getLogs(@Req() req: NuvixRequest, @ProjectPg() dataSource: DataSource) {
+    const qb = dataSource.qb('api_logs').withSchema(Schemas.System);
+    const astToQueryBuilder = new ASTToQueryBuilder(qb, dataSource);
+
+    const { filter, select, order } = this.getParamsFromUrl(
+      req.url,
+      'api_logs',
+    );
+
+    astToQueryBuilder.applySelect(select);
+    astToQueryBuilder.applyFilters(filter, {
+      applyExtra: true,
+      tableName: 'api_logs',
+    });
+    astToQueryBuilder.applyOrder(order, 'api_logs');
+
+    return qb.catch(e => {
+      throw new Exception(Exception.GENERAL_SERVER_ERROR);
+    });
+  }
+
+  private getParamsFromUrl(
+    url: string,
+    tableName: string,
+  ): {
+    filter?: Expression & ParserResult;
+    select?: SelectNode[];
+    order?: ParsedOrdering[];
+  } {
+    const queryString = url.includes('?') ? url.split('?')[1] : '';
+    const urlParams = new URLSearchParams(queryString);
+
+    const _filter = urlParams.get('filter') || '';
+    const filter = _filter
+      ? Parser.create({ tableName }).parse(_filter)
+      : undefined;
+
+    const _select = urlParams.get('select') || '';
+    const select = _select
+      ? new SelectParser({ tableName }).parse(_select)
+      : undefined;
+
+    const _order = urlParams.get('order') || '';
+    const order = _order ? OrderParser.parse(_order, tableName) : undefined;
+
+    return { filter, select, order };
   }
 }

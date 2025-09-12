@@ -16,6 +16,7 @@ declare module 'fastify' {
   interface FastifyContextConfig {
     [RouteContext.AUDIT]?: AuditEventType;
     [RouteContext.RATE_LIMIT]?: ThrottleOptions;
+    [RouteContext.SKIP_LOGGING]?: boolean;
   }
 
   interface FastifyRouteConfig {

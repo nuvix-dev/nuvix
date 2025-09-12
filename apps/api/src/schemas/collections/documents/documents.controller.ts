@@ -22,6 +22,7 @@ import { CurrentDatabase } from '@nuvix/core/decorators/project.decorator';
 import {
   Auth,
   AuthType,
+  Namespace,
   ResModel,
   AuthUser as User,
 } from '@nuvix/core/decorators';
@@ -36,6 +37,7 @@ import type { UsersDoc } from '@nuvix/utils/types';
   version: ['1'],
   path: 'schemas/:schemaId/collections/:collectionId/documents',
 })
+@Namespace('schemas')
 @UseGuards(ProjectGuard, DocSchemaGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class DocumentsController {

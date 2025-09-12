@@ -11,7 +11,12 @@ import { Reflector } from '@nestjs/core';
 import { Auth } from '../../helper/auth.helper';
 import { Exception } from '../../extend/exception';
 import { TOTP } from '../../validators/MFA.validator';
-import { Namespace, Scope } from '@nuvix/core/decorators';
+import {
+  Namespace,
+  Scope,
+  Auth as Auths,
+  type AuthType,
+} from '@nuvix/core/decorators';
 import { Scopes } from '@nuvix/core/config/roles';
 import type { ProjectsDoc, SessionsDoc, UsersDoc } from '@nuvix/utils/types';
 import type { Queue } from 'bullmq';
@@ -39,6 +44,10 @@ export class ApiInterceptor implements NestInterceptor {
     let user = request[Context.User] as UsersDoc;
     const scopes: Scopes[] = request[Context.Scopes] || [];
 
+    if (project.empty()) {
+      throw new Exception(Exception.PROJECT_NOT_FOUND);
+    }
+
     const scope = this.reflector.getAllAndOverride(Scope, [
       context.getHandler(),
       context.getClass(),
@@ -47,8 +56,13 @@ export class ApiInterceptor implements NestInterceptor {
       context.getHandler(),
       context.getClass(),
     ]);
+    const authTypes = this.reflector.getAllAndOverride(Auths, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
 
     if (namespace) {
+      request[Context.Namespace] = namespace;
       if (
         namespace in project.get('services', {}) &&
         !project.get('services', {})[namespace] &&
@@ -58,16 +72,20 @@ export class ApiInterceptor implements NestInterceptor {
       }
     }
 
+    if (authTypes) {
+      const allowedAuthTypes = Array.isArray(authTypes)
+        ? authTypes
+        : [authTypes];
+      if (!allowedAuthTypes.includes(request[Context.AuthType] as AuthType)) {
+        throw new Exception(Exception.GENERAL_ACCESS_FORBIDDEN);
+      }
+    }
+
     if (scope) {
       const requiredScopes = Array.isArray(scope) ? scope : [scope];
       const missingScopes = requiredScopes.filter(s => !scopes.includes(s));
 
       if (missingScopes.length > 0) {
-        if (project.empty()) {
-          // Check if permission is denied because project is missing
-          throw new Exception(Exception.PROJECT_NOT_FOUND);
-        }
-
         throw new Exception(
           Exception.GENERAL_UNAUTHORIZED_SCOPE,
           `${user.get('email', 'User')} (role: ${request['role'] ?? '#'}) missing scopes (${missingScopes.join(', ')})`,

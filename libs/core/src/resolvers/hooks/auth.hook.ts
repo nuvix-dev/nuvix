@@ -9,6 +9,7 @@ import { Hook } from '../../server/hooks/interface';
 import { Key } from '@nuvix/core/helper/key.helper';
 import { ProjectsDoc, SessionsDoc, UsersDoc } from '@nuvix/utils/types';
 import { CoreService } from '@nuvix/core/core.service.js';
+import { AuthType } from '@nuvix/core/decorators';
 
 @Injectable()
 export class AuthHook implements Hook {
@@ -97,6 +98,8 @@ export class AuthHook implements Hook {
 
     if (user.empty() || !sessionId) {
       user = new Doc();
+    } else {
+      req[Context.AuthType] = AuthType.SESSION;
     }
 
     const authJWT = params.getFromHeaders('x-nuvix-jwt');
@@ -126,6 +129,8 @@ export class AuthHook implements Hook {
         )
       ) {
         user = new Doc();
+      } else {
+        req[Context.AuthType] = AuthType.JWT;
       }
     }
 

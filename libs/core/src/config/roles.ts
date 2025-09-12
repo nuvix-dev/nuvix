@@ -174,14 +174,14 @@ export const roles = {
     label: 'Users',
     scopes: member,
   },
-  // [Auth.USER_ROLE_ADMIN]: {
-  //   label: 'Admin',
-  //   scopes: admins,
-  // },
-  // [Auth.USER_ROLE_DEVELOPER]: {
-  //   label: 'Developer',
-  //   scopes: admins,
-  // },
+  admin: {
+    label: 'Admin',
+    scopes: admins,
+  },
+  devloper: {
+    label: 'Developer',
+    scopes: admins,
+  },
   owner: {
     label: 'Owner',
     scopes: [...admins, ...member],

@@ -21,7 +21,7 @@ import {
   CurrentDatabase,
   Project,
 } from '@nuvix/core/decorators/project.decorator';
-import { Auth, AuthType, ResModel } from '@nuvix/core/decorators';
+import { Auth, AuthType, Namespace, ResModel } from '@nuvix/core/decorators';
 
 // DTOs
 import {
@@ -55,6 +55,7 @@ import { AttributesQueryPipe } from '@nuvix/core/pipes/queries';
   version: ['1'],
   path: 'schemas/:schemaId/collections/:collectionId/attributes',
 })
+@Namespace('schemas')
 @UseGuards(ProjectGuard, DocSchemaGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.ADMIN, AuthType.KEY])
