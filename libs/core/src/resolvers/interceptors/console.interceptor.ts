@@ -33,17 +33,17 @@ export class ConsoleInterceptor implements NestInterceptor {
       context.getClass(),
     ]);
 
-    if (scope) {
-      const requiredScopes = Array.isArray(scope) ? scope : [scope];
-      const missingScopes = requiredScopes.filter(s => !scopes.includes(s));
+    // if (scope) {
+    //   const requiredScopes = Array.isArray(scope) ? scope : [scope];
+    //   const missingScopes = requiredScopes.filter(s => !scopes.includes(s));
 
-      if (missingScopes.length > 0) {
-        throw new Exception(
-          Exception.GENERAL_UNAUTHORIZED_SCOPE,
-          `${user.get('email', 'User')} (role: ${request['role'] ?? '#'}) missing scopes (${missingScopes.join(', ')})`,
-        );
-      }
-    }
+    //   if (missingScopes.length > 0) {
+    //     throw new Exception(
+    //       Exception.GENERAL_UNAUTHORIZED_SCOPE,
+    //       `${user.get('email', 'User')} (role: ${request['role'] ?? '#'}) missing scopes (${missingScopes.join(', ')})`,
+    //     );
+    //   }
+    // }
 
     if (user.get('status') === false) {
       // Account is blocked

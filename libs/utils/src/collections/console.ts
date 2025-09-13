@@ -1862,5 +1862,132 @@ export const consoleCollections: Record<string, Collection> = {
     ],
   },
 
+  feedback: {
+    $collection: ID.custom(Database.METADATA),
+    $id: ID.custom('feedback'),
+    name: 'Feedback',
+    attributes: [
+      {
+        $id: ID.custom('email'),
+        key: 'email',
+        type: AttributeType.String,
+        format: AttributeFormat.EMAIL,
+        size: 2000,
+        default: null,
+      },
+      {
+        $id: ID.custom('type'),
+        key: 'type',
+        type: AttributeType.String,
+        size: 100,
+        required: true,
+      },
+      {
+        $id: ID.custom('message'),
+        key: 'message',
+        type: AttributeType.String,
+        size: 5000,
+        required: true,
+      },
+      {
+        $id: ID.custom('metadata'),
+        key: 'metadata',
+        type: AttributeType.Json,
+        default: {},
+      },
+    ],
+    indexes: [
+      {
+        $id: ID.custom('_key_type'),
+        type: IndexType.Key,
+        attributes: ['type'],
+        orders: [Order.Asc],
+      },
+    ],
+  },
+
+  blogs: {
+    $collection: ID.custom(Database.METADATA),
+    $id: ID.custom('blogs'),
+    name: 'Blogs',
+    attributes: [
+      {
+        $id: ID.custom('title'),
+        key: 'title',
+        type: AttributeType.String,
+        size: 256,
+        required: true,
+      },
+      {
+        $id: ID.custom('summary'),
+        key: 'summary',
+        type: AttributeType.String,
+        size: 512,
+        required: true,
+      },
+      {
+        $id: ID.custom('content'),
+        key: 'content',
+        type: AttributeType.String,
+        size: 100000,
+        required: true,
+      },
+      {
+        $id: ID.custom('author'),
+        key: 'author',
+        type: AttributeType.String,
+        size: 100,
+        required: true,
+      },
+      {
+        $id: ID.custom('tags'),
+        key: 'tags',
+        type: AttributeType.String,
+        size: 100,
+        array: true,
+        default: null,
+      },
+      {
+        $id: ID.custom('published'),
+        key: 'published',
+        type: AttributeType.Boolean,
+        required: true,
+        default: false,
+      },
+      {
+        $id: ID.custom('publishedAt'),
+        key: 'publishedAt',
+        type: AttributeType.Timestamptz,
+        default: null,
+      },
+      {
+        $id: ID.custom('metadata'),
+        key: 'metadata',
+        type: AttributeType.Json,
+        default: {},
+      },
+    ],
+    indexes: [
+      {
+        $id: ID.custom('_key_author'),
+        type: IndexType.Key,
+        attributes: ['author'],
+        orders: [Order.Asc],
+      },
+      {
+        $id: ID.custom('_key_published'),
+        type: IndexType.Key,
+        attributes: ['published'],
+        orders: [Order.Asc],
+      },
+      {
+        $id: ID.custom('_key_tags'),
+        type: IndexType.Key,
+        attributes: ['tags'],
+        orders: [],
+      },
+    ],
+  },
+
   ...commonCollections('platform'),
 };
