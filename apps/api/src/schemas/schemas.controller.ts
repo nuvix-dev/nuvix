@@ -26,9 +26,17 @@ import {
   ResponseInterceptor,
   ApiInterceptor,
 } from '@nuvix/core/resolvers/interceptors';
-import { CurrentSchema, Namespace, Scope, Sdk } from '@nuvix/core/decorators';
+import {
+  Auth,
+  AuthType,
+  CurrentSchema,
+  Namespace,
+  Scope,
+  Sdk,
+} from '@nuvix/core/decorators';
 import { DataSource } from '@nuvix/pg';
 import { ParseDuplicatePipe } from '@nuvix/core/pipes';
+import { PermissionsDTO } from './DTO/permissions';
 
 // Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
 @Controller({ version: ['1'], path: ['schemas/:schemaId', 'public'] })
@@ -185,6 +193,71 @@ export class SchemasController {
       limit,
       offset,
       args,
+    });
+  }
+
+  @Put(['tables/:tableId/permissions'])
+  @Auth([AuthType.ADMIN, AuthType.KEY])
+  manageTablePermissions(
+    @CurrentSchema() pg: DataSource,
+    @Param('schemaId') schema: string,
+    @Param('tableId') tableId: string,
+    @Body() body: PermissionsDTO,
+  ) {
+    return this.schemasService.updatePermissions({
+      pg,
+      permissions: body.permissions,
+      tableId,
+      schema,
+    });
+  }
+
+  // TODO: check if schema type is not managed then throw error...
+  @Put(['tables/:tableId/:rowId/permissions'])
+  @Auth([AuthType.ADMIN, AuthType.KEY])
+  manageRowPermissions(
+    @CurrentSchema() pg: DataSource,
+    @Param('tableId') tableId: string,
+    @Param('rowId') rowId: number,
+    @Param('schemaId') schema: string,
+    @Body() body: PermissionsDTO,
+  ) {
+    return this.schemasService.updatePermissions({
+      pg,
+      permissions: body.permissions,
+      tableId,
+      schema,
+      rowId,
+    });
+  }
+
+  @Get(['tables/:tableId/permissions'])
+  @Auth([AuthType.ADMIN, AuthType.KEY])
+  getTablePermissions(
+    @CurrentSchema() pg: DataSource,
+    @Param('schemaId') schema: string,
+    @Param('tableId') tableId: string,
+  ) {
+    return this.schemasService.getPermissions({
+      pg,
+      tableId,
+      schema,
+    });
+  }
+
+  @Get(['tables/:tableId/:rowId/permissions'])
+  @Auth([AuthType.ADMIN, AuthType.KEY])
+  getRowPermissions(
+    @CurrentSchema() pg: DataSource,
+    @Param('tableId') tableId: string,
+    @Param('rowId') rowId: number,
+    @Param('schemaId') schema: string,
+  ) {
+    return this.schemasService.getPermissions({
+      pg,
+      tableId,
+      schema,
+      rowId,
     });
   }
 }

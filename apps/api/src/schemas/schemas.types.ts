@@ -42,3 +42,18 @@ export interface CallFunction {
   offset?: number;
   args?: Record<string, string | number | boolean | null> | any[];
 }
+
+export interface UpdatePermissions {
+  pg: DataSource;
+  schema: string;
+  permissions: string[];
+  rowId?: number;
+  tableId: string;
+}
+
+export interface GetPermissions {
+  pg: DataSource;
+  schema: string;
+  rowId?: number;
+  tableId: string;
+}

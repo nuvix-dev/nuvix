@@ -1,5 +1,13 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { CallFunction, Delete, Insert, Select, Update } from './schemas.types';
+import {
+  CallFunction,
+  Delete,
+  GetPermissions,
+  Insert,
+  Select,
+  Update,
+  UpdatePermissions,
+} from './schemas.types';
 import {
   Expression,
   ParsedOrdering,
@@ -13,6 +21,8 @@ import { ASTToQueryBuilder } from '@nuvix/utils/query/builder';
 import { Exception } from '@nuvix/core/extend/exception';
 import { transformPgError } from '@nuvix/utils/database/pg-error';
 import { Raw } from '@nuvix/pg';
+import { Doc, Permission, PermissionsValidator } from '@nuvix-tech/db';
+import { Database } from '@nuvix-tech/db';
 
 @Injectable()
 export class SchemasService {
@@ -256,5 +266,151 @@ export class SchemasService {
     const order = _order ? OrderParser.parse(_order, tableName) : undefined;
 
     return { filter, select, order };
+  }
+
+  async updatePermissions({
+    pg,
+    tableId,
+    schema,
+    permissions,
+    rowId,
+  }: UpdatePermissions) {
+    let _permissions = Permission.aggregate(permissions);
+
+    if (_permissions === null) {
+      throw new Exception(
+        Exception.GENERAL_BAD_REQUEST,
+        'Permissions are not valid.',
+      );
+    }
+    permissions = _permissions;
+    const validator = new PermissionsValidator();
+
+    if (!validator.$valid(permissions)) {
+      throw new Exception(
+        Exception.GENERAL_BAD_REQUEST,
+        validator.$description,
+      );
+    }
+
+    const doc = new Doc({
+      $permissions: permissions,
+    });
+
+    // Get current permissions from DB
+    const query = pg
+      .table(`${tableId}_perms`)
+      .withSchema(schema)
+      .select(['permission', 'roles']);
+
+    if (rowId !== undefined && rowId !== null) {
+      query.andWhere('row_id', rowId);
+    } else {
+      query.whereNull('row_id');
+    }
+
+    const rows = (await query) as unknown as Array<{
+      permission: string;
+      roles: string[];
+    }>;
+
+    const existingPermissions: Record<string, string[]> = {};
+    for (const row of rows) {
+      existingPermissions[row['permission']] = Array.isArray(row.roles)
+        ? row.roles
+        : [];
+    }
+
+    // Build operations for each permission type
+    for (const type of Database.PERMISSIONS) {
+      const newPermissions = doc.getPermissionsByType(type);
+      const currentPermissions = existingPermissions[type] || [];
+
+      const hasChanged =
+        JSON.stringify(newPermissions.sort()) !==
+        JSON.stringify(currentPermissions.sort());
+
+      if (!hasChanged) {
+        continue;
+      }
+
+      if (newPermissions.length === 0) {
+        // Delete existing row
+        if (currentPermissions.length > 0) {
+          const delQuery = pg
+            .table(`${tableId}_perms`)
+            .withSchema(schema)
+            .andWhere('permission', type);
+
+          if (rowId !== undefined && rowId !== null) {
+            delQuery.andWhere('row_id', rowId);
+          } else {
+            delQuery.whereNull('row_id');
+          }
+
+          await delQuery.delete();
+        }
+      } else {
+        if (currentPermissions.length > 0) {
+          // Update existing row
+          const updQuery = pg
+            .table(`${tableId}_perms`)
+            .withSchema(schema)
+            .andWhere('permission', type);
+
+          if (rowId !== undefined && rowId !== null) {
+            updQuery.andWhere('row_id', rowId);
+          } else {
+            updQuery.whereNull('row_id');
+          }
+
+          await updQuery.update({
+            _permissions: newPermissions,
+          });
+        } else {
+          // Insert new row
+          await pg
+            .table(`${tableId}_perms`)
+            .withSchema(schema)
+            .insert({
+              permission: type,
+              roles: newPermissions,
+              row_id: rowId ?? null,
+            });
+        }
+      }
+    }
+  }
+
+  async getPermissions({
+    pg,
+    tableId,
+    rowId,
+    schema,
+  }: GetPermissions): Promise<Record<string, string[]>> {
+    const query = pg
+      .table(`${tableId}_perms`)
+      .withSchema(schema)
+      .select(['roles', 'permission']);
+
+    if (rowId !== undefined && rowId !== null) {
+      query.andWhere('row_id', rowId);
+    } else {
+      query.whereNull('row_id');
+    }
+
+    const rows = (await query) as unknown as Array<{
+      permission: string;
+      roles: string[];
+    }>;
+
+    // Normalize result into { type -> permissions[] }
+    const permissions: Record<string, string[]> = {};
+    for (const type of Database.PERMISSIONS) {
+      const row = rows.find(r => r.permission === type);
+      permissions[type] = row ? (row.roles ?? []) : [];
+    }
+
+    return permissions;
   }
 }
