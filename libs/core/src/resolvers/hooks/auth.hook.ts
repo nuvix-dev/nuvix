@@ -147,18 +147,16 @@ export class AuthHook implements Hook {
       let teamInternalId!: number;
       if (project.getId() !== 'console') {
         teamInternalId = project.get('teamInternalId');
-      } // TODO: we have to use another approch, or we should pass teamId in headers
-      else if (
+      } else if (
         (req.url.startsWith('/projects/') ||
           req.url.startsWith('/v1/projects/')) &&
         (req.params as any)['projectId']
       ) {
-        const p = await Authorization.skip(
-          async () =>
-            await this.dbForPlatform.getDocument(
-              'projects',
-              (req.params as any)['projectId'],
-            ),
+        const p = await Authorization.skip(() =>
+          this.dbForPlatform.getDocument(
+            'projects',
+            (req.params as any)['projectId'],
+          ),
         );
         teamInternalId = p.get('teamInternalId');
       } else if (
@@ -176,11 +174,10 @@ export class AuthHook implements Hook {
       }
 
       if (teamInternalId) {
-        const team = await Authorization.skip(
-          async () =>
-            await this.dbForPlatform.findOne('teams', [
-              Query.equal('$sequence', [teamInternalId]),
-            ]),
+        const team = await Authorization.skip(() =>
+          this.dbForPlatform.findOne('teams', [
+            Query.equal('$sequence', [teamInternalId]),
+          ]),
         );
         req[Context.Team] = team;
       }

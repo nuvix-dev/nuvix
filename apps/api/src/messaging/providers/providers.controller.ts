@@ -262,7 +262,7 @@ export class ProvidersController {
     });
   }
 
-  @Get('providers')
+  @Get()
   @Scope('providers.read')
   @ResModel(Models.PROVIDER, { list: true })
   @Sdk({

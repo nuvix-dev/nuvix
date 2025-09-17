@@ -52,101 +52,104 @@ export class OrganizationsController {
     return this.organizationsService.create(user, input);
   }
 
-  @Get(':id')
+  @Get(':teamId')
   @ResModel(Models.ORGANIZATION)
-  async findOne(@Param('id') id: string) {
+  async findOne(@Param('teamId') id: string) {
     return this.organizationsService.findOne(id);
   }
 
-  @Put(':id')
+  @Put(':teamId')
   @ResModel(Models.ORGANIZATION)
-  async update(@Param('id') id: string, @Body() input: UpdateOrgDTO) {
+  async update(@Param('teamId') id: string, @Body() input: UpdateOrgDTO) {
     return this.organizationsService.update(id, input);
   }
 
-  @Delete(':id')
+  @Delete(':teamId')
   @ResModel({ type: Models.NONE })
-  async remove(@Param('id') id: string) {
+  async remove(@Param('teamId') id: string) {
     return this.organizationsService.remove(id);
   }
 
-  @Get(':id/prefs')
+  @Get(':teamId/prefs')
   @ResModel(Models.PREFERENCES)
-  async getPrefs(@Param('id') id: string) {
+  async getPrefs(@Param('teamId') id: string) {
     return this.organizationsService.getPrefs(id);
   }
 
-  @Put(':id/prefs')
+  @Put(':teamId/prefs')
   @ResModel(Models.PREFERENCES)
-  async setPrefs(@Param('id') id: string, @Body() input: UpdateTeamPrefsDTO) {
+  async setPrefs(
+    @Param('teamId') id: string,
+    @Body() input: UpdateTeamPrefsDTO,
+  ) {
     return this.organizationsService.setPrefs(id, input);
   }
 
-  @Get(':id/logs')
+  @Get(':teamId/logs')
   @ResModel({ type: Models.LOG, list: true })
-  async teamLogs(@Param('id') id: string) {
+  async teamLogs(@Param('teamId') id: string) {
     return {
       total: 0,
       logs: [],
     };
   }
 
-  @Get(':id/aggregations')
-  async findAggregations(@Param('id') id: string) {
+  @Get(':teamId/aggregations')
+  async findAggregations(@Param('teamId') id: string) {
     return {
       total: 0, // aggs.length,
       aggregations: {}, // aggs
     };
   }
 
-  @Get(':id/memberships')
+  @Get(':teamId/memberships')
   @ResModel({ type: Models.MEMBERSHIP, list: true })
   async getMemberships(
-    @Param('id') id: string,
+    @Param('teamId') id: string,
     @Query('queries', MembershipsQueryPipe) queries: Queries[],
     @Query('search') search?: string,
   ) {
     return this.organizationsService.getMembers(id, queries, search);
   }
 
-  @Post(':id/memberships')
+  @Post(':teamId/memberships')
   @ResModel(Models.MEMBERSHIP)
   async addMembership(
-    @Param('id') id: string,
+    @Param('teamId') id: string,
     @Body() input: CreateMembershipDTO,
   ) {
     return this.organizationsService.addMember(id, input);
   }
 
-  @Get(':id/memberships/:membershipId')
+  @Get(':teamId/memberships/:membershipId')
   @ResModel(Models.MEMBERSHIP)
   async getMembership(
-    @Param('id') id: string,
+    @Param('teamId') id: string,
     @Param('membershipId') membershipId: string,
   ) {
     return this.organizationsService.getMember(id, membershipId);
   }
 
-  @Patch(':id/memberships/:membershipId')
+  @Patch(':teamId/memberships/:membershipId')
   @ResModel(Models.MEMBERSHIP)
   async updateMembership(
-    @Param('id') id: string,
+    @Param('teamId') id: string,
     @Param('membershipId') membershipId: string,
     @Body() input: UpdateMembershipDTO,
   ) {
     return this.organizationsService.updateMember(id, membershipId, input);
   }
 
-  @Delete(':id/memberships/:membershipId')
+  @Delete(':teamId/memberships/:membershipId')
   @ResModel(Models.NONE)
   async removeMembership(
-    @Param('id') id: string,
+    @Param('teamId') id: string,
     @Param('membershipId') membershipId: string,
   ) {
     return this.organizationsService.deleteMember(id, membershipId);
   }
 
-  @Get(':id/roles')
+  @Get(':teamId/roles')
   async getRoles() {
     return {
       scopes: roles.owner.scopes,
@@ -154,8 +157,8 @@ export class OrganizationsController {
     };
   }
 
-  @Get(':id/credits')
-  async getCredits(@Param('id') id: string) {
+  @Get(':teamId/credits')
+  async getCredits(@Param('teamId') id: string) {
     return {
       total: 0, // credits.length,
       credits: [], // credits
@@ -163,22 +166,22 @@ export class OrganizationsController {
     };
   }
 
-  @Get(':id/invoices')
-  async getInvoices(@Param('id') id: string) {
+  @Get(':teamId/invoices')
+  async getInvoices(@Param('teamId') id: string) {
     return {
       total: 0, // invoices.length,
       invoices: [], // invoices
     };
   }
 
-  @Get(':id/plan')
+  @Get(':teamId/plan')
   @ResModel(Models.BILLING_PLAN)
-  async getPlan(@Param('id') id: string) {
+  async getPlan(@Param('teamId') id: string) {
     return this.organizationsService.billingPlan(id);
   }
 
-  @Get(':id/usage')
-  async getUsage(@Param('id') id: string) {
+  @Get(':teamId/usage')
+  async getUsage(@Param('teamId') id: string) {
     return;
   }
 }
