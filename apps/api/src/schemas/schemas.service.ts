@@ -285,7 +285,7 @@ export class SchemasService {
       PermissionType.Update,
       PermissionType.Delete,
     ];
-    if (rowId !== undefined && rowId !== null) {
+    if (rowId === undefined || rowId === null) {
       allowed.push(PermissionType.Create);
     }
 
