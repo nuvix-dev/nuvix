@@ -14,7 +14,7 @@ services:
       test:
         [
           'CMD-SHELL',
-          'pg_isready -U ${APP_DATABASE_USER:-postgres} -d ${APP_DATABASE_NAME} -h localhost',
+          'pg_isready -U nuvix_admin -d postgres -h localhost',
         ]
       interval: 10s
       timeout: 5s
@@ -40,6 +40,27 @@ services:
       retries: 5
       start_period: 10s
 
+  pgcat:
+    image: ghcr.io/postgresml/pgcat:4a7a6a8e7a78354b889002a4db118a8e2f2d6d79
+    container_name: nuvix-pgcat
+    ports:
+      - "9930:9930"  # Metrics port
+    volumes:
+      - ./configs/pgcat.toml:/etc/pgcat/pgcat.toml:ro
+    networks:
+      - nuvix
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 6432"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    command: ["pgcat", "/etc/pgcat/pgcat.toml"]
+
   server:
     build:
       context: .
@@ -49,8 +70,6 @@ services:
         - APP_NAME=server
     container_name: server
     command: ['bun', 'main.js']
-    env_file:
-      - .env
     environment:
       APP_DATABASE_HOST: postgres
       APP_REDIS_HOST: redis
@@ -71,12 +90,41 @@ services:
       options:
         max-size: '10m'
         max-file: '5'
+    
+  platform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        - APP_NAME=platform
+    container_name: platform
+    command: ['bun', 'main.js']
+    environment:
+      APP_DATABASE_HOST: postgres
+      APP_REDIS_HOST: redis
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - nuvix
+      - caddy
+    restart: unless-stopped
+    logging:
+      driver: 'json-file'
+      options:
+        max-size: '10m'
+        max-file: '5'
 
   caddy:
     image: caddy:2
     container_name: nuvix-caddy
     restart: unless-stopped
     ports:
+      - '80:80'
       - '443:443'
       - '443:443/udp'
     volumes:
