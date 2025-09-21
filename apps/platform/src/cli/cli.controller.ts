@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Post, Query } from '@nestjs/common';
 import { CliService } from './cli.service';
 
 @Controller({ path: 'cli', version: ['1'] })

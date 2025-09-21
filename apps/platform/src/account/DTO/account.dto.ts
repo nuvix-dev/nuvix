@@ -1,4 +1,4 @@
-import { IsCustomID, IsUID } from '@nuvix/core/validators/input.validator.js';
+import { IsCustomID } from '@nuvix/core/validators/input.validator.js';
 import {
   IsEmail,
   IsString,

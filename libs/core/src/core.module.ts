@@ -6,10 +6,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 
-import {
-  configuration,
-  QueueFor,
-} from '@nuvix/utils';
+import { configuration, QueueFor } from '@nuvix/utils';
 import { Database, StructureValidator } from '@nuvix/db';
 import pg from 'pg';
 import { parse as parseArray } from 'postgres-array';
@@ -76,17 +73,11 @@ Object.entries(formats).forEach(([key, format]) => {
     CoreService,
     RatelimitService,
   ],
-  exports: [
-    AppConfigService,
-    CoreService,
-    RatelimitService,
-  ],
+  exports: [AppConfigService, CoreService, RatelimitService],
 })
 export class CoreModule implements OnModuleDestroy, OnModuleInit {
   private readonly logger = new Logger(CoreModule.name);
-  constructor(
-    private readonly coreService: CoreService,
-  ) {}
+  constructor(private readonly coreService: CoreService) {}
 
   async onModuleInit() {
     await this.coreService.getCache().flush();

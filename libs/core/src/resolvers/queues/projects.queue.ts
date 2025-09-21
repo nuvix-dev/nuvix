@@ -7,12 +7,7 @@ import { Queue } from './queue';
 import { Job } from 'bullmq';
 
 import { Logger } from '@nestjs/common';
-import {
-  Database,
-  Doc,
-  DuplicateException,
-  type Collection,
-} from '@nuvix/db';
+import { Database, Doc, DuplicateException, type Collection } from '@nuvix/db';
 import {
   DatabaseRole,
   DEFAULT_DATABASE,

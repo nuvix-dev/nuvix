@@ -1,9 +1,4 @@
-import {
-  Controller,
-  Get,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common';
+import { Controller, Get, UseGuards, UseInterceptors } from '@nestjs/common';
 import { AppService } from './app.service';
 import { AuthGuard, Public } from '@nuvix/core/resolvers/guards/auth.guard';
 import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor';

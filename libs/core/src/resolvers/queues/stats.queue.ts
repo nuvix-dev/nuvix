@@ -246,7 +246,7 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
           }
           break;
         }
-          
+
         case collection === 'buckets': {
           const filesDoc = await dbForProject.getDocument(
             'stats',

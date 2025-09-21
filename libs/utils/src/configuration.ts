@@ -210,6 +210,6 @@ export default () => ({
         acc[level.toLowerCase()] = true;
         return acc;
       },
-      {} as { [key: string]: boolean; },
+      {} as { [key: string]: boolean },
     ),
 });

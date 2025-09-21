@@ -1,7 +1,7 @@
 import { InjectQueue } from '@nestjs/bullmq';
 import { All, Controller, Get, Query, Req, Res } from '@nestjs/common';
 import { RouteConfig } from '@nestjs/platform-fastify';
-import { ProjectPg } from '@nuvix/core/decorators';
+import { Auth, AuthType, ProjectPg } from '@nuvix/core/decorators';
 import { Exception } from '@nuvix/core/extend/exception';
 import { Public } from '@nuvix/core/resolvers/guards/auth.guard';
 import { MailJob, type MailQueueOptions } from '@nuvix/core/resolvers/index.js';
@@ -185,38 +185,12 @@ export class BaseController {
     };
   }
 
-  @All('smtp/test')
-  @Public()
-  async testSMTP(
-    @Query('email') email: string,
-    @Query('subject') subject: 'Test email from nuvix app',
-    @Query('body') body: 'Yor smtp config is working.',
-  ) {
-    const emailVariables = {
-      owner: 'Nuvix',
-      user: '`User`',
-      team: '`Team',
-      redirect: 'https://nuvix.in',
-      project: 'Console',
-    };
-
-    await this.mailQueue.add(MailJob.SEND_EMAIL, {
-      email: email,
-      subject: subject,
-      body: body,
-      variables: emailVariables,
-    });
-
-    return {
-      success: true,
-    };
-  }
-
   @Get('logs')
   @RouteConfig({
     [RouteContext.SKIP_LOGGING]: true,
   })
-  getLogs(@Req() req: NuvixRequest, @ProjectPg() dataSource: DataSource) {
+  @Auth([AuthType.ADMIN, AuthType.KEY])
+  async getLogs(@Req() req: NuvixRequest, @ProjectPg() dataSource: DataSource) {
     const qb = dataSource.qb('api_logs').withSchema(Schemas.System);
     const astToQueryBuilder = new ASTToQueryBuilder(qb, dataSource);
 
@@ -232,9 +206,11 @@ export class BaseController {
     });
     astToQueryBuilder.applyOrder(order, 'api_logs');
 
-    return qb.catch(e => {
+    try {
+      return await qb;
+    } catch (e) {
       throw new Exception(Exception.GENERAL_SERVER_ERROR);
-    });
+    }
   }
 
   private getParamsFromUrl(

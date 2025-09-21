@@ -56,8 +56,8 @@ import { ApiLogsQueue } from '@nuvix/core/resolvers/queues/logs.queue';
             ...redisConfig,
             tls: redisConfig.secure
               ? {
-                rejectUnauthorized: false,
-              }
+                  rejectUnauthorized: false,
+                }
               : undefined,
             enableOfflineQueue: false, // Disable offline queue to avoid job accumulation when Redis is down
             enableReadyCheck: true,
@@ -113,11 +113,7 @@ export class AppModule implements NestModule, OnModuleInit {
       .apply(ProjectHook, HostHook, CorsHook)
       .forRoutes('*')
       .apply(AuthHook, ApiHook, StatsHook)
-      .forRoutes(
-        BaseController,
-        DatabasesController,
-        AvatarsController,
-      )
+      .forRoutes(BaseController, DatabasesController, AvatarsController)
       .apply(AuditHook)
       .forRoutes(DatabasesController)
       .apply(LogsHook)

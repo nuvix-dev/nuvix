@@ -84,18 +84,18 @@ export const APP_DATABASE_ENCRYPTION_KEY = 'acd3462d9128abcd'; // 16-byte key fo
 /**@deprecated */ export const APP_REDIS_PASSWORD =
   process.env['APP_REDIS_PASSWORD'];
 /**@deprecated */ export const APP_REDIS_DB = parseInt(
-    process.env['APP_REDIS_DB'] ?? '0',
-    10,
-  );
+  process.env['APP_REDIS_DB'] ?? '0',
+  10,
+);
 /**@deprecated */ export const APP_REDIS_SECURE =
   process.env['APP_REDIS_SECURE'] === 'true';
 
 // Email Config
 /**@deprecated */ export const APP_SMTP_HOST = process.env['APP_SMTP_HOST'];
 /**@deprecated */ export const APP_SMTP_PORT = parseInt(
-    process.env['APP_SMTP_PORT'] ?? '587',
-    10,
-  );
+  process.env['APP_SMTP_PORT'] ?? '587',
+  10,
+);
 /**@deprecated */ export const APP_SMTP_SECURE =
   process.env['APP_SMTP_SECURE'] === 'true';
 /**@deprecated */ export const APP_SMTP_USER = process.env['APP_SMTP_USER'];
@@ -129,9 +129,9 @@ export const APP_POSTGRES_PORT = parseInt(
 /**@deprecated */ export const APP_POSTGRES_SSL =
   process.env['APP_POSTGRES_SSL'] === 'true';
 /**@deprecated */ export const APP_POSTGRES_MAX_CONNECTIONS = parseInt(
-    process.env['APP_POSTGRES_MAX_CONNECTIONS'] ?? '100',
-    10,
-  );
+  process.env['APP_POSTGRES_MAX_CONNECTIONS'] ?? '100',
+  10,
+);
 /**@deprecated */ export const APP_SHARED_CLUSTER = true; // Multi-cluster mode not supported yet!
 // Console DB
 /**@deprecated */ export const APP_DATABASE_HOST =
@@ -143,9 +143,9 @@ export const APP_POSTGRES_PORT = parseInt(
 /**@deprecated */ export const APP_DATABASE_NAME =
   process.env['APP_DATABASE_NAME'];
 /**@deprecated */ export const APP_DATABASE_PORT = parseInt(
-    process.env['APP_DATABASE_PORT'] ?? '3306',
-    10,
-  );
+  process.env['APP_DATABASE_PORT'] ?? '3306',
+  10,
+);
 
 /**@deprecated */ export const APP_INTERNAL_POOL_API =
   process.env['APP_POOL_API'];
@@ -252,7 +252,7 @@ const allowedHeaders = [
   cookieDomain: process.env['APP_COOKIE_DOMAIN'] ?? '',
 };
 
-export const LOG_LEVELS: { [key: string]: boolean; } = (
+export const LOG_LEVELS: { [key: string]: boolean } = (
   process.env['APP_LOG_LEVELS'] ?? ''
 )
   .split(',')
@@ -263,7 +263,7 @@ export const LOG_LEVELS: { [key: string]: boolean; } = (
       acc[level.toLowerCase()] = true;
       return acc;
     },
-    {} as { [key: string]: boolean; },
+    {} as { [key: string]: boolean },
   );
 
 // APP

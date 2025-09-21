@@ -953,7 +953,7 @@ export class AccountService {
     }
 
     const appId = providerConfig.appId ?? '';
-    let appSecret = providerConfig.secret ?? '{}';
+    const appSecret = providerConfig.secret ?? '{}';
 
     // if (appSecret && typeof appSecret === 'object' && appSecret.version) {
     //   // TODO: Handle encrypted app secret
@@ -1031,7 +1031,7 @@ export class AccountService {
     }
 
     const appId = providerConfig.appId ?? '';
-    let appSecret = providerConfig.secret ?? '{}';
+    const appSecret = providerConfig.secret ?? '{}';
 
     const AuthClass = await getOAuth2Class(provider);
     const oauth2 = new AuthClass(appId, appSecret, callback);
@@ -1040,7 +1040,7 @@ export class AccountService {
     if (input.state) {
       try {
         state = { ...defaultState, ...oauth2.parseState(input.state) };
-      } catch (error) {
+      } catch {
         throw new Exception(
           Exception.GENERAL_SERVER_ERROR,
           'Failed to parse login state params as passed from OAuth2 provider',
@@ -1501,7 +1501,7 @@ export class AccountService {
     }
 
     const appId = providerConfig.appId ?? '';
-    let appSecret = providerConfig.secret ?? '{}';
+    const appSecret = providerConfig.secret ?? '{}';
 
     // if (appSecret && typeof appSecret === 'object' && appSecret.version) {
     //   // TODO: Handle encrypted app secret decryption
@@ -1671,7 +1671,7 @@ export class AccountService {
     urlObj.searchParams.set('expire', expire.toISOString());
     url = urlObj.toString();
 
-    let subject = locale.getText('emails.magicSession.subject');
+    const subject = locale.getText('emails.magicSession.subject');
 
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN');
     const agentOs = detector.getOS();
@@ -1698,7 +1698,7 @@ export class AccountService {
         : '',
     };
 
-    let body = template(emailData);
+    const body = template(emailData);
 
     const emailVariables = {
       direction: locale.getText('settings.direction'),
@@ -1830,7 +1830,7 @@ export class AccountService {
 
     await this.db.purgeCachedDocument('users', user.getId());
 
-    let subject = locale.getText('emails.otpSession.subject');
+    const subject = locale.getText('emails.otpSession.subject');
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN');
     const agentOs = detector.getOS();
     const agentClient = detector.getClient();
@@ -1854,7 +1854,7 @@ export class AccountService {
         : '',
     };
 
-    let body = template(emailData);
+    const body = template(emailData);
 
     const emailVariables = {
       direction: locale.getText('settings.direction'),
@@ -1891,7 +1891,7 @@ export class AccountService {
     user: UsersDoc,
     session: SessionsDoc,
   ) {
-    let subject: string = locale.getText('emails.sessionAlert.subject');
+    const subject: string = locale.getText('emails.sessionAlert.subject');
     const templatePath = path.join(
       this.appConfig.assetConfig.templates,
       'email-session-alert.tpl',
@@ -1928,7 +1928,7 @@ export class AccountService {
       ),
     };
 
-    let body = template(emailData);
+    const body = template(emailData);
     const email = user.get('email');
 
     await this.mailsQueue.add(MailJob.SEND_EMAIL, {
@@ -2073,7 +2073,7 @@ export class AccountService {
 
     try {
       await this.db.updateDocument('users', user.getId(), user);
-    } catch (error) {
+    } catch {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
         'Failed saving user to DB',
@@ -2229,7 +2229,7 @@ export class AccountService {
 
     const projectName = 'Console';
     let body = locale.getText('emails.recovery.body');
-    let subject = locale.getText('emails.recovery.subject');
+    const subject = locale.getText('emails.recovery.subject');
 
     const templatePath = path.join(
       this.appConfig.assetConfig.templates,
@@ -2407,7 +2407,7 @@ export class AccountService {
 
     const projectName = 'Console';
     let body = locale.getText('emails.verification.body');
-    let subject = locale.getText('emails.verification.subject');
+    const subject = locale.getText('emails.verification.subject');
 
     const templatePath = path.join(
       this.appConfig.assetConfig.templates,
@@ -2441,6 +2441,7 @@ export class AccountService {
     });
 
     createdVerification.set('secret', verificationSecret);
+    // @typescript-eslint/no-unused-vars
     response.status(201);
     return createdVerification;
   }
@@ -2743,7 +2744,6 @@ export class AccountService {
     request,
     response,
     locale,
-    userId,
     factor,
   }: WithUser<WithReqRes<WithLocale<CreateMfaChallengeDTO>>>) {
     const expire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_CONFIRM * 1000);
@@ -2784,7 +2784,7 @@ export class AccountService {
           throw new Exception(Exception.USER_PHONE_NOT_VERIFIED);
         }
 
-        let smsMessage = locale.getText('sms.verification.body');
+        const smsMessage = locale.getText('sms.verification.body');
         const smsContent = smsMessage
           .replace('{{project}}', 'Console')
           .replace('{{secret}}', code);
@@ -2808,7 +2808,7 @@ export class AccountService {
           throw new Exception(Exception.USER_EMAIL_NOT_VERIFIED);
         }
 
-        let subject = locale.getText('emails.mfaChallenge.subject');
+        const subject = locale.getText('emails.mfaChallenge.subject');
         const detector = new Detector(
           request.headers['user-agent'] || 'UNKNOWN',
         );
@@ -2831,7 +2831,7 @@ export class AccountService {
           signature: locale.getText('emails.mfaChallenge.signature'),
         };
 
-        let body = template(emailData);
+        const body = template(emailData);
         const emailVariables = {
           direction: locale.getText('settings.direction'),
           user: user.get('name'),

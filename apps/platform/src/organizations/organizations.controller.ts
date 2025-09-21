@@ -87,7 +87,7 @@ export class OrganizationsController {
 
   @Get(':teamId/logs')
   @ResModel({ type: Models.LOG, list: true })
-  async teamLogs(@Param('teamId') id: string) {
+  async teamLogs() {
     return {
       total: 0,
       logs: [],
@@ -95,7 +95,7 @@ export class OrganizationsController {
   }
 
   @Get(':teamId/aggregations')
-  async findAggregations(@Param('teamId') id: string) {
+  async findAggregations() {
     return {
       total: 0, // aggs.length,
       aggregations: {}, // aggs
