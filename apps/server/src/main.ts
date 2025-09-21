@@ -1,5 +1,5 @@
 /**
- * Nuvix is a Backend as a Service (BaaS) that allows you to create a backend for your application in minutes.
+ * Nuvix is a Open Source Backend that allows you to create a backend for your application in minutes.
  * This file is the entry point of the application, where the application is created and started.
  * @author Nuvix-Tech
  * @version 1.0
@@ -107,6 +107,9 @@ async function bootstrap() {
   fastify.addHook('onRequest', (req, res, done) => {
     res.header('X-Powered-By', 'Nuvix-Server');
     res.header('Server', 'Nuvix');
+    res.header('Access-Control-Allow-Origin', '*'); // CorsHook will handle this
+    res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS');
+    res.header('Access-Control-Allow-Credentials', 'true');
     done();
   });
 

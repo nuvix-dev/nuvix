@@ -9,17 +9,6 @@ export class CreateOrgDTO {
   @IsString()
   @IsNotEmpty()
   declare name: string;
-
-  @IsNotEmpty()
-  declare billingPlan: string;
-
-  @IsOptional()
-  @IsString()
-  paymentMethodId?: string;
-
-  @IsOptional()
-  @IsString()
-  billingAddressId?: string;
 }
 
 export class UpdateOrgDTO extends PartialType(CreateOrgDTO) {}

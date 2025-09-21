@@ -7,6 +7,7 @@ import {
   DuplicateException,
   Adapter,
   Authorization,
+  ID,
 } from '@nuvix/db';
 import collections from '@nuvix/utils/collections';
 import { Audit } from '@nuvix/audit';
@@ -14,6 +15,10 @@ import { Client } from 'pg';
 import { AppConfigService, CoreService } from '@nuvix/core';
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
 import { DatabaseRole, DEFAULT_DATABASE } from '@nuvix/utils';
+import { AccountService } from '../account/account.service';
+import { OrganizationsService } from '../organizations/organizations.service';
+import { ProjectService } from '../projects/projects.service';
+import { ProjectsQueue } from '@nuvix/core/resolvers';
 
 export async function initSetup(
   app: NestFastifyApplication,
@@ -169,8 +174,77 @@ export async function initSetup(
         logger.log('Creating Audit Collection.');
         await new Audit(dbForPlatform).setup();
       }
-      logger.log('Successfully complete the server setup.');
 
+      // TODO: improve project setup for selfhost and make it dynamic based on multi project or single project
+      if (config.isSelfHost) {
+        logger.log('Setting up project.');
+        const accountService = app.get(AccountService);
+        const orgService = app.get(OrganizationsService);
+        const projectService = app.get(ProjectService);
+        const projectsQueue = app.get(ProjectsQueue);
+
+        const adminEmail = 'admin@nuvix.local';
+        const adminPassword = 'password';
+        const isExists = (
+          await dbForPlatform.findOne('users', qb =>
+            qb.equal('email', adminEmail),
+          )
+        ).empty();
+        if (!isExists) {
+          const user = await accountService.createAccount(
+            ID.unique(),
+            adminEmail,
+            adminPassword,
+            undefined,
+            new Doc(),
+            '',
+          );
+          const team = await orgService.create(user, {
+            organizationId: 'my-team',
+            name: 'Team',
+          });
+          const project = await projectService.create({
+            projectId: 'default',
+            name: 'Project',
+            teamId: team.getId(),
+            region: 'local',
+            password: password ?? 'password',
+          });
+
+          await projectsQueue.devInit(project, {
+            host,
+            port,
+          });
+
+          project
+            .set('status', 'active')
+            .set('database', {
+              postgres: {
+                host,
+                port,
+                password,
+              },
+              pool: {
+                host,
+                port: 6432,
+                password,
+              },
+            })
+            .set('environment', 'local');
+
+          await dbForPlatform.updateDocument(
+            'projects',
+            project.getId(),
+            project,
+          );
+
+          logger.log('Project setup complete.');
+          logger.log(`Admin email: ${adminEmail}`);
+          logger.log(`Admin password: ${adminPassword}`);
+        }
+      }
+
+      logger.log('Successfully complete the server setup.');
       await cache.flush();
     });
   } catch (error: any) {

@@ -164,7 +164,7 @@ export class ProjectsQueue extends Queue {
     }
   }
 
-  private async devInit(
+  async devInit(
     project: ProjectsDoc,
     dbConfig: Record<string, any>,
   ): Promise<void> {

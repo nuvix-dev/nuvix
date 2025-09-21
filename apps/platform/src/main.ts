@@ -74,7 +74,9 @@ async function bootstrap() {
     },
   );
 
+  // @ts-ignore
   app.register(cookieParser);
+  // @ts-ignore
   app.register(fastifyMultipart, {
     limits: {
       fileSize: 50 * 1024 * 1024, // 50MB

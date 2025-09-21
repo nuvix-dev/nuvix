@@ -125,8 +125,8 @@ export default () => ({
     postgres: {
       host: process.env['APP_POSTGRES_HOST'] ?? 'localhost',
       port: parseInt(process.env['APP_POSTGRES_PORT'] ?? '5432', 10),
-      user: process.env['APP_POSTGRES_USER'],
-      password: process.env['APP_POSTGRES_PASSWORD'],
+      user: process.env['APP_POSTGRES_USER'] ?? 'nuvix_admin',
+      password: process.env['APP_POSTGRES_PASSWORD'] ?? 'password',
       database: process.env['APP_POSTGRES_DB']!,
       ssl: process.env['APP_POSTGRES_SSL'] === 'true',
       maxConnections: parseInt(
@@ -137,9 +137,9 @@ export default () => ({
     platform: {
       host: process.env['APP_DATABASE_HOST'] ?? 'localhost',
       port: parseInt(process.env['APP_DATABASE_PORT'] ?? '5432', 10),
-      user: process.env['APP_DATABASE_USER'],
-      password: process.env['APP_DATABASE_PASSWORD'],
-      name: process.env['APP_DATABASE_NAME'],
+      user: process.env['APP_DATABASE_USER'] ?? 'nuvix_admin',
+      password: process.env['APP_DATABASE_PASSWORD'] ?? 'password',
+      name: process.env['APP_DATABASE_NAME'] ?? 'platform',
     },
     timeout: 15_000,
     reconnect: {

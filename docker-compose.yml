@@ -1,14 +1,13 @@
 services:
   postgres:
-    image: postgres:17
-    container_name: nuvix-db
+    image: ravikan6/postgres
+    container_name: nuvix-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_PASSWORD: ${APP_DATABASE_PASSWORD}
-      POSTGRES_DB: ${APP_DATABASE_NAME}
-      POSTGRES_USER: ${APP_DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${APP_DATABASE_PASSWORD:-password}
+      PGDATA: /var/lib/postgresql/data/pgdata
     volumes:
-      - nuvix_paltform_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     networks:
       - nuvix
     healthcheck:
@@ -89,7 +88,7 @@ services:
       - nuvix
 
 volumes:
-  nuvix_paltform_data:
+  postgres_data:
   nuvix_storage:
   redis_data:
   caddy_data:

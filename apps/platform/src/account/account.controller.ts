@@ -99,8 +99,8 @@ export class AccountController {
       input.email,
       input.password,
       input.name,
-      request,
       user,
+      request.ip,
     );
   }
 

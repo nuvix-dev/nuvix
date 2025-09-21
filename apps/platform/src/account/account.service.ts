@@ -98,7 +98,7 @@ export class AccountService {
     @InjectQueue(QueueFor.MAILS)
     private readonly mailsQueue: Queue<MailQueueOptions, MailJob>,
   ) {
-    this.db = coreService.getPlatformDb();
+    this.db = this.coreService.getPlatformDb();
     this.geodb = coreService.getGeoDb();
     this.audit = coreService.getPlatformAudit();
     this.platform = coreService.getPlatform();
@@ -115,8 +115,8 @@ export class AccountService {
     email: string,
     password: string,
     name: string | undefined,
-    request: NuvixRequest,
     user: UsersDoc,
+    ip: string,
   ): Promise<UsersDoc> {
     email = email.toLowerCase();
 
@@ -131,7 +131,7 @@ export class AccountService {
       throw new Exception(Exception.USER_EMAIL_NOT_WHITELISTED);
     }
 
-    if (whitelistIPs && !whitelistIPs.includes(request.ip)) {
+    if (whitelistIPs && !whitelistIPs.includes(ip)) {
       throw new Exception(Exception.USER_IP_NOT_WHITELISTED);
     }
 
@@ -238,7 +238,6 @@ export class AccountService {
 
       await this.db.purgeCachedDocument('users', user.getId());
     } catch (error) {
-      console.log(error);
       if (error instanceof DuplicateException) {
         throw new Exception(Exception.USER_ALREADY_EXISTS);
       } else {
