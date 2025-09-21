@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "declaration": false,
+    "outDir": "./dist"
+  },
+  "include": ["src/**/*", "../../nuvix.d.ts"],
+  "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]
+}
