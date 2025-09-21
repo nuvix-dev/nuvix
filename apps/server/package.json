@@ -2,7 +2,6 @@
   "name": "@nuvix/server",
   "version": "1.0.0",
   "description": "Nuvix is a Open Source Backend that provides a set of tools and services to help developers build and deploy applications quickly and efficiently.",
-  "private": true,
   "type": "module",
   "engines": {
     "node": ">=18.0.0",

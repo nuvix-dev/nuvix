@@ -2,7 +2,6 @@
   "name": "@nuvix/platform",
   "version": "1.0.0",
   "description": "Nuvix Platform to manage multiple tenants",
-  "private": true,
   "type": "module",
   "engines": {
     "node": ">=18.0.0",

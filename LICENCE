@@ -1,0 +1,25 @@
+Business Source License 1.0
+
+Parameters
+Licensor:            Nuvix-Tech
+Licensed Work:       Nuvix (the “Software”)
+License Date:        2025-09-21
+Change Date:         2028-09-21
+Change License:      Apache License, Version 2.0
+
+Usage Grant
+Under this License, you are granted the right to copy, modify, create derivative works, and use the Software for any purpose, except for Production Use as described below, subject to the conditions set forth in this License.
+
+Production Use Limitation
+You may not use the Software to provide a commercial hosted or managed service, where the Software is offered to third parties as a hosted, managed, or cloud service.
+
+Additional Use Grant
+Self-hosting for personal or commercial projects is permitted without limitation, provided the Software is not offered to third parties as a managed service.
+
+Change License
+On the Change Date, the restrictions in this License will automatically terminate, and the Software will be made available under the Change License.
+
+Notice
+The Business Source License (BSL) is not an Open Source license as approved by the Open Source Initiative (OSI). However, the Change License (Apache 2.0) is an OSI-approved license, and the Software will be relicensed under it after the Change Date.
+
+For more information, see https://mariadb.com/bsl11
