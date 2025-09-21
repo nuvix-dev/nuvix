@@ -156,32 +156,4 @@ export class OrganizationsController {
       roles: ['owner'],
     };
   }
-
-  @Get(':teamId/credits')
-  async getCredits(@Param('teamId') id: string) {
-    return {
-      total: 0, // credits.length,
-      credits: [], // credits
-      available: 0,
-    };
-  }
-
-  @Get(':teamId/invoices')
-  async getInvoices(@Param('teamId') id: string) {
-    return {
-      total: 0, // invoices.length,
-      invoices: [], // invoices
-    };
-  }
-
-  @Get(':teamId/plan')
-  @ResModel(Models.BILLING_PLAN)
-  async getPlan(@Param('teamId') id: string) {
-    return this.organizationsService.billingPlan(id);
-  }
-
-  @Get(':teamId/usage')
-  async getUsage(@Param('teamId') id: string) {
-    return;
-  }
 }

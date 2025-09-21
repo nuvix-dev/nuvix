@@ -1,7 +1,7 @@
 {
-  "name": "@nuvix/api",
+  "name": "@nuvix/server",
   "version": "1.0.0",
-  "description": "Nuvix is a Backend as a Service (BaaS) platform that provides a set of tools and services to help developers build and deploy applications quickly and efficiently.",
+  "description": "Nuvix is a Open Source Backend that provides a set of tools and services to help developers build and deploy applications quickly and efficiently.",
   "private": true,
   "type": "module",
   "engines": {
@@ -11,7 +11,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch 'src/**' --watch '../../libs/**/*.ts'",
-    "prebuild": "../../scripts/merge-pkg.js api",
+    "prebuild": "../../scripts/merge-pkg.js server",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "typecheck": "tsc --noEmit",
     "test": "jest",

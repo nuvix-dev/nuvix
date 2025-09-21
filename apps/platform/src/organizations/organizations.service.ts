@@ -564,26 +564,4 @@ export class OrganizationsService {
 
     return null;
   }
-
-  /**
-   * Get Organization Plan
-   */
-  async billingPlan(id: string) {
-    const team = await this.db.getDocument('teams', id);
-
-    if (team.empty()) {
-      throw new Exception(Exception.TEAM_NOT_FOUND);
-    }
-
-    const plan = await this.db.getDocument(
-      'plans',
-      team.get('billingPlan') || 'tier-2',
-    );
-
-    if (!plan) {
-      throw new Exception(Exception.GENERAL_NOT_FOUND, 'Plan not found');
-    }
-
-    return plan;
-  }
 }

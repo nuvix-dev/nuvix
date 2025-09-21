@@ -7,7 +7,6 @@ import {
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
 import { AccountModule } from './account/account.module';
-import { UsersModule } from './users/users.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { ProjectModule } from './projects/project.module';
 import { CoreModule } from '@nuvix/core/core.module';
@@ -25,7 +24,6 @@ import {
 } from '@nuvix/core/resolvers/hooks';
 import { ProjectHook } from './resolvers/hooks/project.hook';
 import { PgMetaController, PgMetaModule } from '@nuvix/pg-meta';
-import { UsersController } from './users/users.controller';
 import { AccountController } from './account/account.controller';
 import { OrganizationsController } from './organizations/organizations.controller';
 import { ProjectController } from './projects/project.controller';
@@ -36,8 +34,6 @@ import { Key } from '@nuvix/core/helper/key.helper';
 import { AppConfigService } from '@nuvix/core';
 import { CliModule } from './cli/cli.module';
 import { CliController } from './cli/cli.controller';
-import { InternalModule } from './internal/internal.module';
-import { InternalController } from './internal/internal.controller';
 
 @Module({
   imports: [
@@ -76,13 +72,11 @@ import { InternalController } from './internal/internal.controller';
       secret: JWT_SECRET,
       global: true,
     }),
-    UsersModule,
     AccountModule,
     OrganizationsModule,
     ProjectModule,
     PgMetaModule,
     CliModule,
-    InternalModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailsQueue, AuditsQueue],
@@ -100,14 +94,12 @@ export class AppModule implements NestModule, OnModuleInit {
       .forRoutes('*')
       .apply(AuthHook, ApiHook, AuditHook)
       .forRoutes(
-        UsersController,
         AccountController,
         OrganizationsController,
         ProjectController,
         ProjectsController,
         PgMetaController,
         CliController,
-        InternalController,
       );
   }
 }

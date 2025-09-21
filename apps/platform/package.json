@@ -1,7 +1,7 @@
 {
   "name": "@nuvix/platform",
   "version": "1.0.0",
-  "description": "Nuvix is a Backend as a Service (BaaS) platform that provides a set of tools and services to help developers build and deploy applications quickly and efficiently.",
+  "description": "Nuvix Platform to manage multiple tenants",
   "private": true,
   "type": "module",
   "engines": {

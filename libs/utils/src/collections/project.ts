@@ -6,7 +6,6 @@ import {
   Order,
   Collection,
 } from '@nuvix-tech/db';
-import { APP_FUNCTION_SPECIFICATION_DEFAULT } from '../constants';
 import { commonCollections } from './common';
 
 export const projectCollections: Record<string, Collection> = {
@@ -201,7 +200,6 @@ export const projectCollections: Record<string, Collection> = {
         key: ID.custom('specification'),
         type: AttributeType.String,
         size: 128,
-        default: APP_FUNCTION_SPECIFICATION_DEFAULT,
       },
       {
         $id: ID.custom('scopes'),

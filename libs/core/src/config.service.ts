@@ -33,4 +33,8 @@ export class AppConfigService {
   get root() {
     return this.configService;
   }
+
+  get isSelfHost() {
+    return this.configService.get('IS_SELF_HOST') !== 'false';
+  }
 }

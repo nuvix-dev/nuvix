@@ -13,6 +13,7 @@ import { Audit } from '@nuvix/audit';
 import { Client } from 'pg';
 import { AppConfigService, CoreService } from '@nuvix/core';
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
+import { DatabaseRole, DEFAULT_DATABASE } from '@nuvix/utils';
 
 export async function initSetup(
   app: NestFastifyApplication,
@@ -23,6 +24,33 @@ export async function initSetup(
   try {
     const { host, password, port, user, name } =
       config.getDatabaseConfig().platform;
+
+    if (config.isSelfHost) {
+      const rootClient = new Client({
+        host,
+        password,
+        port,
+        user: DatabaseRole.ADMIN,
+        database: DEFAULT_DATABASE,
+      });
+      try {
+        await rootClient.connect();
+        const res = await rootClient.query(
+          `SELECT 1 FROM pg_database WHERE datname='${name}'`,
+        );
+        if (res.rowCount === 0) {
+          logger.log(`Database ${name} does not exist. Creating...`);
+          await rootClient.query(`CREATE DATABASE "${name}"`);
+          logger.log(`Database ${name} created.`);
+        }
+      } catch (error: any) {
+        logger.error("Can't create database.", error.message);
+        throw error;
+      } finally {
+        await rootClient.end();
+      }
+    }
+
     const client = new Client({
       host,
       password,

@@ -1,7 +1,7 @@
 import { authenticator } from 'otplib';
 import { MfaType, TOTP as TOTPType } from '@nuvix/core/validators';
 import { Challenge } from '../challenge';
-import { RecordDoc, UsersDoc, type ChallengesDoc } from '@nuvix/utils/types';
+import { UsersDoc, type ChallengesDoc } from '@nuvix/utils/types';
 
 export class TOTP extends Challenge {
   public static override verify(user: UsersDoc, otp: string): boolean {
