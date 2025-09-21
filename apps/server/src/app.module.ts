@@ -37,7 +37,6 @@ import { SchemasModule } from './schemas/schemas.module';
 // Controllers
 import { BaseController } from './base/base.controller';
 import { AvatarsController } from './avatars/avatars.controller';
-import { FunctionsController } from './functions/functions.controller';
 import { DatabasesController } from './databases/databases.controller';
 
 import { Key } from '@nuvix/core/helper/key.helper';
@@ -118,10 +117,9 @@ export class AppModule implements NestModule, OnModuleInit {
         BaseController,
         DatabasesController,
         AvatarsController,
-        FunctionsController,
       )
       .apply(AuditHook)
-      .forRoutes(DatabasesController, FunctionsController)
+      .forRoutes(DatabasesController)
       .apply(LogsHook)
       .forRoutes('*');
   }

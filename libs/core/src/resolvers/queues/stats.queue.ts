@@ -246,47 +246,7 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
           }
           break;
         }
-
-        // case collection === 'databases': {
-        //   const collectionsDoc = await dbForProject.getDocument('stats', fnv1a128(`${MetricPeriod.INF}|${MetricFor.DATABASE_ID_COLLECTIONS.replace('{databaseInternalId}', document.getSequence().toString())}`));
-        //   const documentsDoc = await dbForProject.getDocument('stats', fnv1a128(`${MetricPeriod.INF}|${MetricFor.DATABASE_ID_DOCUMENTS.replace('{databaseInternalId}', document.getSequence().toString())}`));
-
-        //   if (collectionsDoc?.value) {
-        //     metrics.push({
-        //       key: MetricFor.COLLECTIONS,
-        //       value: collectionsDoc.value * -1,
-        //     });
-        //   }
-
-        //   if (documentsDoc?.value) {
-        //     metrics.push({
-        //       key: MetricFor.DOCUMENTS,
-        //       value: documentsDoc.value * -1,
-        //     });
-        //   }
-        //   break;
-        // }
-
-        // case collection.startsWith('database_') && !collection.includes('collection'): {
-        //   const parts = collection.split('_');
-        //   const databaseInternalId = parts[1] || '0';
-        //   const documentsDoc = await dbForProject.getDocument('stats', fnv1a128(`${MetricPeriod.INF}|${MetricFor.DATABASE_ID_COLLECTION_ID_DOCUMENTS
-        //     .replace('{databaseInternalId}', databaseInternalId)
-        //     .replace('{collectionInternalId}', document.getSequence().toString())}`));
-
-        //   if (documentsDoc?.value) {
-        //     metrics.push({
-        //       key: MetricFor.DOCUMENTS,
-        //       value: documentsDoc.value * -1,
-        //     });
-        //     metrics.push({
-        //       key: MetricFor.DATABASE_ID_DOCUMENTS.replace('{databaseInternalId}', databaseInternalId) as MetricFor,
-        //       value: documentsDoc.value * -1,
-        //     });
-        //   }
-        //   break;
-        // }
-
+          
         case collection === 'buckets': {
           const filesDoc = await dbForProject.getDocument(
             'stats',

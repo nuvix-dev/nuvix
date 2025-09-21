@@ -281,7 +281,7 @@ export const APP_LIMIT_COUNT = 5000;
 /**@deprecated */ export const APP_LIMIT_USERS = 10_000;
 /**@deprecated */ export const APP_LIMIT_USER_PASSWORD_HISTORY = 20;
 /**@deprecated */ export const APP_LIMIT_USER_SESSIONS_MAX = 100;
-/**@deprecated */ export const APP_LIMIT_USER_SESSIONS_DEFAULT = 10;
+export const APP_LIMIT_USER_SESSIONS_DEFAULT = 10;
 /**@deprecated */ export const APP_LIMIT_ANTIVIRUS = 20_000_000; //20MB
 /**@deprecated */ export const APP_LIMIT_ENCRYPTION = 20_000_000; //20MB
 /**@deprecated */ export const APP_LIMIT_COMPRESSION = 20_000_000; //20MB
@@ -330,7 +330,7 @@ export const APP_DEBUG_FORMAT = process.env['APP_DEBUG_FORMAT'] === 'json';
 /**@deprecated */ export const WORKER_TYPE_MESSAGING = 'messaging';
 
 // Mails
-/**@deprecated */ export const APP_SYSTEM_EMAIL_ADDRESS = 'app@nuvix.io';
+/**@deprecated */ export const APP_SYSTEM_EMAIL_ADDRESS = 'app@nuvix.in';
 /**@deprecated */ export const APP_SYSTEM_EMAIL_NAME = 'Nuvix';
 /**@deprecated */ export const SEND_TYPE_EMAIL = 'sendEmail';
 

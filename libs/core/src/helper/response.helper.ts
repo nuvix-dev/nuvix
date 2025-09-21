@@ -107,7 +107,7 @@ import { ObjectModel } from '../models/Object.model';
 import { EnvToken } from '../models/EnvToken.model';
 
 /**
- * The `Response` class provides a collection of static properties representing various models used in the application.
+ * The `Models` class provides a collection of static properties representing various models used in the application.
  * These models are categorized into different sections such as Database, Users, MFA, Storage, Locale, Messaging, Teams, VCS, Functions, Proxy, Migrations, Project, and Health.
  * Each static property holds a reference to a specific model class or a string identifier.
  */

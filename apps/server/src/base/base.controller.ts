@@ -196,7 +196,7 @@ export class BaseController {
       owner: 'Nuvix',
       user: '`User`',
       team: '`Team',
-      redirect: 'https://nuvix.io',
+      redirect: 'https://nuvix.in',
       project: 'Console',
     };
 

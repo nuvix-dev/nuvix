@@ -1,3 +1,7 @@
+// This queue is not usefull for self-hosted version
+// because we don't manage database creation for now
+// but we keep it for future use cases
+// and also for nuvix cloud
 import { OnWorkerEvent, Processor } from '@nestjs/bullmq';
 import { Queue } from './queue';
 import { Job } from 'bullmq';

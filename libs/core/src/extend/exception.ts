@@ -766,7 +766,7 @@ export const errorCodes: Record<string, ErrorCode> = {
   [Exception.USER_API_KEY_AND_SESSION_SET]: {
     name: Exception.USER_API_KEY_AND_SESSION_SET,
     description:
-      'API key and session used in the same request. Use either `setSession` or `setKey`. Learn about which authentication method to use in the SSR docs: https://nuvix.io/docs/products/auth/server-side-rendering',
+      'API key and session used in the same request. Use either `setSession` or `setKey`. Learn about which authentication method to use in the SSR docs: https://nuvix.in/docs/products/auth/server-side-rendering',
     code: 403,
   },
   [Exception.API_KEY_EXPIRED]: {

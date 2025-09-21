@@ -184,10 +184,10 @@ export class OAuth2Error extends Exception {
       // Set the appropriate error type based on the code
       const type =
         code === 400
-          ? 'USER_OAUTH2_BAD_REQUEST'
+          ? Exception.USER_OAUTH2_BAD_REQUEST
           : code === 401
-            ? 'USER_OAUTH2_UNAUTHORIZED'
-            : 'USER_OAUTH2_PROVIDER_ERROR';
+            ? Exception.USER_OAUTH2_UNAUTHORIZED
+            : Exception.USER_OAUTH2_PROVIDER_ERROR;
 
       this.setType(type);
 

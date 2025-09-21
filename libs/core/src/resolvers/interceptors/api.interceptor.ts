@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { Context, CORE_SCHEMA_DB, MetricFor, QueueFor } from '@nuvix/utils';
-import { Authorization, Database, Events, Doc } from '@nuvix-tech/db';
+import { Database, Events, Doc } from '@nuvix-tech/db';
 import { Reflector } from '@nestjs/core';
 import { Auth } from '../../helper/auth.helper';
 import { Exception } from '../../extend/exception';
@@ -222,25 +222,6 @@ export class ApiInterceptor implements NestInterceptor {
       case collection === 'sessions':
         metrics.push({ key: MetricFor.SESSIONS, value });
         break;
-      // case collection.startsWith('database_') && !collection.includes('collection'):
-      //   const parts = collection.split('_');
-      //   const databaseInternalId = parts[1] ?? '0';
-      //   queueForStatsUsage
-      //     .addMetric('METRIC_COLLECTIONS', value)
-      //     .addMetric(`METRIC_DATABASE_${databaseInternalId}_COLLECTIONS`, value);
-      //   if (event === Database.EVENT_DOCUMENT_DELETE) {
-      //     queueForStatsUsage.addReduce(document);
-      //   }
-      //   break;
-      // case collection.startsWith('database_') && collection.includes('_collection_'):
-      //   const docParts = collection.split('_');
-      //   const dbInternalId = docParts[1] ?? '0';
-      //   const collectionInternalId = docParts[3] ?? '0';
-      //   queueForStatsUsage
-      //     .addMetric('METRIC_DOCUMENTS', value)
-      //     .addMetric(`METRIC_DATABASE_${dbInternalId}_DOCUMENTS`, value)
-      //     .addMetric(`METRIC_DATABASE_${dbInternalId}_COLLECTION_${collectionInternalId}_DOCUMENTS`, value);
-      //   break;
       case collection === 'buckets':
         metrics.push({ key: MetricFor.BUCKETS, value });
         if (event === Events.DocumentDelete) {
