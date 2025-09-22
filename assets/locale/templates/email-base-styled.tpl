@@ -13,7 +13,9 @@
         }
 
         body {
-            background-color: #f5eaed;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
         }
 
         .icon {
@@ -23,25 +25,31 @@
         }
 
         .main a {
-            color: currentColor;
+            color: #007bff;
         }
 
         .main {
             padding: 32px;
-            line-height: 1.5;
-            color: #d0dbed;
-            border-radius: 12px;
-            font-size: 15px;
+            line-height: 1.6;
+            color: #333333;
+            border-radius: 8px;
+            font-size: 16px;
             font-weight: 400;
-            font-family: "Inter", sans-serif;
-            background-color: #7b4258;
+            font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #ffffff;
             margin: 0;
             box-sizing: border-box;
+            border: 1px solid #e5e5e5;
         }
 
         a {
-            color: currentColor;
-            word-break: break-all;
+            color: #007bff;
+            text-decoration: none;
+            word-break: break-word;
+        }
+
+        a:hover {
+            text-decoration: underline;
         }
 
         table {
@@ -63,68 +71,69 @@
 
         .main {
             max-width: 650px;
-            margin: 0 auto;
-            margin-top: 32px;
+            margin: 32px auto;
         }
 
         h1 {
-            font-size: 22px;
+            font-size: 24px;
             margin-bottom: 0px;
             margin-top: 0px;
-            color: #f0f2fb;
+            color: #1a1a1a;
+            font-weight: 600;
         }
 
         h2 {
             font-size: 20px;
             font-weight: 600;
-            color: #c9cde1;
+            color: #333333;
         }
 
         h3 {
-            font-size: 14px;
+            font-size: 16px;
             font-weight: 500;
-            color: #d2d5e4;
-            line-height: 21px;
+            color: #555555;
+            line-height: 24px;
             margin: 0;
             padding: 0;
         }
 
         h4 {
-            font-family: "DM Sans", sans-serif;
+            font-family: "Inter", sans-serif;
             font-weight: 600;
-            font-size: 12px;
-            color: #d5dae6;
+            font-size: 14px;
+            color: #666666;
             margin: 0;
             padding: 0;
         }
 
         hr {
             border: none;
-            border-top: 1px solid #cf91a7;
+            border-top: 1px solid #e5e5e5;
         }
     </style>
     <style>
         a.button {
             display: inline-block;
-            background: #cf91a7;
+            background: #007bff;
             color: #ffffff;
-            border-radius: 8px;
+            border-radius: 6px;
             height: 48px;
-            padding: 12px 20px;
+            padding: 12px 24px;
             box-sizing: border-box;
             cursor: pointer;
             text-align: center;
             text-decoration: none;
-            border-color: #aa6e7f;
-            border-style: solid;
-            border-width: 1px;
+            border: 1px solid #007bff;
             margin-right: 24px;
             margin-top: 8px;
+            font-weight: 500;
         }
 
         a.button:hover,
         a.button:focus {
-            opacity: 0.8;
+            background: #0056b3;
+            border-color: #0056b3;
+            text-decoration: none;
         }
 
         @media only screen and (max-width: 600px) {
@@ -134,18 +143,29 @@
         }
 
         .social-icon {
-            border-radius: 999px;
-            background: rgba(216, 216, 219, 0.1);
+            border-radius: 6px;
+            background: #f8f9fa;
+            border: 1px solid #e5e5e5;
             width: 32px;
             height: 32px;
             line-height: 32px;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .social-icon:hover {
+            background: #e9ecef;
+            border-color: #dee2e6;
         }
 
         .social-icon>img {
             margin: auto;
+        }
+
+        .social-icon svg {
+            fill: #666666;
         }
     </style>
 </head>
@@ -179,7 +199,7 @@
         <table style="
                     padding-top: 32px;
                     margin-top: 32px;
-                    border-top: solid 1px #aa6e7f;
+                    border-top: solid 1px #e5e5e5;
                 ">
             <tr>
                 <td></td>
@@ -189,7 +209,7 @@
         <table style="width: auto; margin: 0 auto">
             <tr>
                 <td style="padding-left: 4px; padding-right: 4px">
-                    <a href="https://twitter.com/nuvix" class="social-icon" title="Twitter">
+                    <a href="https://twitter.com/nuvixdev" class="social-icon" title="Twitter">
                         <svg viewBox="0 0 24 24" aria-hidden="true" class="icon">
                             <g>
                                 <path
@@ -199,7 +219,7 @@
                         </svg> </a>
                 </td>
                 <td style="padding-left: 4px; padding-right: 4px">
-                    <a href="https://nuvix.io/discord" class="social-icon">
+                    <a href="https://nuvix.in/discord" class="social-icon">
                         <svg viewBox="0 0 24 24" aria-hidden="true" class="icon">
                             <g>
                                 <path
@@ -210,7 +230,7 @@
                     </a>
                 </td>
                 <td style="padding-left: 4px; padding-right: 4px">
-                    <a href="https://github.com/ravikan6/nuvix" class="social-icon">
+                    <a href="https://github.com/Nuvix-Tech/nuvix" class="social-icon">
                         <svg viewBox="0 0 24 24" aria-hidden="true" class="icon">
                             <g>
                                 <path
@@ -224,14 +244,14 @@
         </table>
         <table style="width: auto; margin: 0 auto; margin-top: 60px">
             <tr>
-                <td><a href="https://nuvix.io/terms">Terms</a></td>
-                <td style="color: #e8e9f0">
+                <td><a href="https://nuvix.in/terms">Terms</a></td>
+                <td style="color: #999999">
                     <div style="margin: 0 8px">|</div>
                 </td>
-                <td><a href="https://nuvix.io/privacy">Privacy</a></td>
+                <td><a href="https://nuvix.in/privacy">Privacy</a></td>
             </tr>
         </table>
-        <p style="text-align: center" align="center">
+        <p style="text-align: center; color: #666666; font-size: 14px;" align="center">
             &copy; {{year}} Nuvix | All rights reserved.
         </p>
     </div>
