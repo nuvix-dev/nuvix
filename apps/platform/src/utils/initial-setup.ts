@@ -30,7 +30,7 @@ export async function initSetup(
     const { host, password, port, user, name } =
       config.getDatabaseConfig().platform;
 
-    if (config.isSelfHost) {
+    if (config.isSelfHosted) {
       const rootClient = new Client({
         host,
         password,
@@ -176,7 +176,7 @@ export async function initSetup(
       }
 
       // TODO: improve project setup for selfhost and make it dynamic based on multi project or single project
-      if (config.isSelfHost) {
+      if (config.isSelfHosted) {
         logger.log('Setting up project.');
         const accountService = app.get(AccountService);
         const orgService = app.get(OrganizationsService);

@@ -70,6 +70,8 @@ services:
         - APP_NAME=server
     container_name: server
     command: ['bun', 'main.js']
+    ports:
+      - '4000:4000'
     environment:
       APP_DATABASE_HOST: postgres
       APP_REDIS_HOST: redis
@@ -100,6 +102,8 @@ services:
         - APP_NAME=platform
     container_name: platform
     command: ['bun', 'main.js']
+    ports:
+      - '4100:4100'
     environment:
       APP_DATABASE_HOST: postgres
       APP_REDIS_HOST: redis
@@ -119,28 +123,28 @@ services:
         max-size: '10m'
         max-file: '5'
 
-  caddy:
-    image: caddy:2
-    container_name: nuvix-caddy
-    restart: unless-stopped
-    ports:
-      - '80:80'
-      - '443:443'
-      - '443:443/udp'
-    volumes:
-      - ./configs/Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    networks:
-      - caddy
-      - nuvix
+  # caddy:
+  #   image: caddy:2
+  #   container_name: nuvix-caddy
+  #   restart: unless-stopped
+  #   ports:
+  #     - '80:80'
+  #     - '443:443'
+  #     - '443:443/udp'
+  #   volumes:
+  #     - ./configs/Caddyfile:/etc/caddy/Caddyfile
+  #     - caddy_data:/data
+  #     - caddy_config:/config
+  #   networks:
+  #     - caddy
+  #     - nuvix
 
 volumes:
   postgres_data:
   nuvix_storage:
   redis_data:
-  caddy_data:
-  caddy_config:
+  # caddy_data:
+  # caddy_config:
 
 networks:
   nuvix:

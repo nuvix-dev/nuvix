@@ -201,7 +201,7 @@ export default () => ({
     emailName: 'Nuvix',
   },
 
-  logLevels: (process.env['APP_LOG_LEVELS'] ?? '')
+  logLevels: (process.env['APP_LOG_LEVELS'] ?? 'log,error,warn')
     .split(',')
     .map(level => level.trim())
     .filter(level => level)

@@ -19,7 +19,10 @@ export class HostHook implements Hook {
   }
 
   async onRequest(req: NuvixRequest, reply: NuvixRes): Promise<void> {
-    if (!this.appConfig.get('app').isProduction) {
+    if (
+      !this.appConfig.get('app').isProduction ||
+      this.appConfig.isSelfHosted
+    ) {
       return;
     }
 
@@ -60,15 +63,6 @@ export class HostHook implements Hook {
           'This domain is not connected to any Nuvix resource yet. Please configure custom domain or function domain to allow this request.',
         );
       }
-
-      // if (process.env._APP_OPTIONS_ROUTER_PROTECTION === 'enabled') {
-      //   if (host !== SERVER_CONFIG.host) {
-      //     throw new Exception(
-      //       Exception.GENERAL_ACCESS_FORBIDDEN,
-      //       'Router protection does not allow accessing Nuvix over this domain. Please add it as custom domain to your project.',
-      //     );
-      //   }
-      // }
 
       return;
     }

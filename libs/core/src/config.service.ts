@@ -34,7 +34,7 @@ export class AppConfigService {
     return this.configService;
   }
 
-  get isSelfHost() {
-    return this.configService.get('IS_SELF_HOST') !== 'false';
+  get isSelfHosted() {
+    return this.configService.get('IS_CLOUD') !== 'true';
   }
 }

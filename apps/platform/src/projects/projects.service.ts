@@ -87,7 +87,7 @@ export class ProjectService {
     const projectId = _projectId === 'unique()' ? ID.unique() : _projectId;
 
     const mainConfig = this.appConfig.get('app');
-    if (mainConfig.projects.disabled && !this.appConfig.isSelfHost) {
+    if (mainConfig.projects.disabled && !this.appConfig.isSelfHosted) {
       throw new Exception(
         Exception.GENERAL_API_DISABLED,
         'Projects are disabled',
@@ -95,7 +95,7 @@ export class ProjectService {
     } else if (
       !mainConfig.projects.allowedProdCreate &&
       env === 'prod' &&
-      !this.appConfig.isSelfHost
+      !this.appConfig.isSelfHosted
     ) {
       throw new Exception(
         Exception.GENERAL_BAD_REQUEST,
@@ -177,7 +177,10 @@ export class ProjectService {
 
       // In case if project env is not dev then we need to init the project
       // dev projects will be initialized while envtoken creation
-      if (project.get('environment') !== 'dev' && !this.appConfig.isSelfHost) {
+      if (
+        project.get('environment') !== 'dev' &&
+        !this.appConfig.isSelfHosted
+      ) {
         await this.projectQueue.add(ProjectJob.INIT, {
           project,
         });

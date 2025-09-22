@@ -1,7 +1,7 @@
-localhost:4000 {
+localhost {
   reverse_proxy server:4000
 }
 
-localhost:4100 {
+localhost:9100 {
   reverse_proxy platform:4100
 }

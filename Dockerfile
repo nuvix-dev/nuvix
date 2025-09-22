@@ -6,7 +6,7 @@
     
     WORKDIR /app
     COPY package.json bun.lock ./
-    COPY apps/serverapi/package.json ./apps/server/package.json
+    COPY apps/server/package.json ./apps/server/package.json
     COPY apps/platform/package.json ./apps/platform/package.json
     COPY libs/core/package.json ./libs/core/package.json
     COPY libs/pg-meta/package.json ./libs/pg-meta/package.json
