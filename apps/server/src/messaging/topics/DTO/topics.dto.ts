@@ -1,7 +1,7 @@
 import { PartialType } from '@nestjs/swagger';
 import { OmitType } from '@nestjs/swagger';
 import { IsCustomID } from '@nuvix/core/validators';
-import { APP_LIMIT_ARRAY_PARAMS_SIZE } from '@nuvix/utils';
+import { configuration } from '@nuvix/utils';
 import {
   IsString,
   IsArray,
@@ -22,7 +22,7 @@ export class CreateTopicDTO {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE)
+  @ArrayMaxSize(configuration.limits.arrayParamsSize)
   @MaxLength(64, { each: true })
   subscribe?: string[];
 }

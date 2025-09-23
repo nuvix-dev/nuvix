@@ -15,7 +15,7 @@ import {
   UpdateUserStatusDTO,
 } from './DTO/user.dto';
 import {
-  APP_LIMIT_COUNT,
+  configuration,
   HashAlgorithm,
   MetricFor,
   MetricPeriod,
@@ -78,7 +78,11 @@ export class UsersService {
 
     return {
       users: await db.find('users', queries),
-      total: await db.count('users', filterQueries, APP_LIMIT_COUNT),
+      total: await db.count(
+        'users',
+        filterQueries,
+        configuration.limits.limitCount,
+      ),
     };
   }
 
@@ -675,7 +679,7 @@ export class UsersService {
     const grouped = Query.groupByType(queries);
     const limit = grouped['limit'];
     if (limit === undefined) {
-      queries.push(Query.limit(APP_LIMIT_COUNT));
+      queries.push(Query.limit(configuration.limits.limitCount));
     }
 
     const audit = new Audit(db);
@@ -740,7 +744,11 @@ export class UsersService {
     const filterQueries = Query.groupByType(queries)['filters'];
     return {
       identities: await db.find('identities', queries),
-      total: await db.count('identities', filterQueries, APP_LIMIT_COUNT),
+      total: await db.count(
+        'identities',
+        filterQueries,
+        configuration.limits.limitCount,
+      ),
     };
   }
 

@@ -14,7 +14,7 @@ import {
   Role,
   PermissionsValidator,
 } from '@nuvix/db';
-import { APP_LIMIT_COUNT, SchemaMeta } from '@nuvix/utils';
+import { configuration, SchemaMeta } from '@nuvix/utils';
 import { Auth } from '@nuvix/core/helper/auth.helper';
 import { Exception } from '@nuvix/core/extend/exception';
 
@@ -60,7 +60,7 @@ export class DocumentsService {
     const total = await db.count(
       collection.getId(),
       filterQueries,
-      APP_LIMIT_COUNT,
+      configuration.limits.limitCount,
     );
 
     return {

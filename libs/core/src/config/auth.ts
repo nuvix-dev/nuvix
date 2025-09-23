@@ -1,4 +1,4 @@
-import { APP_LIMIT_USER_SESSIONS_DEFAULT } from '@nuvix/utils';
+import { configuration } from '@nuvix/utils';
 
 export interface AuthMethod {
   name: string;
@@ -8,7 +8,7 @@ export interface AuthMethod {
 
 export const defaultAuthConfig = {
   limit: 0,
-  sessionsLimit: APP_LIMIT_USER_SESSIONS_DEFAULT,
+  sessionsLimit: configuration.limits.userSessionsDefault,
   passwordHistory: 0,
   passwordDictionary: false,
   duration: 31536000,

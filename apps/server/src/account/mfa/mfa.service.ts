@@ -15,7 +15,7 @@ import {
   MailJob,
   MailQueueOptions,
 } from '@nuvix/core/resolvers/queues/mails.queue';
-import { APP_EMAIL_TEAM, APP_NAME, QueueFor } from '@nuvix/utils';
+import { QueueFor } from '@nuvix/utils';
 import { TOTP as TOTPChallenge } from '@nuvix/utils/auth/mfa/challenge/totp';
 import { Email as EmailChallenge } from '@nuvix/utils/auth/mfa/challenge/email';
 import { Phone as PhoneChallenge } from '@nuvix/utils/auth/mfa/challenge/phone';
@@ -421,8 +421,10 @@ export class MfaService {
         const smtpEnabled = smtp['enabled'] ?? false;
         const systemConfig = this.appConfig.get('system');
 
-        let senderEmail = systemConfig.emailAddress || APP_EMAIL_TEAM;
-        let senderName = systemConfig.emailName || APP_NAME + ' Server';
+        let senderEmail =
+          systemConfig.emailAddress || this.appConfig.get('app').emailTeam;
+        let senderName =
+          systemConfig.emailName || this.appConfig.get('app').name + ' Server';
         let replyTo = '';
 
         const smtpServer: SmtpConfig = {} as SmtpConfig;

@@ -21,13 +21,7 @@ import {
   MailJob,
   MailQueueOptions,
 } from '@nuvix/core/resolvers/queues/mails.queue';
-import {
-  APP_EMAIL_TEAM,
-  APP_NAME,
-  QueueFor,
-  TokenType,
-  type HashAlgorithm,
-} from '@nuvix/utils';
+import { QueueFor, TokenType, type HashAlgorithm } from '@nuvix/utils';
 import { CreateRecoveryDTO, UpdateRecoveryDTO } from './DTO/recovery.dto';
 import type {
   ProjectsDoc,
@@ -148,8 +142,10 @@ export class RecoveryService {
     const smtpEnabled = smtp['enabled'] ?? false;
     const systemConfig = this.appConfig.get('system');
 
-    let senderEmail = systemConfig.emailAddress || APP_EMAIL_TEAM;
-    let senderName = systemConfig.emailName || APP_NAME + ' Server';
+    let senderEmail =
+      systemConfig.emailAddress || this.appConfig.get('app').emailTeam;
+    let senderName =
+      systemConfig.emailName || this.appConfig.get('app').name + ' Server';
     let replyTo = '';
 
     const smtpServer: SmtpConfig = {} as SmtpConfig;

@@ -2,11 +2,10 @@ import * as crypto from 'crypto';
 import { createHash, randomBytes, createHmac, scryptSync } from 'crypto';
 import { Exception } from '../extend/exception';
 import {
-  ENCRYPTION_KEY,
   HashAlgorithm,
-  SERVER_CONFIG,
   TokenType,
   SessionProvider,
+  configuration,
 } from '@nuvix/utils';
 import { Role, UserDimension } from '@nuvix/db';
 import {
@@ -19,7 +18,9 @@ import { hash, verify } from 'argon2';
 import { Logger } from '@nestjs/common';
 
 const algorithm = 'aes-256-cbc';
-const key = ENCRYPTION_KEY ? Buffer.from(ENCRYPTION_KEY, 'hex') : undefined;
+const key = configuration.security.encryptionKey
+  ? Buffer.from(configuration.security.encryptionKey, 'hex')
+  : undefined;
 
 export class Auth {
   private static _isTrustedActor: boolean = false;
@@ -54,8 +55,9 @@ export class Auth {
   public static readonly MFA_RECENT_DURATION = 1800; // 30 mins
 
   public static cookieName: string = 'session';
-  public static cookieDomain = SERVER_CONFIG?.cookieDomain || '';
-  public static cookieSamesite: boolean | 'none' | 'lax' | 'strict' = 'none';
+  public static cookieDomain = configuration.server.cookieDomain || '';
+  public static cookieSamesite: boolean | 'none' | 'lax' | 'strict' =
+    configuration.server.cookieSameSite;
   public static unique: string = '';
   public static secret: string = '';
 

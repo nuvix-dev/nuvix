@@ -8,7 +8,7 @@ import {
   Query,
   AttributeType,
 } from '@nuvix/db';
-import { APP_LIMIT_COUNT, QueueFor, SchemaMeta, Status } from '@nuvix/utils';
+import { configuration, QueueFor, SchemaMeta, Status } from '@nuvix/utils';
 import { InjectQueue } from '@nestjs/bullmq';
 import type { Queue } from 'bullmq';
 import { Exception } from '@nuvix/core/extend/exception';
@@ -202,7 +202,7 @@ export class IndexesService {
     const total = await db.count(
       SchemaMeta.indexes,
       filterQueries,
-      APP_LIMIT_COUNT,
+      configuration.limits.limitCount,
     );
 
     return {

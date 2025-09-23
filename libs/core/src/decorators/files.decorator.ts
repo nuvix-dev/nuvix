@@ -2,14 +2,14 @@ import { createParamDecorator, ExecutionContext } from '@nestjs/common';
 
 import { Exception } from '../extend/exception';
 import { MultipartValue } from '@fastify/multipart';
-import { APP_STORAGE_TEMP } from '@nuvix/utils/constants';
+import { configuration } from '@nuvix/utils';
 
 export const UploadedFile = createParamDecorator(
   async (data: string = 'file', ctx: ExecutionContext) => {
     const request: NuvixRequest = ctx.switchToHttp().getRequest<NuvixRequest>();
 
     const files = await request.saveRequestFiles({
-      tmpdir: APP_STORAGE_TEMP,
+      tmpdir: configuration.storage.temp,
     });
     const file = files.find(f => f.fieldname === data);
     if (!file) {

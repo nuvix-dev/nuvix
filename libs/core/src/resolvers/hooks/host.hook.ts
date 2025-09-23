@@ -47,24 +47,7 @@ export class HostHook implements Hook {
       )) ?? null;
 
     if (route === null) {
-      if (host === serverConfig.functionsDomain) {
-        throw new Exception(
-          Exception.GENERAL_ACCESS_FORBIDDEN,
-          'This domain cannot be used for security reasons. Please use any subdomain instead.',
-        );
-      }
-
-      if (
-        serverConfig.functionsDomain &&
-        host.endsWith(serverConfig.functionsDomain)
-      ) {
-        throw new Exception(
-          Exception.GENERAL_ACCESS_FORBIDDEN,
-          'This domain is not connected to any Nuvix resource yet. Please configure custom domain or function domain to allow this request.',
-        );
-      }
-
-      return;
+      // Not Implemented: will check later when support multi projects
     }
 
     const services = project.get('services', {});

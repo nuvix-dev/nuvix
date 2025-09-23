@@ -15,15 +15,7 @@ import {
   LogLevel,
   ValidationPipe,
 } from '@nestjs/common';
-import {
-  APP_DEBUG_COLORS,
-  APP_DEBUG_FORMAT,
-  APP_STORAGE_TEMP,
-  Context,
-  IS_PRODUCTION,
-  LOG_LEVELS,
-  PROJECT_ROOT,
-} from '@nuvix/utils';
+import { configuration, Context, PROJECT_ROOT } from '@nuvix/utils';
 import { Authorization, Doc, Role, storage } from '@nuvix/db';
 import cookieParser from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
@@ -66,11 +58,11 @@ async function bootstrap() {
     {
       abortOnError: false,
       logger: new ConsoleLogger({
-        json: APP_DEBUG_FORMAT,
-        colors: APP_DEBUG_COLORS,
+        json: configuration.app.debug.json,
+        colors: configuration.app.debug.colors,
         prefix: 'Nuvix',
-        logLevels: IS_PRODUCTION
-          ? (Object.keys(LOG_LEVELS) as LogLevel[])
+        logLevels: configuration.app.isProduction
+          ? (Object.keys(configuration.logLevels) as LogLevel[])
           : undefined,
       }),
     },
@@ -164,7 +156,7 @@ async function bootstrap() {
   openApiSetup(app);
 
   // TODO: create a separate function to handle setup
-  await fs.mkdir(APP_STORAGE_TEMP, { recursive: true }).catch(err => {
+  await fs.mkdir(configuration.storage.temp, { recursive: true }).catch(err => {
     if (err.code !== 'EEXIST') {
       Logger.error(
         `Failed to create temp storage directory: ${err.message}`,

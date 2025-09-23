@@ -57,7 +57,7 @@ Object.entries(formats).forEach(([key, format]) => {
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
-      load: [configuration],
+      load: [() => configuration],
     }),
     BullModule.registerQueue(
       { name: QueueFor.MAILS },

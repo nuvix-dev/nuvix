@@ -26,8 +26,7 @@ import {
   MailQueueOptions,
 } from '@nuvix/core/resolvers/queues/mails.queue';
 import {
-  APP_EMAIL_TEAM,
-  APP_NAME,
+  configuration,
   QueueFor,
   TokenType,
   type HashAlgorithm,
@@ -620,8 +619,9 @@ export class AccountService {
     const smtpEnabled = smtp['enabled'] ?? false;
     const systemConfig = this.appConfig.get('system');
 
-    let senderEmail = systemConfig.emailAddress || APP_EMAIL_TEAM;
-    let senderName = systemConfig.emailName || APP_NAME + ' Server';
+    let senderEmail = systemConfig.emailAddress || configuration.app.emailTeam;
+    let senderName =
+      systemConfig.emailName || configuration.app.name + ' Server';
     let replyTo = '';
 
     const smtpServer: SmtpConfig = {} as SmtpConfig;
@@ -809,9 +809,6 @@ export class AccountService {
 
       // TODO: Implement SMS queue functionality
       console.log(`SMS to ${phone}: ${messageContent}`);
-
-      // TODO: Handle stats and abuse tracking if needed
-      // Similar to the PHP implementation with metrics tracking
     }
 
     createdVerification.set('secret', secret);

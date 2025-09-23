@@ -16,8 +16,8 @@ import {
   RelationSide,
 } from '@nuvix/db';
 import {
-  APP_LIMIT_COUNT,
   AttributeFormat,
+  configuration,
   QueueFor,
   SchemaMeta,
   Status,
@@ -108,7 +108,7 @@ export class AttributesService {
     const total = await db.count(
       SchemaMeta.attributes,
       filterQueries,
-      APP_LIMIT_COUNT,
+      configuration.limits.limitCount,
     );
 
     return {

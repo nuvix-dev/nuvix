@@ -9,7 +9,7 @@ import {
   Query,
 } from '@nuvix/db';
 import { Exception } from '@nuvix/core/extend/exception';
-import { APP_LIMIT_COUNT, MetricFor, MetricPeriod } from '@nuvix/utils';
+import { configuration, MetricFor, MetricPeriod } from '@nuvix/utils';
 import { CreateBucketDTO, UpdateBucketDTO } from './DTO/bucket.dto';
 
 import usageConfig from '@nuvix/core/config/usage';
@@ -37,7 +37,11 @@ export class StorageService {
 
     return {
       buckets: await db.find('buckets', queries),
-      total: await db.count('buckets', filterQueries, APP_LIMIT_COUNT),
+      total: await db.count(
+        'buckets',
+        filterQueries,
+        configuration.limits.limitCount,
+      ),
     };
   }
 
@@ -126,7 +130,8 @@ export class StorageService {
       input.permissions ?? bucket.getPermissions(),
     )!;
     const maximumFileSize =
-      input.maximumFileSize ?? bucket.get('maximumFileSize', APP_LIMIT_COUNT);
+      input.maximumFileSize ??
+      bucket.get('maximumFileSize', configuration.storage.limit);
     const allowedFileExtensions =
       input.allowedFileExtensions ?? bucket.get('allowedFileExtensions', []);
     const enabled = input.enabled ?? bucket.get('enabled', true);

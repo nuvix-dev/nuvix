@@ -1,3 +1,4 @@
+import { configuration } from '@nuvix/utils';
 import {
   IsEmail,
   IsNotEmpty,
@@ -9,7 +10,6 @@ import {
   IsUrl,
   IsOptional,
 } from 'class-validator';
-import { APP_LIMIT_ARRAY_PARAMS_SIZE } from '@nuvix/utils';
 
 export class CreateMembershipDTO {
   @IsOptional()
@@ -27,7 +27,7 @@ export class CreateMembershipDTO {
   declare phone: string;
 
   @IsArray()
-  @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE)
+  @ArrayMaxSize(configuration.limits.arrayParamsSize)
   @IsString({ each: true })
   declare roles: string[];
 
@@ -44,7 +44,7 @@ export class CreateMembershipDTO {
 
 export class UpdateMembershipDTO {
   @IsArray()
-  @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE)
+  @ArrayMaxSize(configuration.limits.arrayParamsSize)
   @IsString({ each: true })
   declare roles: string[];
 }

@@ -1,8 +1,8 @@
-import { ASSETS } from '@nuvix/utils';
+import { configuration } from '@nuvix/utils';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
-const _dirname = join(ASSETS.ROOT, 'sql');
+const _dirname = join(configuration.assets.root, 'sql');
 
 export const columnPrivilegesSql = readFileSync(
   join(_dirname, 'column_privileges.sql'),

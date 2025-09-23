@@ -10,7 +10,7 @@ import {
   Query,
 } from '@nuvix/db';
 import {
-  APP_LIMIT_COUNT,
+  configuration,
   MetricFor,
   MetricPeriod,
   QueueFor,
@@ -111,7 +111,7 @@ export class CollectionsService {
     const total = await db.count(
       SchemaMeta.collections,
       filterQueries,
-      APP_LIMIT_COUNT,
+      configuration.limits.limitCount,
     );
 
     return {

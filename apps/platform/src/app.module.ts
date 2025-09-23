@@ -15,7 +15,7 @@ import { BullModule } from '@nestjs/bullmq';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
 import { JwtModule, JwtService } from '@nestjs/jwt';
-import { JWT_SECRET, QueueFor } from '@nuvix/utils';
+import { configuration, QueueFor } from '@nuvix/utils';
 import {
   HostHook,
   AuthHook,
@@ -69,7 +69,7 @@ import { CliController } from './cli/cli.controller';
     }),
     ScheduleModule.forRoot(),
     JwtModule.register({
-      secret: JWT_SECRET,
+      secret: configuration.security.jwtSecret,
       global: true,
     }),
     AccountModule,

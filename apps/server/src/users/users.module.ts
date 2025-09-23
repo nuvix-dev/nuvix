@@ -6,7 +6,7 @@ import {
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
 import { JwtModule } from '@nestjs/jwt';
-import { JWT_SECRET, QueueFor } from '@nuvix/utils';
+import { configuration, QueueFor } from '@nuvix/utils';
 import { BullModule } from '@nestjs/bullmq';
 import { AuthHook, ApiHook, StatsHook, AuditHook } from '@nuvix/core/resolvers';
 import { SessionsController } from './sessions/sessions.controller';
@@ -30,7 +30,7 @@ import { TargetsService } from './targets/targets.service';
       { name: QueueFor.AUDITS },
     ),
     JwtModule.register({
-      secret: JWT_SECRET,
+      secret: configuration.security.jwtSecret,
       signOptions: { expiresIn: '15m' },
     }),
   ],

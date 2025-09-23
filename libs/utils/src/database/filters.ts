@@ -6,14 +6,9 @@ import {
   Filter,
   FilterValue,
 } from '@nuvix/db';
-import {
-  APP_LIMIT_SUBQUERY,
-  APP_LIMIT_SUBSCRIBERS_SUBQUERY,
-  APP_DATABASE_ENCRYPTION_KEY,
-  SchemaMeta,
-  Schemas,
-} from '../constants';
+import { SchemaMeta, Schemas } from '../constants';
 import crypto from 'crypto';
+import { configuration } from '../configuration';
 
 export const filters: Record<
   string,
@@ -122,7 +117,7 @@ export const filters: Record<
     decode: (_, document, database) => {
       return database.find('platforms', [
         Query.equal('projectInternalId', [document.getSequence()]),
-        Query.limit(APP_LIMIT_SUBQUERY),
+        Query.limit(configuration.limits.subquery),
       ]);
     },
   },
@@ -134,7 +129,7 @@ export const filters: Record<
     decode: (_, document, database) => {
       return database.find('keys', [
         Query.equal('projectInternalId', [document.getSequence()]),
-        Query.limit(APP_LIMIT_SUBQUERY),
+        Query.limit(configuration.limits.subquery),
       ]);
     },
   },
@@ -145,7 +140,7 @@ export const filters: Record<
     decode: (_, document, database) => {
       return database.find('webhooks', [
         Query.equal('projectInternalId', [document.getSequence()]),
-        Query.limit(APP_LIMIT_SUBQUERY),
+        Query.limit(configuration.limits.subquery),
       ]);
     },
   },
@@ -157,7 +152,7 @@ export const filters: Record<
       return Authorization.skip(() => {
         return database.find('sessions', [
           Query.equal('userInternalId', [document.getSequence()]),
-          Query.limit(APP_LIMIT_SUBQUERY),
+          Query.limit(configuration.limits.subquery),
         ]);
       });
     },
@@ -170,7 +165,7 @@ export const filters: Record<
       return Authorization.skip(() => {
         return database.find('tokens', [
           Query.equal('userInternalId', [document.getSequence()]),
-          Query.limit(APP_LIMIT_SUBQUERY),
+          Query.limit(configuration.limits.subquery),
         ]);
       });
     },
@@ -183,7 +178,7 @@ export const filters: Record<
       return Authorization.skip(() => {
         return database.find('challenges', [
           Query.equal('userInternalId', [document.getSequence()]),
-          Query.limit(APP_LIMIT_SUBQUERY),
+          Query.limit(configuration.limits.subquery),
         ]);
       });
     },
@@ -196,7 +191,7 @@ export const filters: Record<
       return Authorization.skip(() => {
         return database.find('authenticators', [
           Query.equal('userInternalId', [document.getSequence()]),
-          Query.limit(APP_LIMIT_SUBQUERY),
+          Query.limit(configuration.limits.subquery),
         ]);
       });
     },
@@ -209,7 +204,7 @@ export const filters: Record<
       return Authorization.skip(async () => {
         return database.find('memberships', [
           Query.equal('userInternalId', [document.getSequence()]),
-          Query.limit(APP_LIMIT_SUBQUERY),
+          Query.limit(configuration.limits.subquery),
         ]);
       });
     },
@@ -222,14 +217,14 @@ export const filters: Record<
       return database.find('variables', [
         Query.equal('resourceInternalId', [document.getSequence()]),
         Query.equal('resourceType', ['function']),
-        Query.limit(APP_LIMIT_SUBQUERY),
+        Query.limit(configuration.limits.subquery),
       ]);
     },
   },
 
   encrypt: {
     encode: value => {
-      const key = APP_DATABASE_ENCRYPTION_KEY;
+      const key = configuration.security.dbEncryptionKey;
       const iv = crypto.randomBytes(16);
       const cipher = crypto.createCipheriv('aes-128-gcm', key, iv);
       let encrypted = cipher.update(value as string, 'utf8', 'hex');
@@ -252,10 +247,10 @@ export const filters: Record<
       let key: string;
       switch (value.version) {
         case '1':
-          key = APP_DATABASE_ENCRYPTION_KEY;
+          key = configuration.security.dbEncryptionKey;
           break;
         default:
-          key = APP_DATABASE_ENCRYPTION_KEY;
+          key = configuration.security.dbEncryptionKey;
       }
       const iv = Buffer.from(value.iv, 'hex');
       const tag = Buffer.from(value.tag, 'hex');
@@ -275,7 +270,7 @@ export const filters: Record<
     decode: async (_, __, database) => {
       return database.find('variables', [
         Query.equal('resourceType', ['project']),
-        Query.limit(APP_LIMIT_SUBQUERY),
+        Query.limit(configuration.limits.subquery),
       ]);
     },
   },
@@ -306,7 +301,7 @@ export const filters: Record<
       return Authorization.skip(() => {
         return database.find('targets', [
           Query.equal('userInternalId', [document.getSequence()]),
-          Query.limit(APP_LIMIT_SUBQUERY),
+          Query.limit(configuration.limits.subquery),
         ]);
       });
     },
@@ -317,7 +312,7 @@ export const filters: Record<
       const targetIds = await Authorization.skip(async () => {
         const subscribers = await database.find('subscribers', [
           Query.equal('topicInternalId', [document.getSequence()]),
-          Query.limit(APP_LIMIT_SUBSCRIBERS_SUBQUERY),
+          Query.limit(configuration.limits.subscribersSubquery),
         ]);
         return subscribers.map(subscriber =>
           subscriber.get('targetInternalId'),
@@ -338,7 +333,7 @@ export const filters: Record<
       const targetIds = await Authorization.skip(async () => {
         const subscribers = await database.find('subscribers', [
           Query.equal('topicInternalId', [document.getSequence()]),
-          Query.limit(APP_LIMIT_SUBSCRIBERS_SUBQUERY),
+          Query.limit(configuration.limits.subscribersSubquery),
         ]);
         return subscribers.map(subscriber =>
           subscriber.get('targetInternalId'),

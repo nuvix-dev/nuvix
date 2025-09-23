@@ -29,9 +29,9 @@ export class CorsHook implements Hook {
   private get defaultOptions(): CorsOptions {
     const config = this.appConfig.get('server');
     return {
-      methods: config.methods,
-      allowedHeaders: config.allowedHeaders,
-      exposedHeaders: config.exposedHeaders,
+      methods: [...config.methods],
+      allowedHeaders: [...config.allowedHeaders],
+      exposedHeaders: [...config.exposedHeaders],
       credentials: config.credentials,
       maxAge: 3600,
       preflight: true,

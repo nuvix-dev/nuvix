@@ -2,10 +2,7 @@ import {
   type OAuthProviders,
   oAuthProvidersList,
 } from '@nuvix/core/config/authProviders';
-import {
-  APP_LIMIT_ARRAY_ELEMENT_SIZE,
-  APP_LIMIT_ARRAY_PARAMS_SIZE,
-} from '@nuvix/utils';
+import { configuration } from '@nuvix/utils';
 import { Expose } from 'class-transformer';
 import {
   ArrayMaxSize,
@@ -51,8 +48,8 @@ export class CreateOAuth2SessionDTO {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  @MaxLength(APP_LIMIT_ARRAY_ELEMENT_SIZE, { each: true })
-  @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE)
+  @MaxLength(configuration.limits.arrayElementSize, { each: true })
+  @ArrayMaxSize(configuration.limits.arrayParamsSize)
   scopes: string[] = [];
 }
 

@@ -34,10 +34,9 @@ import {
   type OAuthProviderType,
 } from '@nuvix/core/config/authProviders';
 import {
-  APP_EMAIL_TEAM,
-  APP_NAME,
   AppEvents,
   AuthFactor,
+  configuration,
   MessageType,
   QueueFor,
   SessionProvider,
@@ -625,7 +624,7 @@ export class SessionService {
     if (!providerInfo.enabled) {
       throw new Exception(
         Exception.PROJECT_PROVIDER_DISABLED,
-        `This provider is disabled. Please enable the provider from your ${APP_NAME} console to continue.`,
+        `This provider is disabled. Please enable the provider from your ${configuration.app.name} console to continue.`,
       );
     }
 
@@ -639,7 +638,7 @@ export class SessionService {
     if (!appId || !appSecret) {
       throw new Exception(
         Exception.PROJECT_PROVIDER_DISABLED,
-        `This provider is disabled. Please configure the provider app ID and app secret key from your ${APP_NAME} console to continue.`,
+        `This provider is disabled. Please configure the provider app ID and app secret key from your ${configuration.app.name} console to continue.`,
       );
     }
 
@@ -751,7 +750,7 @@ export class SessionService {
     if (!providerEnabled) {
       failureRedirect(
         Exception.PROJECT_PROVIDER_DISABLED,
-        `This provider is disabled. Please enable the provider from your ${APP_NAME} console to continue.`,
+        `This provider is disabled. Please enable the provider from your ${configuration.app.name} console to continue.`,
       );
     }
 
@@ -1186,7 +1185,7 @@ export class SessionService {
     if (!providerEnabled) {
       throw new Exception(
         Exception.PROJECT_PROVIDER_DISABLED,
-        `This provider is disabled. Please enable the provider from your ${APP_NAME} console to continue.`,
+        `This provider is disabled. Please enable the provider from your ${configuration.app.name} console to continue.`,
       );
     }
 
@@ -1200,7 +1199,7 @@ export class SessionService {
     if (!appId || !appSecret) {
       throw new Exception(
         Exception.PROJECT_PROVIDER_DISABLED,
-        `This provider is disabled. Please configure the provider app ID and app secret key from your ${APP_NAME} console to continue.`,
+        `This provider is disabled. Please configure the provider app ID and app secret key from your ${configuration.app.name} console to continue.`,
       );
     }
 
@@ -1400,8 +1399,9 @@ export class SessionService {
     const smtpEnabled = smtp['enabled'] ?? false;
     const systemConfig = this.appConfig.get('system');
 
-    let senderEmail = systemConfig.emailAddress || APP_EMAIL_TEAM;
-    let senderName = systemConfig.emailName || APP_NAME + ' Server';
+    let senderEmail = systemConfig.emailAddress || configuration.app.emailTeam;
+    let senderName =
+      systemConfig.emailName || configuration.app.name + ' Server';
     let replyTo = '';
 
     const smtpServer: SmtpConfig = {} as SmtpConfig;
@@ -1600,8 +1600,9 @@ export class SessionService {
     const smtpEnabled = smtp['enabled'] ?? false;
     const systemConfig = this.appConfig.get('system');
 
-    let senderEmail = systemConfig.emailAddress || APP_EMAIL_TEAM;
-    let senderName = systemConfig.emailName || APP_NAME + ' Server';
+    let senderEmail = systemConfig.emailAddress || configuration.app.emailTeam;
+    let senderName =
+      systemConfig.emailName || configuration.app.name + ' Server';
     let replyTo = '';
 
     const smtpServer: any = {};
@@ -1879,8 +1880,9 @@ export class SessionService {
     const smtpEnabled = smtp['enabled'] ?? false;
     const systemConfig = this.appConfig.get('system');
 
-    let senderEmail = systemConfig.emailAddress || APP_EMAIL_TEAM;
-    let senderName = systemConfig.emailName || APP_NAME + ' Server';
+    let senderEmail = systemConfig.emailAddress || configuration.app.emailTeam;
+    let senderName =
+      systemConfig.emailName || configuration.app.name + ' Server';
     let replyTo = '';
 
     if (smtpEnabled) {

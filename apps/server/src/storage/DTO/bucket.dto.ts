@@ -9,11 +9,8 @@ import {
   ArrayMaxSize,
   IsIn,
 } from 'class-validator';
-import {
-  APP_LIMIT_ARRAY_PARAMS_SIZE,
-  APP_STORAGE_MAX_SIZE,
-} from '@nuvix/utils';
 import { IsCustomID } from '@nuvix/core/validators/input.validator';
+import { configuration } from '@nuvix/utils';
 
 export class CreateBucketDTO {
   @IsString()
@@ -25,7 +22,7 @@ export class CreateBucketDTO {
   name!: string;
 
   @IsArray()
-  @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE)
+  @ArrayMaxSize(configuration.limits.arrayParamsSize)
   @IsString({ each: true })
   @IsOptional()
   permissions: string[] = [];
@@ -41,10 +38,10 @@ export class CreateBucketDTO {
   @IsInt()
   @Min(1)
   @IsOptional()
-  maximumFileSize: number = APP_STORAGE_MAX_SIZE;
+  maximumFileSize: number = configuration.storage.maxSize;
 
   @IsArray()
-  @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE)
+  @ArrayMaxSize(configuration.limits.arrayParamsSize)
   @IsString({ each: true })
   @IsOptional()
   allowedFileExtensions: string[] = [];
@@ -69,7 +66,7 @@ export class UpdateBucketDTO {
   name?: string;
 
   @IsArray()
-  @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE)
+  @ArrayMaxSize(configuration.limits.arrayParamsSize)
   @IsString({ each: true })
   @IsOptional()
   permissions?: string[];
@@ -88,7 +85,7 @@ export class UpdateBucketDTO {
   maximumFileSize?: number;
 
   @IsArray()
-  @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE)
+  @ArrayMaxSize(configuration.limits.arrayParamsSize)
   @IsString({ each: true })
   @IsOptional()
   allowedFileExtensions?: string[];

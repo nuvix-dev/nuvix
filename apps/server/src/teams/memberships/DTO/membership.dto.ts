@@ -9,8 +9,8 @@ import {
   IsUrl,
   IsOptional,
 } from 'class-validator';
-import { APP_LIMIT_ARRAY_PARAMS_SIZE } from '@nuvix/utils';
 import { IsUID } from '@nuvix/core/validators/input.validator.js';
+import { configuration } from '@nuvix/utils';
 
 export class CreateMembershipDTO {
   @IsOptional()
@@ -28,7 +28,7 @@ export class CreateMembershipDTO {
   phone?: string;
 
   @IsArray()
-  @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE)
+  @ArrayMaxSize(configuration.limits.arrayParamsSize)
   @IsString({ each: true })
   roles: string[] = [];
 
@@ -46,7 +46,7 @@ export class CreateMembershipDTO {
 
 export class UpdateMembershipDTO {
   @IsArray()
-  @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE)
+  @ArrayMaxSize(configuration.limits.arrayParamsSize)
   @IsString({ each: true })
   roles!: string[];
 }

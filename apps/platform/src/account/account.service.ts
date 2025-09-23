@@ -19,12 +19,12 @@ import { PersonalDataValidator } from '@nuvix/core/validators/personal-data.vali
 import {
   QueueFor,
   AppEvents,
-  APP_NAME,
   MessageType,
   type HashAlgorithm,
   SessionProvider,
   TokenType,
   AuthFactor,
+  configuration,
 } from '@nuvix/utils';
 import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor';
 import {
@@ -939,14 +939,14 @@ export class AccountService {
     if (!providerConfig) {
       throw new Exception(
         Exception.PROJECT_PROVIDER_DISABLED,
-        `This provider is disabled. Please enable the provider from your ${APP_NAME} console to continue.`,
+        `This provider is disabled. Please enable the provider from your ${configuration.app.name} console to continue.`,
       );
     }
 
     if (!providerConfig.enabled) {
       throw new Exception(
         Exception.PROJECT_PROVIDER_DISABLED,
-        `This provider is disabled. Please enable the provider from your ${APP_NAME} console to continue.`,
+        `This provider is disabled. Please enable the provider from your ${configuration.app.name} console to continue.`,
       );
     }
 
@@ -960,7 +960,7 @@ export class AccountService {
     if (!appId || !appSecret) {
       throw new Exception(
         Exception.PROJECT_PROVIDER_DISABLED,
-        `This provider is disabled. Please configure the provider app ID and app secret key from your ${APP_NAME} console to continue.`,
+        `This provider is disabled. Please configure the provider app ID and app secret key from your ${configuration.app.name} console to continue.`,
       );
     }
 
@@ -1024,7 +1024,7 @@ export class AccountService {
     if (!providerConfig) {
       throw new Exception(
         Exception.PROJECT_PROVIDER_DISABLED,
-        `This provider is disabled. Please enable the provider from your ${APP_NAME} console to continue.`,
+        `This provider is disabled. Please enable the provider from your ${configuration.app.name} console to continue.`,
       );
     }
 
@@ -1076,7 +1076,7 @@ export class AccountService {
     if (!providerConfig.enabled) {
       failureRedirect(
         Exception.PROJECT_PROVIDER_DISABLED,
-        `This provider is disabled. Please enable the provider from your ${APP_NAME} console to continue.`,
+        `This provider is disabled. Please enable the provider from your ${configuration.app.name} console to continue.`,
       );
     }
 
@@ -1494,7 +1494,7 @@ export class AccountService {
     if (!providerConfig.enabled) {
       throw new Exception(
         Exception.PROJECT_PROVIDER_DISABLED,
-        `This provider is disabled. Please enable the provider from your ${APP_NAME} console to continue.`,
+        `This provider is disabled. Please enable the provider from your ${configuration.app.name} console to continue.`,
       );
     }
 
@@ -1508,7 +1508,7 @@ export class AccountService {
     if (!appId || !appSecret) {
       throw new Exception(
         Exception.PROJECT_PROVIDER_DISABLED,
-        `This provider is disabled. Please configure the provider app ID and app secret key from your ${APP_NAME} console to continue.`,
+        `This provider is disabled. Please configure the provider app ID and app secret key from your ${configuration.app.name} console to continue.`,
       );
     }
 

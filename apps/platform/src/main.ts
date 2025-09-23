@@ -14,13 +14,7 @@ import {
   LogLevel,
   ValidationPipe,
 } from '@nestjs/common';
-import {
-  APP_DEBUG_COLORS,
-  APP_DEBUG_FORMAT,
-  IS_PRODUCTION,
-  LOG_LEVELS,
-  PROJECT_ROOT,
-} from '@nuvix/utils';
+import { configuration, PROJECT_ROOT } from '@nuvix/utils';
 import { Authorization, Role, storage } from '@nuvix/db';
 import cookieParser from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
@@ -63,11 +57,11 @@ async function bootstrap() {
     {
       abortOnError: false,
       logger: new ConsoleLogger({
-        json: APP_DEBUG_FORMAT,
-        colors: APP_DEBUG_COLORS,
+        json: configuration.app.debug.json,
+        colors: configuration.app.debug.colors,
         prefix: 'Nuvix-Console',
-        logLevels: IS_PRODUCTION
-          ? (Object.keys(LOG_LEVELS) as LogLevel[])
+        logLevels: configuration.app.isProduction
+          ? (Object.keys(configuration.logLevels) as LogLevel[])
           : undefined,
       }),
       autoFlushLogs: true,

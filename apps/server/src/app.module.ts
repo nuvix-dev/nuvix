@@ -8,7 +8,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MailsQueue } from '@nuvix/core/resolvers/queues/mails.queue';
 import { AuditsQueue } from '@nuvix/core/resolvers/queues/audits.queue';
-import { JWT_SECRET, QueueFor } from '@nuvix/utils';
+import { configuration, QueueFor } from '@nuvix/utils';
 import { JwtModule, JwtService } from '@nestjs/jwt';
 // Hooks
 import {
@@ -85,7 +85,7 @@ import { ApiLogsQueue } from '@nuvix/core/resolvers/queues/logs.queue';
     }),
     ScheduleModule.forRoot(),
     JwtModule.register({
-      secret: JWT_SECRET,
+      secret: configuration.security.jwtSecret,
       global: true,
     }),
     BaseModule,

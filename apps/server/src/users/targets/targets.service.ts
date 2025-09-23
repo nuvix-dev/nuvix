@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { Exception } from '@nuvix/core/extend/exception';
 import { ID } from '@nuvix/core/helper/ID.helper';
-import { APP_LIMIT_COUNT, MessageType } from '@nuvix/utils';
+import { configuration, MessageType } from '@nuvix/utils';
 import { CreateTargetDTO, UpdateTargetDTO } from './DTO/target.dto';
 import { EmailValidator } from '@nuvix/core/validators/email.validator';
 import { PhoneValidator } from '@nuvix/core/validators/phone.validator';
@@ -112,7 +112,11 @@ export class TargetsService {
 
     return {
       targets: await db.find('targets', queries),
-      total: await db.count('targets', queries, APP_LIMIT_COUNT),
+      total: await db.count(
+        'targets',
+        queries,
+        configuration.limits.limitCount,
+      ),
     };
   }
 

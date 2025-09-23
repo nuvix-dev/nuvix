@@ -10,12 +10,6 @@ import {
   Role,
 } from '@nuvix/db';
 import { Exception } from '@nuvix/core/extend/exception';
-import {
-  APP_LIMIT_COUNT,
-  APP_STORAGE_LIMIT,
-  APP_STORAGE_READ_BUFFER,
-  MAX_OUTPUT_CHUNK_SIZE,
-} from '@nuvix/utils';
 import { Auth } from '@nuvix/core/helper/auth.helper';
 import { CreateFileDTO, UpdateFileDTO } from './DTO/file.dto';
 
@@ -28,6 +22,7 @@ import * as fs from 'fs/promises';
 import { CoreService } from '@nuvix/core';
 import { FileExt, FileSize } from '@nuvix/storage';
 import type { Files, FilesDoc } from '@nuvix/utils/types';
+import { configuration } from '@nuvix/utils';
 
 @Injectable()
 export class FilesService {
@@ -77,7 +72,7 @@ export class FilesService {
     const total = await db.count(
       this.getCollectionName(bucket.getSequence()),
       filterQueries,
-      APP_LIMIT_COUNT,
+      configuration.limits.limitCount,
     );
 
     return {
@@ -145,10 +140,10 @@ export class FilesService {
     }
 
     const maximumFileSize = Math.min(
-      bucket.get('maximumFileSize', APP_STORAGE_LIMIT),
-      APP_STORAGE_LIMIT,
+      bucket.get('maximumFileSize', configuration.storage.limit),
+      configuration.storage.limit,
     );
-    if (maximumFileSize > APP_STORAGE_LIMIT) {
+    if (maximumFileSize > configuration.storage.limit) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
         'Maximum bucket file size exceeds APP_STORAGE_LIMIT',
@@ -674,13 +669,18 @@ export class FilesService {
       });
     }
 
-    if (size > APP_STORAGE_READ_BUFFER) {
-      const totalChunks = Math.ceil(size / MAX_OUTPUT_CHUNK_SIZE);
+    if (size > configuration.storage.readBuffer) {
+      const totalChunks = Math.ceil(
+        size / configuration.storage.maxOutputChunkSize,
+      );
       const chunks: Buffer[] = [];
 
       for (let i = 0; i < totalChunks; i++) {
-        const offset = i * MAX_OUTPUT_CHUNK_SIZE;
-        const chunkSize = Math.min(MAX_OUTPUT_CHUNK_SIZE, size - offset);
+        const offset = i * configuration.storage.maxOutputChunkSize;
+        const chunkSize = Math.min(
+          configuration.storage.maxOutputChunkSize,
+          size - offset,
+        );
         const chunkData = await deviceForFiles.read(path, offset, chunkSize);
         chunks.push(chunkData);
       }
@@ -806,13 +806,18 @@ export class FilesService {
       });
     }
 
-    if (size > APP_STORAGE_READ_BUFFER) {
-      const totalChunks = Math.ceil(size / MAX_OUTPUT_CHUNK_SIZE);
+    if (size > configuration.storage.readBuffer) {
+      const totalChunks = Math.ceil(
+        size / configuration.storage.maxOutputChunkSize,
+      );
       const chunks: Buffer[] = [];
 
       for (let i = 0; i < totalChunks; i++) {
-        const offset = i * MAX_OUTPUT_CHUNK_SIZE;
-        const chunkSize = Math.min(MAX_OUTPUT_CHUNK_SIZE, size - offset);
+        const offset = i * configuration.storage.maxOutputChunkSize;
+        const chunkSize = Math.min(
+          configuration.storage.maxOutputChunkSize,
+          size - offset,
+        );
         const chunkData = await deviceForFiles.read(path, offset, chunkSize);
         chunks.push(chunkData);
       }

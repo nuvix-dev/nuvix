@@ -1,8 +1,5 @@
 import { IsUID } from '@nuvix/core/validators/input.validator.js';
-import {
-  APP_LIMIT_ARRAY_ELEMENT_SIZE,
-  APP_LIMIT_ARRAY_PARAMS_SIZE,
-} from '@nuvix/utils';
+import { configuration } from '@nuvix/utils';
 import {
   IsString,
   IsUrl,
@@ -28,8 +25,8 @@ export class CreateOAuth2TokenDTO {
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  @MaxLength(APP_LIMIT_ARRAY_ELEMENT_SIZE, { each: true })
-  @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE)
+  @MaxLength(configuration.limits.arrayElementSize, { each: true })
+  @ArrayMaxSize(configuration.limits.arrayParamsSize)
   scopes: string[] = [];
 }
 

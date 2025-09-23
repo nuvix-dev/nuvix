@@ -7,7 +7,7 @@ import {
   UpdateMembershipDTO,
   UpdateMembershipStatusDTO,
 } from './DTO/membership.dto';
-import { APP_EMAIL_TEAM, APP_NAME, QueueFor } from '@nuvix/utils';
+import { configuration, QueueFor } from '@nuvix/utils';
 import {
   Authorization,
   AuthorizationException,
@@ -284,8 +284,10 @@ export class MembershipsService {
         const smtpEnabled = smtp['enabled'] ?? false;
         const systemConfig = this.appConfig.get('system');
 
-        let senderEmail = systemConfig.emailAddress || APP_EMAIL_TEAM;
-        let senderName = systemConfig.emailName || APP_NAME + ' Server';
+        let senderEmail =
+          systemConfig.emailAddress || configuration.app.emailTeam;
+        let senderName =
+          systemConfig.emailName || configuration.app.name + ' Server';
         let replyTo = '';
 
         if (smtpEnabled) {

@@ -7,7 +7,7 @@ import {
   Length,
 } from 'class-validator';
 import { IsCustomID } from '@nuvix/core/validators/input.validator';
-import { APP_LIMIT_ARRAY_PARAMS_SIZE } from '@nuvix/utils';
+import { configuration } from '@nuvix/utils';
 
 export class CreateFileDTO {
   @IsString()
@@ -15,7 +15,7 @@ export class CreateFileDTO {
   fileId!: string;
 
   @IsArray()
-  @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE)
+  @ArrayMaxSize(configuration.limits.arrayParamsSize)
   @IsOptional()
   permissions?: string[];
 }

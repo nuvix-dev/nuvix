@@ -7,7 +7,7 @@ import {
 import { Exception } from '@nuvix/core/extend/exception';
 import {
   ApiKey,
-  APP_MAX_COUNT,
+  configuration,
   DatabaseRole,
   DEFAULT_DATABASE,
   QueueFor,
@@ -85,23 +85,6 @@ export class ProjectService {
     ...rest
   }: CreateProjectDTO): Promise<Doc<Projects>> {
     const projectId = _projectId === 'unique()' ? ID.unique() : _projectId;
-
-    const mainConfig = this.appConfig.get('app');
-    if (mainConfig.projects.disabled && !this.appConfig.isSelfHosted) {
-      throw new Exception(
-        Exception.GENERAL_API_DISABLED,
-        'Projects are disabled',
-      );
-    } else if (
-      !mainConfig.projects.allowedProdCreate &&
-      env === 'prod' &&
-      !this.appConfig.isSelfHosted
-    ) {
-      throw new Exception(
-        Exception.GENERAL_BAD_REQUEST,
-        'Creating production projects is not allowed',
-      );
-    }
 
     try {
       const org = await this.db.getDocument('teams', teamId);
@@ -202,7 +185,11 @@ export class ProjectService {
     const filterQueries = Query.groupByType(queries)['filters'];
     return {
       projects: await this.db.find('projects', queries),
-      total: await this.db.count('projects', filterQueries, APP_MAX_COUNT),
+      total: await this.db.count(
+        'projects',
+        filterQueries,
+        configuration.limits.maxCount,
+      ),
     };
   }
 
@@ -318,7 +305,11 @@ export class ProjectService {
   async listEnvTokens() {
     return {
       projects: await this.db.find('envtokens'),
-      total: await this.db.count('envtokens', undefined, APP_MAX_COUNT),
+      total: await this.db.count(
+        'envtokens',
+        undefined,
+        configuration.limits.maxCount,
+      ),
     };
   }
 

@@ -8,7 +8,7 @@ import {
   IsObject,
 } from 'class-validator';
 import { IsCustomID } from '@nuvix/core/validators';
-import { APP_LIMIT_ARRAY_PARAMS_SIZE } from '@nuvix/utils';
+import { configuration } from '@nuvix/utils';
 
 export class CreateTeamDTO {
   @IsCustomID()
@@ -22,8 +22,8 @@ export class CreateTeamDTO {
 
   @IsOptional()
   @IsArray()
-  @ArrayMaxSize(APP_LIMIT_ARRAY_PARAMS_SIZE, {
-    message: `A maximum of ${APP_LIMIT_ARRAY_PARAMS_SIZE} roles are allowed.`,
+  @ArrayMaxSize(configuration.limits.arrayParamsSize, {
+    message: `A maximum of ${configuration.limits.arrayParamsSize} roles are allowed.`,
   })
   @Length(1, 32, {
     each: true,
