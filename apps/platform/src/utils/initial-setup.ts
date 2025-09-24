@@ -20,6 +20,24 @@ import { OrganizationsService } from '../organizations/organizations.service';
 import { ProjectService } from '../projects/projects.service';
 import { ProjectsQueue } from '@nuvix/core/resolvers';
 
+/**
+ * Initializes and bootstraps the platform database and default entities.
+ *
+ * Performs database creation (when self-hosted), ensures the platform database is reachable,
+ * creates platform metadata collections, a default storage bucket and its files collection,
+ * and an Audit collection. When running in self-hosted mode and no user exists, it also
+ * creates an admin account, a team and a default project, initializes project workload,
+ * and persists project database/environment settings.
+ *
+ * Side effects:
+ * - May create the target PostgreSQL database and set the postgres user's password (self-hosted).
+ * - Creates collections and documents in the platform database.
+ * - Creates default admin/team/project and initializes project resources (self-hosted, if no users exist).
+ *
+ * Errors:
+ * - Connection and database creation errors are propagated.
+ * - On any unhandled failure during setup, a generic setup failure Error is thrown.
+ */
 export async function initSetup(
   app: NestFastifyApplication,
   config: AppConfigService,

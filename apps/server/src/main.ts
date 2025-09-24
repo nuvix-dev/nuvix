@@ -44,6 +44,20 @@ config({
 validateRequiredConfig();
 Authorization.enableAsyncLocalStorage();
 
+/**
+ * Bootstraps and starts the Nuvix Nest/Fastify application.
+ *
+ * Initializes and configures the application: creates the Nest Fastify app, registers adapters and plugins
+ * (cookie parser, multipart, static assets), applies global pipes and filters, sets request hooks and request-scoped
+ * context, enables shutdown hooks and versioning, registers OpenAPI/Swagger metadata, ensures temporary storage exists,
+ * and starts listening on the configured host and port.
+ *
+ * Side effects:
+ * - Starts the HTTP server and logs the running URL.
+ * - May call process.exit(1) if creating the configured temporary storage directory fails for reasons other than EEXIST.
+ *
+ * @returns A promise that resolves when the application has finished startup and is listening for requests.
+ */
 async function bootstrap() {
   const app = await NuvixFactory.create<NestFastifyApplication>(
     AppModule,

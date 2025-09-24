@@ -245,6 +245,17 @@ const nxconfig = () =>
 
 export const configuration = nxconfig();
 
+/**
+ * Validates that required environment variables and configuration secrets are present and valid.
+ *
+ * Checks a predefined set of required environment variables (APP_JWT_SECRET, APP_ENCRYPTION_KEY,
+ * APP_REDIS_HOST, APP_DATABASE_ADMIN_PASSWORD, APP_DATABASE_PASSWORD) and throws an Error listing
+ * any that are missing. Also validates that `configuration.security.dbEncryptionKey` is exactly 16
+ * characters long.
+ *
+ * @throws Error if one or more required environment variables are missing (message lists the missing vars)
+ * @throws Error if the database encryption key length is not 16 characters
+ */
 export function validateRequiredConfig() {
   const requiredVars = [
     'APP_JWT_SECRET',

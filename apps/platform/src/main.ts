@@ -39,6 +39,13 @@ config({
 validateRequiredConfig();
 Authorization.enableAsyncLocalStorage();
 
+/**
+ * Bootstraps and starts the Nuvix Platform Nest/Fastify application.
+ *
+ * Performs full runtime initialization: creates a NuvixAdapter and Nest application with a console logger, registers cookie and multipart handlers, enables shutdown hooks, applies a global ValidationPipe and global error filter, configures static asset serving and per-request hooks (response headers and per-request async storage/authorization defaults), registers SIGINT/SIGTERM handlers for graceful shutdown logging, runs platform-specific setup, and starts listening on the configured host and port.
+ *
+ * @returns A promise that resolves when the application has finished starting and is listening for requests.
+ */
 async function bootstrap() {
   const adapter = new NuvixAdapter({
     trustProxy: true,
