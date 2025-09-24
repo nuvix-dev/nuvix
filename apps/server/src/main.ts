@@ -166,12 +166,12 @@ async function bootstrap() {
     }
   });
 
-  const port = parseInt(config.root.get('APP_API_PORT', '4000'), 10);
+  const port = parseInt(config.root.get('APP_SERVER_PORT', '4000'), 10);
   const host = '0.0.0.0';
   await app.listen(port, host);
 
   Logger.log(
-    `🚀 Nuvix API application is running on:  http://${host}:${port}`,
+    `🚀 Nuvix SERVER application is running on:  http://${host}:${port}`,
     'Bootstrap',
   );
 }

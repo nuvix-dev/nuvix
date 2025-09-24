@@ -17,8 +17,8 @@ const nxconfig = () =>
       version: '1.0.0',
       isProduction: process.env['NODE_ENV'] === 'production',
       forceHttps: process.env['APP_FORCE_HTTPS'] === 'disabled',
-      emailTeam: 'team@localhost.test',
-      emailSecurity: '',
+      emailTeam: process.env['APP_EMAIL_TEAM'] || 'team@localhost.test',
+      emailSecurity: process.env['APP_EMAIL_SECURITY'] || '',
       userAgent: 'Nuvix-Server v%s. Please report abuse at %s',
       color: '#477f84',
       debug: {
