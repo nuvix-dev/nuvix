@@ -1,7 +1,7 @@
-localhost {
+api.example.com {
   reverse_proxy server:4000
 }
 
-localhost:9100 {
+platform.example.com {
   reverse_proxy platform:4100
 }

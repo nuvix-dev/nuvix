@@ -1,7 +1,3 @@
-// This queue is not usefull for self-hosted version
-// because we don't manage database creation for now
-// but we keep it for future use cases
-// and also for nuvix cloud
 import { OnWorkerEvent, Processor } from '@nestjs/bullmq';
 import { Queue } from './queue';
 import { Job } from 'bullmq';
@@ -24,7 +20,7 @@ import collections from '@nuvix/utils/collections/index.js';
 
 @Processor(QueueFor.PROJECTS, { concurrency: 1000 })
 export class ProjectsQueue extends Queue {
-  private readonly logger = new Logger(ProjectsQueue.name);
+  private readonly logger = new Logger('Projects Setup Queue');
   private readonly db: Database;
 
   constructor(
@@ -35,10 +31,7 @@ export class ProjectsQueue extends Queue {
     this.db = this.coreService.getPlatformDb();
   }
 
-  async process(
-    job: Job<ProjectQueueOptions, any, ProjectJob>,
-    token?: string,
-  ): Promise<any> {
+  async process(job: Job<ProjectQueueOptions, any, ProjectJob>): Promise<any> {
     const project = new Doc(job.data.project) as unknown as ProjectsDoc;
     switch (job.name) {
       case ProjectJob.INIT:
@@ -58,6 +51,8 @@ export class ProjectsQueue extends Queue {
   }
 
   // Temp Setup (until infrastructure setup)
+  // not used for self-hosted
+  // we keep it for future use cases and nuvix cloud
   private async initProject(project: ProjectsDoc): Promise<void> {
     if (project.get('status') === 'active') {
       this.logger.warn(
@@ -177,8 +172,7 @@ export class ProjectsQueue extends Queue {
 
     const dbName = DEFAULT_DATABASE;
     const databaseConfig = {
-      password: (project.get('database') as unknown as DatabaseConfig).pool
-        .password,
+      password: this.appConfig.getDatabaseConfig().postgres.adminPassword,
       database: dbName,
       host: dbConfig['host'],
       port: dbConfig['port'],

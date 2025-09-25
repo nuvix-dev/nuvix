@@ -1,6 +1,4 @@
-import { config } from 'dotenv';
 import { findProjectRoot } from './helpers';
-config();
 
 export const PROJECT_ROOT = findProjectRoot();
 

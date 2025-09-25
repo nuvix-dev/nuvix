@@ -224,7 +224,7 @@ export const filters: Record<
 
   encrypt: {
     encode: value => {
-      const key = configuration.security.dbEncryptionKey;
+      const key = Buffer.from(configuration.security.dbEncryptionKey, 'utf8');
       const iv = crypto.randomBytes(16);
       const cipher = crypto.createCipheriv('aes-128-gcm', key, iv);
       let encrypted = cipher.update(value as string, 'utf8', 'hex');
@@ -244,13 +244,13 @@ export const filters: Record<
         return null;
       }
       value = typeof value === 'string' ? JSON.parse(value) : value;
-      let key: string;
+      let key: Buffer;
       switch (value.version) {
         case '1':
-          key = configuration.security.dbEncryptionKey;
+          key = Buffer.from(configuration.security.dbEncryptionKey, 'utf8');
           break;
         default:
-          key = configuration.security.dbEncryptionKey;
+          key = Buffer.from(configuration.security.dbEncryptionKey, 'utf8');
       }
       const iv = Buffer.from(value.iv, 'hex');
       const tag = Buffer.from(value.tag, 'hex');

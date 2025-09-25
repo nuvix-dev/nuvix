@@ -5,17 +5,29 @@
  * @version 1.0
  * @beta
  */
+import { config } from 'dotenv';
+config({
+  path: [
+    path.resolve(process.cwd(), '.env'),
+    path.resolve(process.cwd(), '.env.api'),
+  ],
+});
+
 import { NuvixAdapter, NuvixFactory } from '@nuvix/core/server';
 import { AppModule } from './app.module';
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
-import { config } from 'dotenv';
 import {
   ConsoleLogger,
   Logger,
   LogLevel,
   ValidationPipe,
 } from '@nestjs/common';
-import { configuration, Context, PROJECT_ROOT } from '@nuvix/utils';
+import {
+  configuration,
+  Context,
+  PROJECT_ROOT,
+  validateRequiredConfig,
+} from '@nuvix/utils';
 import { Authorization, Doc, Role, storage } from '@nuvix/db';
 import cookieParser from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
@@ -29,13 +41,7 @@ import { openApiSetup } from './core';
 import { Auth } from '@nuvix/core/helper/auth.helper.js';
 import * as crypto from 'crypto';
 
-config({
-  path: [
-    path.resolve(process.cwd(), '.env'),
-    path.resolve(process.cwd(), '.env.api'),
-  ],
-});
-
+validateRequiredConfig();
 Authorization.enableAsyncLocalStorage();
 
 async function bootstrap() {
@@ -62,7 +68,7 @@ async function bootstrap() {
         colors: configuration.app.debug.colors,
         prefix: 'Nuvix',
         logLevels: configuration.app.isProduction
-          ? (Object.keys(configuration.logLevels) as LogLevel[])
+          ? (configuration.logLevels as LogLevel[])
           : undefined,
       }),
     },

@@ -4,8 +4,10 @@ services:
     container_name: nuvix-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_PASSWORD: ${APP_DATABASE_PASSWORD:-password}
+      POSTGRES_PASSWORD: ${APP_DATABASE_ADMIN_PASSWORD}
       PGDATA: /var/lib/postgresql/data/pgdata
+    env_file:
+      - .env
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -14,7 +16,7 @@ services:
       test:
         [
           'CMD-SHELL',
-          'PGPASSWORD=${APP_DATABASE_PASSWORD:-password} pg_isready -U nuvix_admin -d postgres -h localhost',
+          'PGPASSWORD=${APP_DATABASE_ADMIN_PASSWORD} pg_isready -U nuvix_admin -d postgres -h localhost',
         ]
       interval: 10s
       timeout: 5s
@@ -28,8 +30,6 @@ services:
     volumes:
       - ./configs/redis.conf:/usr/local/etc/redis/redis.conf
       - redis_data:/data
-    # ports:
-    #   - '6379:6379'
     restart: unless-stopped
     networks:
       - nuvix
@@ -41,25 +41,37 @@ services:
       start_period: 10s
 
   pgcat:
-    image: ghcr.io/postgresml/pgcat:4a7a6a8e7a78354b889002a4db118a8e2f2d6d79
+    image: ghcr.io/postgresml/pgcat:latest
     container_name: nuvix-pgcat
     ports:
       - "9930:9930"  # Metrics port
+    environment:
+      APP_PGCAT_ADMIN_USER: ${APP_PGCAT_ADMIN_USER:-admin}
+      APP_PGCAT_ADMIN_PASSWORD: ${APP_PGCAT_ADMIN_PASSWORD:-password}
+      APP_DATABASE_PASSWORD: ${APP_DATABASE_PASSWORD}
+      APP_DATABASE_ADMIN_PASSWORD: ${APP_DATABASE_ADMIN_PASSWORD}
+      APP_DATABASE_POOL_HOST: localhost
+      APP_DATABASE_POOL_PORT: 6432
+      APP_DATABASE_HOST: postgres
+      APP_DATABASE_PORT: 5432
+    env_file:
+      - .env
     volumes:
-      - ./configs/pgcat.toml:/etc/pgcat/pgcat.toml:ro
+      - ./configs/pgcat.toml.template:/etc/pgcat/pgcat.toml.template:ro
+      - ./configs/pgcat-entrypoint.sh:/usr/local/bin/pgcat-entrypoint.sh:ro
     networks:
       - nuvix
     depends_on:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost 6432"]
+      test: ["CMD-SHELL", "nc -z localhost ${APP_PGCAT_POOL_PORT:-6432} || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
       start_period: 10s
     restart: unless-stopped
-    command: ["pgcat", "/etc/pgcat/pgcat.toml"]
+    entrypoint: ["/usr/local/bin/pgcat-entrypoint.sh"]
 
   server:
     build:
@@ -76,6 +88,9 @@ services:
       APP_DATABASE_HOST: postgres
       APP_REDIS_HOST: redis
       NODE_ENV: production
+    env_file:
+      - .env
+      - .env.server
     depends_on:
       postgres:
         condition: service_healthy
@@ -108,6 +123,9 @@ services:
       APP_DATABASE_HOST: postgres
       APP_REDIS_HOST: redis
       NODE_ENV: production
+    env_file:
+      - .env
+      - .env.platform
     depends_on:
       postgres:
         condition: service_healthy

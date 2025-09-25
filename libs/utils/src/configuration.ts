@@ -1,10 +1,7 @@
 import * as path from 'path';
 import { PROJECT_ROOT } from './constants';
-import { config } from 'dotenv';
 import { Logger } from '@nestjs/common';
 import { parseBoolean, parseNumber } from './helpers';
-
-config();
 
 const nxconfig = () =>
   ({
@@ -139,30 +136,29 @@ const nxconfig = () =>
     database: {
       // May be we will support multi tenant later, for now single db (provide same details for all)
       postgres: {
-        host: process.env['APP_POSTGRES_HOST'] ?? 'localhost',
-        port: parseNumber(process.env['APP_POSTGRES_PORT'], 5432),
-        user: process.env['APP_POSTGRES_USER'] ?? 'nuvix_admin',
-        password: process.env['APP_POSTGRES_PASSWORD'] ?? 'password',
-        database: process.env['APP_POSTGRES_DB']!,
-        ssl: process.env['APP_POSTGRES_SSL'] === 'true',
+        host: process.env['APP_DATABASE_HOST'] ?? 'localhost',
+        port: parseNumber(process.env['APP_DATABASE_PORT'], 5432),
+        user: process.env['APP_DATABASE_USER'] ?? 'postgres',
+        adminPassword: process.env['APP_DATABASE_ADMIN_PASSWORD'],
+        password: process.env['APP_DATABASE_PASSWORD'],
+        database: 'postgres', // initial db
+        ssl: process.env['APP_DATABASE_SSL'] === 'true',
         maxConnections: parseInt(
-          process.env['APP_POSTGRES_MAX_CONNECTIONS'] ?? '100',
+          process.env['APP_DATABASE_MAX_CONNECTIONS'] ?? '100',
           10,
         ), // not used currently
         // extrnal pool options (pgcat)
         pool: {
-          host: process.env['APP_POSTGRES_POOL_HOST'] ?? undefined,
-          port: process.env['APP_POSTGRES_POOL_PORT']
-            ? parseInt(process.env['APP_POSTGRES_POOL_PORT'], 10)
-            : undefined,
-          // user and password can be same as main or different (we use same for now)
+          host: process.env['APP_DATABASE_POOL_HOST'] ?? undefined,
+          port: parseNumber(process.env['APP_DATABASE_POOL_PORT'], 6432),
+          // user and password can be same as main or different (we enforce same for now)
         },
       },
       platform: {
         host: process.env['APP_DATABASE_HOST'] ?? 'localhost',
         port: parseNumber(process.env['APP_DATABASE_PORT'], 5432),
         user: process.env['APP_DATABASE_USER'] ?? 'nuvix_admin',
-        password: process.env['APP_DATABASE_PASSWORD'] ?? 'password',
+        password: process.env['APP_DATABASE_ADMIN_PASSWORD'],
         name: process.env['APP_DATABASE_NAME'] ?? 'platform',
       },
       timeout: 15_000,
@@ -241,14 +237,47 @@ const nxconfig = () =>
     logLevels: (process.env['APP_LOG_LEVELS'] ?? 'log,error,warn')
       .split(',')
       .map(level => level.trim())
-      .filter(level => level)
-      .reduce(
-        (acc, level) => {
-          acc[level.toLowerCase()] = true;
-          return acc;
-        },
-        {} as { [key: string]: boolean },
-      ),
+      .filter(level => level),
   }) as const;
 
 export const configuration = nxconfig();
+
+export function validateRequiredConfig() {
+  const requiredVars = [
+    'APP_JWT_SECRET',
+    'APP_ENCRYPTION_KEY',
+    'APP_REDIS_HOST',
+    'APP_DATABASE_ADMIN_PASSWORD',
+    'APP_DATABASE_PASSWORD',
+  ];
+
+  const missing: string[] = [];
+
+  for (const envVar of requiredVars) {
+    if (!process.env[envVar]) {
+      missing.push(envVar);
+    }
+  }
+
+  const inProd = process.env['NODE_ENV'] === 'production';
+  if (inProd && !process.env['APP_DATABASE_ENCRYPTION_KEY']) {
+    missing.push('APP_DATABASE_ENCRYPTION_KEY');
+  }
+
+  if (missing.length > 0) {
+    throw new Error(
+      `Missing required environment variables: ${missing.join(', ')}`,
+    );
+  }
+
+  const dbKey =
+    process.env['APP_DATABASE_ENCRYPTION_KEY'] ??
+    configuration.security.dbEncryptionKey;
+
+  const keyBytes = Buffer.byteLength(dbKey, 'utf8');
+  if (![16, 24, 32].includes(keyBytes)) {
+    throw new Error(
+      `DB Encryption key must be 16, 24, or 32 bytes (AES-128/192/256)`,
+    );
+  }
+}

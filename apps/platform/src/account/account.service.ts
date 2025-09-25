@@ -240,6 +240,7 @@ export class AccountService {
       if (error instanceof DuplicateException) {
         throw new Exception(Exception.USER_ALREADY_EXISTS);
       } else {
+        console.error(error);
         throw new Exception(
           Exception.GENERAL_SERVER_ERROR,
           'Failed saving user to DB',

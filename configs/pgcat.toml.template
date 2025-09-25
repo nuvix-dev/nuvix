@@ -1,9 +1,12 @@
 [general]
-host = "0.0.0.0"
-port = 6432
+host = "${APP_DATABASE_POOL_HOST}"
+port = ${APP_DATABASE_POOL_PORT}
+log_level = "info"
+stats_enabled = true
+stats_interval = 10
 prometheus_exporter_port = 9930
-admin_username = "admin_user"
-admin_password = "admin_password"
+admin_username = "${APP_PGCAT_ADMIN_USER}"
+admin_password = "${APP_PGCAT_ADMIN_PASSWORD}"
 pool_mode = "session"
 default_role = "any"
 application_name = "nuvix-pgcat"
@@ -17,7 +20,7 @@ sharding_function = "pg_bigint_hash"
 
 [pools.postgres.users.0]
 username = "postgres"
-password = "password"
+password = "${APP_DATABASE_PASSWORD}"
 pool_size = 100
 statement_timeout = 0
 min_pool_size = 5
@@ -25,12 +28,12 @@ max_pool_size = 200
 
 [pools.postgres.users.1]
 username = "nuvix_admin"
-password = "password"
+password = "${APP_DATABASE_ADMIN_PASSWORD}"
 pool_size = 100
 statement_timeout = 0
 min_pool_size = 5
 max_pool_size = 200
 
 [pools.postgres.shards.0]
-servers = [[ "postgres", 5432, "primary" ]]
+servers = [[ "${APP_DATABASE_HOST}", ${APP_DATABASE_PORT}, "primary" ]]
 database = "postgres"

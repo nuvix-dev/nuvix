@@ -61,7 +61,10 @@ export class ProjectHook implements Hook {
           {
             database: DEFAULT_DATABASE,
             user: this.dbRole,
-            password: dbOptions.pool.password, // TODO: we have to use here admin password for admin
+            password:
+              this.dbRole === DatabaseRole.ADMIN
+                ? this.appConfig.getDatabaseConfig().postgres.adminPassword
+                : dbOptions.pool.password,
             port: dbOptions.pool.port || dbOptions.postgres.port,
             host: dbOptions.pool.host,
           },

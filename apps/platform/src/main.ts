@@ -4,17 +4,29 @@
  * @version 1.0
  * @beta
  */
+import { config } from 'dotenv';
+config({
+  path: [
+    path.resolve(process.cwd(), '.env'),
+    path.resolve(process.cwd(), '.env.platform'),
+  ],
+});
+
 import { NuvixAdapter, NuvixFactory } from '@nuvix/core/server';
 import { AppModule } from './app.module';
 import { NestFastifyApplication } from '@nestjs/platform-fastify';
-import { config } from 'dotenv';
 import {
   ConsoleLogger,
   Logger,
   LogLevel,
   ValidationPipe,
 } from '@nestjs/common';
-import { configuration, PROJECT_ROOT } from '@nuvix/utils';
+import {
+  configuration,
+  parseNumber,
+  PROJECT_ROOT,
+  validateRequiredConfig,
+} from '@nuvix/utils';
 import { Authorization, Role, storage } from '@nuvix/db';
 import cookieParser from '@fastify/cookie';
 import fastifyMultipart from '@fastify/multipart';
@@ -25,13 +37,7 @@ import { ErrorFilter } from '@nuvix/core/filters';
 import { AppConfigService } from '@nuvix/core';
 import { Auth } from '@nuvix/core/helper/auth.helper.js';
 
-config({
-  path: [
-    path.resolve(process.cwd(), '.env'),
-    path.resolve(process.cwd(), '.env.platform'),
-  ],
-});
-
+validateRequiredConfig();
 Authorization.enableAsyncLocalStorage();
 
 async function bootstrap() {
@@ -61,7 +67,7 @@ async function bootstrap() {
         colors: configuration.app.debug.colors,
         prefix: 'Nuvix-Console',
         logLevels: configuration.app.isProduction
-          ? (Object.keys(configuration.logLevels) as LogLevel[])
+          ? (configuration.logLevels as LogLevel[])
           : undefined,
       }),
       autoFlushLogs: true,
@@ -124,7 +130,7 @@ async function bootstrap() {
   app.useGlobalFilters(new ErrorFilter(config));
   await initSetup(app, config as AppConfigService);
 
-  const port = parseInt(config.root.get('APP_PLATFORM_PORT', '4100'), 10);
+  const port = parseNumber(config.root.get('APP_PLATFORM_PORT'), 4100);
   const host = '0.0.0.0';
   await app.listen(port, host);
 
