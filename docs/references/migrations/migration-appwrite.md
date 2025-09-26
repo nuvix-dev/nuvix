@@ -1,0 +1,1 @@
+Migrate data from another Nuvix project to your current project. This endpoint allows you to migrate resources like databases, collections, documents, users, and files from an existing Nuvix project. 
