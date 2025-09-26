@@ -11,3 +11,4 @@ export * from './sdk.decorator';
 export { User as AuthUser } from './project-user.decorator';
 export * from './user.decorator';
 export * from './throttle.decorator';
+export * from './route.decorator';

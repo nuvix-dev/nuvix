@@ -83,9 +83,11 @@ export class AccountController {
     );
   }
 
-  @Get()
-  @Scope('account')
-  @Route()
+  @Route({
+    scopes: 'account',
+    auth: AuthType.SESSION,
+    resModel: Models.ACCOUNT,
+  })
   @ResModel(Models.ACCOUNT)
   async getAccount(@User() user: UsersDoc) {
     if (user.empty()) {
@@ -103,16 +105,18 @@ export class AccountController {
     return this.accountService.deleteAccount(db, user);
   }
 
-  @Post(['jwts', 'jwt'])
-  @Scope('account')
-  @ResModel(Models.JWT)
-  @Throttle({
-    limit: 100,
-    key: 'userId:{userId}',
-  })
-  @Sdk({
-    name: 'createJWT',
+  @Route({
+    method: 'POST',
+    path: ['jwts', 'jwt'],
+    scopes: 'account',
     auth: AuthType.JWT,
+    throttle: {
+      limit: 100,
+      key: 'userId:{userId}',
+    },
+    sdk: {
+      name: 'createJWT',
+    },
   })
   async createJWT(
     @User() user: UsersDoc,
