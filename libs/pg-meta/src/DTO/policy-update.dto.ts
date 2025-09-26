@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   ArrayNotEmpty,
   IsArray,
@@ -20,10 +21,14 @@ export class PolicyUpdateDTO {
 
   @IsOptional()
   @IsEnum(['PERMISSIVE', 'RESTRICTIVE'])
+  @ApiPropertyOptional({ enum: ['PERMISSIVE', 'RESTRICTIVE'] })
   action?: 'PERMISSIVE' | 'RESTRICTIVE';
 
   @IsOptional()
   @IsEnum(['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'ALL'])
+  @ApiPropertyOptional({
+    enum: ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'ALL'],
+  })
   command?: 'SELECT' | 'INSERT' | 'UPDATE' | 'DELETE' | 'ALL';
 
   @IsOptional()

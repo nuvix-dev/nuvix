@@ -2,7 +2,7 @@ import { Permission } from '@nuvix/db';
 import { Exclude, Expose } from 'class-transformer';
 
 @Exclude()
-export default abstract class BaseModel {
+export abstract class BaseModel {
   /**
    *  ID.
    */

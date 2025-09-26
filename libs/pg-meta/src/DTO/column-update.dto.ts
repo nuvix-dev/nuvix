@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsString, IsOptional, IsBoolean, IsEnum } from 'class-validator';
 
 export class ColumnUpdateDTO {
@@ -18,6 +19,7 @@ export class ColumnUpdateDTO {
 
   @IsOptional()
   @IsEnum(['expression', 'literal'])
+  @ApiPropertyOptional({ enum: ['expression', 'literal'] })
   default_value_format?: 'expression' | 'literal';
 
   @IsOptional()
@@ -26,6 +28,7 @@ export class ColumnUpdateDTO {
 
   @IsOptional()
   @IsEnum(['ALWAYS', 'BY DEFAULT'])
+  @ApiPropertyOptional({ enum: ['ALWAYS', 'BY DEFAULT'] })
   identity_generation?: 'ALWAYS' | 'BY DEFAULT';
 
   @IsOptional()

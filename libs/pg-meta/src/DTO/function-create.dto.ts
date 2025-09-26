@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsArray,
   IsBoolean,
@@ -33,6 +34,7 @@ export class FunctionCreateDTO {
 
   @IsOptional()
   @IsEnum(['IMMUTABLE', 'STABLE', 'VOLATILE'])
+  @ApiPropertyOptional({ enum: ['IMMUTABLE', 'STABLE', 'VOLATILE'] })
   behavior?: 'IMMUTABLE' | 'STABLE' | 'VOLATILE';
 
   @IsOptional()

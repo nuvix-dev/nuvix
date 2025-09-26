@@ -16,5 +16,5 @@ export class UpdateProjectServiceDTO {
 
 export class UpdateProjectAllServiceDTO extends OmitType(
   UpdateProjectServiceDTO,
-  ['service'],
+  ['service'] as const,
 ) {}

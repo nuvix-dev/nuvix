@@ -29,5 +29,5 @@ export class CreateFcmProviderDTO {
 }
 
 export class UpdateFcmProviderDTO extends PartialType(
-  OmitType(CreateFcmProviderDTO, ['providerId']),
+  OmitType(CreateFcmProviderDTO, ['providerId'] as const),
 ) {}

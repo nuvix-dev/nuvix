@@ -2769,7 +2769,7 @@ export class AccountService {
     );
 
     switch (factor) {
-      case TOTP.PHONE:
+      case MfaType.PHONE:
         if (!this.appConfig.get('sms').enabled) {
           throw new Exception(
             Exception.GENERAL_PHONE_DISABLED,
@@ -2796,7 +2796,7 @@ export class AccountService {
         // TODO: Implement usage metrics and abuse tracking
         break;
 
-      case TOTP.EMAIL:
+      case MfaType.EMAIL:
         if (!this.appConfig.getSmtpConfig().host) {
           throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP disabled');
         }

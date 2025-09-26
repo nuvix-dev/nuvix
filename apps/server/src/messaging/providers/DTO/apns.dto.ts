@@ -37,5 +37,5 @@ export class CreateApnsProviderDTO {
 }
 
 export class UpdateApnsProviderDTO extends PartialType(
-  OmitType(CreateApnsProviderDTO, ['providerId']),
+  OmitType(CreateApnsProviderDTO, ['providerId'] as const),
 ) {}

@@ -16,5 +16,5 @@ export class CreateDocumentDTO {
 }
 
 export class UpdateDocumentDTO extends PartialType(
-  OmitType(CreateDocumentDTO, ['documentId']),
+  OmitType(CreateDocumentDTO, ['documentId'] as const),
 ) {}

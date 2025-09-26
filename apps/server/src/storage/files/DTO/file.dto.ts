@@ -20,7 +20,9 @@ export class CreateFileDTO {
   permissions?: string[];
 }
 
-export class UpdateFileDTO extends OmitType(CreateFileDTO, ['fileId']) {
+export class UpdateFileDTO extends OmitType(CreateFileDTO, [
+  'fileId',
+] as const) {
   @IsOptional()
   @IsString()
   @Length(1, 255)

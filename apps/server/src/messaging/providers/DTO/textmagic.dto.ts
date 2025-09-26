@@ -35,5 +35,5 @@ export class CreateTextmagicProviderDTO {
 }
 
 export class UpdateTextmagicProviderDTO extends PartialType(
-  OmitType(CreateTextmagicProviderDTO, ['providerId']),
+  OmitType(CreateTextmagicProviderDTO, ['providerId'] as const),
 ) {}

@@ -34,5 +34,5 @@ export class CreateVonageProviderDTO {
 }
 
 export class UpdateVonageProviderDTO extends PartialType(
-  OmitType(CreateVonageProviderDTO, ['providerId']),
+  OmitType(CreateVonageProviderDTO, ['providerId'] as const),
 ) {}

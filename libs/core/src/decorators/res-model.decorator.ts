@@ -1,8 +1,9 @@
-import { SetMetadata, Type } from '@nestjs/common';
+import { applyDecorators, SetMetadata, Type } from '@nestjs/common';
 import {
   CLASS_SERIALIZER_OPTIONS,
   ResolverTypeContextOptions,
 } from '../resolvers/interceptors';
+import { ApiResponse } from '@nestjs/swagger';
 
 function ResModel(type: Type<any>): MethodDecorator;
 function ResModel(options: ResolverTypeContextOptions): MethodDecorator;
@@ -21,7 +22,12 @@ function ResModel(
     typeof typeOrOptions === 'function'
       ? { type: typeOrOptions, ...extra }
       : { ...typeOrOptions };
-  return SetMetadata(CLASS_SERIALIZER_OPTIONS, _options);
+  return applyDecorators(
+    SetMetadata(CLASS_SERIALIZER_OPTIONS, _options),
+    ApiResponse({
+      type: _options.type,
+    }),
+  );
 }
 
 export { ResModel };

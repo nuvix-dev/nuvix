@@ -1,6 +1,6 @@
 import { Permission } from '@nuvix/db';
 import { AuthProviderModel } from './AuthProvider.model';
-import BaseModel from './base.model';
+import { BaseModel } from './base.model';
 import { MockNumberModel } from './MockNumber.model';
 import { PlatformModel } from './Platform.model';
 import { WebhookModel } from './Webhook.model';

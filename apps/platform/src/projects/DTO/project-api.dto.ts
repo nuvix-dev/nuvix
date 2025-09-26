@@ -12,4 +12,4 @@ export class ProjectApiStatusDTO {
 
 export class ProjectApiStatusAllDTO extends OmitType(ProjectApiStatusDTO, [
   'api',
-]) {}
+] as const) {}

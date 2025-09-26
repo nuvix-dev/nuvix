@@ -18,7 +18,7 @@ export class CreatePushTargetDTO {
 
 export class UpdatePushTargetDTO extends OmitType(CreatePushTargetDTO, [
   'targetId',
-]) {}
+] as const) {}
 
 export class TargetIdParamDTO {
   @IsUID()

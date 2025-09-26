@@ -44,5 +44,5 @@ export class CreateSendgridProviderDTO {
 }
 
 export class UpdateSendgridProviderDTO extends PartialType(
-  OmitType(CreateSendgridProviderDTO, ['providerId']),
+  OmitType(CreateSendgridProviderDTO, ['providerId'] as const),
 ) {}

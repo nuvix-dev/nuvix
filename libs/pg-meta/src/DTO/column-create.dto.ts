@@ -1,3 +1,4 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
   IsOptional,
@@ -22,6 +23,7 @@ export class ColumnCreateDTO {
 
   @IsOptional()
   @IsEnum(['ALWAYS', 'BY DEFAULT'])
+  @ApiPropertyOptional({ enum: ['ALWAYS', 'BY DEFAULT'] })
   identity_generation?: 'ALWAYS' | 'BY DEFAULT';
 
   @IsOptional()
@@ -41,6 +43,7 @@ export class ColumnCreateDTO {
 
   @IsOptional()
   @IsEnum(['expression', 'literal'])
+  @ApiPropertyOptional({ enum: ['expression', 'literal'] })
   default_value_format?: 'expression' | 'literal';
 
   @IsOptional()

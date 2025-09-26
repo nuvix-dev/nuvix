@@ -1,5 +1,5 @@
 import { Exclude, Expose } from 'class-transformer';
-import BaseModel from '@nuvix/core/models/base.model';
+import { BaseModel } from '@nuvix/core/models/base.model';
 
 @Exclude()
 export class MigrationReportModel extends BaseModel {

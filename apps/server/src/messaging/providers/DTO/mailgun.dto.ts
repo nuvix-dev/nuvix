@@ -53,5 +53,5 @@ export class CreateMailgunProviderDTO {
 }
 
 export class UpdateMailgunProviderDTO extends PartialType(
-  OmitType(CreateMailgunProviderDTO, ['providerId']),
+  OmitType(CreateMailgunProviderDTO, ['providerId'] as const),
 ) {}

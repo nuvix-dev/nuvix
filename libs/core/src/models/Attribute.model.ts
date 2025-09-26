@@ -1,5 +1,6 @@
 import { Exclude, Expose } from 'class-transformer';
-import BaseModel from '@nuvix/core/models/base.model';
+import { BaseModel } from '@nuvix/core/models/base.model';
+
 import type { Attributes } from '@nuvix/utils/types';
 
 @Exclude()

@@ -75,5 +75,5 @@ export class CreateSMTPProviderDTO {
 }
 
 export class UpdateSMTPProviderDTO extends PartialType(
-  OmitType(CreateSMTPProviderDTO, ['providerId']),
+  OmitType(CreateSMTPProviderDTO, ['providerId'] as const),
 ) {}

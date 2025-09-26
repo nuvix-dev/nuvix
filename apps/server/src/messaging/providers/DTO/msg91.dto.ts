@@ -33,5 +33,5 @@ export class CreateMsg91ProviderDTO {
 }
 
 export class UpdateMsg91ProviderDTO extends PartialType(
-  OmitType(CreateMsg91ProviderDTO, ['providerId']),
+  OmitType(CreateMsg91ProviderDTO, ['providerId'] as const),
 ) {}

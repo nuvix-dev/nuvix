@@ -28,5 +28,5 @@ export class CreateTopicDTO {
 }
 
 export class UpdateTopicDTO extends PartialType(
-  OmitType(CreateTopicDTO, ['topicId']),
+  OmitType(CreateTopicDTO, ['topicId'] as const),
 ) {}

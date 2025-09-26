@@ -1,4 +1,4 @@
-import { NuvixDBConfig } from '@nuvix/db/config';
+import { NuvixDBConfig } from '@nuvix/db';
 import collections from '@nuvix/utils/collections';
 
 const config: NuvixDBConfig = {

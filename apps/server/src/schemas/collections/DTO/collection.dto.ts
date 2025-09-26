@@ -30,5 +30,5 @@ export class CreateCollectionDTO {
 }
 
 export class UpdateCollectionDTO extends PartialType(
-  OmitType(CreateCollectionDTO, ['collectionId']),
+  OmitType(CreateCollectionDTO, ['collectionId'] as const),
 ) {}

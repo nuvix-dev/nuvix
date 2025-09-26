@@ -26,5 +26,5 @@ export class CreateTargetDTO {
 }
 
 export class UpdateTargetDTO extends PartialType(
-  OmitType(CreateTargetDTO, ['targetId', 'providerType']),
+  OmitType(CreateTargetDTO, ['targetId', 'providerType'] as const),
 ) {}

@@ -35,5 +35,5 @@ export class CreateTelesignProviderDTO {
 }
 
 export class UpdateTelesignProviderDTO extends PartialType(
-  OmitType(CreateTelesignProviderDTO, ['providerId']),
+  OmitType(CreateTelesignProviderDTO, ['providerId'] as const),
 ) {}

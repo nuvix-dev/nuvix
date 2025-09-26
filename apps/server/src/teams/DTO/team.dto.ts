@@ -33,7 +33,7 @@ export class CreateTeamDTO {
 }
 
 export class UpdateTeamDTO extends PartialType(
-  OmitType(CreateTeamDTO, ['teamId', 'roles']),
+  OmitType(CreateTeamDTO, ['teamId', 'roles'] as const),
 ) {}
 
 export class UpdateTeamPrefsDTO {

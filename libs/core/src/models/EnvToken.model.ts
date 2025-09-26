@@ -1,4 +1,4 @@
-import BaseModel from './base.model';
+import { BaseModel } from './base.model';
 import { Exclude, Expose } from 'class-transformer';
 
 @Exclude()

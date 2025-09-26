@@ -154,8 +154,10 @@ async function bootstrap() {
   await SwaggerModule.loadPluginMetadata(async () => {
     try {
       // @ts-ignore
-      return (await import('./metadata')).default;
-    } catch {
+      return await (await import('./metadata')).default();
+    } catch (err) {
+      Logger.warn('No swagger metadata found, skipping...');
+      Logger.debug((err as Error).stack || err);
       return {};
     }
   });

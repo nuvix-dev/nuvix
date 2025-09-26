@@ -3,7 +3,7 @@ import { CreateProjectDTO } from './create-project.dto';
 import { IsNotEmpty, IsString } from 'class-validator';
 
 export class UpdateProjectDTO extends PartialType(
-  OmitType(CreateProjectDTO, ['region', 'teamId', 'projectId']),
+  OmitType(CreateProjectDTO, ['region', 'teamId', 'projectId'] as const),
 ) {}
 
 export class UpdateProjectTeamDTO {

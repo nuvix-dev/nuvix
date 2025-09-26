@@ -1,5 +1,6 @@
 import { Exclude, Expose, Transform, Type } from 'class-transformer';
-import BaseModel from '@nuvix/core/models/base.model';
+import { BaseModel } from '@nuvix/core/models/base.model';
+
 import { IndexModel } from './Index.model';
 import { AttributeType } from '@nuvix/db';
 import {

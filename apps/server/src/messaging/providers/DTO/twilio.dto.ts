@@ -35,5 +35,5 @@ export class CreateTwilioProviderDTO {
 }
 
 export class UpdateTwilioProviderDTO extends PartialType(
-  OmitType(CreateTwilioProviderDTO, ['providerId']),
+  OmitType(CreateTwilioProviderDTO, ['providerId'] as const),
 ) {}

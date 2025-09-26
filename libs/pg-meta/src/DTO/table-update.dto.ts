@@ -1,8 +1,8 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsArray,
   IsBoolean,
   IsEnum,
-  IsObject,
   IsOptional,
   IsString,
 } from 'class-validator';
@@ -30,6 +30,7 @@ export class TableUpdateDTO {
 
   @IsOptional()
   @IsEnum(['DEFAULT', 'INDEX', 'FULL', 'NOTHING'])
+  @ApiPropertyOptional({ enum: ['DEFAULT', 'INDEX', 'FULL', 'NOTHING'] })
   replica_identity?: 'DEFAULT' | 'INDEX' | 'FULL' | 'NOTHING';
 
   @IsOptional()

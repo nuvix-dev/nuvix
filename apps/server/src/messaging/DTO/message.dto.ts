@@ -201,7 +201,7 @@ export class UpdateEmailMessageDTO extends PartialType(
     'bcc',
     'scheduledAt',
     'attachments',
-  ]),
+  ] as const),
 ) {}
 
 export class UpdateSmsMessageDTO extends PartialType(
@@ -212,7 +212,7 @@ export class UpdateSmsMessageDTO extends PartialType(
     'content',
     'draft',
     'scheduledAt',
-  ]),
+  ] as const),
 ) {}
 
 export class UpdatePushMessageDTO extends PartialType(
@@ -235,5 +235,5 @@ export class UpdatePushMessageDTO extends PartialType(
     'contentAvailable',
     'critical',
     'priority',
-  ]),
+  ] as const),
 ) {}
