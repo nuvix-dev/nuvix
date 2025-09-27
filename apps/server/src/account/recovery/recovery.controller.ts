@@ -12,7 +12,6 @@ import {
   AuditEvent,
   Namespace,
   Scope,
-  Sdk,
   Throttle,
 } from '@nuvix/core/decorators'
 import { Locale } from '@nuvix/core/decorators/locale.decorator'

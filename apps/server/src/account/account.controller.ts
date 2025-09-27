@@ -118,81 +118,77 @@ export class AccountController {
     return this.accountService.deleteAccount(db, user)
   }
 
-  @Post(['jwts', 'jwt'], {
-    summary: 'Create JWT',
-    tags: ['sessions'],
-    scopes: 'account',
-    auth: AuthType.JWT,
-    resModel: Models.JWT,
-    throttle: {
-      limit: 100,
-      key: 'userId:{userId}',
-    },
-    sdk: {
-      name: 'createJWT',
-      descMd: 'docs/references/account/create-jwt.md',
-    },
-  })
-  async createJWT(
-    @User() user: UsersDoc,
-    @Res({ passthrough: true }) response: NuvixRes,
-  ): Promise<Doc<{ jwt: string }>> {
-    return this.accountService.createJWT(user, response)
-  }
-
   @Get('prefs', {
+    summary: 'Get account preferences',
     scopes: 'account',
     resModel: Models.PREFERENCES,
+    auth: [AuthType.SESSION, AuthType.JWT],
+    sdk: {
+      name: 'getPrefs',
+      descMd: '/docs/references/account/get-prefs.md',
+    },
   })
-  getPrefs(@User() user: UsersDoc) {
+  getPrefs(@User() user: UsersDoc): IResponse<Record<string, unknown>> {
     return user.get('prefs', {})
   }
 
   @Patch('prefs', {
+    summary: 'Update preferences',
     scopes: 'account',
     resModel: Models.PREFERENCES,
+    auth: [AuthType.SESSION, AuthType.JWT],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
+    },
+    sdk: {
+      name: 'updatePrefs',
+      descMd: '/docs/references/account/update-prefs.md',
     },
   })
   async updatePrefs(
     @AuthDatabase() db: Database,
     @User() user: UsersDoc,
     @Body() input: UpdatePrefsDTO,
-  ) {
+  ): Promise<IResponse<Record<string, unknown>>> {
     return this.accountService.updatePrefs(db, user, input.prefs)
   }
 
   @Patch('name', {
+    summary: 'Update name',
     scopes: 'account',
     resModel: Models.ACCOUNT,
+    auth: [AuthType.SESSION, AuthType.JWT],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
     },
     sdk: {
       name: 'updateName',
+      descMd: '/docs/references/account/update-name.md',
     },
   })
   async updateName(
     @AuthDatabase() db: Database,
     @User() user: UsersDoc,
     @Body() { name }: UpdateNameDTO,
-  ) {
+  ): Promise<IResponse<UsersDoc>> {
     return this.accountService.updateName(db, name, user)
   }
 
   @Patch('password', {
+    summary: 'Update password',
     scopes: 'account',
     throttle: 10,
     resModel: Models.ACCOUNT,
+    auth: [AuthType.SESSION, AuthType.JWT],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
     },
     sdk: {
       name: 'updatePassword',
+      descMd: '/docs/references/account/update-password.md',
     },
   })
   async updatePassword(
@@ -211,11 +207,17 @@ export class AccountController {
   }
 
   @Patch('email', {
+    summary: 'Update email',
     scopes: 'account',
     resModel: Models.ACCOUNT,
+    auth: [AuthType.SESSION, AuthType.JWT],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
+    },
+    sdk: {
+      name: 'updateEmail',
+      descMd: '/docs/references/account/update-email.md',
     },
   })
   async updateEmail(
@@ -227,14 +229,17 @@ export class AccountController {
   }
 
   @Patch('phone', {
+    summary: 'Update phone',
     scopes: 'account',
     resModel: Models.ACCOUNT,
+    auth: [AuthType.SESSION, AuthType.JWT],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
     },
     sdk: {
       name: 'updatePhone',
+      descMd: '/docs/references/account/update-phone.md',
     },
   })
   async updatePhone(
@@ -253,14 +258,17 @@ export class AccountController {
   }
 
   @Patch('status', {
+    summary: 'Update status',
     scopes: 'account',
     resModel: Models.ACCOUNT,
+    auth: [AuthType.SESSION, AuthType.JWT],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
     },
     sdk: {
       name: 'updateStatus',
+      descMd: '/docs/references/account/update-status.md',
     },
   })
   async updateStatus(
@@ -279,6 +287,7 @@ export class AccountController {
 
   @Post('verification', {
     scopes: 'account',
+    resModel: Models.TOKEN,
     throttle: {
       limit: 10,
       key: 'ip:{ip},userId:{param-userId}',
@@ -288,7 +297,6 @@ export class AccountController {
       resource: 'user/{res.userId}',
       userId: '{res.userId}',
     },
-    resModel: Models.TOKEN,
     sdk: {
       name: 'createVerification',
     },

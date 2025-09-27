@@ -66,6 +66,7 @@ import type {
 } from '@nuvix/utils/types'
 import { CoreService, AppConfigService } from '@nuvix/core'
 import type { SmtpConfig } from '@nuvix/core/config/smtp.js'
+import { JwtService } from '@nestjs/jwt'
 
 @Injectable()
 export class SessionService {
@@ -75,6 +76,7 @@ export class SessionService {
     private readonly coreService: CoreService,
     private readonly appConfig: AppConfigService,
     private eventEmitter: EventEmitter2,
+    private readonly jwtService: JwtService,
     @InjectQueue(QueueFor.MAILS)
     private readonly mailsQueue: Queue<MailQueueOptions>,
   ) {
@@ -1814,6 +1816,37 @@ export class SessionService {
 
     response.status(201)
     return createdToken
+  }
+
+  /**
+   * Create JWT
+   */
+  async createJWT(user: UsersDoc, response: NuvixRes) {
+    const sessions = user.get('sessions', []) as SessionsDoc[]
+    let current = new Doc<Sessions>()
+
+    for (const session of sessions) {
+      if (session.get('secret') === Auth.hash(Auth.secret)) {
+        current = session
+        break
+      }
+    }
+
+    if (current.empty()) {
+      throw new Exception(Exception.USER_SESSION_NOT_FOUND)
+    }
+
+    const payload = {
+      userId: user.getId(),
+      sessionId: current.getId(),
+    }
+
+    const jwt = this.jwtService.sign(payload, {
+      expiresIn: '15m', // 900 seconds
+    })
+
+    response.status(201)
+    return new Doc({ jwt })
   }
 
   /**

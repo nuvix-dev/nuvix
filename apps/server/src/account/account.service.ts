@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { InjectQueue } from '@nestjs/bullmq'
-import { JwtService } from '@nestjs/jwt'
 import { Queue } from 'bullmq'
 import * as Template from 'handlebars'
 import * as fs from 'fs/promises'
@@ -34,14 +33,12 @@ import {
 import { UpdateEmailDTO } from './DTO/account.dto'
 import type {
   ProjectsDoc,
-  Sessions,
-  SessionsDoc,
   TargetsDoc,
   Tokens,
   TokensDoc,
   UsersDoc,
 } from '@nuvix/utils/types'
-import { CoreService, AppConfigService } from '@nuvix/core'
+import { AppConfigService } from '@nuvix/core'
 import type { SmtpConfig } from '@nuvix/core/config/smtp.js'
 
 @Injectable()
@@ -49,7 +46,6 @@ export class AccountService {
   constructor(
     private readonly appConfig: AppConfigService,
     private eventEmitter: EventEmitter2,
-    private readonly jwtService: JwtService,
     @InjectQueue(QueueFor.MAILS)
     private readonly mailsQueue: Queue<MailQueueOptions>,
   ) {}
@@ -287,37 +283,6 @@ export class AccountService {
         throw error
       }
     }
-  }
-
-  /**
-   * Create JWT
-   */
-  async createJWT(user: UsersDoc, response: NuvixRes) {
-    const sessions = user.get('sessions', []) as SessionsDoc[]
-    let current = new Doc<Sessions>()
-
-    for (const session of sessions) {
-      if (session.get('secret') === Auth.hash(Auth.secret)) {
-        current = session
-        break
-      }
-    }
-
-    if (current.empty()) {
-      throw new Exception(Exception.USER_SESSION_NOT_FOUND)
-    }
-
-    const payload = {
-      userId: user.getId(),
-      sessionId: current.getId(),
-    }
-
-    const jwt = this.jwtService.sign(payload, {
-      expiresIn: '15m', // 900 seconds
-    })
-
-    response.status(201)
-    return new Doc({ jwt })
   }
 
   /**

@@ -10,7 +10,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 
-import { Database } from '@nuvix/db'
+import { Database, type Doc } from '@nuvix/db'
 import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
 import { Locale } from '@nuvix/core/decorators/locale.decorator'
 import { AuthDatabase, Project } from '@nuvix/core/decorators/project.decorator'
@@ -656,5 +656,27 @@ export class SessionsController {
       locale,
       project,
     })
+  }
+
+  @Post(['jwts', 'jwt'], {
+    summary: 'Create JWT',
+    tags: ['tokens'],
+    scopes: 'account',
+    auth: AuthType.JWT,
+    resModel: Models.JWT,
+    throttle: {
+      limit: 100,
+      key: 'userId:{userId}',
+    },
+    sdk: {
+      name: 'createJWT',
+      descMd: '/docs/references/account/create-jwt.md',
+    },
+  })
+  async createJWT(
+    @User() user: UsersDoc,
+    @Res({ passthrough: true }) response: NuvixRes,
+  ): Promise<Doc<{ jwt: string }>> {
+    return this.sessionService.createJWT(user, response)
   }
 }

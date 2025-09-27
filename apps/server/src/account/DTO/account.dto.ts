@@ -38,44 +38,68 @@ export class CreateAccountDTO {
 }
 
 export class UpdatePrefsDTO {
+  /**
+   * Prefs key-value JSON object.
+   */
   @IsObject()
-  prefs!: { [key: string]: any }
+  declare prefs: { [key: string]: any }
 }
 
 export class UpdateEmailDTO {
+  /**
+   * User email.
+   */
   @IsEmail()
-  email!: string
+  declare email: string
 
+  /**
+   * User password. Must be at least 8 chars.
+   */
   @IsNotEmpty()
   @IsString()
-  password!: string
+  declare password: string
 }
 
 export class UpdatePasswordDTO {
+  /**
+   * New user password. Must be at least 8 chars.
+   */
   @IsNotEmpty()
   @IsString()
   @Length(8, 256, { message: 'Password must be between 8 and 256 characters.' })
-  password!: string
+  declare password: string
 
+  /**
+   * Current user password. Must be at least 8 chars.
+   */
   @IsNotEmpty()
   @IsString()
-  oldPassword!: string
+  declare oldPassword: string
 }
 
 export class UpdateNameDTO {
+  /**
+   * User name. Max length: 128 chars.
+   */
   @IsNotEmpty()
   @IsString()
-  name!: string
+  declare name: string
 }
 
 export class UpdatePhoneDTO {
+  /**
+   * Phone number. Format this number with a leading \'+\' and a country code, e.g., +16175551212.
+   */
   @IsNotEmpty()
   @IsString()
-  phone!: string
+  declare phone: string
 
+  /**
+   * User password. Must be at least 8 chars.
+   */
   @IsNotEmpty()
   @IsString()
-  password!: string
+  declare password: string
 }
 
 export class UpdateAccountStatusDTO {
