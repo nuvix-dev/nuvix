@@ -140,7 +140,5 @@ export class MfaService {
     await db.purgeCachedDocument('users', user.getId())
 
     // TODO: Implement queue for events
-
-    return {}
   }
 }
