@@ -112,7 +112,7 @@ export class AttributesService {
     )
 
     return {
-      attributes,
+      data: attributes,
       total,
     }
   }

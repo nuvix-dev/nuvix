@@ -52,7 +52,7 @@ export class CollectionsService {
    */
   async createCollection(db: Database, input: CreateCollectionDTO) {
     const { name, enabled, documentSecurity } = input
-    let { collectionId, permissions } = input
+    let { collectionId, permissions = [] } = input
 
     permissions = Permission.aggregate(permissions) ?? []
     collectionId = collectionId === 'unique()' ? ID.unique() : collectionId
@@ -115,7 +115,7 @@ export class CollectionsService {
     )
 
     return {
-      collections,
+      data: collections,
       total,
     }
   }
@@ -150,7 +150,7 @@ export class CollectionsService {
     // TODO: Implement collection logs
     return {
       total: 0, //await audit.countLogsByResource(resource),
-      logs: [],
+      data: [],
     }
   }
 

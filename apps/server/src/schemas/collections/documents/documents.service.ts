@@ -65,7 +65,7 @@ export class DocumentsService {
 
     return {
       total,
-      documents,
+      data: documents,
     }
   }
 
@@ -272,7 +272,7 @@ export class DocumentsService {
     // TODO: Implement this method
     return {
       total: 0, //await audit.countLogsByResource(resource),
-      logs: [],
+      data: [],
     }
   }
 

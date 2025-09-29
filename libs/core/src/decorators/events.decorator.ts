@@ -28,6 +28,10 @@ const auditEvents = [
   ...event('membership'),
   ...event('bucket'),
   ...event('file'),
+  ...event('collection'),
+  ...event('attribute'),
+  ...event('index'),
+  ...event('document'),
 ] as const
 
 export type AuditEventKey = (typeof auditEvents)[number]

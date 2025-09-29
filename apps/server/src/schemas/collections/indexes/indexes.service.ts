@@ -206,7 +206,7 @@ export class IndexesService {
     )
 
     return {
-      indexes,
+      data: indexes,
       total,
     }
   }

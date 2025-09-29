@@ -2,14 +2,15 @@ import { Query } from '@nestjs/common'
 import { ApiQuery } from '@nestjs/swagger'
 import type { BaseQueryPipe } from '../pipes/queries/base'
 import { configuration } from '@nuvix/utils'
+import { ParseQueryPipe } from '../pipes'
 
 /**
  * A decorator that:
  * 1. Applies a NestJS `@Query` parameter decorator with the provided pipe.
  * 2. Adds Swagger documentation for queries[] automatically from `pipe.ALLOWED_ATTRIBUTES`.
  */
-export function QueryFilter(pipe: typeof BaseQueryPipe) {
-  const allowed = pipe.ALLOWED_ATTRIBUTES ?? []
+export function QueryFilter(pipe: typeof BaseQueryPipe | ParseQueryPipe) {
+  const allowed = (pipe as typeof BaseQueryPipe).ALLOWED_ATTRIBUTES ?? []
 
   return (
     target: Object,
