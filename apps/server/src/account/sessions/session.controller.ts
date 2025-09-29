@@ -51,7 +51,6 @@ export class SessionsController {
 
   @Get('sessions', {
     summary: 'List Sessions',
-    tags: ['sessions'],
     scopes: 'account',
     model: { type: Models.SESSION, list: true },
     sdk: {
@@ -68,7 +67,6 @@ export class SessionsController {
 
   @Delete('sessions', {
     summary: 'Delete sessions',
-    tags: ['sessions'],
     scopes: 'account',
     model: Models.NONE,
     throttle: 100,
@@ -99,7 +97,6 @@ export class SessionsController {
 
   @Get('sessions/:sessionId', {
     summary: 'Get session',
-    tags: ['sessions'],
     scopes: 'account',
     model: Models.SESSION,
     sdk: {
@@ -117,7 +114,6 @@ export class SessionsController {
 
   @Delete('sessions/:sessionId', {
     summary: 'Delete session',
-    tags: ['sessions'],
     scopes: 'account',
     model: Models.NONE,
     throttle: 100,
@@ -150,7 +146,6 @@ export class SessionsController {
 
   @Patch('sessions/:sessionId', {
     summary: 'Update session',
-    tags: ['sessions'],
     scopes: 'account',
     model: Models.SESSION,
     throttle: 10,
@@ -179,7 +174,6 @@ export class SessionsController {
 
   @Post(['sessions/email', 'sessions'], {
     summary: 'Create email password session',
-    tags: ['sessions'],
     scopes: 'sessions.create',
     model: Models.SESSION,
     auth: [],
@@ -220,7 +214,6 @@ export class SessionsController {
 
   @Post('sessions/anonymous', {
     summary: 'Create anonymous session',
-    tags: ['sessions'],
     scopes: 'sessions.create',
     model: Models.SESSION,
     auth: [],
@@ -259,7 +252,6 @@ export class SessionsController {
 
   @Post('sessions/token', {
     summary: 'Create session',
-    tags: ['sessions'],
     scopes: 'sessions.create',
     model: Models.SESSION,
     auth: [],
@@ -300,7 +292,6 @@ export class SessionsController {
 
   @Get('sessions/oauth2/:provider', {
     summary: 'Create OAuth2 session',
-    tags: ['sessions'],
     scopes: 'sessions.create',
     auth: [],
     throttle: {
@@ -338,7 +329,6 @@ export class SessionsController {
 
   @Get('sessions/oauth2/callback/:provider/:projectId', {
     summary: 'Get OAuth2 callback',
-    tags: ['sessions'],
     scopes: 'public',
     auth: [],
     docs: false,
@@ -367,7 +357,6 @@ export class SessionsController {
 
   @Post('sessions/oauth2/callback/:provider/:projectId', {
     summary: 'Get OAuth2 callback',
-    tags: ['sessions'],
     scopes: 'public',
     auth: [],
     docs: false,
@@ -396,7 +385,6 @@ export class SessionsController {
 
   @Get('sessions/oauth2/:provider/redirect', {
     summary: 'Get OAuth2 callback',
-    tags: ['sessions'],
     scopes: 'public',
     auth: [],
     throttle: {
@@ -432,7 +420,6 @@ export class SessionsController {
 
   @Get('tokens/oauth2/:provider', {
     summary: 'Create OAuth2 token',
-    tags: ['tokens'],
     scopes: 'sessions.create',
     auth: [],
     throttle: {
@@ -463,7 +450,6 @@ export class SessionsController {
 
   @Post('tokens/magic-url', {
     summary: 'Create magic URL token',
-    tags: ['tokens'],
     scopes: 'sessions.create',
     auth: [],
     model: Models.TOKEN,
@@ -503,7 +489,6 @@ export class SessionsController {
 
   @Post('tokens/email', {
     summary: 'Create email token(OTP)',
-    tags: ['tokens'],
     scopes: 'sessions.create',
     auth: [],
     model: Models.TOKEN,
@@ -543,7 +528,6 @@ export class SessionsController {
 
   @Put('sessions/magic-url', {
     summary: 'Update magic URL session',
-    tags: ['sessions'],
     scopes: 'sessions.update',
     auth: [],
     model: Models.SESSION,
@@ -583,7 +567,6 @@ export class SessionsController {
 
   @Put('sessions/phone', {
     summary: 'Update phone session',
-    tags: ['sessions'],
     scopes: 'sessions.update',
     auth: [],
     model: Models.SESSION,
@@ -623,7 +606,6 @@ export class SessionsController {
 
   @Post(['tokens/phone', 'sessions/phone'], {
     summary: 'Create phone token',
-    tags: ['tokens'],
     scopes: 'sessions.create',
     auth: [],
     model: Models.SESSION,
@@ -663,7 +645,6 @@ export class SessionsController {
 
   @Post(['jwts', 'jwt'], {
     summary: 'Create JWT',
-    tags: ['tokens'],
     scopes: 'account',
     auth: AuthType.JWT,
     model: Models.JWT,

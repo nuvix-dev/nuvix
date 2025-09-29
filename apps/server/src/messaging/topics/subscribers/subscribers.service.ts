@@ -12,7 +12,7 @@ import {
 } from '@nuvix/db'
 import { Exception } from '@nuvix/core/extend/exception'
 import { MessageType, Schemas } from '@nuvix/utils'
-import type { Subscribers } from '@nuvix/utils/types'
+import type { Subscribers, SubscribersDoc } from '@nuvix/utils/types'
 
 @Injectable()
 export class SubscribersService {
@@ -154,7 +154,7 @@ export class SubscribersService {
     )
 
     return {
-      subscribers: enrichedSubscribers,
+      data: enrichedSubscribers as SubscribersDoc[],
       total,
     }
   }

@@ -497,7 +497,7 @@ export class MessagingService {
     const total = await db.count('messages', filters)
 
     return {
-      messages,
+      data: messages,
       total,
     }
   }
@@ -528,7 +528,7 @@ export class MessagingService {
     const targetIDs = message.get('targets')
     if (!targetIDs || targetIDs.length === 0) {
       return {
-        targets: [],
+        data: [],
         total: 0,
       }
     }
@@ -543,7 +543,7 @@ export class MessagingService {
     })
 
     return {
-      targets,
+      data: targets,
       total,
     }
   }

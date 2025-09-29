@@ -1,31 +1,14 @@
 import { OmitType, PartialType } from '@nestjs/swagger'
-import { IsCustomID } from '@nuvix/core/validators'
-import {
-  IsString,
-  IsNotEmpty,
-  IsOptional,
-  IsBoolean,
-  IsObject,
-  MaxLength,
-} from 'class-validator'
+import { IsOptional, IsObject } from 'class-validator'
+import { CreateProviderDTO } from './base.dto'
 
-export class CreateFcmProviderDTO {
-  @IsString()
-  @IsCustomID()
-  providerId!: string
-
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(128)
-  name!: string
-
+export class CreateFcmProviderDTO extends CreateProviderDTO {
+  /**
+   * FCM service account JSON.
+   */
   @IsOptional()
   @IsObject()
   serviceAccountJSON?: object
-
-  @IsOptional()
-  @IsBoolean()
-  enabled?: boolean
 }
 
 export class UpdateFcmProviderDTO extends PartialType(

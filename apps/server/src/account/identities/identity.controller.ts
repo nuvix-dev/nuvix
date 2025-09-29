@@ -20,12 +20,10 @@ import type { IdentitiesDoc, UsersDoc } from '@nuvix/utils/types'
 import { IdentitiesQueryPipe } from '@nuvix/core/pipes/queries'
 import { Delete, Get } from '@nuvix/core'
 import type { IListResponse } from '@nuvix/utils'
-import { ApiTags } from '@nestjs/swagger'
 
 @Controller({ version: ['1'], path: 'account/identities' })
 @Namespace('account')
 @Scope('account')
-@ApiTags('identities')
 @Auth([AuthType.SESSION, AuthType.JWT])
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)

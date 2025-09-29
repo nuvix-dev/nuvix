@@ -1,37 +1,28 @@
 import { PartialType, OmitType } from '@nestjs/swagger'
-import { IsCustomID } from '@nuvix/core/validators'
-import {
-  IsString,
-  IsPhoneNumber,
-  IsBoolean,
-  IsOptional,
-  MaxLength,
-} from 'class-validator'
+import { IsString, IsPhoneNumber, IsOptional } from 'class-validator'
+import { CreateProviderDTO } from './base.dto'
 
-export class CreateTwilioProviderDTO {
-  @IsString()
-  @IsCustomID()
-  providerId!: string
-
-  @IsString()
-  @MaxLength(128)
-  name!: string
-
+export class CreateTwilioProviderDTO extends CreateProviderDTO {
+  /**
+   * Sender Phone number. Format this number with a leading \'+\' and a country code, e.g., +16175551212.
+   */
   @IsOptional()
   @IsPhoneNumber()
   from?: string
 
+  /**
+   * Twilio account secret ID.
+   */
   @IsOptional()
   @IsString()
   accountSid?: string
 
+  /**
+   * Twilio authentication token.
+   */
   @IsOptional()
   @IsString()
   authToken?: string
-
-  @IsOptional()
-  @IsBoolean()
-  enabled?: boolean
 }
 
 export class UpdateTwilioProviderDTO extends PartialType(

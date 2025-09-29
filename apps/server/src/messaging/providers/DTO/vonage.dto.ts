@@ -1,36 +1,28 @@
 import { PartialType, OmitType } from '@nestjs/swagger'
-import { IsCustomID } from '@nuvix/core/validators'
-import {
-  IsBoolean,
-  IsOptional,
-  IsPhoneNumber,
-  IsString,
-  MaxLength,
-} from 'class-validator'
+import { IsOptional, IsPhoneNumber, IsString } from 'class-validator'
+import { CreateProviderDTO } from './base.dto'
 
-export class CreateVonageProviderDTO {
-  @IsCustomID()
-  providerId!: string
-
-  @IsString()
-  @MaxLength(128)
-  name!: string
-
+export class CreateVonageProviderDTO extends CreateProviderDTO {
+  /**
+   * Sender Phone number. Format this number with a leading \'+\' and a country code, e.g., +16175551212.
+   */
   @IsOptional()
   @IsPhoneNumber()
   from?: string
 
+  /**
+   * Vonage API key.
+   */
   @IsOptional()
   @IsString()
   apiKey?: string
 
+  /**
+   * Vonage API secret.
+   */
   @IsOptional()
   @IsString()
   apiSecret?: string
-
-  @IsOptional()
-  @IsBoolean()
-  enabled?: boolean
 }
 
 export class UpdateVonageProviderDTO extends PartialType(

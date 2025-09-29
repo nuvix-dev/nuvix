@@ -22,13 +22,11 @@ import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.intercept
 import type { ProjectsDoc, SessionsDoc } from '@nuvix/utils/types'
 import type { LocaleTranslator } from '@nuvix/core/helper'
 import { UserParamDTO } from '../DTO/user.dto'
-import { ApiTags } from '@nestjs/swagger'
 import { Delete, Get, Post } from '@nuvix/core'
 import { IListResponse, IResponse } from '@nuvix/utils'
 import { SessionParamDTO } from './DTO/session.dto'
 
 @Namespace('users')
-@ApiTags('sessions')
 @Controller({ version: ['1'], path: 'users/:userId/sessions' })
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)

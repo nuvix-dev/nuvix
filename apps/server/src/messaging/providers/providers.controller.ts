@@ -1,14 +1,7 @@
 import {
   Body,
   Controller,
-  Delete,
-  Get,
-  HttpCode,
-  HttpStatus,
   Param,
-  Patch,
-  Post,
-  Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
@@ -19,17 +12,14 @@ import {
   ResponseInterceptor,
 } from '@nuvix/core/resolvers/interceptors'
 import {
-  AuditEvent,
   ProjectDatabase,
   AuthType,
   Namespace,
-  ResModel,
-  Scope,
-  Sdk,
   Auth,
+  QueryFilter,
+  QuerySearch,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helper'
-
 import {
   CreateMailgunProviderDTO,
   UpdateMailgunProviderDTO,
@@ -60,6 +50,10 @@ import {
 import { CreateFcmProviderDTO, UpdateFcmProviderDTO } from './DTO/fcm.dto'
 import { CreateApnsProviderDTO, UpdateApnsProviderDTO } from './DTO/apns.dto'
 import { ProvidersQueryPipe } from '@nuvix/core/pipes/queries'
+import { Delete, Get, Patch, Post } from '@nuvix/core'
+import { IListResponse, IResponse } from '@nuvix/utils'
+import { ProvidersDoc } from '@nuvix/utils/types'
+import { ProviderParamsDTO } from './DTO/base.dto'
 
 @Namespace('messaging')
 @UseGuards(ProjectGuard)
@@ -69,209 +63,250 @@ import { ProvidersQueryPipe } from '@nuvix/core/pipes/queries'
 export class ProvidersController {
   constructor(private readonly providersService: ProvidersService) {}
 
-  @Post('mailgun')
-  @Scope('providers.create')
-  @AuditEvent('provider.create', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'createMailgunProvider',
-    code: HttpStatus.CREATED,
-    description: 'Create a Mailgun provider',
+  @Post('mailgun', {
+    summary: 'Create Mailgun provider',
+    scopes: 'providers.create',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.create',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'createMailgunProvider',
+      descMd: '/docs/references/messaging/create-mailgun-provider.md',
+    },
   })
   async createMailgunProvider(
     @ProjectDatabase() db: Database,
     @Body() input: CreateMailgunProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createMailgunProvider({
       db,
       input,
     })
   }
 
-  @Post('sendgrid')
-  @Scope('providers.create')
-  @AuditEvent('provider.create', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'createSendgridProvider',
-    code: HttpStatus.CREATED,
-    description: 'Create a Sendgrid provider',
+  @Post('sendgrid', {
+    summary: 'Create Sendgrid provider',
+    scopes: 'providers.create',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.create',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'createSendgridProvider',
+      descMd: '/docs/references/messaging/create-sendgrid-provider.md',
+    },
   })
   async createSendgridProvider(
     @ProjectDatabase() db: Database,
     @Body() input: CreateSendgridProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createSendGridProvider({
       db,
       input,
     })
   }
 
-  @Post('smtp')
-  @Scope('providers.create')
-  @AuditEvent('provider.create', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'createSmtpProvider',
-    code: HttpStatus.CREATED,
-    description: 'Create a SMTP provider',
+  @Post('smtp', {
+    summary: 'Create SMTP provider',
+    scopes: 'providers.create',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.create',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'createSmtpProvider',
+      descMd: '/docs/references/messaging/create-smtp-provider.md',
+    },
   })
   async createSMTPProvider(
     @ProjectDatabase() db: Database,
     @Body() input: CreateSMTPProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createSmtpProvider({
       db,
       input,
     })
   }
 
-  @Post('msg91')
-  @Scope('providers.create')
-  @AuditEvent('provider.create', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'createMsg91Provider',
-    code: HttpStatus.CREATED,
-    description: 'Create a Msg91 provider',
+  @Post('msg91', {
+    summary: 'Create Msg91 provider',
+    scopes: 'providers.create',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.create',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'createMsg91Provider',
+      descMd: '/docs/references/messaging/create-msg91-provider.md',
+    },
   })
   async createMsg91Provider(
     @ProjectDatabase() db: Database,
     @Body() input: CreateMsg91ProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createMsg91Provider({
       db,
       input,
     })
   }
 
-  @Post('telesign')
-  @Scope('providers.create')
-  @AuditEvent('provider.create', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'createTelesignProvider',
-    code: HttpStatus.CREATED,
-    description: 'Create a Telesign provider',
+  @Post('telesign', {
+    summary: 'Create Telesign provider',
+    scopes: 'providers.create',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.create',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'createTelesignProvider',
+      descMd: '/docs/references/messaging/create-telesign-provider.md',
+    },
   })
   async createTelesignProvider(
     @ProjectDatabase() db: Database,
     @Body() input: CreateTelesignProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createTelesignProvider({
       db,
       input,
     })
   }
 
-  @Post('textmagic')
-  @Scope('providers.create')
-  @AuditEvent('provider.create', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'createTextmagicProvider',
-    code: HttpStatus.CREATED,
-    description: 'Create a Textmagic provider',
+  @Post('textmagic', {
+    summary: 'Create Textmagic provider',
+    scopes: 'providers.create',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.create',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'createTextmagicProvider',
+      descMd: '/docs/references/messaging/create-textmagic-provider.md',
+    },
   })
   async createTextmagicProvider(
     @ProjectDatabase() db: Database,
     @Body() input: CreateTextmagicProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createTextMagicProvider({
       db,
       input,
     })
   }
 
-  @Post('twilio')
-  @Scope('providers.create')
-  @AuditEvent('provider.create', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'createTwilioProvider',
-    code: HttpStatus.CREATED,
-    description: 'Create a Twilio provider',
+  @Post('twilio', {
+    summary: 'Create Twilio provider',
+    scopes: 'providers.create',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.create',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'createTwilioProvider',
+      descMd: '/docs/references/messaging/create-twilio-provider.md',
+    },
   })
   async createTwilioProvider(
     @ProjectDatabase() db: Database,
     @Body() input: CreateTwilioProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createTwilioProvider({
       db,
       input,
     })
   }
 
-  @Post('vonage')
-  @Scope('providers.create')
-  @AuditEvent('provider.create', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'createVonageProvider',
-    code: HttpStatus.CREATED,
-    description: 'Create a Vonage provider',
+  @Post('vonage', {
+    summary: 'Create Vonage provider',
+    scopes: 'providers.create',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.create',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'createVonageProvider',
+      descMd: '/docs/references/messaging/create-vonage-provider.md',
+    },
   })
   async createVonageProvider(
     @ProjectDatabase() db: Database,
     @Body() input: CreateVonageProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createVonageProvider({
       db,
       input,
     })
   }
 
-  @Post('fcm')
-  @Scope('providers.create')
-  @AuditEvent('provider.create', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'createFcmProvider',
-    code: HttpStatus.CREATED,
-    description: 'Create a FCM provider',
+  @Post('fcm', {
+    summary: 'Create FCM provider',
+    scopes: 'providers.create',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.create',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'createFcmProvider',
+      descMd: '/docs/references/messaging/create-fcm-provider.md',
+    },
   })
   async createFcmProvider(
     @ProjectDatabase() db: Database,
     @Body() input: CreateFcmProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createFcmProvider({
       db,
       input,
     })
   }
 
-  @Post('apns')
-  @Scope('providers.create')
-  @AuditEvent('provider.create', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'createApnsProvider',
-    code: HttpStatus.CREATED,
-    description: 'Create a APNs provider',
+  @Post('apns', {
+    summary: 'Create APNS provider',
+    scopes: 'providers.create',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.create',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'createApnsProvider',
+      descMd: '/docs/references/messaging/create-apns-provider.md',
+    },
   })
   async createApnsProvider(
     @ProjectDatabase() db: Database,
     @Body() input: CreateApnsProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createApnsProvider({
       db,
       input,
     })
   }
 
-  @Get()
-  @Scope('providers.read')
-  @ResModel(Models.PROVIDER, { list: true })
-  @Sdk({
-    name: 'listProviders',
-    code: HttpStatus.OK,
-    description: 'List all providers',
+  @Get('', {
+    summary: 'List providers',
+    scopes: 'providers.read',
+    model: { type: Models.PROVIDER, list: true },
+    sdk: {
+      name: 'listProviders',
+      descMd: '/docs/references/messaging/list-providers.md',
+    },
   })
   async listProviders(
     @ProjectDatabase() db: Database,
-    @Query('queries', ProvidersQueryPipe) queries: Queries[],
-    @Query('search') search?: string,
-  ) {
+    @QueryFilter(ProvidersQueryPipe) queries: Queries[],
+    @QuerySearch() search?: string,
+  ): Promise<IListResponse<ProvidersDoc>> {
     return this.providersService.listProviders({
       db,
       queries,
@@ -279,35 +314,40 @@ export class ProvidersController {
     })
   }
 
-  @Get(':providerId')
-  @Scope('providers.read')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'getProvider',
-    code: HttpStatus.OK,
-    description: 'Get provider',
+  @Get(':providerId', {
+    summary: 'Get provider',
+    scopes: 'providers.read',
+    model: Models.PROVIDER,
+    sdk: {
+      name: 'getProvider',
+      descMd: '/docs/references/messaging/get-provider.md',
+    },
   })
   async getProvider(
-    @Param('providerId') providerId: string,
+    @Param() { providerId }: ProviderParamsDTO,
     @ProjectDatabase() db: Database,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.getProvider(db, providerId)
   }
 
-  @Patch('mailgun/:providerId')
-  @Scope('providers.update')
-  @AuditEvent('provider.update', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'updateMailgunProvider',
-    code: HttpStatus.OK,
-    description: 'Update Mailgun provider',
+  @Patch('mailgun/:providerId', {
+    summary: 'Update Mailgun provider',
+    scopes: 'providers.update',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.update',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'updateMailgunProvider',
+      descMd: '/docs/references/messaging/update-mailgun-provider.md',
+    },
   })
   async updateMailgunProvider(
-    @Param('providerId') providerId: string,
+    @Param() { providerId }: ProviderParamsDTO,
     @ProjectDatabase() db: Database,
     @Body() input: UpdateMailgunProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateMailgunProvider({
       db,
       providerId,
@@ -315,20 +355,24 @@ export class ProvidersController {
     })
   }
 
-  @Patch('sendgrid/:providerId')
-  @Scope('providers.update')
-  @AuditEvent('provider.update', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'updateSendgridProvider',
-    code: HttpStatus.OK,
-    description: 'Update Sendgrid provider',
+  @Patch('sendgrid/:providerId', {
+    summary: 'Update Sendgrid provider',
+    scopes: 'providers.update',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.update',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'updateSendgridProvider',
+      descMd: '/docs/references/messaging/update-sendgrid-provider.md',
+    },
   })
   async updateSendgridProvider(
-    @Param('providerId') providerId: string,
+    @Param() { providerId }: ProviderParamsDTO,
     @ProjectDatabase() db: Database,
     @Body() input: UpdateSendgridProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateSendGridProvider({
       db,
       providerId,
@@ -336,20 +380,24 @@ export class ProvidersController {
     })
   }
 
-  @Patch('smtp/:providerId')
-  @Scope('providers.update')
-  @AuditEvent('provider.update', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'updateSmtpProvider',
-    code: HttpStatus.OK,
-    description: 'Update SMTP provider',
+  @Patch('smtp/:providerId', {
+    summary: 'Update SMTP provider',
+    scopes: 'providers.update',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.update',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'updateSmtpProvider',
+      descMd: '/docs/references/messaging/update-smtp-provider.md',
+    },
   })
   async updateSmtpProvider(
-    @Param('providerId') providerId: string,
+    @Param() { providerId }: ProviderParamsDTO,
     @ProjectDatabase() db: Database,
     @Body() input: UpdateSMTPProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateSmtpProvider({
       db,
       providerId,
@@ -357,20 +405,24 @@ export class ProvidersController {
     })
   }
 
-  @Patch('msg91/:providerId')
-  @Scope('providers.update')
-  @AuditEvent('provider.update', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'updateMsg91Provider',
-    code: HttpStatus.OK,
-    description: 'Update Msg91 provider',
+  @Patch('msg91/:providerId', {
+    summary: 'Update Msg91 provider',
+    scopes: 'providers.update',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.update',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'updateMsg91Provider',
+      descMd: '/docs/references/messaging/update-msg91-provider.md',
+    },
   })
   async updateMsg91Provider(
-    @Param('providerId') providerId: string,
+    @Param() { providerId }: ProviderParamsDTO,
     @ProjectDatabase() db: Database,
     @Body() input: UpdateMsg91ProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateMsg91Provider({
       db,
       providerId,
@@ -378,20 +430,24 @@ export class ProvidersController {
     })
   }
 
-  @Patch('telesign/:providerId')
-  @Scope('providers.update')
-  @AuditEvent('provider.update', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'updateTelesignProvider',
-    code: HttpStatus.OK,
-    description: 'Update Telesign provider',
+  @Patch('telesign/:providerId', {
+    summary: 'Update Telesign provider',
+    scopes: 'providers.update',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.update',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'updateTelesignProvider',
+      descMd: '/docs/references/messaging/update-telesign-provider.md',
+    },
   })
   async updateTelesignProvider(
-    @Param('providerId') providerId: string,
+    @Param() { providerId }: ProviderParamsDTO,
     @ProjectDatabase() db: Database,
     @Body() input: UpdateTelesignProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateTelesignProvider({
       db,
       providerId,
@@ -399,20 +455,24 @@ export class ProvidersController {
     })
   }
 
-  @Patch('textmagic/:providerId')
-  @Scope('providers.update')
-  @AuditEvent('provider.update', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'updateTextmagicProvider',
-    code: HttpStatus.OK,
-    description: 'Update Textmagic provider',
+  @Patch('textmagic/:providerId', {
+    summary: 'Update Textmagic provider',
+    scopes: 'providers.update',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.update',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'updateTextmagicProvider',
+      descMd: '/docs/references/messaging/update-textmagic-provider.md',
+    },
   })
   async updateTextmagicProvider(
-    @Param('providerId') providerId: string,
+    @Param() { providerId }: ProviderParamsDTO,
     @ProjectDatabase() db: Database,
     @Body() input: UpdateTextmagicProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateTextMagicProvider({
       db,
       providerId,
@@ -420,20 +480,24 @@ export class ProvidersController {
     })
   }
 
-  @Patch('twilio/:providerId')
-  @Scope('providers.update')
-  @AuditEvent('provider.update', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'updateTwilioProvider',
-    code: HttpStatus.OK,
-    description: 'Update Twilio provider',
+  @Patch('twilio/:providerId', {
+    summary: 'Update Twilio provider',
+    scopes: 'providers.update',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.update',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'updateTwilioProvider',
+      descMd: '/docs/references/messaging/update-twilio-provider.md',
+    },
   })
   async updateTwilioProvider(
-    @Param('providerId') providerId: string,
+    @Param() { providerId }: ProviderParamsDTO,
     @ProjectDatabase() db: Database,
     @Body() input: UpdateTwilioProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateTwilioProvider({
       db,
       providerId,
@@ -441,20 +505,24 @@ export class ProvidersController {
     })
   }
 
-  @Patch('vonage/:providerId')
-  @Scope('providers.update')
-  @AuditEvent('provider.update', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'updateVonageProvider',
-    code: HttpStatus.OK,
-    description: 'Update Vonage provider',
+  @Patch('vonage/:providerId', {
+    summary: 'Update Vonage provider',
+    scopes: 'providers.update',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.update',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'updateVonageProvider',
+      descMd: '/docs/references/messaging/update-vonage-provider.md',
+    },
   })
   async updateVonageProvider(
-    @Param('providerId') providerId: string,
+    @Param() { providerId }: ProviderParamsDTO,
     @ProjectDatabase() db: Database,
     @Body() input: UpdateVonageProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateVonageProvider({
       db,
       providerId,
@@ -462,20 +530,24 @@ export class ProvidersController {
     })
   }
 
-  @Patch('fcm/:providerId')
-  @Scope('providers.update')
-  @AuditEvent('provider.update', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'updateFcmProvider',
-    code: HttpStatus.OK,
-    description: 'Update FCM provider',
+  @Patch('fcm/:providerId', {
+    summary: 'Update FCM provider',
+    scopes: 'providers.update',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.update',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'updateFcmProvider',
+      descMd: '/docs/references/messaging/update-fcm-provider.md',
+    },
   })
   async updateFcmProvider(
-    @Param('providerId') providerId: string,
+    @Param() { providerId }: ProviderParamsDTO,
     @ProjectDatabase() db: Database,
     @Body() input: UpdateFcmProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateFcmProvider({
       db,
       providerId,
@@ -483,20 +555,24 @@ export class ProvidersController {
     })
   }
 
-  @Patch('apns/:providerId')
-  @Scope('providers.update')
-  @AuditEvent('provider.update', 'provider/{res.$id}')
-  @ResModel(Models.PROVIDER)
-  @Sdk({
-    name: 'updateApnsProvider',
-    code: HttpStatus.OK,
-    description: 'Update APNs provider',
+  @Patch('apns/:providerId', {
+    summary: 'Update APNS provider',
+    scopes: 'providers.update',
+    model: Models.PROVIDER,
+    audit: {
+      key: 'provider.update',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'updateApnsProvider',
+      descMd: '/docs/references/messaging/update-apns-provider.md',
+    },
   })
   async updateApnsProvider(
-    @Param('providerId') providerId: string,
+    @Param() { providerId }: ProviderParamsDTO,
     @ProjectDatabase() db: Database,
     @Body() input: UpdateApnsProviderDTO,
-  ) {
+  ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateApnsProvider({
       db,
       providerId,
@@ -504,20 +580,22 @@ export class ProvidersController {
     })
   }
 
-  @Delete(':providerId')
-  @Scope('providers.delete')
-  @AuditEvent('provider.delete', 'provider/{params.providerId}')
-  @ResModel(Models.NONE)
-  @Sdk({
-    name: 'deleteProvider',
-    code: HttpStatus.NO_CONTENT,
-    description: 'Delete provider',
+  @Delete(':providerId', {
+    summary: 'Delete provider',
+    scopes: 'providers.delete',
+    audit: {
+      key: 'provider.delete',
+      resource: 'provider/{res.$id}',
+    },
+    sdk: {
+      name: 'deleteProvider',
+      descMd: '/docs/references/messaging/delete-provider.md',
+    },
   })
-  @HttpCode(HttpStatus.NO_CONTENT)
   async deleteProvider(
-    @Param('providerId') providerId: string,
+    @Param() { providerId }: ProviderParamsDTO,
     @ProjectDatabase() db: Database,
-  ) {
+  ): Promise<void> {
     return this.providersService.deleteProvider(db, providerId)
   }
 }

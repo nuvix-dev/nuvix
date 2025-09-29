@@ -1,14 +1,7 @@
 import {
   Body,
   Controller,
-  Delete,
-  Get,
-  HttpCode,
-  HttpStatus,
   Param,
-  Patch,
-  Post,
-  Query,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
@@ -19,20 +12,25 @@ import {
   ResponseInterceptor,
 } from '@nuvix/core/resolvers/interceptors'
 import {
-  AuditEvent,
   ProjectDatabase,
   AuthType,
   Namespace,
-  ResModel,
-  Scope,
-  Sdk,
   Auth,
+  QueryFilter,
+  QuerySearch,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helper'
 
 import { Database, Query as Queries } from '@nuvix/db'
-import { CreateTopicDTO, UpdateTopicDTO } from './DTO/topics.dto'
+import {
+  CreateTopicDTO,
+  TopicParamsDTO,
+  UpdateTopicDTO,
+} from './DTO/topics.dto'
 import { TopicsQueryPipe } from '@nuvix/core/pipes/queries'
+import { Delete, Get, Patch, Post } from '@nuvix/core'
+import { IListResponse, IResponse } from '@nuvix/utils'
+import { TopicsDoc } from '@nuvix/utils/types'
 
 @Namespace('messaging')
 @UseGuards(ProjectGuard)
@@ -42,38 +40,43 @@ import { TopicsQueryPipe } from '@nuvix/core/pipes/queries'
 export class TopicsController {
   constructor(private readonly topicsService: TopicsService) {}
 
-  @Post()
-  @Scope('topics.create')
-  @AuditEvent('topic.create', 'topic/{res.$id}')
-  @ResModel(Models.TOPIC)
-  @Sdk({
-    name: 'createTopic',
-    code: HttpStatus.CREATED,
-    description: 'Create a topic',
+  @Post('', {
+    summary: 'Create topic',
+    scopes: 'topics.create',
+    model: Models.TOPIC,
+    audit: {
+      key: 'topic.create',
+      resource: 'topic/{res.$id}',
+    },
+    sdk: {
+      name: 'createTopic',
+      descMd: '/docs/references/messaging/create-topic.md',
+    },
   })
   async createTopic(
     @ProjectDatabase() db: Database,
     @Body() input: CreateTopicDTO,
-  ) {
+  ): Promise<IResponse<TopicsDoc>> {
     return this.topicsService.createTopic({
       db,
       input,
     })
   }
 
-  @Get()
-  @Scope('topics.read')
-  @ResModel(Models.TOPIC, { list: true })
-  @Sdk({
-    name: 'listTopics',
-    code: HttpStatus.OK,
-    description: 'List all topics',
+  @Get('', {
+    summary: 'List topics',
+    scopes: 'topics.read',
+    model: { type: Models.TOPIC, list: true },
+    sdk: {
+      name: 'listTopics',
+      descMd: '/docs/references/messaging/list-topics.md',
+    },
   })
   async listTopics(
     @ProjectDatabase() db: Database,
-    @Query('queries', TopicsQueryPipe) queries: Queries[],
-    @Query('search') search?: string,
-  ) {
+    @QueryFilter(TopicsQueryPipe) queries: Queries[],
+    @QuerySearch() search?: string,
+  ): Promise<IListResponse<TopicsDoc>> {
     return this.topicsService.listTopics({
       db,
       queries,
@@ -81,35 +84,40 @@ export class TopicsController {
     })
   }
 
-  @Get(':topicId')
-  @Scope('topics.read')
-  @ResModel(Models.TOPIC)
-  @Sdk({
-    name: 'getTopic',
-    code: HttpStatus.OK,
-    description: 'Get topic',
+  @Get(':topicId', {
+    summary: 'Get topic',
+    scopes: 'topics.read',
+    model: Models.TOPIC,
+    sdk: {
+      name: 'getTopic',
+      descMd: '/docs/references/messaging/get-topic.md',
+    },
   })
   async getTopic(
-    @Param('topicId') topicId: string,
+    @Param() { topicId }: TopicParamsDTO,
     @ProjectDatabase() db: Database,
-  ) {
+  ): Promise<IResponse<TopicsDoc>> {
     return this.topicsService.getTopic(db, topicId)
   }
 
-  @Patch(':topicId')
-  @Scope('topics.update')
-  @AuditEvent('topic.update', 'topic/{res.$id}')
-  @ResModel(Models.TOPIC)
-  @Sdk({
-    name: 'updateTopic',
-    code: HttpStatus.OK,
-    description: 'Update topic',
+  @Patch(':topicId', {
+    summary: 'Update topic',
+    scopes: 'topics.update',
+    model: Models.TOPIC,
+    audit: {
+      key: 'topic.update',
+      resource: 'topic/{res.$id}',
+    },
+    sdk: {
+      name: 'updateTopic',
+      descMd: '/docs/references/messaging/update-topic.md',
+    },
   })
   async updateTopic(
-    @Param('topicId') topicId: string,
+    @Param() { topicId }: TopicParamsDTO,
     @ProjectDatabase() db: Database,
     @Body() input: UpdateTopicDTO,
-  ) {
+  ): Promise<IResponse<TopicsDoc>> {
     return this.topicsService.updateTopic({
       db,
       topicId,
@@ -117,20 +125,22 @@ export class TopicsController {
     })
   }
 
-  @Delete(':topicId')
-  @Scope('topics.delete')
-  @AuditEvent('topic.delete', 'topic/{params.topicId}')
-  @ResModel(Models.NONE)
-  @Sdk({
-    name: 'deleteTopic',
-    code: HttpStatus.NO_CONTENT,
-    description: 'Delete topic',
+  @Delete(':topicId', {
+    summary: 'Delete topic',
+    scopes: 'topics.delete',
+    audit: {
+      key: 'topic.delete',
+      resource: 'topic/{res.$id}',
+    },
+    sdk: {
+      name: 'deleteTopic',
+      descMd: '/docs/references/messaging/delete-topic.md',
+    },
   })
-  @HttpCode(HttpStatus.NO_CONTENT)
   async deleteTopic(
-    @Param('topicId') topicId: string,
+    @Param() { topicId }: TopicParamsDTO,
     @ProjectDatabase() db: Database,
-  ) {
+  ): Promise<void> {
     return this.topicsService.deleteTopic(db, topicId)
   }
 }

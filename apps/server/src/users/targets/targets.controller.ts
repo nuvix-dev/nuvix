@@ -24,14 +24,12 @@ import type { Database, Query } from '@nuvix/db'
 import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard'
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor'
 import { Delete, Get, Patch, Post } from '@nuvix/core'
-import { ApiTags } from '@nestjs/swagger'
 import { UserParamDTO } from '../DTO/user.dto'
 import { IListResponse, IResponse } from '@nuvix/utils'
 import { TargetsDoc } from '@nuvix/utils/types'
 import { TargetsQueryPipe } from '@nuvix/core/pipes/queries'
 
 @Namespace('users')
-@ApiTags('targets')
 @Controller({ version: ['1'], path: 'users/:userId/targets' })
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)

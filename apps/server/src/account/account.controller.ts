@@ -286,7 +286,6 @@ export class AccountController {
 
   @Post('verification', {
     summary: 'Create email verification',
-    tags: ['verification'],
     scopes: 'account',
     model: Models.TOKEN,
     auth: [AuthType.SESSION, AuthType.JWT],
@@ -326,7 +325,6 @@ export class AccountController {
 
   @Put('verification', {
     summary: 'Update email verification (confirmation)',
-    tags: ['verification'],
     scopes: 'public',
     model: Models.TOKEN,
     auth: [AuthType.SESSION, AuthType.JWT],
@@ -361,7 +359,6 @@ export class AccountController {
 
   @Post('verification/phone', {
     summary: 'Create phone verification',
-    tags: ['verification'],
     scopes: 'account',
     model: Models.TOKEN,
     auth: [AuthType.SESSION, AuthType.JWT],
@@ -399,7 +396,6 @@ export class AccountController {
 
   @Put('verification/phone', {
     summary: 'Update phone verification (confirmation)',
-    tags: ['verification'],
     scopes: 'public',
     model: Models.TOKEN,
     auth: [AuthType.SESSION, AuthType.JWT],

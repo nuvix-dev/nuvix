@@ -1,46 +1,43 @@
 import { OmitType, PartialType } from '@nestjs/swagger'
-import { IsCustomID } from '@nuvix/core/validators'
-import {
-  IsString,
-  IsEmail,
-  IsBoolean,
-  IsOptional,
-  MaxLength,
-} from 'class-validator'
+import { IsString, IsEmail, IsOptional, MaxLength } from 'class-validator'
+import { CreateProviderDTO } from './base.dto'
 
-export class CreateSendgridProviderDTO {
+export class CreateSendgridProviderDTO extends CreateProviderDTO {
+  /**
+   * Sendgrid API key.
+   */
   @IsString()
-  @IsCustomID()
-  providerId!: string
+  declare apiKey: string
 
-  @IsString()
-  @MaxLength(128)
-  name!: string
-
-  @IsString()
-  apiKey!: string
-
+  /**
+   * Sender Name.
+   */
   @IsOptional()
   @IsString()
   @MaxLength(128)
   fromName?: string
 
+  /**
+   * Sender email address.
+   */
   @IsOptional()
   @IsEmail()
   fromEmail?: string
 
+  /**
+   * Name set in the reply to field for the mail. Default value is sender name.
+   */
   @IsOptional()
   @IsString()
   @MaxLength(128)
   replyToName?: string
 
+  /**
+   * Email set in the reply to field for the mail. Default value is sender email.
+   */
   @IsOptional()
   @IsEmail()
   replyToEmail?: string
-
-  @IsOptional()
-  @IsBoolean()
-  enabled?: boolean
 }
 
 export class UpdateSendgridProviderDTO extends PartialType(

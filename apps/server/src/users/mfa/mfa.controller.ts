@@ -13,14 +13,12 @@ import { Namespace, AuthDatabase, Auth, AuthType } from '@nuvix/core/decorators'
 import type { Database, Doc } from '@nuvix/db'
 import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard'
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor'
-import { ApiTags } from '@nestjs/swagger'
 import { UserParamDTO } from '../DTO/user.dto'
 import { Delete, Get, Patch, Put } from '@nuvix/core'
 import { IResponse } from '@nuvix/utils'
 import { UsersDoc } from '@nuvix/utils/types'
 
 @Namespace('users')
-@ApiTags('mfa')
 @Controller({ version: ['1'], path: 'users/:userId/mfa' })
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)

@@ -1,37 +1,28 @@
 import { PartialType, OmitType } from '@nestjs/swagger'
-import { IsCustomID } from '@nuvix/core/validators'
-import {
-  IsString,
-  IsOptional,
-  IsBoolean,
-  IsPhoneNumber,
-  MaxLength,
-} from 'class-validator'
+import { IsString, IsOptional, IsPhoneNumber } from 'class-validator'
+import { CreateProviderDTO } from './base.dto'
 
-export class CreateTelesignProviderDTO {
-  @IsString()
-  @IsCustomID()
-  providerId!: string
-
-  @IsString()
-  @MaxLength(128)
-  name!: string
-
+export class CreateTelesignProviderDTO extends CreateProviderDTO {
+  /**
+   * Sender Phone number. Format this number with a leading \'+\' and a country code, e.g., +16175551212.
+   */
   @IsOptional()
   @IsPhoneNumber()
   from?: string
 
+  /**
+   * Telesign customer ID.
+   */
   @IsOptional()
   @IsString()
   customerId?: string
 
+  /**
+   * Telesign API key.
+   */
   @IsOptional()
   @IsString()
   apiKey?: string
-
-  @IsOptional()
-  @IsBoolean()
-  enabled?: boolean
 }
 
 export class UpdateTelesignProviderDTO extends PartialType(

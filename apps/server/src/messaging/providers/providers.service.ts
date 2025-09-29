@@ -192,9 +192,7 @@ export class ProvidersService {
         senderId: 'senderId',
         authKey: 'authKey',
       },
-      optionFields: {
-        from: 'from',
-      },
+      optionFields: {},
       enabledCondition: (credentials, options) =>
         credentials.hasOwnProperty('senderId') &&
         credentials.hasOwnProperty('authKey') &&
@@ -352,7 +350,7 @@ export class ProvidersService {
     const total = await db.count('providers', filters)
 
     return {
-      providers,
+      data: providers,
       total,
     }
   }
@@ -560,9 +558,7 @@ export class ProvidersService {
         senderId: 'senderId',
         authKey: 'authKey',
       },
-      optionFields: {
-        from: 'from',
-      },
+      optionFields: {},
       enabledCondition: (credentials, options) =>
         credentials.hasOwnProperty('senderId') &&
         credentials.hasOwnProperty('authKey') &&

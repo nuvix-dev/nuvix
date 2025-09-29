@@ -23,12 +23,10 @@ import {
 } from './DTO/target.dto'
 import type { TargetsDoc, UsersDoc } from '@nuvix/utils/types'
 import { Delete, Post, Put } from '@nuvix/core'
-import { ApiTags } from '@nestjs/swagger'
 import type { IResponse } from '@nuvix/utils'
 
 @Controller({ version: ['1'], path: 'account/targets' })
 @Namespace('account')
-@ApiTags('targets', 'pushTargets')
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth(AuthType.SESSION)

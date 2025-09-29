@@ -45,7 +45,7 @@ export class TopicsService {
     const total = await db.count('topics', filters)
 
     return {
-      topics,
+      data: topics,
       total,
     }
   }
