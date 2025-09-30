@@ -1151,11 +1151,10 @@ export class MessagingService {
 
     switch (message.get('status')) {
       case MessageStatus.PROCESSING:
-        throw new Exception(Exception.MESSAGE_ALREADY_SCHEDULED)
+        throw new Exception(Exception.MESSAGE_ALREADY_PROCESSING)
       case MessageStatus.SCHEDULED:
         const scheduleId = message.get('scheduleId')
         const scheduledAt = message.get('scheduledAt')
-
         const now = new Date()
         const scheduledDate = new Date(scheduledAt as string)
         if (now > scheduledDate) {

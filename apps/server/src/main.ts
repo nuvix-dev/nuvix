@@ -100,7 +100,13 @@ async function bootstrap() {
   fastify.addHook('onRequest', (req, res, done) => {
     res.header('X-Powered-By', 'Nuvix-Server')
     res.header('Server', 'Nuvix')
-    res.header('Access-Control-Allow-Origin', '*') // CorsHook will handle this
+    /**
+     * CORS headers are set here because
+     * CorsHook works after project & host hooks - if an error is thrown before CorsHook
+     * executes, we need these headers to prevent invalid CORS errors; CorsHook will
+     * properly validate and block requests that aren't allowed
+     */
+    res.header('Access-Control-Allow-Origin', '*')
     res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
     res.header('Access-Control-Allow-Credentials', 'true')
     done()

@@ -530,14 +530,16 @@ export class MfaService {
         success = TOTPChallenge.challenge(challenge, user, otp)
         break
       case MfaType.PHONE:
-        success = PhoneChallenge.challenge(challenge, user, otp)
         success =
-          challenge.get('code') === otp && new Date() < challenge.get('expire')
+          PhoneChallenge.challenge(challenge, user, otp) &&
+          challenge.get('code') === otp &&
+          new Date() < new Date(challenge.get('expire') as string)
         break
       case MfaType.EMAIL:
-        success = EmailChallenge.challenge(challenge, user, otp)
         success =
-          challenge.get('code') === otp && new Date() < challenge.get('expire')
+          EmailChallenge.challenge(challenge, user, otp) &&
+          challenge.get('code') === otp &&
+          new Date() < new Date(challenge.get('expire') as string)
         break
       case MfaType.RECOVERY_CODE.toLowerCase():
         success = await recoveryCodeChallenge(challenge, user, otp)

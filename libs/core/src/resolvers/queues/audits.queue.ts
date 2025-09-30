@@ -45,6 +45,9 @@ export class AuditsQueue
   }
 
   private startTimer(): void {
+    if (this.interval) {
+      clearInterval(this.interval)
+    }
     this.interval = setInterval(
       () => this.flushBuffer(),
       AuditsQueue.BATCH_INTERVAL_MS,

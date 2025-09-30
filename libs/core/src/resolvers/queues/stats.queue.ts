@@ -48,6 +48,9 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
   }
 
   private startTimer(): void {
+    if (this.interval) {
+      clearInterval(this.interval)
+    }
     this.interval = setInterval(
       () => this.flushBuffer(),
       StatsQueue.BATCH_INTERVAL_MS,

@@ -26,7 +26,9 @@ generator.generate({
 let content = fs.readFileSync(outputFile, 'utf8')
 
 // Replace `@nuvix/db/dist` with clean `@nuvix/db`
-content = content.replace(/@nuvix\/db\/dist/g, '@nuvix/db')
+content = content
+  .replace(/@nuvix\/db\/dist\//g, '@nuvix/db/')
+  .replace(/@nuvix\/db\/dist\b/g, '@nuvix/db')
 
 fs.writeFileSync(outputFile, content, 'utf8')
 console.log(`✔ Metadata imports cleaned: ${outputFile}`)

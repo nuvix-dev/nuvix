@@ -44,6 +44,9 @@ export class ApiLogsQueue
   }
 
   private startTimer(): void {
+    if (this.interval) {
+      clearInterval(this.interval)
+    }
     this.interval = setInterval(
       () => this.flushBuffer(),
       ApiLogsQueue.BATCH_INTERVAL_MS,

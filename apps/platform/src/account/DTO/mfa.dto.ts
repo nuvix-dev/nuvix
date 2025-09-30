@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger'
-import { IsCustomID, TOTP, MfaType } from '@nuvix/core/validators'
+import { TOTP, MfaType, IsUID } from '@nuvix/core/validators'
 import {
   IsBoolean,
   IsNotEmpty,
@@ -35,15 +35,12 @@ export class CreateMfaChallengeDTO {
   declare factor: MfaType
 
   @IsOptional()
-  @IsString()
-  @IsCustomID()
+  @IsUID()
   userId?: string
 }
 
 export class VerifyMfaChallengeDTO {
-  @IsString()
-  @IsNotEmpty()
-  @IsCustomID()
+  @IsUID()
   declare challengeId: string
 
   @IsString()

@@ -9,10 +9,13 @@ export function openApiSetup(app: NestFastifyApplication) {
     .setVersion('1.0')
     .addTag('nuvix')
     .addGlobalParameters({
-      name: 'x-nuvix-project',
+      name: 'X-Nuvix-Project',
       in: 'header',
       required: true,
       description: 'Project ID.',
+      schema: {
+        type: 'string',
+      },
     })
     .addCookieAuth('session')
     .addGlobalResponse({

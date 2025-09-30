@@ -773,7 +773,7 @@ export class AccountService {
         .replace('{{secret}}', secret)
 
       // TODO: Implement SMS queue functionality
-      console.log(`SMS to ${phone}: ${messageContent}`)
+      throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
     }
 
     createdVerification.set('secret', secret)
@@ -799,7 +799,7 @@ export class AccountService {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
-    const tokens = user.get('tokens', []) as TokensDoc[]
+    const tokens = profile.get('tokens', []) as TokensDoc[]
     const verifiedToken = Auth.tokenVerify(tokens, TokenType.PHONE, secret)
 
     if (!verifiedToken) {

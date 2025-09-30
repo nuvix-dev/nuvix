@@ -47,12 +47,25 @@ export class AvatarsService {
     res: NuvixRes
   }) {
     try {
-      width = Number(width)
-      height = Number(height)
+      const MAX_DIM = 1024
+      const MIN_DIM = 16
+      const toNum = (v: number | string, fallback: number) => {
+        const n = Number(v)
+        return Number.isFinite(n) ? n : fallback
+      }
+      width = Math.min(MAX_DIM, Math.max(MIN_DIM, toNum(width, 100)))
+      height = Math.min(MAX_DIM, Math.max(MIN_DIM, toNum(height, 100)))
       circle = circle === true || circle === 'true' // Handle boolean query
-      background = background
-        ? `#${background.replace(/[^0-9a-fA-F]/g, '')}`
-        : this.getHSLColorFromName(name) // Sanitize background color
+      // Sanitize hex; fallback to deterministic HSL if invalid length
+      if (background) {
+        const hex = background.replace(/[^0-9a-fA-F]/g, '')
+        background =
+          hex.length === 3 || hex.length === 6
+            ? `#${hex}`
+            : this.getHSLColorFromName(name)
+      } else {
+        background = this.getHSLColorFromName(name)
+      }
 
       const cacheKey = this.generateCacheKey(
         name,
@@ -116,10 +129,14 @@ export class AvatarsService {
   }
 
   private getInitials(name: string): string {
-    const words = name.split(' ').filter(Boolean) as [string, string?]
-    return words.length > 1
-      ? words[0][0]!.toUpperCase() + words[1]![0]!.toUpperCase()
-      : words[0].substring(0, 2).toUpperCase()
+    const words = name.trim().split(/\s+/).filter(Boolean)
+    if (words.length === 0) return 'NA'
+    const first = Array.from(words[0]!)[0]?.toUpperCase() ?? 'N'
+    const second =
+      words.length > 1
+        ? Array.from(words[1]!)[0]?.toUpperCase()
+        : Array.from(words[0]!)[1]?.toUpperCase()
+    return (first + (second ?? '')).slice(0, 2)
   }
 
   private generateCacheKey(

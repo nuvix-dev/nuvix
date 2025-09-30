@@ -69,6 +69,10 @@ export class RecoveryService {
     const email = input.email.toLowerCase()
     let url = input.url
 
+    if (!url) {
+      throw new Exception(Exception.GENERAL_BAD_REQUEST, 'url is required')
+    }
+
     const profile = await db.findOne('users', [Query.equal('email', [email])])
 
     if (profile.empty()) {

@@ -260,7 +260,7 @@ export async function initSetup(
       await cache.flush()
     })
   } catch (error: any) {
-    logger.error(`Error while setting up server: ${error.message}`)
-    throw new Error('Something went worng in server setup process.')
+    logger.error(`Error while setting up server: ${error.message}`, error.stack)
+    throw error
   }
 }
