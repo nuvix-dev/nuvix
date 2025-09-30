@@ -33,6 +33,7 @@
     COPY --from=builder /app/dist/${APP_NAME} ./
     COPY --from=builder /app/assets ./assets
     COPY --from=builder /app/public ./public
+    COPY --from=builder /app/docs/references ./docs/references
     COPY --from=builder /app/.env* ./
     
     RUN bun i

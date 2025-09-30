@@ -87,5 +87,3 @@ storage/uploads/*
 .turbo
 
 **/dist/*
-libs/utils/types/generated.ts
-apps/server/src/metadata.ts
