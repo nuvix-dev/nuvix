@@ -1,5 +1,5 @@
 // This file is auto-generated. Do not edit manually.
-// Generated on: 2025-09-30T04:39:24.517Z
+// Generated on: 2025-09-30T15:50:26.317Z
 
 import { Doc, IEntity } from '@nuvix/db'
 
