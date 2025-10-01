@@ -13,11 +13,11 @@
     "prebuild": "../../scripts/merge-pkg.js server",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "typecheck": "tsc --noEmit",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:cov": "vitest run --coverage",
+    "test:debug": "vitest --inspect-brk --inspect --logHeapUsage --threads=false",
+    "test:e2e": "vitest run -c ./vitest.config.e2e.ts"
   },
   "dependencies": {
     "@apollo/server": "^4.12.2",
@@ -29,32 +29,6 @@
     "canvas": "^3.1.0",
     "graphql": "^16.11.0",
     "sharp": "^0.34.2"
-  },
-  "jest": {
-    "moduleFileExtensions": [
-      "js",
-      "json",
-      "ts"
-    ],
-    "rootDir": ".",
-    "testRegex": ".*\\.spec\\.ts$",
-    "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
-    },
-    "collectCoverageFrom": [
-      "**/*.(t|j)s"
-    ],
-    "coverageDirectory": "./coverage",
-    "testEnvironment": "node",
-    "roots": [
-      "<rootDir>/apps/",
-      "<rootDir>/libs/"
-    ],
-    "moduleNameMapper": {
-      "^@nuvix/core(|/.*)$": "<rootDir>/libs/core/src/$1",
-      "^@nuvix/pg-meta(|/.*)$": "<rootDir>/libs/pg-meta/src/$1",
-      "^@nuvix/utils(|/.*)$": "<rootDir>/libs/utils/src/$1"
-    }
   },
   "trustedDependencies": [
     "@apollo/protobufjs",

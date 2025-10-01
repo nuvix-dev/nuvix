@@ -64,12 +64,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    healthcheck:
-      test: ["CMD-SHELL", "nc -z localhost ${APP_PGCAT_POOL_PORT:-6432} || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 10s
     restart: unless-stopped
     entrypoint: ["/usr/local/bin/pgcat-entrypoint.sh"]
 
@@ -84,13 +78,14 @@ services:
     command: ['bun', 'main.js']
     ports:
       - '4000:4000'
-    environment:
-      APP_DATABASE_HOST: postgres
-      APP_REDIS_HOST: redis
-      NODE_ENV: production
     env_file:
       - .env
       - .env.server
+    environment:
+      APP_DATABASE_HOST: postgres
+      APP_DATABASE_POOL_HOST: pgcat
+      APP_REDIS_HOST: redis
+      NODE_ENV: production
     depends_on:
       postgres:
         condition: service_healthy
@@ -119,13 +114,14 @@ services:
     command: ['bun', 'main.js']
     ports:
       - '4100:4100'
-    environment:
-      APP_DATABASE_HOST: postgres
-      APP_REDIS_HOST: redis
-      NODE_ENV: production
     env_file:
       - .env
       - .env.platform
+    environment:
+      APP_DATABASE_HOST: postgres
+      APP_DATABASE_POOL_HOST: pgcat
+      APP_REDIS_HOST: redis
+      NODE_ENV: production
     depends_on:
       postgres:
         condition: service_healthy
@@ -140,13 +136,11 @@ services:
       options:
         max-size: '10m'
         max-file: '5'
-
   # caddy:
   #   image: caddy:2
   #   container_name: nuvix-caddy
   #   restart: unless-stopped
   #   ports:
-  #     - '80:80'
   #     - '443:443'
   #     - '443:443/udp'
   #   volumes:
