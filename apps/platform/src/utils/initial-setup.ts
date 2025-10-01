@@ -243,7 +243,7 @@ export async function initSetup(
               password,
             },
             pool: {
-              host,
+              host: config.getDatabaseConfig().postgres.pool.host,
               port: config.getDatabaseConfig().postgres.pool.port,
               password,
             },
