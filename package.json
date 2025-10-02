@@ -20,11 +20,7 @@
     "test": "turbo test",
     "gen:types": "nuvix-db",
     "typecheck": "turbo typecheck",
-    "format": "biome format --write .",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./apps/nuvix/test/jest-e2e.json"
+    "format": "biome format --write ."
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

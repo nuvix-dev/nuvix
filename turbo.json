@@ -34,6 +34,16 @@
       ],
       "outputs": ["coverage/**"]
     },
+    "test:e2e": {
+      "cache": false,
+      "inputs": [
+        "src/**/*.ts",
+        "test/**/*.ts",
+        "vitest.config.*",
+        "package.json"
+      ],
+      "outputs": ["coverage/**"]
+    },
     "start": {
       "dependsOn": ["build"],
       "cache": false

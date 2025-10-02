@@ -12,12 +12,7 @@
     "dev": "tsup --watch 'src/**' --watch '../../libs/**/*.ts'",
     "prebuild": "../../scripts/merge-pkg.js platform",
     "lint": "eslint \"src/**/*.ts\" --fix",
-    "typecheck": "tsc --noEmit",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@nuvix/core": "workspace:*",
