@@ -25,13 +25,13 @@ export class Platform {
   public static readonly SCHEME_FIREFOX_EXTENSION = 'moz-extension'
   public static readonly SCHEME_SAFARI_EXTENSION = 'safari-web-extension'
   public static readonly SCHEME_EDGE_EXTENSION = 'ms-browser-extension'
-  public static readonly SCHEME_IOS = 'appwrite-ios'
-  public static readonly SCHEME_MACOS = 'appwrite-macos'
-  public static readonly SCHEME_WATCHOS = 'appwrite-watchos'
-  public static readonly SCHEME_TVOS = 'appwrite-tvos'
-  public static readonly SCHEME_ANDROID = 'appwrite-android'
-  public static readonly SCHEME_WINDOWS = 'appwrite-windows'
-  public static readonly SCHEME_LINUX = 'appwrite-linux'
+  public static readonly SCHEME_IOS = 'nuvix-ios'
+  public static readonly SCHEME_MACOS = 'nuvix-macos'
+  public static readonly SCHEME_WATCHOS = 'nuvix-watchos'
+  public static readonly SCHEME_TVOS = 'nuvix-tvos'
+  public static readonly SCHEME_ANDROID = 'nuvix-android'
+  public static readonly SCHEME_WINDOWS = 'nuvix-windows'
+  public static readonly SCHEME_LINUX = 'nuvix-linux'
 
   private static readonly names: Record<string, string> = {
     [Platform.SCHEME_HTTP]: 'Web',

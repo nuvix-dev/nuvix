@@ -4357,7 +4357,7 @@ export default async () => {
                 required: false,
                 type: () => String,
                 description:
-                  'Image for push notification. Must be a compound bucket ID to file ID of a jpeg, png, or bmp image in Appwrite Storage. It should be formatted as <BUCKET_ID>:<FILE_ID>.',
+                  'Image for push notification. Must be a compound bucket ID to file ID of a jpeg, png, or bmp image in Nuvix Storage. It should be formatted as <BUCKET_ID>:<FILE_ID>.',
               },
               icon: {
                 required: false,
