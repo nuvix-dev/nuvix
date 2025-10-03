@@ -1,5 +1,6 @@
 import { INestApplication } from '@nestjs/common'
-import { NuvixAdapter, Test, TestingModule } from '@nuvix/core/server'
+import { NuvixAdapter } from '@nuvix/core/server'
+import { Test, TestingModule } from '@nuvix/core/server/test'
 import { AppModule } from 'apps/server/src/app.module'
 import QueryString from 'qs'
 
