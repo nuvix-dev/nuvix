@@ -3,10 +3,10 @@ import { BaseModel } from '@nuvix/core/models/base.model'
 
 import type { Attributes } from '@nuvix/utils/types'
 
+// TODO: improve this model to support all options of Attribute
 @Exclude()
 export class AttributeModel extends BaseModel implements Partial<Attributes> {
-  @Exclude() declare $id: string
-  @Exclude() declare $permissions: string[] | any[]
+  @Exclude() declare $permissions: string[]
   /**
    * Attribute Key.
    */

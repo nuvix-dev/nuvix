@@ -1,4 +1,3 @@
-import { Permission } from '@nuvix/db'
 import { Exclude, Expose } from 'class-transformer'
 
 @Exclude()
@@ -16,7 +15,7 @@ export abstract class BaseModel {
    */
   @Expose() declare $updatedAt: Date
 
-  @Expose() declare $permissions: string[] | Permission[]
+  @Expose() declare $permissions: string[]
 
   @Exclude() $collection?: string
 

@@ -60,13 +60,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Account"]
+        "tags": [
+          "Account"
+        ]
       },
       "get": {
         "operationId": "AccountController_getAccount",
@@ -116,13 +123,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Account"]
+        "tags": [
+          "Account"
+        ]
       },
       "delete": {
         "operationId": "AccountController_deleteAccount",
@@ -172,13 +186,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Account"]
+        "tags": [
+          "Account"
+        ]
       }
     },
     "/account/sessions": {
@@ -223,13 +244,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Account"]
+        "tags": [
+          "Account"
+        ]
       },
       "delete": {
         "operationId": "AccountController_deleteSessions",
@@ -272,13 +300,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Account"]
+        "tags": [
+          "Account"
+        ]
       },
       "post": {
         "operationId": "AccountController_createEmailSession[1]",
@@ -331,13 +366,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Account"]
+        "tags": [
+          "Account"
+        ]
       }
     },
     "/account/sessions/{id}": {
@@ -397,13 +439,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Account"]
+        "tags": [
+          "Account"
+        ]
       },
       "delete": {
         "operationId": "AccountController_deleteSession",
@@ -454,13 +503,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Account"]
+        "tags": [
+          "Account"
+        ]
       },
       "patch": {
         "operationId": "AccountController_updateSession",
@@ -518,13 +574,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Account"]
+        "tags": [
+          "Account"
+        ]
       }
     },
     "/account/sessions/email": {
@@ -579,13 +642,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Account"]
+        "tags": [
+          "Account"
+        ]
       }
     },
     "/account/sessions/token": {
@@ -640,13 +710,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Account"]
+        "tags": [
+          "Account"
+        ]
       }
     },
     "/account/tokens/email": {
@@ -701,13 +778,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Account"]
+        "tags": [
+          "Account"
+        ]
       }
     },
     "/account/prefs": {
@@ -759,13 +843,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Account"]
+        "tags": [
+          "Account"
+        ]
       },
       "patch": {
         "operationId": "AccountController_updatePrefs",
@@ -825,13 +916,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Account"]
+        "tags": [
+          "Account"
+        ]
       }
     },
     "/account/name": {
@@ -893,13 +991,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Account"]
+        "tags": [
+          "Account"
+        ]
       }
     },
     "/account/password": {
@@ -961,13 +1066,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Account"]
+        "tags": [
+          "Account"
+        ]
       }
     },
     "/account/email": {
@@ -1022,13 +1134,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Account"]
+        "tags": [
+          "Account"
+        ]
       }
     },
     "/teams": {
@@ -1091,14 +1210,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create team",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       },
       "get": {
         "description": "Get a list of all the teams in which the current user is a member. You can use the parameters to filter your results.",
@@ -1170,14 +1296,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List teams",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       }
     },
     "/teams/{teamId}": {
@@ -1239,14 +1372,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get team",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       },
       "put": {
         "description": "Update the team's name by its unique ID.",
@@ -1316,14 +1456,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update name",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       },
       "delete": {
         "description": "Delete a team using its ID. Only team members with the owner role can delete the team.",
@@ -1383,14 +1530,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete team",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       }
     },
     "/teams/{teamId}/prefs": {
@@ -1452,14 +1606,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get team preferences",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       },
       "put": {
         "description": "Update the team's preferences by its unique ID. The object you pass is stored as is and replaces any previous value. The maximum allowed prefs size is 64kB and throws an error if exceeded.",
@@ -1529,14 +1690,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update preferences",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       }
     },
     "/teams/{teamId}/memberships": {
@@ -1608,14 +1776,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create team membership",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       },
       "get": {
         "description": "Use this endpoint to list a team's members using the team's ID. All team members have read access to this endpoint. Hide sensitive attributes from the response by toggling membership privacy in the Console.",
@@ -1671,7 +1846,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/MembershipModel"
+                        "$ref": "#/components/schemas/"
                       }
                     },
                     "total": {
@@ -1706,14 +1881,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List team memberships",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       }
     },
     "/teams/{teamId}/memberships/{membershipId}": {
@@ -1784,14 +1966,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get team membership",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       },
       "patch": {
         "description": "Modify the roles of a team member. Only team members with the owner role have access to this endpoint. Learn more about [roles and permissions](https://docs.nuvix.in/permissions).",
@@ -1870,14 +2059,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update membership",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       },
       "delete": {
         "description": "This endpoint allows a user to leave a team or for a team owner to delete the membership of any other team member. You can also use this endpoint to delete a user membership even if it is not accepted.",
@@ -1946,14 +2142,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete team membership",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       }
     },
     "/teams/{teamId}/memberships/{membershipId}/status": {
@@ -2034,14 +2237,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update team membership status",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       }
     },
     "/projects": {
@@ -2104,14 +2314,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create project",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       },
       "get": {
         "description": "Get a list of all projects. You can use the query params to filter your results.",
@@ -2158,7 +2375,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/ProjectModel"
+                        "$ref": "#/components/schemas/"
                       }
                     },
                     "total": {
@@ -2193,14 +2410,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List projects",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}": {
@@ -2262,14 +2486,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get project",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       },
       "patch": {
         "description": "Update a project by its unique ID.",
@@ -2339,14 +2570,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update project",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       },
       "delete": {
         "description": "Delete a project by its unique ID.",
@@ -2399,14 +2637,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete project",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/jwts": {
@@ -2478,14 +2723,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create JWT",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/team": {
@@ -2557,14 +2809,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update project team",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/service": {
@@ -2636,14 +2895,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update service status",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/service/all": {
@@ -2715,14 +2981,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update all service status",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/api": {
@@ -2794,14 +3067,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update API status",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/api/all": {
@@ -2873,14 +3153,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update all API status",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/oauth2": {
@@ -2952,14 +3239,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update project OAuth2",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/smtp": {
@@ -3031,14 +3325,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update SMTP",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/project/usage": {
@@ -3109,14 +3410,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get project usage stats",
-        "tags": ["Project"]
+        "tags": [
+          "Project"
+        ]
       }
     },
     "/project/logs": {
@@ -3161,14 +3469,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get Project Logs",
-        "tags": ["Project"]
+        "tags": [
+          "Project"
+        ]
       }
     },
     "/projects/{projectId}/auth/session-alerts": {
@@ -3240,14 +3555,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update project sessions emails",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/auth/limit": {
@@ -3319,14 +3641,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update project users limit",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/auth/duration": {
@@ -3398,14 +3727,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update project authentication duration",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/auth/password-history": {
@@ -3477,14 +3813,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update authentication password history",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/auth/password-dictionary": {
@@ -3556,14 +3899,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update authentication password dictionary status",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/auth/personal-data": {
@@ -3635,14 +3985,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update personal data check",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/auth/max-sessions": {
@@ -3714,14 +4071,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update project user sessions limit",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/auth/mock-numbers": {
@@ -3793,14 +4157,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update the mock numbers for the project",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/auth/memberships-privacy": {
@@ -3872,14 +4243,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update project memberships privacy attributes",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/auth/{method}": {
@@ -3960,14 +4338,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update project auth method status",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/keys": {
@@ -4004,7 +4389,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/KeyModel"
+                        "$ref": "#/components/schemas/"
                       }
                     },
                     "total": {
@@ -4039,14 +4424,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List keys",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       },
       "post": {
         "description": "Create a new API key. It's recommended to have multiple API keys with strict scopes for separate functions within your project.",
@@ -4116,14 +4508,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create key",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/keys/{keyId}": {
@@ -4194,14 +4593,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get key",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       },
       "put": {
         "description": "Update a key by its unique ID. Use this endpoint to update the name, scopes, or expiration time of an API key.",
@@ -4280,14 +4686,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update key",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       },
       "delete": {
         "description": "Delete a key by its unique ID. Once deleted, the key can no longer be used to authenticate API calls.",
@@ -4356,14 +4769,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete key",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/platforms": {
@@ -4399,7 +4819,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/PlatformModel"
+                        "$ref": "#/components/schemas/"
                       }
                     },
                     "total": {
@@ -4434,14 +4854,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get platforms",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       },
       "post": {
         "description": "Create a new platform for your project. Use this endpoint to register a new platform where your users will run your application which will interact with the Nuvix API.",
@@ -4511,14 +4938,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create platform",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/platforms/{platformId}": {
@@ -4589,14 +5023,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get platform",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       },
       "put": {
         "description": "Update a platform by its unique ID. Use this endpoint to update the platform's name, key, platform store ID, or hostname.",
@@ -4675,14 +5116,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update platform",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       },
       "delete": {
         "description": "Delete a platform by its unique ID. This endpoint removes the platform and all its configurations from the project.",
@@ -4744,14 +5192,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete platform",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/webhooks": {
@@ -4788,7 +5243,7 @@
                     "data": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/WebhookModel"
+                        "$ref": "#/components/schemas/"
                       }
                     },
                     "total": {
@@ -4823,14 +5278,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List webhooks",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       },
       "post": {
         "description": "Create a new webhook. Use this endpoint to configure a URL that will receive events from Nuvix when specific events occur.",
@@ -4900,14 +5362,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create webhook",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/webhooks/{webhookId}": {
@@ -4978,14 +5447,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get webhook",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       },
       "put": {
         "description": "Update a webhook by its unique ID. Use this endpoint to update the URL, events, or status of an existing webhook.",
@@ -5064,14 +5540,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update webhook",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       },
       "delete": {
         "description": "Delete a webhook by its unique ID. Once deleted, the webhook will no longer receive project events.",
@@ -5133,14 +5616,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete webhook",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/projects/{projectId}/webhooks/{webhookId}/signature": {
@@ -5211,14 +5701,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update webhook signature key",
-        "tags": ["projects"]
+        "tags": [
+          "projects"
+        ]
       }
     },
     "/database/query": {
@@ -5280,13 +5777,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/query/format": {
@@ -5348,13 +5852,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/query/parse": {
@@ -5416,13 +5927,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/query/deparse": {
@@ -5484,13 +6002,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/schemas": {
@@ -5559,14 +6084,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Schemas ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "post": {
         "operationId": "PgMetaController_createSchema",
@@ -5626,13 +6158,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/schemas/{id}": {
@@ -5692,13 +6231,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "patch": {
         "operationId": "PgMetaController_updateSchema",
@@ -5767,13 +6313,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "delete": {
         "operationId": "PgMetaController_deleteSchema",
@@ -5840,13 +6393,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/tables": {
@@ -5949,14 +6509,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Tables ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "post": {
         "operationId": "PgMetaController_createTable",
@@ -6016,13 +6583,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/tables/{id}": {
@@ -6083,13 +6657,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "patch": {
         "operationId": "PgMetaController_updateTable",
@@ -6158,13 +6739,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "delete": {
         "operationId": "PgMetaController_deleteTable",
@@ -6231,13 +6819,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/columns": {
@@ -6328,14 +6923,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Columns ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "post": {
         "operationId": "PgMetaController_createColumn",
@@ -6395,13 +6997,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/columns/{tableAndOrdinalPosition}": {
@@ -6507,13 +7116,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/columns/{id}": {
@@ -6583,13 +7199,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "delete": {
         "operationId": "PgMetaController_deleteColumn",
@@ -6655,13 +7278,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/extensions": {
@@ -6722,14 +7352,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Extensions ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "post": {
         "operationId": "PgMetaController_createExtension",
@@ -6789,13 +7426,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/extensions/{name}": {
@@ -6855,13 +7499,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "patch": {
         "operationId": "PgMetaController_updateExtension",
@@ -6929,13 +7580,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "delete": {
         "operationId": "PgMetaController_deleteExtension",
@@ -7001,13 +7659,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/roles": {
@@ -7076,14 +7741,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Roles ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "post": {
         "operationId": "PgMetaController_createRole",
@@ -7143,13 +7815,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/roles/{id}": {
@@ -7210,13 +7889,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "patch": {
         "operationId": "PgMetaController_updateRole",
@@ -7285,13 +7971,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "delete": {
         "operationId": "PgMetaController_deleteRole",
@@ -7350,13 +8043,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/functions": {
@@ -7441,14 +8141,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Functions ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "post": {
         "operationId": "PgMetaController_createFunction",
@@ -7508,13 +8215,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/functions/{id}": {
@@ -7575,13 +8289,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "patch": {
         "operationId": "PgMetaController_updateFunction",
@@ -7650,13 +8371,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "delete": {
         "operationId": "PgMetaController_deleteFunction",
@@ -7715,13 +8443,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/indexes": {
@@ -7806,14 +8541,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Indexes ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/indexes/{id}": {
@@ -7874,13 +8616,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/views": {
@@ -7983,14 +8732,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Views ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/views/{id}": {
@@ -8051,13 +8807,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/foreign-tables": {
@@ -8136,14 +8899,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Foreign Tables ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/foreign-tables/{id}": {
@@ -8204,13 +8974,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/column-privileges": {
@@ -8295,14 +9072,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Column Privileges ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "post": {
         "operationId": "PgMetaController_grantColumnPrivileges",
@@ -8365,13 +9149,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "delete": {
         "operationId": "PgMetaController_revokeColumnPrivileges",
@@ -8434,13 +9225,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/materialized-views": {
@@ -8535,14 +9333,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Materialized Views ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/materialized-views/{id}": {
@@ -8603,13 +9408,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/config": {
@@ -8670,14 +9482,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Config ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/config/version": {
@@ -8729,13 +9548,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/policies": {
@@ -8820,14 +9646,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Policies ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "post": {
         "operationId": "PgMetaController_createPolicy",
@@ -8887,13 +9720,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/policies/{id}": {
@@ -8953,13 +9793,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "patch": {
         "operationId": "PgMetaController_updatePolicy",
@@ -9027,13 +9874,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "delete": {
         "operationId": "PgMetaController_deletePolicy",
@@ -9091,13 +9945,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/publications": {
@@ -9158,14 +10019,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Publications ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "post": {
         "operationId": "PgMetaController_createPublication",
@@ -9225,13 +10093,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/publications/{id}": {
@@ -9291,13 +10166,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "patch": {
         "operationId": "PgMetaController_updatePublication",
@@ -9365,13 +10247,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "delete": {
         "operationId": "PgMetaController_deletePublication",
@@ -9429,13 +10318,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/table-privileges": {
@@ -9520,14 +10416,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Table Privileges ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "post": {
         "operationId": "PgMetaController_grantTablePrivileges",
@@ -9590,13 +10493,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "delete": {
         "operationId": "PgMetaController_revokeTablePrivileges",
@@ -9659,13 +10569,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/triggers": {
@@ -9753,14 +10670,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Triggers ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "post": {
         "operationId": "PgMetaController_createTrigger",
@@ -9820,13 +10744,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/triggers/{id}": {
@@ -9886,13 +10817,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "patch": {
         "operationId": "PgMetaController_updateTrigger",
@@ -9960,13 +10898,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       },
       "delete": {
         "operationId": "PgMetaController_deleteTrigger",
@@ -10032,13 +10977,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/types": {
@@ -10134,14 +11086,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Types ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/generators/typescript": {
@@ -10225,14 +11184,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "************************* Generators ********************************",
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/generators/go": {
@@ -10316,13 +11282,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/database/generators/swift": {
@@ -10406,13 +11379,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["PgMeta"]
+        "tags": [
+          "PgMeta"
+        ]
       }
     },
     "/cli/template": {
@@ -10472,13 +11452,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["Cli"]
+        "tags": [
+          "Cli"
+        ]
       }
     },
     "/": {
@@ -10523,13 +11510,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["App"]
+        "tags": [
+          "App"
+        ]
       }
     }
   },
@@ -10580,7 +11574,11 @@
             "maxLength": 128
           }
         },
-        "required": ["userId", "email", "password"]
+        "required": [
+          "userId",
+          "email",
+          "password"
+        ]
       },
       "CreateEmailSessionDTO": {
         "type": "object",
@@ -10596,7 +11594,10 @@
             "minLength": 8
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "CreateSessionDTO": {
         "type": "object",
@@ -10612,7 +11613,10 @@
             "maxLength": 256
           }
         },
-        "required": ["userId", "secret"]
+        "required": [
+          "userId",
+          "secret"
+        ]
       },
       "CreateEmailTokenDTO": {
         "type": "object",
@@ -10632,7 +11636,10 @@
             "default": false
           }
         },
-        "required": ["userId", "email"]
+        "required": [
+          "userId",
+          "email"
+        ]
       },
       "UpdatePrefsDTO": {
         "type": "object",
@@ -10646,7 +11653,9 @@
             "description": "User name. Max length: 128 chars."
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "UpdatePasswordDTO": {
         "type": "object",
@@ -10662,7 +11671,10 @@
             "description": "Current user password. Must be at least 8 chars."
           }
         },
-        "required": ["password", "oldPassword"]
+        "required": [
+          "password",
+          "oldPassword"
+        ]
       },
       "UpdateEmailDTO": {
         "type": "object",
@@ -10679,7 +11691,10 @@
             "maxLength": 256
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "CreateTeamDTO": {
         "type": "object",
@@ -10695,7 +11710,10 @@
             "maxLength": 128
           }
         },
-        "required": ["teamId", "name"]
+        "required": [
+          "teamId",
+          "name"
+        ]
       },
       "TeamModel": {
         "type": "object",
@@ -10802,7 +11820,9 @@
             "maxLength": 128
           }
         },
-        "required": ["roles"]
+        "required": [
+          "roles"
+        ]
       },
       "MembershipModel": {
         "type": "object",
@@ -10901,7 +11921,9 @@
             }
           }
         },
-        "required": ["roles"]
+        "required": [
+          "roles"
+        ]
       },
       "UpdateMembershipStatusDTO": {
         "type": "object",
@@ -10916,7 +11938,10 @@
             "maxLength": 256
           }
         },
-        "required": ["userId", "secret"]
+        "required": [
+          "userId",
+          "secret"
+        ]
       },
       "CreateProjectDTO": {
         "type": "object",
@@ -10961,7 +11986,13 @@
             "default": "dev"
           }
         },
-        "required": ["projectId", "name", "teamId", "password", "region"]
+        "required": [
+          "projectId",
+          "name",
+          "teamId",
+          "password",
+          "region"
+        ]
       },
       "AuthProviderModel": {
         "type": "object",
@@ -11416,7 +12447,10 @@
             "maximum": 3600
           }
         },
-        "required": ["scopes", "duration"]
+        "required": [
+          "scopes",
+          "duration"
+        ]
       },
       "JWTModel": {
         "type": "object",
@@ -11444,7 +12478,13 @@
             "type": "object"
           }
         },
-        "required": ["jwt", "$id", "$createdAt", "$updatedAt", "$permissions"]
+        "required": [
+          "jwt",
+          "$id",
+          "$createdAt",
+          "$updatedAt",
+          "$permissions"
+        ]
       },
       "UpdateProjectTeamDTO": {
         "type": "object",
@@ -11454,7 +12494,9 @@
             "description": "Team ID of the team to transfer project to."
           }
         },
-        "required": ["teamId"]
+        "required": [
+          "teamId"
+        ]
       },
       "UpdateProjectServiceDTO": {
         "type": "object",
@@ -11468,7 +12510,10 @@
             "description": "Service status."
           }
         },
-        "required": ["service", "status"]
+        "required": [
+          "service",
+          "status"
+        ]
       },
       "UpdateProjectAllServiceDTO": {
         "type": "object",
@@ -11478,7 +12523,9 @@
             "description": "Service status."
           }
         },
-        "required": ["status"]
+        "required": [
+          "status"
+        ]
       },
       "ProjectApiStatusDTO": {
         "type": "object",
@@ -11492,7 +12539,10 @@
             "description": "API status."
           }
         },
-        "required": ["api", "status"]
+        "required": [
+          "api",
+          "status"
+        ]
       },
       "ProjectApiStatusAllDTO": {
         "type": "object",
@@ -11502,7 +12552,9 @@
             "description": "API status."
           }
         },
-        "required": ["status"]
+        "required": [
+          "status"
+        ]
       },
       "oAuth2DTO": {
         "type": "object",
@@ -11526,7 +12578,9 @@
             "description": "Provider status. Set to \\'false\\' to disable new session creation."
           }
         },
-        "required": ["provider"]
+        "required": [
+          "provider"
+        ]
       },
       "UpdateSmtpDTO": {
         "type": "object",
@@ -11572,7 +12626,9 @@
             "description": "Does SMTP server use secure connection'"
           }
         },
-        "required": ["enabled"]
+        "required": [
+          "enabled"
+        ]
       },
       "UsageProjectModel": {
         "type": "object",
@@ -11728,7 +12784,9 @@
             "description": "Set to true to enable session emails."
           }
         },
-        "required": ["alerts"]
+        "required": [
+          "alerts"
+        ]
       },
       "AuthLimitDTO": {
         "type": "object",
@@ -11739,7 +12797,9 @@
             "minimum": 0
           }
         },
-        "required": ["limit"]
+        "required": [
+          "limit"
+        ]
       },
       "AuthDurationDTO": {
         "type": "object",
@@ -11751,7 +12811,9 @@
             "maximum": 31536000
           }
         },
-        "required": ["duration"]
+        "required": [
+          "duration"
+        ]
       },
       "AuthPasswordHistoryDTO": {
         "type": "object",
@@ -11762,7 +12824,9 @@
             "minimum": 0
           }
         },
-        "required": ["limit"]
+        "required": [
+          "limit"
+        ]
       },
       "AuthPasswordDictionaryDTO": {
         "type": "object",
@@ -11772,7 +12836,9 @@
             "description": "Set whether or not to enable checking user\\'s password against most commonly used passwords. Default is false."
           }
         },
-        "required": ["enabled"]
+        "required": [
+          "enabled"
+        ]
       },
       "AuthPersonalDataDTO": {
         "type": "object",
@@ -11782,7 +12848,9 @@
             "description": "Set whether or not to check a password for similarity with personal data. Default is false."
           }
         },
-        "required": ["enabled"]
+        "required": [
+          "enabled"
+        ]
       },
       "AuthMaxSessionsDTO": {
         "type": "object",
@@ -11793,7 +12861,9 @@
             "minimum": 0
           }
         },
-        "required": ["limit"]
+        "required": [
+          "limit"
+        ]
       },
       "MockNumber": {
         "type": "object",
@@ -11805,7 +12875,10 @@
             "type": "string"
           }
         },
-        "required": ["phone", "otp"]
+        "required": [
+          "phone",
+          "otp"
+        ]
       },
       "AuthMockNumbersDTO": {
         "type": "object",
@@ -11819,7 +12892,9 @@
             }
           }
         },
-        "required": ["numbers"]
+        "required": [
+          "numbers"
+        ]
       },
       "AuthMembershipPrivacyDTO": {
         "type": "object",
@@ -11850,7 +12925,9 @@
             "description": "Set the status of this auth method."
           }
         },
-        "required": ["status"]
+        "required": [
+          "status"
+        ]
       },
       "CreateKeyDTO": {
         "type": "object",
@@ -11873,7 +12950,9 @@
             "description": "Expiration time in [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html) format. If not set, the key won't expire."
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "UpdateKeyDTO": {
         "type": "object",
@@ -11946,7 +13025,12 @@
             "maxLength": 256
           }
         },
-        "required": ["type", "name", "store", "hostname"]
+        "required": [
+          "type",
+          "name",
+          "store",
+          "hostname"
+        ]
       },
       "UpdatePlatformDTO": {
         "type": "object",
@@ -11976,7 +13060,11 @@
             "maxLength": 256
           }
         },
-        "required": ["name", "store", "hostname"]
+        "required": [
+          "name",
+          "store",
+          "hostname"
+        ]
       },
       "CreateWebhookDTO": {
         "type": "object",
@@ -12017,7 +13105,12 @@
             "maxLength": 256
           }
         },
-        "required": ["name", "enabled", "events", "url"]
+        "required": [
+          "name",
+          "enabled",
+          "events",
+          "url"
+        ]
       },
       "UpdateWebhookDTO": {
         "type": "object",
@@ -12066,7 +13159,9 @@
             "type": "string"
           }
         },
-        "required": ["query"]
+        "required": [
+          "query"
+        ]
       },
       "DeparseDTO": {
         "type": "object",
@@ -12075,7 +13170,9 @@
             "type": "object"
           }
         },
-        "required": ["ast"]
+        "required": [
+          "ast"
+        ]
       },
       "SchemaCreateDTO": {
         "type": "object",
@@ -12087,7 +13184,9 @@
             "type": "string"
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "SchemaUpdateDTO": {
         "type": "object",
@@ -12149,17 +13248,27 @@
                 }
               }
             },
-            "required": ["strategy", "columns"]
+            "required": [
+              "strategy",
+              "columns"
+            ]
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "TableUpdateDTO": {
         "type": "object",
         "properties": {
           "replica_identity": {
             "type": "string",
-            "enum": ["DEFAULT", "INDEX", "FULL", "NOTHING"]
+            "enum": [
+              "DEFAULT",
+              "INDEX",
+              "FULL",
+              "NOTHING"
+            ]
           },
           "name": {
             "type": "string"
@@ -12188,7 +13297,9 @@
                   "type": "string"
                 }
               },
-              "required": ["name"]
+              "required": [
+                "name"
+              ]
             }
           }
         }
@@ -12198,11 +13309,17 @@
         "properties": {
           "identity_generation": {
             "type": "string",
-            "enum": ["ALWAYS", "BY DEFAULT"]
+            "enum": [
+              "ALWAYS",
+              "BY DEFAULT"
+            ]
           },
           "default_value_format": {
             "type": "string",
-            "enum": ["expression", "literal"]
+            "enum": [
+              "expression",
+              "literal"
+            ]
           },
           "name": {
             "type": "string"
@@ -12235,18 +13352,28 @@
             "type": "string"
           }
         },
-        "required": ["name", "table_id", "type"]
+        "required": [
+          "name",
+          "table_id",
+          "type"
+        ]
       },
       "ColumnUpdateDTO": {
         "type": "object",
         "properties": {
           "default_value_format": {
             "type": "string",
-            "enum": ["expression", "literal"]
+            "enum": [
+              "expression",
+              "literal"
+            ]
           },
           "identity_generation": {
             "type": "string",
-            "enum": ["ALWAYS", "BY DEFAULT"]
+            "enum": [
+              "ALWAYS",
+              "BY DEFAULT"
+            ]
           },
           "name": {
             "type": "string"
@@ -12290,7 +13417,9 @@
             "type": "string"
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "ExtensionUpdateDTO": {
         "type": "object",
@@ -12361,7 +13490,9 @@
             "type": "object"
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "RoleUpdateDTO": {
         "type": "object",
@@ -12412,7 +13543,11 @@
         "properties": {
           "behavior": {
             "type": "string",
-            "enum": ["IMMUTABLE", "STABLE", "VOLATILE"]
+            "enum": [
+              "IMMUTABLE",
+              "STABLE",
+              "VOLATILE"
+            ]
           },
           "name": {
             "type": "string"
@@ -12445,14 +13580,21 @@
             "type": "string"
           }
         },
-        "required": ["name", "definition"]
+        "required": [
+          "name",
+          "definition"
+        ]
       },
       "FunctionUpdateDTO": {
         "type": "object",
         "properties": {
           "behavior": {
             "type": "string",
-            "enum": ["IMMUTABLE", "STABLE", "VOLATILE"]
+            "enum": [
+              "IMMUTABLE",
+              "STABLE",
+              "VOLATILE"
+            ]
           },
           "name": {
             "type": "string"
@@ -12491,11 +13633,20 @@
         "properties": {
           "action": {
             "type": "string",
-            "enum": ["PERMISSIVE", "RESTRICTIVE"]
+            "enum": [
+              "PERMISSIVE",
+              "RESTRICTIVE"
+            ]
           },
           "command": {
             "type": "string",
-            "enum": ["SELECT", "INSERT", "UPDATE", "DELETE", "ALL"]
+            "enum": [
+              "SELECT",
+              "INSERT",
+              "UPDATE",
+              "DELETE",
+              "ALL"
+            ]
           },
           "name": {
             "type": "string"
@@ -12520,18 +13671,30 @@
             }
           }
         },
-        "required": ["name", "table"]
+        "required": [
+          "name",
+          "table"
+        ]
       },
       "PolicyUpdateDTO": {
         "type": "object",
         "properties": {
           "action": {
             "type": "string",
-            "enum": ["PERMISSIVE", "RESTRICTIVE"]
+            "enum": [
+              "PERMISSIVE",
+              "RESTRICTIVE"
+            ]
           },
           "command": {
             "type": "string",
-            "enum": ["SELECT", "INSERT", "UPDATE", "DELETE", "ALL"]
+            "enum": [
+              "SELECT",
+              "INSERT",
+              "UPDATE",
+              "DELETE",
+              "ALL"
+            ]
           },
           "name": {
             "type": "string"
@@ -12550,7 +13713,9 @@
             }
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "PublicationCreateDTO": {
         "type": "object",
@@ -12578,7 +13743,9 @@
             }
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "PublicationUpdateDTO": {
         "type": "object",
@@ -12658,7 +13825,13 @@
             "type": "object"
           }
         },
-        "required": ["name", "table", "function_name", "activation", "events"]
+        "required": [
+          "name",
+          "table",
+          "function_name",
+          "activation",
+          "events"
+        ]
       },
       "TriggerUpdateDTO": {
         "type": "object",
