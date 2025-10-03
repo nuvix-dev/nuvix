@@ -321,9 +321,12 @@ export const Route = ({ docs = true, ...options }: RouteOptions) => {
       decorators.push(ApiExtraModels(responseModel as Type<any>))
   }
 
-  if (options.model && !isList && responseModel !== Models.NONE) {
+  if (options.model) {
     responseModel =
-      typeof options.model === 'object' && 'type' in options.model
+      typeof options.model === 'object' &&
+      'type' in options.model &&
+      !isList &&
+      responseModel !== Models.NONE
         ? options.model.type
         : (options.model as Type<any>)
     decorators.push(ResModel(options.model as any))

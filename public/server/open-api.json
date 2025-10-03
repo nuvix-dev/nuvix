@@ -61,14 +61,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create user",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       },
       "get": {
         "description": "Get a list of all the project's users. You can use the query params to filter your results.",
@@ -150,14 +157,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List users",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/argon2": {
@@ -220,14 +234,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create user with Argon2 password",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/bcrypt": {
@@ -290,14 +311,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create user with bcrypt password",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/md5": {
@@ -360,14 +388,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create user with MD5 password",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/sha": {
@@ -430,14 +465,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create user with SHA password",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/phpass": {
@@ -501,14 +543,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create user with PHPass password",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/scrypt": {
@@ -571,14 +620,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create user with Scrypt password",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/scrypt-modified": {
@@ -641,14 +697,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create user with Scrypt modified password",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/usage": {
@@ -711,14 +774,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get users usage stats",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/identities": {
@@ -802,14 +872,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List identities",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/identities/{identityId}": {
@@ -871,14 +948,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete identity",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}": {
@@ -940,14 +1024,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get user",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       },
       "delete": {
         "description": "Delete a user by its unique ID, thereby releasing it's ID. Since ID is released and can be reused, all user-related resources like documents or storage files should be deleted before user deletion. If you want to keep ID reserved, use the [updateStatus](https://docs.nuvix.in/server/users#usersUpdateStatus) endpoint instead.",
@@ -1000,14 +1091,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete user",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/prefs": {
@@ -1069,14 +1167,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get user preferences",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       },
       "patch": {
         "description": "Update the user preferences by its unique ID. The object you pass is stored as is, and replaces any previous value. The maximum allowed prefs size is 64kB and throws error if exceeded.",
@@ -1146,14 +1251,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update user preferences",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/status": {
@@ -1225,14 +1337,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update user status",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/labels": {
@@ -1304,14 +1423,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update user labels",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/name": {
@@ -1383,14 +1509,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update name",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/password": {
@@ -1462,14 +1595,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update password",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/email": {
@@ -1541,14 +1681,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update email",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/phone": {
@@ -1620,14 +1767,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update phone",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/jwts": {
@@ -1699,14 +1853,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create user JWT",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/memberships": {
@@ -1799,14 +1960,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List user memberships",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/tokens": {
@@ -1878,14 +2046,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create token",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/logs": {
@@ -1969,14 +2144,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List user logs",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/verification": {
@@ -2048,14 +2230,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update phone verification",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/verification/phone": {
@@ -2127,14 +2316,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update phone verification",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/sessions": {
@@ -2206,14 +2402,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List user sessions",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       },
       "post": {
         "description": "Creates a session for a user. Returns an immediately usable session object.\n\nIf you want to generate a token for a custom authentication flow, use the [POST /users/{userId}/tokens](https://docs.nuvix.in/server/users#createToken) endpoint.",
@@ -2273,14 +2476,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create session",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       },
       "delete": {
         "description": "Delete all user's sessions by using the user's unique ID.",
@@ -2340,14 +2550,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete user sessions",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/sessions/{sessionId}": {
@@ -2418,14 +2635,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete user session",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/targets": {
@@ -2497,14 +2721,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create user target",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       },
       "get": {
         "description": "List the messaging targets that are associated with a user.",
@@ -2586,14 +2817,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List user targets",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/targets/{targetId}": {
@@ -2664,14 +2902,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get user target",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       },
       "patch": {
         "description": "Update a messaging target.",
@@ -2750,14 +2995,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update user target",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       },
       "delete": {
         "description": "Delete a messaging target.",
@@ -2826,14 +3078,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete user target",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/mfa": {
@@ -2905,14 +3164,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update MFA",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/mfa/factors": {
@@ -2974,14 +3240,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List factors",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/mfa/recovery-codes": {
@@ -3043,14 +3316,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get MFA recovery codes",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       },
       "patch": {
         "description": "Generate recovery codes used as backup for MFA flow for User ID. Recovery codes can be used as a MFA verification type in [createMfaChallenge](/docs/references/cloud/client-web/account#createMfaChallenge) method by client SDK.",
@@ -3110,14 +3390,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create MFA recovery codes",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       },
       "put": {
         "description": "Regenerate recovery codes that can be used as backup for MFA flow by User ID. Before regenerating codes, they must be first generated using [createMfaRecoveryCodes](/docs/references/cloud/client-web/account#createMfaRecoveryCodes) method.",
@@ -3177,14 +3464,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update MFA recovery codes (regenerate)",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/users/{userId}/mfa/authenticators/{type}": {
@@ -3255,14 +3549,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete authenticator",
-        "tags": ["users"]
+        "tags": [
+          "users"
+        ]
       }
     },
     "/v1/teams": {
@@ -3325,14 +3626,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create team",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       },
       "get": {
         "description": "Get a list of all the teams in which the current user is a member. You can use the parameters to filter your results.",
@@ -3404,14 +3712,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List teams",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       }
     },
     "/v1/teams/{teamId}": {
@@ -3473,14 +3788,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get team",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       },
       "put": {
         "description": "Update the team's name by its unique ID.",
@@ -3550,14 +3872,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update name",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       },
       "delete": {
         "description": "Delete a team using its ID. Only team members with the owner role can delete the team.",
@@ -3617,14 +3946,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete team",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       }
     },
     "/v1/teams/{teamId}/prefs": {
@@ -3686,14 +4022,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get team preferences",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       },
       "put": {
         "description": "Update the team's preferences by its unique ID. The object you pass is stored as is and replaces any previous value. The maximum allowed prefs size is 64kB and throws an error if exceeded.",
@@ -3763,14 +4106,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update preferences",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       }
     },
     "/v1/teams/{teamId}/memberships": {
@@ -3842,14 +4192,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create team membership",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       },
       "get": {
         "description": "Use this endpoint to list a team's members using the team's ID. All team members have read access to this endpoint. Hide sensitive attributes from the response by toggling membership privacy in the Console.",
@@ -3940,14 +4297,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List team memberships",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       }
     },
     "/v1/teams/{teamId}/memberships/{membershipId}": {
@@ -4018,14 +4382,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get team membership",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       },
       "patch": {
         "description": "Modify the roles of a team member. Only team members with the owner role have access to this endpoint. Learn more about [roles and permissions](https://docs.nuvix.in/permissions).",
@@ -4104,14 +4475,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update membership",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       },
       "delete": {
         "description": "This endpoint allows a user to leave a team or for a team owner to delete the membership of any other team member. You can also use this endpoint to delete a user membership even if it is not accepted.",
@@ -4180,14 +4558,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete team membership",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       }
     },
     "/v1/teams/{teamId}/memberships/{membershipId}/status": {
@@ -4268,14 +4653,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update team membership status",
-        "tags": ["teams"]
+        "tags": [
+          "teams"
+        ]
       }
     },
     "/v1/account": {
@@ -4338,14 +4730,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create Account",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10,
           "configKey": "create_account"
@@ -4400,14 +4799,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get Account",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       },
       "delete": {
         "description": "Delete the currently logged in user.",
@@ -4458,14 +4864,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete Account",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       }
     },
     "/v1/account/prefs": {
@@ -4518,14 +4931,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get account preferences",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       },
       "patch": {
         "description": "Update currently logged in user account preferences. The object you pass is stored as is, and replaces any previous value. The maximum allowed prefs size is 64kB and throws error if exceeded.",
@@ -4586,14 +5006,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update preferences",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       }
     },
     "/v1/account/name": {
@@ -4656,14 +5083,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update name",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       }
     },
     "/v1/account/password": {
@@ -4726,14 +5160,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update password",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10
         }
@@ -4799,14 +5240,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update email",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       }
     },
     "/v1/account/phone": {
@@ -4869,14 +5317,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update phone",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       }
     },
     "/v1/account/status": {
@@ -4929,14 +5384,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update status",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       }
     },
     "/v1/account/verification": {
@@ -4999,14 +5461,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create email verification",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10,
           "key": "ip:{ip},userId:{param-userId}"
@@ -5071,14 +5540,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update email verification (confirmation)",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10,
           "key": "ip:{ip},userId:{param-userId}"
@@ -5135,14 +5611,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create phone verification",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10,
           "key": "ip:{ip},userId:{param-userId}"
@@ -5207,14 +5690,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update phone verification (confirmation)",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10,
           "key": "ip:{ip},userId:{param-userId}"
@@ -5293,14 +5783,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List identities",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       }
     },
     "/v1/account/identities/{identityId}": {
@@ -5362,14 +5859,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete identity",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       }
     },
     "/v1/account/mfa": {
@@ -5432,14 +5936,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update MFA",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       }
     },
     "/v1/account/mfa/factors": {
@@ -5492,14 +6003,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List factors",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       }
     },
     "/v1/account/mfa/authenticators/{type}": {
@@ -5561,14 +6079,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create authenticator",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       },
       "put": {
         "description": "Verify an authenticator app after adding it using the [add authenticator](/docs/references/cloud/client-web/account#createMfaAuthenticator) method.",
@@ -5638,14 +6163,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update authenticator (confirmation)",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       },
       "delete": {
         "description": "Delete an authenticator for a user by ID.",
@@ -5705,14 +6237,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete authenticator",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       }
     },
     "/v1/account/mfa/recovery-codes": {
@@ -5765,14 +6304,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create MFA recovery codes",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       },
       "patch": {
         "description": "Regenerate recovery codes that can be used as backup for MFA flow. Before regenerating codes, they must be first generated using [createMfaRecoveryCodes](/docs/references/cloud/client-web/account#createMfaRecoveryCodes) method. An OTP challenge is required to regenreate recovery codes.",
@@ -5823,14 +6369,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update MFA recovery codes (regenerate)",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       },
       "get": {
         "description": "Get recovery codes that can be used as backup for MFA flow. Before getting codes, they must be generated using [createMfaRecoveryCodes](/docs/references/cloud/client-web/account#createMfaRecoveryCodes) method. An OTP challenge is required to read recovery codes.",
@@ -5881,14 +6434,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List MFA recovery codes",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       }
     },
     "/v1/account/mfa/challenge": {
@@ -5951,14 +6511,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create MFA challenge",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10,
           "key": "ip:{ip},userId:{userId}"
@@ -6022,14 +6589,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update MFA challenge (confirmation)",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10,
           "key": "challengeId:{param-challengeId}"
@@ -6089,14 +6663,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create password recovery",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10
         }
@@ -6160,14 +6741,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update password recovery (confirmation)",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10,
           "key": "ip:{ip},userId:{param-userId}"
@@ -6234,14 +6822,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List Sessions",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       },
       "delete": {
         "description": "Delete all sessions from the user account and remove any sessions cookies from the end client.",
@@ -6292,14 +6887,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete sessions",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 100
         }
@@ -6363,14 +6965,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create email password session",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10,
           "key": "email:{param-email}",
@@ -6428,14 +7037,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get session",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       },
       "delete": {
         "description": "Logout the user. Use 'current' as the session ID to logout on this device, use a session ID to logout on another device. If you're looking to logout the user on all devices, use [Delete Sessions](https://docs.nuvix.in/references/cloud/client-web/account#deleteSessions) instead.",
@@ -6486,14 +7102,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete session",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 100
         }
@@ -6547,14 +7170,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update session",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10
         }
@@ -6620,14 +7250,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create email password session",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10,
           "key": "email:{param-email}",
@@ -6685,14 +7322,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create anonymous session",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 50,
           "key": "ip:{ip}",
@@ -6760,14 +7404,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create session",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10,
           "key": "ip:{ip},userId:{param-userId}",
@@ -6847,14 +7498,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create OAuth2 session",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 50,
           "key": "ip:{ip}",
@@ -6934,14 +7592,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create OAuth2 token",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 50,
           "key": "ip:{ip}"
@@ -7008,14 +7673,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create magic URL token",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 60
         }
@@ -7081,14 +7753,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create email token(OTP)",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10
         }
@@ -7154,14 +7833,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update magic URL session",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10,
           "key": "ip:{ip},userId:{param-userId}"
@@ -7228,14 +7914,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update phone session",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10,
           "key": "ip:{ip},userId:{param-userId}"
@@ -7300,14 +7993,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create phone token",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10
         }
@@ -7373,14 +8073,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create phone token",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 10
         }
@@ -7436,14 +8143,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create JWT",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 100,
           "key": "userId:{userId}"
@@ -7500,14 +8214,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create JWT",
-        "tags": ["account"],
+        "tags": [
+          "account"
+        ],
         "x-rateLimit": {
           "limit": 100,
           "key": "userId:{userId}"
@@ -7574,14 +8295,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create push target",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       }
     },
     "/v1/account/targets/{targetId}/push": {
@@ -7653,14 +8381,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update push target",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       },
       "delete": {
         "description": "Delete a push notification target for the currently logged in user. After deletion, the device will no longer receive push notifications. The target must exist and belong to the current user.",
@@ -7720,14 +8455,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete push target",
-        "tags": ["account"]
+        "tags": [
+          "account"
+        ]
       }
     },
     "/v1/databases/schemas": {
@@ -7743,7 +8485,11 @@
             "schema": {
               "example": "managed",
               "type": "string",
-              "enum": ["managed", "unmanaged", "document"]
+              "enum": [
+                "managed",
+                "unmanaged",
+                "document"
+              ]
             }
           },
           {
@@ -7801,14 +8547,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List schemas",
-        "tags": ["database"]
+        "tags": [
+          "database"
+        ]
       },
       "post": {
         "description": "Create a new schema in the database. Supports managed, unmanaged, and document schema types",
@@ -7869,14 +8622,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create schema",
-        "tags": ["database"]
+        "tags": [
+          "database"
+        ]
       }
     },
     "/v1/database/schemas": {
@@ -7892,7 +8652,11 @@
             "schema": {
               "example": "managed",
               "type": "string",
-              "enum": ["managed", "unmanaged", "document"]
+              "enum": [
+                "managed",
+                "unmanaged",
+                "document"
+              ]
             }
           },
           {
@@ -7950,14 +8714,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List schemas",
-        "tags": ["database"]
+        "tags": [
+          "database"
+        ]
       },
       "post": {
         "description": "Create a new schema in the database. Supports managed, unmanaged, and document schema types",
@@ -8018,14 +8789,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create schema",
-        "tags": ["database"]
+        "tags": [
+          "database"
+        ]
       }
     },
     "/v1/databases/schemas/{schemaId}": {
@@ -8087,14 +8865,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get schema",
-        "tags": ["database"]
+        "tags": [
+          "database"
+        ]
       }
     },
     "/v1/database/schemas/{schemaId}": {
@@ -8156,14 +8941,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get schema",
-        "tags": ["database"]
+        "tags": [
+          "database"
+        ]
       }
     },
     "/v1/avatars/initials": {
@@ -8249,14 +9041,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Generate avatar with initials",
-        "tags": ["avatars"]
+        "tags": [
+          "avatars"
+        ]
       }
     },
     "/v1/storage/buckets": {
@@ -8340,14 +9139,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List buckets",
-        "tags": ["storage"]
+        "tags": [
+          "storage"
+        ]
       },
       "post": {
         "description": "Create a new storage bucket.",
@@ -8408,14 +9214,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create bucket",
-        "tags": ["storage"]
+        "tags": [
+          "storage"
+        ]
       }
     },
     "/v1/storage/buckets/{bucketId}": {
@@ -8477,14 +9290,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get bucket",
-        "tags": ["storage"]
+        "tags": [
+          "storage"
+        ]
       },
       "put": {
         "description": "Update a storage bucket by its unique ID.",
@@ -8554,14 +9374,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update bucket",
-        "tags": ["storage"]
+        "tags": [
+          "storage"
+        ]
       },
       "delete": {
         "description": "Delete a storage bucket by its unique ID.",
@@ -8621,14 +9448,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete bucket",
-        "tags": ["storage"]
+        "tags": [
+          "storage"
+        ]
       }
     },
     "/v1/storage/usage": {
@@ -8644,7 +9478,11 @@
             "schema": {
               "default": "30d",
               "type": "string",
-              "enum": ["24h", "30d", "90d"]
+              "enum": [
+                "24h",
+                "30d",
+                "90d"
+              ]
             }
           },
           {
@@ -8692,14 +9530,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get storage usage stats",
-        "tags": ["storage"]
+        "tags": [
+          "storage"
+        ]
       }
     },
     "/v1/storage/{bucket}/usage": {
@@ -8724,7 +9569,11 @@
             "schema": {
               "default": "30d",
               "type": "string",
-              "enum": ["24h", "30d", "90d"]
+              "enum": [
+                "24h",
+                "30d",
+                "90d"
+              ]
             }
           },
           {
@@ -8772,14 +9621,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get bucket usage stats",
-        "tags": ["storage"]
+        "tags": [
+          "storage"
+        ]
       }
     },
     "/v1/storage/buckets/{bucketId}/files": {
@@ -8872,14 +9728,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List files",
-        "tags": ["storage"]
+        "tags": [
+          "storage"
+        ]
       },
       "post": {
         "description": "Create a new file. Before using this route, you should create a new bucket resource using either a [server integration](https://docs.nuvix.in/server/storage#storageCreateBucket) API or directly from your Nuvix console.\n\nLarger files should be uploaded using multiple requests with the [content-range](https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Range) header to send a partial request with a maximum supported chunk of `5MB`. The `content-range` header values should always be in bytes.\n\nWhen the first request is sent, the server will return the **File** object, and the subsequent part request must include the file's **id** in `x-nuvix-id` header to allow the server to know that the partial upload is for the existing file and not for a new one.\n\nIf you're creating a new file using one of the Nuvix SDKs, all the chunking logic will be managed by the SDK internally.",
@@ -8928,7 +9791,10 @@
                     "format": "binary"
                   }
                 },
-                "required": ["fileId", "file"]
+                "required": [
+                  "fileId",
+                  "file"
+                ]
               }
             }
           }
@@ -8968,14 +9834,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create file",
-        "tags": ["storage"],
+        "tags": [
+          "storage"
+        ],
         "x-rateLimit": {
           "limit": 60,
           "ttl": 60,
@@ -9051,14 +9924,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get file",
-        "tags": ["storage"]
+        "tags": [
+          "storage"
+        ]
       },
       "put": {
         "description": "Update a file by its unique ID. Only users with write permissions have access to update this resource.",
@@ -9137,14 +10017,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update file",
-        "tags": ["storage"],
+        "tags": [
+          "storage"
+        ],
         "x-rateLimit": {
           "limit": 60,
           "ttl": 60,
@@ -9218,14 +10105,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete file",
-        "tags": ["storage"],
+        "tags": [
+          "storage"
+        ],
         "x-rateLimit": {
           "limit": 60,
           "ttl": 60,
@@ -9413,14 +10307,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get file preview",
-        "tags": ["storage"]
+        "tags": [
+          "storage"
+        ]
       }
     },
     "/v1/storage/buckets/{bucketId}/files/{fileId}/download": {
@@ -9503,14 +10404,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get file for download",
-        "tags": ["storage"]
+        "tags": [
+          "storage"
+        ]
       }
     },
     "/v1/storage/buckets/{bucketId}/files/{fileId}/view": {
@@ -9593,14 +10501,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get file for view",
-        "tags": ["storage"]
+        "tags": [
+          "storage"
+        ]
       }
     },
     "/v1/storage/buckets/{bucketId}/files/{fileId}/push": {
@@ -9671,14 +10586,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get file for push notification",
-        "tags": ["storage"]
+        "tags": [
+          "storage"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/{tableId}": {
@@ -9759,14 +10681,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Query table data",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "post": {
         "description": "Insert one or more records into a specific table",
@@ -9840,14 +10769,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Insert data into table",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "patch": {
         "description": "Update existing records in a specific table with optional pagination and force flag",
@@ -9945,14 +10881,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update table data",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "delete": {
         "description": "Delete records from a specific table with optional pagination and force flag",
@@ -10039,14 +10982,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete table data",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/tables/{tableId}": {
@@ -10127,14 +11077,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Query table data",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "post": {
         "description": "Insert one or more records into a specific table",
@@ -10208,14 +11165,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Insert data into table",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "patch": {
         "description": "Update existing records in a specific table with optional pagination and force flag",
@@ -10313,14 +11277,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update table data",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "delete": {
         "description": "Delete records from a specific table with optional pagination and force flag",
@@ -10407,14 +11378,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete table data",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/public/{tableId}": {
@@ -10495,14 +11473,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Query table data",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "post": {
         "description": "Insert one or more records into a specific table",
@@ -10576,14 +11561,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Insert data into table",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "patch": {
         "description": "Update existing records in a specific table with optional pagination and force flag",
@@ -10681,14 +11673,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update table data",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "delete": {
         "description": "Delete records from a specific table with optional pagination and force flag",
@@ -10775,14 +11774,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete table data",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/public/tables/{tableId}": {
@@ -10863,14 +11869,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Query table data",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "post": {
         "description": "Insert one or more records into a specific table",
@@ -10944,14 +11957,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Insert data into table",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "patch": {
         "description": "Update existing records in a specific table with optional pagination and force flag",
@@ -11049,14 +12069,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update table data",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "delete": {
         "description": "Delete records from a specific table with optional pagination and force flag",
@@ -11143,14 +12170,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete table data",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/fn/{functionId}": {
@@ -11231,14 +12265,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Call database function",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/rpc/{functionId}": {
@@ -11319,14 +12360,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Call database function",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/public/fn/{functionId}": {
@@ -11407,14 +12455,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Call database function",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/public/rpc/{functionId}": {
@@ -11495,14 +12550,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Call database function",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/tables/{tableId}/permissions": {
@@ -11577,14 +12639,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update table permissions",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "get": {
         "description": "Retrieve permissions for a specific table",
@@ -11647,14 +12716,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get table permissions",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/public/tables/{tableId}/permissions": {
@@ -11729,14 +12805,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update table permissions",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "get": {
         "description": "Retrieve permissions for a specific table",
@@ -11799,14 +12882,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get table permissions",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/tables/{tableId}/{rowId}/permissions": {
@@ -11890,14 +12980,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update row permissions",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "get": {
         "description": "Retrieve permissions for a specific row in a table",
@@ -11969,14 +13066,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get row permissions",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/public/tables/{tableId}/{rowId}/permissions": {
@@ -12060,14 +13164,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update row permissions",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "get": {
         "description": "Retrieve permissions for a specific row in a table",
@@ -12139,14 +13250,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get row permissions",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/messaging/messages/email": {
@@ -12209,14 +13327,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create email",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/messages/sms": {
@@ -12279,14 +13404,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create SMS",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/messages/push": {
@@ -12349,14 +13481,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create push notification",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/messages": {
@@ -12440,14 +13579,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List messages",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/messages/{messageId}": {
@@ -12509,14 +13655,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get message",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       },
       "delete": {
         "description": "Delete a message. If the message is not a draft or scheduled, but has been sent, this will not recall the message.",
@@ -12569,14 +13722,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete message",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/messages/{messageId}/targets": {
@@ -12660,14 +13820,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List message targets",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/messages/email/{messageId}": {
@@ -12739,14 +13906,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update email",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/messages/sms/{messageId}": {
@@ -12818,14 +13992,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update SMS",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/messages/push/{messageId}": {
@@ -12897,14 +14078,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update push notification",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/mailgun": {
@@ -12967,14 +14155,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create Mailgun provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/sendgrid": {
@@ -13037,14 +14232,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create Sendgrid provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/smtp": {
@@ -13107,14 +14309,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create SMTP provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/msg91": {
@@ -13177,14 +14386,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create Msg91 provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/telesign": {
@@ -13247,14 +14463,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create Telesign provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/textmagic": {
@@ -13317,14 +14540,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create Textmagic provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/twilio": {
@@ -13387,14 +14617,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create Twilio provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/vonage": {
@@ -13457,14 +14694,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create Vonage provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/fcm": {
@@ -13527,14 +14771,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create FCM provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/apns": {
@@ -13597,14 +14848,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create APNS provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers": {
@@ -13688,14 +14946,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List providers",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/{providerId}": {
@@ -13757,14 +15022,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       },
       "delete": {
         "description": "Delete a provider by its unique ID.",
@@ -13817,14 +15089,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/mailgun/{providerId}": {
@@ -13896,14 +15175,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update Mailgun provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/sendgrid/{providerId}": {
@@ -13975,14 +15261,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update Sendgrid provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/smtp/{providerId}": {
@@ -14054,14 +15347,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update SMTP provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/msg91/{providerId}": {
@@ -14133,14 +15433,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update Msg91 provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/telesign/{providerId}": {
@@ -14212,14 +15519,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update Telesign provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/textmagic/{providerId}": {
@@ -14291,14 +15605,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update Textmagic provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/twilio/{providerId}": {
@@ -14370,14 +15691,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update Twilio provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/vonage/{providerId}": {
@@ -14449,14 +15777,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update Vonage provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/fcm/{providerId}": {
@@ -14528,14 +15863,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update FCM provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/providers/apns/{providerId}": {
@@ -14607,14 +15949,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update APNS provider",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/topics": {
@@ -14677,14 +16026,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create topic",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       },
       "get": {
         "description": "Get a list of all topics from the current Nuvix project.",
@@ -14766,14 +16122,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List topics",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/topics/{topicId}": {
@@ -14835,14 +16198,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get topic",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       },
       "patch": {
         "description": "Update a topic by its unique ID.",
@@ -14912,14 +16282,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update topic",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       },
       "delete": {
         "description": "Delete a topic by its unique ID.",
@@ -14972,14 +16349,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete topic",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/topics/{topicId}/subscribers": {
@@ -15041,14 +16425,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create subscriber",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       },
       "get": {
         "description": "Get a list of all subscribers from the current Nuvix project.",
@@ -15139,14 +16530,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List subscribers",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/v1/messaging/topics/{topicId}/subscribers/{subscriberId}": {
@@ -15199,14 +16597,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get subscriber",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       },
       "delete": {
         "description": "Delete a subscriber by its unique ID.",
@@ -15250,14 +16655,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete subscriber",
-        "tags": ["messaging"]
+        "tags": [
+          "messaging"
+        ]
       }
     },
     "/": {
@@ -15302,13 +16714,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["App"]
+        "tags": [
+          "App"
+        ]
       }
     },
     "/favicon.ico": {
@@ -15353,13 +16772,20 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
-        "tags": ["App"]
+        "tags": [
+          "App"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections": {
@@ -15452,14 +16878,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List collections",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "post": {
         "description": "Create a new Collection. Before using this route, you should create a new database resource using either a [server integration](https://docs.nuvix.in/server/databases#databasesCreateCollection) API or directly from your database console.",
@@ -15529,14 +16962,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create collection",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}": {
@@ -15607,14 +17047,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get collection",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "put": {
         "description": "Update a collection by its unique ID.",
@@ -15693,14 +17140,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update collection",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "delete": {
         "description": "Delete a collection by its unique ID. Only users with write permissions have access to delete this resource.",
@@ -15762,14 +17216,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete collection",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/usage": {
@@ -15848,14 +17309,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get collection usage stats",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes": {
@@ -15948,14 +17416,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List attributes",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/string": {
@@ -16036,14 +17511,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create string attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/email": {
@@ -16124,14 +17606,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create email attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/enum": {
@@ -16212,14 +17701,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create enum attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/ip": {
@@ -16300,14 +17796,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create IP address attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/url": {
@@ -16388,14 +17891,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create URL attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/integer": {
@@ -16476,14 +17986,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create integer attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/float": {
@@ -16564,14 +18081,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create float attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/boolean": {
@@ -16652,14 +18176,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create boolean attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/datetime": {
@@ -16740,14 +18271,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create datetime attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/timestamptz": {
@@ -16828,14 +18366,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create datetime attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/relationship": {
@@ -16916,14 +18461,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create relationship attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/{key}": {
@@ -17003,14 +18555,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "delete": {
         "description": "Deletes an attribute.",
@@ -17081,14 +18640,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/string/{key}": {
@@ -17178,14 +18744,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update string attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/email/{key}": {
@@ -17275,14 +18848,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update email attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/enum/{key}": {
@@ -17372,14 +18952,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update enum attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/ip/{key}": {
@@ -17469,14 +19056,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update IP address attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/url/{key}": {
@@ -17566,14 +19160,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update URL attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/integer/{key}": {
@@ -17663,14 +19264,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update integer attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/float/{key}": {
@@ -17760,14 +19368,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update float attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/boolean/{key}": {
@@ -17857,14 +19472,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update boolean attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/datetime/{key}": {
@@ -17954,14 +19576,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update DateTime attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/timestamptz/{key}": {
@@ -18051,14 +19680,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update DateTime attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/attributes/relationship/{key}": {
@@ -18148,14 +19784,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update relationship attribute",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/indexes": {
@@ -18236,14 +19879,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create index",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "get": {
         "description": "List indexes in the collection.",
@@ -18334,14 +19984,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List indexes",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/indexes/{key}": {
@@ -18421,14 +20078,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get index",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "delete": {
         "description": "Delete an index.",
@@ -18499,14 +20163,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete index",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       }
     },
     "/v1/schemas/{schemaId}/collections/{collectionId}/documents": {
@@ -18599,14 +20270,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "List documents",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "post": {
         "description": "Create a new Document. Before using this route, you should create a new collection resource using either a [server integration](https://docs.nuvix.in/server/databases#databasesCreateCollection) API or directly from your database console.",
@@ -18685,14 +20363,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Create document",
-        "tags": ["schemas"],
+        "tags": [
+          "schemas"
+        ],
         "x-rateLimit": {
           "limit": 120,
           "ttl": 60
@@ -18788,14 +20473,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Get document",
-        "tags": ["schemas"]
+        "tags": [
+          "schemas"
+        ]
       },
       "patch": {
         "description": "Update a document by its unique ID. Using the patch method you can pass only specific fields that will get updated.",
@@ -18883,14 +20575,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Update document",
-        "tags": ["schemas"],
+        "tags": [
+          "schemas"
+        ],
         "x-rateLimit": {
           "limit": 120,
           "ttl": 60
@@ -18965,14 +20664,21 @@
                       "description": "API version"
                     }
                   },
-                  "required": ["code", "type", "message", "version"]
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
                 }
               }
             }
           }
         },
         "summary": "Delete document",
-        "tags": ["schemas"],
+        "tags": [
+          "schemas"
+        ],
         "x-rateLimit": {
           "limit": 60,
           "ttl": 60
@@ -19483,7 +21189,9 @@
             "description": "User Status. To activate the user pass `true` and to block the user pass `false`."
           }
         },
-        "required": ["status"]
+        "required": [
+          "status"
+        ]
       },
       "UpdateUserLabelDTO": {
         "type": "object",
@@ -19508,7 +21216,9 @@
             "maxLength": 128
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "UpdateUserPasswordDTO": {
         "type": "object",
@@ -19519,7 +21229,9 @@
             "minLength": 8
           }
         },
-        "required": ["password"]
+        "required": [
+          "password"
+        ]
       },
       "UpdateUserEmailDTO": {
         "type": "object",
@@ -19530,7 +21242,9 @@
             "format": "email"
           }
         },
-        "required": ["email"]
+        "required": [
+          "email"
+        ]
       },
       "UpdateUserPhoneDTO": {
         "type": "object",
@@ -19540,7 +21254,9 @@
             "description": "User phone number."
           }
         },
-        "required": ["phone"]
+        "required": [
+          "phone"
+        ]
       },
       "CreateJwtDTO": {
         "type": "object",
@@ -19558,7 +21274,9 @@
             "maximum": 3600
           }
         },
-        "required": ["duration"]
+        "required": [
+          "duration"
+        ]
       },
       "JWTModel": {
         "type": "object",
@@ -19586,7 +21304,13 @@
             "type": "object"
           }
         },
-        "required": ["jwt", "$id", "$createdAt", "$updatedAt", "$permissions"]
+        "required": [
+          "jwt",
+          "$id",
+          "$createdAt",
+          "$updatedAt",
+          "$permissions"
+        ]
       },
       "MembershipModel": {
         "type": "object",
@@ -19690,7 +21414,10 @@
             "minimum": 60
           }
         },
-        "required": ["length", "expire"]
+        "required": [
+          "length",
+          "expire"
+        ]
       },
       "TokenModel": {
         "type": "object",
@@ -19901,7 +21628,9 @@
             "description": "User email verification status."
           }
         },
-        "required": ["emailVerification"]
+        "required": [
+          "emailVerification"
+        ]
       },
       "UpdateUserPoneVerificationDTO": {
         "type": "object",
@@ -19911,7 +21640,9 @@
             "description": "User phone verification status."
           }
         },
-        "required": ["phoneVerification"]
+        "required": [
+          "phoneVerification"
+        ]
       },
       "SessionModel": {
         "type": "object",
@@ -20080,7 +21811,11 @@
           "providerType": {
             "type": "string",
             "description": "The target provider type. Can be one of the following: `email`, `sms` or `push`.",
-            "enum": ["email", "push", "sms"]
+            "enum": [
+              "email",
+              "push",
+              "sms"
+            ]
           },
           "targetId": {
             "type": "string",
@@ -20102,7 +21837,12 @@
             "maxLength": 128
           }
         },
-        "required": ["providerType", "targetId", "identifier", "name"]
+        "required": [
+          "providerType",
+          "targetId",
+          "identifier",
+          "name"
+        ]
       },
       "UpdateTargetDTO": {
         "type": "object",
@@ -20132,7 +21872,9 @@
             "description": "Enable or disable MFA."
           }
         },
-        "required": ["mfa"]
+        "required": [
+          "mfa"
+        ]
       },
       "MFAFactorsModel": {
         "type": "object",
@@ -20245,7 +21987,10 @@
             "maxLength": 128
           }
         },
-        "required": ["teamId", "name"]
+        "required": [
+          "teamId",
+          "name"
+        ]
       },
       "TeamModel": {
         "type": "object",
@@ -20344,7 +22089,9 @@
             "maxLength": 128
           }
         },
-        "required": ["roles"]
+        "required": [
+          "roles"
+        ]
       },
       "UpdateMembershipDTO": {
         "type": "object",
@@ -20357,7 +22104,9 @@
             }
           }
         },
-        "required": ["roles"]
+        "required": [
+          "roles"
+        ]
       },
       "UpdateMembershipStatusDTO": {
         "type": "object",
@@ -20372,7 +22121,10 @@
             "maxLength": 256
           }
         },
-        "required": ["userId", "secret"]
+        "required": [
+          "userId",
+          "secret"
+        ]
       },
       "CreateAccountDTO": {
         "type": "object",
@@ -20399,7 +22151,11 @@
             "maxLength": 128
           }
         },
-        "required": ["userId", "email", "password"]
+        "required": [
+          "userId",
+          "email",
+          "password"
+        ]
       },
       "AccountModel": {
         "type": "object",
@@ -20529,7 +22285,9 @@
             "description": "User name. Max length: 128 chars."
           }
         },
-        "required": ["name"]
+        "required": [
+          "name"
+        ]
       },
       "UpdatePasswordDTO": {
         "type": "object",
@@ -20545,7 +22303,10 @@
             "description": "Current user password. Must be at least 8 chars."
           }
         },
-        "required": ["password", "oldPassword"]
+        "required": [
+          "password",
+          "oldPassword"
+        ]
       },
       "UpdateEmailDTO": {
         "type": "object",
@@ -20562,7 +22323,10 @@
             "maxLength": 256
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "UpdatePhoneDTO": {
         "type": "object",
@@ -20578,7 +22342,10 @@
             "maxLength": 256
           }
         },
-        "required": ["phone", "password"]
+        "required": [
+          "phone",
+          "password"
+        ]
       },
       "CreateEmailVerificationDTO": {
         "type": "object",
@@ -20602,7 +22369,10 @@
             "description": "Valid verification token."
           }
         },
-        "required": ["userId", "secret"]
+        "required": [
+          "userId",
+          "secret"
+        ]
       },
       "UpdatePhoneVerificationDTO": {
         "type": "object",
@@ -20616,7 +22386,10 @@
             "description": "Valid verification token."
           }
         },
-        "required": ["userId", "secret"]
+        "required": [
+          "userId",
+          "secret"
+        ]
       },
       "UpdateAccountMfaDTO": {
         "type": "object",
@@ -20626,7 +22399,9 @@
             "description": "Enable or disable MFA."
           }
         },
-        "required": ["mfa"]
+        "required": [
+          "mfa"
+        ]
       },
       "MFAChallengeModel": {
         "type": "object",
@@ -20715,7 +22490,9 @@
             "description": "Valid verification token."
           }
         },
-        "required": ["otp"]
+        "required": [
+          "otp"
+        ]
       },
       "CreateMfaChallengeDTO": {
         "type": "object",
@@ -20725,7 +22502,9 @@
             "description": "Factor used for verification. Must be one of following: `email`, `phone`, `totp`, `recoveryCode`."
           }
         },
-        "required": ["factor"]
+        "required": [
+          "factor"
+        ]
       },
       "VerifyMfaChallengeDTO": {
         "type": "object",
@@ -20739,7 +22518,10 @@
             "description": "Valid verification token."
           }
         },
-        "required": ["challengeId", "otp"]
+        "required": [
+          "challengeId",
+          "otp"
+        ]
       },
       "CreateRecoveryDTO": {
         "type": "object",
@@ -20755,7 +22537,10 @@
             "format": "uri"
           }
         },
-        "required": ["email", "url"]
+        "required": [
+          "email",
+          "url"
+        ]
       },
       "UpdateRecoveryDTO": {
         "type": "object",
@@ -20773,7 +22558,11 @@
             "description": "New user password. Must be between 8 and 256 chars."
           }
         },
-        "required": ["userId", "secret", "password"]
+        "required": [
+          "userId",
+          "secret",
+          "password"
+        ]
       },
       "CreateEmailSessionDTO": {
         "type": "object",
@@ -20789,7 +22578,10 @@
             "minLength": 8
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "CreateSessionDTO": {
         "type": "object",
@@ -20805,7 +22597,10 @@
             "maxLength": 256
           }
         },
-        "required": ["userId", "secret"]
+        "required": [
+          "userId",
+          "secret"
+        ]
       },
       "CreateMagicURLTokenDTO": {
         "type": "object",
@@ -20830,7 +22625,10 @@
             "default": false
           }
         },
-        "required": ["userId", "email"]
+        "required": [
+          "userId",
+          "email"
+        ]
       },
       "CreateEmailTokenDTO": {
         "type": "object",
@@ -20850,7 +22648,10 @@
             "default": false
           }
         },
-        "required": ["userId", "email"]
+        "required": [
+          "userId",
+          "email"
+        ]
       },
       "CreatePhoneTokenDTO": {
         "type": "object",
@@ -20864,7 +22665,10 @@
             "description": "Unique Id. Choose a custom ID or generate a random ID with `ID.unique()`. Valid chars are a-z, A-Z, 0-9, period, hyphen, and underscore. Can\\'t start with a special char. Max length is 36 chars. If the email address has never been used, a new account is created using the provided userId. Otherwise, if the email address is already attached to an account, the user ID is ignored."
           }
         },
-        "required": ["phone", "userId"]
+        "required": [
+          "phone",
+          "userId"
+        ]
       },
       "CreatePushTargetDTO": {
         "type": "object",
@@ -20882,7 +22686,10 @@
             "description": "Provider ID. Message will be sent to this target from the specified provider ID. If no provider ID is set the first setup provider will be used."
           }
         },
-        "required": ["targetId", "identifier"]
+        "required": [
+          "targetId",
+          "identifier"
+        ]
       },
       "UpdatePushTargetDTO": {
         "type": "object",
@@ -20892,7 +22699,9 @@
             "description": "The target identifier (token, email, phone etc.)"
           }
         },
-        "required": ["identifier"]
+        "required": [
+          "identifier"
+        ]
       },
       "SchemaModel": {
         "type": "object",
@@ -20952,13 +22761,20 @@
             "maxLength": 255
           },
           "type": {
-            "enum": ["managed", "unmanaged", "document"],
+            "enum": [
+              "managed",
+              "unmanaged",
+              "document"
+            ],
             "type": "string",
             "description": "Schema type, either managed, unmanaged or document",
             "example": "managed"
           }
         },
-        "required": ["name", "type"]
+        "required": [
+          "name",
+          "type"
+        ]
       },
       "BucketModel": {
         "type": "object",
@@ -21045,7 +22861,11 @@
             "type": "string",
             "description": "Compression algorithm choosen for compression.",
             "default": "none",
-            "enum": ["none", "gzip", "zstd"]
+            "enum": [
+              "none",
+              "gzip",
+              "zstd"
+            ]
           },
           "bucketId": {
             "type": "string",
@@ -21115,7 +22935,11 @@
             "type": "string",
             "description": "Compression algorithm choosen for compression.",
             "default": "none",
-            "enum": ["none", "gzip", "zstd"]
+            "enum": [
+              "none",
+              "gzip",
+              "zstd"
+            ]
           },
           "name": {
             "type": "string",
@@ -21396,7 +23220,9 @@
             }
           }
         },
-        "required": ["permissions"]
+        "required": [
+          "permissions"
+        ]
       },
       "CreateEmailMessageDTO": {
         "type": "object",
@@ -21437,7 +23263,10 @@
             "description": "Is content of type HTML"
           }
         },
-        "required": ["subject", "content"]
+        "required": [
+          "subject",
+          "content"
+        ]
       },
       "MessageModel": {
         "type": "object",
@@ -21532,7 +23361,9 @@
             "maxLength": 64230
           }
         },
-        "required": ["content"]
+        "required": [
+          "content"
+        ]
       },
       "CreatePushMessageDTO": {
         "type": "object",
@@ -21765,7 +23596,10 @@
             "description": "Set as enabled."
           }
         },
-        "required": ["providerId", "name"]
+        "required": [
+          "providerId",
+          "name"
+        ]
       },
       "ProviderModel": {
         "type": "object",
@@ -21865,7 +23699,11 @@
             "description": "Set as enabled."
           }
         },
-        "required": ["apiKey", "providerId", "name"]
+        "required": [
+          "apiKey",
+          "providerId",
+          "name"
+        ]
       },
       "CreateSMTPProviderDTO": {
         "type": "object",
@@ -21937,7 +23775,11 @@
             "description": "Set as enabled."
           }
         },
-        "required": ["host", "providerId", "name"]
+        "required": [
+          "host",
+          "providerId",
+          "name"
+        ]
       },
       "CreateMsg91ProviderDTO": {
         "type": "object",
@@ -21968,7 +23810,10 @@
             "description": "Set as enabled."
           }
         },
-        "required": ["providerId", "name"]
+        "required": [
+          "providerId",
+          "name"
+        ]
       },
       "CreateTelesignProviderDTO": {
         "type": "object",
@@ -21999,7 +23844,10 @@
             "description": "Set as enabled."
           }
         },
-        "required": ["providerId", "name"]
+        "required": [
+          "providerId",
+          "name"
+        ]
       },
       "CreateTextmagicProviderDTO": {
         "type": "object",
@@ -22030,7 +23878,10 @@
             "description": "Set as enabled."
           }
         },
-        "required": ["providerId", "name"]
+        "required": [
+          "providerId",
+          "name"
+        ]
       },
       "CreateTwilioProviderDTO": {
         "type": "object",
@@ -22061,7 +23912,10 @@
             "description": "Set as enabled."
           }
         },
-        "required": ["providerId", "name"]
+        "required": [
+          "providerId",
+          "name"
+        ]
       },
       "CreateVonageProviderDTO": {
         "type": "object",
@@ -22092,7 +23946,10 @@
             "description": "Set as enabled."
           }
         },
-        "required": ["providerId", "name"]
+        "required": [
+          "providerId",
+          "name"
+        ]
       },
       "CreateFcmProviderDTO": {
         "type": "object",
@@ -22115,7 +23972,10 @@
             "description": "Set as enabled."
           }
         },
-        "required": ["providerId", "name"]
+        "required": [
+          "providerId",
+          "name"
+        ]
       },
       "CreateApnsProviderDTO": {
         "type": "object",
@@ -22155,7 +24015,10 @@
             "description": "Set as enabled."
           }
         },
-        "required": ["providerId", "name"]
+        "required": [
+          "providerId",
+          "name"
+        ]
       },
       "UpdateMailgunProviderDTO": {
         "type": "object",
@@ -22512,7 +24375,10 @@
             }
           }
         },
-        "required": ["topicId", "name"]
+        "required": [
+          "topicId",
+          "name"
+        ]
       },
       "TopicModel": {
         "type": "object",
@@ -22810,7 +24676,12 @@
             "default": true
           }
         },
-        "required": ["collectionId", "name", "documentSecurity", "enabled"]
+        "required": [
+          "collectionId",
+          "name",
+          "documentSecurity",
+          "enabled"
+        ]
       },
       "UpdateCollectionDTO": {
         "type": "object",
@@ -22983,7 +24854,10 @@
             "default": false
           }
         },
-        "required": ["key", "size"]
+        "required": [
+          "key",
+          "size"
+        ]
       },
       "AttributeStringModel": {
         "type": "object",
@@ -23095,7 +24969,9 @@
             "default": false
           }
         },
-        "required": ["key"]
+        "required": [
+          "key"
+        ]
       },
       "AttributeEmailModel": {
         "type": "object",
@@ -23223,7 +25099,9 @@
             "default": false
           }
         },
-        "required": ["key"]
+        "required": [
+          "key"
+        ]
       },
       "AttributeEnumModel": {
         "type": "object",
@@ -23350,7 +25228,9 @@
             "default": false
           }
         },
-        "required": ["key"]
+        "required": [
+          "key"
+        ]
       },
       "AttributeIPModel": {
         "type": "object",
@@ -23470,7 +25350,9 @@
             "default": false
           }
         },
-        "required": ["key"]
+        "required": [
+          "key"
+        ]
       },
       "AttributeURLModel": {
         "type": "object",
@@ -23596,7 +25478,9 @@
             "default": false
           }
         },
-        "required": ["key"]
+        "required": [
+          "key"
+        ]
       },
       "AttributeIntegerModel": {
         "type": "object",
@@ -23721,7 +25605,9 @@
             "default": false
           }
         },
-        "required": ["key"]
+        "required": [
+          "key"
+        ]
       },
       "AttributeFloatModel": {
         "type": "object",
@@ -23839,7 +25725,9 @@
             "default": false
           }
         },
-        "required": ["key"]
+        "required": [
+          "key"
+        ]
       },
       "AttributeBooleanModel": {
         "type": "object",
@@ -23946,7 +25834,9 @@
             "default": false
           }
         },
-        "required": ["key"]
+        "required": [
+          "key"
+        ]
       },
       "AttributeDatetimeModel": {
         "type": "object",
@@ -24047,12 +25937,21 @@
         "properties": {
           "type": {
             "description": "Relation type",
-            "enum": ["oneToOne", "oneToMany", "manyToOne", "manyToMany"],
+            "enum": [
+              "oneToOne",
+              "oneToMany",
+              "manyToOne",
+              "manyToMany"
+            ],
             "type": "string"
           },
           "onDelete": {
             "description": "Constraints option",
-            "enum": ["cascade", "setNull", "restrict"],
+            "enum": [
+              "cascade",
+              "setNull",
+              "restrict"
+            ],
             "type": "string"
           },
           "relatedCollectionId": {
@@ -24073,7 +25972,12 @@
             "description": "Two Way Attribute Key."
           }
         },
-        "required": ["type", "onDelete", "relatedCollectionId", "key"]
+        "required": [
+          "type",
+          "onDelete",
+          "relatedCollectionId",
+          "key"
+        ]
       },
       "AttributeRelationshipModel": {
         "type": "object",
@@ -24131,7 +26035,12 @@
             "default": null
           },
           "relationType": {
-            "enum": ["oneToOne", "oneToMany", "manyToOne", "manyToMany"],
+            "enum": [
+              "oneToOne",
+              "oneToMany",
+              "manyToOne",
+              "manyToMany"
+            ],
             "type": "string"
           },
           "twoWay": {
@@ -24142,7 +26051,11 @@
             "type": "string"
           },
           "onDelete": {
-            "enum": ["cascade", "setNull", "restrict"],
+            "enum": [
+              "cascade",
+              "setNull",
+              "restrict"
+            ],
             "type": "string"
           },
           "side": {
@@ -24385,7 +26298,11 @@
         "properties": {
           "onDelete": {
             "description": "Constraints option",
-            "enum": ["cascade", "setNull", "restrict"],
+            "enum": [
+              "cascade",
+              "setNull",
+              "restrict"
+            ],
             "type": "string"
           },
           "newKey": {
@@ -24399,7 +26316,12 @@
         "properties": {
           "type": {
             "description": "Index type.",
-            "enum": ["unique", "key", "fulltext", "spatial"],
+            "enum": [
+              "unique",
+              "key",
+              "fulltext",
+              "spatial"
+            ],
             "type": "string"
           },
           "orders": {
@@ -24407,7 +26329,11 @@
             "description": "Array of index orders.",
             "items": {
               "type": "string",
-              "enum": ["ASC", "DESC", null]
+              "enum": [
+                "ASC",
+                "DESC",
+                null
+              ]
             }
           },
           "key": {
@@ -24422,7 +26348,12 @@
             }
           }
         },
-        "required": ["type", "orders", "key", "attributes"]
+        "required": [
+          "type",
+          "orders",
+          "key",
+          "attributes"
+        ]
       },
       "DocumentModel": {
         "type": "object",
@@ -24486,7 +26417,11 @@
             }
           }
         },
-        "required": ["documentId", "data", "permissions"]
+        "required": [
+          "documentId",
+          "data",
+          "permissions"
+        ]
       },
       "UpdateDocumentDTO": {
         "type": "object",

@@ -15,6 +15,7 @@ import { loadPackage } from '@nestjs/common/utils/load-package.util.js'
 import { ClassTransformOptions } from '@nestjs/common/interfaces/external/class-transform-options.interface'
 import { TransformerPackage } from '@nestjs/common/interfaces/external/transformer-package.interface'
 import { Doc } from '@nuvix/db'
+import { Reflector } from '@nestjs/core'
 
 export const CLASS_SERIALIZER_OPTIONS = 'CLASS_SERIALIZER_OPTIONS'
 
@@ -42,7 +43,7 @@ export interface ClassSerializerInterceptorOptions
 @Injectable()
 export class ResponseInterceptor implements NestInterceptor {
   constructor(
-    @Inject(REFLECTOR) protected readonly reflector: any,
+    @Inject(REFLECTOR) protected readonly reflector: Reflector,
     @Optional()
     protected readonly defaultOptions: ClassSerializerInterceptorOptions = {
       excludePrefixes: ['$tenant'],
