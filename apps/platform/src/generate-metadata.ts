@@ -3,7 +3,7 @@ import { ReadonlyVisitor } from '@nestjs/swagger/dist/plugin/visitors/readonly.v
 import * as fs from 'fs'
 import path from 'path'
 
-const outputFile = path.resolve('apps/platform/src/metadata.ts')
+const outputFile = path.resolve('src/metadata.ts')
 
 const generator = new PluginMetadataGenerator()
 generator.generate({
@@ -13,13 +13,13 @@ generator.generate({
       classTransformerShim: true,
       classValidatorShim: true,
       introspectComments: true,
-      pathToSource: 'apps/platform/src',
+      pathToSource: 'src',
       esmCompatible: true,
     }),
   ],
-  outputDir: 'apps/platform/src',
+  outputDir: 'src',
   watch: false,
-  tsconfigPath: 'apps/platform/tsconfig.app.json',
+  tsconfigPath: 'tsconfig.app.json',
 })
 
 // --- Post-process step ---

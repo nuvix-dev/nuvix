@@ -186,7 +186,7 @@ export default async () => {
                 type: () => Date,
                 description: 'User update date in ISO 8601 format.',
               },
-              $permissions: { required: true, type: () => Object },
+              $permissions: { required: true, type: () => [String] },
             },
             BaseListModel: { total: { required: true, type: () => Number } },
           },

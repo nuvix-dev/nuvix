@@ -66,7 +66,7 @@ export class TeamsController {
   @Get('', {
     summary: 'List teams',
     scopes: ['teams.read'],
-    model: Models.TEAM,
+    model: { type: Models.TEAM, list: true },
     sdk: {
       name: 'list',
       descMd: '/docs/references/teams/list-teams.md',

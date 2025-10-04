@@ -45,7 +45,7 @@ export default async () => {
                 type: () => Date,
                 description: 'User update date in ISO 8601 format.',
               },
-              $permissions: { required: true, type: () => Object },
+              $permissions: { required: true, type: () => [String] },
             },
             BaseListModel: { total: { required: true, type: () => Number } },
           },
@@ -3913,9 +3913,25 @@ export default async () => {
           import('./account/sessions/DTO/token.dto.js'),
           {
             CreateOAuth2TokenDTO: {
-              success: { required: false, type: () => String, format: 'uri' },
-              failure: { required: false, type: () => String, format: 'uri' },
-              scopes: { required: true, type: () => [String] },
+              success: {
+                required: false,
+                type: () => String,
+                description:
+                  "URL to redirect back to your app after a successful login attempt.  Only URLs from hostnames in your project\\'s platform list are allowed. This requirement helps to prevent an [open redirect](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html) attack against your project API.",
+                format: 'uri',
+              },
+              failure: {
+                required: false,
+                type: () => String,
+                description:
+                  "URL to redirect back to your app after a failed login attempt.  Only URLs from hostnames in your project\\'s platform list are allowed. This requirement helps to prevent an [open redirect](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html) attack against your project API.",
+                format: 'uri',
+              },
+              scopes: {
+                required: true,
+                type: () => [String],
+                description: 'Array of OAuth2 scopes.',
+              },
             },
             CreateMagicURLTokenDTO: {
               userId: {

@@ -12,7 +12,8 @@
     "dev": "tsup --watch 'src/**' --watch '../../libs/**/*.ts'",
     "prebuild": "../../scripts/merge-pkg.js platform",
     "lint": "eslint \"src/**/*.ts\" --fix",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "gen:metadata": "bun src/generate-metadata.ts"
   },
   "dependencies": {
     "@nuvix/core": "workspace:*",

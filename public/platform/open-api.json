@@ -1267,7 +1267,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TeamModel"
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/"
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    }
+                  }
                 }
               }
             }
