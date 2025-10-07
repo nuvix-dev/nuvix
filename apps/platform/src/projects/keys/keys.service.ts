@@ -111,15 +111,10 @@ export class KeysService {
       throw new Exception(Exception.KEY_NOT_FOUND)
     }
 
-    if (input.name !== undefined) {
-      key.set('name', input.name)
-    }
-    if (input.scopes !== undefined) {
-      key.set('scopes', input.scopes)
-    }
-    if (input.expire !== undefined) {
-      key.set('expire', input.expire ?? null)
-    }
+    key
+      .update('name', input.name)
+      .update('scopes', input.scopes)
+      .update('expire', input.expire)
 
     await this.db.updateDocument('keys', key.getId(), key)
     await this.db.purgeCachedDocument('projects', project.getId())

@@ -9,6 +9,7 @@ import {
   Delete,
   UseFilters,
   UseGuards,
+  VERSION_NEUTRAL,
 } from '@nestjs/common'
 import { Client } from './decorators'
 import { PostgresMeta } from './lib'
@@ -73,7 +74,7 @@ import { ParseComaStringPipe } from '@nuvix/core/pipes/string-coma.pipe'
 import { Exception } from '@nuvix/core/extend/exception'
 import { AuthGuard, ProjectGuard } from '@nuvix/core/resolvers/guards'
 
-@Controller({ path: 'database', version: ['1'] })
+@Controller({ path: 'database', version: ['1', VERSION_NEUTRAL] })
 @UseGuards(ProjectGuard, AuthGuard)
 @UseFilters(PgMetaExceptionFilter)
 export class PgMetaController {

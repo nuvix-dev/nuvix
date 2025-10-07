@@ -1,25 +1,15 @@
-import {
-  Injectable,
-  Logger,
-  CanActivate,
-  ExecutionContext,
-} from '@nestjs/common'
+import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common'
 import { Doc } from '@nuvix/db'
 import { Exception } from '@nuvix/core/extend/exception'
 import { RatelimitService } from '@nuvix/core/rate-limit.service'
-import { Context, RouteContext } from '@nuvix/utils'
+import { Context, KeyArgs, RouteContext } from '@nuvix/utils'
+import { ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
 
 interface RateLimitResult {
   allowed: boolean
   limit: number
   remaining: number
   resetTime: number
-}
-
-interface KeyArgs {
-  ip: string
-  params: Record<string, any>
-  body: Record<string, any>
 }
 
 @Injectable()
@@ -86,6 +76,8 @@ export class ThrottlerGuard implements CanActivate {
         ip: request.ip,
         params: request.params ?? {},
         body: request.body ?? {},
+        user: this.getUser(request),
+        req: request,
       }
       const result = templateKey(keyArgs)
       return Array.isArray(result) ? result : [result]
@@ -98,18 +90,18 @@ export class ThrottlerGuard implements CanActivate {
     return ['ip:{ip}']
   }
 
-  private getProject(request: NuvixRequest): Doc {
+  private getProject(request: NuvixRequest): ProjectsDoc {
     return request[Context.Project] ?? new Doc({ $id: 'global' })
   }
 
-  private getUser(request: NuvixRequest): Doc {
+  private getUser(request: NuvixRequest): UsersDoc {
     return request[Context.User] ?? new Doc({ $id: 'anonymous' })
   }
 
   private buildRateLimitKey(
     request: NuvixRequest,
-    project: Doc,
-    user: Doc,
+    project: ProjectsDoc,
+    user: UsersDoc,
     abuseKey: string,
   ): string {
     const config = request.routeOptions.config

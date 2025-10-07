@@ -28,7 +28,7 @@ export type Schema = {
   metadata: Record<string, any>
 }
 
-type KeyArgs = {
+export type KeyArgs = {
   ip: string
   params: Record<string, any>
   body: Record<string, any>

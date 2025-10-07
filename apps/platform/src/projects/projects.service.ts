@@ -193,11 +193,14 @@ export class ProjectService {
     if (project.empty()) throw new Exception(Exception.PROJECT_NOT_FOUND)
 
     project
-      .set('name', updateProjectDTO.name)
-      .set('description', updateProjectDTO.description)
-      .set('logo', updateProjectDTO.logo)
-      .set('url', updateProjectDTO.url)
-      .set('search', [id, updateProjectDTO.name].join(' '))
+      .update('name', updateProjectDTO.name)
+      .update('description', updateProjectDTO.description)
+      .update('logo', updateProjectDTO.logo)
+      .update('url', updateProjectDTO.url)
+      .update(
+        'search',
+        [id, updateProjectDTO.name ?? project.get('name')].join(' '),
+      )
 
     project = await this.db.updateDocument('projects', project.getId(), project)
 

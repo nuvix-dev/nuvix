@@ -113,10 +113,10 @@ export class PlatformsService {
     }
 
     platform
-      .set('name', input.name)
-      .set('key', input.key)
-      .set('store', input.store)
-      .set('hostname', input.hostname)
+      .update('name', input.name)
+      .update('key', input.key)
+      .update('store', input.store)
+      .update('hostname', input.hostname)
 
     await this.db.updateDocument('platforms', platform.getId(), platform)
     await this.db.purgeCachedDocument('projects', project.getId())

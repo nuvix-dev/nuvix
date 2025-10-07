@@ -1,4 +1,5 @@
-import { IsInt, IsOptional, IsString } from 'class-validator'
+import { Type } from 'class-transformer'
+import { IsNumber, IsOptional, IsString } from 'class-validator'
 
 export class TableParamsDTO {
   /**
@@ -34,6 +35,7 @@ export class RowParamsDTO extends TableParamsDTO {
   /**
    * Row ID. (See [Schemas](https://docs.nuvix.in/schemas/managed-schema#_id))
    */
-  @IsInt()
+  @Type(() => Number)
+  @IsNumber()
   declare rowId: number
 }

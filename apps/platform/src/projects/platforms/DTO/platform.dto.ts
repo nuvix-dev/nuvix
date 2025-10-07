@@ -1,4 +1,4 @@
-import { ApiProperty, OmitType } from '@nestjs/swagger'
+import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger'
 import { PlatformType } from '@nuvix/core/config'
 import {
   IsEnum,
@@ -42,7 +42,7 @@ export class CreatePlatformDTO {
   @IsString()
   @MinLength(1)
   @MaxLength(256)
-  declare store: string
+  store?: string
 
   /**
    * Platform client hostname.
@@ -51,12 +51,12 @@ export class CreatePlatformDTO {
   @IsString()
   @MinLength(1)
   @MaxLength(256)
-  declare hostname: string
+  hostname?: string
 }
 
-export class UpdatePlatformDTO extends OmitType(CreatePlatformDTO, [
-  'type',
-] as const) {}
+export class UpdatePlatformDTO extends PartialType(
+  OmitType(CreatePlatformDTO, ['type'] as const),
+) {}
 
 // Params
 
