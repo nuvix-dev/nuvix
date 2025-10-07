@@ -134,10 +134,10 @@ const _admins = [
   'subscribers.read',
 
   // schema
-  'schema.read',
-  'schema.create',
-  'schema.update',
-  'schema.delete',
+  'schemas.read',
+  'schemas.create',
+  'schemas.update',
+  'schemas.delete',
 ] as const
 
 const admins = [..._admins, ...Object.keys(scopes)]

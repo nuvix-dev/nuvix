@@ -137,7 +137,7 @@
       "**/*.jsx",
       "**/*.tsx",
       "**/*.json",
-      "!public/**",
+      "!**/public/**",
       "!node_modules/**",
       "!dist/**",
       "!build/**",

@@ -57,7 +57,7 @@ export class TemplatesController {
 
   @Get('email/:type/:locale', {
     summary: 'Get custom email template',
-    scopes: 'project.read',
+    scopes: 'projects.read',
     sdk: {
       name: 'getEmailTemplate',
       descMd: '/docs/references/projects/get-email-template.md',

@@ -7539,6 +7539,7 @@
             "name": "success",
             "required": false,
             "in": "query",
+            "description": "URL to redirect back to your app after a successful login attempt.  Only URLs from hostnames in your project\\'s platform list are allowed. This requirement helps to prevent an [open redirect](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html) attack against your project API.",
             "schema": {
               "format": "uri",
               "type": "string"
@@ -7548,6 +7549,7 @@
             "name": "failure",
             "required": false,
             "in": "query",
+            "description": "URL to redirect back to your app after a failed login attempt.  Only URLs from hostnames in your project\\'s platform list are allowed. This requirement helps to prevent an [open redirect](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html) attack against your project API.",
             "schema": {
               "format": "uri",
               "type": "string"
@@ -7557,6 +7559,7 @@
             "name": "scopes",
             "required": true,
             "in": "query",
+            "description": "Array of OAuth2 scopes.",
             "schema": {
               "type": "array",
               "items": {
@@ -20786,7 +20789,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -20894,7 +20900,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21091,7 +21100,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21157,7 +21169,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21311,7 +21326,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21388,7 +21406,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21464,7 +21485,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21599,7 +21623,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21779,7 +21806,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21924,7 +21954,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21963,7 +21996,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -22032,7 +22068,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -22260,7 +22299,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -22440,7 +22482,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -22480,7 +22525,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -22740,7 +22788,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -22846,7 +22897,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -23049,7 +23103,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -23108,7 +23165,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -23183,7 +23243,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -23344,7 +23407,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -23652,7 +23718,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -24431,7 +24500,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -24506,7 +24578,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -24574,7 +24649,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -24640,7 +24718,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -24752,7 +24833,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -24813,7 +24897,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -24928,7 +25015,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "size": {
             "type": "number",
@@ -25042,7 +25132,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "format": {
             "enum": [
@@ -25172,7 +25265,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "elements": {
             "type": "array",
@@ -25301,7 +25397,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "format": {
             "enum": [
@@ -25423,7 +25522,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "format": {
             "enum": [
@@ -25551,7 +25653,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "min": {
             "type": "number",
@@ -25678,7 +25783,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "min": {
             "type": "number",
@@ -25798,7 +25906,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "default": {
             "type": "boolean",
@@ -25907,7 +26018,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "format": {
             "enum": [
@@ -26037,7 +26151,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           },
           "relatedCollection": {
             "type": "string",
@@ -26395,7 +26512,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [

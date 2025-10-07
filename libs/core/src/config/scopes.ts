@@ -1,15 +1,6 @@
 const consoleScopes = {
-  'project.create': {
-    description: 'Access to create project',
-  },
   'project.read': {
     description: 'Access to read project details',
-  },
-  'project.update': {
-    description: 'Access to update project settings',
-  },
-  'project.delete': {
-    description: 'Access to delete project',
   },
   'organization.create': {
     description: 'Access to create organization',
@@ -287,28 +278,28 @@ export const scopes = {
 
   // schema
 
-  'schema.create': {
+  'schemas.create': {
     description: 'Access to create a schema',
   },
-  'schema.update': {
+  'schemas.update': {
     description: 'Access to update a schema',
   },
-  'schema.delete': {
+  'schemas.delete': {
     description: 'Access to delete a schema',
   },
-  'schema.read': {
+  'schemas.read': {
     description: 'Access to read a schema',
   },
-  'schema.tables.read': {
+  'schemas.tables.read': {
     description: 'Access to read a schema tables',
   },
-  'schema.tables.create': {
+  'schemas.tables.create': {
     description: 'Access to create a schema tables',
   },
-  'schema.tables.update': {
+  'schemas.tables.update': {
     description: 'Access to update a schema tables',
   },
-  'schema.tables.delete': {
+  'schemas.tables.delete': {
     description: 'Access to delete a schema tables',
   },
   ...consoleScopes,

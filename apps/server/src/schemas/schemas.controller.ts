@@ -44,7 +44,7 @@ export class SchemasController {
   @Get([':tableId', 'tables/:tableId'], {
     summary: 'Query table data',
     description: 'Retrieve data from a specific table with optional pagination',
-    scopes: 'schema.tables.read',
+    scopes: 'schemas.tables.read',
   })
   async queryTable(
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
@@ -68,7 +68,7 @@ export class SchemasController {
   @Post([':tableId', 'tables/:tableId'], {
     summary: 'Insert data into table',
     description: 'Insert one or more records into a specific table',
-    scopes: 'schema.tables.create',
+    scopes: 'schemas.tables.create',
   })
   async insertIntoTable(
     @CurrentSchema() pg: DataSource,
@@ -96,7 +96,7 @@ export class SchemasController {
     summary: 'Update table data',
     description:
       'Update existing records in a specific table with optional pagination and force flag',
-    scopes: 'schema.tables.update',
+    scopes: 'schemas.tables.update',
   })
   async updateTables(
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
@@ -133,7 +133,7 @@ export class SchemasController {
     summary: 'Upsert table data',
     description:
       'Insert or update records in a specific table (upsert operation)',
-    scopes: ['schema.tables.create', 'schema.tables.update'],
+    scopes: ['schemas.tables.create', 'schemas.tables.update'],
     docs: false,
   })
   async upsertTable(

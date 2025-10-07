@@ -44,7 +44,7 @@ export class DatabasesController {
     summary: 'List schemas',
     description:
       'Retrieve a list of all schemas in the database with optional filtering by type',
-    scopes: 'schema.read',
+    scopes: 'schemas.read',
     model: { type: Models.SCHEMA, list: true },
     sdk: {
       name: 'listSchemas',
@@ -62,7 +62,7 @@ export class DatabasesController {
     summary: 'Create schema',
     description:
       'Create a new schema in the database. Supports managed, unmanaged, and document schema types',
-    scopes: 'schema.create',
+    scopes: 'schemas.create',
     model: Models.SCHEMA,
     sdk: {
       name: 'createSchema',
@@ -82,7 +82,7 @@ export class DatabasesController {
   @Get('schemas/:schemaId', {
     summary: 'Get schema',
     description: 'Retrieve a specific schema by its ID',
-    scopes: 'schema.read',
+    scopes: 'schemas.read',
     model: Models.SCHEMA,
     sdk: {
       name: 'getSchema',
