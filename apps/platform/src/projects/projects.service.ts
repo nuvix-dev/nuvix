@@ -137,6 +137,9 @@ export class ProjectService {
         } as any,
         enabled: true,
         status: 'pending',
+        metadata: {
+          allowedSchemas: ['public'],
+        },
       })
 
       project = await this.db.createDocument('projects', project)

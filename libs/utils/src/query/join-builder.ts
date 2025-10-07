@@ -99,9 +99,13 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
     const conditionSQL = conditionQueryBuilder.toSQL()
     const cleanedCondition = conditionSQL.sql.replace('select * where ', '')
 
-    ;(this.astBuilder.qb as any)[joinType + 'Join'](
-      // TODO: Fix type casting
+    const joinMethod = (
+      joinType === 'full' ? 'fullOuterJoin' : `${joinType}Join`
+    ) as 'leftJoin' | 'rightJoin' | 'innerJoin' | 'fullOuterJoin'
+
+    this.astBuilder.qb[joinMethod](
       this.astBuilder.pg.alias(tableName, joinAlias),
+      // @ts-expect-error type overload issue
       this.astBuilder.pg.raw(cleanedCondition, conditionSQL.bindings),
     )
 
@@ -154,8 +158,12 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
       resultShape,
     )
 
-    // TODO: Fix type casting
-    ;(this.astBuilder.qb as any)[joinType + 'Join'](
+    const joinMethod = (
+      joinType === 'full' ? 'fullOuterJoin' : `${joinType}Join`
+    ) as 'leftJoin' | 'rightJoin' | 'innerJoin' | 'fullOuterJoin'
+
+    this.astBuilder.qb[joinMethod](
+      // @ts-expect-error type overload issue
       this.astBuilder.pg.raw(
         `lateral (${lateralSelectContent})`,
         subQuerySQL.bindings,

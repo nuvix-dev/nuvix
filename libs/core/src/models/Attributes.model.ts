@@ -1,12 +1,12 @@
 import { Exclude, Expose } from 'class-transformer'
 import { AttributeModel } from './Attribute.model'
-import { AttributeType, OnDelete, RelationType } from '@nuvix/db'
+import { AttributeType, OnDelete, RelationSide, RelationType } from '@nuvix/db'
 import { AttributeFormat } from '@nuvix/utils'
 
 @Exclude()
 export class AttributeBooleanModel extends AttributeModel {
   @Expose() override type: AttributeType = AttributeType.Boolean
-  @Expose() default: boolean | null = null
+  @Expose() override default: boolean | null = null
 
   constructor(partial: Partial<AttributeBooleanModel>) {
     super(partial)
@@ -17,8 +17,8 @@ export class AttributeBooleanModel extends AttributeModel {
 @Exclude()
 export class AttributeDatetimeModel extends AttributeModel {
   @Expose() override type: AttributeType = AttributeType.Timestamptz
-  @Expose() format: AttributeFormat = AttributeFormat.DATETIME
-  @Expose() default: string | null = null
+  @Expose() override format: AttributeFormat = AttributeFormat.DATETIME
+  @Expose() override default: string | null = null
 
   constructor(partial: Partial<AttributeDatetimeModel>) {
     super(partial)
@@ -29,8 +29,8 @@ export class AttributeDatetimeModel extends AttributeModel {
 @Exclude()
 export class AttributeEmailModel extends AttributeModel {
   @Expose() override type: AttributeType = AttributeType.String
-  @Expose() format: AttributeFormat = AttributeFormat.EMAIL
-  @Expose() default: string | null = null
+  @Expose() override format: AttributeFormat = AttributeFormat.EMAIL
+  @Expose() override default: string | null = null
 
   constructor(partial: Partial<AttributeEmailModel>) {
     super(partial)
@@ -41,9 +41,9 @@ export class AttributeEmailModel extends AttributeModel {
 @Exclude()
 export class AttributeEnumModel extends AttributeModel {
   @Expose() override type: AttributeType = AttributeType.String
-  @Expose() elements: string[] = []
-  @Expose() format: AttributeFormat = AttributeFormat.ENUM
-  @Expose() default: string | null = null
+  @Expose() override elements: string[] = []
+  @Expose() override format: AttributeFormat = AttributeFormat.ENUM
+  @Expose() override default: string | null = null
 
   constructor(partial: Partial<AttributeEnumModel>) {
     super(partial)
@@ -54,9 +54,9 @@ export class AttributeEnumModel extends AttributeModel {
 @Exclude()
 export class AttributeFloatModel extends AttributeModel {
   @Expose() override type: AttributeType = AttributeType.Float
-  @Expose() min: number | null = null
-  @Expose() max: number | null = null
-  @Expose() default: number | null = null
+  @Expose() override min: number | null = null
+  @Expose() override max: number | null = null
+  @Expose() override default: number | null = null
 
   constructor(partial: Partial<AttributeFloatModel>) {
     super(partial)
@@ -67,8 +67,8 @@ export class AttributeFloatModel extends AttributeModel {
 @Exclude()
 export class AttributeIPModel extends AttributeModel {
   @Expose() override type: AttributeType = AttributeType.String
-  @Expose() format: AttributeFormat = AttributeFormat.IP
-  @Expose() default: string | null = null
+  @Expose() override format: AttributeFormat = AttributeFormat.IP
+  @Expose() override default: string | null = null
 
   constructor(partial: Partial<AttributeIPModel>) {
     super(partial)
@@ -79,9 +79,9 @@ export class AttributeIPModel extends AttributeModel {
 @Exclude()
 export class AttributeIntegerModel extends AttributeModel {
   @Expose() override type: AttributeType = AttributeType.Integer
-  @Expose() min: number | null = null
-  @Expose() max: number | null = null
-  @Expose() default: number | null = null
+  @Expose() override min: number | null = null
+  @Expose() override max: number | null = null
+  @Expose() override default: number | null = null
 
   constructor(partial: Partial<AttributeIntegerModel>) {
     super(partial)
@@ -102,12 +102,12 @@ export class AttributeListModel extends AttributeModel {
 
 @Exclude()
 export class AttributeRelationshipModel extends AttributeModel {
-  @Expose() relatedCollection: string | null = null
-  @Expose() relationType: RelationType = RelationType.OneToOne
-  @Expose() twoWay: boolean = false
-  @Expose() twoWayKey!: string
-  @Expose() onDelete: OnDelete = OnDelete.Restrict
-  @Expose() side: string = ''
+  @Expose() override relatedCollection: string | null = null
+  @Expose() override relationType: RelationType = RelationType.OneToOne
+  @Expose() override twoWay: boolean = false
+  @Expose() override twoWayKey?: string | undefined = undefined
+  @Expose() override onDelete: OnDelete = OnDelete.Restrict
+  @Expose() override side: RelationSide = RelationSide.Parent
 
   constructor(partial: Partial<AttributeRelationshipModel>) {
     super(partial)
@@ -118,8 +118,8 @@ export class AttributeRelationshipModel extends AttributeModel {
 @Exclude()
 export class AttributeStringModel extends AttributeModel {
   @Expose() override type: AttributeType = AttributeType.String
-  @Expose() size: number = 0
-  @Expose() default: string | null = null
+  @Expose() override size: number = 0
+  @Expose() override default: string | null = null
 
   constructor(partial: Partial<AttributeStringModel>) {
     super(partial)
@@ -130,8 +130,8 @@ export class AttributeStringModel extends AttributeModel {
 @Exclude()
 export class AttributeURLModel extends AttributeModel {
   @Expose() override type: AttributeType = AttributeType.String
-  @Expose() format: AttributeFormat = AttributeFormat.URL
-  @Expose() default: string | null = null
+  @Expose() override format: AttributeFormat = AttributeFormat.URL
+  @Expose() override default: string | null = null
 
   constructor(partial: Partial<AttributeURLModel>) {
     super(partial)

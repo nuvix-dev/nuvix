@@ -72,6 +72,8 @@ export async function bootstrap() {
       transformOptions: {
         exposeDefaultValues: true,
       },
+      whitelist: true,
+      forbidNonWhitelisted: false,
     }),
   )
 

@@ -11,16 +11,17 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 import { SchemasService } from './schemas.service'
-import { ProjectGuard } from '@nuvix/core/resolvers/guards'
+import { ProjectGuard, SchemaGuard } from '@nuvix/core/resolvers/guards'
 import {
   ResponseInterceptor,
   ApiInterceptor,
 } from '@nuvix/core/resolvers/interceptors'
 import {
-  Auth,
   AuthType,
   CurrentSchema,
+  CurrentSchemaType,
   Namespace,
+  Project,
 } from '@nuvix/core/decorators'
 import { DataSource } from '@nuvix/pg'
 import { ParseDuplicatePipe } from '@nuvix/core/pipes'
@@ -31,25 +32,28 @@ import {
   RowParamsDTO,
   TableParamsDTO,
 } from './DTO/table.dto'
+import type { ProjectsDoc } from '@nuvix/utils/types'
+import { SchemaType } from '@nuvix/utils'
 
 // Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
 @Controller({ version: ['1'], path: ['schemas/:schemaId', 'public'] })
-@UseGuards(ProjectGuard)
+@UseGuards(ProjectGuard, SchemaGuard)
 @Namespace('schemas')
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
-@Auth([AuthType.ADMIN, AuthType.JWT, AuthType.SESSION, AuthType.SESSION])
+@CurrentSchemaType([SchemaType.Managed, SchemaType.Unmanaged])
 export class SchemasController {
   constructor(private readonly schemasService: SchemasService) {}
 
-  @Get([':tableId', 'tables/:tableId'], {
+  @Get(['tables/:tableId'], {
     summary: 'Query table data',
     description: 'Retrieve data from a specific table with optional pagination',
-    scopes: 'schema.tables.read',
+    scopes: 'schemas.tables.read',
   })
   async queryTable(
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
     @Req() request: NuvixRequest,
     @CurrentSchema() pg: DataSource,
+    @Project() project: ProjectsDoc,
     @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
     limit: number,
     @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
@@ -62,19 +66,21 @@ export class SchemasController {
       offset,
       schema,
       url: request.raw.url || request.url,
+      project,
     })
   }
 
-  @Post([':tableId', 'tables/:tableId'], {
+  @Post(['tables/:tableId'], {
     summary: 'Insert data into table',
     description: 'Insert one or more records into a specific table',
-    scopes: 'schema.tables.create',
+    scopes: 'schemas.tables.create',
   })
   async insertIntoTable(
     @CurrentSchema() pg: DataSource,
     @Req() request: NuvixRequest,
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
     @Body() input: Record<string, any> | Record<string, any>[],
+    @Project() project: ProjectsDoc,
     @Query(
       'columns',
       ParseDuplicatePipe,
@@ -89,20 +95,22 @@ export class SchemasController {
       input,
       columns,
       url: request.raw.url || request.url,
+      project,
     })
   }
 
-  @Patch([':tableId', 'tables/:tableId'], {
+  @Patch(['tables/:tableId'], {
     summary: 'Update table data',
     description:
       'Update existing records in a specific table with optional pagination and force flag',
-    scopes: 'schema.tables.update',
+    scopes: 'schemas.tables.update',
   })
   async updateTables(
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
     @CurrentSchema() pg: DataSource,
     @Req() request: NuvixRequest,
     @Body() input: Record<string, any>,
+    @Project() project: ProjectsDoc,
     @Query(
       'columns',
       ParseDuplicatePipe,
@@ -126,14 +134,15 @@ export class SchemasController {
       limit,
       offset,
       force,
+      project,
     })
   }
 
-  @Put([':tableId', 'tables/:tableId'], {
+  @Put(['tables/:tableId'], {
     summary: 'Upsert table data',
     description:
       'Insert or update records in a specific table (upsert operation)',
-    scopes: ['schema.tables.create', 'schema.tables.update'],
+    scopes: ['schemas.tables.create', 'schemas.tables.update'],
     docs: false,
   })
   async upsertTable(
@@ -147,8 +156,9 @@ export class SchemasController {
     @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
   ) {}
 
-  @Delete([':tableId', 'tables/:tableId'], {
+  @Delete(['tables/:tableId'], {
     summary: 'Delete table data',
+    scopes: 'schemas.tables.delete',
     description:
       'Delete records from a specific table with optional pagination and force flag',
   })
@@ -156,6 +166,7 @@ export class SchemasController {
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
     @CurrentSchema() pg: DataSource,
     @Req() request: NuvixRequest,
+    @Project() project: ProjectsDoc,
     @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
     limit?: number,
     @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
@@ -171,6 +182,7 @@ export class SchemasController {
       limit,
       offset,
       force,
+      project,
     })
   }
 
@@ -189,6 +201,7 @@ export class SchemasController {
       schemaId: schema = 'public',
       functionId: functionName,
     }: FunctionParamsDTO,
+    @Project() project: ProjectsDoc,
     @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
     limit?: number,
     @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
@@ -203,76 +216,89 @@ export class SchemasController {
       limit,
       offset,
       args,
+      project,
     })
   }
 
   @Put(['tables/:tableId/permissions'], {
     summary: 'Update table permissions',
     description: 'Manage permissions for a specific table',
+    auth: [AuthType.ADMIN, AuthType.KEY],
   })
-  @Auth([AuthType.ADMIN, AuthType.KEY])
+  @CurrentSchemaType(SchemaType.Managed)
   manageTablePermissions(
     @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId }: TableParamsDTO,
     @Body() body: PermissionsDTO,
-  ) {
+    @Project() project: ProjectsDoc,
+  ): Promise<string[]> {
     return this.schemasService.updatePermissions({
       pg,
       permissions: body.permissions,
       tableId,
       schema,
+      project,
     })
   }
 
   @Put(['tables/:tableId/:rowId/permissions'], {
     summary: 'Update row permissions',
     description: 'Manage permissions for a specific row in a table',
+    auth: [AuthType.ADMIN, AuthType.KEY],
   })
-  @Auth([AuthType.ADMIN, AuthType.KEY])
+  @CurrentSchemaType(SchemaType.Managed)
   manageRowPermissions(
     @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId, rowId }: RowParamsDTO,
     @Body() body: PermissionsDTO,
-  ) {
+    @Project() project: ProjectsDoc,
+  ): Promise<string[]> {
     return this.schemasService.updatePermissions({
       pg,
       permissions: body.permissions,
       tableId,
       schema,
       rowId,
+      project,
     })
   }
 
   @Get(['tables/:tableId/permissions'], {
     summary: 'Get table permissions',
     description: 'Retrieve permissions for a specific table',
+    auth: [AuthType.ADMIN, AuthType.KEY],
   })
-  @Auth([AuthType.ADMIN, AuthType.KEY])
+  @CurrentSchemaType(SchemaType.Managed)
   getTablePermissions(
     @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId }: TableParamsDTO,
-  ) {
+    @Project() project: ProjectsDoc,
+  ): Promise<string[]> {
     return this.schemasService.getPermissions({
       pg,
       tableId,
       schema,
+      project,
     })
   }
 
   @Get(['tables/:tableId/:rowId/permissions'], {
     summary: 'Get row permissions',
     description: 'Retrieve permissions for a specific row in a table',
+    auth: [AuthType.ADMIN, AuthType.KEY],
   })
-  @Auth([AuthType.ADMIN, AuthType.KEY])
+  @CurrentSchemaType(SchemaType.Managed)
   getRowPermissions(
     @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId, rowId }: RowParamsDTO,
-  ) {
+    @Project() project: ProjectsDoc,
+  ): Promise<string[]> {
     return this.schemasService.getPermissions({
       pg,
       tableId,
       schema,
       rowId,
+      project,
     })
   }
 }

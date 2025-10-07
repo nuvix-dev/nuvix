@@ -5,10 +5,15 @@ import {
   ArrayMaxSize,
   IsOptional,
   Length,
+  IsIn,
+  IsNumber,
+  Min,
+  Max,
 } from 'class-validator'
 import { IsCustomID, IsUID } from '@nuvix/core/validators/input.validator'
 import { configuration } from '@nuvix/utils'
 import { BucketParamsDTO } from '../../DTO/bucket.dto'
+import { Type } from 'class-transformer'
 
 export class CreateFileDTO {
   @IsString()
@@ -50,79 +55,112 @@ export class FileParamsDTO extends BucketParamsDTO {
 
 export class PreviewFileQueryDTO {
   /**
-   * Resize preview image width, Pass an integer between 0 to 4000.
+   * Resize preview image width, integer between 0 and 4000.
    */
   @IsOptional()
-  @IsString()
-  width?: string
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(4000)
+  width?: number
 
   /**
-   * Resize preview image height, Pass an integer between 0 to 4000.
+   * Resize preview image height, integer between 0 and 4000.
    */
   @IsOptional()
-  @IsString()
-  height?: string
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(4000)
+  height?: number
 
   /**
-   * Image crop gravity. Can be one of center, top-left, top, top-right, left, right, bottom-left, bottom, bottom-right
+   * Image crop gravity.
    */
   @IsOptional()
   @IsString()
+  @IsIn([
+    'center',
+    'top-left',
+    'top',
+    'top-right',
+    'left',
+    'right',
+    'bottom-left',
+    'bottom',
+    'bottom-right',
+  ])
   gravity?: string
 
   /**
-   * Preview image quality. Pass an integer between 0 to 100. Defaults to keep existing image quality.
+   * Preview image quality, integer between 0 and 100.
    */
   @IsOptional()
-  @IsString()
-  quality?: string
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  quality?: number
 
   /**
-   * Preview image border in pixels. Pass an integer between 0 to 100. Defaults to 0.
+   * Preview image border in pixels, integer between 0 and 100.
    */
   @IsOptional()
-  @IsString()
-  borderWidth?: string
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  borderWidth?: number
 
   /**
-   * Preview image border color. Use a valid HEX color, no # is needed for prefix.
+   * Preview image border color, valid HEX without # prefix.
    */
   @IsOptional()
   @IsString()
   borderColor?: string
 
   /**
-   * Preview image border radius in pixels. Pass an integer between 0 to 4000.
+   * Preview image border radius in pixels, integer between 0 and 4000.
    */
   @IsOptional()
-  @IsString()
-  borderRadius?: string
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(4000)
+  borderRadius?: number
 
   /**
-   * Preview image opacity. Only works with images having an alpha channel (like png). Pass a number between 0 to 1.
+   * Preview image opacity, number between 0 and 1.
    */
   @IsOptional()
-  @IsString()
-  opacity?: string
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  opacity?: number
 
   /**
-   * Preview image rotation in degrees. Pass an integer between -360 and 360.
+   * Preview image rotation in degrees, integer between -360 and 360.
    */
   @IsOptional()
-  @IsString()
-  rotation?: string
+  @Type(() => Number)
+  @IsNumber()
+  @Min(-360)
+  @Max(360)
+  rotation?: number
 
   /**
-   * Preview image background color. Only works with transparent images (png). Use a valid HEX color, no # is needed for prefix.
+   * Preview image background color, valid HEX without # prefix.
    */
   @IsOptional()
   @IsString()
   background?: string
 
   /**
-   * Output format type (jpeg, jpg, png, gif and webp).
+   * Output format type (jpeg, jpg, png, gif, webp).
    */
   @IsOptional()
   @IsString()
+  @IsIn(['jpeg', 'jpg', 'png', 'gif', 'webp'])
   output?: string
 }

@@ -11,15 +11,17 @@ import type { Entities } from '@nuvix/db';
 import type { Entities as NuvixEntities } from '@nuvix/utils/types';
 import type { RouteContext, ThrottleOptions } from '@nuvix/utils';
 import type { AuditEventType } from '@nuvix/core/decorators';
+import { SchemaType } from '@nuvix/pg';
 
 declare module 'fastify' {
   interface FastifyContextConfig {
     [RouteContext.AUDIT]?: AuditEventType;
     [RouteContext.RATE_LIMIT]?: ThrottleOptions;
     [RouteContext.SKIP_LOGGING]?: boolean;
+    [RouteContext.SCHEMA_TYPE]?: SchemaType[] | SchemaType;
   }
 
-  interface FastifyRouteConfig {
+  interface FastifyRouteConfig extends FastifyContextConfig {
 
   }
 

@@ -53,6 +53,7 @@ import { Audit, AuditDoc } from '@nuvix/audit'
 import type { LocaleTranslator } from '@nuvix/core/helper'
 import usageConfig from '@nuvix/core/config/usage'
 import { StatsQueue } from '@nuvix/core/resolvers'
+import { Hooks } from '@nuvix/core/extend/hooks'
 
 @Injectable()
 export class UsersService {
@@ -214,8 +215,13 @@ export class UsersService {
       return updatedUser
     }
 
-    // TODO: Implement hooks
-    // hooks.trigger('passwordValidator', [db, project, input.password, user, true]);
+    await Hooks.trigger('passwordValidator', [
+      db,
+      project,
+      password,
+      user,
+      true,
+    ])
 
     const newPassword = await Auth.passwordHash(
       password,

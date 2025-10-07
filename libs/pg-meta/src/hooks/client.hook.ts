@@ -26,6 +26,7 @@ export class ResolveClient implements Hook {
   }
 
   // TODO: we don't need to handle it here, because client will be ended in Project Hook
+  // but for safety we will keep it here for now
   async onResponse(req: NuvixRequest) {
     const pgMeta = req[CLIENT] as PostgresMeta
 

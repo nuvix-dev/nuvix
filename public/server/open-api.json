@@ -7539,6 +7539,7 @@
             "name": "success",
             "required": false,
             "in": "query",
+            "description": "URL to redirect back to your app after a successful login attempt.  Only URLs from hostnames in your project\\'s platform list are allowed. This requirement helps to prevent an [open redirect](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html) attack against your project API.",
             "schema": {
               "format": "uri",
               "type": "string"
@@ -7548,6 +7549,7 @@
             "name": "failure",
             "required": false,
             "in": "query",
+            "description": "URL to redirect back to your app after a failed login attempt.  Only URLs from hostnames in your project\\'s platform list are allowed. This requirement helps to prevent an [open redirect](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html) attack against your project API.",
             "schema": {
               "format": "uri",
               "type": "string"
@@ -7557,6 +7559,7 @@
             "name": "scopes",
             "required": true,
             "in": "query",
+            "description": "Array of OAuth2 scopes.",
             "schema": {
               "type": "array",
               "items": {
@@ -10164,25 +10167,29 @@
             "name": "width",
             "required": false,
             "in": "query",
-            "description": "Resize preview image width, Pass an integer between 0 to 4000.",
+            "description": "Resize preview image width, integer between 0 and 4000.",
             "schema": {
-              "type": "string"
+              "minimum": 0,
+              "maximum": 4000,
+              "type": "number"
             }
           },
           {
             "name": "height",
             "required": false,
             "in": "query",
-            "description": "Resize preview image height, Pass an integer between 0 to 4000.",
+            "description": "Resize preview image height, integer between 0 and 4000.",
             "schema": {
-              "type": "string"
+              "minimum": 0,
+              "maximum": 4000,
+              "type": "number"
             }
           },
           {
             "name": "gravity",
             "required": false,
             "in": "query",
-            "description": "Image crop gravity. Can be one of center, top-left, top, top-right, left, right, bottom-left, bottom, bottom-right",
+            "description": "Image crop gravity.",
             "schema": {
               "type": "string"
             }
@@ -10191,25 +10198,29 @@
             "name": "quality",
             "required": false,
             "in": "query",
-            "description": "Preview image quality. Pass an integer between 0 to 100. Defaults to keep existing image quality.",
+            "description": "Preview image quality, integer between 0 and 100.",
             "schema": {
-              "type": "string"
+              "minimum": 0,
+              "maximum": 100,
+              "type": "number"
             }
           },
           {
             "name": "borderWidth",
             "required": false,
             "in": "query",
-            "description": "Preview image border in pixels. Pass an integer between 0 to 100. Defaults to 0.",
+            "description": "Preview image border in pixels, integer between 0 and 100.",
             "schema": {
-              "type": "string"
+              "minimum": 0,
+              "maximum": 100,
+              "type": "number"
             }
           },
           {
             "name": "borderColor",
             "required": false,
             "in": "query",
-            "description": "Preview image border color. Use a valid HEX color, no # is needed for prefix.",
+            "description": "Preview image border color, valid HEX without # prefix.",
             "schema": {
               "type": "string"
             }
@@ -10218,34 +10229,40 @@
             "name": "borderRadius",
             "required": false,
             "in": "query",
-            "description": "Preview image border radius in pixels. Pass an integer between 0 to 4000.",
+            "description": "Preview image border radius in pixels, integer between 0 and 4000.",
             "schema": {
-              "type": "string"
+              "minimum": 0,
+              "maximum": 4000,
+              "type": "number"
             }
           },
           {
             "name": "opacity",
             "required": false,
             "in": "query",
-            "description": "Preview image opacity. Only works with images having an alpha channel (like png). Pass a number between 0 to 1.",
+            "description": "Preview image opacity, number between 0 and 1.",
             "schema": {
-              "type": "string"
+              "minimum": 0,
+              "maximum": 1,
+              "type": "number"
             }
           },
           {
             "name": "rotation",
             "required": false,
             "in": "query",
-            "description": "Preview image rotation in degrees. Pass an integer between -360 and 360.",
+            "description": "Preview image rotation in degrees, integer between -360 and 360.",
             "schema": {
-              "type": "string"
+              "minimum": -360,
+              "maximum": 360,
+              "type": "number"
             }
           },
           {
             "name": "background",
             "required": false,
             "in": "query",
-            "description": "Preview image background color. Only works with transparent images (png). Use a valid HEX color, no # is needed for prefix.",
+            "description": "Preview image background color, valid HEX without # prefix.",
             "schema": {
               "type": "string"
             }
@@ -10254,7 +10271,7 @@
             "name": "output",
             "required": false,
             "in": "query",
-            "description": "Output format type (jpeg, jpg, png, gif and webp).",
+            "description": "Output format type (jpeg, jpg, png, gif, webp).",
             "schema": {
               "type": "string"
             }
@@ -20786,7 +20803,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -20894,7 +20914,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21091,7 +21114,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21157,7 +21183,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21311,7 +21340,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21388,7 +21420,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21464,7 +21499,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21599,7 +21637,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21779,7 +21820,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21924,7 +21968,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -21963,7 +22010,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -22032,7 +22082,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -22260,7 +22313,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -22440,7 +22496,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -22480,7 +22539,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -22740,7 +22802,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -22846,7 +22911,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -23049,7 +23117,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -23108,7 +23179,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -23183,7 +23257,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -23344,7 +23421,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -23652,7 +23732,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -24380,8 +24463,7 @@
             "description": "An array of role strings with subscribe permission. By default all users are granted with any subscribe permission. [learn more about roles](https://docs.nuvix.in/permissions#permission-roles).",
             "type": "array",
             "items": {
-              "type": "string",
-              "maxLength": 64
+              "type": "string"
             }
           }
         },
@@ -24431,7 +24513,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -24458,8 +24543,7 @@
             "description": "An array of role strings with subscribe permission. By default all users are granted with any subscribe permission. [learn more about roles](https://docs.nuvix.in/permissions#permission-roles).",
             "type": "array",
             "items": {
-              "type": "string",
-              "maxLength": 64
+              "type": "string"
             }
           }
         }
@@ -24506,7 +24590,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -24574,7 +24661,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -24640,7 +24730,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -24752,7 +24845,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
@@ -24770,13 +24866,22 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "Attribute Key.",
-            "default": ""
+            "description": "Attribute Key."
           },
           "type": {
-            "type": "string",
             "description": "Attribute type.",
-            "default": ""
+            "enum": [
+              "string",
+              "integer",
+              "float",
+              "boolean",
+              "timestamptz",
+              "jsonb",
+              "relationship",
+              "virtual",
+              "uuid"
+            ],
+            "type": "string"
           },
           "status": {
             "type": "string",
@@ -24785,8 +24890,7 @@
           },
           "error": {
             "type": "string",
-            "description": "Error message. Displays error generated on failure of creating or deleting an attribute.",
-            "default": ""
+            "description": "Error message. Displays error generated on failure of creating or deleting an attribute."
           },
           "required": {
             "type": "boolean",
@@ -24797,6 +24901,84 @@
             "type": "boolean",
             "description": "Is attribute an array?",
             "default": false
+          },
+          "default": {
+            "type": "object",
+            "description": "Attribute default value."
+          },
+          "format": {
+            "description": "Attribute format.",
+            "enum": [
+              "email",
+              "enum",
+              "ip",
+              "datetime",
+              "url",
+              "integer",
+              "float"
+            ],
+            "type": "string"
+          },
+          "elements": {
+            "description": "Enum elements (for enum type only).",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "min": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "max": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "size": {
+            "type": "number",
+            "description": "Attribute size (for string)."
+          },
+          "relatedCollection": {
+            "type": "string",
+            "nullable": true,
+            "description": "Related collection ID (for relationship type only)."
+          },
+          "relationType": {
+            "description": "Relation type, possible values are: `oneToOne`, `oneToMany`, `manyToOne`, `manyToMany` (for relationship type only).",
+            "enum": [
+              "oneToOne",
+              "oneToMany",
+              "manyToOne",
+              "manyToMany"
+            ],
+            "type": "string"
+          },
+          "twoWay": {
+            "type": "boolean",
+            "description": "Indicates whether the relationship is two-way (for relationship type only)."
+          },
+          "twoWayKey": {
+            "type": "string",
+            "description": "Two-way attribute key (for relationship type only)."
+          },
+          "onDelete": {
+            "description": "On delete action, possible values are: `cascade`, `restrict`, or `setNull` (for relationship type only).",
+            "enum": [
+              "cascade",
+              "setNull",
+              "restrict"
+            ],
+            "type": "string"
+          },
+          "side": {
+            "description": "Attribute side (for relationship type only).\nPossible values are `parent` or `child`.",
+            "enum": [
+              "parent",
+              "child"
+            ],
+            "type": "string"
           },
           "$id": {
             "type": "string",
@@ -24813,14 +24995,16 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "key",
           "type",
           "status",
-          "error",
           "required",
           "array",
           "$id",
@@ -24874,13 +25058,10 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "Attribute Key.",
-            "default": ""
+            "description": "Attribute Key."
           },
           "type": {
-            "type": "string",
             "description": "Attribute type.",
-            "default": "",
             "enum": [
               "string",
               "integer",
@@ -24891,7 +25072,8 @@
               "relationship",
               "virtual",
               "uuid"
-            ]
+            ],
+            "type": "string"
           },
           "status": {
             "type": "string",
@@ -24900,8 +25082,7 @@
           },
           "error": {
             "type": "string",
-            "description": "Error message. Displays error generated on failure of creating or deleting an attribute.",
-            "default": ""
+            "description": "Error message. Displays error generated on failure of creating or deleting an attribute."
           },
           "required": {
             "type": "boolean",
@@ -24912,6 +25093,87 @@
             "type": "boolean",
             "description": "Is attribute an array?",
             "default": false
+          },
+          "default": {
+            "type": "object",
+            "description": "Attribute default value.",
+            "nullable": true,
+            "default": null
+          },
+          "format": {
+            "description": "Attribute format.",
+            "enum": [
+              "email",
+              "enum",
+              "ip",
+              "datetime",
+              "url",
+              "integer",
+              "float"
+            ],
+            "type": "string"
+          },
+          "elements": {
+            "description": "Enum elements (for enum type only).",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "min": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "max": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "size": {
+            "type": "number",
+            "description": "Attribute size (for string).",
+            "default": 0
+          },
+          "relatedCollection": {
+            "type": "string",
+            "nullable": true,
+            "description": "Related collection ID (for relationship type only)."
+          },
+          "relationType": {
+            "description": "Relation type, possible values are: `oneToOne`, `oneToMany`, `manyToOne`, `manyToMany` (for relationship type only).",
+            "enum": [
+              "oneToOne",
+              "oneToMany",
+              "manyToOne",
+              "manyToMany"
+            ],
+            "type": "string"
+          },
+          "twoWay": {
+            "type": "boolean",
+            "description": "Indicates whether the relationship is two-way (for relationship type only)."
+          },
+          "twoWayKey": {
+            "type": "string",
+            "description": "Two-way attribute key (for relationship type only)."
+          },
+          "onDelete": {
+            "description": "On delete action, possible values are: `cascade`, `restrict`, or `setNull` (for relationship type only).",
+            "enum": [
+              "cascade",
+              "setNull",
+              "restrict"
+            ],
+            "type": "string"
+          },
+          "side": {
+            "description": "Attribute side (for relationship type only).\nPossible values are `parent` or `child`.",
+            "enum": [
+              "parent",
+              "child"
+            ],
+            "type": "string"
           },
           "$id": {
             "type": "string",
@@ -24928,31 +25190,22 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
-          },
-          "size": {
-            "type": "number",
-            "default": 0
-          },
-          "default": {
-            "type": "string",
-            "nullable": true,
-            "default": null
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "key",
           "type",
           "status",
-          "error",
           "required",
           "array",
           "$id",
           "$createdAt",
           "$updatedAt",
-          "$permissions",
-          "size",
-          "default"
+          "$permissions"
         ]
       },
       "CreateEmailAttributeDTO": {
@@ -24988,13 +25241,10 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "Attribute Key.",
-            "default": ""
+            "description": "Attribute Key."
           },
           "type": {
-            "type": "string",
             "description": "Attribute type.",
-            "default": "",
             "enum": [
               "string",
               "integer",
@@ -25005,7 +25255,8 @@
               "relationship",
               "virtual",
               "uuid"
-            ]
+            ],
+            "type": "string"
           },
           "status": {
             "type": "string",
@@ -25014,8 +25265,7 @@
           },
           "error": {
             "type": "string",
-            "description": "Error message. Displays error generated on failure of creating or deleting an attribute.",
-            "default": ""
+            "description": "Error message. Displays error generated on failure of creating or deleting an attribute."
           },
           "required": {
             "type": "boolean",
@@ -25026,6 +25276,86 @@
             "type": "boolean",
             "description": "Is attribute an array?",
             "default": false
+          },
+          "default": {
+            "type": "object",
+            "description": "Attribute default value.",
+            "nullable": true,
+            "default": null
+          },
+          "format": {
+            "description": "Attribute format.",
+            "enum": [
+              "email",
+              "enum",
+              "ip",
+              "datetime",
+              "url",
+              "integer",
+              "float"
+            ],
+            "type": "string"
+          },
+          "elements": {
+            "description": "Enum elements (for enum type only).",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "min": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "max": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "size": {
+            "type": "number",
+            "description": "Attribute size (for string)."
+          },
+          "relatedCollection": {
+            "type": "string",
+            "nullable": true,
+            "description": "Related collection ID (for relationship type only)."
+          },
+          "relationType": {
+            "description": "Relation type, possible values are: `oneToOne`, `oneToMany`, `manyToOne`, `manyToMany` (for relationship type only).",
+            "enum": [
+              "oneToOne",
+              "oneToMany",
+              "manyToOne",
+              "manyToMany"
+            ],
+            "type": "string"
+          },
+          "twoWay": {
+            "type": "boolean",
+            "description": "Indicates whether the relationship is two-way (for relationship type only)."
+          },
+          "twoWayKey": {
+            "type": "string",
+            "description": "Two-way attribute key (for relationship type only)."
+          },
+          "onDelete": {
+            "description": "On delete action, possible values are: `cascade`, `restrict`, or `setNull` (for relationship type only).",
+            "enum": [
+              "cascade",
+              "setNull",
+              "restrict"
+            ],
+            "type": "string"
+          },
+          "side": {
+            "description": "Attribute side (for relationship type only).\nPossible values are `parent` or `child`.",
+            "enum": [
+              "parent",
+              "child"
+            ],
+            "type": "string"
           },
           "$id": {
             "type": "string",
@@ -25042,39 +25372,22 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
-          },
-          "format": {
-            "enum": [
-              "email",
-              "enum",
-              "ip",
-              "datetime",
-              "url",
-              "integer",
-              "float"
-            ],
-            "type": "string"
-          },
-          "default": {
-            "type": "string",
-            "nullable": true,
-            "default": null
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "key",
           "type",
           "status",
-          "error",
           "required",
           "array",
           "$id",
           "$createdAt",
           "$updatedAt",
-          "$permissions",
-          "format",
-          "default"
+          "$permissions"
         ]
       },
       "CreateEnumAttributeDTO": {
@@ -25118,13 +25431,10 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "Attribute Key.",
-            "default": ""
+            "description": "Attribute Key."
           },
           "type": {
-            "type": "string",
             "description": "Attribute type.",
-            "default": "",
             "enum": [
               "string",
               "integer",
@@ -25135,7 +25445,8 @@
               "relationship",
               "virtual",
               "uuid"
-            ]
+            ],
+            "type": "string"
           },
           "status": {
             "type": "string",
@@ -25144,8 +25455,7 @@
           },
           "error": {
             "type": "string",
-            "description": "Error message. Displays error generated on failure of creating or deleting an attribute.",
-            "default": ""
+            "description": "Error message. Displays error generated on failure of creating or deleting an attribute."
           },
           "required": {
             "type": "boolean",
@@ -25156,6 +25466,86 @@
             "type": "boolean",
             "description": "Is attribute an array?",
             "default": false
+          },
+          "default": {
+            "type": "object",
+            "description": "Attribute default value.",
+            "nullable": true,
+            "default": null
+          },
+          "format": {
+            "description": "Attribute format.",
+            "enum": [
+              "email",
+              "enum",
+              "ip",
+              "datetime",
+              "url",
+              "integer",
+              "float"
+            ],
+            "type": "string"
+          },
+          "elements": {
+            "description": "Enum elements (for enum type only).",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "min": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "max": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "size": {
+            "type": "number",
+            "description": "Attribute size (for string)."
+          },
+          "relatedCollection": {
+            "type": "string",
+            "nullable": true,
+            "description": "Related collection ID (for relationship type only)."
+          },
+          "relationType": {
+            "description": "Relation type, possible values are: `oneToOne`, `oneToMany`, `manyToOne`, `manyToMany` (for relationship type only).",
+            "enum": [
+              "oneToOne",
+              "oneToMany",
+              "manyToOne",
+              "manyToMany"
+            ],
+            "type": "string"
+          },
+          "twoWay": {
+            "type": "boolean",
+            "description": "Indicates whether the relationship is two-way (for relationship type only)."
+          },
+          "twoWayKey": {
+            "type": "string",
+            "description": "Two-way attribute key (for relationship type only)."
+          },
+          "onDelete": {
+            "description": "On delete action, possible values are: `cascade`, `restrict`, or `setNull` (for relationship type only).",
+            "enum": [
+              "cascade",
+              "setNull",
+              "restrict"
+            ],
+            "type": "string"
+          },
+          "side": {
+            "description": "Attribute side (for relationship type only).\nPossible values are `parent` or `child`.",
+            "enum": [
+              "parent",
+              "child"
+            ],
+            "type": "string"
           },
           "$id": {
             "type": "string",
@@ -25172,46 +25562,22 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
-          },
-          "elements": {
             "type": "array",
             "items": {
               "type": "string"
             }
-          },
-          "format": {
-            "enum": [
-              "email",
-              "enum",
-              "ip",
-              "datetime",
-              "url",
-              "integer",
-              "float"
-            ],
-            "type": "string"
-          },
-          "default": {
-            "type": "string",
-            "nullable": true,
-            "default": null
           }
         },
         "required": [
           "key",
           "type",
           "status",
-          "error",
           "required",
           "array",
           "$id",
           "$createdAt",
           "$updatedAt",
-          "$permissions",
-          "elements",
-          "format",
-          "default"
+          "$permissions"
         ]
       },
       "CreateIpAttributeDTO": {
@@ -25247,13 +25613,10 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "Attribute Key.",
-            "default": ""
+            "description": "Attribute Key."
           },
           "type": {
-            "type": "string",
             "description": "Attribute type.",
-            "default": "",
             "enum": [
               "string",
               "integer",
@@ -25264,7 +25627,8 @@
               "relationship",
               "virtual",
               "uuid"
-            ]
+            ],
+            "type": "string"
           },
           "status": {
             "type": "string",
@@ -25273,8 +25637,7 @@
           },
           "error": {
             "type": "string",
-            "description": "Error message. Displays error generated on failure of creating or deleting an attribute.",
-            "default": ""
+            "description": "Error message. Displays error generated on failure of creating or deleting an attribute."
           },
           "required": {
             "type": "boolean",
@@ -25285,6 +25648,86 @@
             "type": "boolean",
             "description": "Is attribute an array?",
             "default": false
+          },
+          "default": {
+            "type": "object",
+            "description": "Attribute default value.",
+            "nullable": true,
+            "default": null
+          },
+          "format": {
+            "description": "Attribute format.",
+            "enum": [
+              "email",
+              "enum",
+              "ip",
+              "datetime",
+              "url",
+              "integer",
+              "float"
+            ],
+            "type": "string"
+          },
+          "elements": {
+            "description": "Enum elements (for enum type only).",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "min": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "max": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "size": {
+            "type": "number",
+            "description": "Attribute size (for string)."
+          },
+          "relatedCollection": {
+            "type": "string",
+            "nullable": true,
+            "description": "Related collection ID (for relationship type only)."
+          },
+          "relationType": {
+            "description": "Relation type, possible values are: `oneToOne`, `oneToMany`, `manyToOne`, `manyToMany` (for relationship type only).",
+            "enum": [
+              "oneToOne",
+              "oneToMany",
+              "manyToOne",
+              "manyToMany"
+            ],
+            "type": "string"
+          },
+          "twoWay": {
+            "type": "boolean",
+            "description": "Indicates whether the relationship is two-way (for relationship type only)."
+          },
+          "twoWayKey": {
+            "type": "string",
+            "description": "Two-way attribute key (for relationship type only)."
+          },
+          "onDelete": {
+            "description": "On delete action, possible values are: `cascade`, `restrict`, or `setNull` (for relationship type only).",
+            "enum": [
+              "cascade",
+              "setNull",
+              "restrict"
+            ],
+            "type": "string"
+          },
+          "side": {
+            "description": "Attribute side (for relationship type only).\nPossible values are `parent` or `child`.",
+            "enum": [
+              "parent",
+              "child"
+            ],
+            "type": "string"
           },
           "$id": {
             "type": "string",
@@ -25301,39 +25744,22 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
-          },
-          "format": {
-            "enum": [
-              "email",
-              "enum",
-              "ip",
-              "datetime",
-              "url",
-              "integer",
-              "float"
-            ],
-            "type": "string"
-          },
-          "default": {
-            "type": "string",
-            "nullable": true,
-            "default": null
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "key",
           "type",
           "status",
-          "error",
           "required",
           "array",
           "$id",
           "$createdAt",
           "$updatedAt",
-          "$permissions",
-          "format",
-          "default"
+          "$permissions"
         ]
       },
       "CreateURLAttributeDTO": {
@@ -25369,13 +25795,10 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "Attribute Key.",
-            "default": ""
+            "description": "Attribute Key."
           },
           "type": {
-            "type": "string",
             "description": "Attribute type.",
-            "default": "",
             "enum": [
               "string",
               "integer",
@@ -25386,7 +25809,8 @@
               "relationship",
               "virtual",
               "uuid"
-            ]
+            ],
+            "type": "string"
           },
           "status": {
             "type": "string",
@@ -25395,8 +25819,7 @@
           },
           "error": {
             "type": "string",
-            "description": "Error message. Displays error generated on failure of creating or deleting an attribute.",
-            "default": ""
+            "description": "Error message. Displays error generated on failure of creating or deleting an attribute."
           },
           "required": {
             "type": "boolean",
@@ -25407,6 +25830,86 @@
             "type": "boolean",
             "description": "Is attribute an array?",
             "default": false
+          },
+          "default": {
+            "type": "object",
+            "description": "Attribute default value.",
+            "nullable": true,
+            "default": null
+          },
+          "format": {
+            "description": "Attribute format.",
+            "enum": [
+              "email",
+              "enum",
+              "ip",
+              "datetime",
+              "url",
+              "integer",
+              "float"
+            ],
+            "type": "string"
+          },
+          "elements": {
+            "description": "Enum elements (for enum type only).",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "min": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "max": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "size": {
+            "type": "number",
+            "description": "Attribute size (for string)."
+          },
+          "relatedCollection": {
+            "type": "string",
+            "nullable": true,
+            "description": "Related collection ID (for relationship type only)."
+          },
+          "relationType": {
+            "description": "Relation type, possible values are: `oneToOne`, `oneToMany`, `manyToOne`, `manyToMany` (for relationship type only).",
+            "enum": [
+              "oneToOne",
+              "oneToMany",
+              "manyToOne",
+              "manyToMany"
+            ],
+            "type": "string"
+          },
+          "twoWay": {
+            "type": "boolean",
+            "description": "Indicates whether the relationship is two-way (for relationship type only)."
+          },
+          "twoWayKey": {
+            "type": "string",
+            "description": "Two-way attribute key (for relationship type only)."
+          },
+          "onDelete": {
+            "description": "On delete action, possible values are: `cascade`, `restrict`, or `setNull` (for relationship type only).",
+            "enum": [
+              "cascade",
+              "setNull",
+              "restrict"
+            ],
+            "type": "string"
+          },
+          "side": {
+            "description": "Attribute side (for relationship type only).\nPossible values are `parent` or `child`.",
+            "enum": [
+              "parent",
+              "child"
+            ],
+            "type": "string"
           },
           "$id": {
             "type": "string",
@@ -25423,39 +25926,22 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
-          },
-          "format": {
-            "enum": [
-              "email",
-              "enum",
-              "ip",
-              "datetime",
-              "url",
-              "integer",
-              "float"
-            ],
-            "type": "string"
-          },
-          "default": {
-            "type": "string",
-            "nullable": true,
-            "default": null
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "key",
           "type",
           "status",
-          "error",
           "required",
           "array",
           "$id",
           "$createdAt",
           "$updatedAt",
-          "$permissions",
-          "format",
-          "default"
+          "$permissions"
         ]
       },
       "CreateIntegerAttributeDTO": {
@@ -25497,13 +25983,10 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "Attribute Key.",
-            "default": ""
+            "description": "Attribute Key."
           },
           "type": {
-            "type": "string",
             "description": "Attribute type.",
-            "default": "",
             "enum": [
               "string",
               "integer",
@@ -25514,7 +25997,8 @@
               "relationship",
               "virtual",
               "uuid"
-            ]
+            ],
+            "type": "string"
           },
           "status": {
             "type": "string",
@@ -25523,8 +26007,7 @@
           },
           "error": {
             "type": "string",
-            "description": "Error message. Displays error generated on failure of creating or deleting an attribute.",
-            "default": ""
+            "description": "Error message. Displays error generated on failure of creating or deleting an attribute."
           },
           "required": {
             "type": "boolean",
@@ -25535,6 +26018,88 @@
             "type": "boolean",
             "description": "Is attribute an array?",
             "default": false
+          },
+          "default": {
+            "type": "object",
+            "description": "Attribute default value.",
+            "nullable": true,
+            "default": null
+          },
+          "format": {
+            "description": "Attribute format.",
+            "enum": [
+              "email",
+              "enum",
+              "ip",
+              "datetime",
+              "url",
+              "integer",
+              "float"
+            ],
+            "type": "string"
+          },
+          "elements": {
+            "description": "Enum elements (for enum type only).",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "min": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options.",
+            "default": null
+          },
+          "max": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options.",
+            "default": null
+          },
+          "size": {
+            "type": "number",
+            "description": "Attribute size (for string)."
+          },
+          "relatedCollection": {
+            "type": "string",
+            "nullable": true,
+            "description": "Related collection ID (for relationship type only)."
+          },
+          "relationType": {
+            "description": "Relation type, possible values are: `oneToOne`, `oneToMany`, `manyToOne`, `manyToMany` (for relationship type only).",
+            "enum": [
+              "oneToOne",
+              "oneToMany",
+              "manyToOne",
+              "manyToMany"
+            ],
+            "type": "string"
+          },
+          "twoWay": {
+            "type": "boolean",
+            "description": "Indicates whether the relationship is two-way (for relationship type only)."
+          },
+          "twoWayKey": {
+            "type": "string",
+            "description": "Two-way attribute key (for relationship type only)."
+          },
+          "onDelete": {
+            "description": "On delete action, possible values are: `cascade`, `restrict`, or `setNull` (for relationship type only).",
+            "enum": [
+              "cascade",
+              "setNull",
+              "restrict"
+            ],
+            "type": "string"
+          },
+          "side": {
+            "description": "Attribute side (for relationship type only).\nPossible values are `parent` or `child`.",
+            "enum": [
+              "parent",
+              "child"
+            ],
+            "type": "string"
           },
           "$id": {
             "type": "string",
@@ -25551,38 +26116,22 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
-          },
-          "min": {
-            "type": "number",
-            "nullable": true,
-            "default": null
-          },
-          "max": {
-            "type": "number",
-            "nullable": true,
-            "default": null
-          },
-          "default": {
-            "type": "number",
-            "nullable": true,
-            "default": null
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "key",
           "type",
           "status",
-          "error",
           "required",
           "array",
           "$id",
           "$createdAt",
           "$updatedAt",
-          "$permissions",
-          "min",
-          "max",
-          "default"
+          "$permissions"
         ]
       },
       "CreateFloatAttributeDTO": {
@@ -25624,13 +26173,10 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "Attribute Key.",
-            "default": ""
+            "description": "Attribute Key."
           },
           "type": {
-            "type": "string",
             "description": "Attribute type.",
-            "default": "",
             "enum": [
               "string",
               "integer",
@@ -25641,7 +26187,8 @@
               "relationship",
               "virtual",
               "uuid"
-            ]
+            ],
+            "type": "string"
           },
           "status": {
             "type": "string",
@@ -25650,8 +26197,7 @@
           },
           "error": {
             "type": "string",
-            "description": "Error message. Displays error generated on failure of creating or deleting an attribute.",
-            "default": ""
+            "description": "Error message. Displays error generated on failure of creating or deleting an attribute."
           },
           "required": {
             "type": "boolean",
@@ -25662,6 +26208,88 @@
             "type": "boolean",
             "description": "Is attribute an array?",
             "default": false
+          },
+          "default": {
+            "type": "object",
+            "description": "Attribute default value.",
+            "nullable": true,
+            "default": null
+          },
+          "format": {
+            "description": "Attribute format.",
+            "enum": [
+              "email",
+              "enum",
+              "ip",
+              "datetime",
+              "url",
+              "integer",
+              "float"
+            ],
+            "type": "string"
+          },
+          "elements": {
+            "description": "Enum elements (for enum type only).",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "min": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options.",
+            "default": null
+          },
+          "max": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options.",
+            "default": null
+          },
+          "size": {
+            "type": "number",
+            "description": "Attribute size (for string)."
+          },
+          "relatedCollection": {
+            "type": "string",
+            "nullable": true,
+            "description": "Related collection ID (for relationship type only)."
+          },
+          "relationType": {
+            "description": "Relation type, possible values are: `oneToOne`, `oneToMany`, `manyToOne`, `manyToMany` (for relationship type only).",
+            "enum": [
+              "oneToOne",
+              "oneToMany",
+              "manyToOne",
+              "manyToMany"
+            ],
+            "type": "string"
+          },
+          "twoWay": {
+            "type": "boolean",
+            "description": "Indicates whether the relationship is two-way (for relationship type only)."
+          },
+          "twoWayKey": {
+            "type": "string",
+            "description": "Two-way attribute key (for relationship type only)."
+          },
+          "onDelete": {
+            "description": "On delete action, possible values are: `cascade`, `restrict`, or `setNull` (for relationship type only).",
+            "enum": [
+              "cascade",
+              "setNull",
+              "restrict"
+            ],
+            "type": "string"
+          },
+          "side": {
+            "description": "Attribute side (for relationship type only).\nPossible values are `parent` or `child`.",
+            "enum": [
+              "parent",
+              "child"
+            ],
+            "type": "string"
           },
           "$id": {
             "type": "string",
@@ -25678,38 +26306,22 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
-          },
-          "min": {
-            "type": "number",
-            "nullable": true,
-            "default": null
-          },
-          "max": {
-            "type": "number",
-            "nullable": true,
-            "default": null
-          },
-          "default": {
-            "type": "number",
-            "nullable": true,
-            "default": null
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "key",
           "type",
           "status",
-          "error",
           "required",
           "array",
           "$id",
           "$createdAt",
           "$updatedAt",
-          "$permissions",
-          "min",
-          "max",
-          "default"
+          "$permissions"
         ]
       },
       "CreateBooleanAttributeDTO": {
@@ -25744,13 +26356,10 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "Attribute Key.",
-            "default": ""
+            "description": "Attribute Key."
           },
           "type": {
-            "type": "string",
             "description": "Attribute type.",
-            "default": "",
             "enum": [
               "string",
               "integer",
@@ -25761,7 +26370,8 @@
               "relationship",
               "virtual",
               "uuid"
-            ]
+            ],
+            "type": "string"
           },
           "status": {
             "type": "string",
@@ -25770,8 +26380,7 @@
           },
           "error": {
             "type": "string",
-            "description": "Error message. Displays error generated on failure of creating or deleting an attribute.",
-            "default": ""
+            "description": "Error message. Displays error generated on failure of creating or deleting an attribute."
           },
           "required": {
             "type": "boolean",
@@ -25782,6 +26391,86 @@
             "type": "boolean",
             "description": "Is attribute an array?",
             "default": false
+          },
+          "default": {
+            "type": "object",
+            "description": "Attribute default value.",
+            "nullable": true,
+            "default": null
+          },
+          "format": {
+            "description": "Attribute format.",
+            "enum": [
+              "email",
+              "enum",
+              "ip",
+              "datetime",
+              "url",
+              "integer",
+              "float"
+            ],
+            "type": "string"
+          },
+          "elements": {
+            "description": "Enum elements (for enum type only).",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "min": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "max": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "size": {
+            "type": "number",
+            "description": "Attribute size (for string)."
+          },
+          "relatedCollection": {
+            "type": "string",
+            "nullable": true,
+            "description": "Related collection ID (for relationship type only)."
+          },
+          "relationType": {
+            "description": "Relation type, possible values are: `oneToOne`, `oneToMany`, `manyToOne`, `manyToMany` (for relationship type only).",
+            "enum": [
+              "oneToOne",
+              "oneToMany",
+              "manyToOne",
+              "manyToMany"
+            ],
+            "type": "string"
+          },
+          "twoWay": {
+            "type": "boolean",
+            "description": "Indicates whether the relationship is two-way (for relationship type only)."
+          },
+          "twoWayKey": {
+            "type": "string",
+            "description": "Two-way attribute key (for relationship type only)."
+          },
+          "onDelete": {
+            "description": "On delete action, possible values are: `cascade`, `restrict`, or `setNull` (for relationship type only).",
+            "enum": [
+              "cascade",
+              "setNull",
+              "restrict"
+            ],
+            "type": "string"
+          },
+          "side": {
+            "description": "Attribute side (for relationship type only).\nPossible values are `parent` or `child`.",
+            "enum": [
+              "parent",
+              "child"
+            ],
+            "type": "string"
           },
           "$id": {
             "type": "string",
@@ -25798,26 +26487,22 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
-          },
-          "default": {
-            "type": "boolean",
-            "nullable": true,
-            "default": null
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "key",
           "type",
           "status",
-          "error",
           "required",
           "array",
           "$id",
           "$createdAt",
           "$updatedAt",
-          "$permissions",
-          "default"
+          "$permissions"
         ]
       },
       "CreateDatetimeAttributeDTO": {
@@ -25853,13 +26538,10 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "Attribute Key.",
-            "default": ""
+            "description": "Attribute Key."
           },
           "type": {
-            "type": "string",
             "description": "Attribute type.",
-            "default": "",
             "enum": [
               "string",
               "integer",
@@ -25870,7 +26552,8 @@
               "relationship",
               "virtual",
               "uuid"
-            ]
+            ],
+            "type": "string"
           },
           "status": {
             "type": "string",
@@ -25879,8 +26562,7 @@
           },
           "error": {
             "type": "string",
-            "description": "Error message. Displays error generated on failure of creating or deleting an attribute.",
-            "default": ""
+            "description": "Error message. Displays error generated on failure of creating or deleting an attribute."
           },
           "required": {
             "type": "boolean",
@@ -25891,6 +26573,86 @@
             "type": "boolean",
             "description": "Is attribute an array?",
             "default": false
+          },
+          "default": {
+            "type": "object",
+            "description": "Attribute default value.",
+            "nullable": true,
+            "default": null
+          },
+          "format": {
+            "description": "Attribute format.",
+            "enum": [
+              "email",
+              "enum",
+              "ip",
+              "datetime",
+              "url",
+              "integer",
+              "float"
+            ],
+            "type": "string"
+          },
+          "elements": {
+            "description": "Enum elements (for enum type only).",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "min": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "max": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "size": {
+            "type": "number",
+            "description": "Attribute size (for string)."
+          },
+          "relatedCollection": {
+            "type": "string",
+            "nullable": true,
+            "description": "Related collection ID (for relationship type only)."
+          },
+          "relationType": {
+            "description": "Relation type, possible values are: `oneToOne`, `oneToMany`, `manyToOne`, `manyToMany` (for relationship type only).",
+            "enum": [
+              "oneToOne",
+              "oneToMany",
+              "manyToOne",
+              "manyToMany"
+            ],
+            "type": "string"
+          },
+          "twoWay": {
+            "type": "boolean",
+            "description": "Indicates whether the relationship is two-way (for relationship type only)."
+          },
+          "twoWayKey": {
+            "type": "string",
+            "description": "Two-way attribute key (for relationship type only)."
+          },
+          "onDelete": {
+            "description": "On delete action, possible values are: `cascade`, `restrict`, or `setNull` (for relationship type only).",
+            "enum": [
+              "cascade",
+              "setNull",
+              "restrict"
+            ],
+            "type": "string"
+          },
+          "side": {
+            "description": "Attribute side (for relationship type only).\nPossible values are `parent` or `child`.",
+            "enum": [
+              "parent",
+              "child"
+            ],
+            "type": "string"
           },
           "$id": {
             "type": "string",
@@ -25907,39 +26669,22 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
-          },
-          "format": {
-            "enum": [
-              "email",
-              "enum",
-              "ip",
-              "datetime",
-              "url",
-              "integer",
-              "float"
-            ],
-            "type": "string"
-          },
-          "default": {
-            "type": "string",
-            "nullable": true,
-            "default": null
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "key",
           "type",
           "status",
-          "error",
           "required",
           "array",
           "$id",
           "$createdAt",
           "$updatedAt",
-          "$permissions",
-          "format",
-          "default"
+          "$permissions"
         ]
       },
       "CreateRelationAttributeDTO": {
@@ -25994,13 +26739,22 @@
         "properties": {
           "key": {
             "type": "string",
-            "description": "Attribute Key.",
-            "default": ""
+            "description": "Attribute Key."
           },
           "type": {
-            "type": "string",
             "description": "Attribute type.",
-            "default": ""
+            "enum": [
+              "string",
+              "integer",
+              "float",
+              "boolean",
+              "timestamptz",
+              "jsonb",
+              "relationship",
+              "virtual",
+              "uuid"
+            ],
+            "type": "string"
           },
           "status": {
             "type": "string",
@@ -26009,8 +26763,7 @@
           },
           "error": {
             "type": "string",
-            "description": "Error message. Displays error generated on failure of creating or deleting an attribute.",
-            "default": ""
+            "description": "Error message. Displays error generated on failure of creating or deleting an attribute."
           },
           "required": {
             "type": "boolean",
@@ -26021,6 +26774,86 @@
             "type": "boolean",
             "description": "Is attribute an array?",
             "default": false
+          },
+          "default": {
+            "type": "object",
+            "description": "Attribute default value."
+          },
+          "format": {
+            "description": "Attribute format.",
+            "enum": [
+              "email",
+              "enum",
+              "ip",
+              "datetime",
+              "url",
+              "integer",
+              "float"
+            ],
+            "type": "string"
+          },
+          "elements": {
+            "description": "Enum elements (for enum type only).",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "min": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "max": {
+            "type": "number",
+            "nullable": true,
+            "description": "Numeric attribute options."
+          },
+          "size": {
+            "type": "number",
+            "description": "Attribute size (for string)."
+          },
+          "relatedCollection": {
+            "type": "string",
+            "nullable": true,
+            "description": "Related collection ID (for relationship type only).",
+            "default": null
+          },
+          "relationType": {
+            "description": "Relation type, possible values are: `oneToOne`, `oneToMany`, `manyToOne`, `manyToMany` (for relationship type only).",
+            "enum": [
+              "oneToOne",
+              "oneToMany",
+              "manyToOne",
+              "manyToMany"
+            ],
+            "type": "string"
+          },
+          "twoWay": {
+            "type": "boolean",
+            "description": "Indicates whether the relationship is two-way (for relationship type only).",
+            "default": false
+          },
+          "twoWayKey": {
+            "type": "string",
+            "description": "Two-way attribute key (for relationship type only)."
+          },
+          "onDelete": {
+            "description": "On delete action, possible values are: `cascade`, `restrict`, or `setNull` (for relationship type only).",
+            "enum": [
+              "cascade",
+              "setNull",
+              "restrict"
+            ],
+            "type": "string"
+          },
+          "side": {
+            "description": "Attribute side (for relationship type only).\nPossible values are `parent` or `child`.",
+            "enum": [
+              "parent",
+              "child"
+            ],
+            "type": "string"
           },
           "$id": {
             "type": "string",
@@ -26037,59 +26870,22 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
-          },
-          "relatedCollection": {
-            "type": "string",
-            "nullable": true,
-            "default": null
-          },
-          "relationType": {
-            "enum": [
-              "oneToOne",
-              "oneToMany",
-              "manyToOne",
-              "manyToMany"
-            ],
-            "type": "string"
-          },
-          "twoWay": {
-            "type": "boolean",
-            "default": false
-          },
-          "twoWayKey": {
-            "type": "string"
-          },
-          "onDelete": {
-            "enum": [
-              "cascade",
-              "setNull",
-              "restrict"
-            ],
-            "type": "string"
-          },
-          "side": {
-            "type": "string",
-            "default": ""
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [
           "key",
           "type",
           "status",
-          "error",
           "required",
           "array",
           "$id",
           "$createdAt",
           "$updatedAt",
-          "$permissions",
-          "relatedCollection",
-          "relationType",
-          "twoWay",
-          "twoWayKey",
-          "onDelete",
-          "side"
+          "$permissions"
         ]
       },
       "UpdateStringAttributeDTO": {
@@ -26395,7 +27191,10 @@
             "description": "User update date in ISO 8601 format."
           },
           "$permissions": {
-            "type": "object"
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": [

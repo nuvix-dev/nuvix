@@ -7,7 +7,7 @@ import { ApiInterceptor } from '@nuvix/core/resolvers'
 
 @Controller({ version: ['1'], path: 'avatars' })
 @Namespace('avatars')
-@UseInterceptors(ApiInterceptor)
+// @UseInterceptors(ApiInterceptor)
 @Scope('avatars.read')
 export class AvatarsController {
   constructor(private readonly avatarsService: AvatarsService) {}

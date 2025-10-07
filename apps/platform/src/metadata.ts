@@ -387,13 +387,11 @@ export default async () => {
                 required: true,
                 type: () => String,
                 description: 'Attribute Key.',
-                default: '',
               },
               type: {
                 required: true,
-                type: () => String,
                 description: 'Attribute type.',
-                default: '',
+                enum: t['@nuvix/db'].AttributeType,
               },
               status: {
                 required: true,
@@ -403,11 +401,10 @@ export default async () => {
                 default: 'available',
               },
               error: {
-                required: true,
+                required: false,
                 type: () => String,
                 description:
                   'Error message. Displays error generated on failure of creating or deleting an attribute.',
-                default: '',
               },
               required: {
                 required: true,
@@ -420,6 +417,75 @@ export default async () => {
                 type: () => Boolean,
                 description: 'Is attribute an array?',
                 default: false,
+              },
+              default: {
+                required: false,
+                type: () => Object,
+                description: 'Attribute default value.',
+              },
+              format: {
+                required: false,
+                description: 'Attribute format.',
+                enum: t['../../../libs/utils/src/constants.js'].AttributeFormat,
+              },
+              elements: {
+                required: false,
+                type: () => [String],
+                description: 'Enum elements (for enum type only).',
+              },
+              min: {
+                required: false,
+                type: () => Number,
+                nullable: true,
+                description: 'Numeric attribute options.',
+              },
+              max: {
+                required: false,
+                type: () => Number,
+                nullable: true,
+                description: 'Numeric attribute options.',
+              },
+              size: {
+                required: false,
+                type: () => Number,
+                description: 'Attribute size (for string).',
+              },
+              relatedCollection: {
+                required: false,
+                type: () => String,
+                nullable: true,
+                description:
+                  'Related collection ID (for relationship type only).',
+              },
+              relationType: {
+                required: false,
+                description:
+                  'Relation type, possible values are: `oneToOne`, `oneToMany`, `manyToOne`, `manyToMany` (for relationship type only).',
+                enum: t['@nuvix/db'].RelationType,
+              },
+              twoWay: {
+                required: false,
+                type: () => Boolean,
+                description:
+                  'Indicates whether the relationship is two-way (for relationship type only).',
+              },
+              twoWayKey: {
+                required: false,
+                type: () => String,
+                description:
+                  'Two-way attribute key (for relationship type only).',
+              },
+              onDelete: {
+                required: false,
+                description:
+                  'On delete action, possible values are: `cascade`, `restrict`, or `setNull` (for relationship type only).',
+                enum: t['@nuvix/db'].OnDelete,
+              },
+              side: {
+                required: false,
+                description:
+                  'Attribute side (for relationship type only).\nPossible values are `parent` or `child`.',
+                enum: t['@nuvix/db'].RelationSide,
               },
             },
           },
@@ -740,9 +806,9 @@ export default async () => {
                 enum: t['@nuvix/db'].RelationType,
               },
               twoWay: { required: true, type: () => Boolean, default: false },
-              twoWayKey: { required: true, type: () => String },
+              twoWayKey: { required: false, type: () => String },
               onDelete: { required: true, enum: t['@nuvix/db'].OnDelete },
-              side: { required: true, type: () => String, default: '' },
+              side: { required: true, enum: t['@nuvix/db'].RelationSide },
             },
             AttributeStringModel: {
               type: { required: true, enum: t['@nuvix/db'].AttributeType },

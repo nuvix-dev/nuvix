@@ -54,10 +54,11 @@ export class MailsQueue extends Queue {
     } as any)
   }
 
-  // TODO: better error handling
+  // TODO: Add retry logic with exponential backoff for failed email sends
+  // improve logging to capture more details about failures
+  // and reduce the boilerplate code for rendering templates
   async process(
     job: Job<MailQueueOptions | MailsQueueOptions, any, MailJob>,
-    token?: string,
   ): Promise<any> {
     switch (job.name) {
       case MailJob.SEND_EMAIL:

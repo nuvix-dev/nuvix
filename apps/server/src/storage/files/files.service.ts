@@ -11,7 +11,11 @@ import {
 } from '@nuvix/db'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Auth } from '@nuvix/core/helper/auth.helper'
-import { CreateFileDTO, UpdateFileDTO } from './DTO/file.dto'
+import {
+  CreateFileDTO,
+  PreviewFileQueryDTO,
+  UpdateFileDTO,
+} from './DTO/file.dto'
 
 import { JwtService } from '@nestjs/jwt'
 import sharp from 'sharp'
@@ -386,7 +390,7 @@ export class FilesService {
       throw new Exception(Exception.USER_UNAUTHORIZED)
     }
 
-    // TODO: i think i should recheck the logic
+    // TODO: we have to review this part later for security issues
     const file = (
       fileSecurity && !valid
         ? await db.getDocument(
@@ -410,13 +414,13 @@ export class FilesService {
 
   /**
    * Preview a file.
-   * @todo
+   * @todo optimize image processing for large images
    */
   async previewFile(
     db: Database,
     bucketId: string,
     fileId: string,
-    params: PreviewParams,
+    params: PreviewFileQueryDTO,
     project: Doc,
   ) {
     const deviceForFiles = this.coreService.getProjectDevice(project.getId())
@@ -1094,18 +1098,4 @@ export class FilesService {
       )
     }
   }
-}
-
-interface PreviewParams {
-  width?: number
-  height?: number
-  gravity?: string
-  quality?: number
-  borderWidth?: number
-  borderColor?: string
-  borderRadius?: number
-  opacity?: number
-  rotation?: number
-  background?: string
-  output?: string
 }

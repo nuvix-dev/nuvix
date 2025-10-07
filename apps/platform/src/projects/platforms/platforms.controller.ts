@@ -1,4 +1,10 @@
-import { Controller, Body, Param, UseInterceptors } from '@nestjs/common'
+import {
+  Controller,
+  Body,
+  Param,
+  UseInterceptors,
+  VERSION_NEUTRAL,
+} from '@nestjs/common'
 import {
   CreatePlatformDTO,
   PlatformParamsDTO,
@@ -15,7 +21,10 @@ import { IListResponse, IResponse } from '@nuvix/utils'
 import { PlatformsDoc } from '@nuvix/utils/types'
 
 @Namespace('projects')
-@Controller({ version: ['1'], path: 'projects/:projectId/platforms' })
+@Controller({
+  version: ['1', VERSION_NEUTRAL],
+  path: 'projects/:projectId/platforms',
+})
 @Auth(AuthType.ADMIN)
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class PlatformsController {

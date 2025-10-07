@@ -1,7 +1,14 @@
 import { NuvixAdapter, NuvixFactory } from '@nuvix/core/server'
 import { AppModule } from './app.module'
 import { NestFastifyApplication } from '@nestjs/platform-fastify'
-import { ConsoleLogger, Logger, LogLevel, ValidationPipe } from '@nestjs/common'
+import {
+  ConsoleLogger,
+  Logger,
+  LogLevel,
+  ValidationPipe,
+  VERSION_NEUTRAL,
+  VersioningType,
+} from '@nestjs/common'
 import {
   configuration,
   parseNumber,
@@ -66,9 +73,14 @@ export async function bootstrap() {
   })
 
   app.enableShutdownHooks()
+  app.enableVersioning({
+    type: VersioningType.HEADER,
+    header: 'X-API-Version',
+    defaultVersion: VERSION_NEUTRAL,
+  })
   app.useGlobalPipes(
     new ValidationPipe({
-      stopAtFirstError: true,
+      stopAtFirstError: false,
       transform: true,
       transformOptions: {
         exposeDefaultValues: true,

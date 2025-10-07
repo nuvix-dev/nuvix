@@ -1,4 +1,5 @@
 import type { DataSource } from '@nuvix/pg'
+import { ProjectsDoc } from '@nuvix/utils/types'
 
 export interface Select {
   schema: string
@@ -8,6 +9,7 @@ export interface Select {
   limit?: number
   offset?: number
   shape?: 'array' | 'object'
+  project: ProjectsDoc
 }
 
 export interface Insert {
@@ -20,6 +22,7 @@ export interface Insert {
   schema: string
   url: string
   returnPref?: 'minimal' | 'location' | 'full'
+  project: ProjectsDoc
 }
 
 export interface Update extends Omit<Insert, 'input'> {
@@ -41,6 +44,7 @@ export interface CallFunction {
   limit?: number
   offset?: number
   args?: Record<string, string | number | boolean | null> | any[]
+  project: ProjectsDoc
 }
 
 export interface UpdatePermissions {
@@ -49,6 +53,7 @@ export interface UpdatePermissions {
   permissions: string[]
   rowId?: number
   tableId: string
+  project: ProjectsDoc
 }
 
 export interface GetPermissions {
@@ -56,4 +61,5 @@ export interface GetPermissions {
   schema: string
   rowId?: number
   tableId: string
+  project: ProjectsDoc
 }

@@ -11,6 +11,7 @@ import {
   Session,
   UseGuards,
   UseInterceptors,
+  VERSION_NEUTRAL,
 } from '@nestjs/common'
 import { AccountService } from './account.service'
 import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
@@ -39,7 +40,7 @@ import { CreateEmailSessionDTO, CreateSessionDTO } from './DTO/session.dto'
 import { CreateEmailTokenDTO } from './DTO/token.dto'
 import type { SessionsDoc, UsersDoc } from '@nuvix/utils/types'
 
-@Controller({ version: ['1'], path: 'account' })
+@Controller({ version: ['1', VERSION_NEUTRAL], path: 'account' })
 @UseGuards(AuthGuard)
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class AccountController {

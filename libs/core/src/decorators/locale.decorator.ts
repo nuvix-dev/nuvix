@@ -1,13 +1,19 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common'
 import { LocaleTranslator } from '../helper/locale.helper'
+import ParamsHelper from '../helper/params.helper'
 
 export const Locale = createParamDecorator<any, any>(
   (data: unknown, ctx: ExecutionContext): any => {
-    const request: Request = ctx.switchToHttp().getRequest()
+    const request: NuvixRequest = ctx.switchToHttp().getRequest()
+    const params = new ParamsHelper(request)
 
-    // TODO: Implement the logic to get the locale from the request object
-    //  request[LOCALE];
+    const locale =
+      params.getFromHeaders('x-nuvix-locale') ||
+      params.getFromQuery('locale') ||
+      'en'
 
-    return new LocaleTranslator()
+    // TODO: validate locale against supported locales
+
+    return new LocaleTranslator(locale)
   },
 )

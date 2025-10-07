@@ -246,13 +246,11 @@ export default async () => {
                 required: true,
                 type: () => String,
                 description: 'Attribute Key.',
-                default: '',
               },
               type: {
                 required: true,
-                type: () => String,
                 description: 'Attribute type.',
-                default: '',
+                enum: t['@nuvix/db'].AttributeType,
               },
               status: {
                 required: true,
@@ -262,11 +260,10 @@ export default async () => {
                 default: 'available',
               },
               error: {
-                required: true,
+                required: false,
                 type: () => String,
                 description:
                   'Error message. Displays error generated on failure of creating or deleting an attribute.',
-                default: '',
               },
               required: {
                 required: true,
@@ -279,6 +276,75 @@ export default async () => {
                 type: () => Boolean,
                 description: 'Is attribute an array?',
                 default: false,
+              },
+              default: {
+                required: false,
+                type: () => Object,
+                description: 'Attribute default value.',
+              },
+              format: {
+                required: false,
+                description: 'Attribute format.',
+                enum: t['../../../libs/utils/src/constants.js'].AttributeFormat,
+              },
+              elements: {
+                required: false,
+                type: () => [String],
+                description: 'Enum elements (for enum type only).',
+              },
+              min: {
+                required: false,
+                type: () => Number,
+                nullable: true,
+                description: 'Numeric attribute options.',
+              },
+              max: {
+                required: false,
+                type: () => Number,
+                nullable: true,
+                description: 'Numeric attribute options.',
+              },
+              size: {
+                required: false,
+                type: () => Number,
+                description: 'Attribute size (for string).',
+              },
+              relatedCollection: {
+                required: false,
+                type: () => String,
+                nullable: true,
+                description:
+                  'Related collection ID (for relationship type only).',
+              },
+              relationType: {
+                required: false,
+                description:
+                  'Relation type, possible values are: `oneToOne`, `oneToMany`, `manyToOne`, `manyToMany` (for relationship type only).',
+                enum: t['@nuvix/db'].RelationType,
+              },
+              twoWay: {
+                required: false,
+                type: () => Boolean,
+                description:
+                  'Indicates whether the relationship is two-way (for relationship type only).',
+              },
+              twoWayKey: {
+                required: false,
+                type: () => String,
+                description:
+                  'Two-way attribute key (for relationship type only).',
+              },
+              onDelete: {
+                required: false,
+                description:
+                  'On delete action, possible values are: `cascade`, `restrict`, or `setNull` (for relationship type only).',
+                enum: t['@nuvix/db'].OnDelete,
+              },
+              side: {
+                required: false,
+                description:
+                  'Attribute side (for relationship type only).\nPossible values are `parent` or `child`.',
+                enum: t['@nuvix/db'].RelationSide,
               },
             },
           },
@@ -599,9 +665,9 @@ export default async () => {
                 enum: t['@nuvix/db'].RelationType,
               },
               twoWay: { required: true, type: () => Boolean, default: false },
-              twoWayKey: { required: true, type: () => String },
+              twoWayKey: { required: false, type: () => String },
               onDelete: { required: true, enum: t['@nuvix/db'].OnDelete },
-              side: { required: true, type: () => String, default: '' },
+              side: { required: true, enum: t['@nuvix/db'].RelationSide },
             },
             AttributeStringModel: {
               type: { required: true, enum: t['@nuvix/db'].AttributeType },
@@ -4231,69 +4297,80 @@ export default async () => {
             PreviewFileQueryDTO: {
               width: {
                 required: false,
-                type: () => String,
+                type: () => Number,
                 description:
-                  'Resize preview image width, Pass an integer between 0 to 4000.',
+                  'Resize preview image width, integer between 0 and 4000.',
+                minimum: 0,
+                maximum: 4000,
               },
               height: {
                 required: false,
-                type: () => String,
+                type: () => Number,
                 description:
-                  'Resize preview image height, Pass an integer between 0 to 4000.',
+                  'Resize preview image height, integer between 0 and 4000.',
+                minimum: 0,
+                maximum: 4000,
               },
               gravity: {
                 required: false,
                 type: () => String,
-                description:
-                  'Image crop gravity. Can be one of center, top-left, top, top-right, left, right, bottom-left, bottom, bottom-right',
+                description: 'Image crop gravity.',
               },
               quality: {
                 required: false,
-                type: () => String,
+                type: () => Number,
                 description:
-                  'Preview image quality. Pass an integer between 0 to 100. Defaults to keep existing image quality.',
+                  'Preview image quality, integer between 0 and 100.',
+                minimum: 0,
+                maximum: 100,
               },
               borderWidth: {
                 required: false,
-                type: () => String,
+                type: () => Number,
                 description:
-                  'Preview image border in pixels. Pass an integer between 0 to 100. Defaults to 0.',
+                  'Preview image border in pixels, integer between 0 and 100.',
+                minimum: 0,
+                maximum: 100,
               },
               borderColor: {
                 required: false,
                 type: () => String,
                 description:
-                  'Preview image border color. Use a valid HEX color, no # is needed for prefix.',
+                  'Preview image border color, valid HEX without # prefix.',
               },
               borderRadius: {
                 required: false,
-                type: () => String,
+                type: () => Number,
                 description:
-                  'Preview image border radius in pixels. Pass an integer between 0 to 4000.',
+                  'Preview image border radius in pixels, integer between 0 and 4000.',
+                minimum: 0,
+                maximum: 4000,
               },
               opacity: {
                 required: false,
-                type: () => String,
-                description:
-                  'Preview image opacity. Only works with images having an alpha channel (like png). Pass a number between 0 to 1.',
+                type: () => Number,
+                description: 'Preview image opacity, number between 0 and 1.',
+                minimum: 0,
+                maximum: 1,
               },
               rotation: {
                 required: false,
-                type: () => String,
+                type: () => Number,
                 description:
-                  'Preview image rotation in degrees. Pass an integer between -360 and 360.',
+                  'Preview image rotation in degrees, integer between -360 and 360.',
+                minimum: -360,
+                maximum: 360,
               },
               background: {
                 required: false,
                 type: () => String,
                 description:
-                  'Preview image background color. Only works with transparent images (png). Use a valid HEX color, no # is needed for prefix.',
+                  'Preview image background color, valid HEX without # prefix.',
               },
               output: {
                 required: false,
                 type: () => String,
-                description:
-                  'Output format type (jpeg, jpg, png, gif and webp).',
+                description: 'Output format type (jpeg, jpg, png, gif, webp).',
               },
             },
           },
@@ -4823,7 +4900,6 @@ export default async () => {
                 type: () => [String],
                 description:
                   'An array of role strings with subscribe permission. By default all users are granted with any subscribe permission. [learn more about roles](https://docs.nuvix.in/permissions#permission-roles).',
-                maxLength: 64,
               },
             },
             UpdateTopicDTO: {},

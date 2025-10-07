@@ -55,7 +55,10 @@ export class CollectionsQueue extends Queue {
         await this.deleteCollection(job.data)
         break
       case CollectionsJob.DELETE_SCHEMA:
-      // TODO: Implement schema deletion logic
+        // TODO: Implement schema deletion logic (currently not needed)
+        // like if we store any metadata about schema in platform/project DB
+        // then we have to delete that too
+        break
       default:
         this.logger.error('Invalid job type')
         throw new Exception(Exception.GENERAL_SERVER_ERROR)

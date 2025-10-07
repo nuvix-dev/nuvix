@@ -179,9 +179,7 @@ export class FilesController {
       db,
       bucketId,
       fileId,
-      {
-        ...queryParams,
-      } as any, // TODO: improve type & vlidation
+      queryParams,
       project,
     )
   }

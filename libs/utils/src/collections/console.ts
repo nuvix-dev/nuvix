@@ -484,7 +484,7 @@ export const consoleCollections: Record<string, Collection> = {
         $id: ID.custom('httpPass'),
         key: 'httpPass',
         type: AttributeType.String,
-        size: Database.LENGTH_KEY, // TODO will the length suffice after encryption?
+        size: Database.LENGTH_KEY * 2, // doubled for encryption
         default: null,
         filters: ['encrypt'],
       },

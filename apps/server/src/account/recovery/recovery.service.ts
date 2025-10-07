@@ -31,6 +31,7 @@ import type {
 } from '@nuvix/utils/types'
 import { AppConfigService } from '@nuvix/core'
 import type { SmtpConfig } from '@nuvix/core/config/smtp.js'
+import { Hooks } from '@nuvix/core/extend/hooks'
 
 @Injectable()
 export class RecoveryService {
@@ -255,7 +256,13 @@ export class RecoveryService {
       history = history.slice(Math.max(0, history.length - historyLimit))
     }
 
-    // hooks.trigger('passwordValidator', [db, project, input.password, user, true]);
+    await Hooks.trigger('passwordValidator', [
+      db,
+      project,
+      input.password,
+      user,
+      true,
+    ])
 
     const updatedProfile = await db.updateDocument(
       'users',

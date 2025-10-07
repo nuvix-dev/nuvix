@@ -14,7 +14,13 @@ import {
   CurrentDatabase,
   Project,
 } from '@nuvix/core/decorators/project.decorator'
-import { Auth, AuthType, Namespace, QueryFilter } from '@nuvix/core/decorators'
+import {
+  Auth,
+  AuthType,
+  CurrentSchemaType,
+  Namespace,
+  QueryFilter,
+} from '@nuvix/core/decorators'
 
 // DTOs
 import {
@@ -41,28 +47,22 @@ import {
   UpdateURLAttributeDTO,
 } from './DTO/attributes.dto'
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor'
-import { DocSchemaGuard } from '@nuvix/core/resolvers/guards'
+import { SchemaGuard } from '@nuvix/core/resolvers/guards'
 import type { AttributesDoc, ProjectsDoc } from '@nuvix/utils/types'
 import { AttributesQueryPipe } from '@nuvix/core/pipes/queries'
-import { ApiParam } from '@nestjs/swagger'
 import { Delete, Get, Patch, Post } from '@nuvix/core'
 import { CollectionParamsDTO } from '../DTO/collection.dto'
-import { IListResponse, IResponse } from '@nuvix/utils'
+import { IListResponse, IResponse, SchemaType } from '@nuvix/utils'
 
 @Controller({
   version: ['1'],
   path: 'schemas/:schemaId/collections/:collectionId/attributes',
 })
 @Namespace('schemas')
-@UseGuards(ProjectGuard, DocSchemaGuard)
+@UseGuards(ProjectGuard, SchemaGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
-@ApiParam({
-  name: 'schemaId',
-  description: 'Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).',
-  type: 'string',
-  required: true,
-})
 @Auth([AuthType.ADMIN, AuthType.KEY])
+@CurrentSchemaType(SchemaType.Document)
 export class AttributesController {
   constructor(private readonly attributesService: AttributesService) {}
 

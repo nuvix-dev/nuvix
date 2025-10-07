@@ -11,6 +11,7 @@ import {
   PROJECT_DB_CLIENT,
   PROJECT_PG,
   Schemas,
+  SchemaType,
   type Schema,
 } from '@nuvix/utils'
 import type { ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
@@ -39,8 +40,9 @@ export class SchemaHook implements Hook {
       role = DatabaseRole.AUTHENTICATED
     }
 
-    const schemaId = (request.params as { schemaId: string | undefined })
-      .schemaId
+    const schemaId =
+      (request.params as { schemaId: string | undefined }).schemaId || 'public'
+
     if (schemaId === undefined) return
     const schema = await pg
       .table<Schema>('schemas')
@@ -49,11 +51,22 @@ export class SchemaHook implements Hook {
       .first()
 
     if (schema) {
+      request[Context.CurrentSchema] = schema
       if (!Auth.isTrustedActor) {
         if (!schema.enabled) {
           throw new Exception(Exception.SCHEMA_NOT_FOUND)
         }
-        // TODO: Check if schema is publicly accessible
+        const allowed = project.get('metadata')?.['allowedSchemas'] ?? []
+        // May be we will add Document schema too in future
+        if (
+          !allowed.includes(schema.name) &&
+          schema.type !== SchemaType.Document
+        ) {
+          throw new Exception(
+            Exception.GENERAL_ACCESS_FORBIDDEN,
+            `Access denied: Schema '${schema.name}' is not exposed to the API for this project`,
+          )
+        }
       }
 
       const pg = this.coreService.getProjectPg(
@@ -63,14 +76,15 @@ export class SchemaHook implements Hook {
         }),
       )
       request[CURRENT_SCHEMA_PG] = pg
-      if (schema.type === 'document') {
+
+      if (schema.type === SchemaType.Document) {
         const db = this.coreService.getProjectDb(client, {
           projectId: project.getId(),
           schema: schema.name,
         })
         request[CURRENT_SCHEMA_DB] = db
       } else {
-        if (mode !== AppMode.ADMIN) {
+        if (mode !== AppMode.ADMIN || !Auth.isPlatformActor) {
           try {
             await client.query(`SET ROLE ${role}`)
           } catch (e) {

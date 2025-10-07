@@ -2,18 +2,18 @@ import { PROJECT_ROOT } from '@nuvix/utils'
 import * as fs from 'fs'
 import * as path from 'path'
 
+// We could later improve this to use cache for translations to avoid reading files multiple times
+
 /**
  * Class to handle translations for different locales.
  */
 export class LocaleTranslator {
-  private locale: string
   private translations: { [key: string]: string }
 
   default = 'en'
 
-  constructor(locale: string = 'en') {
-    this.locale = locale
-    this.translations = this.loadTranslations(locale)
+  constructor(private locale: string = 'en') {
+    this.translations = this.loadTranslations(this.locale)
   }
 
   private loadTranslations(locale: string): { [key: string]: string } {

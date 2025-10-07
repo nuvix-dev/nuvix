@@ -491,7 +491,7 @@ export class MessagingQueue extends Queue {
       const batchPromises = batches.map(async batch => {
         let deliveredTotal = 0
         const deliveryErrors: string[] = []
-        const messageData: Doc<Messages & { to?: string }> = message // TODO: ----
+        const messageData: Doc<Messages & { to?: string }> = message // TODO: should we clone it?
         messageData.set('to', batch)
 
         let data: SMS | Push | Email

@@ -40,6 +40,7 @@ import type {
 } from '@nuvix/utils/types'
 import { AppConfigService } from '@nuvix/core'
 import type { SmtpConfig } from '@nuvix/core/config/smtp.js'
+import { Hooks } from '@nuvix/core/extend/hooks'
 
 @Injectable()
 export class AccountService {
@@ -96,7 +97,13 @@ export class AccountService {
       }
     }
 
-    // hooks.trigger('passwordValidator', [db, project, password, user, true]);
+    await Hooks.trigger('passwordValidator', [
+      db,
+      project,
+      password,
+      user,
+      true,
+    ])
 
     const passwordHistory = auths['passwordHistory'] ?? 0
     const hashedPassword = await Auth.passwordHash(
@@ -363,7 +370,13 @@ export class AccountService {
       }
     }
 
-    // hooks.trigger('passwordValidator', [db, project, password, user, true]);
+    await Hooks.trigger('passwordValidator', [
+      db,
+      project,
+      password,
+      user,
+      true,
+    ])
 
     user
       .set('password', newPassword)
@@ -409,7 +422,13 @@ export class AccountService {
       throw new Exception(Exception.USER_INVALID_CREDENTIALS)
     }
 
-    // hooks.trigger('passwordValidator', [db, project, password, user, false]);
+    await Hooks.trigger('passwordValidator', [
+      db,
+      project,
+      password,
+      user,
+      false,
+    ])
 
     const target = await Authorization.skip(
       async () =>

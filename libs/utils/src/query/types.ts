@@ -15,7 +15,7 @@ export interface ParseError extends Error {
 }
 
 export type JsonFieldType = {
-  __type: 'json' // TODO
+  __type: 'json'
   name: string
   operator?: '->' | '->>'
 }

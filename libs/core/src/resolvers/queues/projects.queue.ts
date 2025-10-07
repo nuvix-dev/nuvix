@@ -1,3 +1,10 @@
+// This file needs strong refactoring and cleanup
+// There is a lot of duplicate code and unnecessary complexity
+// We will keep it as is for now to avoid breaking changes
+// will shift cloud specific logic to nuvix cloud package in future
+// and keep only the core logic here
+// Also we will improve error handling and logging
+// and make the code more robust and resilient to failures
 import { OnWorkerEvent, Processor } from '@nestjs/bullmq'
 import { Queue } from './queue'
 import { Job } from 'bullmq'
@@ -107,7 +114,6 @@ export class ProjectsQueue extends Queue {
         schema: Schemas.Auth,
       })
       await authSchema.create(Schemas.Auth)
-      // TODO: flush cache to ensure schema is recognized (after lib update)
 
       const authCollections = Object.entries(collections.auth) ?? []
       const $collections = Object.entries(collections.project) ?? []
@@ -208,7 +214,6 @@ export class ProjectsQueue extends Queue {
       } catch (e) {
         if (!(e instanceof DuplicateException)) throw e
       }
-      // TODO: flush cache to ensure schema is recognized (after lib update)
 
       const authCollections = Object.entries(collections.auth) ?? []
       const $collections = Object.entries(collections.project) ?? []

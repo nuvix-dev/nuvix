@@ -1,3 +1,4 @@
+import { RolesValidator } from '@nuvix/db'
 import { Transform } from 'class-transformer'
 import { registerDecorator, ValidationOptions } from 'class-validator'
 import { ValidateIf, isBoolean } from 'class-validator'
@@ -97,5 +98,76 @@ export function TransformStringToBoolean() {
     })(target, propertyKey)
 
     ValidateIf((_, value) => value !== undefined)(target, propertyKey)
+  }
+}
+
+/**
+ * Decorator that checks if a property is a valid date in the future.
+ */
+export function IsFutureDate(
+  validationOptions?: ValidationOptions,
+): PropertyDecorator {
+  return function (object: object, propertyName: string | Symbol) {
+    registerDecorator({
+      name: 'isFutureDate',
+      target: object.constructor,
+      propertyName: propertyName.toString(),
+      options: validationOptions,
+      validator: {
+        validate(value: any) {
+          const date = typeof value === 'string' ? new Date(value) : value
+          const now = new Date()
+          return !isNaN(date.getTime()) && date > now
+        },
+        defaultMessage() {
+          return `${propertyName} must be a valid date in the future.`
+        },
+      },
+    })
+  }
+}
+
+export function IsCompoundID(
+  validationOptions?: ValidationOptions,
+): PropertyDecorator {
+  return function (object: object, propertyName: string | Symbol) {
+    registerDecorator({
+      name: 'isCompoundID',
+      target: object.constructor,
+      propertyName: propertyName.toString(),
+      options: validationOptions,
+      validator: {
+        validate(value: any) {
+          const regex =
+            /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,35}:[a-zA-Z0-9][a-zA-Z0-9._-]{0,35}$/
+          return typeof value === 'string' && regex.test(value)
+        },
+        defaultMessage() {
+          return `${propertyName} must be in the format <ID>:<ID> where each ID is alphanumeric and can include period, hyphen, and underscore. Cannot start with a special character. Max length for each ID is 36 chars.`
+        },
+      },
+    })
+  }
+}
+
+export function IsPermissionsArray(
+  validationOptions?: ValidationOptions & { limit?: number },
+): PropertyDecorator {
+  return function (object: object, propertyName: string | Symbol) {
+    registerDecorator({
+      name: 'isPermissionsArray',
+      target: object.constructor,
+      propertyName: propertyName.toString(),
+      options: validationOptions,
+      validator: {
+        validate(value: any) {
+          const validator = new RolesValidator(validationOptions?.limit)
+          return validator.$valid(value)
+        },
+        defaultMessage() {
+          return `${propertyName} must be a valid permissions array.`
+        },
+      },
+    })
   }
 }

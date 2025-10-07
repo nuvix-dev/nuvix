@@ -56,6 +56,7 @@ import type {
   UsersDoc,
 } from '@nuvix/utils/types'
 import { AppConfigService, CoreService, Platform } from '@nuvix/core'
+import { Hooks } from '@nuvix/core/extend/hooks'
 
 @Injectable()
 @UseInterceptors(ResponseInterceptor)
@@ -133,7 +134,13 @@ export class AccountService {
       }
     }
 
-    // hooks.trigger('passwordValidator', [db, project, password, user, true]);
+    await Hooks.trigger('passwordValidator', [
+      this.db,
+      new Doc(),
+      password,
+      user,
+      true,
+    ])
 
     const passwordHistory = this.platform.get('auths').passwordHistory ?? 0
     const hashedPassword =

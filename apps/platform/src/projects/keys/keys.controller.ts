@@ -1,4 +1,10 @@
-import { Controller, Body, Param, UseInterceptors } from '@nestjs/common'
+import {
+  Controller,
+  Body,
+  Param,
+  UseInterceptors,
+  VERSION_NEUTRAL,
+} from '@nestjs/common'
 
 // DTO
 import { CreateKeyDTO, KeyParamsDTO, UpdateKeyDTO } from './DTO/keys.dto'
@@ -13,7 +19,10 @@ import { IListResponse, IResponse } from '@nuvix/utils'
 import { KeysDoc } from '@nuvix/utils/types'
 
 @Namespace('projects')
-@Controller({ version: ['1'], path: 'projects/:projectId/keys' })
+@Controller({
+  version: ['1', VERSION_NEUTRAL],
+  path: 'projects/:projectId/keys',
+})
 @Auth(AuthType.ADMIN)
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class KeysController {

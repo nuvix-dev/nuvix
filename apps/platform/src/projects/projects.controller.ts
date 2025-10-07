@@ -1,4 +1,10 @@
-import { Controller, Body, Param, UseInterceptors } from '@nestjs/common'
+import {
+  Controller,
+  Body,
+  Param,
+  UseInterceptors,
+  VERSION_NEUTRAL,
+} from '@nestjs/common'
 import { ProjectService } from './projects.service'
 
 // DTO
@@ -38,7 +44,7 @@ import { ProjectsDoc } from '@nuvix/utils/types'
 import { IListResponse, IResponse } from '@nuvix/utils'
 
 @Namespace('projects')
-@Controller({ version: ['1'], path: 'projects' })
+@Controller({ version: ['1', VERSION_NEUTRAL], path: 'projects' })
 @Auth(AuthType.ADMIN)
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class ProjectsController {

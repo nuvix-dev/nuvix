@@ -14,6 +14,7 @@ import { ParseQueryPipe } from '@nuvix/core/pipes/query.pipe'
 import { CurrentDatabase } from '@nuvix/core/decorators/project.decorator'
 import {
   AuthType,
+  CurrentSchemaType,
   Namespace,
   QueryFilter,
   AuthUser as User,
@@ -26,11 +27,15 @@ import {
   UpdateDocumentDTO,
 } from './DTO/document.dto'
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor'
-import { DocSchemaGuard } from '@nuvix/core/resolvers/guards'
+import { SchemaGuard } from '@nuvix/core/resolvers/guards'
 import type { UsersDoc } from '@nuvix/utils/types'
-import { ApiParam } from '@nestjs/swagger'
 import { Delete, Get, Patch, Post } from '@nuvix/core'
-import { configuration, IListResponse, IResponse } from '@nuvix/utils'
+import {
+  configuration,
+  IListResponse,
+  IResponse,
+  SchemaType,
+} from '@nuvix/utils'
 import { CollectionParamsDTO } from '../DTO/collection.dto'
 import { LogsQueryPipe } from '@nuvix/core/pipes/queries'
 import { Exception } from '@nuvix/core/extend/exception'
@@ -40,20 +45,15 @@ import { Exception } from '@nuvix/core/extend/exception'
   path: 'schemas/:schemaId/collections/:collectionId/documents',
 })
 @Namespace('schemas')
-@UseGuards(ProjectGuard, DocSchemaGuard)
+@UseGuards(ProjectGuard, SchemaGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
-@ApiParam({
-  name: 'schemaId',
-  description: 'Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).',
-  type: 'string',
-  required: true,
-})
+@CurrentSchemaType(SchemaType.Document)
 export class DocumentsController {
   constructor(private readonly documentsService: DocumentsService) {}
 
   @Get('', {
     summary: 'List documents',
-    scopes: ['collections.read', 'documents.read'],
+    scopes: ['documents.read'],
     model: { type: Models.DOCUMENT, list: true },
     sdk: {
       name: 'listDocuments',
@@ -71,7 +71,7 @@ export class DocumentsController {
 
   @Post('', {
     summary: 'Create document',
-    scopes: ['collections.read', 'documents.create'],
+    scopes: ['documents.create'],
     model: Models.DOCUMENT,
     throttle: {
       key: ({ user, ip }) => [`ip:${ip}`, `userId:${user.getId()}`].join(','),
@@ -103,7 +103,7 @@ export class DocumentsController {
 
   @Get(':documentId', {
     summary: 'Get document',
-    scopes: ['collections.read', 'documents.read'],
+    scopes: ['documents.read'],
     model: Models.DOCUMENT,
     sdk: {
       name: 'getDocument',
@@ -126,7 +126,7 @@ export class DocumentsController {
 
   @Patch(':documentId', {
     summary: 'Update document',
-    scopes: ['collections.read', 'documents.update'],
+    scopes: ['documents.update'],
     model: Models.DOCUMENT,
     throttle: {
       key: ({ user, ip }) => [`ip:${ip}`, `userId:${user.getId()}`].join(','),
@@ -157,7 +157,7 @@ export class DocumentsController {
 
   @Delete(':documentId', {
     summary: 'Delete document',
-    scopes: ['collections.read', 'documents.delete'],
+    scopes: ['documents.delete'],
     throttle: {
       key: ({ user, ip }) => [`ip:${ip}`, `userId:${user.getId()}`].join(','),
       limit: configuration.limits.writeRateDefault,
@@ -181,7 +181,7 @@ export class DocumentsController {
 
   @Get(':documentId/logs', {
     summary: 'List document logs',
-    scopes: ['collections.read', 'documents.read'],
+    scopes: ['documents.read'],
     model: { type: Models.LOG, list: true },
     auth: [AuthType.ADMIN, AuthType.KEY],
     sdk: {

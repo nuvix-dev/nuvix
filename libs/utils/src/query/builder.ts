@@ -27,6 +27,7 @@ export interface ASTToQueryBuilderOptions {
   maxNestingDepth?: number
   throwOnEmpty?: boolean
   throwOnEmptyError?: Exception
+  allowedSchemas?: string[]
 }
 
 export class ASTToQueryBuilder<T extends QueryBuilder> {
@@ -47,6 +48,9 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
   ]
 
   constructor(qb: T, pg: DataSource, options: ASTToQueryBuilderOptions = {}) {
+    if (options.allowedSchemas) {
+      this.allowedSchemas = options.allowedSchemas
+    }
     this.qb = qb
     this.pg = pg
   }

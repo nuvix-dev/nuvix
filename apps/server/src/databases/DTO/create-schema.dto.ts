@@ -55,6 +55,8 @@ export class SchemaQueryDTO {
     enum: SchemaType,
     example: 'managed',
   })
+  @IsOptional()
+  @IsEnum(SchemaType)
   type?: SchemaType
 }
 

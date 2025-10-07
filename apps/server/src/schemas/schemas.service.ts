@@ -33,9 +33,12 @@ import { Database } from '@nuvix/db'
 export class SchemasService {
   private readonly logger = new Logger(SchemasService.name)
 
-  async select({ pg, table, url, limit, offset, schema }: Select) {
+  async select({ pg, table, url, limit, offset, schema, project }: Select) {
     const qb = pg.qb(table).withSchema(schema)
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, pg)
+    const allowedSchemas = project.get('metadata')?.['allowedSchemas'] || []
+    const astToQueryBuilder = new ASTToQueryBuilder(qb, pg, {
+      allowedSchemas,
+    })
 
     const { filter, select, order } = this.getParamsFromUrl(url, table)
 
@@ -105,6 +108,7 @@ export class SchemasService {
   async update({
     pg,
     table,
+    project,
     input,
     columns,
     schema,
@@ -135,7 +139,10 @@ export class SchemasService {
 
     const qb = pg.qb(table).withSchema(schema)
     const { select, filter, order } = this.getParamsFromUrl(url, table)
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, pg)
+    const allowedSchemas = project.get('metadata')?.['allowedSchemas'] || []
+    const astToQueryBuilder = new ASTToQueryBuilder(qb, pg, {
+      allowedSchemas,
+    })
 
     astToQueryBuilder.applyReturning(select)
     astToQueryBuilder.applyFilters(filter, {
@@ -159,10 +166,22 @@ export class SchemasService {
       .catch(e => this.processError(e))
   }
 
-  async delete({ pg, table, schema, url, limit, offset, force }: Delete) {
+  async delete({
+    pg,
+    table,
+    project,
+    schema,
+    url,
+    limit,
+    offset,
+    force,
+  }: Delete) {
     const qb = pg.qb(table).withSchema(schema)
     const { select, filter, order } = this.getParamsFromUrl(url, table)
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, pg)
+    const allowedSchemas = project.get('metadata')?.['allowedSchemas'] || []
+    const astToQueryBuilder = new ASTToQueryBuilder(qb, pg, {
+      allowedSchemas,
+    })
 
     astToQueryBuilder.applyReturning(select)
     astToQueryBuilder.applyFilters(filter, {

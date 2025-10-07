@@ -91,7 +91,7 @@ export interface LifecycleHookMethods {
     req: NuvixRequest,
     reply: NuvixRes,
     next: (err?: Error) => void,
-    error: Error, // TODO: -----
+    error: Error, // TODO: it can be undefined? we have to check our custom adapter solution
   ): Promise<unknown>
 
   /**
