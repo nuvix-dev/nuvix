@@ -134,7 +134,7 @@ export class TeamsService {
       throw new Exception(Exception.TEAM_NOT_FOUND)
     }
 
-    // TODO: improve the logic || add logic
+    // TODO: this needs to be improved
     if (team.get('total') > 1) {
       throw new Exception(
         Exception.DELETE_FAILED,

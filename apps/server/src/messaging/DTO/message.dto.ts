@@ -1,5 +1,10 @@
 import { PartialType, PickType } from '@nestjs/swagger'
-import { IsCustomID, IsUID } from '@nuvix/core/validators'
+import {
+  IsCompoundID,
+  IsCustomID,
+  IsFutureDate,
+  IsUID,
+} from '@nuvix/core/validators'
 import {
   IsString,
   IsOptional,
@@ -11,6 +16,7 @@ import {
   IsIn,
   MaxLength,
   Min,
+  Validate,
 } from 'class-validator'
 
 abstract class CreateMessageDTO {
@@ -56,7 +62,8 @@ abstract class CreateMessageDTO {
    */
   @IsOptional()
   @IsDateString()
-  scheduledAt?: string // TODO: Future Date validation
+  @IsFutureDate()
+  scheduledAt?: string
 }
 
 export class CreateEmailMessageDTO extends CreateMessageDTO {
@@ -95,7 +102,7 @@ export class CreateEmailMessageDTO extends CreateMessageDTO {
    */
   @IsOptional()
   @IsArray()
-  @IsString({ each: true }) // TODO: CompoundID
+  @IsCompoundID({ each: true })
   attachments?: string[]
 
   /**

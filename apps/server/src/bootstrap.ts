@@ -72,6 +72,9 @@ export async function bootstrap() {
       transformOptions: {
         exposeDefaultValues: true,
       },
+      validateCustomDecorators: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
     }),
   )
 

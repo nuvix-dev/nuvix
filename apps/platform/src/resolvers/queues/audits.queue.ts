@@ -85,7 +85,7 @@ export class AuditsQueue
       resource,
       userAgent: userAgent || '',
       ip: ip || '',
-      location: '', // TODO: Implement location extraction logic
+      location: '', // Can be populated with a geo-IP service if needed
       data: {
         userId: user.$id,
         userName: user.name || '',

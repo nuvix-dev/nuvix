@@ -262,6 +262,7 @@ export class DocumentsService {
 
   /**
    * Get document logs.
+   * TODO: Implement audit logs and return real data.
    */
   async getDocumentLogs(
     db: Database,

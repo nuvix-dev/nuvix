@@ -89,7 +89,6 @@ export class RecoveryController {
     @Body() input: UpdateRecoveryDTO,
     @Project() project: ProjectsDoc,
   ): Promise<IResponse<TokensDoc>> {
-    // TODO: validate newPassword with password dictionry
     return this.recoveryService.updateRecovery({
       db,
       user,
