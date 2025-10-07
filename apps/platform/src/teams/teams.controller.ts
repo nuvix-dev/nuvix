@@ -1,4 +1,10 @@
-import { Body, Controller, Param, UseInterceptors } from '@nestjs/common'
+import {
+  Body,
+  Controller,
+  Param,
+  UseInterceptors,
+  VERSION_NEUTRAL,
+} from '@nestjs/common'
 import { TeamsService } from './teams.service'
 import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
 import {
@@ -26,7 +32,7 @@ import { ConsoleInterceptor } from '@nuvix/core/resolvers'
 
 @Namespace('teams')
 @Auth([AuthType.SESSION, AuthType.JWT])
-@Controller({ version: ['1'], path: 'teams' })
+@Controller({ version: ['1', VERSION_NEUTRAL], path: 'teams' })
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class TeamsController {
   constructor(private readonly teamsService: TeamsService) {}

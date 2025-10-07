@@ -10,7 +10,6 @@ import {
   DatabaseRole,
   PROJECT_DB_CLIENT,
   PROJECT_PG,
-  RouteContext,
   Schemas,
   SchemaType,
   type Schema,
@@ -41,8 +40,9 @@ export class SchemaHook implements Hook {
       role = DatabaseRole.AUTHENTICATED
     }
 
-    const schemaId = (request.params as { schemaId: string | undefined })
-      .schemaId
+    const schemaId =
+      (request.params as { schemaId: string | undefined }).schemaId || 'public'
+
     if (schemaId === undefined) return
     const schema = await pg
       .table<Schema>('schemas')
@@ -51,6 +51,7 @@ export class SchemaHook implements Hook {
       .first()
 
     if (schema) {
+      request[Context.CurrentSchema] = schema
       if (!Auth.isTrustedActor) {
         if (!schema.enabled) {
           throw new Exception(Exception.SCHEMA_NOT_FOUND)
@@ -75,22 +76,6 @@ export class SchemaHook implements Hook {
         }),
       )
       request[CURRENT_SCHEMA_PG] = pg
-
-      const requestSchemaType =
-        request.routeOptions.config[RouteContext.SCHEMA_TYPE]
-      if (requestSchemaType) {
-        const types = Array.isArray(requestSchemaType)
-          ? requestSchemaType
-          : [requestSchemaType]
-        if (!types.includes(schema.type)) {
-          throw new Exception(
-            Exception.GENERAL_BAD_REQUEST,
-            `Invalid schema type, expected ${types.join(
-              ' or ',
-            )} but received ${schema.type}`,
-          )
-        }
-      }
 
       if (schema.type === SchemaType.Document) {
         const db = this.coreService.getProjectDb(client, {

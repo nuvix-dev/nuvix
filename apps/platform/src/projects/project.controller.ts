@@ -5,6 +5,7 @@ import {
   ParseDatePipe,
   UseGuards,
   Req,
+  VERSION_NEUTRAL,
 } from '@nestjs/common'
 import { Authorization, type Database } from '@nuvix/db'
 import {
@@ -35,7 +36,7 @@ import {
 } from '@nuvix/utils/query'
 import { Exception } from '@nuvix/core/extend/exception'
 
-@Controller({ version: ['1'], path: 'project' })
+@Controller({ version: ['1', VERSION_NEUTRAL], path: 'project' })
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 @UseGuards(ProjectGuard)
 @Auth([AuthType.ADMIN])

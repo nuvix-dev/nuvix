@@ -18,6 +18,7 @@ import {
 import {
   Auth,
   AuthType,
+  CurrentSchemaType,
   Namespace,
   QueryFilter,
   QuerySearch,
@@ -30,25 +31,19 @@ import {
   UpdateCollectionDTO,
 } from './DTO/collection.dto'
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor'
-import { DocSchemaGuard } from '@nuvix/core/resolvers/guards'
+import { SchemaGuard } from '@nuvix/core/resolvers/guards'
 import type { CollectionsDoc, ProjectsDoc } from '@nuvix/utils/types'
 import { CollectionsQueryPipe, LogsQueryPipe } from '@nuvix/core/pipes/queries'
 import { Delete, Get, Post, Put } from '@nuvix/core'
-import { IListResponse, IResponse } from '@nuvix/utils'
-import { ApiParam } from '@nestjs/swagger'
+import { IListResponse, IResponse, SchemaType } from '@nuvix/utils'
 import { Exception } from '@nuvix/core/extend/exception'
 
 @Namespace('schemas')
 @Auth([AuthType.ADMIN, AuthType.KEY])
-@UseGuards(ProjectGuard, DocSchemaGuard)
+@UseGuards(ProjectGuard, SchemaGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
-@ApiParam({
-  name: 'schemaId',
-  description: 'Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).',
-  type: 'string',
-  required: true,
-})
 @Controller({ version: ['1'], path: 'schemas/:schemaId/collections' })
+@CurrentSchemaType(SchemaType.Document)
 export class CollectionsController {
   constructor(private readonly collectionsService: CollectionsService) {}
 

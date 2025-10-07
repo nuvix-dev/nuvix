@@ -41,6 +41,10 @@ const member = [
   'subscribers.delete',
   'subscribers.read',
   'assistant.read',
+  'schemas.tables.read',
+  'schemas.tables.create',
+  'schemas.tables.update',
+  'schemas.tables.delete',
 ] as const
 
 const _admins = [
@@ -138,6 +142,11 @@ const _admins = [
   'schemas.create',
   'schemas.update',
   'schemas.delete',
+
+  'schemas.tables.read',
+  'schemas.tables.create',
+  'schemas.tables.update',
+  'schemas.tables.delete',
 ] as const
 
 const admins = [..._admins, ...Object.keys(scopes)]
@@ -167,6 +176,10 @@ export const roles = {
       'execution.create',
       'execution.update',
       'execution.delete',
+      'schemas.tables.read',
+      'schemas.tables.create',
+      'schemas.tables.update',
+      'schemas.tables.delete',
     ],
   },
   users: {

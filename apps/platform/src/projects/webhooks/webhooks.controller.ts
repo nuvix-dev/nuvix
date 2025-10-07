@@ -1,4 +1,10 @@
-import { Controller, Body, Param, UseInterceptors } from '@nestjs/common'
+import {
+  Controller,
+  Body,
+  Param,
+  UseInterceptors,
+  VERSION_NEUTRAL,
+} from '@nestjs/common'
 import {
   CreateWebhookDTO,
   UpdateWebhookDTO,
@@ -15,7 +21,10 @@ import { IListResponse, IResponse } from '@nuvix/utils'
 import { WebhooksDoc } from '@nuvix/utils/types'
 
 @Namespace('projects')
-@Controller({ version: ['1'], path: 'projects/:projectId/webhooks' })
+@Controller({
+  version: ['1', VERSION_NEUTRAL],
+  path: 'projects/:projectId/webhooks',
+})
 @Auth(AuthType.ADMIN)
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class WebhooksController {

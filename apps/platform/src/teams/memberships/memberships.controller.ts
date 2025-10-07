@@ -5,6 +5,7 @@ import {
   Req,
   Res,
   UseInterceptors,
+  VERSION_NEUTRAL,
 } from '@nestjs/common'
 import { MembershipsService } from './memberships.service'
 import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
@@ -34,7 +35,10 @@ import { ConsoleInterceptor } from '@nuvix/core/resolvers'
 
 @Namespace('teams')
 @Auth([AuthType.SESSION, AuthType.JWT])
-@Controller({ version: ['1'], path: 'teams/:teamId/memberships' })
+@Controller({
+  version: ['1', VERSION_NEUTRAL],
+  path: 'teams/:teamId/memberships',
+})
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class MembershipsController {
   constructor(private readonly membershipsService: MembershipsService) {}

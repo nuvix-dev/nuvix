@@ -11,15 +11,15 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 import { SchemasService } from './schemas.service'
-import { ProjectGuard } from '@nuvix/core/resolvers/guards'
+import { ProjectGuard, SchemaGuard } from '@nuvix/core/resolvers/guards'
 import {
   ResponseInterceptor,
   ApiInterceptor,
 } from '@nuvix/core/resolvers/interceptors'
 import {
-  Auth,
   AuthType,
   CurrentSchema,
+  CurrentSchemaType,
   Namespace,
   Project,
 } from '@nuvix/core/decorators'
@@ -33,22 +33,18 @@ import {
   TableParamsDTO,
 } from './DTO/table.dto'
 import type { ProjectsDoc } from '@nuvix/utils/types'
-import { RouteConfig } from '@nestjs/platform-fastify'
-import { RouteContext, SchemaType } from '@nuvix/utils'
+import { SchemaType } from '@nuvix/utils'
 
 // Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
 @Controller({ version: ['1'], path: ['schemas/:schemaId', 'public'] })
-@UseGuards(ProjectGuard)
+@UseGuards(ProjectGuard, SchemaGuard)
 @Namespace('schemas')
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
-@Auth([AuthType.ADMIN, AuthType.JWT, AuthType.SESSION, AuthType.KEY])
-@RouteConfig({
-  [RouteContext.SCHEMA_TYPE]: [SchemaType.Managed, SchemaType.Unmanaged],
-})
+@CurrentSchemaType([SchemaType.Managed, SchemaType.Unmanaged])
 export class SchemasController {
   constructor(private readonly schemasService: SchemasService) {}
 
-  @Get([':tableId', 'tables/:tableId'], {
+  @Get(['tables/:tableId'], {
     summary: 'Query table data',
     description: 'Retrieve data from a specific table with optional pagination',
     scopes: 'schemas.tables.read',
@@ -74,7 +70,7 @@ export class SchemasController {
     })
   }
 
-  @Post([':tableId', 'tables/:tableId'], {
+  @Post(['tables/:tableId'], {
     summary: 'Insert data into table',
     description: 'Insert one or more records into a specific table',
     scopes: 'schemas.tables.create',
@@ -103,7 +99,7 @@ export class SchemasController {
     })
   }
 
-  @Patch([':tableId', 'tables/:tableId'], {
+  @Patch(['tables/:tableId'], {
     summary: 'Update table data',
     description:
       'Update existing records in a specific table with optional pagination and force flag',
@@ -142,7 +138,7 @@ export class SchemasController {
     })
   }
 
-  @Put([':tableId', 'tables/:tableId'], {
+  @Put(['tables/:tableId'], {
     summary: 'Upsert table data',
     description:
       'Insert or update records in a specific table (upsert operation)',
@@ -160,8 +156,9 @@ export class SchemasController {
     @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
   ) {}
 
-  @Delete([':tableId', 'tables/:tableId'], {
+  @Delete(['tables/:tableId'], {
     summary: 'Delete table data',
+    scopes: 'schemas.tables.delete',
     description:
       'Delete records from a specific table with optional pagination and force flag',
   })
@@ -226,11 +223,9 @@ export class SchemasController {
   @Put(['tables/:tableId/permissions'], {
     summary: 'Update table permissions',
     description: 'Manage permissions for a specific table',
+    auth: [AuthType.ADMIN, AuthType.KEY],
   })
-  @Auth([AuthType.ADMIN, AuthType.KEY])
-  @RouteConfig({
-    [RouteContext.SCHEMA_TYPE]: [SchemaType.Managed],
-  })
+  @CurrentSchemaType(SchemaType.Managed)
   manageTablePermissions(
     @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId }: TableParamsDTO,
@@ -249,11 +244,9 @@ export class SchemasController {
   @Put(['tables/:tableId/:rowId/permissions'], {
     summary: 'Update row permissions',
     description: 'Manage permissions for a specific row in a table',
+    auth: [AuthType.ADMIN, AuthType.KEY],
   })
-  @RouteConfig({
-    [RouteContext.SCHEMA_TYPE]: [SchemaType.Managed],
-  })
-  @Auth([AuthType.ADMIN, AuthType.KEY])
+  @CurrentSchemaType(SchemaType.Managed)
   manageRowPermissions(
     @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId, rowId }: RowParamsDTO,
@@ -273,11 +266,9 @@ export class SchemasController {
   @Get(['tables/:tableId/permissions'], {
     summary: 'Get table permissions',
     description: 'Retrieve permissions for a specific table',
+    auth: [AuthType.ADMIN, AuthType.KEY],
   })
-  @RouteConfig({
-    [RouteContext.SCHEMA_TYPE]: [SchemaType.Managed],
-  })
-  @Auth([AuthType.ADMIN, AuthType.KEY])
+  @CurrentSchemaType(SchemaType.Managed)
   getTablePermissions(
     @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId }: TableParamsDTO,
@@ -294,11 +285,9 @@ export class SchemasController {
   @Get(['tables/:tableId/:rowId/permissions'], {
     summary: 'Get row permissions',
     description: 'Retrieve permissions for a specific row in a table',
+    auth: [AuthType.ADMIN, AuthType.KEY],
   })
-  @RouteConfig({
-    [RouteContext.SCHEMA_TYPE]: [SchemaType.Managed],
-  })
-  @Auth([AuthType.ADMIN, AuthType.KEY])
+  @CurrentSchemaType(SchemaType.Managed)
   getRowPermissions(
     @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId, rowId }: RowParamsDTO,

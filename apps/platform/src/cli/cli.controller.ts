@@ -1,7 +1,7 @@
-import { Body, Controller, Post, Query } from '@nestjs/common'
+import { Body, Controller, Post, Query, VERSION_NEUTRAL } from '@nestjs/common'
 import { CliService } from './cli.service'
 
-@Controller({ path: 'cli', version: ['1'] })
+@Controller({ path: 'cli', version: ['1', VERSION_NEUTRAL] })
 export class CliController {
   constructor(private readonly cliService: CliService) {}
 

@@ -1,5 +1,5 @@
 export * from './guards/auth.guard'
-export * from './guards/doc-schema.guard'
+export * from './guards/schema.guard'
 export * from './guards/project.guard'
 export * from './hooks/api.hook'
 export * from './hooks/audit.hook'

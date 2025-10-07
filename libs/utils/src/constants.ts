@@ -223,6 +223,7 @@ export enum Context {
   Mode = 'mode',
   AuthType = 'authType',
   Namespace = 'namespace',
+  CurrentSchema = 'currentSchema',
 }
 
 export enum HashAlgorithm {

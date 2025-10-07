@@ -1,4 +1,10 @@
-import { Controller, Body, Param, UseInterceptors } from '@nestjs/common'
+import {
+  Controller,
+  Body,
+  Param,
+  UseInterceptors,
+  VERSION_NEUTRAL,
+} from '@nestjs/common'
 
 import {
   AuthSessionAlertsDTO,
@@ -24,7 +30,10 @@ import { ProjectsDoc } from '@nuvix/utils/types'
 import { ProjectParamsDTO } from '../DTO/create-project.dto'
 
 @Namespace('projects')
-@Controller({ version: ['1'], path: 'projects/:projectId/auth' })
+@Controller({
+  version: ['1', VERSION_NEUTRAL],
+  path: 'projects/:projectId/auth',
+})
 @Auth(AuthType.ADMIN)
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class AuthSettingsController {

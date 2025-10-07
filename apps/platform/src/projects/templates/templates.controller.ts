@@ -1,4 +1,9 @@
-import { Controller, Param, UseInterceptors } from '@nestjs/common'
+import {
+  Controller,
+  Param,
+  UseInterceptors,
+  VERSION_NEUTRAL,
+} from '@nestjs/common'
 import { Exception } from '@nuvix/core/extend/exception'
 import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
 import { ConsoleInterceptor } from '@nuvix/core/resolvers/interceptors/console.interceptor'
@@ -8,7 +13,10 @@ import { TemplateParamsDTO } from './DTO/params.dto'
 import { Delete, Get, Patch } from '@nuvix/core'
 
 @Namespace('projects')
-@Controller({ version: ['1'], path: 'projects/:projectId/templates' })
+@Controller({
+  version: ['1', VERSION_NEUTRAL],
+  path: 'projects/:projectId/templates',
+})
 @Auth(AuthType.ADMIN)
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class TemplatesController {

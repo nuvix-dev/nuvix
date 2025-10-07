@@ -18,7 +18,7 @@ import {
   type _AuditEvent,
   type AuditEventKey,
 } from './events.decorator'
-import { Auth, type AuthType } from './sdk.decorator'
+import { Auth, type AuthType } from './misc.decorator'
 import { Scope } from './scope.decorator'
 import type { Scopes } from '../config'
 import { Throttle } from './throttle.decorator'

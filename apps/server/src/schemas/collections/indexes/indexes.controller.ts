@@ -14,31 +14,31 @@ import {
   CurrentDatabase,
   Project,
 } from '@nuvix/core/decorators/project.decorator'
-import { Auth, AuthType, Namespace, QueryFilter } from '@nuvix/core/decorators'
+import {
+  Auth,
+  AuthType,
+  CurrentSchemaType,
+  Namespace,
+  QueryFilter,
+} from '@nuvix/core/decorators'
 import { CreateIndexDTO, IndexParamsDTO } from './DTO/indexes.dto'
 import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor'
-import { DocSchemaGuard } from '@nuvix/core/resolvers/guards'
+import { SchemaGuard } from '@nuvix/core/resolvers/guards'
 import type { IndexesDoc, ProjectsDoc } from '@nuvix/utils/types'
 import { IndexesQueryPipe } from '@nuvix/core/pipes/queries'
-import { ApiParam } from '@nestjs/swagger'
 import { Delete, Get, Post } from '@nuvix/core'
 import { CollectionParamsDTO } from '../DTO/collection.dto'
-import { IListResponse, IResponse } from '@nuvix/utils'
+import { IListResponse, IResponse, SchemaType } from '@nuvix/utils'
 
 @Controller({
   version: ['1'],
   path: 'schemas/:schemaId/collections/:collectionId/indexes',
 })
 @Namespace('schemas')
-@UseGuards(ProjectGuard, DocSchemaGuard)
+@UseGuards(ProjectGuard, SchemaGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.ADMIN, AuthType.KEY])
-@ApiParam({
-  name: 'schemaId',
-  description: 'Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).',
-  type: 'string',
-  required: true,
-})
+@CurrentSchemaType(SchemaType.Document)
 export class IndexesController {
   constructor(private readonly indexesService: IndexesService) {}
 

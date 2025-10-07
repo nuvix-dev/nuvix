@@ -8,6 +8,7 @@ import {
 } from '@nuvix/utils'
 import { applyDecorators } from '@nestjs/common'
 import { ApiTags } from '@nestjs/swagger'
+import { SchemaType } from '@nuvix/utils'
 
 export const _Namespace = Reflector.createDecorator<keyof typeof services>()
 export const Namespace = (ns: keyof typeof services) => {
@@ -22,3 +23,7 @@ export enum AuthType {
 }
 
 export const Auth = Reflector.createDecorator<AuthType | AuthType[]>()
+
+export const CurrentSchemaType = Reflector.createDecorator<
+  SchemaType | SchemaType[]
+>()

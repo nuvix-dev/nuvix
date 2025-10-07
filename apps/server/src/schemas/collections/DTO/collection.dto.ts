@@ -63,6 +63,12 @@ export class UpdateCollectionDTO extends PartialType(
 
 export class CollectionParamsDTO {
   /**
+   * Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).
+   */
+  @IsString()
+  declare schemaId: string
+
+  /**
    * Collection ID.
    */
   @IsUID()

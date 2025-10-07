@@ -1,6 +1,6 @@
-import type { SchemaType } from '@nuvix/pg'
 import type { configuration } from './configuration.js'
 import { UsersDoc } from '../types/'
+import { SchemaType } from './constants.js'
 
 export type Configuration = typeof configuration
 
