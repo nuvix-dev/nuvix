@@ -538,7 +538,7 @@ export class AccountService {
     })
 
     return {
-      sessions: updatedSessions,
+      data: updatedSessions,
       total: updatedSessions.length,
     }
   }

@@ -30,6 +30,7 @@ import { StatsQueue } from '@nuvix/core/resolvers/queues'
 import { AppConfigService } from '@nuvix/core'
 import { LogsHook } from '@nuvix/core/resolvers'
 import { ApiLogsQueue } from '@nuvix/core/resolvers/queues/logs.queue'
+import { LocaleModule } from './locale/locale.module'
 
 @Module({
   imports: [
@@ -82,6 +83,7 @@ import { ApiLogsQueue } from '@nuvix/core/resolvers/queues/logs.queue'
     StorageModule,
     SchemasModule,
     MessagingModule,
+    LocaleModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailsQueue, AuditsQueue, StatsQueue, ApiLogsQueue],

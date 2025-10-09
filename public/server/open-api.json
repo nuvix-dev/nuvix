@@ -10630,7 +10630,7 @@
         ]
       }
     },
-    "/v1/schemas/{schemaId}/{tableId}": {
+    "/v1/schemas/{schemaId}/tables/{tableId}": {
       "get": {
         "description": "Retrieve data from a specific table with optional pagination",
         "operationId": "SchemasController_queryTable[0]_v1",
@@ -11026,7 +11026,7 @@
         ]
       }
     },
-    "/v1/schemas/{schemaId}/tables/{tableId}": {
+    "/v1/public/tables/{tableId}": {
       "get": {
         "description": "Retrieve data from a specific table with optional pagination",
         "operationId": "SchemasController_queryTable[1]_v1",
@@ -11323,798 +11323,6 @@
       "delete": {
         "description": "Delete records from a specific table with optional pagination and force flag",
         "operationId": "SchemasController_deleteTables[1]_v1",
-        "parameters": [
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
-            "schema": {
-              "default": "public",
-              "type": "string"
-            }
-          },
-          {
-            "name": "tableId",
-            "required": true,
-            "in": "path",
-            "description": "Table ID.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "limit",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "offset",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "force",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "X-Nuvix-Project",
-            "in": "header",
-            "required": true,
-            "description": "Project ID.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful response"
-          },
-          "5XX": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "code": {
-                      "type": "number",
-                      "description": "Error code"
-                    },
-                    "type": {
-                      "type": "string",
-                      "description": "Error type"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "version": {
-                      "type": "string",
-                      "description": "API version"
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "type",
-                    "message",
-                    "version"
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "summary": "Delete table data",
-        "tags": [
-          "schemas"
-        ]
-      }
-    },
-    "/v1/public/{tableId}": {
-      "get": {
-        "description": "Retrieve data from a specific table with optional pagination",
-        "operationId": "SchemasController_queryTable[2]_v1",
-        "parameters": [
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
-            "schema": {
-              "default": "public",
-              "type": "string"
-            }
-          },
-          {
-            "name": "tableId",
-            "required": true,
-            "in": "path",
-            "description": "Table ID.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "limit",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "offset",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "X-Nuvix-Project",
-            "in": "header",
-            "required": true,
-            "description": "Project ID.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response"
-          },
-          "5XX": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "code": {
-                      "type": "number",
-                      "description": "Error code"
-                    },
-                    "type": {
-                      "type": "string",
-                      "description": "Error type"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "version": {
-                      "type": "string",
-                      "description": "API version"
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "type",
-                    "message",
-                    "version"
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "summary": "Query table data",
-        "tags": [
-          "schemas"
-        ]
-      },
-      "post": {
-        "description": "Insert one or more records into a specific table",
-        "operationId": "SchemasController_insertIntoTable[2]_v1",
-        "parameters": [
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
-            "schema": {
-              "default": "public",
-              "type": "string"
-            }
-          },
-          {
-            "name": "tableId",
-            "required": true,
-            "in": "path",
-            "description": "Table ID.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "columns",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "X-Nuvix-Project",
-            "in": "header",
-            "required": true,
-            "description": "Project ID.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Successful response"
-          },
-          "5XX": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "code": {
-                      "type": "number",
-                      "description": "Error code"
-                    },
-                    "type": {
-                      "type": "string",
-                      "description": "Error type"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "version": {
-                      "type": "string",
-                      "description": "API version"
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "type",
-                    "message",
-                    "version"
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "summary": "Insert data into table",
-        "tags": [
-          "schemas"
-        ]
-      },
-      "patch": {
-        "description": "Update existing records in a specific table with optional pagination and force flag",
-        "operationId": "SchemasController_updateTables[2]_v1",
-        "parameters": [
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
-            "schema": {
-              "default": "public",
-              "type": "string"
-            }
-          },
-          {
-            "name": "tableId",
-            "required": true,
-            "in": "path",
-            "description": "Table ID.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "columns",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "limit",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "offset",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "force",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "X-Nuvix-Project",
-            "in": "header",
-            "required": true,
-            "description": "Project ID.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response"
-          },
-          "5XX": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "code": {
-                      "type": "number",
-                      "description": "Error code"
-                    },
-                    "type": {
-                      "type": "string",
-                      "description": "Error type"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "version": {
-                      "type": "string",
-                      "description": "API version"
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "type",
-                    "message",
-                    "version"
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "summary": "Update table data",
-        "tags": [
-          "schemas"
-        ]
-      },
-      "delete": {
-        "description": "Delete records from a specific table with optional pagination and force flag",
-        "operationId": "SchemasController_deleteTables[2]_v1",
-        "parameters": [
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
-            "schema": {
-              "default": "public",
-              "type": "string"
-            }
-          },
-          {
-            "name": "tableId",
-            "required": true,
-            "in": "path",
-            "description": "Table ID.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "limit",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "offset",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "force",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "X-Nuvix-Project",
-            "in": "header",
-            "required": true,
-            "description": "Project ID.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Successful response"
-          },
-          "5XX": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "code": {
-                      "type": "number",
-                      "description": "Error code"
-                    },
-                    "type": {
-                      "type": "string",
-                      "description": "Error type"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "version": {
-                      "type": "string",
-                      "description": "API version"
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "type",
-                    "message",
-                    "version"
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "summary": "Delete table data",
-        "tags": [
-          "schemas"
-        ]
-      }
-    },
-    "/v1/public/tables/{tableId}": {
-      "get": {
-        "description": "Retrieve data from a specific table with optional pagination",
-        "operationId": "SchemasController_queryTable[3]_v1",
-        "parameters": [
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
-            "schema": {
-              "default": "public",
-              "type": "string"
-            }
-          },
-          {
-            "name": "tableId",
-            "required": true,
-            "in": "path",
-            "description": "Table ID.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "limit",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "offset",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "X-Nuvix-Project",
-            "in": "header",
-            "required": true,
-            "description": "Project ID.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response"
-          },
-          "5XX": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "code": {
-                      "type": "number",
-                      "description": "Error code"
-                    },
-                    "type": {
-                      "type": "string",
-                      "description": "Error type"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "version": {
-                      "type": "string",
-                      "description": "API version"
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "type",
-                    "message",
-                    "version"
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "summary": "Query table data",
-        "tags": [
-          "schemas"
-        ]
-      },
-      "post": {
-        "description": "Insert one or more records into a specific table",
-        "operationId": "SchemasController_insertIntoTable[3]_v1",
-        "parameters": [
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
-            "schema": {
-              "default": "public",
-              "type": "string"
-            }
-          },
-          {
-            "name": "tableId",
-            "required": true,
-            "in": "path",
-            "description": "Table ID.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "columns",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "X-Nuvix-Project",
-            "in": "header",
-            "required": true,
-            "description": "Project ID.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Successful response"
-          },
-          "5XX": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "code": {
-                      "type": "number",
-                      "description": "Error code"
-                    },
-                    "type": {
-                      "type": "string",
-                      "description": "Error type"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "version": {
-                      "type": "string",
-                      "description": "API version"
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "type",
-                    "message",
-                    "version"
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "summary": "Insert data into table",
-        "tags": [
-          "schemas"
-        ]
-      },
-      "patch": {
-        "description": "Update existing records in a specific table with optional pagination and force flag",
-        "operationId": "SchemasController_updateTables[3]_v1",
-        "parameters": [
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
-            "schema": {
-              "default": "public",
-              "type": "string"
-            }
-          },
-          {
-            "name": "tableId",
-            "required": true,
-            "in": "path",
-            "description": "Table ID.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "columns",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "array",
-              "items": {
-                "type": "string"
-              }
-            }
-          },
-          {
-            "name": "limit",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "offset",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "number"
-            }
-          },
-          {
-            "name": "force",
-            "required": true,
-            "in": "query",
-            "schema": {
-              "type": "boolean"
-            }
-          },
-          {
-            "name": "X-Nuvix-Project",
-            "in": "header",
-            "required": true,
-            "description": "Project ID.",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful response"
-          },
-          "5XX": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "code": {
-                      "type": "number",
-                      "description": "Error code"
-                    },
-                    "type": {
-                      "type": "string",
-                      "description": "Error type"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "version": {
-                      "type": "string",
-                      "description": "API version"
-                    }
-                  },
-                  "required": [
-                    "code",
-                    "type",
-                    "message",
-                    "version"
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "summary": "Update table data",
-        "tags": [
-          "schemas"
-        ]
-      },
-      "delete": {
-        "description": "Delete records from a specific table with optional pagination and force flag",
-        "operationId": "SchemasController_deleteTables[3]_v1",
         "parameters": [
           {
             "name": "schemaId",
@@ -16699,6 +15907,612 @@
         ]
       }
     },
+    "/v1/locale": {
+      "get": {
+        "description": "Get the current user location based on IP. Returns an object with user country code, country name, continent name, continent code, ip address and suggested currency. You can use the locale header to get the data in a supported language.\n\n([IP Geolocation by DB-IP](https://db-ip.com))",
+        "operationId": "get",
+        "parameters": [
+          {
+            "name": "X-Nuvix-Project",
+            "in": "header",
+            "required": true,
+            "description": "Project ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LocaleModel"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "number",
+                      "description": "Error code"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "version": {
+                      "type": "string",
+                      "description": "API version"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get user locale",
+        "tags": [
+          "locale"
+        ]
+      }
+    },
+    "/v1/locale/codes": {
+      "get": {
+        "description": "List of all locale codes in [ISO 639-1](https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes).",
+        "operationId": "listCodes",
+        "parameters": [
+          {
+            "name": "X-Nuvix-Project",
+            "in": "header",
+            "required": true,
+            "description": "Project ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/"
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "number",
+                      "description": "Error code"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "version": {
+                      "type": "string",
+                      "description": "API version"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "List locale codes",
+        "tags": [
+          "locale"
+        ]
+      }
+    },
+    "/v1/locale/countries": {
+      "get": {
+        "description": "List of all countries. You can use the locale header to get the data in a supported language.",
+        "operationId": "listCountries",
+        "parameters": [
+          {
+            "name": "X-Nuvix-Project",
+            "in": "header",
+            "required": true,
+            "description": "Project ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/"
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "number",
+                      "description": "Error code"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "version": {
+                      "type": "string",
+                      "description": "API version"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "List countries",
+        "tags": [
+          "locale"
+        ]
+      }
+    },
+    "/v1/locale/countries/eu": {
+      "get": {
+        "description": "List of all countries that are currently members of the EU. You can use the locale header to get the data in a supported language.",
+        "operationId": "listCountriesEU",
+        "parameters": [
+          {
+            "name": "X-Nuvix-Project",
+            "in": "header",
+            "required": true,
+            "description": "Project ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/"
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "number",
+                      "description": "Error code"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "version": {
+                      "type": "string",
+                      "description": "API version"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "List EU countries",
+        "tags": [
+          "locale"
+        ]
+      }
+    },
+    "/v1/locale/countries/phones": {
+      "get": {
+        "description": "List of all countries phone codes. You can use the locale header to get the data in a supported language.",
+        "operationId": "listCountriesPhones",
+        "parameters": [
+          {
+            "name": "X-Nuvix-Project",
+            "in": "header",
+            "required": true,
+            "description": "Project ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/"
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "number",
+                      "description": "Error code"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "version": {
+                      "type": "string",
+                      "description": "API version"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "List countries phone codes",
+        "tags": [
+          "locale"
+        ]
+      }
+    },
+    "/v1/locale/continents": {
+      "get": {
+        "description": "List of all continents. You can use the locale header to get the data in a supported language.",
+        "operationId": "listContinents",
+        "parameters": [
+          {
+            "name": "X-Nuvix-Project",
+            "in": "header",
+            "required": true,
+            "description": "Project ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/"
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "number",
+                      "description": "Error code"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "version": {
+                      "type": "string",
+                      "description": "API version"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "List continents",
+        "tags": [
+          "locale"
+        ]
+      }
+    },
+    "/v1/locale/currencies": {
+      "get": {
+        "description": "List of all currencies, including currency symbol, name, plural, and decimal digits for all major and minor currencies. You can use the locale header to get the data in a supported language.",
+        "operationId": "listCurrencies",
+        "parameters": [
+          {
+            "name": "X-Nuvix-Project",
+            "in": "header",
+            "required": true,
+            "description": "Project ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/"
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "number",
+                      "description": "Error code"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "version": {
+                      "type": "string",
+                      "description": "API version"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "List currencies",
+        "tags": [
+          "locale"
+        ]
+      }
+    },
+    "/v1/locale/languages": {
+      "get": {
+        "description": "List of all languages classified by ISO 639-1 including 2-letter code, name in English, and name in the respective language.",
+        "operationId": "listLanguages",
+        "parameters": [
+          {
+            "name": "X-Nuvix-Project",
+            "in": "header",
+            "required": true,
+            "description": "Project ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/"
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "number",
+                      "description": "Error code"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "version": {
+                      "type": "string",
+                      "description": "API version"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "List languages",
+        "tags": [
+          "locale"
+        ]
+      }
+    },
     "/": {
       "get": {
         "operationId": "AppController_main",
@@ -16842,15 +16656,6 @@
             }
           },
           {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "X-Nuvix-Project",
             "in": "header",
             "required": true,
@@ -16925,15 +16730,6 @@
         "description": "Create a new Collection. Before using this route, you should create a new database resource using either a [server integration](https://docs.nuvix.in/server/databases#databasesCreateCollection) API or directly from your database console.",
         "operationId": "createCollection",
         "parameters": [
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
-            "schema": {
-              "type": "string"
-            }
-          },
           {
             "name": "X-Nuvix-Project",
             "in": "header",
@@ -17012,19 +16808,19 @@
         "operationId": "getCollection",
         "parameters": [
           {
-            "name": "collectionId",
+            "name": "schemaId",
             "required": true,
             "in": "path",
-            "description": "Collection ID.",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "schemaId",
+            "name": "collectionId",
             "required": true,
             "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "description": "Collection ID.",
             "schema": {
               "type": "string"
             }
@@ -17095,19 +16891,19 @@
         "operationId": "updateCollection",
         "parameters": [
           {
-            "name": "collectionId",
+            "name": "schemaId",
             "required": true,
             "in": "path",
-            "description": "Collection ID.",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "schemaId",
+            "name": "collectionId",
             "required": true,
             "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "description": "Collection ID.",
             "schema": {
               "type": "string"
             }
@@ -17188,19 +16984,19 @@
         "operationId": "deleteCollection",
         "parameters": [
           {
-            "name": "collectionId",
+            "name": "schemaId",
             "required": true,
             "in": "path",
-            "description": "Collection ID.",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "schemaId",
+            "name": "collectionId",
             "required": true,
             "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "description": "Collection ID.",
             "schema": {
               "type": "string"
             }
@@ -17266,6 +17062,15 @@
         "operationId": "getCollectionUsage",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -17278,15 +17083,6 @@
             "name": "range",
             "required": true,
             "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -17359,6 +17155,15 @@
         "operationId": "listAttributes",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -17377,15 +17182,6 @@
               "items": {
                 "type": "string"
               }
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
-            "schema": {
-              "type": "string"
             }
           },
           {
@@ -17466,19 +17262,19 @@
         "operationId": "createStringAttribute",
         "parameters": [
           {
-            "name": "collectionId",
+            "name": "schemaId",
             "required": true,
             "in": "path",
-            "description": "Collection ID.",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "schemaId",
+            "name": "collectionId",
             "required": true,
             "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "description": "Collection ID.",
             "schema": {
               "type": "string"
             }
@@ -17561,19 +17357,19 @@
         "operationId": "createEmailAttribute",
         "parameters": [
           {
-            "name": "collectionId",
+            "name": "schemaId",
             "required": true,
             "in": "path",
-            "description": "Collection ID.",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "schemaId",
+            "name": "collectionId",
             "required": true,
             "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "description": "Collection ID.",
             "schema": {
               "type": "string"
             }
@@ -17656,19 +17452,19 @@
         "operationId": "createEnumAttribute",
         "parameters": [
           {
-            "name": "collectionId",
+            "name": "schemaId",
             "required": true,
             "in": "path",
-            "description": "Collection ID.",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "schemaId",
+            "name": "collectionId",
             "required": true,
             "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "description": "Collection ID.",
             "schema": {
               "type": "string"
             }
@@ -17751,19 +17547,19 @@
         "operationId": "createIpAttribute",
         "parameters": [
           {
-            "name": "collectionId",
+            "name": "schemaId",
             "required": true,
             "in": "path",
-            "description": "Collection ID.",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "schemaId",
+            "name": "collectionId",
             "required": true,
             "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "description": "Collection ID.",
             "schema": {
               "type": "string"
             }
@@ -17846,19 +17642,19 @@
         "operationId": "createUrlAttribute",
         "parameters": [
           {
-            "name": "collectionId",
+            "name": "schemaId",
             "required": true,
             "in": "path",
-            "description": "Collection ID.",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "schemaId",
+            "name": "collectionId",
             "required": true,
             "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "description": "Collection ID.",
             "schema": {
               "type": "string"
             }
@@ -17941,19 +17737,19 @@
         "operationId": "createIntegerAttribute",
         "parameters": [
           {
-            "name": "collectionId",
+            "name": "schemaId",
             "required": true,
             "in": "path",
-            "description": "Collection ID.",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "schemaId",
+            "name": "collectionId",
             "required": true,
             "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "description": "Collection ID.",
             "schema": {
               "type": "string"
             }
@@ -18036,19 +17832,19 @@
         "operationId": "createFloatAttribute",
         "parameters": [
           {
-            "name": "collectionId",
+            "name": "schemaId",
             "required": true,
             "in": "path",
-            "description": "Collection ID.",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "schemaId",
+            "name": "collectionId",
             "required": true,
             "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "description": "Collection ID.",
             "schema": {
               "type": "string"
             }
@@ -18131,19 +17927,19 @@
         "operationId": "createBooleanAttribute",
         "parameters": [
           {
-            "name": "collectionId",
+            "name": "schemaId",
             "required": true,
             "in": "path",
-            "description": "Collection ID.",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "schemaId",
+            "name": "collectionId",
             "required": true,
             "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "description": "Collection ID.",
             "schema": {
               "type": "string"
             }
@@ -18226,19 +18022,19 @@
         "operationId": "createDatetimeAttribute",
         "parameters": [
           {
-            "name": "collectionId",
+            "name": "schemaId",
             "required": true,
             "in": "path",
-            "description": "Collection ID.",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "schemaId",
+            "name": "collectionId",
             "required": true,
             "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "description": "Collection ID.",
             "schema": {
               "type": "string"
             }
@@ -18321,19 +18117,19 @@
         "operationId": "createDatetimeAttribute",
         "parameters": [
           {
-            "name": "collectionId",
+            "name": "schemaId",
             "required": true,
             "in": "path",
-            "description": "Collection ID.",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "schemaId",
+            "name": "collectionId",
             "required": true,
             "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "description": "Collection ID.",
             "schema": {
               "type": "string"
             }
@@ -18416,19 +18212,19 @@
         "operationId": "createRelationshipAttribute",
         "parameters": [
           {
-            "name": "collectionId",
+            "name": "schemaId",
             "required": true,
             "in": "path",
-            "description": "Collection ID.",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "schemaId",
+            "name": "collectionId",
             "required": true,
             "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "description": "Collection ID.",
             "schema": {
               "type": "string"
             }
@@ -18511,6 +18307,15 @@
         "operationId": "getAttribute",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -18524,15 +18329,6 @@
             "required": true,
             "in": "path",
             "description": "Attribute Key.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -18603,6 +18399,15 @@
         "operationId": "deleteAttribute",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -18616,15 +18421,6 @@
             "required": true,
             "in": "path",
             "description": "Attribute Key.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -18690,6 +18486,15 @@
         "operationId": "updateStringAttribute",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -18703,15 +18508,6 @@
             "required": true,
             "in": "path",
             "description": "Attribute Key.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -18794,6 +18590,15 @@
         "operationId": "updateEmailAttribute",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -18807,15 +18612,6 @@
             "required": true,
             "in": "path",
             "description": "Attribute Key.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -18898,6 +18694,15 @@
         "operationId": "updateEnumAttribute",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -18911,15 +18716,6 @@
             "required": true,
             "in": "path",
             "description": "Attribute Key.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -19002,6 +18798,15 @@
         "operationId": "updateIpAttribute",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -19015,15 +18820,6 @@
             "required": true,
             "in": "path",
             "description": "Attribute Key.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -19106,6 +18902,15 @@
         "operationId": "updateUrlAttribute",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -19119,15 +18924,6 @@
             "required": true,
             "in": "path",
             "description": "Attribute Key.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -19210,6 +19006,15 @@
         "operationId": "updateIntegerAttribute",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -19223,15 +19028,6 @@
             "required": true,
             "in": "path",
             "description": "Attribute Key.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -19314,6 +19110,15 @@
         "operationId": "updateFloatAttribute",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -19327,15 +19132,6 @@
             "required": true,
             "in": "path",
             "description": "Attribute Key.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -19418,6 +19214,15 @@
         "operationId": "updateBooleanAttribute",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -19431,15 +19236,6 @@
             "required": true,
             "in": "path",
             "description": "Attribute Key.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -19522,6 +19318,15 @@
         "operationId": "updateDatetimeAttribute",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -19535,15 +19340,6 @@
             "required": true,
             "in": "path",
             "description": "Attribute Key.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -19626,6 +19422,15 @@
         "operationId": "updateDatetimeAttribute",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -19639,15 +19444,6 @@
             "required": true,
             "in": "path",
             "description": "Attribute Key.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -19730,6 +19526,15 @@
         "operationId": "updateRelationshipAttribute",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -19743,15 +19548,6 @@
             "required": true,
             "in": "path",
             "description": "Attribute Key.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -19834,19 +19630,19 @@
         "operationId": "createIndex",
         "parameters": [
           {
-            "name": "collectionId",
+            "name": "schemaId",
             "required": true,
             "in": "path",
-            "description": "Collection ID.",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "schemaId",
+            "name": "collectionId",
             "required": true,
             "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "description": "Collection ID.",
             "schema": {
               "type": "string"
             }
@@ -19927,6 +19723,15 @@
         "operationId": "listIndexes",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -19945,15 +19750,6 @@
               "items": {
                 "type": "string"
               }
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
-            "schema": {
-              "type": "string"
             }
           },
           {
@@ -20034,6 +19830,15 @@
         "operationId": "getIndex",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -20047,15 +19852,6 @@
             "required": true,
             "in": "path",
             "description": "Index Key.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -20126,6 +19922,15 @@
         "operationId": "deleteIndex",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -20139,15 +19944,6 @@
             "required": true,
             "in": "path",
             "description": "Index Key.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -20213,6 +20009,15 @@
         "operationId": "listDocuments",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -20231,15 +20036,6 @@
               "items": {
                 "type": "string"
               }
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
-            "schema": {
-              "type": "string"
             }
           },
           {
@@ -20318,19 +20114,19 @@
         "operationId": "createDocument",
         "parameters": [
           {
-            "name": "collectionId",
+            "name": "schemaId",
             "required": true,
             "in": "path",
-            "description": "Collection ID.",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
           },
           {
-            "name": "schemaId",
+            "name": "collectionId",
             "required": true,
             "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "description": "Collection ID.",
             "schema": {
               "type": "string"
             }
@@ -20417,6 +20213,15 @@
         "operationId": "getDocument",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -20444,15 +20249,6 @@
               "items": {
                 "type": "string"
               }
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
-            "schema": {
-              "type": "string"
             }
           },
           {
@@ -20521,6 +20317,15 @@
         "operationId": "updateDocument",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -20534,15 +20339,6 @@
             "required": true,
             "in": "path",
             "description": "Document ID.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -20627,6 +20423,15 @@
         "operationId": "deleteDocument",
         "parameters": [
           {
+            "name": "schemaId",
+            "required": true,
+            "in": "path",
+            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "collectionId",
             "required": true,
             "in": "path",
@@ -20640,15 +20445,6 @@
             "required": true,
             "in": "path",
             "description": "Document ID.",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "schemaId",
-            "required": true,
-            "in": "path",
-            "description": "Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).",
             "schema": {
               "type": "string"
             }
@@ -24603,6 +24399,377 @@
           "userName",
           "topicId",
           "providerType",
+          "$id",
+          "$createdAt",
+          "$updatedAt",
+          "$permissions"
+        ]
+      },
+      "LocaleModel": {
+        "type": "object",
+        "properties": {
+          "ip": {
+            "type": "string",
+            "description": "User IP address.",
+            "default": ""
+          },
+          "countryCode": {
+            "type": "string",
+            "description": "Country code in ISO 3166-1 two-character format.",
+            "default": ""
+          },
+          "country": {
+            "type": "string",
+            "description": "Country name. This field supports localization.",
+            "default": ""
+          },
+          "continentCode": {
+            "type": "string",
+            "description": "Continent code. A two character continent code.",
+            "default": ""
+          },
+          "continent": {
+            "type": "string",
+            "description": "Continent name. This field supports localization.",
+            "default": ""
+          },
+          "eu": {
+            "type": "boolean",
+            "description": "True if country is part of the European Union.",
+            "default": false
+          },
+          "currency": {
+            "type": "string",
+            "description": "Currency code in ISO 4217 three-character format.",
+            "default": ""
+          },
+          "$id": {
+            "type": "string",
+            "description": "ID."
+          },
+          "$createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "User creation date in ISO 8601 format."
+          },
+          "$updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "User update date in ISO 8601 format."
+          },
+          "$permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "ip",
+          "countryCode",
+          "country",
+          "continentCode",
+          "continent",
+          "eu",
+          "currency",
+          "$id",
+          "$createdAt",
+          "$updatedAt",
+          "$permissions"
+        ]
+      },
+      "LocaleCodeModel": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Locale codes in ISO 639-1.",
+            "default": ""
+          },
+          "name": {
+            "type": "string",
+            "description": "Locale name.",
+            "default": ""
+          },
+          "$id": {
+            "type": "string",
+            "description": "ID."
+          },
+          "$createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "User creation date in ISO 8601 format."
+          },
+          "$updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "User update date in ISO 8601 format."
+          },
+          "$permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "code",
+          "name",
+          "$id",
+          "$createdAt",
+          "$updatedAt",
+          "$permissions"
+        ]
+      },
+      "CountryModel": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Country name.",
+            "default": ""
+          },
+          "code": {
+            "type": "string",
+            "description": "Country two-character ISO 3166-1 alpha code.",
+            "default": ""
+          },
+          "$id": {
+            "type": "string",
+            "description": "ID."
+          },
+          "$createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "User creation date in ISO 8601 format."
+          },
+          "$updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "User update date in ISO 8601 format."
+          },
+          "$permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "code",
+          "$id",
+          "$createdAt",
+          "$updatedAt",
+          "$permissions"
+        ]
+      },
+      "PhoneModel": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "description": "Phone code.",
+            "default": ""
+          },
+          "countryCode": {
+            "type": "string",
+            "default": ""
+          },
+          "countryName": {
+            "type": "string",
+            "default": ""
+          },
+          "$id": {
+            "type": "string",
+            "description": "ID."
+          },
+          "$createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "User creation date in ISO 8601 format."
+          },
+          "$updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "User update date in ISO 8601 format."
+          },
+          "$permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "code",
+          "countryCode",
+          "countryName",
+          "$id",
+          "$createdAt",
+          "$updatedAt",
+          "$permissions"
+        ]
+      },
+      "ContinentModel": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Continent name.",
+            "default": ""
+          },
+          "code": {
+            "type": "string",
+            "description": "Continent two letter code.",
+            "default": ""
+          },
+          "$id": {
+            "type": "string",
+            "description": "ID."
+          },
+          "$createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "User creation date in ISO 8601 format."
+          },
+          "$updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "User update date in ISO 8601 format."
+          },
+          "$permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "code",
+          "$id",
+          "$createdAt",
+          "$updatedAt",
+          "$permissions"
+        ]
+      },
+      "CurrencyModel": {
+        "type": "object",
+        "properties": {
+          "symbol": {
+            "type": "string",
+            "description": "Currency symbol.",
+            "default": ""
+          },
+          "name": {
+            "type": "string",
+            "description": "Currency name.",
+            "default": ""
+          },
+          "symbolNative": {
+            "type": "string",
+            "description": "Currency native symbol.",
+            "default": ""
+          },
+          "decimalDigits": {
+            "type": "number",
+            "description": "Number of decimal digits.",
+            "default": 0
+          },
+          "rounding": {
+            "type": "number",
+            "description": "Currency digit rounding.",
+            "default": 0
+          },
+          "code": {
+            "type": "string",
+            "description": "Currency code in ISO 4217 three-character format.",
+            "default": ""
+          },
+          "namePlural": {
+            "type": "string",
+            "description": "Currency plural name.",
+            "default": ""
+          },
+          "$id": {
+            "type": "string",
+            "description": "ID."
+          },
+          "$createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "User creation date in ISO 8601 format."
+          },
+          "$updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "User update date in ISO 8601 format."
+          },
+          "$permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "symbol",
+          "name",
+          "symbolNative",
+          "decimalDigits",
+          "rounding",
+          "code",
+          "namePlural",
+          "$id",
+          "$createdAt",
+          "$updatedAt",
+          "$permissions"
+        ]
+      },
+      "LanguageModel": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Language name.",
+            "default": ""
+          },
+          "code": {
+            "type": "string",
+            "description": "Language two-character ISO 639-1 codes.",
+            "default": ""
+          },
+          "nativeName": {
+            "type": "string",
+            "description": "Language native name.",
+            "default": ""
+          },
+          "$id": {
+            "type": "string",
+            "description": "ID."
+          },
+          "$createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "User creation date in ISO 8601 format."
+          },
+          "$updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "description": "User update date in ISO 8601 format."
+          },
+          "$permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "code",
+          "nativeName",
           "$id",
           "$createdAt",
           "$updatedAt",

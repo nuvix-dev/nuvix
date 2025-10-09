@@ -5728,6 +5728,91 @@
         ]
       }
     },
+    "/projects/{projectId}/metadata/exposed-schemas": {
+      "put": {
+        "operationId": "MetadataController_updateExposedSchemas",
+        "parameters": [
+          {
+            "name": "projectId",
+            "required": true,
+            "in": "path",
+            "description": "Project ID.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Nuvix-Project",
+            "in": "header",
+            "required": false,
+            "description": "Project ID.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateExposedSchemasDTO"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectModel"
+                }
+              }
+            }
+          },
+          "5XX": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "number",
+                      "description": "Error code"
+                    },
+                    "type": {
+                      "type": "string",
+                      "description": "Error type"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "version": {
+                      "type": "string",
+                      "description": "API version"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "type",
+                    "message",
+                    "version"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "summary": "Update Exposed Schemas",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
     "/database/query": {
       "post": {
         "operationId": "PgMetaController_query",
@@ -13064,9 +13149,7 @@
         },
         "required": [
           "type",
-          "name",
-          "store",
-          "hostname"
+          "name"
         ]
       },
       "UpdatePlatformDTO": {
@@ -13096,12 +13179,7 @@
             "minLength": 1,
             "maxLength": 256
           }
-        },
-        "required": [
-          "name",
-          "store",
-          "hostname"
-        ]
+        }
       },
       "CreateWebhookDTO": {
         "type": "object",
@@ -13188,6 +13266,20 @@
             "maxLength": 256
           }
         }
+      },
+      "UpdateExposedSchemasDTO": {
+        "type": "object",
+        "properties": {
+          "schemas": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "schemas"
+        ]
       },
       "QueryDTO": {
         "type": "object",

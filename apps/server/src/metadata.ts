@@ -5038,6 +5038,12 @@ export default async () => {
               },
             },
             CollectionParamsDTO: {
+              schemaId: {
+                required: true,
+                type: () => String,
+                description:
+                  'Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).',
+              },
               collectionId: {
                 required: true,
                 type: () => String,
@@ -5702,6 +5708,21 @@ export default async () => {
               findIndexes: {},
               findIndex: { type: Object },
               removeIndex: {},
+            },
+          },
+        ],
+        [
+          import('./locale/locale.controller.js'),
+          {
+            LocaleController: {
+              getUserLocale: { type: Object },
+              getLocaleCodes: {},
+              getCountries: {},
+              getEuCountries: {},
+              getCountriesPhone: {},
+              getContinents: {},
+              getCurrencies: {},
+              getLanguages: {},
             },
           },
         ],
