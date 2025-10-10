@@ -3,6 +3,7 @@ import { roles } from '../config/roles'
 import { Doc, RoleName } from '@nuvix/db'
 import { JwtService } from '@nestjs/jwt'
 import { KeysDoc, ProjectsDoc } from '@nuvix/utils/types'
+import { UserRole } from './auth.helper'
 
 interface JWTPayload {
   name?: string
@@ -68,14 +69,19 @@ export class Key {
     let type: string
     let secret: string
 
-    if (key.includes('_')) {
-      ;[type, secret] = key.split('_', 2) as [string, string]
+    if (
+      key.startsWith(`${ApiKey.DYNAMIC}_`) ||
+      key.startsWith(`${ApiKey.STANDARD}_`)
+    ) {
+      const firstSplitIndex = key.indexOf('_')
+      type = key.slice(0, firstSplitIndex)
+      secret = key.slice(firstSplitIndex + 1)
     } else {
       type = ApiKey.STANDARD
       secret = key
     }
 
-    const role = 'apps'
+    const role = UserRole.APPS
     let scopes = roles[role]?.scopes ?? []
     let expired = false
 

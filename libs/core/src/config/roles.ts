@@ -1,3 +1,4 @@
+import { UserRole } from '../helper'
 import { scopes } from './scopes'
 
 const member = [
@@ -152,7 +153,7 @@ const _admins = [
 const admins = [..._admins, ...Object.keys(scopes)]
 
 export const roles = {
-  guests: {
+  [UserRole.GUESTS]: {
     label: 'Guests',
     scopes: [
       'global',
@@ -182,23 +183,23 @@ export const roles = {
       'schemas.tables.delete',
     ],
   },
-  users: {
+  [UserRole.USERS]: {
     label: 'Users',
     scopes: member,
   },
-  admin: {
+  [UserRole.ADMIN]: {
     label: 'Admin',
     scopes: admins,
   },
-  devloper: {
+  [UserRole.DEVLOPER]: {
     label: 'Developer',
     scopes: admins,
   },
-  owner: {
+  [UserRole.OWNER]: {
     label: 'Owner',
     scopes: [...admins, ...member],
   },
-  apps: {
+  [UserRole.APPS]: {
     label: 'Applications',
     scopes: ['global', 'health.read', 'graphql'],
   },
