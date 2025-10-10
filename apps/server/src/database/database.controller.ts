@@ -6,7 +6,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { DatabasesService } from './databases.service'
+import { DatabaseService } from './database.service'
 import { ProjectGuard } from '@nuvix/core/resolvers/guards'
 import {
   ResponseInterceptor,
@@ -32,13 +32,13 @@ import type { ProjectsDoc } from '@nuvix/utils/types'
 import { IListResponse, SchemaType } from '@nuvix/utils'
 import { Get, Post } from '@nuvix/core'
 
-@Controller({ version: ['1'], path: ['databases', 'database'] })
+@Controller({ version: ['1'], path: ['database'] })
 @UseGuards(ProjectGuard)
 @Namespace('database')
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.ADMIN, AuthType.KEY])
-export class DatabasesController {
-  constructor(private readonly databaseService: DatabasesService) {}
+export class DatabaseController {
+  constructor(private readonly databaseService: DatabaseService) {}
 
   @Get('schemas', {
     summary: 'List schemas',

@@ -1,4 +1,4 @@
-export const list = [
+export const euList = [
   'AT', // Austria
   'BE', // Belgium
   'HR', // Croatia

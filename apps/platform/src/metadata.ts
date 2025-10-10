@@ -3936,14 +3936,14 @@ export default async () => {
                 maxLength: 256,
               },
               store: {
-                required: true,
+                required: false,
                 type: () => String,
                 description: 'App store or Google Play store ID.',
                 minLength: 1,
                 maxLength: 256,
               },
               hostname: {
-                required: true,
+                required: false,
                 type: () => String,
                 description: 'Platform client hostname.',
                 minLength: 1,
@@ -4029,6 +4029,14 @@ export default async () => {
                 type: () => String,
                 description: 'Webhook unique ID.',
               },
+            },
+          },
+        ],
+        [
+          import('./projects/metadata/DTO/exposed-schemas.dto.js'),
+          {
+            UpdateExposedSchemasDTO: {
+              schemas: { required: true, type: () => [String] },
             },
           },
         ],
@@ -4880,6 +4888,10 @@ export default async () => {
               deleteWebhook: {},
             },
           },
+        ],
+        [
+          import('./projects/metadata/metadata.controller.js'),
+          { MetadataController: { updateExposedSchemas: { type: Object } } },
         ],
         [
           import('../../../libs/pg-meta/src/pg-meta.controller.js'),

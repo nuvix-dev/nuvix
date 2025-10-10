@@ -17,6 +17,8 @@ import { PlatformsService } from './platforms/platforms.service'
 import { TemplatesService } from './templates/templates.service'
 import { WebhooksService } from './webhooks/webhooks.service'
 import { AuthHook, ApiHook, AuditHook } from '@nuvix/core/resolvers'
+import { MetadataService } from './metadata/metadata.service'
+import { MetadataController } from './metadata/metadata.controller'
 
 @Module({
   imports: [
@@ -50,6 +52,7 @@ import { AuthHook, ApiHook, AuditHook } from '@nuvix/core/resolvers'
     PlatformsService,
     TemplatesService,
     WebhooksService,
+    MetadataService,
   ],
   controllers: [
     ProjectsController,
@@ -59,6 +62,7 @@ import { AuthHook, ApiHook, AuditHook } from '@nuvix/core/resolvers'
     PlatformsController,
     TemplatesController,
     WebhooksController,
+    MetadataController,
   ],
 })
 export class ProjectModule implements NestModule {
@@ -73,6 +77,7 @@ export class ProjectModule implements NestModule {
         PlatformsController,
         TemplatesController,
         WebhooksController,
+        MetadataController,
       )
   }
 }

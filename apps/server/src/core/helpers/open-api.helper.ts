@@ -1,7 +1,5 @@
 import { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
-import { configuration } from '@nuvix/utils'
-import { writeFileSync, existsSync, mkdirSync } from 'fs'
 
 export function openApiSetup(app: NestFastifyApplication) {
   const config = new DocumentBuilder()
@@ -52,15 +50,7 @@ export function openApiSetup(app: NestFastifyApplication) {
       deepScanRoutes: true,
     })
 
-  const document = documentFactory()
-  const path = configuration.assets.get('public', 'server')
-
-  try {
-    if (!existsSync(path)) {
-      mkdirSync(path, { recursive: true })
-    }
-    writeFileSync(`${path}/open-api.json`, JSON.stringify(document, null, 2))
-  } catch (error) {
-    console.error('Error writing OpenAPI spec files:', error)
-  }
+  SwaggerModule.setup('api', app, documentFactory, {
+    ui: false,
+  })
 }

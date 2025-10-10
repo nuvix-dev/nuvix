@@ -62,9 +62,11 @@ export class ProjectController {
     const total: Record<string, number> = {}
     const usage: Record<string, any[]> = {}
 
-    const firstDay =
-      new Date(startDate).toISOString().split('T')[0] + ' 00:00:00'
-    const lastDay = new Date(endDate).toISOString().split('T')[0] + ' 00:00:00'
+    const firstDay = new Date(startDate)
+    firstDay.setUTCHours(0, 0, 0, 0)
+    const lastDay = new Date(endDate)
+    lastDay.setUTCDate(lastDay.getUTCDate() + 1) // include full endDate
+    lastDay.setUTCHours(0, 0, 0, 0)
 
     const metrics = {
       total: [
@@ -116,8 +118,8 @@ export class ProjectController {
           qb
             .equal('metric', metric)
             .equal('period', period)
-            .greaterThanEqual('time', firstDay)
-            .lessThan('time', lastDay)
+            .greaterThanEqual('time', firstDay.toISOString())
+            .lessThan('time', lastDay.toISOString())
             .limit(limit)
             .orderDesc('time'),
         )

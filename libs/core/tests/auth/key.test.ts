@@ -2,7 +2,7 @@ import { JwtService } from '@nestjs/jwt'
 import { roles } from '@nuvix/core/config'
 import { Key, UserRole } from '@nuvix/core/helper'
 import { Doc } from '@nuvix/db'
-import { ApiKey, configuration } from '@nuvix/utils'
+import { ApiKey } from '@nuvix/utils'
 import { Projects } from '@nuvix/utils/types'
 import { describe, it, expect } from 'vitest'
 
@@ -10,7 +10,7 @@ describe('Key', () => {
   beforeAll(() => {
     Key.setJwtService(
       new JwtService({
-        secret: configuration.security.jwtSecret || 'secret',
+        secret: 'secret',
       }),
     )
   })
@@ -20,7 +20,7 @@ describe('Key', () => {
     const scopes = ['databases.read', 'collections.read', 'documents.read']
     const roleScopes = roles['apps']?.scopes || []
 
-    const key = generateKey(projectId, usage, scopes)
+    const key = await generateKey(projectId, usage, scopes)
     const project = new Doc<Projects>({ $id: projectId })
     const decoded = await Key.decode(project, key)
 
@@ -31,23 +31,23 @@ describe('Key', () => {
   })
 })
 
-function generateKey(
+async function generateKey(
   projectId: string,
   usage: boolean,
   scopes: string[],
-): string {
+): Promise<string> {
   const jwt = new JwtService({
-    secret: configuration.security.jwtSecret || 'secret',
+    secret: 'secret',
   })
 
-  const apiKey = jwt.sign(
+  const apiKey = await jwt.signAsync(
     {
       projectId,
       usage,
       scopes,
     },
     {
-      expiresIn: '1h',
+      expiresIn: '15m',
     },
   )
 

@@ -8,9 +8,9 @@ import { CoreService } from '@nuvix/core/core.service.js'
 import type { Projects, ProjectsDoc } from '@nuvix/utils/types'
 import collections from '@nuvix/utils/collections/index.js'
 
-@Processor(QueueFor.DATABASES, { concurrency: 10000 })
-export class DatabasesQueue extends Queue {
-  private readonly logger = new Logger(DatabasesQueue.name)
+@Processor(QueueFor.DATABASE, { concurrency: 10000 })
+export class DatabaseQueue extends Queue {
+  private readonly logger = new Logger(DatabaseQueue.name)
 
   constructor(private readonly coreService: CoreService) {
     super()

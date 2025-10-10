@@ -115,10 +115,8 @@ export class Models {
   public static NONE = class {}
   public static ANY = class {}
   public static LOG = LogModel
-  public static ERROR = 'error'
   public static METRIC = MetricModel
   public static METRIC_BREAKDOWN = MetricBreakdownModel
-  public static ERROR_DEV = 'errorDev'
   public static USAGE_DATABASES = UsageDatabasesModel
   public static USAGE_DATABASE = UsageDatabaseModel
   public static USAGE_COLLECTION = UsageCollectionModel
@@ -162,6 +160,7 @@ export class Models {
   // MFA
   public static MFA_TYPE = MFATypeModel
   public static MFA_FACTORS = MFAFactorsModel
+  /**@deprecated Not Implemented */
   public static MFA_OTP = 'mfaTotp'
   public static MFA_CHALLENGE = MFAChallengeModel
   public static MFA_RECOVERY_CODES = MFARecoveryCodesModel

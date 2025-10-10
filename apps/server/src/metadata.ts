@@ -3328,7 +3328,7 @@ export default async () => {
           },
         ],
         [
-          import('./databases/DTO/create-schema.dto.js'),
+          import('./database/DTO/create-schema.dto.js'),
           {
             CreateSchema: {
               name: {
@@ -5038,6 +5038,12 @@ export default async () => {
               },
             },
             CollectionParamsDTO: {
+              schemaId: {
+                required: true,
+                type: () => String,
+                description:
+                  'Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).',
+              },
               collectionId: {
                 required: true,
                 type: () => String,
@@ -5321,9 +5327,9 @@ export default async () => {
           { AppController: { main: {}, getFavicon: {} } },
         ],
         [
-          import('./databases/databases.controller.js'),
+          import('./database/database.controller.js'),
           {
-            DatabasesController: {
+            DatabaseController: {
               getSchemas: {},
               createSchema: { type: Object },
               getSchema: { type: Object },
@@ -5702,6 +5708,21 @@ export default async () => {
               findIndexes: {},
               findIndex: { type: Object },
               removeIndex: {},
+            },
+          },
+        ],
+        [
+          import('./locale/locale.controller.js'),
+          {
+            LocaleController: {
+              getUserLocale: { type: Object },
+              getLocaleCodes: {},
+              getCountries: {},
+              getEuCountries: {},
+              getCountriesPhone: {},
+              getContinents: {},
+              getCurrencies: {},
+              getLanguages: {},
             },
           },
         ],

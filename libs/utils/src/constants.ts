@@ -61,7 +61,7 @@ export enum QueueFor {
   PROJECTS = 'projects',
   FUNCTIONS = 'functions',
   MESSAGING = 'messaging',
-  DATABASES = 'databases',
+  DATABASE = 'database',
   MAILS = 'mails',
   COLLECTIONS = 'collections',
   STATS = 'stats',

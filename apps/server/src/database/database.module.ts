@@ -1,18 +1,18 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'
-import { DatabasesService } from './databases.service'
-import { DatabasesController } from './databases.controller'
+import { DatabaseService } from './database.service'
+import { DatabaseController } from './database.controller'
 import { BullModule } from '@nestjs/bullmq'
-import { DatabasesQueue } from '@nuvix/core/resolvers/queues/databases.queue'
+import { DatabaseQueue } from '@nuvix/core/resolvers/queues/database.queue'
 import { QueueFor } from '@nuvix/utils'
 import { AuthHook, ApiHook, StatsHook, AuditHook } from '@nuvix/core/resolvers'
 
 @Module({
-  controllers: [DatabasesController],
-  providers: [DatabasesService, DatabasesQueue],
+  controllers: [DatabaseController],
+  providers: [DatabaseService, DatabaseQueue],
   imports: [
     BullModule.registerQueue(
       {
-        name: QueueFor.DATABASES,
+        name: QueueFor.DATABASE,
         defaultJobOptions: {
           removeOnComplete: true,
           attempts: 2,
@@ -23,10 +23,10 @@ import { AuthHook, ApiHook, StatsHook, AuditHook } from '@nuvix/core/resolvers'
     ),
   ],
 })
-export class DatabasesModule implements NestModule {
+export class DatabaseModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(AuthHook, ApiHook, StatsHook, AuditHook)
-      .forRoutes(DatabasesController)
+      .forRoutes(DatabaseController)
   }
 }

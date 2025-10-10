@@ -6,7 +6,7 @@ import { Queue } from 'bullmq'
 import {
   SchemaJob,
   SchemaQueueOptions,
-} from '@nuvix/core/resolvers/queues/databases.queue'
+} from '@nuvix/core/resolvers/queues/database.queue'
 import { QueueFor, Schemas, type SchemaType } from '@nuvix/utils'
 
 // DTO's
@@ -14,11 +14,9 @@ import { CreateSchema } from './DTO/create-schema.dto'
 import type { ProjectsDoc } from '@nuvix/utils/types'
 
 @Injectable()
-export class DatabasesService {
-  private readonly logger = new Logger(DatabasesService.name)
-
+export class DatabaseService {
   constructor(
-    @InjectQueue(QueueFor.DATABASES)
+    @InjectQueue(QueueFor.DATABASE)
     private readonly databasesQueue: Queue<SchemaQueueOptions, any, SchemaJob>,
   ) {}
 
