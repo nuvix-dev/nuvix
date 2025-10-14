@@ -85,10 +85,12 @@ export class SessionsController {
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
+    @Project() project: ProjectsDoc,
   ): Promise<void> {
     return this.sessionService.deleteSessions(
       db,
       user,
+      project,
       locale,
       request,
       response,
@@ -133,10 +135,12 @@ export class SessionsController {
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
+    @Project() project: ProjectsDoc,
   ): Promise<void> {
     return this.sessionService.deleteSession(
       db,
       user,
+      project,
       params.sessionId,
       request,
       response,

@@ -214,6 +214,9 @@ export class CoreService implements OnModuleDestroy {
     }
   }
 
+  // we will support pool type later
+  // there is many cases where we can use transaction pool instead of session pool
+  // for example in case of queue processing
   async createProjectDatabase(
     project: ProjectsDoc,
     options?: CreateProjectDatabaseOptions,

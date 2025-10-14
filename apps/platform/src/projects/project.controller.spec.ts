@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nestjs/testing'
+import { Test, TestingModule } from '@nuvix/core/server/test'
 import { ProjectsController } from './projects.controller'
 import { ProjectService } from './projects.service'
 
