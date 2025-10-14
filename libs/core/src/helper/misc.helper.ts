@@ -56,3 +56,14 @@ export async function deleteSubscribers(
     },
   )
 }
+
+export async function deleteIdentities(
+  database: Database,
+  query: Query,
+): Promise<void> {
+  await database.deleteDocumentsBatch(
+    'identities',
+    [query, Query.orderAsc()],
+    Database.DELETE_BATCH_SIZE,
+  )
+}

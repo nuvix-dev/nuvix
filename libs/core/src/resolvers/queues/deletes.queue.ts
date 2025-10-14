@@ -1,42 +1,124 @@
 import { Processor } from '@nestjs/bullmq'
 import { Queue } from './queue'
-import { configuration, DeleteType, QueueFor } from '@nuvix/utils'
+import {
+  configuration,
+  DeleteDocumentType,
+  DeleteType,
+  QueueFor,
+  Schemas,
+} from '@nuvix/utils'
 import { Job } from 'bullmq'
 import { Database, Doc, IEntity, Query } from '@nuvix/db'
-import { ProjectsDoc, Schedules, TopicsDoc } from '@nuvix/utils/types'
+import type {
+  Memberships,
+  ProjectsDoc,
+  Schedules,
+  TopicsDoc,
+  UsersDoc,
+} from '@nuvix/utils/types'
 import { CoreService } from '@nuvix/core/core.service'
-import { deleteTargets } from '@nuvix/core/helper/misc.helper'
+import {
+  deleteIdentities,
+  deleteSubscribers,
+  deleteTargets,
+} from '@nuvix/core/helper/misc.helper'
+import { Auth } from '@nuvix/core/helper'
+import { Audit } from '@nuvix/audit'
+import { Logger } from '@nestjs/common'
 
 @Processor(QueueFor.DELETES, { concurrency: 1000 })
 export class DeletesQueue extends Queue {
   private readonly dbForPlatform: Database
+  private readonly logger = new Logger(DeletesQueue.name)
 
   constructor(private readonly coreService: CoreService) {
     super()
     this.dbForPlatform = this.coreService.getPlatformDb()
   }
 
-  override process(
+  override async process(
     job: Job<DeletesJobData, unknown, DeleteType>,
   ): Promise<any> {
+    const document = new Doc(job.data.document) as Doc<any>
+    const { datetime, hourlyUsageRetentionDatetime, resource, resourceType } =
+      job.data
+    let project: ProjectsDoc = new Doc(
+      job.data.project,
+    ) as unknown as ProjectsDoc
+
     switch (job.name) {
-      case DeleteType.DATABASES:
       case DeleteType.DOCUMENT:
-      case DeleteType.COLLECTIONS:
+        switch (document.getCollection() as DeleteDocumentType) {
+          case DeleteDocumentType.PROJECTS:
+            // TODO: Implement deleteProject with devices and certificates
+            this.logger.warn('Project deletion not fully implemented')
+            break
+          case DeleteDocumentType.FUNCTIONS:
+            // TODO: Implement deleteFunction
+            this.logger.warn('Function deletion not fully implemented')
+            break
+          case DeleteDocumentType.DEPLOYMENTS:
+            // TODO: Implement deleteDeployment
+            this.logger.warn('Deployment deletion not fully implemented')
+            break
+          case DeleteDocumentType.USERS:
+            await this.deleteUser(project, document as UsersDoc)
+            break
+          case DeleteDocumentType.BUCKETS:
+            // TODO: Implement deleteBucket
+            this.logger.warn('Bucket deletion not fully implemented')
+            break
+          case DeleteDocumentType.INSTALLATIONS:
+            // TODO: Implement deleteInstallation
+            this.logger.warn('Installation deletion not fully implemented')
+            break
+          case DeleteDocumentType.RULES:
+            // TODO: Implement deleteRule with certificates
+            this.logger.warn('Rule deletion not fully implemented')
+            break
+          default:
+            this.logger.error(
+              'No lazy delete operation available for document of type: ' +
+                document.getCollection(),
+            )
+            break
+        }
+        break
       case DeleteType.TEAM_PROJECTS:
-      case DeleteType.EXECUTIONS:
+        await this.deleteProjectsByTeam(document)
+        break
+      // case DeleteType.EXECUTIONS:
+      //    break
       case DeleteType.AUDIT:
-      case DeleteType.ABUSE:
-      case DeleteType.USAGE:
-      case DeleteType.REALTIME:
+        await this.deleteAuditLogs(project, datetime!)
+        break
+      // case DeleteType.REALTIME:
+      //     break
       case DeleteType.SESSIONS:
+        await this.deleteExpiredSessions(project)
+        break
+      case DeleteType.USAGE:
+        await this.deleteUsageStats(project, hourlyUsageRetentionDatetime!)
+        break
       case DeleteType.SCHEDULES:
+        await this.deleteSchedules(datetime!)
+        break
       case DeleteType.TOPIC:
+        await this.deleteTopic(project, document as TopicsDoc)
+        break
       case DeleteType.TARGET:
+        await this.withDatabase(project, db => {
+          return deleteSubscribers(db, document)
+        })
+        break
       case DeleteType.EXPIRED_TARGETS:
+        await this.deleteExpiredTargets(project)
+        break
       case DeleteType.SESSION_TARGETS:
+        await this.deleteSessionTargets(project, document)
+        break
       default:
-        throw new Error('Invalid Job in deletes queue')
+        throw new Error('No delete operation for type: ' + job.name)
     }
   }
 
@@ -62,7 +144,7 @@ export class DeletesQueue extends Queue {
 
         if (project.empty()) {
           await this.dbForPlatform.deleteDocument('schedules', document.getId())
-          console.log(
+          this.logger.log(
             'Deleted schedule for deleted project ' + document.get('projectId'),
           )
           return
@@ -89,7 +171,7 @@ export class DeletesQueue extends Queue {
             return db.getDocument(collectionId, document.get('resourceId'))
           })
         } catch (e: any) {
-          console.error(
+          this.logger.error(
             'Failed to get resource for schedule ' +
               document.getId() +
               ' ' +
@@ -111,7 +193,7 @@ export class DeletesQueue extends Queue {
 
         if (shouldDelete) {
           await this.dbForPlatform.deleteDocument('schedules', document.getId())
-          console.log(
+          this.logger.log(
             'Deleting schedule for ' +
               document.get('resourceType') +
               ' ' +
@@ -130,7 +212,7 @@ export class DeletesQueue extends Queue {
     topic: TopicsDoc,
   ): Promise<void> {
     if (topic.empty()) {
-      console.error('Failed to delete subscribers. Topic not found')
+      this.logger.error('Failed to delete subscribers. Topic not found')
       return
     }
 
@@ -143,7 +225,7 @@ export class DeletesQueue extends Queue {
         ],
         db,
       ).catch((e: any) => {
-        console.error('Failed to delete subscribers: ' + e.message)
+        this.logger.error('Failed to delete subscribers: ' + e.message)
       })
     })
   }
@@ -152,9 +234,13 @@ export class DeletesQueue extends Queue {
    * Delete expired targets
    */
   private async deleteExpiredTargets(project: ProjectsDoc): Promise<void> {
-    await this.withDatabase(project, db => {
-      return deleteTargets(db, Query.equal('expired', [true]))
-    })
+    await this.withDatabase(
+      project,
+      db => {
+        return deleteTargets(db, Query.equal('expired', [true]))
+      },
+      Schemas.Auth,
+    )
   }
 
   /**
@@ -164,22 +250,210 @@ export class DeletesQueue extends Queue {
     project: ProjectsDoc,
     session: Doc,
   ): Promise<void> {
-    await this.withDatabase(project, db => {
-      return deleteTargets(
+    await this.withDatabase(
+      project,
+      db => {
+        return deleteTargets(
+          db,
+          Query.equal('sessionInternalId', [session.getSequence()]),
+        )
+      },
+      Schemas.Auth,
+    )
+  }
+
+  /**
+   * Delete usage stats from project database
+   */
+  private async deleteUsageStats(
+    project: ProjectsDoc,
+    hourlyUsageRetentionDatetime: string,
+  ): Promise<void> {
+    await this.withDatabase(project, async db => {
+      await this.deleteByGroup(
+        'stats',
+        [
+          Query.equal('period', ['1h']),
+          Query.lessThan('time', hourlyUsageRetentionDatetime),
+          Query.orderDesc('time'),
+          Query.orderDesc(),
+        ],
         db,
-        Query.equal('sessionInternalId', [session.getSequence()]),
       )
+    })
+  }
+
+  /**
+   * Delete memberships for a team
+   */
+  private async deleteMemberships(
+    project: ProjectsDoc,
+    team: Doc,
+  ): Promise<void> {
+    const teamInternalId = team.getSequence()
+
+    await this.withDatabase(
+      project,
+      db => {
+        return this.deleteByGroup<Memberships>(
+          'memberships',
+          [Query.equal('teamInternalId', [teamInternalId]), Query.orderAsc()],
+          db,
+          async membership => {
+            const userId = membership.get('userId')
+            await db.purgeCachedDocument('users', userId)
+          },
+        )
+      },
+      Schemas.Auth,
+    )
+  }
+
+  /**
+   * Delete projects by team
+   */
+  private async deleteProjectsByTeam(team: Doc): Promise<void> {
+    const projects = await this.dbForPlatform.find<ProjectsDoc>('projects', [
+      Query.equal('teamInternalId', [team.getSequence()]),
+      Query.equal('region', [configuration.app.region || 'default']),
+    ])
+
+    for (const project of projects) {
+      // TODO: Implement device cleanup and project deletion
+      // This would require access to storage devices and certificates
+      await this.dbForPlatform.deleteDocument('projects', project.getId())
+    }
+  }
+
+  /**
+   * Delete user and associated data
+   */
+  private async deleteUser(
+    project: ProjectsDoc,
+    user: UsersDoc,
+  ): Promise<void> {
+    const userId = user.getId()
+    const userInternalId = user.getSequence()
+
+    await this.withDatabase(
+      project,
+      async db => {
+        // Delete all sessions of this user from the sessions table
+        await this.deleteByGroup(
+          'sessions',
+          [Query.equal('userInternalId', [userInternalId]), Query.orderAsc()],
+          db,
+        )
+
+        await db.purgeCachedDocument('users', userId)
+
+        // Delete Memberships and decrement team membership counts
+        await this.deleteByGroup<Memberships>(
+          'memberships',
+          [Query.equal('userInternalId', [userInternalId]), Query.orderAsc()],
+          db,
+          async membership => {
+            if (membership.get('confirm')) {
+              // Count only confirmed members
+              const teamId = membership.get('teamId')
+              const team = await db.getDocument('teams', teamId)
+              if (!team.empty()) {
+                await db.decreaseDocumentAttribute(
+                  'teams',
+                  teamId,
+                  'total',
+                  1,
+                  0,
+                )
+              }
+            }
+          },
+        )
+
+        // Delete tokens
+        await this.deleteByGroup(
+          'tokens',
+          [Query.equal('userInternalId', [userInternalId]), Query.orderAsc()],
+          db,
+        )
+
+        // Delete identities
+        await deleteIdentities(
+          db,
+          Query.equal('userInternalId', [userInternalId]),
+        )
+
+        // Delete targets
+        await deleteTargets(db, Query.equal('userInternalId', [userInternalId]))
+      },
+      Schemas.Auth,
+    )
+  }
+
+  /**
+   * Delete expired sessions based on project auth duration
+   */
+  private async deleteExpiredSessions(project: ProjectsDoc): Promise<void> {
+    await this.withDatabase(
+      project,
+      async db => {
+        const duration =
+          project.get('auths')?.['duration'] ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
+        const expired = new Date(Date.now() - duration * 1000).toISOString()
+
+        await this.deleteByGroup(
+          'sessions',
+          [
+            Query.lessThan('$createdAt', expired),
+            Query.orderDesc('$createdAt'),
+            Query.orderDesc(),
+          ],
+          db,
+        )
+      },
+      Schemas.Auth,
+    )
+  }
+
+  /**
+   * Delete audit logs older than the retention period
+   */
+  private async deleteAuditLogs(
+    project: ProjectsDoc,
+    auditRetention: string,
+  ): Promise<void> {
+    const projectId = project.getId()
+
+    await this.withDatabase(project, async db => {
+      try {
+        await this.deleteByGroup(
+          Audit.COLLECTION,
+          [
+            Query.lessThan('time', auditRetention),
+            Query.orderDesc('time'),
+            Query.orderAsc(),
+          ],
+          db,
+        )
+      } catch (error: any) {
+        this.logger.error(
+          `Failed to delete audit logs for project ${projectId}: ${error.message}`,
+        )
+      }
     })
   }
 
   private async withDatabase<T>(
     project: ProjectsDoc,
     callback: (db: Database) => Promise<T>,
+    schema = Schemas.Core,
   ) {
     let _client: any
     try {
       const { dbForProject, client } =
-        await this.coreService.createProjectDatabase(project)
+        await this.coreService.createProjectDatabase(project, {
+          schema,
+        })
       _client = client
       return callback(dbForProject)
     } finally {
@@ -205,11 +479,11 @@ export class DeletesQueue extends Queue {
       )
 
       const end = Date.now()
-      console.info(
+      this.logger.log(
         `Deleted ${count} documents by group in ${(end - start) / 1000} seconds`,
       )
     } catch (error: any) {
-      console.error(
+      this.logger.error(
         `Failed to delete documents for collection:${database.namespace}_${collection} :${error.message}`,
       )
     }
@@ -253,10 +527,17 @@ export class DeletesQueue extends Queue {
 
     const end = Date.now()
 
-    console.info(
+    this.logger.log(
       `Listed ${count} documents by group in ${(end - start) / 1000} seconds`,
     )
   }
 }
 
-export type DeletesJobData = {}
+export type DeletesJobData = {
+  datetime?: string
+  document?: Doc<any>
+  hourlyUsageRetentionDatetime?: string
+  resource?: string
+  resourceType?: string
+  project: ProjectsDoc
+}
