@@ -21,7 +21,7 @@
         "@nestjs/swagger": "^11.2.0",
         "@nuvix/audit": "^1.0.3",
         "@nuvix/cache": "^1.0.4",
-        "@nuvix/db": "^0.1.29",
+        "@nuvix/db": "^0.1.29-alpha.1",
         "@nuvix/messaging": "^1.0.2",
         "@nuvix/pg": "^1.0.4",
         "@nuvix/storage": "^1.0.1",
@@ -623,7 +623,7 @@
 
     "@nuvix/core": ["@nuvix/core@workspace:libs/core"],
 
-    "@nuvix/db": ["@nuvix/db@0.1.29", "", { "dependencies": { "chalk": "^5.5.0" }, "bin": { "nuvix-db": "dist/cli/generate-types.js" } }, "sha512-/I8YOIahdxnolprAcOnEKKU0+ha6W3YmNu3RGDXKf/9+cgY3u+rVVqAEVU2McqXpuapmOomllBmoEYUJ5eSGYQ=="],
+    "@nuvix/db": ["@nuvix/db@0.1.29-alpha.1", "", { "dependencies": { "chalk": "^5.5.0" }, "bin": { "nuvix-db": "dist/cli/generate-types.js" } }, "sha512-zJcyjg/flrVJLmI/AKKDwOzerxFXf60EvheX1gPt0BmypUHss2LkeOmhU/SENNnJxObW4uKw//XFDFXsNlQrXA=="],
 
     "@nuvix/messaging": ["@nuvix/messaging@1.0.2", "", { "dependencies": { "jsonwebtoken": "^9.0.2", "libphonenumber-js": "^1.12.9" }, "peerDependencies": { "nodemailer": "^7.0.3" } }, "sha512-ALaXNHdn5owgsvG3H24rHMw8htRAT4QnlIaLSMUoYkIaN3hjXjdu/s2MaOovuKXG5dQnmLx4vY+9Lo3YrT9tow=="],
 
