@@ -1,4 +1,4 @@
-import { Test, TestingModule } from '@nuvix/core/server/test'
+import { Test, TestingModule } from '@nestjs/testing'
 import { MessagingController } from './messaging.controller'
 import { MessagingService } from './messaging.service'
 

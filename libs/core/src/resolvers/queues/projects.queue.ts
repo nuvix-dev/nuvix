@@ -85,11 +85,10 @@ export class ProjectsQueue extends Queue {
 
     try {
       // Update project document with database configuration (temporarily before collections)
-      project.set('database', databaseConfig).set('status', 'active')
       project = await this.db.updateDocument(
         'projects',
         project.getId(),
-        project,
+        project.set('database', databaseConfig).set('status', 'active'),
       )
       await this.db.getCache().flush()
       try {

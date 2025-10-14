@@ -66,7 +66,6 @@ export enum QueueFor {
   COLLECTIONS = 'collections',
   STATS = 'stats',
   LOGS = 'logs',
-  DELETES = 'deletes',
 }
 
 export const EVENT_DELIMITER = '.'
@@ -179,28 +178,27 @@ export enum DeleteType {
   DATABASES = 'databases',
   DOCUMENT = 'document',
   COLLECTIONS = 'collections',
+  PROJECTS = 'projects',
+  FUNCTIONS = 'functions',
+  DEPLOYMENTS = 'deployments',
+  USERS = 'users',
   TEAM_PROJECTS = 'teams_projects',
   EXECUTIONS = 'executions',
   AUDIT = 'audit',
   ABUSE = 'abuse',
   USAGE = 'usage',
   REALTIME = 'realtime',
+  BUCKETS = 'buckets',
+  INSTALLATIONS = 'installations',
+  RULES = 'rules',
   SESSIONS = 'sessions',
+  CACHE_BY_TIMESTAMP = 'cacheByTimeStamp',
+  CACHE_BY_RESOURCE = 'cacheByResource',
   SCHEDULES = 'schedules',
   TOPIC = 'topic',
   TARGET = 'target',
   EXPIRED_TARGETS = 'invalid_targets',
   SESSION_TARGETS = 'session_targets',
-}
-
-export enum DeleteDocumentType {
-  PROJECTS = 'projects',
-  FUNCTIONS = 'functions',
-  DEPLOYMENTS = 'deployments',
-  USERS = 'users',
-  BUCKETS = 'buckets',
-  RULES = 'rules',
-  INSTALLATIONS = 'installations',
 }
 
 export enum AttributeFormat {

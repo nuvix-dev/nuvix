@@ -37,7 +37,6 @@ import {
   AppEvents,
   AuthFactor,
   configuration,
-  DeleteType,
   MessageType,
   QueueFor,
   SessionProvider,
@@ -68,7 +67,6 @@ import type {
 import { CoreService, AppConfigService } from '@nuvix/core'
 import type { SmtpConfig } from '@nuvix/core/config/smtp.js'
 import { JwtService } from '@nestjs/jwt'
-import { DeletesJobData } from '@nuvix/core/resolvers/queues/deletes.queue'
 
 @Injectable()
 export class SessionService {
@@ -81,8 +79,6 @@ export class SessionService {
     private readonly jwtService: JwtService,
     @InjectQueue(QueueFor.MAILS)
     private readonly mailsQueue: Queue<MailQueueOptions>,
-    @InjectQueue(QueueFor.DELETES)
-    private readonly deletesQueue: Queue<DeletesJobData, unknown, DeleteType>,
   ) {
     this.geodb = this.coreService.getGeoDb()
   }
@@ -122,7 +118,6 @@ export class SessionService {
   async deleteSessions(
     db: Database,
     user: UsersDoc,
-    project: ProjectsDoc,
     locale: LocaleTranslator,
     request: NuvixRequest,
     response: NuvixRes,
@@ -158,18 +153,10 @@ export class SessionService {
           httpOnly: true,
           sameSite: Auth.cookieSamesite,
         })
+
+        // queueForDeletes.setType(DELETE_TYPE_SESSION_TARGETS).setDocument(session).trigger();
       }
     }
-
-    await this.deletesQueue.addBulk(
-      [...sessions].map(s => ({
-        name: DeleteType.SESSION_TARGETS,
-        data: {
-          project,
-          document: s,
-        },
-      })),
-    )
 
     await db.purgeCachedDocument('users', user.getId())
 
@@ -219,7 +206,6 @@ export class SessionService {
   async deleteSession(
     db: Database,
     user: UsersDoc,
-    project: ProjectsDoc,
     sessionId: string,
     request: NuvixRequest,
     response: NuvixRes,
@@ -270,10 +256,8 @@ export class SessionService {
         },
       })
 
-      await this.deletesQueue.add(DeleteType.SESSION_TARGETS, {
-        project,
-        document: session,
-      })
+      // TODO: Handle Queues
+      // queueForDeletes.setType(DELETE_TYPE_SESSION_TARGETS).setDocument(session).trigger();
 
       return
     }

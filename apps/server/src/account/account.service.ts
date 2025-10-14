@@ -556,12 +556,14 @@ export class AccountService {
 
     Authorization.setRole(Role.user(user.getId()).toString())
 
-    verification.set('$permissions', [
-      Permission.read(Role.user(user.getId())),
-      Permission.update(Role.user(user.getId())),
-      Permission.delete(Role.user(user.getId())),
-    ])
-    const createdVerification = await db.createDocument('tokens', verification)
+    const createdVerification = await db.createDocument(
+      'tokens',
+      verification.set('$permissions', [
+        Permission.read(Role.user(user.getId())),
+        Permission.update(Role.user(user.getId())),
+        Permission.delete(Role.user(user.getId())),
+      ]),
+    )
 
     await db.purgeCachedDocument('users', user.getId())
     url ??= `${request.protocol}://${request.host}`
@@ -765,12 +767,14 @@ export class AccountService {
 
     Authorization.setRole(Role.user(user.getId()).toString())
 
-    verification.set('$permissions', [
-      Permission.read(Role.user(user.getId())),
-      Permission.update(Role.user(user.getId())),
-      Permission.delete(Role.user(user.getId())),
-    ])
-    const createdVerification = await db.createDocument('tokens', verification)
+    const createdVerification = await db.createDocument(
+      'tokens',
+      verification.set('$permissions', [
+        Permission.read(Role.user(user.getId())),
+        Permission.update(Role.user(user.getId())),
+        Permission.delete(Role.user(user.getId())),
+      ]),
+    )
 
     await db.purgeCachedDocument('users', user.getId())
 

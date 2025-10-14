@@ -159,11 +159,9 @@ export class ApiInterceptor implements NestInterceptor {
         .on(Events.DocumentsDelete, 'calculate-usage', documents =>
           this.usageDatabaseListener(
             Events.DocumentDelete,
-            Array.isArray(documents)
-              ? new Doc({
-                  modified: documents.length,
-                })
-              : documents,
+            new Doc({
+              modified: documents.length,
+            }),
             metrics,
             reduce,
           ),
