@@ -17,7 +17,7 @@ const nxconfig = () =>
       emailTeam: process.env['APP_EMAIL_TEAM'] || 'team@localhost.test',
       emailSecurity: process.env['APP_EMAIL_SECURITY'] || '',
       userAgent: 'Nuvix-Server v%s. Please report abuse at %s',
-      color: '#477f84',
+      color: '#18e299',
       debug: {
         colors: parseBoolean(process.env['APP_DEBUG_COLORS'], true),
         json: parseBoolean(process.env['APP_DEBUG_JSON'], false),
