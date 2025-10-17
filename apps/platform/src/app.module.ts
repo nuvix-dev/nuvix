@@ -22,7 +22,7 @@ import {
   ApiHook,
 } from '@nuvix/core/resolvers/hooks'
 import { ProjectHook } from './resolvers/hooks/project.hook'
-import { PgMetaController, PgMetaModule } from '@nuvix/pg-meta'
+import { PgMetaModule } from '@nuvix/pg-meta'
 import { AccountController } from './account/account.controller'
 import { AuditHook } from '@nuvix/core/resolvers/hooks/audit.hook'
 import { AuditsQueue } from './resolvers/queues/audits.queue'
@@ -90,6 +90,6 @@ export class AppModule implements NestModule, OnModuleInit {
       .apply(ProjectHook, HostHook, CorsHook)
       .forRoutes('*')
       .apply(AuthHook, ApiHook, AuditHook)
-      .forRoutes(AccountController, PgMetaController, CliController)
+      .forRoutes(AccountController, CliController)
   }
 }

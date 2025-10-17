@@ -9,31 +9,31 @@ Modern backend infrastructure for TypeScript. Fast, modular, and scalable — po
 <p align="center">
   <a href="https://github.com/Nuvix-Tech/nuvix/releases"><img src="https://img.shields.io/github/v/release/Nuvix-Tech/nuvix?color=0A84FF" alt="Latest release" /></a>
   <a href="https://github.com/Nuvix-Tech/nuvix/actions"><img src="https://github.com/Nuvix-Tech/nuvix/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
-  <a href="https://discord.gg/PUjXjcQB"><img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" alt="Join Discord" /></a>
+  <a href="https://discord.gg/2fWv2T6RzK"><img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" alt="Join Discord" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-BSL%201.1-2EA44F" alt="License: BSL 1.1" /></a>
 </p>
 
 ---
 
-## Project status
-
-Nuvix is feature-complete and entering pre-production testing. Major systems are implemented; current focus is test coverage, stability, and documentation ahead of the first stable release.
+> [!WARNING]
+> ## Project Status: Pre-Production
+> Nuvix is feature-complete and entering pre-production testing. It is not yet recommended for production use. The current focus is on improving test coverage, stability, and documentation ahead of the first stable release.
 
 ---
 
 ## Contents
 
-- Overview
-- Core features
-- Ecosystem
-- Quick start
-- Roadmap
-- Contributing
-- Security
-- License
-- Acknowledgements
-- Community
-- Vision
+- [Overview](#overview)
+- [Core features](#core-features)
+- [Ecosystem](#ecosystem)
+- [Quick start](#quick-start)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [Security](#security)
+- [License](#license)
+- [Acknowledgements](#acknowledgements)
+- [Community](#community)
+- [Vision](#vision)
 
 ---
 
@@ -104,12 +104,12 @@ Nuvix supports multiple data models to match your needs:
 ### Nuvix Console
 A companion dashboard to manage users, schemas, messages, and configuration.
 
-Repository: https://github.com/Nuvix-Tech/console
+Repository: [github.com/Nuvix-Tech/console](https://github.com/Nuvix-Tech/console)
 
 ### Documentation
 Comprehensive docs and API references are in progress.
 
-Docs (coming soon): https://docs.nuvix.in
+Docs (coming soon): [docs.nuvix.in](https://docs.nuvix.in)
 
 ---
 
@@ -125,24 +125,31 @@ Docs (coming soon): https://docs.nuvix.in
 <details open>
 <summary><strong>Setup with Docker</strong></summary>
 
-1. Clone the repository:
-```bash
-git clone https://github.com/Nuvix-Tech/nuvix.git
-cd nuvix
-```
+1.  Clone the repository:
+    ```bash
+    git clone https://github.com/Nuvix-Tech/nuvix.git
+    cd nuvix
+    ```
 
-2. Start the stack:
-```bash
-docker compose up --build
-```
+2.  Create environment files from the examples:
+    ```bash
+    cp .env.example .env
+    cp .env.platform.example .env.platform
+    cp .env.server.example .env.server
+    ```
+    > **Note:** You can customize variables in these `.env` files as needed.
 
-This launches:
-- PostgreSQL
-- Redis
-- Nuvix Server
+3.  Start the stack:
+    ```bash
+    docker compose up -d
+    ```
+    This launches:
+    - PostgreSQL
+    - Redis
+    - Nuvix Server
 
-3. Access the server:
-- API: http://localhost:4000
+4.  Access the server:
+    - API: [http://localhost:4000](http://localhost:4000)
 </details>
 
 ---
@@ -166,8 +173,8 @@ This launches:
 
 Contributions are welcome. Please read the contributing guide before opening pull requests or issues.
 
-- Contributing guide: ./CONTRIBUTING.md
-- Good first issues: https://github.com/Nuvix-Tech/nuvix/issues
+- Contributing guide: [CONTRIBUTING.md](./CONTRIBUTING.md)
+- Good first issues: [github.com/Nuvix-Tech/nuvix/issues](https://github.com/Nuvix-Tech/nuvix/issues)
 
 ---
 
@@ -179,7 +186,7 @@ If you discover a security issue, please report it responsibly using private cha
 
 ## License
 
-This project is licensed under the Business Source License 1.1 (BSL). See ./LICENSE for terms and conversion conditions.
+This project is licensed under the Business Source License 1.1 (BSL). See [LICENSE](./LICENSE) for terms and conversion conditions.
 
 ---
 
@@ -197,7 +204,7 @@ Nuvix builds on these ecosystems while introducing multi-schema flexibility, aut
 ## Community
 
 <p align="center">
-  <a href="https://discord.gg/PUjXjcQB"><img src="https://img.shields.io/badge/Join%20our%20Discord-5865F2?logo=discord&logoColor=white" alt="Join our Discord" /></a>
+  <a href="https://discord.gg/2fWv2T6RzK"><img src="https://img.shields.io/badge/Join%20our%20Discord-5865F2?logo=discord&logoColor=white" alt="Join our Discord" /></a>
   <a href="https://twitter.com/nuvix_tech"><img src="https://img.shields.io/badge/Follow%20on%20X-000000?logo=x" alt="Follow on X" /></a>
   <a href="https://docs.nuvix.in"><img src="https://img.shields.io/badge/Docs-Coming%20Soon-1E90FF?logo=readthedocs" alt="Docs coming soon" /></a>
 </p>

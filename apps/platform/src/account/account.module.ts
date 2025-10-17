@@ -12,6 +12,7 @@ import { QueueFor } from '@nuvix/utils'
       },
       { name: QueueFor.STATS },
       { name: QueueFor.AUDITS },
+      { name: QueueFor.DELETES },
     ),
   ],
   controllers: [AccountController],

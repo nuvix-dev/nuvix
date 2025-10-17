@@ -18,6 +18,7 @@ import {
   Auth,
   QueryFilter,
   QuerySearch,
+  Project,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helper'
 
@@ -29,8 +30,8 @@ import {
 } from './DTO/topics.dto'
 import { TopicsQueryPipe } from '@nuvix/core/pipes/queries'
 import { Delete, Get, Patch, Post } from '@nuvix/core'
-import { IListResponse, IResponse } from '@nuvix/utils'
-import { TopicsDoc } from '@nuvix/utils/types'
+import type { IListResponse, IResponse } from '@nuvix/utils'
+import type { ProjectsDoc, TopicsDoc } from '@nuvix/utils/types'
 
 @Namespace('messaging')
 @UseGuards(ProjectGuard)
@@ -140,7 +141,8 @@ export class TopicsController {
   async deleteTopic(
     @Param() { topicId }: TopicParamsDTO,
     @ProjectDatabase() db: Database,
+    @Project() project: ProjectsDoc,
   ): Promise<void> {
-    return this.topicsService.deleteTopic(db, topicId)
+    return this.topicsService.deleteTopic(db, topicId, project)
   }
 }

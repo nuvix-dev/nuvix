@@ -35,8 +35,8 @@ export class PlatformsController {
     scopes: 'projects.read',
     model: { type: Models.PLATFORM, list: true },
     sdk: {
-      name: 'getPlatforms',
-      descMd: '/docs/references/projects/get-platforms.md',
+      name: 'listPlatforms',
+      descMd: '/docs/references/projects/list-platforms.md',
     },
   })
   async getPlatforms(

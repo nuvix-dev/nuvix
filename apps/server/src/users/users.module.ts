@@ -28,6 +28,7 @@ import { TargetsService } from './targets/targets.service'
     BullModule.registerQueue(
       { name: QueueFor.STATS },
       { name: QueueFor.AUDITS },
+      { name: QueueFor.DELETES },
     ),
     JwtModule.register({
       secret: configuration.security.jwtSecret,

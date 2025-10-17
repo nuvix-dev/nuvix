@@ -638,7 +638,8 @@ export class UsersController {
   async remove(
     @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
+    @Project() project: ProjectsDoc,
   ): Promise<void> {
-    return this.usersService.remove(db, userId)
+    return this.usersService.remove(db, userId, project)
   }
 }

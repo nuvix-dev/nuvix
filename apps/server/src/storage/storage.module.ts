@@ -16,6 +16,7 @@ import { FilesService } from './files/files.service'
     BullModule.registerQueue(
       { name: QueueFor.STATS },
       { name: QueueFor.AUDITS },
+      { name: QueueFor.DELETES },
     ),
   ],
   controllers: [StorageController, FilesController],

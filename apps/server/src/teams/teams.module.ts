@@ -17,6 +17,7 @@ import { MembershipsService } from './memberships/memberships.service'
       { name: QueueFor.MAILS },
       { name: QueueFor.STATS },
       { name: QueueFor.AUDITS },
+      { name: QueueFor.DELETES },
     ),
   ],
   controllers: [TeamsController, MembershipsController],

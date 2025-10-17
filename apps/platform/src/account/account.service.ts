@@ -22,6 +22,7 @@ import {
   SessionProvider,
   TokenType,
   AuthFactor,
+  DeleteType,
 } from '@nuvix/utils'
 import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
 import {
@@ -57,6 +58,7 @@ import type {
 } from '@nuvix/utils/types'
 import { AppConfigService, CoreService, Platform } from '@nuvix/core'
 import { Hooks } from '@nuvix/core/extend/hooks'
+import type { DeletesJobData } from '@nuvix/core/resolvers/queues/deletes.queue'
 
 @Injectable()
 @UseInterceptors(ResponseInterceptor)
@@ -71,6 +73,8 @@ export class AccountService {
     private readonly jwtService: JwtService,
     @InjectQueue(QueueFor.MAILS)
     private readonly mailsQueue: Queue<MailQueueOptions, MailJob>,
+    @InjectQueue(QueueFor.DELETES)
+    private readonly deletesQueue: Queue<DeletesJobData, unknown, DeleteType>,
   ) {
     this.db = this.coreService.getPlatformDb()
     this.geodb = coreService.getGeoDb()
@@ -253,8 +257,6 @@ export class AccountService {
       variables: vars,
     })
 
-    // queueForAppEvents.setParam('userId', user.getId());
-
     return user
   }
 
@@ -288,6 +290,11 @@ export class AccountService {
       this.db.deleteDocument('users', user.getId()),
     )
     await this.db.purgeCachedDocument('users', user.getId())
+
+    await this.deletesQueue.add(DeleteType.DOCUMENT, {
+      document: user.clone(),
+      project: new Doc({ $id: 'console' }),
+    })
 
     return user
   }
@@ -443,7 +450,6 @@ export class AccountService {
       .set('hash', Auth.DEFAULT_ALGO)
       .set('hashOptions', Auth.DEFAULT_ALGO_OPTIONS)
 
-    // TODO: should update with request timestamp
     user = await this.db.updateDocument('users', user.getId(), user)
 
     return user
@@ -578,8 +584,6 @@ export class AccountService {
           httpOnly: true,
           sameSite: Auth.cookieSamesite,
         })
-
-        // queueForDeletes.setType(DELETE_TYPE_SESSION_TARGETS).setDocument(session).trigger();
       }
     }
 
@@ -1190,8 +1194,6 @@ export class AccountService {
     ) {
       await this.sendSessionAlert(locale, user, createdSession)
     }
-
-    // queueForAppEvents.setParam('userId', user.getId()).setParam('sessionId', createdSession.getId());
 
     const expire = new Date(Date.now() + duration * 1000)
     const protocol = request.protocol

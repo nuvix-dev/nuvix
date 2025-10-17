@@ -9,18 +9,31 @@ import {
   Query,
 } from '@nuvix/db'
 import { Exception } from '@nuvix/core/extend/exception'
-import { configuration, MetricFor, MetricPeriod } from '@nuvix/utils'
+import {
+  configuration,
+  DeleteType,
+  MetricFor,
+  MetricPeriod,
+  QueueFor,
+} from '@nuvix/utils'
 import { CreateBucketDTO, UpdateBucketDTO } from './DTO/bucket.dto'
 
 import usageConfig from '@nuvix/core/config/usage'
 import collections from '@nuvix/utils/collections/index.js'
 import { StatsQueue } from '@nuvix/core/resolvers'
+import { InjectQueue } from '@nestjs/bullmq'
+import type { DeletesJobData } from '@nuvix/core/resolvers/queues/deletes.queue'
+import { Queue } from 'bullmq'
+import { ProjectsDoc } from '@nuvix/utils/types'
 
 @Injectable()
 export class StorageService {
   private readonly logger = new Logger(StorageService.name)
 
-  constructor() {}
+  constructor(
+    @InjectQueue(QueueFor.DELETES)
+    private readonly deletesQueue: Queue<DeletesJobData, unknown, DeleteType>,
+  ) {}
 
   private getCollectionName(s: number) {
     return `bucket_${s}`
@@ -168,7 +181,7 @@ export class StorageService {
   /**
    * Delete a bucket.
    */
-  async deleteBucket(db: Database, id: string) {
+  async deleteBucket(db: Database, id: string, project: ProjectsDoc) {
     const bucket = await db.getDocument('buckets', id)
 
     if (bucket.empty()) {
@@ -182,7 +195,11 @@ export class StorageService {
       )
     }
 
-    await db.deleteCollection(this.getCollectionName(bucket.getSequence())) // TODO: use queues to delete
+    await this.deletesQueue.add(DeleteType.DOCUMENT, {
+      document: bucket.clone(),
+      project,
+    })
+
     return
   }
 

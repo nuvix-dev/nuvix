@@ -16,9 +16,11 @@ import {
 } from './DTO/user.dto'
 import {
   configuration,
+  DeleteType,
   HashAlgorithm,
   MetricFor,
   MetricPeriod,
+  QueueFor,
   TokenType,
 } from '@nuvix/utils'
 import { Auth } from '@nuvix/core/helper/auth.helper'
@@ -54,6 +56,9 @@ import type { LocaleTranslator } from '@nuvix/core/helper'
 import usageConfig from '@nuvix/core/config/usage'
 import { StatsQueue } from '@nuvix/core/resolvers'
 import { Hooks } from '@nuvix/core/extend/hooks'
+import { InjectQueue } from '@nestjs/bullmq'
+import type { DeletesJobData } from '@nuvix/core/resolvers/queues/deletes.queue'
+import { Queue } from 'bullmq'
 
 @Injectable()
 export class UsersService {
@@ -64,6 +69,8 @@ export class UsersService {
     private readonly coreService: CoreService,
     private readonly jwtService: JwtService,
     private readonly event: EventEmitter2,
+    @InjectQueue(QueueFor.DELETES)
+    private readonly deletesQueue: Queue<DeletesJobData, unknown, DeleteType>,
   ) {
     this.geoDb = this.coreService.getGeoDb()
   }
@@ -708,7 +715,6 @@ export class UsersService {
     for (const log of logs) {
       const userAgent = log.userAgent || 'UNKNOWN'
       const detector = new Detector(userAgent)
-      // detector.skipBotDetection();
 
       const os = detector.getOS()
       const client = detector.getClient()
@@ -866,7 +872,7 @@ export class UsersService {
   /**
    * Delete User
    */
-  async remove(db: Database, userId: string) {
+  async remove(db: Database, userId: string, project: ProjectsDoc) {
     const user = await db.getDocument('users', userId)
 
     if (user.empty()) {
@@ -877,7 +883,10 @@ export class UsersService {
     const clone = user.clone()
     await db.deleteDocument('users', userId)
 
-    // TODO: Implement queue for deletes
+    await this.deletesQueue.add(DeleteType.DOCUMENT, {
+      document: clone,
+      project,
+    })
   }
 
   /**

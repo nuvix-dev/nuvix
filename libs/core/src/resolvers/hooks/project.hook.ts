@@ -53,6 +53,21 @@ export class ProjectHook implements Hook {
     )
 
     if (!project.empty()) {
+      // we does not support multiple projects
+      // so we can update the database information on the fly from environment variables
+      project.set('database', {
+        pool: {
+          host: this.appConfig.getDatabaseConfig().postgres.pool.host,
+          port: this.appConfig.getDatabaseConfig().postgres.pool.port,
+          password: this.appConfig.getDatabaseConfig().postgres.password,
+        },
+        postgres: {
+          port: this.appConfig.getDatabaseConfig().postgres.port,
+          host: this.appConfig.getDatabaseConfig().postgres.host,
+          password: this.appConfig.getDatabaseConfig().postgres.password,
+        },
+      } as unknown as DatabaseConfig)
+
       try {
         const dbOptions = project.get('database') as unknown as DatabaseConfig
         const client = await this.coreService.createProjectDbClient(

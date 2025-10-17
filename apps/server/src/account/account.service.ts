@@ -26,6 +26,7 @@ import {
 } from '@nuvix/core/resolvers/queues/mails.queue'
 import {
   configuration,
+  DeleteType,
   QueueFor,
   TokenType,
   type HashAlgorithm,
@@ -41,6 +42,7 @@ import type {
 import { AppConfigService } from '@nuvix/core'
 import type { SmtpConfig } from '@nuvix/core/config/smtp.js'
 import { Hooks } from '@nuvix/core/extend/hooks'
+import type { DeletesJobData } from '@nuvix/core/resolvers/queues/deletes.queue'
 
 @Injectable()
 export class AccountService {
@@ -49,6 +51,8 @@ export class AccountService {
     private eventEmitter: EventEmitter2,
     @InjectQueue(QueueFor.MAILS)
     private readonly mailsQueue: Queue<MailQueueOptions>,
+    @InjectQueue(QueueFor.DELETES)
+    private readonly deletesQueue: Queue<DeletesJobData, unknown, DeleteType>,
   ) {}
 
   /**
@@ -199,7 +203,7 @@ export class AccountService {
     return user.get('prefs', {})
   }
 
-  async deleteAccount(db: Database, user: UsersDoc) {
+  async deleteAccount(db: Database, user: UsersDoc, project: ProjectsDoc) {
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
@@ -209,6 +213,12 @@ export class AccountService {
     }
 
     await db.deleteDocument('users', user.getId())
+
+    await this.deletesQueue.add(DeleteType.DOCUMENT, {
+      document: user.clone(),
+      project,
+    })
+
     return
   }
 
@@ -301,8 +311,6 @@ export class AccountService {
     user.set('name', name)
 
     user = await db.updateDocument('users', user.getId(), user)
-
-    // TODO: Trigger Event
 
     return user
   }

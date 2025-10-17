@@ -13,6 +13,7 @@ import type {
   Memberships,
   ProjectsDoc,
   Schedules,
+  TeamsDoc,
   TopicsDoc,
   UsersDoc,
 } from '@nuvix/utils/types'
@@ -65,8 +66,7 @@ export class DeletesQueue extends Queue {
             await this.deleteUser(project, document as UsersDoc)
             break
           case DeleteDocumentType.BUCKETS:
-            // TODO: Implement deleteBucket
-            this.logger.warn('Bucket deletion not fully implemented')
+            await this.deleteBucket(project, document)
             break
           case DeleteDocumentType.INSTALLATIONS:
             // TODO: Implement deleteInstallation
@@ -92,8 +92,6 @@ export class DeletesQueue extends Queue {
       case DeleteType.AUDIT:
         await this.deleteAuditLogs(project, datetime!)
         break
-      // case DeleteType.REALTIME:
-      //     break
       case DeleteType.SESSIONS:
         await this.deleteExpiredSessions(project)
         break
@@ -286,26 +284,17 @@ export class DeletesQueue extends Queue {
   /**
    * Delete memberships for a team
    */
-  private async deleteMemberships(
-    project: ProjectsDoc,
-    team: Doc,
-  ): Promise<void> {
+  public async deleteMemberships(db: Database, team: TeamsDoc): Promise<void> {
     const teamInternalId = team.getSequence()
 
-    await this.withDatabase(
-      project,
-      db => {
-        return this.deleteByGroup<Memberships>(
-          'memberships',
-          [Query.equal('teamInternalId', [teamInternalId]), Query.orderAsc()],
-          db,
-          async membership => {
-            const userId = membership.get('userId')
-            await db.purgeCachedDocument('users', userId)
-          },
-        )
+    return this.deleteByGroup<Memberships>(
+      'memberships',
+      [Query.equal('teamInternalId', [teamInternalId]), Query.orderAsc()],
+      db,
+      async membership => {
+        const userId = membership.get('userId')
+        await db.purgeCachedDocument('users', userId)
       },
-      Schemas.Auth,
     )
   }
 
@@ -391,6 +380,23 @@ export class DeletesQueue extends Queue {
   }
 
   /**
+   * Delete bucket and its files
+   */
+  private async deleteBucket(project: ProjectsDoc, bucket: Doc): Promise<void> {
+    if (bucket.empty()) {
+      this.logger.error('Failed to delete bucket. Bucket not found')
+      return
+    }
+
+    await this.withDatabase(project, async db => {
+      await db.deleteCollection('bucket_' + bucket.getSequence())
+    })
+
+    const device = this.coreService.getProjectDevice(project.getId())
+    await device.deletePath(bucket.getId())
+  }
+
+  /**
    * Delete expired sessions based on project auth duration
    */
   private async deleteExpiredSessions(project: ProjectsDoc): Promise<void> {
@@ -448,6 +454,8 @@ export class DeletesQueue extends Queue {
     callback: (db: Database) => Promise<T>,
     schema = Schemas.Core,
   ) {
+    if (project.getId() === 'console') return callback(this.dbForPlatform)
+
     let _client: any
     try {
       const { dbForProject, client } =

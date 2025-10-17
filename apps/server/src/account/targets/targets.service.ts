@@ -11,13 +11,19 @@ import {
 import { Exception } from '@nuvix/core/extend/exception'
 import { Auth } from '@nuvix/core/helper/auth.helper'
 import { Detector } from '@nuvix/core/helper/detector.helper'
-import { MessageType } from '@nuvix/utils'
+import { DeleteType, MessageType, QueueFor } from '@nuvix/utils'
 import { CreatePushTargetDTO, UpdatePushTargetDTO } from './DTO/target.dto'
-import type { Targets, UsersDoc } from '@nuvix/utils/types'
+import type { ProjectsDoc, Targets, UsersDoc } from '@nuvix/utils/types'
+import { InjectQueue } from '@nestjs/bullmq'
+import type { DeletesJobData } from '@nuvix/core/resolvers/queues/deletes.queue'
+import { Queue } from 'bullmq'
 
 @Injectable()
 export class TargetsService {
-  constructor() {}
+  constructor(
+    @InjectQueue(QueueFor.DELETES)
+    private readonly deletesQueue: Queue<DeletesJobData, unknown, DeleteType>,
+  ) {}
 
   /**
    * Create Push Target
@@ -134,7 +140,8 @@ export class TargetsService {
     db,
     user,
     targetId,
-  }: WithDB<WithUser<{ targetId: string }>>) {
+    project,
+  }: WithDB<WithUser<{ targetId: string; project: ProjectsDoc }>>) {
     const target = await Authorization.skip(
       async () => await db.getDocument('targets', targetId),
     )
@@ -151,8 +158,10 @@ export class TargetsService {
 
     await db.purgeCachedDocument('users', user.getId())
 
-    // TODO: Handle Delete Queue
-    // Delete resource that depends on Targets (like in messaging)
+    await this.deletesQueue.add(DeleteType.TARGET, {
+      document: target.clone(),
+      project,
+    })
   }
 }
 

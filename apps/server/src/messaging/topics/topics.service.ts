@@ -2,10 +2,18 @@ import { Injectable } from '@nestjs/common'
 import type { CreateTopic, ListTopics, UpdateTopic } from './topics.types'
 import { Database, Doc, DuplicateException, ID, Query } from '@nuvix/db'
 import { Exception } from '@nuvix/core/extend/exception'
-import type { Topics } from '@nuvix/utils/types'
+import type { ProjectsDoc, Topics } from '@nuvix/utils/types'
+import { InjectQueue } from '@nestjs/bullmq'
+import type { DeletesJobData } from '@nuvix/core/resolvers/queues/deletes.queue'
+import { QueueFor, DeleteType } from '@nuvix/utils'
+import { Queue } from 'bullmq'
 
 @Injectable()
 export class TopicsService {
+  constructor(
+    @InjectQueue(QueueFor.DELETES)
+    private readonly deletesQueue: Queue<DeletesJobData, unknown, DeleteType>,
+  ) {}
   /**
    * Create Topic
    */
@@ -89,7 +97,7 @@ export class TopicsService {
   /**
    * Deletes a topic.
    */
-  async deleteTopic(db: Database, topicId: string) {
+  async deleteTopic(db: Database, topicId: string, project: ProjectsDoc) {
     const topic = await db.getDocument('topics', topicId)
 
     if (topic.empty()) {
@@ -98,7 +106,10 @@ export class TopicsService {
 
     await db.deleteDocument('topics', topicId)
 
-    // TODO: handle topics delete queue
+    await this.deletesQueue.add(DeleteType.TOPIC, {
+      project,
+      document: topic.clone(),
+    })
     return
   }
 }

@@ -10,6 +10,7 @@ import {
   UseFilters,
   UseGuards,
   VERSION_NEUTRAL,
+  UseInterceptors,
 } from '@nestjs/common'
 import { Client } from './decorators'
 import { PostgresMeta } from './lib'
@@ -66,18 +67,25 @@ import { TriggerDeleteQueryDTO } from './DTO/trigger-delete.dto'
 import { TypeQueryDTO } from './DTO/type.dto'
 import { GeneratorQueryDTO } from './DTO/generator.dto'
 import { getGeneratorMetadata } from './lib/generators'
-import { apply as applyTypescriptTemplate } from './templates/typescript'
 import { apply as applyGoTemplate } from './templates/go'
 import { apply as applySwiftTemplate } from './templates/swift'
 import { PgMetaExceptionFilter } from './extra/exception.filter'
 import { ParseComaStringPipe } from '@nuvix/core/pipes/string-coma.pipe'
 import { Exception } from '@nuvix/core/extend/exception'
 import { AuthGuard, ProjectGuard } from '@nuvix/core/resolvers/guards'
+import { Auth, AuthType, Project } from '@nuvix/core/decorators'
+import { PgMetaService } from './pg-meta.service'
+import type { ProjectsDoc } from '@nuvix/utils/types'
+import { ConsoleInterceptor } from '@nuvix/core/resolvers'
 
 @Controller({ path: 'database', version: ['1', VERSION_NEUTRAL] })
 @UseGuards(ProjectGuard, AuthGuard)
+@UseInterceptors(ConsoleInterceptor)
+@Auth(AuthType.ADMIN)
 @UseFilters(PgMetaExceptionFilter)
 export class PgMetaController {
+  constructor(private readonly pgMetaService: PgMetaService) {}
+
   @Post('query')
   async query(@Client() client: PostgresMeta, @Body() body: QueryDTO) {
     const { data } = await client.query(body.query, false)
@@ -915,25 +923,9 @@ export class PgMetaController {
   async generateTypescript(
     @Query() query: GeneratorQueryDTO,
     @Client() client: PostgresMeta,
+    @Project() project: ProjectsDoc,
   ) {
-    const {
-      included_schemas,
-      excluded_schemas,
-      detect_one_to_one_relationships: detectOneToOneRelationships = false,
-    } = query
-    const { data } = await getGeneratorMetadata(client, {
-      includedSchemas: included_schemas
-        ?.split(',')
-        .map(schema => schema.trim()),
-      excludedSchemas: excluded_schemas
-        ?.split(',')
-        .map(schema => schema.trim()),
-    })
-
-    return applyTypescriptTemplate({
-      ...data!,
-      detectOneToOneRelationships,
-    })
+    return this.pgMetaService.generateTypescript(client, query, project)
   }
 
   @Get('generators/go')

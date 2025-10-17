@@ -1,5 +1,5 @@
 # --- STAGE 1: BUILDER ---
-    FROM oven/bun:latest AS builder
+    FROM oven/bun:1.3.0 AS builder
 
     ARG APP_NAME
     ENV APP_NAME=$APP_NAME
@@ -19,7 +19,7 @@
     
     # --- STAGE 2: RUNTIME ---
     # This is the final image, which is as small as possible.
-    FROM oven/bun:slim AS runtime
+    FROM oven/bun:1.3.0-slim AS runtime
     
     # Set environment variables for the runtime image.
     ARG APP_NAME

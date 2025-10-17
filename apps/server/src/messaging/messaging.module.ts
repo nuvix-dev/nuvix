@@ -24,6 +24,7 @@ import { SubscribersService } from './topics/subscribers/subscribers.service'
       },
       { name: QueueFor.STATS },
       { name: QueueFor.AUDITS },
+      { name: QueueFor.DELETES },
     ),
   ],
   controllers: [

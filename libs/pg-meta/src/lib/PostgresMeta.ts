@@ -1,3 +1,4 @@
+import type { Client } from 'pg'
 import * as Parser from './Parser'
 import PostgresMetaColumnPrivileges from './PostgresMetaColumnPrivileges'
 import PostgresMetaColumns from './PostgresMetaColumns'
@@ -27,6 +28,7 @@ export default class PostgresMeta {
     trackQueryInSentry?: boolean,
   ) => Promise<PostgresMetaResult<any>>
   end: () => Promise<void>
+  client: Client
   columnPrivileges: PostgresMetaColumnPrivileges
   columns: PostgresMetaColumns
   config: PostgresMetaConfig
@@ -55,6 +57,7 @@ export default class PostgresMeta {
     const { query, end } = init(config)
     this.query = query
     this.end = end
+    this.client = config as Client
     this.columnPrivileges = new PostgresMetaColumnPrivileges(this.query)
     this.columns = new PostgresMetaColumns(this.query)
     this.config = new PostgresMetaConfig(this.query)

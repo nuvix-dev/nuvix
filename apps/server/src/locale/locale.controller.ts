@@ -81,7 +81,7 @@ export class LocaleController {
           name: locale.getText(`countries.${c.toLowerCase()}`),
           code: c,
         }))
-        .sort(), // TODO: ------------
+        .sort((a, b) => a.name.localeCompare(b.name)),
       total: countries.length,
     }
   }
@@ -104,7 +104,7 @@ export class LocaleController {
           name: locale.getText(`countries.${c.toLowerCase()}`),
           code: c,
         }))
-        .sort(), // TODO: ------------
+        .sort((a, b) => a.name.localeCompare(b.name)),
       total: countries.length,
     }
   }
@@ -162,7 +162,7 @@ export class LocaleController {
           name: locale.getText(`continents.${c.toLowerCase()}`),
           code: c,
         }))
-        .sort(),
+        .sort((a, b) => a.name.localeCompare(b.name)),
       total: continents.length,
     }
   }

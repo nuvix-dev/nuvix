@@ -5,3 +5,9 @@ dist
 logs
 db.log
 *.log
+**/node_modules
+**/dist
+**/.git
+**/.vscode
+**/logs
+**/.turbo

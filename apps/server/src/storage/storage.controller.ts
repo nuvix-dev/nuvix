@@ -19,6 +19,7 @@ import {
   AuthType,
   QueryFilter,
   QuerySearch,
+  Project,
 } from '@nuvix/core/decorators'
 
 import {
@@ -31,7 +32,7 @@ import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.intercept
 import { BucketsQueryPipe } from '@nuvix/core/pipes/queries'
 import { Delete, Get, Post, Put } from '@nuvix/core'
 import { IListResponse, IResponse } from '@nuvix/utils'
-import { BucketsDoc } from '@nuvix/utils/types'
+import type { BucketsDoc, ProjectsDoc } from '@nuvix/utils/types'
 
 @Namespace('storage')
 @UseGuards(ProjectGuard)
@@ -131,8 +132,9 @@ export class StorageController {
   async deleteBucket(
     @ProjectDatabase() db: Database,
     @Param() { bucketId }: BucketParamsDTO,
+    @Project() project: ProjectsDoc,
   ): Promise<void> {
-    return this.storageService.deleteBucket(db, bucketId)
+    return this.storageService.deleteBucket(db, bucketId, project)
   }
 
   @Get('usage', {

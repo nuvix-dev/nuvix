@@ -9,7 +9,7 @@ import {
 
 import { Database } from '@nuvix/db'
 import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
-import { AuthDatabase } from '@nuvix/core/decorators/project.decorator'
+import { AuthDatabase, Project } from '@nuvix/core/decorators/project.decorator'
 import { User } from '@nuvix/core/decorators/project-user.decorator'
 import { Models } from '@nuvix/core/helper/response.helper'
 import { ProjectGuard } from '@nuvix/core/resolvers/guards'
@@ -21,7 +21,7 @@ import {
   TargetIdParamDTO,
   UpdatePushTargetDTO,
 } from './DTO/target.dto'
-import type { TargetsDoc, UsersDoc } from '@nuvix/utils/types'
+import type { ProjectsDoc, TargetsDoc, UsersDoc } from '@nuvix/utils/types'
 import { Delete, Post, Put } from '@nuvix/core'
 import type { IResponse } from '@nuvix/utils'
 
@@ -109,11 +109,13 @@ export class TargetsController {
     @Param() { targetId }: TargetIdParamDTO,
     @User() user: UsersDoc,
     @AuthDatabase() db: Database,
+    @Project() project: ProjectsDoc,
   ): Promise<void> {
     return this.targetService.deletePushTarget({
       targetId,
       user,
       db,
+      project,
     })
   }
 }

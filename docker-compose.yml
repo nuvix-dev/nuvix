@@ -1,3 +1,7 @@
+# this file is used for local development only
+# if you want to deploy nuvix in production, please refer to the documentation
+# https://docs.nuvix.in/deployment/docker
+
 services:
   postgres:
     image: ravikan6/postgres
@@ -45,6 +49,7 @@ services:
     container_name: nuvix-pgcat
     ports:
       - "9930:9930"  # Metrics port
+      - "6432:6432"  
     environment:
       APP_PGCAT_ADMIN_USER: ${APP_PGCAT_ADMIN_USER:-admin}
       APP_PGCAT_ADMIN_PASSWORD: ${APP_PGCAT_ADMIN_PASSWORD:-password}

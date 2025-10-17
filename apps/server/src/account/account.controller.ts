@@ -113,8 +113,9 @@ export class AccountController {
   async deleteAccount(
     @AuthDatabase() db: Database,
     @User() user: UsersDoc,
+    @Project() project: ProjectsDoc,
   ): Promise<void> {
-    return this.accountService.deleteAccount(db, user)
+    return this.accountService.deleteAccount(db, user, project)
   }
 
   @Get('prefs', {

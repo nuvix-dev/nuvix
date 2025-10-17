@@ -16,9 +16,13 @@ import {
 } from '@nuvix/db'
 import { Auth } from '@nuvix/core/helper/auth.helper'
 import type { UsersDoc } from '@nuvix/utils/types'
+import { DeletesQueue } from '@nuvix/core/resolvers/queues/deletes.queue'
+import { CoreService } from '@nuvix/core'
 
 @Injectable()
 export class TeamsService {
+  constructor(private readonly coreService: CoreService) {}
+
   /**
    * Find all teams
    */
@@ -140,12 +144,8 @@ export class TeamsService {
       )
     }
 
-    // Delete all memberships associated with this team
-    const membershipQueries = [Query.equal('teamId', [team.getId()])]
-    const memberships = await db.find('memberships', membershipQueries)
-    for (const membership of memberships) {
-      await db.deleteDocument('memberships', membership.getId())
-    }
+    const deletes = new DeletesQueue(this.coreService)
+    await deletes.deleteMemberships(db, team)
 
     return
   }
