@@ -134,7 +134,8 @@ export class CoreService implements OnModuleDestroy {
     const adapter = new Adapter({
       ...platformDbConfig,
       database: platformDbConfig.name,
-      max: 100,
+      max: 20,
+      idleTimeoutMillis: 30000,
     })
     const connection = new Database(adapter, this.getCache()).setMeta({
       schema: 'public',

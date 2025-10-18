@@ -18,7 +18,6 @@ import {
 import { Hook } from '../../server/hooks/interface'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Client } from 'pg'
-import { setupDatabaseMeta } from '@nuvix/core/helper/db-meta.helper'
 import { Audit } from '@nuvix/audit'
 import { CoreService } from '@nuvix/core/core.service.js'
 import { AppConfigService } from '@nuvix/core/config.service.js'
@@ -85,13 +84,6 @@ export class ProjectHook implements Hook {
         )
         client.setMaxListeners(20)
         req[PROJECT_DB_CLIENT] = client
-
-        await setupDatabaseMeta({
-          client,
-          project,
-          request: req,
-        })
-
         req[PROJECT_PG] = this.coreService.getProjectPg(client)
         const coreDatabase = this.coreService.getProjectDb(client, {
           projectId: project.getId(),

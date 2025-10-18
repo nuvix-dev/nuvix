@@ -1,19 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Authorization, Database, Doc, Role } from '@nuvix/db'
-import {
-  ApiKey,
-  AppMode,
-  AuthActivity,
-  Context,
-  PROJECT_DB_CLIENT,
-} from '@nuvix/utils'
+import { ApiKey, AppMode, AuthActivity, Context } from '@nuvix/utils'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Auth } from '@nuvix/core/helper/auth.helper'
 import { roles } from '@nuvix/core/config/roles'
 import ParamsHelper from '@nuvix/core/helper/params.helper'
 import { APP_PLATFORM_SERVER, platforms } from '@nuvix/core/config/platforms'
 import { Hook } from '../../server/hooks/interface'
-import { setupDatabaseMeta } from '@nuvix/core/helper/db-meta.helper'
 import { Key } from '@nuvix/core/helper/key.helper'
 import {
   KeysDoc,
@@ -187,42 +180,34 @@ export class ApiHook implements Hook {
     }
 
     const session: SessionsDoc = req[Context.Session]
-    const client = req[PROJECT_DB_CLIENT]
 
-    if (client) {
-      await setupDatabaseMeta({
-        client: req[PROJECT_DB_CLIENT],
-        extra: {
-          user:
-            user && !user.empty()
-              ? {
-                  id: user.getId(),
-                  name: user.get('name'),
-                  email: user.get('email'),
-                }
-              : undefined,
-          team:
-            team && !team.empty()
-              ? {
-                  id: team.getId(),
-                  name: team.get('name'),
-                }
-              : undefined,
-          session: session
-            ? JSON.stringify({
-                id: session.getId(),
-                userId: session.get('userId'),
-                provider: session.get('provider'),
-                ip: session.get('ip'),
-                userAgent: session.get('userAgent'),
-              })
-            : undefined,
-          roles: JSON.stringify(Authorization.getRoles()),
-        },
-        extraPrefix: 'request.auth',
-      })
+    req[Context.AuthMeta] = {
+      user:
+        user && !user.empty()
+          ? {
+              id: user.getId(),
+              name: user.get('name'),
+              email: user.get('email'),
+            }
+          : undefined,
+      team:
+        team && !team.empty()
+          ? {
+              id: team.getId(),
+              name: team.get('name'),
+            }
+          : undefined,
+      session: session
+        ? JSON.stringify({
+            id: session.getId(),
+            userId: session.get('userId'),
+            provider: session.get('provider'),
+            ip: session.get('ip'),
+            userAgent: session.get('userAgent'),
+          })
+        : undefined,
+      roles: JSON.stringify(Authorization.getRoles()),
     }
-
     req[Context.Scopes] = scopes
     req[Context.Role] = role
     req[Context.User] = user

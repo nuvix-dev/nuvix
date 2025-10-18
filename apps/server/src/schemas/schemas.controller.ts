@@ -33,7 +33,7 @@ import {
   TableParamsDTO,
 } from './DTO/table.dto'
 import type { ProjectsDoc } from '@nuvix/utils/types'
-import { SchemaType } from '@nuvix/utils'
+import { Context, SchemaType } from '@nuvix/utils'
 
 // Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
 @Controller({ version: ['1'], path: ['schemas/:schemaId', 'public'] })
@@ -67,6 +67,7 @@ export class SchemasController {
       schema,
       url: request.raw.url || request.url,
       project,
+      context: request[Context.AuthMeta],
     })
   }
 

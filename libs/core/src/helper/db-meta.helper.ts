@@ -1,3 +1,4 @@
+import { DataSource } from '@nuvix/pg'
 import { ProjectsDoc } from '@nuvix/utils/types'
 import { Client } from 'pg'
 
@@ -7,7 +8,7 @@ interface SetupDatabaseMeta {
   project?: ProjectsDoc
   extra?: Record<string, any>
   extraPrefix?: string
-  client: Client
+  client: DataSource
 }
 
 export const setupDatabaseMeta = async ({
@@ -29,12 +30,12 @@ export const setupDatabaseMeta = async ({
       headers[k.toLowerCase()] = v!
     }
     sqlChunks.push(`
-      SET "request.method" = ${escapeString(request.method?.toUpperCase() || 'GET')};
-      SET "request.path" = ${escapeString(request.url || '')};
-      SET "request.id" = ${escapeString(request.id || '')};
-      SET "request.headers" = ${escapeString(JSON.stringify(headers))};
-      SET "request.cookies" = ${escapeString(JSON.stringify(request.cookies ?? {}))};
-      SET "request.ip" = ${escapeString(request.ip || '')};
+      SET LOCAL "request.method" = ${escapeString(request.method?.toUpperCase() || 'GET')};
+      SET LOCAL "request.path" = ${escapeString(request.url || '')};
+      SET LOCAL "request.id" = ${escapeString(request.id || '')};
+      SET LOCAL "request.headers" = ${escapeString(JSON.stringify(headers))};
+      SET LOCAL "request.cookies" = ${escapeString(JSON.stringify(request.cookies ?? {}))};
+      SET LOCAL "request.ip" = ${escapeString(request.ip || '')};
     `)
   }
 
@@ -44,7 +45,7 @@ export const setupDatabaseMeta = async ({
       name: project.get('name'),
     }
     sqlChunks.push(
-      `SET app.project = ${escapeString(JSON.stringify(projectData))};`,
+      `SET LOCAL app.project = ${escapeString(JSON.stringify(projectData))};`,
     )
   }
 
@@ -62,7 +63,9 @@ export const setupDatabaseMeta = async ({
             const finalKey = extraPrefix
               ? `"${extraPrefix}.${fullKey}"`
               : `"${fullKey}"`
-            sqlChunks.push(`SET ${finalKey} = ${escapeString(String(value))};`)
+            sqlChunks.push(
+              `SET LOCAL ${finalKey} = ${escapeString(String(value))};`,
+            )
           }
         }
       }
@@ -73,6 +76,6 @@ export const setupDatabaseMeta = async ({
 
   if (!sqlChunks.length) return
 
-  const finalSQL = `DO $$ BEGIN ${sqlChunks.join('\n')} END $$;`
-  await client.query(finalSQL)
+  const finalSQL = sqlChunks.join('\n')
+  await client.execute(finalSQL)
 }

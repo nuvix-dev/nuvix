@@ -85,13 +85,9 @@ export class SchemaHook implements Hook {
         request[CURRENT_SCHEMA_DB] = db
       } else {
         if (mode !== AppMode.ADMIN || !Auth.isPlatformActor) {
-          try {
-            await client.query(`SET ROLE ${role}`)
-          } catch (e) {
-            throw new Exception(
-              Exception.GENERAL_SERVER_ERROR,
-              'Failed to set database role',
-            )
+          request[Context.AuthMeta] = {
+            ...(request[Context.AuthMeta] || {}),
+            role,
           }
         }
       }

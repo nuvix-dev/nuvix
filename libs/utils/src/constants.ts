@@ -226,6 +226,7 @@ export enum Context {
   AuthType = 'authType',
   Namespace = 'namespace',
   CurrentSchema = 'currentSchema',
+  AuthMeta = 'authMeta',
 }
 
 export enum HashAlgorithm {

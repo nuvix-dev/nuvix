@@ -10,6 +10,7 @@ export interface Select {
   offset?: number
   shape?: 'array' | 'object'
   project: ProjectsDoc
+  context?: Record<string, any>
 }
 
 export interface Insert {

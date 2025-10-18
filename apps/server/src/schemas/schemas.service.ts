@@ -28,12 +28,22 @@ import {
   PermissionType,
 } from '@nuvix/db'
 import { Database } from '@nuvix/db'
+import { setupDatabaseMeta } from '@nuvix/core/helper'
 
 @Injectable()
 export class SchemasService {
   private readonly logger = new Logger(SchemasService.name)
 
-  async select({ pg, table, url, limit, offset, schema, project }: Select) {
+  async select({
+    pg,
+    table,
+    url,
+    limit,
+    offset,
+    schema,
+    project,
+    context,
+  }: Select) {
     const qb = pg.qb(table).withSchema(schema)
     const allowedSchemas = project.get('metadata')?.['allowedSchemas'] || []
     const astToQueryBuilder = new ASTToQueryBuilder(qb, pg, {
@@ -55,7 +65,17 @@ export class SchemasService {
 
     this.logger.debug(qb.toSQL())
 
-    return qb.catch(e => this.processError(e))
+    return pg.withTransaction(async () => {
+      const { role, ...extra } = context as any
+      await pg.execute(`SET LOCAL ROLE ${pg.escapeIdentifier(role)};`)
+      await setupDatabaseMeta({
+        extra,
+        project,
+        client: pg,
+        extraPrefix: 'request.auth',
+      })
+      return qb.catch(e => this.processError(e))
+    })
   }
 
   async insert({ pg, table, input, columns, schema, url }: Insert) {
