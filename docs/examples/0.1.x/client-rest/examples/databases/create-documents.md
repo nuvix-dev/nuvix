@@ -1,4 +1,4 @@
-POST /v1/databases/{databaseId}/collections/{collectionId}/documents HTTP/1.1
+POST /v1/schemas/{schemaId}/collections/{collectionId}/documents HTTP/1.1
 Host: api.nuvix.in
 Content-Type: application/json
 X-Nuvix-Response-Format: 1.7.0

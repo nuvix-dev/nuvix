@@ -1,4 +1,4 @@
-import { Client, Storage } from "nuvix";
+import { Client, Storage } from "@nuvix/client";
 
 const client = new Client()
     .setEndpoint('https://api.nuvix.in/v1') // Your API Endpoint

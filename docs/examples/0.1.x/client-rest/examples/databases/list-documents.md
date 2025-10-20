@@ -1,4 +1,4 @@
-GET /v1/databases/{databaseId}/collections/{collectionId}/documents HTTP/1.1
+GET /v1/schemas/{schemaId}/collections/{collectionId}/documents HTTP/1.1
 Host: api.nuvix.in
 X-Nuvix-Response-Format: 1.7.0
 X-Nuvix-Project: <YOUR_PROJECT_ID>

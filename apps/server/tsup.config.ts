@@ -58,7 +58,7 @@ export default defineConfig(options => {
     outDir: '../../dist/server',
     noExternal: [],
     splitting: false,
-    minify: false,
+    minify: true,
     target: 'es2024',
     skipNodeModulesBundle: true,
     shims: true,

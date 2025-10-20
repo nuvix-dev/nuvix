@@ -1,4 +1,4 @@
-import { Client, Storage, ImageGravity, ImageFormat } from "nuvix";
+import { Client, Storage, ImageGravity, ImageFormat } from "@nuvix/client";
 
 const client = new Client()
     .setEndpoint('https://api.nuvix.in/v1') // Your API Endpoint

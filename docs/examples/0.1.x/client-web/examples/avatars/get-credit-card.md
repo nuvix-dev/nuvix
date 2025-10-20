@@ -1,4 +1,4 @@
-import { Client, Avatars, CreditCard } from "nuvix";
+import { Client, Avatars, CreditCard } from "@nuvix/client";
 
 const client = new Client()
     .setEndpoint('https://api.nuvix.in/v1') // Your API Endpoint

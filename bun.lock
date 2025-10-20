@@ -21,9 +21,9 @@
         "@nestjs/swagger": "^11.2.0",
         "@nuvix/audit": "^1.0.3",
         "@nuvix/cache": "^1.0.4",
-        "@nuvix/db": "^0.1.29-alpha.3",
+        "@nuvix/db": "^0.1.29-alpha.4",
         "@nuvix/messaging": "^1.0.2",
-        "@nuvix/pg": "^1.0.5",
+        "@nuvix/pg": "^1.0.6",
         "@nuvix/storage": "^1.0.1",
         "@nuvix/telemetry": "^1.0.2",
         "argon2": "^0.44.0",
@@ -623,11 +623,11 @@
 
     "@nuvix/core": ["@nuvix/core@workspace:libs/core"],
 
-    "@nuvix/db": ["@nuvix/db@0.1.29-alpha.3", "", { "dependencies": { "chalk": "^5.5.0" }, "bin": { "nuvix-db": "dist/cli/generate-types.js" } }, "sha512-LD/0jkca+tkhPdV5Czo8GCbnbGdimAezYIO1h59LWyGTwXez6saxeQLooGNjgzIP/LDMCMzl83IfwKnKuuDP7w=="],
+    "@nuvix/db": ["@nuvix/db@0.1.29-alpha.4", "", { "dependencies": { "chalk": "^5.5.0" }, "bin": { "nuvix-db": "dist/cli/generate-types.js" } }, "sha512-bAmUB2U8Lak/H3+VUjckhEHGZngGTVeQ9j7r00aZ5xPrKL903WsWN7P27T9iiG1NbzX/R1D0GEpelJI4eJThXw=="],
 
     "@nuvix/messaging": ["@nuvix/messaging@1.0.2", "", { "dependencies": { "jsonwebtoken": "^9.0.2", "libphonenumber-js": "^1.12.9" }, "peerDependencies": { "nodemailer": "^7.0.3" } }, "sha512-ALaXNHdn5owgsvG3H24rHMw8htRAT4QnlIaLSMUoYkIaN3hjXjdu/s2MaOovuKXG5dQnmLx4vY+9Lo3YrT9tow=="],
 
-    "@nuvix/pg": ["@nuvix/pg@1.0.5", "", { "dependencies": { "colorette": "^2.0.20", "debug": "^4.4.0" } }, "sha512-xL6P4JYnmP2CkqlcWxjYZbvq7F4wjUz3c49YhTamKu2l7GvHHJDY/wtstD3AIzPo7M2TDzdZqJV4hBlv+AzKzg=="],
+    "@nuvix/pg": ["@nuvix/pg@1.0.6", "", { "dependencies": { "colorette": "^2.0.20", "debug": "^4.4.0" } }, "sha512-+mZG+iDm9sn9F4vQ60i+VXBnoyxaKHTSOmPGPnywVvJX/WhFKQ8+DJuB7kJEtTDcv+Ii9aKIWm+2vv/r7FMEoQ=="],
 
     "@nuvix/pg-meta": ["@nuvix/pg-meta@workspace:libs/pg-meta"],
 

@@ -1,6 +1,6 @@
 # Nuvix
 
-Modern backend infrastructure for TypeScript. Fast, modular, and scalable — powered by PostgreSQL, Bun, and Redis.
+Modern backend infrastructure for TypeScript.
 
 <p align="center">
   <img src="https://github.com/Nuvix-Tech/console/raw/main/apps/www/public/images/dashboard/hero_dark.png" alt="Nuvix project banner" width="100%" />
@@ -12,12 +12,6 @@ Modern backend infrastructure for TypeScript. Fast, modular, and scalable — po
   <a href="https://discord.gg/2fWv2T6RzK"><img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" alt="Join Discord" /></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/License-BSL%201.1-2EA44F" alt="License: BSL 1.1" /></a>
 </p>
-
----
-
-> [!WARNING]
-> ## Project Status: Pre-Production
-> Nuvix is feature-complete and entering pre-production testing. It is not yet recommended for production use. The current focus is on improving test coverage, stability, and documentation ahead of the first stable release.
 
 ---
 
@@ -39,7 +33,7 @@ Modern backend infrastructure for TypeScript. Fast, modular, and scalable — po
 
 ## Overview
 
-Nuvix is a high-performance backend platform that combines the simplicity of BaaS with the flexibility of a custom backend. It offers a modular architecture with first-class TypeScript support and a PostgreSQL-first data model.
+Nuvix is a backend platform that combines the simplicity of BaaS with the flexibility of a custom backend. It offers a modular architecture with first-class TypeScript support and a PostgreSQL-first data model.
 
 Highlights:
 - Built-in authentication, storage, messaging, and schema management

@@ -210,18 +210,18 @@ export const init: (config: PoolConfig | any) => {
 
     async end() {
       // Sentry.startSpan({ op: 'db', name: 'init.end' }, async () => {
-      try {
-        const _pool = pool
-        pool = null
-        // Gracefully wait for active connections to be idle, then close all
-        // connections in the pool.
-        if (_pool) {
-          await _pool.end()
-        }
-      } catch (endError) {
-        // Ignore any errors during cleanup just log them
-        console.error('Failed ending connection pool', endError)
-      }
+      // try {
+      //   const _pool = pool
+      //   pool = null
+      //   // Gracefully wait for active connections to be idle, then close all
+      //   // connections in the pool.
+      //   if (_pool) {
+      //     await _pool.end()
+      //   }
+      // } catch (endError) {
+      //   // Ignore any errors during cleanup just log them
+      //   console.error('Failed ending connection pool', endError)
+      // }
       // })
     },
   }
