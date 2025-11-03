@@ -72,15 +72,6 @@ export class ApiInterceptor implements NestInterceptor {
       }
     }
 
-    if (authTypes) {
-      const allowedAuthTypes = Array.isArray(authTypes)
-        ? authTypes
-        : [authTypes]
-      if (!allowedAuthTypes.includes(request[Context.AuthType] as AuthType)) {
-        throw new Exception(Exception.GENERAL_ACCESS_FORBIDDEN)
-      }
-    }
-
     if (scope) {
       const requiredScopes = Array.isArray(scope) ? scope : [scope]
       const missingScopes = requiredScopes.filter(s => !scopes.includes(s))
@@ -88,8 +79,20 @@ export class ApiInterceptor implements NestInterceptor {
       if (missingScopes.length > 0) {
         throw new Exception(
           Exception.GENERAL_UNAUTHORIZED_SCOPE,
-          `${user.get('email', 'User')} (role: ${request['role'] ?? '#'}) missing scopes (${missingScopes.join(', ')})`,
+          `${user.get('email', 'User')} (role: ${request['role'] ?? '#'}) missing scopes [${missingScopes.join(', ')}]`,
         )
+      }
+    }
+
+    if (authTypes) {
+      const allowedAuthTypes = Array.isArray(authTypes)
+        ? authTypes
+        : [authTypes]
+      if (
+        allowedAuthTypes.length > 0 &&
+        !allowedAuthTypes.includes(request[Context.AuthType] as AuthType)
+      ) {
+        throw new Exception(Exception.USER_UNAUTHORIZED)
       }
     }
 
