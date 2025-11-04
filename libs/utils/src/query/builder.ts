@@ -201,7 +201,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
           : undefined
 
     if (Number.isInteger(limit)) this.qb.limit(limit as number)
-    if (Number.isInteger(offset)) this.qb.limit(offset as number)
+    if (Number.isInteger(offset)) this.qb.offset(offset as number)
 
     return this.qb
   }

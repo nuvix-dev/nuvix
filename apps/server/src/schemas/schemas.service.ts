@@ -189,9 +189,9 @@ export class SchemasService {
     astToQueryBuilder.applyFilters(filter, {
       applyExtra: true,
       tableName: table,
-      throwOnEmpty: force,
+      throwOnEmpty: !force,
       throwOnEmptyError: new Exception(
-        Exception.GENERAL_ACCESS_FORBIDDEN,
+        Exception.GENERAL_BAD_REQUEST,
         'you must provide a filter to update data or use &force=true',
       ),
     })
@@ -229,9 +229,9 @@ export class SchemasService {
     astToQueryBuilder.applyFilters(filter, {
       applyExtra: true,
       tableName: table,
-      throwOnEmpty: force,
+      throwOnEmpty: !force,
       throwOnEmptyError: new Exception(
-        Exception.GENERAL_ACCESS_FORBIDDEN,
+        Exception.GENERAL_BAD_REQUEST,
         'you must provide a filter to delete data or use &force=true',
       ),
     })
@@ -240,11 +240,10 @@ export class SchemasService {
       limit,
       offset,
     })
-    qb.delete()
 
-    return this.withMetaTransaction(pg, project, context, async () => {
-      return qb.catch(e => this.processError(e))
-    })
+    return this.withMetaTransaction(pg, project, context, async () =>
+      qb.delete().catch(e => this.processError(e)),
+    )
   }
 
   async callFunction({
@@ -275,8 +274,8 @@ export class SchemasService {
 
     const raw = new Raw(pg)
     raw.set(`??.??(${placeholder})`, values)
-    const qb = pg.queryBuilder().table(raw as any)
 
+    const qb = pg.queryBuilder().table(raw as any)
     const astToQueryBuilder = new ASTToQueryBuilder(qb, pg)
 
     const { select, filter, order } = this.getParamsFromUrl(url, functionName)
@@ -288,10 +287,24 @@ export class SchemasService {
       limit,
       offset,
     })
+    const result = await this.withMetaTransaction(
+      pg,
+      project,
+      context,
+      async () => {
+        return qb.catch(e => this.processError(e))
+      },
+    )
 
-    return this.withMetaTransaction(pg, project, context, async () => {
-      return qb.catch(e => this.processError(e))
-    })
+    if (
+      Array.isArray(result) &&
+      result.length === 1 &&
+      functionName in result[0] &&
+      Object.keys(result[0]).length === 1
+    ) {
+      return result[0][functionName]
+    }
+    return result
   }
 
   private processError(e: unknown) {

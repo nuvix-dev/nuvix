@@ -9,6 +9,8 @@ import {
   Req,
   UseGuards,
   UseInterceptors,
+  UsePipes,
+  ValidationPipe,
 } from '@nestjs/common'
 import { SchemasService } from './schemas.service'
 import { ProjectGuard, SchemaGuard } from '@nuvix/core/resolvers/guards'
