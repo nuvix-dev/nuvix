@@ -218,7 +218,7 @@ export class SchemasService {
     force,
     context,
   }: Delete) {
-    const qb = pg.qb(table).withSchema(schema)
+    const qb = pg.table(table).withSchema(schema)
     const { select, filter, order } = this.getParamsFromUrl(url, table)
     const allowedSchemas = project.get('metadata')?.['allowedSchemas'] || []
     const astToQueryBuilder = new ASTToQueryBuilder(qb, pg, {
@@ -240,9 +240,10 @@ export class SchemasService {
       limit,
       offset,
     })
+    qb.delete()
 
     return this.withMetaTransaction(pg, project, context, async () =>
-      qb.delete().catch(e => this.processError(e)),
+      qb.catch(e => this.processError(e)),
     )
   }
 

@@ -163,6 +163,10 @@ export class SchemasController {
     scopes: 'schemas.tables.delete',
     description:
       'Delete records from a specific table with optional pagination and force flag',
+    sdk: {
+      name: 'delete',
+      code: 200,
+    },
   })
   async deleteTables(
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
