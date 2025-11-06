@@ -10,9 +10,9 @@ Initialize your SDK with your Nuvix server API endpoint and project ID which can
 
 ```js
 // Init your Web SDK
-const client = new Client();
+const nx = new Client();
 
-client
+nx
     .setEndpoint('http://localhost/v1') // Your Nuvix Endpoint
     .setProject('455x34dfkj') // Your project ID
 ;
@@ -22,10 +22,9 @@ client
 Once your SDK object is set, access any of the Nuvix services and choose any request to send. Full documentation for any service method you would like to use can be found in your SDK documentation or in the [API References](https://docs.nuvix.in) section.
 
 ```js
-const account = new Account(client);
 
 // Register User
-account.create(ID.unique(), "email@example.com", "password", "Walter O'Brien")
+nx.account.create(ID.unique(), "email@example.com", "password", "Walter O'Brien")
     .then(function (response) {
         console.log(response);
     }, function (error) {
@@ -37,17 +36,15 @@ account.create(ID.unique(), "email@example.com", "password", "Walter O'Brien")
 ### Full Example
 ```js
 // Init your Web SDK
-const client = new Client();
+const nx = new Client();
 
-client
+nx
     .setEndpoint('http://localhost/v1') // Your Nuvix Endpoint
     .setProject('455x34dfkj')
 ;
 
-const account = new Account(client);
-
 // Register User
-account.create(ID.unique(), "email@example.com", "password", "Walter O'Brien")
+nx.account.create(ID.unique(), "email@example.com", "password", "Walter O'Brien")
     .then(function (response) {
         console.log(response);
     }, function (error) {

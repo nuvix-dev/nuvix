@@ -1,12 +1,10 @@
-import { Client, Avatars } from "@nuvix/client";
+import { Client } from "@nuvix/client";
 
-const client = new Client()
+const nx = new Client()
     .setEndpoint('https://api.nuvix.in/v1') // Your API Endpoint
     .setProject('<YOUR_PROJECT_ID>'); // Your project ID
 
-const avatars = new Avatars(client);
-
-const result = avatars.getQR(
+const result = nx.avatars.getQR(
     '<TEXT>', // text
     1, // size (optional)
     0, // margin (optional)

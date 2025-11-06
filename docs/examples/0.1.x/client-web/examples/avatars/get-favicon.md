@@ -1,12 +1,10 @@
-import { Client, Avatars } from "@nuvix/client";
+import { Client } from "@nuvix/client";
 
-const client = new Client()
+const nx = new Client()
     .setEndpoint('https://api.nuvix.in/v1') // Your API Endpoint
     .setProject('<YOUR_PROJECT_ID>'); // Your project ID
 
-const avatars = new Avatars(client);
-
-const result = avatars.getFavicon(
+const result = nx.avatars.getFavicon(
     'https://example.com' // url
 );
 

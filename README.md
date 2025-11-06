@@ -1,210 +1,115 @@
 # Nuvix
 
-Modern backend infrastructure for TypeScript.
+Modern backend infrastructure for ambitious developers.
 
 <p align="center">
-  <img src="https://github.com/Nuvix-Tech/console/raw/main/apps/www/public/images/dashboard/hero_dark.png" alt="Nuvix project banner" width="100%" />
+  <img src="https://github.com/Nuvix-Tech/console/raw/main/apps/www/public/images/dashboard/hero_dark.png" width="100%" alt="Nuvix Banner" />
 </p>
 
-<p align="center">
-  <a href="https://github.com/Nuvix-Tech/nuvix/releases"><img src="https://img.shields.io/github/v/release/Nuvix-Tech/nuvix?color=0A84FF" alt="Latest release" /></a>
-  <a href="https://github.com/Nuvix-Tech/nuvix/actions"><img src="https://github.com/Nuvix-Tech/nuvix/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
-  <a href="https://discord.gg/2fWv2T6RzK"><img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" alt="Join Discord" /></a>
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-BSL%201.1-2EA44F" alt="License: BSL 1.1" /></a>
-</p>
+**Nuvix is a TypeScript-first backend platform that helps you build secure and scalable applications with less effort. It combines authentication, a powerful multi-schema database, file storage, and messaging into a single, unified system you can self-host anywhere.**
+
+Whether you're building for web, mobile, or server environments, Nuvix gives you a strong backend foundation without boilerplate or complexity.
 
 ---
 
-## Contents
+## What You Get
 
-- [Overview](#overview)
-- [Core features](#core-features)
-- [Ecosystem](#ecosystem)
-- [Quick start](#quick-start)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [Security](#security)
-- [License](#license)
-- [Acknowledgements](#acknowledgements)
-- [Community](#community)
-- [Vision](#vision)
+### ✅ Authentication
 
----
+Built-in users, sessions, and team management. Designed for secure, multi-tenant applications from day one.
 
-## Overview
+### ✅ Database
 
-Nuvix is a backend platform that combines the simplicity of BaaS with the flexibility of a custom backend. It offers a modular architecture with first-class TypeScript support and a PostgreSQL-first data model.
+A flexible, permission-driven data layer powered by PostgreSQL, featuring the Nuvix **three-schema system**:
 
-Highlights:
-- Built-in authentication, storage, messaging, and schema management
-- Extensible, modular components
-- Fine-grained access control using PostgreSQL Row-Level Security (RLS)
-- Optional companion console for visual administration
+#### **1. Document Schemas**
 
----
+A NoSQL-style model for fast iteration. Define attributes and indexes without writing SQL.
 
-## Core features
+#### **2. Managed Schemas**
 
-<details>
-<summary><strong>Flexible schema system</strong></summary>
+Structured PostgreSQL tables enhanced with Nuvix automation:
 
-Nuvix supports multiple data models to match your needs:
+* Auto-generated CRUD policies
+* Automatic Row-Level Security
+* Built-in permission tables
+* Secure by default
 
-| Schema type        | Description                                                                               | Typical use case          |
-|--------------------|-------------------------------------------------------------------------------------------|---------------------------|
-| Document           | NoSQL-like structure with relationship-based querying                                     | Rapid prototyping         |
-| Managed            | Auto-provisioned permissions tables with PostgreSQL RLS for granular access control       | Secure, multi-tenant apps |
-| Unmanaged          | Direct PostgreSQL access for advanced use cases                                           | Full database control     |
-</details>
+#### **3. Unmanaged Schemas**
 
-<details>
-<summary><strong>Authentication and authorization</strong></summary>
+Full SQL freedom. Bring your own tables, views, and logic with no restrictions.
 
-- User and session management
-- JWT-based authentication
-- Role/permission-based access control
-- Automatic RLS enforcement on managed schemas
-</details>
+All schema types share a consistent API surface and follow the same permission rules.
 
-<details>
-<summary><strong>Unified messaging</strong></summary>
+### ✅ Storage
 
-- Email, SMS, and push notifications through a single interface
-- Template-driven messages
-- Redis-backed queues for reliability
-</details>
+A simple, permission-aware file system with support for S3-compatible drivers or local storage.
 
-<details>
-<summary><strong>File storage</strong></summary>
+### ✅ Messaging
 
-- S3-compatible or local adapters
-- Chunked uploads
-- Built-in file permissions
-</details>
+A unified interface for outbound communication:
 
-<details>
-<summary><strong>Developer experience</strong></summary>
+* Email
+* SMS
+* Push notifications
 
-- Ultra-fast Bun runtime
-- Modular TypeScript + NestJS architecture
-- Integrated Redis for caching, queues, and events
-- Designed for simplicity, scalability, and performance
-</details>
+Templates and integrations included.
 
 ---
 
-## Ecosystem
+## Why Nuvix
 
-### Nuvix Console
-A companion dashboard to manage users, schemas, messages, and configuration.
+### Developer-first
 
-Repository: [github.com/Nuvix-Tech/console](https://github.com/Nuvix-Tech/console)
+TypeScript everywhere. Clean APIs. Predictable behavior. Minimal setup.
 
-### Documentation
-Comprehensive docs and API references are in progress.
+### Secure by Default
 
-Docs (coming soon): [docs.nuvix.in](https://docs.nuvix.in)
+Permission checks apply across database, storage, messaging, and project boundaries.
 
----
+Managed schemas include automatic RLS and policy generation—no SQL required.
 
-## Quick start
+### Self-Host Anywhere
 
-<details>
-<summary><strong>Prerequisites</strong></summary>
+Deploy using simple containers on any cloud, server, or local environment.
 
-- Git
-- Docker and Docker Compose
-</details>
+### Flexible by Design
 
-<details open>
-<summary><strong>Setup with Docker</strong></summary>
+Mix and match schema types depending on your project needs:
 
-1.  Clone the repository:
-    ```bash
-    git clone https://github.com/Nuvix-Tech/nuvix.git
-    cd nuvix
-    ```
-
-2.  Create environment files from the examples:
-    ```bash
-    cp .env.example .env
-    cp .env.platform.example .env.platform
-    cp .env.server.example .env.server
-    ```
-    > **Note:** You can customize variables in these `.env` files as needed.
-
-3.  Start the stack:
-    ```bash
-    docker compose up -d
-    ```
-    This launches:
-    - PostgreSQL
-    - Redis
-    - Nuvix Server
-
-4.  Access the server:
-    - API: [http://localhost:4000](http://localhost:4000)
-</details>
+* Prototype quickly with Document Schemas
+* Scale confidently with Managed Schemas
+* Take full control with Unmanaged Schemas
 
 ---
 
-## Roadmap
+## Get Started
 
-| Milestone                      | Status          |
-|--------------------------------|-----------------|
-| Authentication & Authorization | Complete        |
-| Flexible Schema System         | Complete        |
-| Messaging (Email, SMS, Push)   | Complete        |
-| Storage System                 | Complete        |
-| Admin Dashboard                | Console ready   |
-| Test Suite & Coverage          | In progress     |
-| Documentation                  | In progress     |
-| First Production Release       | Pending tests   |
+Spin up the platform locally with Docker and manage everything through the admin console.
 
----
-
-## Contributing
-
-Contributions are welcome. Please read the contributing guide before opening pull requests or issues.
-
-- Contributing guide: [CONTRIBUTING.md](./CONTRIBUTING.md)
-- Good first issues: [github.com/Nuvix-Tech/nuvix/issues](https://github.com/Nuvix-Tech/nuvix/issues)
-
----
-
-## Security
-
-If you discover a security issue, please report it responsibly using private channels. Do not open public issues for security reports.
-
----
-
-## License
-
-This project is licensed under the Business Source License 1.1 (BSL). See [LICENSE](./LICENSE) for terms and conversion conditions.
-
----
-
-## Acknowledgements
-
-Inspired by:
-- Supabase
-- Appwrite
-- Firebase
-
-Nuvix builds on these ecosystems while introducing multi-schema flexibility, automatic RLS, and Bun-native performance.
+* **Repository:** [https://github.com/Nuvix-Tech/nuvix](https://github.com/Nuvix-Tech/nuvix)
+* **Console (Dashboard):** [https://github.com/Nuvix-Tech/console](https://github.com/Nuvix-Tech/console)
+* **Documentation:** [https://docs.nuvix.in](https://docs.nuvix.in) *(coming soon)*
 
 ---
 
 ## Community
 
 <p align="center">
-  <a href="https://discord.gg/2fWv2T6RzK"><img src="https://img.shields.io/badge/Join%20our%20Discord-5865F2?logo=discord&logoColor=white" alt="Join our Discord" /></a>
-  <a href="https://twitter.com/nuvix_tech"><img src="https://img.shields.io/badge/Follow%20on%20X-000000?logo=x" alt="Follow on X" /></a>
-  <a href="https://docs.nuvix.in"><img src="https://img.shields.io/badge/Docs-Coming%20Soon-1E90FF?logo=readthedocs" alt="Docs coming soon" /></a>
+  <a href="https://discord.gg/2fWv2T6RzK"><img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white" /></a>
+  <a href="https://twitter.com/nuvix_tech"><img src="https://img.shields.io/badge/Follow%20on%20X-000000?logo=x" /></a>
 </p>
 
 ---
 
-## Vision
+## Contributing
 
-Nuvix unifies backend development by combining the power of PostgreSQL with modern tooling. The goal is a single, developer-first platform that scales from prototype to production with minimal friction.
+We welcome contributions of all kinds: features, bug fixes, docs, and feedback.
+
+See the contributing guide in the repository for details.
+
+---
+
+## License
+
+Nuvix is open source under the **BSD 3-Clause License**. See the [`LICENSE`](/LICENSE) file for details.

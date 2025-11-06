@@ -1,12 +1,10 @@
-import { Client, Messaging } from "@nuvix/client";
+import { Client } from "@nuvix/client";
 
-const client = new Client()
+const nx = new Client()
     .setEndpoint('https://api.nuvix.in/v1') // Your API Endpoint
     .setProject('<YOUR_PROJECT_ID>'); // Your project ID
 
-const messaging = new Messaging(client);
-
-const result = await messaging.createSubscriber(
+const result = await nx.messaging.createSubscriber(
     '<TOPIC_ID>', // topicId
     '<SUBSCRIBER_ID>', // subscriberId
     '<TARGET_ID>' // targetId

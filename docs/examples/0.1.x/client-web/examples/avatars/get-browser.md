@@ -1,12 +1,10 @@
-import { Client, Avatars, Browser } from "@nuvix/client";
+import { Client, Browser } from "@nuvix/client";
 
-const client = new Client()
+const nx = new Client()
     .setEndpoint('https://api.nuvix.in/v1') // Your API Endpoint
     .setProject('<YOUR_PROJECT_ID>'); // Your project ID
 
-const avatars = new Avatars(client);
-
-const result = avatars.getBrowser(
+const result = nx.avatars.getBrowser(
     Browser.AvantBrowser, // code
     0, // width (optional)
     0, // height (optional)

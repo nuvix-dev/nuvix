@@ -1,7 +1,6 @@
 POST /v1/storage/buckets/{bucketId}/files HTTP/1.1
 Host: api.nuvix.in
 Content-Type: multipart/form-data; boundary="cec8e8123c05ba25"
-X-Nuvix-Response-Format: 1.7.0
 X-Nuvix-Project: <YOUR_PROJECT_ID>
 X-Nuvix-Session: 
 X-Nuvix-JWT: <YOUR_JWT>

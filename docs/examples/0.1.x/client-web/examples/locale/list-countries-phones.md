@@ -1,11 +1,9 @@
-import { Client, Locale } from "@nuvix/client";
+import { Client } from "@nuvix/client";
 
-const client = new Client()
+const nx = new Client()
     .setEndpoint('https://api.nuvix.in/v1') // Your API Endpoint
     .setProject('<YOUR_PROJECT_ID>'); // Your project ID
 
-const locale = new Locale(client);
-
-const result = await locale.listCountriesPhones();
+const result = await nx.locale.listCountriesPhones();
 
 console.log(result);

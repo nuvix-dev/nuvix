@@ -1,12 +1,10 @@
-import { Client, Account, AuthenticationFactor } from "@nuvix/client";
+import { Client, AuthenticationFactor } from "@nuvix/client";
 
-const client = new Client()
+const nx = new Client()
     .setEndpoint('https://api.nuvix.in/v1') // Your API Endpoint
     .setProject('<YOUR_PROJECT_ID>'); // Your project ID
 
-const account = new Account(client);
-
-const result = await account.createMfaChallenge(
+const result = await nx.account.createMfaChallenge(
     AuthenticationFactor.Email // factor
 );
 

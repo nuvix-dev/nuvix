@@ -1,9 +1,9 @@
 {
   "name": "nuvix",
-  "version": "1.0.0",
+  "version": "0.1.0",
   "description": "Nuvix is an Open Source Backend providing a set of tools and services to help developers build and deploy applications quickly and efficiently.",
   "author": "Nuvix-Tech",
-  "license": "BSL-1.0",
+  "license": "BSD-3-Clause",
   "type": "module",
   "repository": {
     "type": "git",

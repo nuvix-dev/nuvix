@@ -1,12 +1,10 @@
-import { Client, Teams } from "@nuvix/client";
+import { Client } from "@nuvix/client";
 
-const client = new Client()
+const nx = new Client()
     .setEndpoint('https://api.nuvix.in/v1') // Your API Endpoint
     .setProject('<YOUR_PROJECT_ID>'); // Your project ID
 
-const teams = new Teams(client);
-
-const result = await teams.getPrefs(
+const result = await nx.teams.getPrefs(
     '<TEAM_ID>' // teamId
 );
 

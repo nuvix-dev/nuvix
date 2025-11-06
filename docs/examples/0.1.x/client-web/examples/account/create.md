@@ -1,12 +1,10 @@
-import { Client, Account } from "@nuvix/client";
+import { Client } from "@nuvix/client";
 
-const client = new Client()
+const nx = new Client()
     .setEndpoint('https://api.nuvix.in/v1') // Your API Endpoint
     .setProject('<YOUR_PROJECT_ID>'); // Your project ID
 
-const account = new Account(client);
-
-const result = await account.create(
+const result = await nx.account.create(
     '<USER_ID>', // userId
     'email@example.com', // email
     '', // password

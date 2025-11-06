@@ -1,12 +1,10 @@
-import { Client, Storage, ImageGravity, ImageFormat } from "@nuvix/client";
+import { Client, ImageGravity, ImageFormat } from "@nuvix/client";
 
-const client = new Client()
+const nx = new Client()
     .setEndpoint('https://api.nuvix.in/v1') // Your API Endpoint
     .setProject('<YOUR_PROJECT_ID>'); // Your project ID
 
-const storage = new Storage(client);
-
-const result = storage.getFilePreview(
+const result = nx.storage.getFilePreview(
     '<BUCKET_ID>', // bucketId
     '<FILE_ID>', // fileId
     0, // width (optional)
