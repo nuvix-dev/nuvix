@@ -282,7 +282,7 @@ export const Route = ({ docs = true, ...options }: RouteOptions) => {
   // -------------------------------
   // 2. Security / Scopes / Audit
   // -------------------------------
-  if (options.auth) decorators.push(Auth(options.auth))
+  if (options.auth !== undefined) decorators.push(Auth(options.auth))
   if (options.scopes) decorators.push(Scope(options.scopes))
   if (options.audit) {
     const { key, ...rest } = options.audit
