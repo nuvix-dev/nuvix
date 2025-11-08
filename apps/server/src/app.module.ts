@@ -16,7 +16,6 @@ import { CorsHook, HostHook, ProjectHook } from '@nuvix/core/resolvers/hooks'
 import { BullModule } from '@nestjs/bullmq'
 import { ScheduleModule } from '@nestjs/schedule'
 import { CoreModule } from '@nuvix/core/core.module'
-import { EventEmitterModule } from '@nestjs/event-emitter'
 import { DatabaseModule } from './database/database.module'
 import { AvatarsModule } from './avatars/avatars.module'
 import { UsersModule } from './users/users.module'
@@ -27,7 +26,6 @@ import { MessagingModule } from './messaging/messaging.module'
 import { SchemasModule } from './schemas/schemas.module'
 import { Key } from '@nuvix/core/helper/key.helper'
 import { StatsQueue } from '@nuvix/core/resolvers/queues'
-import { AppConfigService } from '@nuvix/core'
 import { LogsHook } from '@nuvix/core/resolvers'
 import { ApiLogsQueue } from '@nuvix/core/resolvers/queues/logs.queue'
 import { LocaleModule } from './locale/locale.module'
@@ -35,41 +33,12 @@ import { LocaleModule } from './locale/locale.module'
 @Module({
   imports: [
     CoreModule,
-    BullModule.forRootAsync({
-      useFactory(config: AppConfigService) {
-        const redisConfig = config.getRedisConfig()
-        return {
-          connection: {
-            ...redisConfig,
-            tls: redisConfig.secure
-              ? {
-                  rejectUnauthorized: false,
-                }
-              : undefined,
-            enableOfflineQueue: false, // Disable offline queue to avoid job accumulation when Redis is down
-            enableReadyCheck: true,
-          },
-          defaultJobOptions: {
-            priority: 1,
-            attempts: 2,
-            backoff: { type: 'exponential', delay: 5000 },
-            removeOnComplete: true,
-            removeOnFail: true,
-          },
-          prefix: 'nuvix', // TODO: we have to include a instance key that should be unique per app instance
-        }
-      },
-      inject: [AppConfigService],
-    }),
     BullModule.registerQueue(
       { name: QueueFor.MAILS },
       { name: QueueFor.STATS },
       { name: QueueFor.AUDITS },
       { name: QueueFor.LOGS },
     ),
-    EventEmitterModule.forRoot({
-      global: true,
-    }),
     ScheduleModule.forRoot(),
     JwtModule.register({
       secret: configuration.security.jwtSecret,

@@ -11,7 +11,6 @@ import { ProjectModule } from './projects/project.module'
 import { CoreModule } from '@nuvix/core/core.module'
 import { MailsQueue } from '@nuvix/core/resolvers/queues'
 import { BullModule } from '@nestjs/bullmq'
-import { EventEmitterModule } from '@nestjs/event-emitter'
 import { ScheduleModule } from '@nestjs/schedule'
 import { JwtModule, JwtService } from '@nestjs/jwt'
 import { configuration, QueueFor } from '@nuvix/utils'
@@ -27,7 +26,7 @@ import { AccountController } from './account/account.controller'
 import { AuditHook } from '@nuvix/core/resolvers/hooks/audit.hook'
 import { AuditsQueue } from './resolvers/queues/audits.queue'
 import { Key } from '@nuvix/core/helper/key.helper'
-import { AppConfigService, CoreService } from '@nuvix/core'
+import { CoreService } from '@nuvix/core'
 import { CliModule } from './cli/cli.module'
 import { CliController } from './cli/cli.controller'
 import { TeamsModule } from './teams/teams.module'
@@ -35,35 +34,11 @@ import { TeamsModule } from './teams/teams.module'
 @Module({
   imports: [
     CoreModule,
-    BullModule.forRootAsync({
-      useFactory(config: AppConfigService) {
-        const redisConfig = config.getRedisConfig()
-        return {
-          connection: {
-            ...redisConfig,
-            tls: redisConfig.secure
-              ? {
-                  rejectUnauthorized: false,
-                }
-              : undefined,
-          },
-          defaultJobOptions: {
-            removeOnComplete: true,
-            removeOnFail: true,
-          },
-          prefix: 'nuvix', // TODO: we have to include a instance key that must be unique per app instance
-        }
-      },
-      inject: [AppConfigService],
-    }),
     BullModule.registerQueue(
       { name: QueueFor.MAILS },
       { name: QueueFor.STATS },
       { name: QueueFor.AUDITS },
     ),
-    EventEmitterModule.forRoot({
-      global: true,
-    }),
     ScheduleModule.forRoot(),
     JwtModule.register({
       secret: configuration.security.jwtSecret,

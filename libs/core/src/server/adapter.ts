@@ -80,8 +80,8 @@ export class NuvixAdapter extends FastifyAdapter {
           typeof args[args.length - 1] === 'function'
             ? args[args.length - 1]
             : (e: Error) => {
-              if (e) throw e
-            }
+                if (e) throw e
+              }
 
         const extra = args.slice(2, -1)
         if (extra.length) {

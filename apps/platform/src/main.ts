@@ -2,7 +2,6 @@
  * The main entry point for the Nuvix Platform application.
  * @author Nuvix-Tech
  * @version 1.0
- * @beta
  */
 import { config } from 'dotenv'
 import path from 'path'
@@ -14,4 +13,10 @@ config({
 })
 
 import { bootstrap } from './bootstrap.js'
+import {
+  configureDbFiltersAndFormats,
+  configurePgTypeParsers,
+} from '@nuvix/core'
+configurePgTypeParsers()
+configureDbFiltersAndFormats()
 bootstrap()

@@ -6,7 +6,7 @@ import {
   OnModuleInit,
 } from '@nestjs/common'
 
-import { configuration, QueueFor } from '@nuvix/utils'
+import { configuration } from '@nuvix/utils'
 import { Database, StructureValidator } from '@nuvix/db'
 import pg from 'pg'
 import { parse as parseArray } from 'postgres-array'
@@ -16,6 +16,69 @@ import { CoreService } from './core.service.js'
 import { ConfigModule } from '@nestjs/config'
 import { RatelimitService } from './rate-limit.service.js'
 import { BullModule } from '@nestjs/bullmq'
+import { EventEmitterModule } from '@nestjs/event-emitter'
+
+@Global()
+@Module({
+  imports: [
+    ConfigModule.forRoot({
+      isGlobal: true,
+      load: [() => configuration],
+    }),
+    BullModule.forRootAsync({
+      useFactory(config: AppConfigService) {
+        const redisConfig = config.getRedisConfig()
+        return {
+          connection: {
+            ...redisConfig,
+            tls: redisConfig.secure
+              ? {
+                  rejectUnauthorized: false,
+                }
+              : undefined,
+            enableOfflineQueue: true,
+            enableReadyCheck: true,
+          },
+          defaultJobOptions: {
+            priority: 1,
+            attempts: 2,
+            backoff: { type: 'exponential', delay: 5000 },
+            removeOnComplete: true,
+            removeOnFail: true,
+          },
+          prefix: 'nuvix', // TODO: we have to include a instance key that should be unique per app instance
+        }
+      },
+      inject: [AppConfigService],
+    }),
+    EventEmitterModule.forRoot({
+      global: true,
+    }),
+  ],
+  providers: [
+    {
+      provide: AppConfigService,
+      useClass: AppConfigService,
+    },
+    CoreService,
+    RatelimitService,
+  ],
+  exports: [AppConfigService, CoreService, RatelimitService],
+})
+export class CoreModule implements OnModuleDestroy, OnModuleInit {
+  private readonly logger = new Logger(CoreModule.name)
+  constructor(private readonly coreService: CoreService) {}
+
+  async onModuleInit() {
+    await this.coreService.getCache().flush()
+  }
+
+  async onModuleDestroy() {
+    this.logger.log('Initiating cache flush during module shutdown...')
+    await this.coreService.getCache().flush()
+    this.logger.log('Cache successfully flushed on module shutdown.')
+  }
+}
 
 export function configurePgTypeParsers() {
   const types = pg.types
@@ -42,50 +105,12 @@ export function configurePgTypeParsers() {
   types.setTypeParser(1017 as any, x => x) // _point
 }
 
-configurePgTypeParsers()
+export function configureDbFiltersAndFormats() {
+  Object.entries(filters).forEach(([key, filter]) => {
+    Database.addFilter(key, filter)
+  })
 
-Object.entries(filters).forEach(([key, filter]) => {
-  Database.addFilter(key, filter)
-})
-
-Object.entries(formats).forEach(([key, format]) => {
-  StructureValidator.addFormat(key, format)
-})
-
-@Global()
-@Module({
-  imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [() => configuration],
-    }),
-    BullModule.registerQueue(
-      { name: QueueFor.MAILS },
-      { name: QueueFor.STATS },
-      { name: QueueFor.AUDITS },
-    ),
-  ],
-  providers: [
-    {
-      provide: AppConfigService,
-      useClass: AppConfigService,
-    },
-    CoreService,
-    RatelimitService,
-  ],
-  exports: [AppConfigService, CoreService, RatelimitService],
-})
-export class CoreModule implements OnModuleDestroy, OnModuleInit {
-  private readonly logger = new Logger(CoreModule.name)
-  constructor(private readonly coreService: CoreService) {}
-
-  async onModuleInit() {
-    await this.coreService.getCache().flush()
-  }
-
-  async onModuleDestroy() {
-    this.logger.log('Initiating cache flush during module shutdown...')
-    await this.coreService.getCache().flush()
-    this.logger.log('Cache successfully flushed on module shutdown.')
-  }
+  Object.entries(formats).forEach(([key, format]) => {
+    StructureValidator.addFormat(key, format)
+  })
 }
