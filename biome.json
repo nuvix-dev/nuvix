@@ -140,6 +140,7 @@
       "!**/public/**",
       "!node_modules/**",
       "!dist/**",
+      "!**/output/**",
       "!build/**",
       "!coverage/**",
       "!*.d.ts"

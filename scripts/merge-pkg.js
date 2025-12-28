@@ -149,7 +149,7 @@ async function prepareDeploy(appName) {
       ? Array.from(new Set(finalPkg['trustedDependencies']))
       : []
 
-    const outDir = path.join(__dirname, `../dist/pkg/${appName}`)
+    const outDir = path.join(__dirname, `../apps/${appName}/output`)
     if (!existsSync(outDir)) {
       // Create the output directory if it doesn't exist
       await fs.mkdir(outDir, { recursive: true })

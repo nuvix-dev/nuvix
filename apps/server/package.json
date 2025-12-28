@@ -10,6 +10,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch 'src/**' --watch '../../libs/**/*.ts'",
+    "start": "bun output/dist/main.js",
     "prebuild": "../../scripts/merge-pkg.js server",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "typecheck": "tsc --noEmit",

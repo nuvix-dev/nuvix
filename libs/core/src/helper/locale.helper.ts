@@ -1,4 +1,4 @@
-import { PROJECT_ROOT } from '@nuvix/utils'
+import { configuration, PROJECT_ROOT } from '@nuvix/utils'
 import * as fs from 'fs'
 import * as path from 'path'
 
@@ -17,9 +17,10 @@ export class LocaleTranslator {
   }
 
   private loadTranslations(locale: string): { [key: string]: string } {
-    const filePath = path.resolve(
-      PROJECT_ROOT,
-      `assets/locale/translations/${locale}.json`,
+    const filePath = configuration.assets.get(
+      'locale',
+      'translations',
+      `${locale}.json`,
     )
     if (fs.existsSync(filePath)) {
       const fileContent = fs.readFileSync(filePath, 'utf-8')

@@ -87,3 +87,5 @@ storage/uploads/*
 .turbo
 
 **/dist/*
+**/output/*
+**/build/*

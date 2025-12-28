@@ -1,4 +1,4 @@
-import { configuration, type ThrottleOptions } from '@nuvix/utils'
+import { configuration, PROJECT_ROOT, type ThrottleOptions } from '@nuvix/utils'
 import {
   applyDecorators,
   Get,
@@ -35,6 +35,7 @@ import {
 } from '@nestjs/swagger'
 import * as fs from 'fs'
 import { Models } from '../helper'
+import path from 'path'
 
 type RouteMethod =
   | 'GET'
@@ -131,7 +132,11 @@ const HTTP_METHOD_DECORATORS = {
 
 const readMarkdownFile = (filePath: string): string | null => {
   try {
-    const fullPath = configuration.assets.get(filePath)
+    const fullPath = path.join(
+      PROJECT_ROOT,
+      configuration.app.docsRoot,
+      filePath,
+    )
     if (!fs.existsSync(fullPath)) {
       console.warn(`Markdown file not found: ${fullPath}`)
       return null

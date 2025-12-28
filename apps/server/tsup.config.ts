@@ -55,7 +55,7 @@ export default defineConfig(options => {
     dts: false,
     sourcemap: true,
     clean: !!!options.watch,
-    outDir: '../../dist/server',
+    outDir: 'output/dist',
     noExternal: [],
     splitting: false,
     minify: true,

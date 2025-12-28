@@ -7,7 +7,7 @@ export default defineConfig(options => {
     dts: false,
     sourcemap: true,
     clean: !!!options.watch,
-    outDir: '../../dist/platform',
+    outDir: 'output/dist',
     noExternal: [],
     splitting: false,
     minify: false,

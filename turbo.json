@@ -45,7 +45,6 @@
       "outputs": ["coverage/**"]
     },
     "start": {
-      "dependsOn": ["build"],
       "cache": false
     },
     "start:dev": {

@@ -16,6 +16,7 @@
   "scripts": {
     "build": "turbo build",
     "dev": "turbo dev",
+    "start": "turbo start",
     "lint": "biome check",
     "test": "turbo test",
     "gen:types": "nuvix-db",

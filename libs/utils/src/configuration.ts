@@ -25,25 +25,26 @@ const nxconfig = () =>
       region: process.env['APP_REGION'] || 'local',
       enableLogs: parseBoolean(process.env['APP_ENABLE_LOGS'], true),
       enableStats: parseBoolean(process.env['APP_ENABLE_STATS'], true),
+      docsRoot: process.env['APP_DOCS_ROOT'] || path.join(PROJECT_ROOT, 'docs'),
     },
 
     assets: {
       root: path.join(PROJECT_ROOT, process.env['APP_ASSETS_ROOT'] || 'assets'),
-      images: path.join(
-        PROJECT_ROOT,
-        process.env['ASSETS_IMAGES'] || 'assets/images',
-      ),
-      fonts: path.join(
-        PROJECT_ROOT,
-        process.env['ASSETS_FONTS'] || 'assets/fonts',
-      ),
-      templates: path.join(PROJECT_ROOT, 'assets/locale/templates'),
+      get images() {
+        return path.join(configuration.assets.root, 'images')
+      },
+      get fonts() {
+        return path.join(configuration.assets.root, 'fonts')
+      },
+      get templates() {
+        return path.join(configuration.assets.root, 'locale', 'templates')
+      },
       public: path.join(
         PROJECT_ROOT,
         process.env['APP_ASSETS_PUBLIC'] || 'public',
       ),
       get: (...relativePath: string[]) =>
-        path.join(PROJECT_ROOT, ...relativePath),
+        path.join(configuration.assets.root, ...relativePath),
     },
 
     security: {
@@ -63,7 +64,7 @@ const nxconfig = () =>
     server: {
       host: process.env['APP_HOST'] ?? 'localhost',
       methods: ['GET', 'PUT', 'PATCH', 'POST', 'DELETE'],
-      allowedOrigins: (process.env['CORS_ORIGIN'] ?? '')
+      allowedOrigins: (process.env['APP_CORS_ORIGIN'] ?? '')
         .split(',')
         .map(origin => origin.trim()),
       allowedHeaders: [
@@ -89,7 +90,7 @@ const nxconfig = () =>
         'content-range',
         'x-fallback-cookies',
         'x-nuvix-session',
-        ...(process.env['CORS_HEADERS'] ?? '')
+        ...(process.env['APP_CORS_HEADERS'] ?? '')
           .split(',')
           .map(header => header.trim()),
       ],
