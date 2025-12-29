@@ -10,11 +10,8 @@ import { ProjectService } from './projects.service'
 // DTO
 import { oAuth2DTO } from './DTO/oauth2.dto'
 import { CreateJwtDTO } from './DTO/create-jwt.dto'
-import { CreateProjectDTO, ProjectParamsDTO } from './DTO/create-project.dto'
-import {
-  UpdateProjectDTO,
-  UpdateProjectTeamDTO,
-} from './DTO/update-project.dto'
+import { ProjectParamsDTO } from './DTO/create-project.dto'
+import { UpdateProjectDTO } from './DTO/update-project.dto'
 import {
   ProjectApiStatusAllDTO,
   ProjectApiStatusDTO,
@@ -35,11 +32,9 @@ import {
   Namespace,
   QueryFilter,
   QuerySearch,
-  ResModel,
-  Scope,
 } from '@nuvix/core/decorators'
 import { ProjectsQueryPipe } from '@nuvix/core/pipes/queries'
-import { Delete, Get, Patch, Post } from '@nuvix/core'
+import { Get, Patch, Post } from '@nuvix/core'
 import { ProjectsDoc } from '@nuvix/utils/types'
 import { IListResponse, IResponse } from '@nuvix/utils'
 
@@ -49,25 +44,6 @@ import { IListResponse, IResponse } from '@nuvix/utils'
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class ProjectsController {
   constructor(private readonly projectService: ProjectService) {}
-
-  @Post('', {
-    summary: 'Create project',
-    scopes: 'projects.create',
-    model: Models.PROJECT,
-    audit: {
-      key: 'project.create',
-      resource: 'project/{res.$projectId}',
-    },
-    sdk: {
-      name: 'create',
-      descMd: '/docs/references/projects/create.md',
-    },
-  })
-  async create(
-    @Body() createProjectDTO: CreateProjectDTO,
-  ): Promise<IResponse<ProjectsDoc>> {
-    return this.projectService.create(createProjectDTO)
-  }
 
   @Get('', {
     summary: 'List projects',
@@ -120,22 +96,6 @@ export class ProjectsController {
     return this.projectService.update(projectId, updateProjectDTO)
   }
 
-  @Delete(':projectId', {
-    summary: 'Delete project',
-    scopes: ['projects.read', 'projects.delete'],
-    audit: {
-      key: 'project.delete',
-      resource: 'project/{params.projectId}',
-    },
-    sdk: {
-      name: 'delete',
-      descMd: '/docs/references/projects/delete.md',
-    },
-  })
-  remove(@Param() { projectId }: ProjectParamsDTO): Promise<void> {
-    return this.projectService.remove(projectId)
-  }
-
   @Post(':projectId/jwts', {
     summary: 'Create JWT',
     scopes: 'projects.update',
@@ -150,25 +110,6 @@ export class ProjectsController {
     @Body() input: CreateJwtDTO,
   ): Promise<IResponse<{ jwt: string }>> {
     return this.projectService.createJwt(projectId, input)
-  }
-
-  @Patch(':projectId/team', {
-    summary: 'Update project team',
-    scopes: ['projects.delete'],
-    model: Models.PROJECT,
-    sdk: {
-      name: 'updateTeam',
-      descMd: '/docs/references/projects/update-team.md',
-    },
-  })
-  async updateTeam(
-    @Param() { projectId }: ProjectParamsDTO,
-    @Body() updateProjectTeamDTO: UpdateProjectTeamDTO,
-  ): Promise<IResponse<ProjectsDoc>> {
-    return this.projectService.updateProjectOrganization(
-      projectId,
-      updateProjectTeamDTO,
-    )
   }
 
   @Patch(':projectId/service', {

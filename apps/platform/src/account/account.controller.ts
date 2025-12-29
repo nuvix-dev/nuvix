@@ -36,8 +36,7 @@ import {
   UpdatePasswordDTO,
   UpdatePrefsDTO,
 } from './DTO/account.dto'
-import { CreateEmailSessionDTO, CreateSessionDTO } from './DTO/session.dto'
-import { CreateEmailTokenDTO } from './DTO/token.dto'
+import { CreateEmailSessionDTO } from './DTO/session.dto'
 import type { SessionsDoc, UsersDoc } from '@nuvix/utils/types'
 
 @Controller({ version: ['1', VERSION_NEUTRAL], path: 'account' })
@@ -46,7 +45,7 @@ import type { SessionsDoc, UsersDoc } from '@nuvix/utils/types'
 export class AccountController {
   constructor(private readonly accountService: AccountService) {}
 
-  @Public()
+  // @Public()
   @Post()
   @Scope('sessions.create')
   @ResModel(Models.ACCOUNT)
@@ -85,7 +84,8 @@ export class AccountController {
   @ResModel(Models.NONE)
   @AuditEvent('user.delete', 'user/{res.$id}')
   async deleteAccount(@User() user: UsersDoc) {
-    return this.accountService.deleteAccount(user)
+    throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
+    // return this.accountService.deleteAccount(user)
   }
 
   @Get('sessions')
@@ -170,54 +170,6 @@ export class AccountController {
       request,
       response,
     )
-  }
-
-  @Public()
-  @Post('sessions/token')
-  @Scope('sessions.update')
-  @ResModel(Models.SESSION)
-  @AuditEvent('session.update', {
-    resource: 'user/{res.userId}',
-    userId: '{res.userId}',
-  })
-  async createSession(
-    @User() user: UsersDoc,
-    @Body() input: CreateSessionDTO,
-    @Req() request: NuvixRequest,
-    @Res({ passthrough: true }) response: NuvixRes,
-    @Locale() locale: LocaleTranslator,
-  ) {
-    return this.accountService.createSession({
-      user,
-      input,
-      request,
-      response,
-      locale,
-    })
-  }
-
-  @Public()
-  @Post('tokens/email')
-  @Scope('sessions.create')
-  @ResModel(Models.TOKEN)
-  @AuditEvent('session.create', {
-    resource: 'user/{res.userId}',
-    userId: '{res.userId}',
-  })
-  async createEmailToken(
-    @Body() input: CreateEmailTokenDTO,
-    @Req() request: NuvixRequest,
-    @Res({ passthrough: true }) response: NuvixRes,
-    @User() user: UsersDoc,
-    @Locale() locale: LocaleTranslator,
-  ) {
-    return this.accountService.createEmailToken({
-      input,
-      request,
-      response,
-      user,
-      locale,
-    })
   }
 
   @Get('prefs')

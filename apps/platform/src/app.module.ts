@@ -27,9 +27,6 @@ import { AuditHook } from '@nuvix/core/resolvers/hooks/audit.hook'
 import { AuditsQueue } from './resolvers/queues/audits.queue'
 import { Key } from '@nuvix/core/helper/key.helper'
 import { CoreService } from '@nuvix/core'
-import { CliModule } from './cli/cli.module'
-import { CliController } from './cli/cli.controller'
-import { TeamsModule } from './teams/teams.module'
 
 @Module({
   imports: [
@@ -45,10 +42,8 @@ import { TeamsModule } from './teams/teams.module'
       global: true,
     }),
     AccountModule,
-    TeamsModule,
     ProjectModule,
     PgMetaModule,
-    CliModule,
   ],
   controllers: [AppController],
   providers: [AppService, MailsQueue, AuditsQueue],
@@ -67,6 +62,6 @@ export class AppModule implements NestModule, OnModuleInit {
       .apply(ProjectHook, HostHook, CorsHook)
       .forRoutes('*')
       .apply(AuthHook, ApiHook, AuditHook)
-      .forRoutes(AccountController, CliController)
+      .forRoutes(AccountController)
   }
 }
