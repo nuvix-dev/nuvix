@@ -29,13 +29,11 @@
     WORKDIR /app
     
     # Copy the final build artifacts and necessary runtime files from the 'builder' stage.
-    COPY --from=builder /app/dist/pkg/${APP_NAME} ./
-    COPY --from=builder /app/dist/${APP_NAME} ./
+    COPY --from=builder /app/apps/${APP_NAME}/output/ ./output
     COPY --from=builder /app/assets ./assets
     COPY --from=builder /app/public ./public
     COPY --from=builder /app/docs/references ./docs/references
     COPY --from=builder /app/.env* ./
     
-    RUN bun i
-    
-    CMD ["bun", "main.js"]
+    RUN bun i --production
+    CMD ["bun", "run", "start"]

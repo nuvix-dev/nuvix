@@ -11,29 +11,20 @@ import {
   Context,
   PROJECT_DB_CLIENT,
   PROJECT_PG,
-  type DatabaseConfig,
   DatabaseRole,
-  DEFAULT_DATABASE,
 } from '@nuvix/utils'
 import { Hook } from '../../server/hooks/interface'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Audit } from '@nuvix/audit'
 import { CoreService } from '@nuvix/core/core.service.js'
-import { AppConfigService } from '@nuvix/core/config.service.js'
 
-// Needs to change to single tenant in future
-// Maybe we will migrate some part of nuvix to rust,
-// So for now keep it simple
 @Injectable()
 export class ProjectHook implements Hook {
   private readonly logger = new Logger(ProjectHook.name)
   private readonly db: Database
   protected dbRole: DatabaseRole = DatabaseRole.ADMIN
 
-  constructor(
-    private readonly coreService: CoreService,
-    private readonly appConfig: AppConfigService,
-  ) {
+  constructor(private readonly coreService: CoreService) {
     this.db = coreService.getPlatformDb()
   }
 
@@ -54,33 +45,8 @@ export class ProjectHook implements Hook {
     )
 
     if (!project.empty()) {
-      // Will convert this multi tenant setup to single tenant in future
-      // So for now we will keep it as is
-      project.set('database', {
-        pool: {
-          host: this.appConfig.getDatabaseConfig().postgres.pool.host,
-          port: this.appConfig.getDatabaseConfig().postgres.pool.port,
-          password: this.appConfig.getDatabaseConfig().postgres.password,
-        },
-        postgres: {
-          port: this.appConfig.getDatabaseConfig().postgres.port,
-          host: this.appConfig.getDatabaseConfig().postgres.host,
-          password: this.appConfig.getDatabaseConfig().postgres.password,
-        },
-      } as unknown as DatabaseConfig)
-
       try {
-        const dbOptions = project.get('database') as unknown as DatabaseConfig
-        const client = this.coreService.createProjectDbClient(project.getId(), {
-          database: DEFAULT_DATABASE,
-          user: this.dbRole,
-          password:
-            this.dbRole === DatabaseRole.ADMIN
-              ? this.appConfig.getDatabaseConfig().postgres.adminPassword
-              : dbOptions.pool.password,
-          port: dbOptions.pool.port || dbOptions.postgres.port,
-          host: dbOptions.pool.host,
-        })
+        const client = this.coreService.createMainPool()
         req[PROJECT_DB_CLIENT] = client
         req[PROJECT_PG] = this.coreService.getProjectPg(client)
         const coreDatabase = this.coreService.getProjectDb(client, {

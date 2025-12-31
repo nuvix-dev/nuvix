@@ -89,7 +89,6 @@ services:
       - '4000:4000'
     env_file:
       - .env
-      - .env.server
     environment:
       NUVIX_DATABASE_HOST: postgres
       NUVIX_DATABASE_POOL_HOST: pgcat
@@ -125,7 +124,6 @@ services:
       - '4100:4100'
     env_file:
       - .env
-      - .env.platform
     environment:
       NUVIX_DATABASE_HOST: postgres
       NUVIX_DATABASE_POOL_HOST: pgcat

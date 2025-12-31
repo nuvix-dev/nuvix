@@ -54,7 +54,6 @@ export class DatabaseController {
     @ProjectPg() pg: DataSource,
     @Query() { type }: SchemaQueryDTO,
   ): Promise<IListResponse<unknown>> {
-    console.log({ type }, 'Yah it worked!')
     const schemas = await this.databaseService.getSchemas(pg, type)
     return schemas
   }
