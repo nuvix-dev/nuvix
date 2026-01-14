@@ -1,4 +1,4 @@
-import { PersonalDataValidator } from '@nuvix/core/validators'
+import { PersonalDataValidator } from '../../src/validators'
 import { describe, it, expect, beforeEach } from 'vitest'
 
 describe('PersonalData', () => {

@@ -1,5 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
-import { Exception } from '@nuvix/core/extend/exception'
+import { Exception } from '../../extend/exception'
 import { Reflector } from '@nestjs/core'
 import { Context } from '@nuvix/utils'
 import { ProjectsDoc } from '@nuvix/utils/types'

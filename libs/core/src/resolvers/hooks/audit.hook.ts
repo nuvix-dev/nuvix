@@ -1,8 +1,8 @@
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable, Logger } from '@nestjs/common'
-import { AuditEventType } from '@nuvix/core/decorators'
-import { Exception } from '@nuvix/core/extend/exception'
-import { Hook } from '@nuvix/core/server'
+import { AuditEventType } from '../../decorators'
+import { Exception } from '../../extend/exception'
+import { Hook } from '../../server'
 import { Doc } from '@nuvix/db'
 import {
   QueueFor,

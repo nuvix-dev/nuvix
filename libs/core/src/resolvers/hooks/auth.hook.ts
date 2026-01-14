@@ -1,15 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { Authorization, Database, Doc, Query } from '@nuvix/db'
-import { Exception } from '@nuvix/core/extend/exception'
-import { Auth } from '@nuvix/core/helper/auth.helper'
-import ParamsHelper from '@nuvix/core/helper/params.helper'
+import { Exception } from '../../extend/exception'
+import { Auth } from '../../helper/auth.helper'
+import ParamsHelper from '../../helper/params.helper'
 import { AppMode, AUTH_SCHEMA_DB, Context } from '@nuvix/utils'
 import { Hook } from '../../server/hooks/interface'
-import { Key } from '@nuvix/core/helper/key.helper'
+import { Key } from '../../helper/key.helper'
 import { ProjectsDoc, SessionsDoc, UsersDoc } from '@nuvix/utils/types'
-import { CoreService } from '@nuvix/core/core.service.js'
-import { AuthType } from '@nuvix/core/decorators'
+import { CoreService } from '../../core.service.js'
+import { AuthType } from '../../decorators'
 
 @Injectable()
 export class AuthHook implements Hook {

@@ -16,8 +16,8 @@ import {
   Auth as Auths,
   type AuthType,
   _Namespace,
-} from '@nuvix/core/decorators'
-import { Scopes } from '@nuvix/core/config/roles'
+} from '../../decorators'
+import { Scopes } from '../../config/roles'
 import type { ProjectsDoc, SessionsDoc, UsersDoc } from '@nuvix/utils/types'
 import type { Queue } from 'bullmq'
 import { StatsQueueJob, type StatsQueueOptions } from '../queues'

@@ -1,6 +1,6 @@
 import { Permission } from '@nuvix/db'
 import { Exclude, Expose } from 'class-transformer'
-import { BaseModel } from '@nuvix/core/models/base.model'
+import { BaseModel } from './base.model'
 
 @Exclude()
 export class IndexModel extends BaseModel {

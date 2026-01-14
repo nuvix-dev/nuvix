@@ -16,7 +16,7 @@
     "typecheck": "tsc --noEmit",
     "gen:metadata": "bun src/generate-metadata.ts"
   },
-  "dependencies": {
+  "devDependencies": {
     "@nuvix/core": "workspace:*",
     "@nuvix/pg-meta": "workspace:*",
     "@nuvix/utils": "workspace:*"

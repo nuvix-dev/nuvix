@@ -10,8 +10,8 @@ import { Authorization } from '@nuvix/db'
 import { Reflector } from '@nestjs/core'
 import { Exception } from '../../extend/exception'
 import { TOTP } from '../../validators/MFA.validator'
-import { Scope } from '@nuvix/core/decorators'
-import { Scopes } from '@nuvix/core/config/roles'
+import { Scope } from '../../decorators'
+import { Scopes } from '../../config/roles'
 import type { ProjectsDoc, SessionsDoc, UsersDoc } from '@nuvix/utils/types'
 
 @Injectable()

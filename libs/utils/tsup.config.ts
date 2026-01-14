@@ -4,7 +4,7 @@ export default defineConfig({
   entry: [
     'src/index.ts',
     'src/query/index.ts',
-    'src/database/index.js',
+    'src/database/index.ts',
     'src/collections/index.ts',
     'src/auth/index.ts',
   ],

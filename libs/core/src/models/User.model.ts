@@ -1,5 +1,5 @@
 import { Exclude, Expose, Type } from 'class-transformer'
-import { BaseModel } from '@nuvix/core/models/base.model'
+import { BaseModel } from './base.model'
 
 import { TargetModel } from './Target.model'
 

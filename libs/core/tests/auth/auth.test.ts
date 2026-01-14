@@ -1,4 +1,4 @@
-import { Auth } from '@nuvix/core/helper'
+import { Auth } from '../../src/helper'
 import { Authorization, Doc, ID, Role, UserDimension } from '@nuvix/db'
 import { HashAlgorithm, SessionProvider, TokenType } from '@nuvix/utils'
 import { Sessions, Tokens, Users } from '@nuvix/utils/types'

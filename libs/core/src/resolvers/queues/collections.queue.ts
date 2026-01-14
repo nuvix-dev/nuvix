@@ -7,7 +7,7 @@ import {
   Query,
 } from '@nuvix/db'
 import { Queue } from './queue'
-import { Exception } from '@nuvix/core/extend/exception'
+import { Exception } from '../../extend/exception'
 import { OnWorkerEvent, Processor } from '@nestjs/bullmq'
 import { Job } from 'bullmq'
 import { QueueFor, SchemaMeta } from '@nuvix/utils'
@@ -22,7 +22,7 @@ import type {
   Projects,
   ProjectsDoc,
 } from '@nuvix/utils/types'
-import { CoreService } from '@nuvix/core/core.service.js'
+import { CoreService } from '../../core.service.js'
 import { Audit } from '@nuvix/audit'
 
 @Processor(QueueFor.COLLECTIONS, { concurrency: 10000 })

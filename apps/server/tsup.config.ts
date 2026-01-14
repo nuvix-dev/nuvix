@@ -50,19 +50,19 @@ export default defineConfig(options => {
   printStylizedNuvix()
 
   return {
-    entry: ['src'],
-    format: ['cjs', 'esm'],
+    entry: ['src/main.ts'],
+    format: ['esm'],
     dts: false,
     sourcemap: true,
     clean: !!!options.watch,
     outDir: 'output/dist',
     noExternal: [],
     splitting: false,
-    minify: true,
+    minify: false,
     target: 'es2024',
     skipNodeModulesBundle: true,
-    bundle: false,
-    shims: true,
+    bundle: true,
+    shims: false,
     tsconfig: './tsconfig.app.json',
   }
 })

@@ -1,5 +1,5 @@
-import { Origin } from '@nuvix/core/validators/network/origin'
-import { Platform } from '@nuvix/core/validators/network/platform'
+import { Origin } from '../../src/validators/network/origin'
+import { Platform } from '../../src/validators/network/platform'
 import { Doc, ID } from '@nuvix/db'
 import { describe, it, expect } from 'vitest'
 
