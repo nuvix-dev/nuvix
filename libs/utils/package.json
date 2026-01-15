@@ -16,9 +16,6 @@
     "test": "jest",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "otplib": "^12.0.1"
-  },
   "devDependencies": {
     "@nuvix/core": "workspace:*"
   }

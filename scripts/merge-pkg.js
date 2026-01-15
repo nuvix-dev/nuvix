@@ -80,7 +80,7 @@ function resolveLibPath(pkgName) {
  * @param {Set<string>} visited A set to keep track of visited packages to prevent infinite loops.
  */
 function collectLibDeps(pkg, visited = new Set()) {
-  for (const field of DEP_FIELDS) {
+  for (const field of ['devDependencies']) {
     if (!pkg[field]) continue
 
     for (const [dep, version] of Object.entries(pkg[field])) {
@@ -149,7 +149,7 @@ async function prepareDeploy(appName) {
       ? Array.from(new Set(finalPkg['trustedDependencies']))
       : []
 
-    const outDir = path.join(__dirname, `../apps/${appName}/output`)
+    const outDir = path.join(__dirname, `../dist/${appName}`)
     if (!existsSync(outDir)) {
       // Create the output directory if it doesn't exist
       await fs.mkdir(outDir, { recursive: true })

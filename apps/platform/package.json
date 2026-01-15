@@ -9,7 +9,7 @@
   },
   "scripts": {
     "build": "tsup",
-    "start": "bun output/dist/main.js",
+    "start": "bun build/main.js",
     "dev": "tsup --watch 'src/**' --watch '../../libs/**/*.ts'",
     "prebuild": "../../scripts/merge-pkg.js platform",
     "lint": "eslint \"src/**/*.ts\" --fix",

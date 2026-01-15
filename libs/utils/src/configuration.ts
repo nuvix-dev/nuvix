@@ -27,8 +27,7 @@ const nxconfig = () =>
       region: process.env['NUVIX_REGION'] || 'local',
       enableLogs: parseBoolean(process.env['NUVIX_ENABLE_LOGS'], true),
       enableStats: parseBoolean(process.env['NUVIX_ENABLE_STATS'], true),
-      docsRoot:
-        process.env['NUVIX_DOCS_ROOT'] || path.join(PROJECT_ROOT, 'docs'),
+      docsRoot: process.env['NUVIX_DOCS_ROOT'] || PROJECT_ROOT,
       projectId: process.env['NUVIX_PROJECT_ID'] || 'default',
     },
 
@@ -239,7 +238,8 @@ const nxconfig = () =>
     },
 
     system: {
-      emailAddress: process.env['SYSTEM_EMAIL_ADDRESS'] ?? 'support@nuvix.in',
+      emailAddress:
+        process.env['NUVIX_SYSTEM_EMAIL_ADDRESS'] ?? 'support@nuvix.in',
       emailName: process.env['NUVIX_NAME'] ?? 'Nuvix Support',
     },
 

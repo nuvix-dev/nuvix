@@ -3,7 +3,9 @@
   "compilerOptions": {
     "declaration": true,
     "composite": true,
-    "outDir": "../../dist/libs/core"
+    "outDir": "../../dist/libs/core",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
   },
   "include": ["src/**/*", "../../nuvix.d.ts"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]

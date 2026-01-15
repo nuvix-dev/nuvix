@@ -5,7 +5,7 @@
     "build": {
       "dependsOn": ["^build"],
       "inputs": ["src/**/*.ts", "tsconfig*.json", "package.json"],
-      "outputs": ["dist/**", ".next/**", "!.next/cache/**"]
+      "outputs": ["../../dist"]
     },
     "prebuild": {
       "dependsOn": ["^prebuild"]
