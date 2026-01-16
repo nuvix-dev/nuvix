@@ -12,7 +12,7 @@ import {
   Length,
   Matches,
 } from 'class-validator'
-import { IsCustomID, IsUID } from '@nuvix/core/validators/input.validator'
+import { IsCustomID, IsUID } from '@nuvix/core/validators'
 import { ApiPropertyOptional } from '@nestjs/swagger'
 import { configuration } from '@nuvix/utils'
 

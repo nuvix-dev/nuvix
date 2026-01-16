@@ -1,16 +1,16 @@
 import { Injectable } from '@nestjs/common'
 import { Exception } from '@nuvix/core/extend/exception'
-import { ID } from '@nuvix/core/helper/ID.helper'
+import { ID } from '@nuvix/core/helpers'
 import { SessionProvider } from '@nuvix/utils'
-import { Auth } from '@nuvix/core/helper/auth.helper'
-import { Detector } from '@nuvix/core/helper/detector.helper'
+import { Auth } from '@nuvix/core/helpers'
+import { Detector } from '@nuvix/core/helpers'
 
 import { Database, Doc, Permission, Role } from '@nuvix/db'
 import { CountryResponse, Reader } from 'maxmind'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { CoreService } from '@nuvix/core'
 import type { ProjectsDoc, Sessions, SessionsDoc } from '@nuvix/utils/types'
-import type { LocaleTranslator } from '@nuvix/core/helper'
+import type { LocaleTranslator } from '@nuvix/core/helpers'
 
 @Injectable()
 export class SessionsService {

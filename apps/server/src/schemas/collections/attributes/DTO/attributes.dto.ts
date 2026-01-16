@@ -17,7 +17,7 @@ import {
   Max,
   Min,
 } from 'class-validator'
-import { IsKey, IsUID } from '@nuvix/core/validators/input.validator'
+import { IsKey, IsUID } from '@nuvix/core/validators'
 import {
   APP_DATABASE_ATTRIBUTE_STRING_MAX_LENGTH,
   configuration,

@@ -2,7 +2,9 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "declaration": true,
-    "outDir": "../../dist/libs/pg-meta"
+    "outDir": "../../dist/libs/pg-meta",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
   },
   "include": ["src/**/*", "../../nuvix.d.ts"],
   "exclude": ["node_modules", "dist", "test", "**/*.spec.ts"]

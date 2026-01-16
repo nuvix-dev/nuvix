@@ -1,4 +1,4 @@
-import { IsUID } from '@nuvix/core/validators/input.validator.js'
+import { IsUID } from '@nuvix/core/validators'
 import { IsInt, Min, Max, IsOptional } from 'class-validator'
 
 export class CreateJwtDTO {

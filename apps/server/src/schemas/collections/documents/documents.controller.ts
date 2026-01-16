@@ -5,13 +5,13 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
 import { DocumentsService } from './documents.service'
-import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard'
-import { Models } from '@nuvix/core/helper/response.helper'
+import { ProjectGuard } from '@nuvix/core/resolvers'
+import { Models } from '@nuvix/core/helpers'
 import type { Database, Doc, Query as Queries } from '@nuvix/db'
-import { ParseQueryPipe } from '@nuvix/core/pipes/query.pipe'
-import { CurrentDatabase } from '@nuvix/core/decorators/project.decorator'
+import { ParseQueryPipe } from '@nuvix/core/pipes'
+import { CurrentDatabase } from '@nuvix/core/decorators'
 import {
   AuthType,
   CurrentSchemaType,
@@ -26,8 +26,8 @@ import {
   DocumentParamsDTO,
   UpdateDocumentDTO,
 } from './DTO/document.dto'
-import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor'
-import { SchemaGuard } from '@nuvix/core/resolvers/guards'
+import { ApiInterceptor } from '@nuvix/core/resolvers'
+import { SchemaGuard } from '@nuvix/core/resolvers'
 import type { UsersDoc } from '@nuvix/utils/types'
 import { Delete, Get, Patch, Post } from '@nuvix/core'
 import {

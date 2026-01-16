@@ -11,9 +11,9 @@ import {
 import { Job } from 'bullmq'
 import { Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
 import { Doc, type Database } from '@nuvix/db'
-import { CoreService } from '@nuvix/core/core.service.js'
+import { CoreService } from '../../core.service.js'
 import type { ProjectsDoc, Stats } from '@nuvix/utils/types'
-import { AppConfigService } from '@nuvix/core/config.service'
+import { AppConfigService } from '../../config.service'
 
 @Processor(QueueFor.STATS, {
   concurrency: 10000,

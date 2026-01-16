@@ -25,7 +25,7 @@ import { Device } from '@nuvix/storage'
 import { Database, Doc, Query } from '@nuvix/db'
 import { Injectable, Logger } from '@nestjs/common'
 import { Schemas, QueueFor, MessageType, MessageProvider } from '@nuvix/utils'
-import { MessageStatus } from '@nuvix/core/messaging/status'
+import { MessageStatus } from '@nuvix/utils'
 import type {
   Files,
   Messages,
@@ -35,7 +35,7 @@ import type {
   ProvidersDoc,
   TargetsDoc,
 } from '@nuvix/utils/types'
-import { CoreService } from '@nuvix/core/core.service.js'
+import { CoreService } from '../../core.service.js'
 
 @Injectable()
 @Processor(QueueFor.MESSAGING, { concurrency: 10000 })

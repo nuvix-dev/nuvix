@@ -10,7 +10,7 @@ import {
   Min,
   Max,
 } from 'class-validator'
-import { IsCustomID, IsUID } from '@nuvix/core/validators/input.validator'
+import { IsCustomID, IsUID } from '@nuvix/core/validators'
 import { configuration } from '@nuvix/utils'
 import { BucketParamsDTO } from '../../DTO/bucket.dto'
 import { Type } from 'class-transformer'

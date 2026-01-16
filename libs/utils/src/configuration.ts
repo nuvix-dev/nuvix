@@ -5,151 +5,7 @@ import { parseBoolean, parseNumber } from './helpers'
 
 type CookieSameSite = 'none' | 'lax' | 'strict'
 
-interface Configuration {
-  readonly app: {
-    readonly name: string
-    readonly domain: string
-    readonly hostname: string
-    readonly hostnameInternal: string
-    readonly consoleURL: string
-    readonly version: string
-    readonly isProduction: boolean
-    readonly forceHttps: boolean
-    readonly emailTeam: string
-    readonly emailSecurity: string
-    readonly userAgent: string
-    readonly color: string
-    readonly debug: {
-      readonly colors: boolean
-      readonly json: boolean
-    }
-    readonly region: string
-    readonly enableLogs: boolean
-    readonly enableStats: boolean
-    readonly docsRoot: string
-    readonly projectId: string
-  }
-  readonly assets: {
-    readonly root: string
-    readonly images: string
-    readonly fonts: string
-    readonly templates: string
-    readonly public: string
-    readonly get: (...relativePath: string[]) => string
-  }
-  readonly security: {
-    readonly jwtSecret: string | undefined
-    readonly encryptionKey: string | undefined
-    readonly dbEncryptionKey: string
-  }
-  readonly server: {
-    readonly host: string
-    readonly methods: readonly string[]
-    readonly allowedOrigins: readonly string[]
-    readonly allowedHeaders: readonly string[]
-    readonly credentials: boolean
-    readonly exposedHeaders: readonly string[]
-    readonly cookieDomain: string
-    readonly cookieSameSite: CookieSameSite
-  }
-  readonly redis: {
-    readonly port: number
-    readonly host: string | undefined
-    readonly user: string | undefined
-    readonly password: string | undefined
-    readonly db: number
-    readonly secure: boolean
-  }
-  readonly smtp: {
-    readonly host: string | undefined
-    readonly port: number
-    readonly secure: boolean
-    readonly user: string | undefined
-    readonly password: string | undefined
-    readonly emailFrom: string | undefined
-    readonly sender: string | undefined
-    readonly replyTo: string | undefined
-    readonly dkim: {
-      readonly domain: string | undefined
-      readonly key: string | undefined
-      readonly privateKey: string | undefined
-    }
-  }
-  readonly sms: {
-    readonly enabled: boolean
-  }
-  readonly database: {
-    readonly postgres: {
-      readonly host: string
-      readonly port: number
-      readonly user: string
-      readonly adminPassword: string | undefined
-      readonly password: string | undefined
-      readonly database: string
-      readonly ssl: boolean
-      readonly maxConnections: number
-      readonly pool: {
-        readonly host: string | undefined
-        readonly port: number
-      }
-    }
-    readonly timeout: number
-    readonly reconnect: {
-      readonly sleep: number
-      readonly maxAttempts: number
-    }
-    readonly useExternalPool: boolean
-  }
-  readonly storage: {
-    readonly uploads: string
-    readonly cache: string
-    readonly certificates: string
-    readonly config: string
-    readonly temp: string
-    readonly readBuffer: number
-    readonly maxSize: number
-    readonly limit: number
-    readonly maxOutputChunkSize: number
-  }
-  readonly limits: {
-    readonly pagingLimit: number
-    readonly maxCount: number
-    readonly limitCount: number
-    readonly users: number
-    readonly userPasswordHistory: number
-    readonly userSessionsMax: number
-    readonly userSessionsDefault: number
-    readonly antivirus: number
-    readonly encryption: number
-    readonly compression: number
-    readonly arrayParamsSize: number
-    readonly arrayLabelsSize: number
-    readonly arrayElementSize: number
-    readonly subquery: number
-    readonly subscribersSubquery: number
-    readonly writeRateDefault: number
-    readonly writeRatePeriodDefault: number
-    readonly listDefault: number
-    readonly batchSize: number
-    readonly batchIntervalMs: number
-  }
-  readonly access: {
-    readonly key: number
-    readonly user: number
-    readonly project: number
-  }
-  readonly cache: {
-    readonly update: number
-    readonly buster: number
-  }
-  readonly system: {
-    readonly emailAddress: string
-    readonly emailName: string
-  }
-  readonly logLevels: readonly string[]
-}
-
-const nxconfig = (): Configuration =>
+const nxconfig = () =>
   ({
     app: {
       name: 'Nuvix',
@@ -171,8 +27,7 @@ const nxconfig = (): Configuration =>
       region: process.env['NUVIX_REGION'] || 'local',
       enableLogs: parseBoolean(process.env['NUVIX_ENABLE_LOGS'], true),
       enableStats: parseBoolean(process.env['NUVIX_ENABLE_STATS'], true),
-      docsRoot:
-        process.env['NUVIX_DOCS_ROOT'] || path.join(PROJECT_ROOT, 'docs'),
+      docsRoot: process.env['NUVIX_DOCS_ROOT'] || PROJECT_ROOT,
       projectId: process.env['NUVIX_PROJECT_ID'] || 'default',
     },
 
@@ -383,7 +238,8 @@ const nxconfig = (): Configuration =>
     },
 
     system: {
-      emailAddress: process.env['SYSTEM_EMAIL_ADDRESS'] ?? 'support@nuvix.in',
+      emailAddress:
+        process.env['NUVIX_SYSTEM_EMAIL_ADDRESS'] ?? 'support@nuvix.in',
       emailName: process.env['NUVIX_NAME'] ?? 'Nuvix Support',
     },
 

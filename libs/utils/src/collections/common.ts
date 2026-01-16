@@ -1,4 +1,4 @@
-import { Auth } from '@nuvix/core/helper'
+import { Auth } from '@nuvix/core/helpers'
 import {
   ID,
   Database,

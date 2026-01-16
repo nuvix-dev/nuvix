@@ -1,5 +1,5 @@
 import { HttpException } from '@nestjs/common'
-import { MessageStatus } from '../messaging/status'
+import { MessageStatus } from '@nuvix/utils'
 
 export class Exception extends HttpException {
   static readonly GENERAL_UNKNOWN = 'general_unknown'

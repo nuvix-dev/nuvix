@@ -35,6 +35,8 @@ export function fnv1a128(str: string): string {
  * @throws Error if project root directory cannot be found
  */
 export function findProjectRoot(): string {
+  if (process.env['NODE_ENV'] !== 'production')
+    return path.join(process.cwd(), '../../')
   try {
     // Start from current file's directory
     let currentDir: string

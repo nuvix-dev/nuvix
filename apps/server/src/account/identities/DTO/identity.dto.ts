@@ -1,4 +1,4 @@
-import { IsUID } from '@nuvix/core/validators/input.validator'
+import { IsUID } from '@nuvix/core/validators'
 
 export class IdentityIdParamDTO {
   /**

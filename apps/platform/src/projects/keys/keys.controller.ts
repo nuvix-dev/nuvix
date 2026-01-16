@@ -8,9 +8,9 @@ import {
 
 // DTO
 import { CreateKeyDTO, KeyParamsDTO, UpdateKeyDTO } from './DTO/keys.dto'
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
-import { Models } from '@nuvix/core/helper/response.helper'
-import { ConsoleInterceptor } from '@nuvix/core/resolvers/interceptors/console.interceptor'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
+import { Models } from '@nuvix/core/helpers'
+import { ConsoleInterceptor } from '@nuvix/core/resolvers'
 import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
 import { KeysService } from './keys.service'
 import { Delete, Get, Post, Put } from '@nuvix/core'

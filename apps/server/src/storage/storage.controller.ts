@@ -7,11 +7,11 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
 import { StorageService } from './storage.service'
-import { Models } from '@nuvix/core/helper/response.helper'
+import { Models } from '@nuvix/core/helpers'
 import { Database, Query as Queries } from '@nuvix/db'
-import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard'
+import { ProjectGuard } from '@nuvix/core/resolvers'
 import {
   ProjectDatabase,
   Namespace,
@@ -28,7 +28,7 @@ import {
   UpdateBucketDTO,
   UsageQueryDTO,
 } from './DTO/bucket.dto'
-import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor'
+import { ApiInterceptor } from '@nuvix/core/resolvers'
 import { BucketsQueryPipe } from '@nuvix/core/pipes/queries'
 import { Delete, Get, Post, Put } from '@nuvix/core'
 import { IListResponse, IResponse } from '@nuvix/utils'

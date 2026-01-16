@@ -9,11 +9,11 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
 import { FilesService } from './files.service'
-import { Models } from '@nuvix/core/helper/response.helper'
+import { Models } from '@nuvix/core/helpers'
 import { Database, Doc, Query as Queries } from '@nuvix/db'
-import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard'
+import { ProjectGuard } from '@nuvix/core/resolvers'
 import {
   MultipartParam,
   ProjectDatabase,
@@ -30,9 +30,9 @@ import {
   PreviewFileQueryDTO,
   UpdateFileDTO,
 } from './DTO/file.dto'
-import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor'
+import { ApiInterceptor } from '@nuvix/core/resolvers'
 import { type SavedMultipartFile } from '@fastify/multipart'
-import { User } from '@nuvix/core/decorators/project-user.decorator'
+import { User } from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
 import { FilesQueryPipe } from '@nuvix/core/pipes/queries'
 import { Delete, Get, Post, Put } from '@nuvix/core'

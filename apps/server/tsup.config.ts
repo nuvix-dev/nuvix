@@ -1,4 +1,5 @@
 import { defineConfig } from 'tsup'
+import { copy } from 'esbuild-plugin-copy'
 
 function printStylizedNuvix() {
   const logo = `
@@ -47,21 +48,70 @@ function printStylizedNuvix() {
 }
 
 export default defineConfig(options => {
-  printStylizedNuvix()
+  const isDev = !!options.watch
+  if (!isDev) printStylizedNuvix()
 
   return {
     entry: ['src/main.ts'],
-    format: ['cjs', 'esm'],
+    format: ['esm'],
     dts: false,
     sourcemap: true,
-    clean: !!!options.watch,
-    outDir: 'output/dist',
-    noExternal: [],
+    clean: !isDev,
+    outDir: isDev ? 'dist' : '../../dist/server/build',
+    noExternal: ['@nuvix/core', '@nuvix/utils'],
     splitting: false,
-    minify: true,
+    minify: false,
     target: 'es2024',
     skipNodeModulesBundle: true,
-    shims: true,
+    bundle: true,
+    shims: false,
     tsconfig: './tsconfig.app.json',
+    onSuccess: !isDev ? undefined : 'bun --watch dist/main.js',
+    banner({ format }) {
+      const envPaths: string[] = isDev
+        ? ['../../.env', '../../.env.local']
+        : ['.env', '.env.server']
+      return {
+        js:
+          format === 'esm'
+            ? `import { config as __nxconfig } from 'dotenv';
+import {default as __nxpath}  from 'path';
+__nxconfig({
+  path: [${envPaths.map(p => `__nxpath.resolve(process.cwd(), '${p}')`).join(',\n\t')}]
+});`
+            : `const __nxpath = require('path');
+require('dotenv').config({
+    path: [${envPaths.map(p => `__nxpath.resolve(process.cwd(), '${p}')`).join(',\n\t')}]
+});`,
+      }
+    },
+    esbuildPlugins: isDev
+      ? []
+      : [
+          copy({
+            assets: [
+              {
+                from: ['../../assets/**/*'],
+                to: ['../assets'],
+              },
+              {
+                from: ['../../docs/references/**/*'],
+                to: ['../docs/references'],
+              },
+              {
+                from: ['../../public/**/*'],
+                to: ['../public'],
+              },
+              {
+                from: ['../../LICENSE', '../../.env.example'],
+                to: ['../'],
+              },
+              {
+                from: ['../../README.md'],
+                to: ['../README.md'],
+              },
+            ],
+          }),
+        ],
   }
 })

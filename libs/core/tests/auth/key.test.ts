@@ -1,6 +1,6 @@
 import { JwtService } from '@nestjs/jwt'
-import { roles } from '@nuvix/core/config'
-import { Key, UserRole } from '@nuvix/core/helper'
+import { roles } from '../../src/config'
+import { Key, UserRole } from '../../src/helpers'
 import { Doc } from '@nuvix/db'
 import { ApiKey } from '@nuvix/utils'
 import { Projects } from '@nuvix/utils/types'

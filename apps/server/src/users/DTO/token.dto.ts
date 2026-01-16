@@ -1,5 +1,5 @@
 import { IsInt, Min, Max, IsOptional } from 'class-validator'
-import { Auth } from '@nuvix/core/helper/auth.helper'
+import { Auth } from '@nuvix/core/helpers'
 
 export class CreateTokenDTO {
   /**

@@ -13,4 +13,4 @@ const apis = {
   },
 }
 
-export default apis
+export { apis }

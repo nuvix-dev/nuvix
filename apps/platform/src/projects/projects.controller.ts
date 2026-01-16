@@ -22,10 +22,10 @@ import {
 } from './DTO/project-service.dto'
 import { SmtpTestsDTO, UpdateSmtpDTO } from './DTO/smtp.dto'
 
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
-import { Models } from '@nuvix/core/helper/response.helper'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
+import { Models } from '@nuvix/core/helpers'
 import type { Query as Queries } from '@nuvix/db'
-import { ConsoleInterceptor } from '@nuvix/core/resolvers/interceptors/console.interceptor'
+import { ConsoleInterceptor } from '@nuvix/core/resolvers'
 import {
   Auth,
   AuthType,

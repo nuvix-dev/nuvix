@@ -14,10 +14,7 @@ import type { Queue } from 'bullmq'
 import { Exception } from '@nuvix/core/extend/exception'
 import type { CreateIndexDTO } from './DTO/indexes.dto'
 import { EventEmitter2 } from '@nestjs/event-emitter'
-import {
-  CollectionsJob,
-  CollectionsJobData,
-} from '@nuvix/core/resolvers/queues'
+import { CollectionsJob, CollectionsJobData } from '@nuvix/core/resolvers'
 import type {
   Attributes,
   AttributesDoc,

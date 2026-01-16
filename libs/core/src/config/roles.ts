@@ -1,4 +1,4 @@
-import { UserRole } from '../helper'
+import { UserRole } from '../helpers'
 import { scopes } from './scopes'
 
 const member = [

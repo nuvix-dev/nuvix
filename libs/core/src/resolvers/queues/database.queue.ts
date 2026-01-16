@@ -4,9 +4,9 @@ import { Job } from 'bullmq'
 import { Logger } from '@nestjs/common'
 import { Database, Doc, DuplicateException } from '@nuvix/db'
 import { QueueFor } from '@nuvix/utils'
-import { CoreService } from '@nuvix/core/core.service.js'
+import { CoreService } from '../../core.service.js'
 import type { Projects, ProjectsDoc } from '@nuvix/utils/types'
-import collections from '@nuvix/utils/collections/index.js'
+import collections from '@nuvix/utils/collections'
 
 @Processor(QueueFor.DATABASE, { concurrency: 10000 })
 export class DatabaseQueue extends Queue {

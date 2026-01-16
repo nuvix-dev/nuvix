@@ -8,7 +8,7 @@ import { Observable } from 'rxjs'
 import { Context, CORE_SCHEMA_DB, MetricFor, QueueFor } from '@nuvix/utils'
 import { Database, Events, Doc } from '@nuvix/db'
 import { Reflector } from '@nestjs/core'
-import { Auth } from '../../helper/auth.helper'
+import { Auth } from '../../helpers/auth.helper'
 import { Exception } from '../../extend/exception'
 import { TOTP } from '../../validators/MFA.validator'
 import {
@@ -16,8 +16,8 @@ import {
   Auth as Auths,
   type AuthType,
   _Namespace,
-} from '@nuvix/core/decorators'
-import { Scopes } from '@nuvix/core/config/roles'
+} from '../../decorators'
+import { Scopes } from '../../config/roles'
 import type { ProjectsDoc, SessionsDoc, UsersDoc } from '@nuvix/utils/types'
 import type { Queue } from 'bullmq'
 import { StatsQueueJob, type StatsQueueOptions } from '../queues'

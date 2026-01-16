@@ -3,10 +3,7 @@ import { DataSource } from '@nuvix/pg'
 import { Exception } from '@nuvix/core/extend/exception'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Queue } from 'bullmq'
-import {
-  SchemaJob,
-  SchemaQueueOptions,
-} from '@nuvix/core/resolvers/queues/database.queue'
+import { SchemaJob, SchemaQueueOptions } from '@nuvix/core/resolvers'
 import { QueueFor, Schema, Schemas, SchemaType } from '@nuvix/utils'
 
 // DTO's

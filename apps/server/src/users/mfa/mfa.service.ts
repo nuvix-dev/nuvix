@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { Exception } from '@nuvix/core/extend/exception'
-import { MfaType, TOTP } from '@nuvix/core/validators/MFA.validator'
+import { MfaType, TOTP } from '@nuvix/core/validators'
 
 import { Database, Doc } from '@nuvix/db'
 

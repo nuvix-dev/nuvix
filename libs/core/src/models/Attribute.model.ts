@@ -1,5 +1,5 @@
 import { Exclude, Expose } from 'class-transformer'
-import { BaseModel } from '@nuvix/core/models/base.model'
+import { BaseModel } from './base.model'
 import type { Attributes } from '@nuvix/utils/types'
 import { AttributeType, OnDelete, RelationSide, RelationType } from '@nuvix/db'
 import { AttributeFormat } from '@nuvix/utils'

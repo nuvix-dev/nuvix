@@ -1,9 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import {
-  type OAuthProviders,
-  oAuthProvidersList,
-} from '@nuvix/core/config/authProviders'
-import { IsUID } from '@nuvix/core/validators/input.validator.js'
+import { type OAuthProviders, oAuthProvidersList } from '@nuvix/core/config'
+import { IsUID } from '@nuvix/core/validators'
 import { configuration } from '@nuvix/utils'
 import { Expose } from 'class-transformer'
 import {

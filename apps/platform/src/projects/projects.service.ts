@@ -6,19 +6,13 @@ import {
 } from './DTO/update-project.dto'
 import { Exception } from '@nuvix/core/extend/exception'
 import { ApiKey, configuration } from '@nuvix/utils'
-import authMethods, {
-  AuthMethod,
-  defaultAuthConfig,
-} from '@nuvix/core/config/auth'
-import {
-  oAuthProviders,
-  type OAuthProviderType,
-} from '@nuvix/core/config/authProviders'
-import { defaultSmtpConfig } from '@nuvix/core/config/smtp'
-import { services } from '@nuvix/core/config/services'
+import { authMethods, AuthMethod, defaultAuthConfig } from '@nuvix/core/config'
+import { oAuthProviders, type OAuthProviderType } from '@nuvix/core/config'
+import { defaultSmtpConfig } from '@nuvix/core/config'
+import { services } from '@nuvix/core/config'
 import { UpdateProjectServiceDTO } from './DTO/project-service.dto'
 import { ProjectApiStatusDTO } from './DTO/project-api.dto'
-import apis from '@nuvix/core/config/apis'
+import { apis } from '@nuvix/core/config'
 import { oAuth2DTO } from './DTO/oauth2.dto'
 import { JwtService } from '@nestjs/jwt'
 import { CreateJwtDTO } from './DTO/create-jwt.dto'
@@ -34,7 +28,7 @@ import {
 } from '@nuvix/db'
 import { CoreService } from '@nuvix/core'
 import type { Projects } from '@nuvix/utils/types'
-import { setupDatabase } from '@nuvix/utils/database/setup'
+import { setupDatabase } from '@nuvix/utils/database'
 
 @Injectable()
 export class ProjectService {

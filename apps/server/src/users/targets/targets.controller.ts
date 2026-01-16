@@ -11,8 +11,8 @@ import {
   TargetParamDTO,
   UpdateTargetDTO,
 } from './DTO/target.dto'
-import { Models } from '@nuvix/core/helper/response.helper'
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
+import { Models } from '@nuvix/core/helpers'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
 import {
   Namespace,
   AuthDatabase,
@@ -21,8 +21,8 @@ import {
   QueryFilter,
 } from '@nuvix/core/decorators'
 import type { Database, Query } from '@nuvix/db'
-import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard'
-import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor'
+import { ProjectGuard } from '@nuvix/core/resolvers'
+import { ApiInterceptor } from '@nuvix/core/resolvers'
 import { Delete, Get, Patch, Post } from '@nuvix/core'
 import { UserParamDTO } from '../DTO/user.dto'
 import { IListResponse, IResponse } from '@nuvix/utils'

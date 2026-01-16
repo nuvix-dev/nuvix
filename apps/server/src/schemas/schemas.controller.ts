@@ -11,8 +11,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 import { SchemasService } from './schemas.service'
-import { ProjectGuard, SchemaGuard } from '@nuvix/core/resolvers/guards'
-import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors'
+import { ProjectGuard, SchemaGuard } from '@nuvix/core/resolvers'
+import { ApiInterceptor } from '@nuvix/core/resolvers'
 import {
   AuthType,
   CurrentSchema,

@@ -9,13 +9,13 @@ import {
   DuplicateException,
 } from '@nuvix/db'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Auth } from '@nuvix/core/helper/auth.helper'
-import { Detector } from '@nuvix/core/helper/detector.helper'
+import { Auth } from '@nuvix/core/helpers'
+import { Detector } from '@nuvix/core/helpers'
 import { DeleteType, MessageType, QueueFor } from '@nuvix/utils'
 import { CreatePushTargetDTO, UpdatePushTargetDTO } from './DTO/target.dto'
 import type { ProjectsDoc, Targets, UsersDoc } from '@nuvix/utils/types'
 import { InjectQueue } from '@nestjs/bullmq'
-import type { DeletesJobData } from '@nuvix/core/resolvers/queues/deletes.queue'
+import type { DeletesJobData } from '@nuvix/core/resolvers'
 import { Queue } from 'bullmq'
 
 @Injectable()

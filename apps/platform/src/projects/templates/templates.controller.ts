@@ -5,8 +5,8 @@ import {
   VERSION_NEUTRAL,
 } from '@nestjs/common'
 import { Exception } from '@nuvix/core/extend/exception'
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
-import { ConsoleInterceptor } from '@nuvix/core/resolvers/interceptors/console.interceptor'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
+import { ConsoleInterceptor } from '@nuvix/core/resolvers'
 import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
 import { TemplatesService } from './templates.service'
 import { TemplateParamsDTO } from './DTO/params.dto'

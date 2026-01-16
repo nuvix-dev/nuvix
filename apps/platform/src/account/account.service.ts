@@ -12,9 +12,9 @@ import {
 
 import { CountryResponse, Reader } from 'maxmind'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Auth } from '@nuvix/core/helper/auth.helper'
-import { Detector } from '@nuvix/core/helper/detector.helper'
-import { PersonalDataValidator } from '@nuvix/core/validators/personal-data.validator'
+import { Auth } from '@nuvix/core/helpers'
+import { Detector } from '@nuvix/core/helpers'
+import { PersonalDataValidator } from '@nuvix/core/validators'
 import {
   QueueFor,
   AppEvents,
@@ -22,22 +22,19 @@ import {
   SessionProvider,
   DeleteType,
 } from '@nuvix/utils'
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
 import { UpdateEmailDTO, UpdatePasswordDTO } from './DTO/account.dto'
-import { PasswordHistoryValidator } from '@nuvix/core/validators/password-history.validator'
+import { PasswordHistoryValidator } from '@nuvix/core/validators'
 import { CreateEmailSessionDTO } from './DTO/session.dto'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Queue } from 'bullmq'
 import * as Template from 'handlebars'
 import * as fs from 'fs/promises'
-import {
-  MailJob,
-  MailQueueOptions,
-} from '@nuvix/core/resolvers/queues/mails.queue'
+import { MailJob, MailQueueOptions } from '@nuvix/core/resolvers'
 import path from 'path'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { JwtService } from '@nestjs/jwt'
-import { LocaleTranslator } from '@nuvix/core/helper'
+import { LocaleTranslator } from '@nuvix/core/helpers'
 import type {
   MembershipsDoc,
   Sessions,
@@ -47,7 +44,7 @@ import type {
 } from '@nuvix/utils/types'
 import { AppConfigService, CoreService, Platform } from '@nuvix/core'
 import { Hooks } from '@nuvix/core/extend/hooks'
-import type { DeletesJobData } from '@nuvix/core/resolvers/queues/deletes.queue'
+import type { DeletesJobData } from '@nuvix/core/resolvers'
 
 @Injectable()
 @UseInterceptors(ResponseInterceptor)

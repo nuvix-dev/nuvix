@@ -1,13 +1,10 @@
 import { Controller, Ip, UseGuards, UseInterceptors } from '@nestjs/common'
-import { ProjectGuard } from '@nuvix/core/resolvers/guards'
-import {
-  ResponseInterceptor,
-  ApiInterceptor,
-} from '@nuvix/core/resolvers/interceptors'
+import { ProjectGuard } from '@nuvix/core/resolvers'
+import { ResponseInterceptor, ApiInterceptor } from '@nuvix/core/resolvers'
 import { Auth, AuthType, Locale, Namespace } from '@nuvix/core/decorators'
 import { Get } from '@nuvix/core'
 import { LocaleService } from './locale.service'
-import { LocaleTranslator, Models } from '@nuvix/core/helper'
+import { LocaleTranslator, Models } from '@nuvix/core/helpers'
 import type { IListResponse, IResponse } from '@nuvix/utils'
 import type { ILocaleResponse } from './locale.types'
 import {

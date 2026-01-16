@@ -3,7 +3,7 @@ import { Database, Doc, DuplicateException, type Collection } from '@nuvix/db'
 import { Schemas } from '@nuvix/utils'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Audit } from '@nuvix/audit'
-import collections from '@nuvix/utils/collections/index.js'
+import collections from '@nuvix/utils/collections'
 import { CoreService } from '@nuvix/core'
 
 const logger = new Logger('Database Setup')

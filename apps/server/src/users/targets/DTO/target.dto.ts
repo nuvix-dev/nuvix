@@ -1,6 +1,6 @@
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger'
 import { Database } from '@nuvix/db'
-import { IsCustomID, IsUID } from '@nuvix/core/validators/input.validator.js'
+import { IsCustomID, IsUID } from '@nuvix/core/validators'
 import { MessageType } from '@nuvix/utils'
 import { IsString, IsOptional, Length, IsEnum } from 'class-validator'
 import { UserParamDTO } from '../../DTO/user.dto'

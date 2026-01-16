@@ -19,7 +19,7 @@ import {
 import { InjectQueue } from '@nestjs/bullmq'
 import type { Queue } from 'bullmq'
 import { Exception } from '@nuvix/core/extend/exception'
-import usageConfig from '@nuvix/core/config/usage'
+import { usageConfig } from '@nuvix/core/config'
 
 import type {
   CreateCollectionDTO,
@@ -30,7 +30,7 @@ import {
   CollectionsJob,
   CollectionsJobData,
   StatsQueue,
-} from '@nuvix/core/resolvers/queues'
+} from '@nuvix/core/resolvers'
 import type { ProjectsDoc } from '@nuvix/utils/types'
 
 @Injectable()

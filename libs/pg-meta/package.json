@@ -2,17 +2,22 @@
   "name": "@nuvix/pg-meta",
   "version": "1.0.0",
   "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "scripts": {
     "lint": "eslint src/**/*.ts --fix",
     "test": "jest",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {},
+  "dependencies": {
+    "pg-format": "^1.0.4",
+    "pgsql-parser": "^17.8.2",
+    "prettier-plugin-sql": "^0.19.1",
+    "@sinclair/typebox": "^0.31.25"
+  },
   "devDependencies": {
-    "@types/node": "^22.15.30",
-    "typescript": "^5.8.3",
-    "tsup": "^8.5.0",
-    "pg": "^8.16.0",
-    "@types/pg": "^8.15.4"
+    "@nuvix/core": "workspace:*",
+    "@nuvix/utils": "workspace:*"
   }
 }

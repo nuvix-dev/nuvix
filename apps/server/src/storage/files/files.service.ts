@@ -10,7 +10,7 @@ import {
   Role,
 } from '@nuvix/db'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Auth } from '@nuvix/core/helper/auth.helper'
+import { Auth } from '@nuvix/core/helpers'
 import {
   CreateFileDTO,
   PreviewFileQueryDTO,
@@ -20,7 +20,7 @@ import {
 import { JwtService } from '@nestjs/jwt'
 import sharp from 'sharp'
 import { type SavedMultipartFile } from '@fastify/multipart'
-import { logos } from '@nuvix/core/config/storage/logos'
+import { logos } from '@nuvix/core/config'
 import path from 'path'
 import * as fs from 'fs/promises'
 import { CoreService } from '@nuvix/core'

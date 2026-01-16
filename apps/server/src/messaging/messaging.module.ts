@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common'
 import { MessagingService } from './messaging.service'
 import { MessagingController } from './messaging.controller'
-import { MessagingQueue } from '@nuvix/core/resolvers/queues/messaging.queue'
+import { MessagingQueue } from '@nuvix/core/resolvers'
 import { BullModule } from '@nestjs/bullmq'
 import { QueueFor } from '@nuvix/utils'
 import { AuthHook, ApiHook, StatsHook, AuditHook } from '@nuvix/core/resolvers'

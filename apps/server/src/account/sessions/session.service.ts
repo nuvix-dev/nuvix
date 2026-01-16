@@ -19,20 +19,14 @@ import {
   DuplicateException,
 } from '@nuvix/db'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Auth } from '@nuvix/core/helper/auth.helper'
-import { LocaleTranslator } from '@nuvix/core/helper/locale.helper'
-import { Models } from '@nuvix/core/helper/response.helper'
-import { Detector } from '@nuvix/core/helper/detector.helper'
-import { URLValidator } from '@nuvix/core/validators/url.validator'
-import {
-  MailJob,
-  MailQueueOptions,
-} from '@nuvix/core/resolvers/queues/mails.queue'
+import { Auth } from '@nuvix/core/helpers'
+import { LocaleTranslator } from '@nuvix/core/helpers'
+import { Models } from '@nuvix/core/helpers'
+import { Detector } from '@nuvix/core/helpers'
+import { URLValidator } from '@nuvix/core/validators'
+import { MailJob, MailQueueOptions } from '@nuvix/core/resolvers'
 import { getOAuth2Class, OAuth2 } from '@nuvix/core/OAuth2'
-import {
-  type OAuthProviders,
-  type OAuthProviderType,
-} from '@nuvix/core/config/authProviders'
+import { type OAuthProviders, type OAuthProviderType } from '@nuvix/core/config'
 import {
   AppEvents,
   AuthFactor,
@@ -44,7 +38,7 @@ import {
   TokenType,
   type HashAlgorithm,
 } from '@nuvix/utils'
-import { PhraseGenerator } from '@nuvix/utils/auth/pharse'
+import { PhraseGenerator } from '@nuvix/utils/auth'
 import {
   CreateEmailSessionDTO,
   CreateOAuth2SessionDTO,
@@ -66,9 +60,9 @@ import type {
   UsersDoc,
 } from '@nuvix/utils/types'
 import { CoreService, AppConfigService } from '@nuvix/core'
-import type { SmtpConfig } from '@nuvix/core/config/smtp.js'
+import type { SmtpConfig } from '@nuvix/core/config'
 import { JwtService } from '@nestjs/jwt'
-import { DeletesJobData } from '@nuvix/core/resolvers/queues/deletes.queue'
+import { DeletesJobData } from '@nuvix/core/resolvers'
 
 @Injectable()
 export class SessionService {

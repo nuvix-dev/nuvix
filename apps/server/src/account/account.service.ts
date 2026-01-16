@@ -16,14 +16,11 @@ import {
   DuplicateException,
 } from '@nuvix/db'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Auth } from '@nuvix/core/helper/auth.helper'
-import { LocaleTranslator } from '@nuvix/core/helper/locale.helper'
-import { PersonalDataValidator } from '@nuvix/core/validators/personal-data.validator'
+import { Auth } from '@nuvix/core/helpers'
+import { LocaleTranslator } from '@nuvix/core/helpers'
+import { PersonalDataValidator } from '@nuvix/core/validators'
 import { PasswordHistoryValidator } from '@nuvix/core/validators'
-import {
-  MailJob,
-  MailQueueOptions,
-} from '@nuvix/core/resolvers/queues/mails.queue'
+import { MailJob, MailQueueOptions } from '@nuvix/core/resolvers'
 import {
   configuration,
   DeleteType,
@@ -40,9 +37,9 @@ import type {
   UsersDoc,
 } from '@nuvix/utils/types'
 import { AppConfigService } from '@nuvix/core'
-import type { SmtpConfig } from '@nuvix/core/config/smtp.js'
+import type { SmtpConfig } from '@nuvix/core/config'
 import { Hooks } from '@nuvix/core/extend/hooks'
-import type { DeletesJobData } from '@nuvix/core/resolvers/queues/deletes.queue'
+import type { DeletesJobData } from '@nuvix/core/resolvers'
 
 @Injectable()
 export class AccountService {

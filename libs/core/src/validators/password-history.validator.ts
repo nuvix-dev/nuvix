@@ -1,5 +1,5 @@
 import type { Validator } from '@nuvix/db'
-import { Auth } from '../helper/auth.helper'
+import { Auth } from '../helpers/auth.helper'
 import { PasswordValidator } from './password.validator'
 import type { HashAlgorithm } from '@nuvix/utils'
 

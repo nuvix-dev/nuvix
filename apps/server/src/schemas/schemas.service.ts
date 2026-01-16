@@ -13,13 +13,13 @@ import {
   ParsedOrdering,
   ParserResult,
   SelectNode,
-} from '@nuvix/utils/query/types'
-import { Parser } from '@nuvix/utils/query/parser'
-import { SelectParser } from '@nuvix/utils/query/select'
-import { OrderParser } from '@nuvix/utils/query/order'
-import { ASTToQueryBuilder } from '@nuvix/utils/query/builder'
+} from '@nuvix/utils/query'
+import { Parser } from '@nuvix/utils/query'
+import { SelectParser } from '@nuvix/utils/query'
+import { OrderParser } from '@nuvix/utils/query'
+import { ASTToQueryBuilder } from '@nuvix/utils/query'
 import { Exception } from '@nuvix/core/extend/exception'
-import { transformPgError } from '@nuvix/utils/database/pg-error'
+import { transformPgError } from '@nuvix/utils/database'
 import { DataSource, Raw } from '@nuvix/pg'
 import {
   Doc,
@@ -28,7 +28,7 @@ import {
   PermissionType,
 } from '@nuvix/db'
 import { Database } from '@nuvix/db'
-import { setupDatabaseMeta } from '@nuvix/core/helper'
+import { setupDatabaseMeta } from '@nuvix/core/helpers'
 import { ProjectsDoc } from '@nuvix/utils/types'
 
 @Injectable()

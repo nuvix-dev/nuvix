@@ -1,6 +1,6 @@
 import { OmitType } from '@nestjs/swagger'
 import { IsBoolean, IsIn } from 'class-validator'
-import apis from '@nuvix/core/config/apis'
+import { apis } from '@nuvix/core/config'
 
 export class ProjectApiStatusDTO {
   /**

@@ -2,7 +2,10 @@
   "extends": "../../tsconfig.json",
   "compilerOptions": {
     "declaration": true,
-    "outDir": "../../dist/libs/core"
+    "composite": true,
+    "outDir": "../../dist/libs/core",
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
   },
   "include": ["src/**/*", "../../nuvix.d.ts"],
   "exclude": ["node_modules", "dist", "test", "**/*spec.ts"]

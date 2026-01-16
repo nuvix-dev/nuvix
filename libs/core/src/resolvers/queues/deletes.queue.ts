@@ -17,13 +17,13 @@ import type {
   TopicsDoc,
   UsersDoc,
 } from '@nuvix/utils/types'
-import { CoreService } from '@nuvix/core/core.service'
+import { CoreService } from '../../core.service'
 import {
   deleteIdentities,
   deleteSubscribers,
   deleteTargets,
-} from '@nuvix/core/helper/misc.helper'
-import { Auth } from '@nuvix/core/helper'
+} from '../../helpers/misc.helper'
+import { Auth } from '../../helpers'
 import { Audit } from '@nuvix/audit'
 import { Logger } from '@nestjs/common'
 

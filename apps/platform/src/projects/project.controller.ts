@@ -14,7 +14,7 @@ import {
   ProjectDatabase,
   ProjectPg,
 } from '@nuvix/core/decorators'
-import { Models } from '@nuvix/core/helper'
+import { Models } from '@nuvix/core/helpers'
 import {
   ConsoleInterceptor,
   ProjectGuard,

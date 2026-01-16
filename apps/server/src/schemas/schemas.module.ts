@@ -1,7 +1,7 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'
 import { SchemasService } from './schemas.service'
 import { SchemasController } from './schemas.controller'
-import { SchemaHook } from '@nuvix/core/resolvers/hooks/schema.hook'
+import { SchemaHook } from '@nuvix/core/resolvers'
 import { CollectionsModule } from './collections/collections.module'
 import { BullModule } from '@nestjs/bullmq'
 import { QueueFor } from '@nuvix/utils'

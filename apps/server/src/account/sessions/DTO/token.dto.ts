@@ -1,5 +1,5 @@
 import { OmitType, PickType } from '@nestjs/swagger'
-import { IsUID } from '@nuvix/core/validators/input.validator.js'
+import { IsUID } from '@nuvix/core/validators'
 import { configuration } from '@nuvix/utils'
 import {
   IsString,

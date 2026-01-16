@@ -6,11 +6,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 import { TopicsService } from './topics.service'
-import { ProjectGuard } from '@nuvix/core/resolvers/guards'
-import {
-  ApiInterceptor,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers/interceptors'
+import { ProjectGuard } from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import {
   ProjectDatabase,
   AuthType,
@@ -20,7 +17,7 @@ import {
   QuerySearch,
   Project,
 } from '@nuvix/core/decorators'
-import { Models } from '@nuvix/core/helper'
+import { Models } from '@nuvix/core/helpers'
 
 import { Database, Query as Queries } from '@nuvix/db'
 import {

@@ -2,7 +2,7 @@ import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'
 import { DatabaseService } from './database.service'
 import { DatabaseController } from './database.controller'
 import { BullModule } from '@nestjs/bullmq'
-import { DatabaseQueue } from '@nuvix/core/resolvers/queues/database.queue'
+import { DatabaseQueue } from '@nuvix/core/resolvers'
 import { QueueFor } from '@nuvix/utils'
 import { AuthHook, ApiHook, StatsHook, AuditHook } from '@nuvix/core/resolvers'
 

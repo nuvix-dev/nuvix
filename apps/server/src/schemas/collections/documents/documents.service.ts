@@ -15,7 +15,7 @@ import {
   PermissionsValidator,
 } from '@nuvix/db'
 import { configuration, SchemaMeta } from '@nuvix/utils'
-import { Auth } from '@nuvix/core/helper/auth.helper'
+import { Auth } from '@nuvix/core/helpers'
 import { Exception } from '@nuvix/core/extend/exception'
 
 // DTOs

@@ -14,9 +14,9 @@ import {
   VERSION_NEUTRAL,
 } from '@nestjs/common'
 import { AccountService } from './account.service'
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
-import { Models } from '@nuvix/core/helper/response.helper'
-import { User } from '@nuvix/core/decorators/user.decorator'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
+import { Models } from '@nuvix/core/helpers'
+import { User } from '@nuvix/core/decorators'
 import {
   AuditEvent,
   Locale,
@@ -25,10 +25,10 @@ import {
   Throttle,
 } from '@nuvix/core/decorators'
 
-import { AuthGuard, Public } from '@nuvix/core/resolvers/guards/auth.guard'
-import { ConsoleInterceptor } from '@nuvix/core/resolvers/interceptors/console.interceptor'
+import { AuthGuard, Public } from '@nuvix/core/resolvers'
+import { ConsoleInterceptor } from '@nuvix/core/resolvers'
 import { Exception } from '@nuvix/core/extend/exception'
-import { LocaleTranslator } from '@nuvix/core/helper'
+import { LocaleTranslator } from '@nuvix/core/helpers'
 import {
   CreateAccountDTO,
   UpdateEmailDTO,

@@ -34,7 +34,7 @@ import {
   ApiExtension,
 } from '@nestjs/swagger'
 import * as fs from 'fs'
-import { Models } from '../helper'
+import { Models } from '../helpers'
 import path from 'path'
 
 type RouteMethod =
@@ -132,11 +132,7 @@ const HTTP_METHOD_DECORATORS = {
 
 const readMarkdownFile = (filePath: string): string | null => {
   try {
-    const fullPath = path.join(
-      PROJECT_ROOT,
-      configuration.app.docsRoot,
-      filePath,
-    )
+    const fullPath = path.join(configuration.app.docsRoot, filePath)
     if (!fs.existsSync(fullPath)) {
       console.warn(`Markdown file not found: ${fullPath}`)
       return null

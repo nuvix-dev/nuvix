@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { DataSource, Context as DataSourceContext } from '@nuvix/pg'
-import { Exception } from '@nuvix/core/extend/exception'
-import { Hook } from '@nuvix/core/server'
+import { Exception } from '../../extend/exception'
+import { Hook } from '../../server'
 import {
   AppMode,
   Context,
@@ -15,9 +15,9 @@ import {
   type Schema,
 } from '@nuvix/utils'
 import type { ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
-import { CoreService } from '@nuvix/core/core.service.js'
+import { CoreService } from '../../core.service.js'
 import type { Client } from 'pg'
-import { Auth } from '@nuvix/core/helper'
+import { Auth } from '../../helpers'
 
 @Injectable()
 export class SchemaHook implements Hook {

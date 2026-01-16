@@ -2,19 +2,32 @@
   "name": "@nuvix/core",
   "version": "1.0.0",
   "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./config": "./src/config/index.ts",
+    "./decorators": "./src/decorators/index.ts",
+    "./extend/exception": "./src/extend/exception.ts",
+    "./extend/hooks": "./src/extend/hooks.ts",
+    "./filters": "./src/filters/index.ts",
+    "./helpers": "./src/helpers/index.ts",
+    "./models": "./src/models/index.ts",
+    "./OAuth2": "./src/OAuth2.ts",
+    "./pipes": "./src/pipes/index.ts",
+    "./pipes/queries": "./src/pipes/queries/index.ts",
+    "./resolvers": "./src/resolvers/index.ts",
+    "./server": "./src/server/index.ts",
+    "./server/test": "./src/server/test/index.ts",
+    "./validators": "./src/validators/index.ts",
+    "./rate-limit.service": "./src/rate-limit.service.ts"
+  },
   "scripts": {
     "lint": "eslint src/**/*.ts --fix",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {},
-  "devDependencies": {
-    "@types/node": "^22.15.30",
-    "typescript": "^5.8.3",
-    "tsup": "^8.5.0"
-  },
-  "trustedDependencies": [
-    "argon2",
-    "bcrypt"
-  ]
+  "dependencies": {
+    "axios": "^1.9.0",
+    "otplib": "^12.0.1",
+    "ua-parser-js": "^2.0.3"
+  }
 }

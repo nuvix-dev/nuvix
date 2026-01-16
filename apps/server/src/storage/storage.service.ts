@@ -18,11 +18,11 @@ import {
 } from '@nuvix/utils'
 import { CreateBucketDTO, UpdateBucketDTO } from './DTO/bucket.dto'
 
-import usageConfig from '@nuvix/core/config/usage'
-import collections from '@nuvix/utils/collections/index.js'
+import { usageConfig } from '@nuvix/core/config'
+import collections from '@nuvix/utils/collections'
 import { StatsQueue } from '@nuvix/core/resolvers'
 import { InjectQueue } from '@nestjs/bullmq'
-import type { DeletesJobData } from '@nuvix/core/resolvers/queues/deletes.queue'
+import type { DeletesJobData } from '@nuvix/core/resolvers'
 import { Queue } from 'bullmq'
 import { ProjectsDoc } from '@nuvix/utils/types'
 

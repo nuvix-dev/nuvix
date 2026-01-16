@@ -14,13 +14,10 @@ import {
   Authorization,
 } from '@nuvix/db'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Auth } from '@nuvix/core/helper/auth.helper'
-import { LocaleTranslator } from '@nuvix/core/helper/locale.helper'
+import { Auth } from '@nuvix/core/helpers'
+import { LocaleTranslator } from '@nuvix/core/helpers'
 import { PasswordHistoryValidator } from '@nuvix/core/validators'
-import {
-  MailJob,
-  MailQueueOptions,
-} from '@nuvix/core/resolvers/queues/mails.queue'
+import { MailJob, MailQueueOptions } from '@nuvix/core/resolvers'
 import { QueueFor, TokenType, type HashAlgorithm } from '@nuvix/utils'
 import { CreateRecoveryDTO, UpdateRecoveryDTO } from './DTO/recovery.dto'
 import type {
@@ -30,7 +27,7 @@ import type {
   UsersDoc,
 } from '@nuvix/utils/types'
 import { AppConfigService } from '@nuvix/core'
-import type { SmtpConfig } from '@nuvix/core/config/smtp.js'
+import type { SmtpConfig } from '@nuvix/core/config'
 import { Hooks } from '@nuvix/core/extend/hooks'
 
 @Injectable()

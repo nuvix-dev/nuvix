@@ -8,9 +8,9 @@ import type {
   FastifyRouteConfig,
 } from 'fastify';
 import type { Entities } from '@nuvix/db';
-import type { Entities as NuvixEntities } from '@nuvix/utils/types';
-import type { RouteContext, ThrottleOptions } from '@nuvix/utils';
-import type { AuditEventType } from '@nuvix/core/decorators';
+import type { Entities as NuvixEntities } from './libs/utils/types';
+import type { RouteContext, ThrottleOptions } from './libs/utils/src';
+import type { AuditEventType } from './libs/core/src/decorators';
 import { SchemaType } from '@nuvix/pg';
 
 declare module 'fastify' {

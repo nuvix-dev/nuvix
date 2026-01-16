@@ -1,5 +1,5 @@
 // This file is auto-generated. Do not edit manually.
-// Generated on: 2025-09-30T15:50:26.317Z
+// Generated on: 2026-01-13T14:40:37.670Z
 
 import { Doc, IEntity } from '@nuvix/db'
 
@@ -1359,132 +1359,6 @@ export interface Files extends IEntity {
   search?: string
 }
 
-export interface Organizations extends IEntity {
-  /**
-   * @optional
-   * @default null
-   */
-  name?: string
-  /**
-   * @optional
-   * @default null
-   */
-  total?: number
-  /**
-   * @optional
-   * @default null
-   */
-  search?: string
-  /**
-   * @optional
-   * @default {}
-   */
-  prefs?: Record<string, any>
-  /**
-   * @array
-   * @optional
-   * @default []
-   */
-  budgetAlerts?: string[]
-  /**
-   * @optional
-   * @default null
-   */
-  billingPlan?: string
-  /**
-   * @optional
-   * @default null
-   */
-  billingEmail?: string
-  /**
-   * @optional
-   * @default null
-   */
-  billingStartDate?: string | Date
-  /**
-   * @optional
-   * @default null
-   */
-  billingCurrentInvoiceDate?: string | Date
-  /**
-   * @optional
-   * @default null
-   */
-  billingNextInvoiceDate?: string | Date
-  /**
-   * @optional
-   * @default null
-   */
-  billingTrialStartDate?: string | Date
-  /**
-   * @optional
-   * @default 0
-   */
-  billingTrialDays?: number
-  /**
-   * @optional
-   * @default null
-   */
-  billingAggregationId?: string
-  /**
-   * @optional
-   * @default null
-   */
-  paymentMethodId?: string
-  /**
-   * @optional
-   * @default null
-   */
-  billingAddressId?: string
-  /**
-   * @optional
-   * @default null
-   */
-  backupPaymentMethodId?: string
-  /**
-   * @optional
-   * @default null
-   */
-  agreementBAA?: string
-  /**
-   * @optional
-   * @default null
-   */
-  programManagerName?: string
-  /**
-   * @optional
-   * @default null
-   */
-  programManagerCalendar?: string
-  /**
-   * @optional
-   * @default null
-   */
-  programDiscordChannelName?: string
-  /**
-   * @optional
-   * @default null
-   */
-  programDiscordChannelUrl?: string
-  /**
-   * @optional
-   * @default {}
-   */
-  billingLimits?: Record<string, any>
-  /**
-   * @optional
-   * @default {}
-   */
-  billingPlanDowngrade?: Record<string, any>
-  /**
-   * @optional
-   * @default null
-   */
-  billingTaxId?: string
-  /** @default false */
-  markedForDeletion: boolean
-}
-
 export interface Projects extends IEntity {
   /** @default null */
   teamInternalId: number
@@ -1965,7 +1839,6 @@ export type CollectionsDoc = Doc<Collections>
 export type AttributesDoc = Doc<Attributes>
 export type IndexesDoc = Doc<Indexes>
 export type FilesDoc = Doc<Files>
-export type OrganizationsDoc = Doc<Organizations>
 export type ProjectsDoc = Doc<Projects>
 export type SchedulesDoc = Doc<Schedules>
 export type PlatformsDoc = Doc<Platforms>
@@ -2273,23 +2146,6 @@ export type FilesKeys = keyof Files
 export type FilesValues = Files[FilesKeys]
 export type FilesPick<K extends keyof Files> = Pick<Files, K>
 export type FilesOmit<K extends keyof Files> = Omit<Files, K>
-
-// Utility types for Organizations
-export type OrganizationsCreate = Omit<
-  Organizations,
-  '$id' | '$createdAt' | '$updatedAt' | '$sequence'
->
-export type OrganizationsUpdate = Partial<OrganizationsCreate>
-export type OrganizationsKeys = keyof Organizations
-export type OrganizationsValues = Organizations[OrganizationsKeys]
-export type OrganizationsPick<K extends keyof Organizations> = Pick<
-  Organizations,
-  K
->
-export type OrganizationsOmit<K extends keyof Organizations> = Omit<
-  Organizations,
-  K
->
 
 // Utility types for Projects
 export type ProjectsCreate = Omit<
@@ -2831,20 +2687,6 @@ export type FilesInput = Omit<
 export type FilesCreateInput = FilesInput
 export type FilesUpdateInput = Partial<FilesInput>
 
-// Input types for Organizations
-export type OrganizationsInput = Omit<
-  Organizations,
-  | '$id'
-  | '$createdAt'
-  | '$updatedAt'
-  | '$permissions'
-  | '$sequence'
-  | '$collection'
-  | '$tenant'
->
-export type OrganizationsCreateInput = OrganizationsInput
-export type OrganizationsUpdateInput = Partial<OrganizationsInput>
-
 // Input types for Projects
 export type ProjectsInput = Omit<
   Projects,
@@ -3054,7 +2896,6 @@ export interface Entities {
   _attributes: Attributes
   _indexes: Indexes
   files: Files
-  organizations: Organizations
   projects: Projects
   schedules: Schedules
   platforms: Platforms

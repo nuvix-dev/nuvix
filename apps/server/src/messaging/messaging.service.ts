@@ -17,14 +17,11 @@ import {
   ScheduleResourceType,
   Schemas,
 } from '@nuvix/utils'
-import { MessageStatus } from '@nuvix/core/messaging/status'
+import { MessageStatus } from '@nuvix/utils'
 import { JwtService } from '@nestjs/jwt'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Queue } from 'bullmq'
-import {
-  MessagingJob,
-  MessagingJobData,
-} from '@nuvix/core/resolvers/queues/messaging.queue'
+import { MessagingJob, MessagingJobData } from '@nuvix/core/resolvers'
 import { CoreService, AppConfigService } from '@nuvix/core'
 import type { Messages, Schedules } from '@nuvix/utils/types'
 

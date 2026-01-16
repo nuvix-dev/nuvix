@@ -3,12 +3,12 @@ import { Queue } from './queue'
 import { Job } from 'bullmq'
 import { createTransport, Transporter } from 'nodemailer'
 import { QueueFor } from '@nuvix/utils'
-import { Exception } from '@nuvix/core/extend/exception'
+import { Exception } from '../../extend/exception'
 import * as fs from 'fs'
 import { Logger } from '@nestjs/common'
 import * as Template from 'handlebars'
-import { AppConfigService } from '@nuvix/core/config.service.js'
-import type { SmtpConfig } from '@nuvix/core/config/smtp.js'
+import { AppConfigService } from '../../config.service'
+import type { SmtpConfig } from '../../config/smtp'
 
 @Processor(QueueFor.MAILS, { concurrency: 10000 })
 export class MailsQueue extends Queue {
@@ -47,7 +47,7 @@ export class MailsQueue extends Queue {
         name: config.sender,
         address: config.emailFrom,
       },
-      logger: true,
+      logger: !appConfig.get('app').isProduction,
       tls: {
         rejectUnauthorized: false,
       },

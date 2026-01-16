@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
-import { ID } from '@nuvix/core/helper/ID.helper'
+import { ID } from '@nuvix/core/helpers'
 import { Exception } from '@nuvix/core/extend/exception'
-import { TOTP } from '@nuvix/core/validators/MFA.validator'
+import { TOTP } from '@nuvix/core/validators'
 import {
   CreateMembershipDTO,
   UpdateMembershipDTO,
@@ -18,21 +18,18 @@ import {
   Query,
   Role,
 } from '@nuvix/db'
-import { Auth } from '@nuvix/core/helper/auth.helper'
+import { Auth } from '@nuvix/core/helpers'
 import { InjectQueue } from '@nestjs/bullmq'
 import type { Queue } from 'bullmq'
-import {
-  MailJob,
-  MailQueueOptions,
-} from '@nuvix/core/resolvers/queues/mails.queue'
-import { LocaleTranslator } from '@nuvix/core/helper/locale.helper'
+import { MailJob, MailQueueOptions } from '@nuvix/core/resolvers'
+import { LocaleTranslator } from '@nuvix/core/helpers'
 import { sprintf } from 'sprintf-js'
 import * as fs from 'fs'
 import * as Template from 'handlebars'
 import { AppConfigService, CoreService } from '@nuvix/core'
 import type { Memberships, ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
-import type { SmtpConfig } from '@nuvix/core/config/smtp.js'
-import { Detector } from '@nuvix/core/helper'
+import type { SmtpConfig } from '@nuvix/core/config'
+import { Detector } from '@nuvix/core/helpers'
 
 @Injectable()
 export class MembershipsService {

@@ -6,7 +6,7 @@ import {
   IsObject,
   IsNotEmpty,
 } from 'class-validator'
-import { IsCustomID } from '@nuvix/core/validators/input.validator'
+import { IsCustomID } from '@nuvix/core/validators'
 
 export class CreateAccountDTO {
   /**

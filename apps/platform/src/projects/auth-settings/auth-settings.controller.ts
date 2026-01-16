@@ -19,9 +19,9 @@ import {
   AuthMethodParamsDTO,
   AuthMembershipPrivacyDTO,
 } from './DTO/project-auth.dto'
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
-import { Models } from '@nuvix/core/helper/response.helper'
-import { ConsoleInterceptor } from '@nuvix/core/resolvers/interceptors/console.interceptor'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
+import { Models } from '@nuvix/core/helpers'
+import { ConsoleInterceptor } from '@nuvix/core/resolvers'
 import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
 import { AuthSettingsService } from './auth-settings.service'
 import { Patch } from '@nuvix/core'

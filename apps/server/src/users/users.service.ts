@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Exception } from '@nuvix/core/extend/exception'
-import { ID } from '@nuvix/core/helper/ID.helper'
-import { PersonalDataValidator } from '@nuvix/core/validators/personal-data.validator'
+import { ID } from '@nuvix/core/helpers'
+import { PersonalDataValidator } from '@nuvix/core/validators'
 import {
   CreateUserDTO,
   CreateUserWithScryptDTO,
@@ -23,9 +23,9 @@ import {
   QueueFor,
   TokenType,
 } from '@nuvix/utils'
-import { Auth } from '@nuvix/core/helper/auth.helper'
-import { PasswordHistoryValidator } from '@nuvix/core/validators/password-history.validator'
-import { Detector } from '@nuvix/core/helper/detector.helper'
+import { Auth } from '@nuvix/core/helpers'
+import { PasswordHistoryValidator } from '@nuvix/core/validators'
+import { Detector } from '@nuvix/core/helpers'
 
 import { CreateTokenDTO } from './DTO/token.dto'
 import { CreateJwtDTO } from './DTO/jwt.dto'
@@ -52,12 +52,12 @@ import type {
   UsersDoc,
 } from '@nuvix/utils/types'
 import { Audit, AuditDoc } from '@nuvix/audit'
-import type { LocaleTranslator } from '@nuvix/core/helper'
-import usageConfig from '@nuvix/core/config/usage'
+import type { LocaleTranslator } from '@nuvix/core/helpers'
+import { usageConfig } from '@nuvix/core/config'
 import { StatsQueue } from '@nuvix/core/resolvers'
 import { Hooks } from '@nuvix/core/extend/hooks'
 import { InjectQueue } from '@nestjs/bullmq'
-import type { DeletesJobData } from '@nuvix/core/resolvers/queues/deletes.queue'
+import type { DeletesJobData } from '@nuvix/core/resolvers'
 import { Queue } from 'bullmq'
 
 @Injectable()

@@ -8,12 +8,12 @@ import {
   QueryFilter,
   Scope,
 } from '@nuvix/core/decorators'
-import { AuthDatabase } from '@nuvix/core/decorators/project.decorator'
-import { User } from '@nuvix/core/decorators/project-user.decorator'
-import { Models } from '@nuvix/core/helper/response.helper'
-import { ProjectGuard } from '@nuvix/core/resolvers/guards'
-import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor'
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
+import { AuthDatabase } from '@nuvix/core/decorators'
+import { User } from '@nuvix/core/decorators'
+import { Models } from '@nuvix/core/helpers'
+import { ProjectGuard } from '@nuvix/core/resolvers'
+import { ApiInterceptor } from '@nuvix/core/resolvers'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
 import { IdentityService } from './identity.service'
 import { IdentityIdParamDTO } from './DTO/identity.dto'
 import type { IdentitiesDoc, UsersDoc } from '@nuvix/utils/types'

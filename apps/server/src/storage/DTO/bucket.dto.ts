@@ -10,7 +10,7 @@ import {
   IsIn,
   Max,
 } from 'class-validator'
-import { IsCustomID, IsUID } from '@nuvix/core/validators/input.validator'
+import { IsCustomID, IsUID } from '@nuvix/core/validators'
 import { configuration } from '@nuvix/utils'
 import { ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger'
 

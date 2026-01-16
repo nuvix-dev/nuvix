@@ -6,15 +6,12 @@ import {
   UseInterceptors,
   Query,
 } from '@nestjs/common'
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
 import { CollectionsService } from './collections.service'
-import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard'
-import { Models } from '@nuvix/core/helper/response.helper'
+import { ProjectGuard } from '@nuvix/core/resolvers'
+import { Models } from '@nuvix/core/helpers'
 import type { Database, Query as Queries } from '@nuvix/db'
-import {
-  CurrentDatabase,
-  Project,
-} from '@nuvix/core/decorators/project.decorator'
+import { CurrentDatabase, Project } from '@nuvix/core/decorators'
 import {
   Auth,
   AuthType,
@@ -30,8 +27,8 @@ import {
   CreateCollectionDTO,
   UpdateCollectionDTO,
 } from './DTO/collection.dto'
-import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor'
-import { SchemaGuard } from '@nuvix/core/resolvers/guards'
+import { ApiInterceptor } from '@nuvix/core/resolvers'
+import { SchemaGuard } from '@nuvix/core/resolvers'
 import type { CollectionsDoc, ProjectsDoc } from '@nuvix/utils/types'
 import { CollectionsQueryPipe, LogsQueryPipe } from '@nuvix/core/pipes/queries'
 import { Delete, Get, Post, Put } from '@nuvix/core'

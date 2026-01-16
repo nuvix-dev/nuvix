@@ -10,7 +10,7 @@ import { AppMode, configuration, QueueFor, Schemas } from '@nuvix/utils'
 import { Doc } from '@nuvix/db'
 import { Audit } from '@nuvix/audit'
 import { Job } from 'bullmq'
-import { CoreService } from '@nuvix/core/core.service.js'
+import { CoreService } from '../../core.service.js'
 import type { ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
 
 interface AuditLogsBuffer {

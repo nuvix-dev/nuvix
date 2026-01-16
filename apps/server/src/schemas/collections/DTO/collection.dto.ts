@@ -7,7 +7,7 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator'
-import { IsCustomID, IsUID } from '@nuvix/core/validators/input.validator'
+import { IsCustomID, IsUID } from '@nuvix/core/validators'
 import { configuration } from '@nuvix/utils'
 
 export class CreateCollectionDTO {

@@ -1,4 +1,4 @@
-import { LocaleTranslator } from '@nuvix/core/helper'
+import { LocaleTranslator } from '@nuvix/core/helpers'
 
 export declare namespace TLocalService {
   type GetUserLocale = {

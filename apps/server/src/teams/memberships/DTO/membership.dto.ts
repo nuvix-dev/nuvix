@@ -9,7 +9,7 @@ import {
   IsUrl,
   IsOptional,
 } from 'class-validator'
-import { IsUID } from '@nuvix/core/validators/input.validator.js'
+import { IsUID } from '@nuvix/core/validators'
 import { configuration } from '@nuvix/utils'
 import { TeamsParamDTO } from '../../DTO/team.dto'
 

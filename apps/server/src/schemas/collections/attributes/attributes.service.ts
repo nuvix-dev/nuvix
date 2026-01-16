@@ -50,10 +50,7 @@ import type {
   CreateURLAttributeDTO,
 } from './DTO/attributes.dto'
 import { EventEmitter2 } from '@nestjs/event-emitter'
-import {
-  CollectionsJob,
-  CollectionsJobData,
-} from '@nuvix/core/resolvers/queues'
+import { CollectionsJob, CollectionsJobData } from '@nuvix/core/resolvers'
 import type {
   Attributes,
   AttributesDoc,

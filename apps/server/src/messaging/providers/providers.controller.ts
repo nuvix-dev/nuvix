@@ -6,11 +6,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 import { ProvidersService } from './providers.service'
-import { ProjectGuard } from '@nuvix/core/resolvers/guards'
-import {
-  ApiInterceptor,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers/interceptors'
+import { ProjectGuard } from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import {
   ProjectDatabase,
   AuthType,
@@ -19,7 +16,7 @@ import {
   QueryFilter,
   QuerySearch,
 } from '@nuvix/core/decorators'
-import { Models } from '@nuvix/core/helper'
+import { Models } from '@nuvix/core/helpers'
 import {
   CreateMailgunProviderDTO,
   UpdateMailgunProviderDTO,

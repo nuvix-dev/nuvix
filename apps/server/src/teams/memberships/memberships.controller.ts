@@ -8,7 +8,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 import { MembershipsService } from './memberships.service'
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
 import {
   Auth,
   AuthType,
@@ -17,8 +17,8 @@ import {
   QuerySearch,
 } from '@nuvix/core/decorators'
 
-import { Models } from '@nuvix/core/helper/response.helper'
-import { User } from '@nuvix/core/decorators/project-user.decorator'
+import { Models } from '@nuvix/core/helpers'
+import { User } from '@nuvix/core/decorators'
 import {
   CreateMembershipDTO,
   MembershipParamDTO,
@@ -26,11 +26,11 @@ import {
   UpdateMembershipStatusDTO,
 } from './DTO/membership.dto'
 import { Database, Query as Queries } from '@nuvix/db'
-import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard'
-import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor'
-import { AuthDatabase, Project } from '@nuvix/core/decorators/project.decorator'
-import { Locale } from '@nuvix/core/decorators/locale.decorator'
-import { LocaleTranslator } from '@nuvix/core/helper/locale.helper'
+import { ProjectGuard } from '@nuvix/core/resolvers'
+import { ApiInterceptor } from '@nuvix/core/resolvers'
+import { AuthDatabase, Project } from '@nuvix/core/decorators'
+import { Locale } from '@nuvix/core/decorators'
+import { LocaleTranslator } from '@nuvix/core/helpers'
 import type { MembershipsDoc, ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
 import { MembershipsQueryPipe } from '@nuvix/core/pipes/queries'
 import { Delete, Get, Patch, Post } from '@nuvix/core'

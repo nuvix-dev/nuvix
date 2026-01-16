@@ -26,8 +26,8 @@ import {
   RangeQueryDTO,
   IdentityParamDTO,
 } from './DTO/user.dto'
-import { Models } from '@nuvix/core/helper/response.helper'
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
+import { Models } from '@nuvix/core/helpers'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
 import {
   Namespace,
   Project,
@@ -41,8 +41,8 @@ import {
 import { CreateTokenDTO } from './DTO/token.dto'
 import { CreateJwtDTO } from './DTO/jwt.dto'
 import type { Database, Query as Queries } from '@nuvix/db'
-import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard'
-import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor'
+import { ProjectGuard } from '@nuvix/core/resolvers'
+import { ApiInterceptor } from '@nuvix/core/resolvers'
 import type {
   IdentitiesDoc,
   MembershipsDoc,
@@ -56,7 +56,7 @@ import {
   MembershipsQueryPipe,
   UsersQueryPipe,
 } from '@nuvix/core/pipes/queries'
-import type { LocaleTranslator } from '@nuvix/core/helper'
+import type { LocaleTranslator } from '@nuvix/core/helpers'
 import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
 import type { IListResponse, IResponse } from '@nuvix/utils'
 import { AuditDoc } from '@nuvix/audit'

@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { Exception } from '@nuvix/core/extend/exception'
-import authMethods from '@nuvix/core/config/auth'
+import { authMethods } from '@nuvix/core/config'
 import {
   AuthMembershipPrivacyDTO,
   AuthMockNumbersDTO,

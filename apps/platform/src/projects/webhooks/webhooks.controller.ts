@@ -10,9 +10,9 @@ import {
   UpdateWebhookDTO,
   WebhookParamsDTO,
 } from './DTO/webhook.dto'
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
-import { Models } from '@nuvix/core/helper/response.helper'
-import { ConsoleInterceptor } from '@nuvix/core/resolvers/interceptors/console.interceptor'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
+import { Models } from '@nuvix/core/helpers'
+import { ConsoleInterceptor } from '@nuvix/core/resolvers'
 import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
 import { WebhooksService } from './webhooks.service'
 import { Delete, Get, Patch, Post, Put } from '@nuvix/core'

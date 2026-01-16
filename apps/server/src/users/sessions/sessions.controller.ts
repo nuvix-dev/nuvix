@@ -6,8 +6,8 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 import { SessionsService } from './sessions.service'
-import { Models } from '@nuvix/core/helper/response.helper'
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
+import { Models } from '@nuvix/core/helpers'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
 import {
   Namespace,
   Project,
@@ -17,10 +17,10 @@ import {
   AuthType,
 } from '@nuvix/core/decorators'
 import type { Database } from '@nuvix/db'
-import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard'
-import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor'
+import { ProjectGuard } from '@nuvix/core/resolvers'
+import { ApiInterceptor } from '@nuvix/core/resolvers'
 import type { ProjectsDoc, SessionsDoc } from '@nuvix/utils/types'
-import type { LocaleTranslator } from '@nuvix/core/helper'
+import type { LocaleTranslator } from '@nuvix/core/helpers'
 import { UserParamDTO } from '../DTO/user.dto'
 import { Delete, Get, Post } from '@nuvix/core'
 import { IListResponse, IResponse } from '@nuvix/utils'

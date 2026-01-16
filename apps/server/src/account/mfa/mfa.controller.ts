@@ -10,15 +10,15 @@ import {
 
 import { Database, type Doc } from '@nuvix/db'
 import { Auth, AuthType, Namespace, Scope } from '@nuvix/core/decorators'
-import { Locale } from '@nuvix/core/decorators/locale.decorator'
-import { AuthDatabase, Project } from '@nuvix/core/decorators/project.decorator'
-import { User } from '@nuvix/core/decorators/project-user.decorator'
+import { Locale } from '@nuvix/core/decorators'
+import { AuthDatabase, Project } from '@nuvix/core/decorators'
+import { User } from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
-import { LocaleTranslator } from '@nuvix/core/helper/locale.helper'
-import { Models } from '@nuvix/core/helper/response.helper'
-import { ProjectGuard } from '@nuvix/core/resolvers/guards'
-import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor'
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
+import { LocaleTranslator } from '@nuvix/core/helpers'
+import { Models } from '@nuvix/core/helpers'
+import { ProjectGuard } from '@nuvix/core/resolvers'
+import { ApiInterceptor } from '@nuvix/core/resolvers'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
 import { MfaService } from './mfa.service'
 import {
   CreateMfaChallengeDTO,

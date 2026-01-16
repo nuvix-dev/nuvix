@@ -1,10 +1,10 @@
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
-import { Hook } from '@nuvix/core/server'
+import { Hook } from '../../server'
 import { configuration, Context, MetricFor, QueueFor } from '@nuvix/utils'
 import { Queue } from 'bullmq'
 import { StatsQueueOptions, StatsQueueJob } from '../queues'
-import { Auth } from '@nuvix/core/helper'
+import { Auth } from '../../helpers'
 import type { ProjectsDoc } from '@nuvix/utils/types'
 
 @Injectable()

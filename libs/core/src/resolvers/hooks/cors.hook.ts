@@ -4,10 +4,10 @@ import { Hook } from '../../server/hooks/interface'
 import {
   addOriginToVaryHeader,
   addAccessControlRequestHeadersToVaryHeader,
-} from '@nuvix/core/helper/vary.helper'
+} from '../../helpers/vary.helper'
 import { ProjectsDoc } from '@nuvix/utils/types'
-import { AppConfigService } from '@nuvix/core/config.service'
-import { Origin } from '@nuvix/core/validators/network/origin'
+import { AppConfigService } from '../../config.service'
+import { Origin } from '../../validators/network/origin'
 
 interface CorsOptions {
   origin?: string | false

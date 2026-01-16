@@ -7,13 +7,10 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 import { DatabaseService } from './database.service'
-import { ProjectGuard } from '@nuvix/core/resolvers/guards'
-import {
-  ResponseInterceptor,
-  ApiInterceptor,
-} from '@nuvix/core/resolvers/interceptors'
+import { ProjectGuard } from '@nuvix/core/resolvers'
+import { ResponseInterceptor, ApiInterceptor } from '@nuvix/core/resolvers'
 import { DataSource } from '@nuvix/pg'
-import { Models } from '@nuvix/core/helper'
+import { Models } from '@nuvix/core/helpers'
 import {
   Auth,
   AuthType,

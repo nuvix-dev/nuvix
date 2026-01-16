@@ -10,7 +10,7 @@
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch 'src/**' --watch '../../libs/**/*.ts'",
-    "start": "bun output/dist/main.js",
+    "start": "bun build/main.js",
     "prebuild": "../../scripts/merge-pkg.js server",
     "lint": "eslint \"src/**/*.ts\" --fix",
     "typecheck": "tsc --noEmit",
@@ -25,12 +25,14 @@
     "@apollo/server": "^4.12.2",
     "@nestjs/apollo": "^13.1.0",
     "@nestjs/graphql": "^13.1.0",
-    "@nuvix/core": "workspace:*",
-    "@nuvix/utils": "workspace:*",
     "@scalar/nestjs-api-reference": "^0.5.8",
     "canvas": "^3.1.0",
     "graphql": "^16.11.0",
     "sharp": "^0.34.2"
+  },
+  "devDependencies": {
+    "@nuvix/core": "workspace:*",
+    "@nuvix/utils": "workspace:*"
   },
   "trustedDependencies": [
     "@apollo/protobufjs",

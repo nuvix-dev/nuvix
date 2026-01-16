@@ -4,7 +4,7 @@ import { Database, Doc, DuplicateException, ID, Query } from '@nuvix/db'
 import { Exception } from '@nuvix/core/extend/exception'
 import type { ProjectsDoc, Topics } from '@nuvix/utils/types'
 import { InjectQueue } from '@nestjs/bullmq'
-import type { DeletesJobData } from '@nuvix/core/resolvers/queues/deletes.queue'
+import type { DeletesJobData } from '@nuvix/core/resolvers'
 import { QueueFor, DeleteType } from '@nuvix/utils'
 import { Queue } from 'bullmq'
 

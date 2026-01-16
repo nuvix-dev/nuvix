@@ -7,18 +7,15 @@ import path from 'path'
 
 import { Doc, Database, ID, Permission, Role } from '@nuvix/db'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Auth } from '@nuvix/core/helper/auth.helper'
-import { LocaleTranslator } from '@nuvix/core/helper/locale.helper'
-import { Detector } from '@nuvix/core/helper/detector.helper'
+import { Auth } from '@nuvix/core/helpers'
+import { LocaleTranslator } from '@nuvix/core/helpers'
+import { Detector } from '@nuvix/core/helpers'
 import { MfaType, TOTP } from '@nuvix/core/validators'
-import {
-  MailJob,
-  MailQueueOptions,
-} from '@nuvix/core/resolvers/queues/mails.queue'
+import { MailJob, MailQueueOptions } from '@nuvix/core/resolvers'
 import { QueueFor } from '@nuvix/utils'
-import { TOTP as TOTPChallenge } from '@nuvix/utils/auth/mfa/challenge/totp'
-import { Email as EmailChallenge } from '@nuvix/utils/auth/mfa/challenge/email'
-import { Phone as PhoneChallenge } from '@nuvix/utils/auth/mfa/challenge/phone'
+import { TOTPChallenge } from '@nuvix/utils/auth'
+import { EmailChallenge } from '@nuvix/utils/auth'
+import { PhoneChallenge } from '@nuvix/utils/auth'
 import { CreateMfaChallengeDTO, VerifyMfaChallengeDTO } from './DTO/mfa.dto'
 import type {
   AuthenticatorsDoc,
@@ -28,7 +25,7 @@ import type {
   UsersDoc,
 } from '@nuvix/utils/types'
 import { AppConfigService } from '@nuvix/core'
-import type { SmtpConfig } from '@nuvix/core/config/smtp.js'
+import type { SmtpConfig } from '@nuvix/core/config'
 
 @Injectable()
 export class MfaService {

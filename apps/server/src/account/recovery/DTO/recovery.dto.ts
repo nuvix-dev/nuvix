@@ -1,4 +1,4 @@
-import { IsUID } from '@nuvix/core/validators/input.validator.js'
+import { IsUID } from '@nuvix/core/validators'
 import { IsEmail, IsString, IsNotEmpty, IsUrl } from 'class-validator'
 
 export class CreateRecoveryDTO {

@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common'
 import { Exception } from '@nuvix/core/extend/exception'
-import { ID } from '@nuvix/core/helper/ID.helper'
+import { ID } from '@nuvix/core/helpers'
 import { configuration, MessageType } from '@nuvix/utils'
 import { CreateTargetDTO, UpdateTargetDTO } from './DTO/target.dto'
-import { EmailValidator } from '@nuvix/core/validators/email.validator'
-import { PhoneValidator } from '@nuvix/core/validators/phone.validator'
+import { EmailValidator } from '@nuvix/core/validators'
+import { PhoneValidator } from '@nuvix/core/validators'
 import {
   Database,
   Doc,

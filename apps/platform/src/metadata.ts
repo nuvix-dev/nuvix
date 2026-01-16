@@ -28,6 +28,9 @@ export default async () => {
     ['../../../libs/core/src/models/Key.model.js']: await import(
       '../../../libs/core/src/models/Key.model.js'
     ),
+    ['./projects/auth-settings/DTO/project-auth.dto.js']: await import(
+      './projects/auth-settings/DTO/project-auth.dto.js'
+    ),
   }
   return {
     '@nestjs/swagger': {
@@ -3379,351 +3382,6 @@ export default async () => {
           },
         ],
         [
-          import('./database/DTO/create-schema.dto.js'),
-          {
-            CreateSchema: {
-              name: {
-                required: true,
-                type: () => String,
-                pattern: '/^[a-z][a-z0-9_]{0,254}$/',
-              },
-              description: { required: false, type: () => String },
-              type: {
-                required: true,
-                enum: t['../../../libs/utils/src/constants.js'].SchemaType,
-              },
-            },
-            SchemaQueryDTO: {
-              type: {
-                required: false,
-                enum: t['../../../libs/utils/src/constants.js'].SchemaType,
-              },
-            },
-            SchemaParamsDTO: {
-              schemaId: {
-                required: true,
-                type: () => String,
-                description: 'Schema ID.',
-              },
-            },
-          },
-        ],
-        [
-          import('./users/DTO/user.dto.js'),
-          {
-            CreateUserDTO: {
-              userId: {
-                required: false,
-                type: () => String,
-                description:
-                  "User ID. Choose a custom ID or generate a random ID with `ID.unique()`. Valid chars are a-z, A-Z, 0-9, period, hyphen, and underscore. Can\\'t start with a special char. Max length is 36 chars.",
-              },
-              email: {
-                required: false,
-                type: () => String,
-                description: 'User email.',
-                format: 'email',
-              },
-              phone: {
-                required: false,
-                type: () => String,
-                description:
-                  "Phone number. Format this number with a leading \\'+\\' and a country code, e.g., +16175551212.",
-              },
-              password: {
-                required: false,
-                type: () => String,
-                description:
-                  'Plain text user password. Must be at least 8 chars.',
-                minLength: 8,
-              },
-              name: {
-                required: false,
-                type: () => String,
-                description: 'User name. Max length: 128 chars.',
-                minLength: 1,
-                maxLength: 128,
-              },
-            },
-            CreateUserWithShaDTO: {
-              passwordVersion: {
-                required: false,
-                type: () => String,
-                description:
-                  "Optional SHA version used to hash password. Allowed values are: 'sha1', 'sha224', 'sha256', 'sha384', 'sha512/224', 'sha512/256', 'sha512', 'sha3-224', 'sha3-256', 'sha3-384', 'sha3-512'",
-                pattern:
-                  '/^(sha1|sha224|sha256|sha384|sha512\\/224|sha512\\/256|sha512|sha3-224|sha3-256|sha3-384|sha3-512)$/',
-              },
-            },
-            CreateUserWithScryptDTO: {
-              passwordSalt: {
-                required: false,
-                type: () => String,
-                description: 'Optional salt used to hash password.',
-                minLength: 1,
-                maxLength: 128,
-              },
-              passwordCpu: {
-                required: false,
-                type: () => Number,
-                description: 'Optional CPU cost used to hash password.',
-              },
-              passwordMemory: {
-                required: false,
-                type: () => Number,
-                description: 'Optional memory cost used to hash password.',
-              },
-              passwordParallel: {
-                required: false,
-                type: () => Number,
-                description:
-                  'Optional parallelization cost used to hash password.',
-              },
-              passwordLength: {
-                required: false,
-                type: () => Number,
-                description: 'Optional hash length used to hash password.',
-              },
-            },
-            CreateUserWithScryptModifedDTO: {
-              passwordSalt: {
-                required: false,
-                type: () => String,
-                description: 'Salt used to hash password.',
-                minLength: 1,
-                maxLength: 128,
-              },
-              passwordSaltSeparator: {
-                required: false,
-                type: () => String,
-                description: 'Salt separator used to hash password.',
-                minLength: 1,
-                maxLength: 128,
-              },
-              passwordSignerKey: {
-                required: false,
-                type: () => String,
-                description: 'Signer key used to hash password.',
-                minLength: 1,
-                maxLength: 128,
-              },
-            },
-            UpdateUserStatusDTO: {
-              status: {
-                required: true,
-                type: () => Boolean,
-                description:
-                  'User Status. To activate the user pass `true` and to block the user pass `false`.',
-              },
-            },
-            UpdateUserLabelDTO: {
-              labels: {
-                required: false,
-                type: () => [String],
-                pattern: '/^[a-zA-Z0-9]{1,36}$/',
-              },
-            },
-            UpdateUserPoneVerificationDTO: {
-              phoneVerification: {
-                required: true,
-                type: () => Boolean,
-                description: 'User phone verification status.',
-              },
-            },
-            UpdateUserEmailVerificationDTO: {
-              emailVerification: {
-                required: true,
-                type: () => Boolean,
-                description: 'User email verification status.',
-              },
-            },
-            UpdateUserNameDTO: {
-              name: {
-                required: true,
-                type: () => String,
-                description: 'User name. Max length: 128 chars.',
-                minLength: 1,
-                maxLength: 128,
-              },
-            },
-            UpdateUserPasswordDTO: {
-              password: {
-                required: true,
-                type: () => String,
-                description: 'New user password. Must be at least 8 chars.',
-                minLength: 8,
-              },
-            },
-            UpdateUserEmailDTO: {
-              email: {
-                required: true,
-                type: () => String,
-                description: 'User email.',
-                format: 'email',
-              },
-            },
-            UpdateUserPhoneDTO: {
-              phone: {
-                required: true,
-                type: () => String,
-                description: 'User phone number.',
-              },
-            },
-            UpdateUserPrefsDTO: {
-              prefs: {
-                required: false,
-                type: () => Object,
-                description: 'Prefs key-value JSON object.',
-              },
-            },
-            UserParamDTO: {
-              userId: {
-                required: true,
-                type: () => String,
-                description: 'User ID.',
-              },
-            },
-            IdentityParamDTO: {
-              identityId: {
-                required: true,
-                type: () => String,
-                description: 'Identity ID.',
-              },
-            },
-            RangeQueryDTO: {
-              range: {
-                required: false,
-                type: () => String,
-                description: 'Date range.',
-                default: '30d',
-              },
-            },
-          },
-        ],
-        [
-          import('./users/DTO/token.dto.js'),
-          {
-            CreateTokenDTO: {
-              length: {
-                required: true,
-                type: () => Number,
-                description:
-                  'Token length in characters. The default length is 6 characters',
-                default: 6,
-                minimum: 4,
-                maximum: 128,
-              },
-              expire: {
-                required: true,
-                type: () => Number,
-                description: 'Token expiration period in seconds.',
-                minimum: 60,
-              },
-            },
-          },
-        ],
-        [
-          import('./users/DTO/jwt.dto.js'),
-          {
-            CreateJwtDTO: {
-              sessionId: {
-                required: false,
-                type: () => String,
-                description:
-                  "Session ID. Use the string \\'recent\\' to use the most recent session. Defaults to the most recent session.",
-                default: 'recent',
-              },
-              duration: {
-                required: true,
-                type: () => Number,
-                description:
-                  'Time in seconds before JWT expires. Default duration is 900 seconds, and maximum is 3600 seconds.',
-                default: 900,
-                minimum: 0,
-                maximum: 3600,
-              },
-            },
-          },
-        ],
-        [
-          import('./users/sessions/DTO/session.dto.js'),
-          {
-            SessionParamDTO: {
-              sessionId: {
-                required: true,
-                type: () => String,
-                description: 'Session ID.',
-              },
-            },
-          },
-        ],
-        [
-          import('./users/targets/DTO/target.dto.js'),
-          {
-            CreateTargetDTO: {
-              targetId: {
-                required: true,
-                type: () => String,
-                description:
-                  "Target ID. Choose a custom ID or generate a random ID with `ID.unique()`. Valid chars are a-z, A-Z, 0-9, period, hyphen, and underscore. Can\\'t start with a special char. Max length is 36 chars.",
-              },
-              providerType: {
-                required: true,
-                type: () => String,
-                description:
-                  'The target provider type. Can be one of the following: `email`, `sms` or `push`.',
-              },
-              identifier: {
-                required: true,
-                type: () => String,
-                description: 'The target identifier (token, email, phone etc.)',
-                minLength: 1,
-              },
-              providerId: {
-                required: false,
-                type: () => String,
-                description:
-                  'Provider ID. Message will be sent to this target from the specified provider ID. If no provider ID is set the first setup provider will be used.',
-              },
-              name: {
-                required: true,
-                type: () => String,
-                description:
-                  'Target name. Max length: 128 chars. For example: My Awesome App Galaxy S24.',
-                minLength: 1,
-                maxLength: 128,
-              },
-            },
-            UpdateTargetDTO: {},
-            TargetParamDTO: {
-              targetId: {
-                required: true,
-                type: () => String,
-                description: 'Target ID.',
-              },
-            },
-          },
-        ],
-        [
-          import('./users/mfa/DTO/mfa.dto.js'),
-          {
-            UpdateMfaStatusDTO: {
-              mfa: {
-                required: true,
-                type: () => Boolean,
-                description: 'Enable or disable MFA.',
-              },
-            },
-            MfaTypeParamDTO: {
-              type: {
-                required: true,
-                type: () => String,
-                description: 'Type of authenticator.',
-              },
-            },
-          },
-        ],
-        [
           import('./account/DTO/account.dto.js'),
           {
             CreateAccountDTO: {
@@ -3810,125 +3468,7 @@ export default async () => {
           },
         ],
         [
-          import('./account/DTO/verification.dto.js'),
-          {
-            CreateEmailVerificationDTO: {
-              url: {
-                required: false,
-                type: () => String,
-                description:
-                  'URL to redirect the user back to your app from the verification email. Only URLs from hostnames in your project platform list are allowed. This requirement helps to prevent an [open redirect](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html) attack against your project API.',
-                format: 'uri',
-              },
-            },
-            UpdateEmailVerificationDTO: {
-              userId: {
-                required: true,
-                type: () => String,
-                description: 'User ID.',
-              },
-              secret: {
-                required: true,
-                type: () => String,
-                description: 'Valid verification token.',
-              },
-            },
-            UpdatePhoneVerificationDTO: {},
-          },
-        ],
-        [
-          import('./account/identities/DTO/identity.dto.js'),
-          {
-            IdentityIdParamDTO: {
-              identityId: {
-                required: true,
-                type: () => String,
-                description: 'Identity ID.',
-              },
-            },
-          },
-        ],
-        [
-          import('./account/mfa/DTO/mfa.dto.js'),
-          {
-            UpdateAccountMfaDTO: {
-              mfa: {
-                required: true,
-                type: () => Boolean,
-                description: 'Enable or disable MFA.',
-              },
-            },
-            MfaAuthenticatorTypeParamDTO: {
-              type: {
-                required: true,
-                type: () => String,
-                description: 'Type of authenticator. Must be `totp`',
-              },
-            },
-            VerifyMfaAuthenticatorDTO: {
-              otp: {
-                required: true,
-                type: () => String,
-                description: 'Valid verification token.',
-              },
-            },
-            CreateMfaChallengeDTO: {
-              factor: { required: true, type: () => String },
-            },
-            VerifyMfaChallengeDTO: {
-              challengeId: {
-                required: true,
-                type: () => String,
-                description: 'ID of the challenge.',
-              },
-              otp: {
-                required: true,
-                type: () => String,
-                description: 'Valid verification token.',
-              },
-            },
-          },
-        ],
-        [
-          import('./account/recovery/DTO/recovery.dto.js'),
-          {
-            CreateRecoveryDTO: {
-              email: {
-                required: true,
-                type: () => String,
-                description: 'User email.',
-                format: 'email',
-              },
-              url: {
-                required: true,
-                type: () => String,
-                description:
-                  'URL to redirect the user back to your app from the recovery email. Only URLs from hostnames in your project platform list are allowed. This requirement helps to prevent an [open redirect](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html) attack against your project API.',
-                format: 'uri',
-              },
-            },
-            UpdateRecoveryDTO: {
-              userId: {
-                required: true,
-                type: () => String,
-                description: 'User ID.',
-              },
-              secret: {
-                required: true,
-                type: () => String,
-                description: 'Valid reset token.',
-              },
-              password: {
-                required: true,
-                type: () => String,
-                description:
-                  'New user password. Must be between 8 and 256 chars.',
-              },
-            },
-          },
-        ],
-        [
-          import('./account/sessions/DTO/session.dto.js'),
+          import('./account/DTO/session.dto.js'),
           {
             CreateEmailSessionDTO: {
               email: {
@@ -3944,1528 +3484,1175 @@ export default async () => {
                 minLength: 8,
               },
             },
-            CreateSessionDTO: {
-              userId: {
+          },
+        ],
+        [
+          import('./projects/DTO/create-project.dto.js'),
+          {
+            CreateProjectDTO: {
+              projectId: {
                 required: true,
                 type: () => String,
                 description:
-                  "User ID. Choose a custom ID or generate a random ID with `ID.unique()`. Valid chars are a-z, A-Z, 0-9, period, hyphen, and underscore. Can\\'t start with a special char. Max length is 36 chars.",
+                  "Unique Id. Choose a custom ID or generate a random ID with `ID.unique()`. Valid chars are a-z, and hyphen. Can\\'t start with a special char. Max length is 36 chars.'",
               },
-              secret: {
+              name: {
                 required: true,
                 type: () => String,
-                description:
-                  'Secret of a token generated by login methods. For example, the `createMagicURLToken` or `createPhoneToken` methods.',
-                minLength: 200,
-                maxLength: 256,
+                description: 'Project name. Max length: 128 chars.',
               },
-            },
-            CreateOAuth2SessionDTO: {
-              success: {
-                required: false,
-                type: () => String,
-                description:
-                  "URL to redirect back to your app after a successful login attempt.  Only URLs from hostnames in your project\\'s platform list are allowed. This requirement helps to prevent an [open redirect](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html) attack against your project API.",
-                format: 'uri',
-              },
-              failure: {
-                required: false,
-                type: () => String,
-                description:
-                  "URL to redirect back to your app after a failed login attempt.  Only URLs from hostnames in your project\\'s platform list are allowed. This requirement helps to prevent an [open redirect](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html) attack against your project API.",
-                format: 'uri',
-              },
-              scopes: { required: false, type: () => [String] },
-            },
-            OAuth2CallbackDTO: {
-              code: {
-                required: false,
-                type: () => String,
-                description:
-                  'OAuth2 code. This is a temporary code that the will be later exchanged for an access token.',
-                maxLength: 2048,
-              },
-              state: {
-                required: false,
-                type: () => String,
-                description: 'Login state params.',
-                maxLength: 2048,
-              },
-              error: {
-                required: false,
-                type: () => String,
-                description: 'Error code returned from the OAuth2 provider.',
-                maxLength: 2048,
-              },
-              error_description: {
-                required: false,
-                type: () => String,
-                description:
-                  'Human-readable text providing additional information about the error returned from the OAuth2 provider.',
-                maxLength: 2048,
-              },
-            },
-            ProviderParamDTO: {
-              provider: { required: true, type: () => Object },
-            },
-            SessionsParamDTO: {
-              sessionId: {
+              teamId: {
                 required: true,
                 type: () => String,
-                description:
-                  "Session ID. Use the string \\'current\\' to refer current device session.",
+                description: 'Team unique ID.',
+              },
+              password: {
+                required: true,
+                type: () => String,
+                description: 'Database password.',
+                minLength: 6,
+              },
+              region: {
+                required: true,
+                type: () => String,
+                description: 'Project Region.',
+              },
+              description: {
+                required: false,
+                type: () => String,
+                description: 'Project description. Max length: 256 chars.',
+              },
+              logo: {
+                required: false,
+                type: () => String,
+                description: 'Project logo.',
+              },
+              url: {
+                required: false,
+                type: () => String,
+                description: 'Project URL.',
               },
             },
-            OAuth2CallbackParamDTO: {
+            ProjectParamsDTO: {
               projectId: {
                 required: true,
                 type: () => String,
                 description: 'Project ID.',
               },
-              provider: { required: true, type: () => Object },
             },
           },
         ],
         [
-          import('./account/sessions/DTO/token.dto.js'),
+          import('./projects/DTO/update-project.dto.js'),
           {
-            CreateOAuth2TokenDTO: {
-              success: {
+            UpdateProjectDTO: {},
+            UpdateProjectTeamDTO: {
+              teamId: {
+                required: true,
+                type: () => String,
+                description: 'Team ID of the team to transfer project to.',
+              },
+            },
+          },
+        ],
+        [
+          import('./projects/DTO/project-service.dto.js'),
+          {
+            UpdateProjectServiceDTO: {
+              service: {
+                required: true,
+                type: () => String,
+                description: 'Service name.',
+              },
+              status: {
+                required: true,
+                type: () => Boolean,
+                description: 'Service status.',
+              },
+            },
+            UpdateProjectAllServiceDTO: {},
+          },
+        ],
+        [
+          import('./projects/DTO/project-api.dto.js'),
+          {
+            ProjectApiStatusDTO: {
+              api: {
+                required: true,
+                type: () => String,
+                description: 'API name.',
+              },
+              status: {
+                required: true,
+                type: () => Boolean,
+                description: 'API status.',
+              },
+            },
+            ProjectApiStatusAllDTO: {},
+          },
+        ],
+        [
+          import('./projects/DTO/oauth2.dto.js'),
+          {
+            oAuth2DTO: {
+              provider: {
+                required: true,
+                type: () => String,
+                description: 'Provider Name',
+              },
+              appId: {
                 required: false,
                 type: () => String,
-                description:
-                  "URL to redirect back to your app after a successful login attempt.  Only URLs from hostnames in your project\\'s platform list are allowed. This requirement helps to prevent an [open redirect](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html) attack against your project API.",
-                format: 'uri',
+                description: 'Provider app ID. Max length: 256 chars.',
+                maxLength: 256,
               },
-              failure: {
+              secret: {
                 required: false,
                 type: () => String,
-                description:
-                  "URL to redirect back to your app after a failed login attempt.  Only URLs from hostnames in your project\\'s platform list are allowed. This requirement helps to prevent an [open redirect](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html) attack against your project API.",
-                format: 'uri',
+                description: 'Provider secret key. Max length: 512 chars.',
+                maxLength: 512,
               },
+              enabled: {
+                required: false,
+                type: () => Boolean,
+                description:
+                  "Provider status. Set to \\'false\\' to disable new session creation.",
+              },
+            },
+          },
+        ],
+        [
+          import('./projects/DTO/create-jwt.dto.js'),
+          {
+            CreateJwtDTO: {
               scopes: {
                 required: true,
                 type: () => [String],
-                description: 'Array of OAuth2 scopes.',
+                description: 'Api Scopes.',
               },
-            },
-            CreateMagicURLTokenDTO: {
-              userId: {
+              duration: {
                 required: true,
-                type: () => String,
-                description:
-                  "Unique Id. Choose a custom ID or generate a random ID with `ID.unique()`. Valid chars are a-z, A-Z, 0-9, period, hyphen, and underscore. Can\\'t start with a special char. Max length is 36 chars. If the email address has never been used, a new account is created using the provided userId. Otherwise, if the email address is already attached to an account, the user ID is ignored.",
-              },
-              email: {
-                required: true,
-                type: () => String,
-                description: 'User email.',
-                format: 'email',
-              },
-              url: {
-                required: false,
-                type: () => String,
-                description:
-                  'URL to redirect the user back to your app from the magic URL login. Only URLs from hostnames in your project platform list are allowed. This requirement helps to prevent an [open redirect](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html) attack against your project API.',
-                format: 'uri',
-              },
-              phrase: {
-                required: false,
-                type: () => Boolean,
-                description:
-                  'Toggle for security phrase. If enabled, email will be send with a randomly generated phrase and the phrase will also be included in the response. Confirming phrases match increases the security of your authentication flow.',
-                default: false,
-              },
-            },
-            CreateEmailTokenDTO: {},
-            CreatePhoneTokenDTO: {
-              phone: {
-                required: true,
-                type: () => String,
-                description:
-                  "Phone number. Format this number with a leading \\'+\\' and a country code, e.g., +16175551212.",
+                type: () => Number,
+                description: 'Duration in seconds (max 1 hour).',
+                minimum: 0,
+                maximum: 3600,
               },
             },
           },
         ],
         [
-          import('./account/targets/DTO/target.dto.js'),
+          import('./projects/DTO/smtp.dto.js'),
           {
-            CreatePushTargetDTO: {
-              targetId: {
-                required: true,
-                type: () => String,
-                description:
-                  "Target ID. Choose a custom ID or generate a random ID with `ID.unique()`. Valid chars are a-z, A-Z, 0-9, period, hyphen, and underscore. Can\\'t start with a special char. Max length is 36 chars.",
-              },
-              identifier: {
-                required: true,
-                type: () => String,
-                description: 'The target identifier (token, email, phone etc.)',
-              },
-              providerId: {
-                required: false,
-                type: () => String,
-                description:
-                  'Provider ID. Message will be sent to this target from the specified provider ID. If no provider ID is set the first setup provider will be used.',
-              },
-            },
-            UpdatePushTargetDTO: {},
-            TargetIdParamDTO: {
-              targetId: {
-                required: true,
-                type: () => String,
-                description: 'Target ID.',
-              },
-            },
-          },
-        ],
-        [
-          import('./teams/DTO/team.dto.js'),
-          {
-            CreateTeamDTO: {
-              teamId: {
-                required: true,
-                type: () => String,
-                description:
-                  "Team ID. Choose a custom ID or generate a random ID with `ID.unique()`. Valid chars are a-z, A-Z, 0-9, period, hyphen, and underscore. Can\\'t start with a special char. Max length is 36 chars.",
-              },
-              name: {
-                required: true,
-                type: () => String,
-                description: 'Team name. Max length: 128 chars.',
-                minLength: 1,
-                maxLength: 128,
-              },
-              roles: {
-                required: false,
-                type: () => [String],
-                minLength: 1,
-                maxLength: 32,
-              },
-            },
-            UpdateTeamDTO: {},
-            UpdateTeamPrefsDTO: {
-              prefs: {
-                required: false,
-                type: () => Object,
-                description: 'Prefs key-value JSON object.',
-              },
-            },
-            TeamsParamDTO: {
-              teamId: {
-                required: true,
-                type: () => String,
-                description: 'Team ID.',
-              },
-            },
-          },
-        ],
-        [
-          import('./teams/memberships/DTO/membership.dto.js'),
-          {
-            CreateMembershipDTO: {
-              email: {
-                required: false,
-                type: () => String,
-                description: 'Email of the new team member.',
-                format: 'email',
-              },
-              userId: {
-                required: false,
-                type: () => String,
-                description: 'ID of the user to be added to a team.',
-              },
-              phone: {
-                required: false,
-                type: () => String,
-                description:
-                  "Phone number. Format this number with a leading \\'+\\' and a country code, e.g., +16175551212.",
-              },
-              roles: {
-                required: true,
-                type: () => [String],
-                description:
-                  'Array of strings. Use this param to set the user roles in the team. A role can be any string. Learn more about [roles and permissions](https://docs.nuvix.in/permissions).',
-              },
-              url: {
-                required: false,
-                type: () => String,
-                description:
-                  'URL to redirect the user back to your app from the invitation email. This parameter is not required when an API key is supplied. Only URLs from hostnames in your project platform list are allowed. This requirement helps to prevent an [open redirect](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html) attack against your project API.',
-                format: 'uri',
-              },
-              name: {
-                required: false,
-                type: () => String,
-                description: 'Name of the new team member.',
-                maxLength: 128,
-              },
-            },
-            UpdateMembershipDTO: {
-              roles: {
-                required: true,
-                type: () => [String],
-                description:
-                  "An array of strings. Use this param to set the user\\'s roles in the team. A role can be any string. Learn more about [roles and permissions](https://docs.nuvix.in/permissions).",
-              },
-            },
-            UpdateMembershipStatusDTO: {
-              userId: {
-                required: true,
-                type: () => String,
-                description: 'User ID.',
-              },
-              secret: {
-                required: true,
-                type: () => String,
-                description: 'Secret key.',
-                maxLength: 256,
-              },
-            },
-            MembershipParamDTO: {
-              membershipId: {
-                required: true,
-                type: () => String,
-                description: 'Membership ID.',
-              },
-            },
-          },
-        ],
-        [
-          import('./storage/DTO/bucket.dto.js'),
-          {
-            CreateBucketDTO: {
-              bucketId: {
-                required: true,
-                type: () => String,
-                description:
-                  "Unique Id. Choose a custom ID or generate a random ID with `ID.unique()`. Valid chars are a-z, A-Z, 0-9, period, hyphen, and underscore. Can\\'t start with a special char. Max length is 36 chars.",
-              },
-              name: {
-                required: true,
-                type: () => String,
-                description: 'Bucket name',
-                maxLength: 128,
-              },
-              permissions: {
-                required: true,
-                type: () => [String],
-                description:
-                  'An array of permission strings. By default, no user is granted with any permissions. [Learn more about permissions](https://docs.nuvix.in/permissions).',
-              },
-              fileSecurity: {
-                required: true,
-                type: () => Boolean,
-                description:
-                  'Enables configuring permissions for individual file. A user needs one of file or bucket level permissions to access a file. [Learn more about permissions](https://docs.nuvix.in/permissions).',
-                default: false,
-              },
+            UpdateSmtpDTO: {
               enabled: {
                 required: true,
                 type: () => Boolean,
-                description:
-                  "Is bucket enabled? When set to \\'disabled\\', users cannot access the files in this bucket but Server SDKs with and API key can still access the bucket. No files are lost when this is toggled.",
-                default: true,
+                description: 'Enable custom SMTP service',
               },
-              maximumFileSize: {
-                required: true,
-                type: () => Number,
-                description: 'Maximum file size allowed in bytes.',
-                minimum: 1,
-              },
-              allowedFileExtensions: {
-                required: true,
-                type: () => [String],
-                description: 'Allowed file extensions.',
-              },
-              compression: {
-                required: true,
-                type: () => String,
-                description: 'Compression algorithm choosen for compression.',
-                default: 'none',
-              },
-              encryption: {
-                required: true,
-                type: () => Boolean,
-                description: 'Is encryption enabled?',
-                default: false,
-              },
-              antivirus: {
-                required: true,
-                type: () => Boolean,
-                description: 'Is virus scanning enabled?',
-                default: false,
-              },
-            },
-            UpdateBucketDTO: {},
-            BucketParamsDTO: {
-              bucketId: {
-                required: true,
-                type: () => String,
-                description: 'Bucket ID.',
-              },
-            },
-            UsageQueryDTO: {
-              range: {
+              senderName: {
                 required: false,
                 type: () => String,
-                description: 'Date range.',
-                default: '30d',
-              },
-            },
-          },
-        ],
-        [
-          import('./storage/files/DTO/file.dto.js'),
-          {
-            CreateFileDTO: {
-              fileId: { required: true, type: () => String },
-              permissions: {
-                required: false,
-                type: () => [String],
-                description:
-                  'An array of permission strings. By default, only the current user is granted all permissions. [Learn more about permissions](https://docs.nuvix.in/permissions).',
-              },
-            },
-            UpdateFileDTO: {
-              name: {
-                required: false,
-                type: () => String,
-                description: 'A name for the file (1-255 characters).',
-                minLength: 1,
+                description: 'Name of the email sender',
+                minLength: 0,
                 maxLength: 255,
               },
-            },
-            FileParamsDTO: {
-              fileId: {
-                required: true,
-                type: () => String,
-                description: 'The file ID.',
-              },
-            },
-            PreviewFileQueryDTO: {
-              width: {
-                required: false,
-                type: () => Number,
-                description:
-                  'Resize preview image width, integer between 0 and 4000.',
-                minimum: 0,
-                maximum: 4000,
-              },
-              height: {
-                required: false,
-                type: () => Number,
-                description:
-                  'Resize preview image height, integer between 0 and 4000.',
-                minimum: 0,
-                maximum: 4000,
-              },
-              gravity: {
+              senderEmail: {
                 required: false,
                 type: () => String,
-                description: 'Image crop gravity.',
-              },
-              quality: {
-                required: false,
-                type: () => Number,
-                description:
-                  'Preview image quality, integer between 0 and 100.',
-                minimum: 0,
-                maximum: 100,
-              },
-              borderWidth: {
-                required: false,
-                type: () => Number,
-                description:
-                  'Preview image border in pixels, integer between 0 and 100.',
-                minimum: 0,
-                maximum: 100,
-              },
-              borderColor: {
-                required: false,
-                type: () => String,
-                description:
-                  'Preview image border color, valid HEX without # prefix.',
-              },
-              borderRadius: {
-                required: false,
-                type: () => Number,
-                description:
-                  'Preview image border radius in pixels, integer between 0 and 4000.',
-                minimum: 0,
-                maximum: 4000,
-              },
-              opacity: {
-                required: false,
-                type: () => Number,
-                description: 'Preview image opacity, number between 0 and 1.',
-                minimum: 0,
-                maximum: 1,
-              },
-              rotation: {
-                required: false,
-                type: () => Number,
-                description:
-                  'Preview image rotation in degrees, integer between -360 and 360.',
-                minimum: -360,
-                maximum: 360,
-              },
-              background: {
-                required: false,
-                type: () => String,
-                description:
-                  'Preview image background color, valid HEX without # prefix.',
-              },
-              output: {
-                required: false,
-                type: () => String,
-                description: 'Output format type (jpeg, jpg, png, gif, webp).',
-              },
-            },
-          },
-        ],
-        [
-          import('./messaging/DTO/message.dto.js'),
-          {
-            CreateEmailMessageDTO: {
-              subject: {
-                required: true,
-                type: () => String,
-                description: 'Email Subject.',
-                maxLength: 998,
-              },
-              content: {
-                required: true,
-                type: () => String,
-                description: 'Email Content.',
-                maxLength: 64230,
-              },
-              cc: {
-                required: false,
-                type: () => [String],
-                description: 'Array of target IDs to be added as CC.',
-              },
-              bcc: {
-                required: false,
-                type: () => [String],
-                description: "Array of target IDs to be added as BCC.'",
-              },
-              attachments: {
-                required: false,
-                type: () => [String],
-                description:
-                  'Array of compound ID strings of bucket IDs and file IDs to be attached to the email. They should be formatted as <BUCKET_ID>:<FILE_ID>.',
-              },
-              html: {
-                required: false,
-                type: () => Boolean,
-                description: 'Is content of type HTML',
-              },
-            },
-            CreateSmsMessageDTO: {
-              content: {
-                required: true,
-                type: () => String,
-                description: 'SMS Content.',
-                maxLength: 64230,
-              },
-            },
-            CreatePushMessageDTO: {
-              title: {
-                required: false,
-                type: () => String,
-                description: 'Title for push notification.',
-                maxLength: 256,
-              },
-              body: {
-                required: false,
-                type: () => String,
-                description: 'Body for push notification.',
-                maxLength: 64230,
-              },
-              data: {
-                required: false,
-                type: () => Object,
-                description:
-                  'Additional key-value pair data for push notification.',
-              },
-              action: {
-                required: false,
-                type: () => String,
-                description: 'Action for push notification.',
-                maxLength: 256,
-              },
-              image: {
-                required: false,
-                type: () => String,
-                description:
-                  'Image for push notification. Must be a compound bucket ID to file ID of a jpeg, png, or bmp image in Nuvix Storage. It should be formatted as <BUCKET_ID>:<FILE_ID>.',
-              },
-              icon: {
-                required: false,
-                type: () => String,
-                description:
-                  'Icon for push notification. Available only for Android and Web Platform.',
-                maxLength: 256,
-              },
-              sound: {
-                required: false,
-                type: () => String,
-                description:
-                  'Sound for push notification. Available only for Android and iOS Platform.',
-                maxLength: 256,
-              },
-              color: {
-                required: false,
-                type: () => String,
-                description:
-                  'Color for push notification. Available only for Android Platform.',
-                maxLength: 256,
-              },
-              tag: {
-                required: false,
-                type: () => String,
-                description:
-                  'Tag for push notification. Available only for Android Platform.',
-                maxLength: 256,
-              },
-              badge: {
-                required: false,
-                type: () => Number,
-                description:
-                  'Badge for push notification. Available only for iOS Platform.',
-                minimum: -1,
-              },
-              contentAvailable: {
-                required: false,
-                type: () => Boolean,
-                description:
-                  'If set to true, the notification will be delivered in the background. Available only for iOS Platform.',
-              },
-              critical: {
-                required: false,
-                type: () => Boolean,
-                description:
-                  'If set to true, the notification will be marked as critical. This requires the app to have the critical notification entitlement. Available only for iOS Platform.',
-              },
-              priority: {
-                required: false,
-                type: () => Object,
-                description:
-                  'Set the notification priority. "normal" will consider device state and may not deliver notifications immediately. "high" will always attempt to immediately deliver the notification.',
-                default: 'high',
-              },
-            },
-            UpdateEmailMessageDTO: {},
-            UpdateSmsMessageDTO: {},
-            UpdatePushMessageDTO: {},
-            MessageParamsDTO: {
-              messageId: {
-                required: true,
-                type: () => String,
-                description: 'Message ID.',
-              },
-            },
-          },
-        ],
-        [
-          import('./messaging/providers/DTO/base.dto.js'),
-          {
-            CreateProviderDTO: {
-              providerId: {
-                required: true,
-                type: () => String,
-                description:
-                  "Provider ID. Choose a custom ID or generate a random ID with `ID.unique()`. Valid chars are a-z, A-Z, 0-9, period, hyphen, and underscore. Can\\'t start with a special char. Max length is 36 chars.",
-              },
-              name: {
-                required: true,
-                type: () => String,
-                description: 'Provider name.',
-                maxLength: 128,
-              },
-              enabled: {
-                required: false,
-                type: () => Boolean,
-                description: 'Set as enabled.',
-              },
-            },
-            ProviderParamsDTO: {
-              providerId: {
-                required: true,
-                type: () => String,
-                description: 'Provider ID.',
-              },
-            },
-          },
-        ],
-        [
-          import('./messaging/providers/DTO/mailgun.dto.js'),
-          {
-            CreateMailgunProviderDTO: {
-              apiKey: {
-                required: false,
-                type: () => String,
-                description: 'Mailgun API Key.',
-              },
-              domain: {
-                required: false,
-                type: () => String,
-                description: 'Mailgun Domain.',
-              },
-              isEuRegion: {
-                required: false,
-                type: () => Boolean,
-                description: 'Set as EU region.',
-              },
-              fromName: {
-                required: false,
-                type: () => String,
-                description: 'Sender Name.',
-                maxLength: 128,
-              },
-              fromEmail: {
-                required: false,
-                type: () => String,
-                description: 'Sender email address.',
+                description: 'Email of the sender',
                 format: 'email',
               },
-              replyToName: {
+              replyTo: {
                 required: false,
                 type: () => String,
-                description:
-                  'Name set in the reply to field for the mail. Default value is sender name. Reply to name must have reply to email as well.',
-                maxLength: 128,
-              },
-              replyToEmail: {
-                required: false,
-                type: () => String,
-                description:
-                  'Email set in the reply to field for the mail. Default value is sender email. Reply to email must have reply to name as well.',
+                description: 'Reply to email',
                 format: 'email',
               },
-            },
-            UpdateMailgunProviderDTO: {},
-          },
-        ],
-        [
-          import('./messaging/providers/DTO/sendgrid.dto.js'),
-          {
-            CreateSendgridProviderDTO: {
-              apiKey: {
-                required: true,
-                type: () => String,
-                description: 'Sendgrid API key.',
-              },
-              fromName: {
-                required: false,
-                type: () => String,
-                description: 'Sender Name.',
-                maxLength: 128,
-              },
-              fromEmail: {
-                required: false,
-                type: () => String,
-                description: 'Sender email address.',
-                format: 'email',
-              },
-              replyToName: {
-                required: false,
-                type: () => String,
-                description:
-                  'Name set in the reply to field for the mail. Default value is sender name.',
-                maxLength: 128,
-              },
-              replyToEmail: {
-                required: false,
-                type: () => String,
-                description:
-                  'Email set in the reply to field for the mail. Default value is sender email.',
-                format: 'email',
-              },
-            },
-            UpdateSendgridProviderDTO: {},
-          },
-        ],
-        [
-          import('./messaging/providers/DTO/twilio.dto.js'),
-          {
-            CreateTwilioProviderDTO: {
-              from: {
-                required: false,
-                type: () => String,
-                description:
-                  "Sender Phone number. Format this number with a leading \\'+\\' and a country code, e.g., +16175551212.",
-              },
-              accountSid: {
-                required: false,
-                type: () => String,
-                description: 'Twilio account secret ID.',
-              },
-              authToken: {
-                required: false,
-                type: () => String,
-                description: 'Twilio authentication token.',
-              },
-            },
-            UpdateTwilioProviderDTO: {},
-          },
-        ],
-        [
-          import('./messaging/providers/DTO/smtp.dto.js'),
-          {
-            CreateSMTPProviderDTO: {
               host: {
-                required: true,
+                required: false,
                 type: () => String,
-                description:
-                  'SMTP hosts. Either a single hostname or multiple semicolon-delimited hostnames. You can also specify a different port for each host such as `smtp1.example.com:25;smtp2.example.com`. You can also specify encryption type, for example: `tls://smtp1.example.com:587;ssl://smtp2.example.com:465"`. Hosts will be tried in order.',
+                description: 'SMTP server host name',
               },
               port: {
                 required: false,
                 type: () => Number,
-                description: 'The default SMTP server port.',
-                default: 587,
-                minimum: 1,
-                maximum: 65535,
+                description: 'SMTP server port',
               },
               username: {
                 required: false,
                 type: () => String,
-                description: 'Authentication username.',
+                description: 'SMTP server username',
               },
               password: {
                 required: false,
                 type: () => String,
-                description: 'Authentication password.',
+                description: 'SMTP server password',
               },
-              encryption: {
+              secure: {
                 required: false,
+                type: () => Object,
+                description: "Does SMTP server use secure connection'",
+              },
+            },
+            SmtpTestsDTO: {
+              emails: {
+                required: true,
+                type: () => [String],
+                description:
+                  'Array of emails to send test email to. Maximum of 10 emails are allowed.',
+                format: 'email',
+                maxItems: 10,
+              },
+              senderName: {
+                required: true,
                 type: () => String,
-                description: "Encryption type. Can be omitted, 'ssl' or 'tls'",
-                default: 'none',
+                description: 'Name of the email sender',
+                minLength: 0,
+                maxLength: 255,
               },
-              autoTLS: {
-                required: false,
-                type: () => Boolean,
-                description: 'Enable SMTP AutoTLS feature.',
-                default: true,
-              },
-              mailer: {
-                required: false,
+              senderEmail: {
+                required: true,
                 type: () => String,
-                description: 'The value to use for the X-Mailer header.',
-              },
-              fromName: {
-                required: false,
-                type: () => String,
-                description: 'Sender Name.',
-                maxLength: 128,
-              },
-              fromEmail: {
-                required: false,
-                type: () => String,
-                description: 'Sender email address.',
+                description: 'Email of the sender',
                 format: 'email',
               },
-              replyToName: {
+              replyTo: {
                 required: false,
                 type: () => String,
-                description:
-                  'Name set in the reply to field for the mail. Default value is sender name.',
-                maxLength: 128,
-              },
-              replyToEmail: {
-                required: false,
-                type: () => String,
-                description:
-                  'Email set in the reply to field for the mail. Default value is sender email.',
+                description: 'Reply to email',
                 format: 'email',
               },
-            },
-            UpdateSMTPProviderDTO: {},
-          },
-        ],
-        [
-          import('./messaging/providers/DTO/msg91.dto.js'),
-          {
-            CreateMsg91ProviderDTO: {
-              templateId: {
-                required: false,
+              host: {
+                required: true,
                 type: () => String,
-                description: 'Msg91 template ID',
+                description: 'SMTP server host name',
               },
-              senderId: {
+              port: {
                 required: false,
-                type: () => String,
-                description: 'Msg91 sender ID.',
-              },
-              authKey: {
-                required: false,
-                type: () => String,
-                description: 'Msg91 auth key.',
-              },
-            },
-            UpdateMsg91ProviderDTO: {},
-          },
-        ],
-        [
-          import('./messaging/providers/DTO/telesign.dto.js'),
-          {
-            CreateTelesignProviderDTO: {
-              from: {
-                required: false,
-                type: () => String,
-                description:
-                  "Sender Phone number. Format this number with a leading \\'+\\' and a country code, e.g., +16175551212.",
-              },
-              customerId: {
-                required: false,
-                type: () => String,
-                description: 'Telesign customer ID.',
-              },
-              apiKey: {
-                required: false,
-                type: () => String,
-                description: 'Telesign API key.',
-              },
-            },
-            UpdateTelesignProviderDTO: {},
-          },
-        ],
-        [
-          import('./messaging/providers/DTO/textmagic.dto.js'),
-          {
-            CreateTextmagicProviderDTO: {
-              from: {
-                required: false,
-                type: () => String,
-                description:
-                  "Sender Phone number. Format this number with a leading \\'+\\' and a country code, e.g., +16175551212.",
+                type: () => Number,
+                description: 'SMTP server port',
               },
               username: {
                 required: false,
                 type: () => String,
-                description: 'Textmagic username.',
+                description: 'SMTP server username',
               },
-              apiKey: {
+              password: {
                 required: false,
                 type: () => String,
-                description: 'Textmagic apiKey.',
+                description: 'SMTP server password',
               },
-            },
-            UpdateTextmagicProviderDTO: {},
-          },
-        ],
-        [
-          import('./messaging/providers/DTO/vonage.dto.js'),
-          {
-            CreateVonageProviderDTO: {
-              from: {
-                required: false,
-                type: () => String,
-                description:
-                  "Sender Phone number. Format this number with a leading \\'+\\' and a country code, e.g., +16175551212.",
-              },
-              apiKey: {
-                required: false,
-                type: () => String,
-                description: 'Vonage API key.',
-              },
-              apiSecret: {
-                required: false,
-                type: () => String,
-                description: 'Vonage API secret.',
-              },
-            },
-            UpdateVonageProviderDTO: {},
-          },
-        ],
-        [
-          import('./messaging/providers/DTO/fcm.dto.js'),
-          {
-            CreateFcmProviderDTO: {
-              serviceAccountJSON: {
+              secure: {
                 required: false,
                 type: () => Object,
-                description: 'FCM service account JSON.',
+                description: 'Does SMTP server use secure connection',
               },
             },
-            UpdateFcmProviderDTO: {},
           },
         ],
         [
-          import('./messaging/providers/DTO/apns.dto.js'),
+          import('./projects/auth-settings/DTO/project-auth.dto.js'),
           {
-            CreateApnsProviderDTO: {
-              authKey: {
-                required: false,
-                type: () => String,
-                description: 'APNS authentication key.',
-              },
-              authKeyId: {
-                required: false,
-                type: () => String,
-                description: 'APNS authentication key ID.',
-              },
-              teamId: {
-                required: false,
-                type: () => String,
-                description: 'APNS team ID.',
-              },
-              bundleId: {
-                required: false,
-                type: () => String,
-                description: 'APNS bundle ID.',
-              },
-              sandbox: {
-                required: false,
+            AuthSessionAlertsDTO: {
+              alerts: {
+                required: true,
                 type: () => Boolean,
-                description: 'Use APNS sandbox environment.',
-                default: false,
+                description: 'Set to true to enable session emails.',
               },
             },
-            UpdateApnsProviderDTO: {},
-          },
-        ],
-        [
-          import('./messaging/topics/DTO/topics.dto.js'),
-          {
-            CreateTopicDTO: {
-              topicId: {
-                required: true,
-                type: () => String,
-                description:
-                  'Topic ID. Choose a custom Topic ID or a new Topic ID.',
-              },
-              name: {
-                required: true,
-                type: () => String,
-                description: 'Topic Name.',
-                maxLength: 128,
-              },
-              subscribe: {
-                required: false,
-                type: () => [String],
-                description:
-                  'An array of role strings with subscribe permission. By default all users are granted with any subscribe permission. [learn more about roles](https://docs.nuvix.in/permissions#permission-roles).',
-              },
-            },
-            UpdateTopicDTO: {},
-            TopicParamsDTO: {
-              topicId: {
-                required: true,
-                type: () => String,
-                description: 'Topic ID.',
-              },
-            },
-          },
-        ],
-        [
-          import('./messaging/topics/subscribers/DTO/subscriber.dto.js'),
-          {
-            CreateSubscriberDTO: {
-              subscriberId: {
-                required: true,
-                type: () => String,
-                description:
-                  'Subscriber ID. Choose a custom Subscriber ID or a new Subscriber ID.',
-              },
-              targetId: {
-                required: true,
-                type: () => String,
-                description:
-                  'Target ID. The target ID to link to the specified Topic ID.',
-              },
-            },
-            SubscriberParamsDTO: {
-              subscriberId: {
-                required: true,
-                type: () => String,
-                description: 'Subscriber ID.',
-              },
-            },
-          },
-        ],
-        [
-          import('./schemas/DTO/permissions.dto.js'),
-          {
-            PermissionsDTO: {
-              permissions: {
-                required: true,
-                type: () => [String],
-                description:
-                  "An array of permissions strings. [Learn more about permissions](https://docs.nuvix.in/permissions).'",
-              },
-            },
-          },
-        ],
-        [
-          import('./schemas/DTO/table.dto.js'),
-          {
-            TableParamsDTO: {
-              schemaId: {
-                required: true,
-                type: () => String,
-                description:
-                  'Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).',
-                default: 'public',
-              },
-              tableId: {
-                required: true,
-                type: () => String,
-                description: 'Table ID.',
-              },
-            },
-            FunctionParamsDTO: {
-              schemaId: {
-                required: true,
-                type: () => String,
-                description:
-                  'Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).',
-                default: 'public',
-              },
-              functionId: {
-                required: true,
-                type: () => String,
-                description: 'Function ID.',
-              },
-            },
-            RowParamsDTO: {
-              rowId: {
+            AuthLimitDTO: {
+              limit: {
                 required: true,
                 type: () => Number,
                 description:
-                  'Row ID. (See [Schemas](https://docs.nuvix.in/schemas/managed-schema#_id))',
+                  'Set the max number of users allowed in this project. Use 0 for unlimited.',
+                minimum: 0,
               },
             },
-          },
-        ],
-        [
-          import('./schemas/collections/DTO/collection.dto.js'),
-          {
-            CreateCollectionDTO: {
-              collectionId: {
+            AuthDurationDTO: {
+              duration: {
                 required: true,
-                type: () => String,
+                type: () => Number,
                 description:
-                  "Unique Id. Choose a custom ID or generate a random ID with `ID.unique()`. Valid chars are a-z, A-Z, 0-9, period, hyphen, and underscore. Can\\'t start with a special char. Max length is 36 chars.",
+                  'Project session length in seconds. Max length: 31536000 seconds.',
+                minimum: 0,
+                maximum: 31536000,
               },
-              name: {
-                required: true,
-                type: () => String,
-                description: 'Collection name. Max length: 128 chars.',
-                maxLength: 128,
-              },
-              permissions: {
-                required: false,
-                type: () => [String],
-                description:
-                  'An array of permissions strings. By default, no user is granted with any permissions. [Learn more about permissions](https://docs.nuvix.in/permissions).',
-              },
-              documentSecurity: {
+            },
+            AuthMethodStatusDTO: {
+              status: {
                 required: true,
                 type: () => Boolean,
-                description:
-                  'Enables configuring permissions for individual documents. A user needs one of document or collection level permissions to access a document. [Learn more about permissions](https://docs.nuvix.in/permissions).',
-                default: false,
+                description: 'Set the status of this auth method.',
               },
+            },
+            AuthPasswordHistoryDTO: {
+              limit: {
+                required: true,
+                type: () => Number,
+                description:
+                  "Set the max number of passwords to store in user history. User can\\'t choose a new password that is already stored in the password history list.",
+                minimum: 0,
+              },
+            },
+            AuthPasswordDictionaryDTO: {
               enabled: {
                 required: true,
                 type: () => Boolean,
                 description:
-                  "Is collection enabled? When set to \\'disabled\\', users cannot access the collection but Server SDKs with and API key can still read and write to the collection. No data is lost when this is toggled.",
-                default: true,
+                  "Set whether or not to enable checking user\\'s password against most commonly used passwords. Default is false.",
               },
             },
-            UpdateCollectionDTO: {
-              documentSecurity: {
-                required: false,
+            AuthPersonalDataDTO: {
+              enabled: {
+                required: true,
                 type: () => Boolean,
                 description:
-                  'Enables configuring permissions for individual documents. A user needs one of document or collection level permissions to access a document. [Learn more about permissions](https://docs.nuvix.in/permissions).',
+                  'Set whether or not to check a password for similarity with personal data. Default is false.',
               },
             },
-            CollectionParamsDTO: {
-              schemaId: {
-                required: true,
-                type: () => String,
-                description:
-                  'Schema ID. (See [Schemas](https://docs.nuvix.in/schemas)).',
-              },
-              collectionId: {
-                required: true,
-                type: () => String,
-                description: 'Collection ID.',
-              },
-            },
-          },
-        ],
-        [
-          import('./schemas/collections/documents/DTO/document.dto.js'),
-          {
-            CreateDocumentDTO: {
-              documentId: {
-                required: true,
-                type: () => String,
-                description:
-                  "ocument ID. Choose a custom ID or generate a random ID with `ID.unique()`. Valid chars are a-z, A-Z, 0-9, period, hyphen, and underscore. Can\\'t start with a special char. Max length is 36 chars.",
-              },
-              data: {
-                required: true,
-                type: () => Object,
-                description: 'Document data as JSON object.',
-              },
-              permissions: {
-                required: true,
-                type: () => [String],
-                description:
-                  "An array of permissions strings. By default, only the current user is granted all permissions. [Learn more about permissions](https://docs.nuvix.in/permissions).'",
-              },
-            },
-            UpdateDocumentDTO: {},
-            DocumentParamsDTO: {
-              documentId: {
-                required: true,
-                type: () => String,
-                description: 'Document ID.',
-              },
-            },
-          },
-        ],
-        [
-          import('./schemas/collections/attributes/DTO/attributes.dto.js'),
-          {
-            CreateStringAttributeDTO: {
-              key: {
-                required: true,
-                type: () => String,
-                description: 'Attribute Key.',
-              },
-              size: {
+            AuthMaxSessionsDTO: {
+              limit: {
                 required: true,
                 type: () => Number,
                 description:
-                  'Attribute size for text attributes, in number of characters',
-                default: 0,
-                minimum: 1,
-              },
-              required: {
-                required: false,
-                type: () => Boolean,
-                description: 'Is attribute required?',
-                default: false,
-              },
-              default: {
-                required: false,
-                type: () => String,
-                nullable: true,
-                description:
-                  'Default value for attribute when not provided. Cannot be set when attribute is required.',
-                default: null,
-              },
-              array: {
-                required: false,
-                type: () => Boolean,
-                description: 'Is attribute an array?',
-                default: false,
-              },
-              encrypt: {
-                required: false,
-                type: () => Boolean,
-                description:
-                  'Toggle encryption for the attribute. Encryption enhances security by not storing any plain text values in the database. However, encrypted attributes cannot be queried.',
-                default: false,
+                  'Set the max number of users allowed in this project.',
+                minimum: 0,
               },
             },
-            CreateEmailAttributeDTO: {},
-            CreateEnumAttributeDTO: {
-              elements: {
-                required: false,
-                type: () => [String],
+            MockNumber: {
+              phone: { required: true, type: () => String },
+              otp: { required: true, type: () => String },
+            },
+            AuthMockNumbersDTO: {
+              numbers: {
+                required: true,
+                type: () => [
+                  t['./projects/auth-settings/DTO/project-auth.dto.js']
+                    .MockNumber,
+                ],
                 description:
-                  'Array of elements in enumerated type. Uses length of longest element to determine size.',
+                  'An array of mock numbers and their corresponding verification codes (OTPs). Each number should be a valid E.164 formatted phone number. Maximum of 10 numbers are allowed.',
+                maxItems: 10,
+              },
+            },
+            AuthMembershipPrivacyDTO: {
+              userName: {
+                required: false,
+                type: () => Boolean,
+                description:
+                  'Set to true to show userName to members of a team.',
+              },
+              userEmail: {
+                required: false,
+                type: () => Boolean,
+                description: 'Set to true to show email to members of a team.',
+              },
+              mfa: {
+                required: false,
+                type: () => Boolean,
+                description: 'Set to true to show mfa to members of a team.',
+              },
+            },
+            AuthMethodParamsDTO: {
+              method: {
+                required: true,
+                type: () => Object,
+                description: 'Auth Method.',
+              },
+            },
+          },
+        ],
+        [
+          import('./projects/keys/DTO/keys.dto.js'),
+          {
+            CreateKeyDTO: {
+              name: {
+                required: true,
+                type: () => String,
+                description: 'Key name. Max length: 128 chars.',
                 minLength: 1,
-                maxLength: 1024,
+                maxLength: 128,
               },
-              default: {
+              scopes: {
                 required: false,
-                type: () => Object,
+                type: () => [String],
+                description: 'Key scopes list.',
+              },
+              expire: {
+                required: false,
+                type: () => String,
                 description:
-                  'Default value for attribute when not provided. Cannot be set when attribute is required.',
-                default: null,
+                  "Expiration time in [ISO 8601](https://www.iso.org/iso-8601-date-and-time-format.html) format. If not set, the key won't expire.",
               },
             },
-            CreateIpAttributeDTO: {},
-            CreateURLAttributeDTO: {},
-            CreateIntegerAttributeDTO: {
-              min: {
-                required: false,
-                type: () => Number,
-                description: 'Minimum value to enforce on new documents',
-              },
-              max: {
-                required: false,
-                type: () => Number,
-                description: 'Maximum value to enforce on new documents',
-              },
-              default: {
-                required: false,
-                type: () => Number,
-                description:
-                  'Default value for attribute when not provided. Cannot be set when attribute is required.',
-              },
-            },
-            CreateFloatAttributeDTO: {},
-            CreateBooleanAttributeDTO: {
-              default: {
-                required: false,
-                type: () => Boolean,
-                description:
-                  'Default value for attribute when not provided. Cannot be set when attribute is required.',
-                default: false,
-              },
-            },
-            CreateDatetimeAttributeDTO: {},
-            CreateRelationAttributeDTO: {
-              relatedCollectionId: {
+            UpdateKeyDTO: {},
+            KeyParamsDTO: {
+              keyId: {
                 required: true,
                 type: () => String,
-                description: 'Related Collection ID.',
-              },
-              type: {
-                required: true,
-                description: 'Relation type',
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .RelationType,
-              },
-              twoWay: {
-                required: false,
-                type: () => Boolean,
-                description: 'Is Two Way?',
-                default: false,
-              },
-              key: {
-                required: true,
-                type: () => String,
-                description: 'Attribute Key.',
-              },
-              twoWayKey: {
-                required: false,
-                type: () => String,
-                description: 'Two Way Attribute Key.',
-              },
-              onDelete: {
-                required: true,
-                description: 'Constraints option',
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .OnDelete,
-              },
-            },
-            UpdateStringAttributeDTO: {
-              newKey: {
-                required: false,
-                type: () => String,
-                description: 'New attribute key.',
-              },
-            },
-            UpdateEmailAttributeDTO: {},
-            UpdateEnumAttributeDTO: {
-              newKey: {
-                required: false,
-                type: () => String,
-                description: 'New attribute key.',
-              },
-            },
-            UpdateIpAttributeDTO: {
-              newKey: {
-                required: false,
-                type: () => String,
-                description: 'New attribute key.',
-              },
-            },
-            UpdateURLAttributeDTO: {
-              newKey: {
-                required: false,
-                type: () => String,
-                description: 'New attribute key.',
-              },
-            },
-            UpdateIntegerAttributeDTO: {
-              newKey: {
-                required: false,
-                type: () => String,
-                description: 'New attribute key.',
-              },
-            },
-            UpdateFloatAttributeDTO: {
-              newKey: {
-                required: false,
-                type: () => String,
-                description: 'New attribute key.',
-              },
-            },
-            UpdateBooleanAttributeDTO: {
-              newKey: {
-                required: false,
-                type: () => String,
-                description: 'New attribute key.',
-              },
-            },
-            UpdateDatetimeAttributeDTO: {
-              newKey: {
-                required: false,
-                type: () => String,
-                description: 'New attribute key.',
-              },
-            },
-            UpdateRelationAttributeDTO: {
-              newKey: {
-                required: false,
-                type: () => String,
-                description: 'New attribute key.',
-              },
-            },
-            AttributeParamsDTO: {
-              key: {
-                required: true,
-                type: () => String,
-                description: 'Attribute Key.',
+                description: 'Key ID.',
               },
             },
           },
         ],
         [
-          import('./schemas/collections/indexes/DTO/indexes.dto.js'),
+          import('./projects/platforms/DTO/platform.dto.js'),
           {
-            CreateIndexDTO: {
-              key: {
+            CreatePlatformDTO: {
+              name: {
                 required: true,
                 type: () => String,
-                description: 'Index Key.',
+                description: 'Platform name.',
+                minLength: 1,
+                maxLength: 128,
               },
               type: {
                 required: true,
-                description: 'Index type.',
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .IndexType,
+                type: () => String,
+                description: 'Platform type.',
               },
-              attributes: {
-                required: true,
-                type: () => [String],
-                description: 'Array of attributes to index.',
+              key: {
+                required: false,
+                type: () => String,
+                description:
+                  'Package name for Android or bundle ID for iOS or macOS.',
+                minLength: 1,
+                maxLength: 256,
               },
-              orders: {
-                required: true,
-                type: () => [String],
-                description: 'Array of index orders.',
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .Order,
-                isArray: true,
+              store: {
+                required: false,
+                type: () => String,
+                description: 'App store or Google Play store ID.',
+                minLength: 1,
+                maxLength: 256,
+              },
+              hostname: {
+                required: false,
+                type: () => String,
+                description: 'Platform client hostname.',
+                minLength: 1,
+                maxLength: 256,
               },
             },
-            IndexParamsDTO: {
-              key: {
+            UpdatePlatformDTO: {},
+            PlatformParamsDTO: {
+              platformId: {
                 required: true,
                 type: () => String,
-                description: 'Index Key.',
+                description: 'Platform ID.',
               },
+            },
+          },
+        ],
+        [
+          import('./projects/templates/DTO/params.dto.js'),
+          {
+            TemplateParamsDTO: {
+              type: {
+                required: true,
+                type: () => String,
+                description: 'Template type',
+              },
+              locale: {
+                required: true,
+                type: () => Object,
+                description: 'Template locale',
+              },
+            },
+          },
+        ],
+        [
+          import('./projects/webhooks/DTO/webhook.dto.js'),
+          {
+            CreateWebhookDTO: {
+              name: {
+                required: true,
+                type: () => String,
+                description: 'Webhook name. Max length: 128 chars.',
+                maxLength: 128,
+              },
+              enabled: {
+                required: true,
+                type: () => Boolean,
+                description: 'Enable or disable a webhook.',
+              },
+              events: {
+                required: true,
+                type: () => [String],
+                description: 'Events list',
+              },
+              url: {
+                required: true,
+                type: () => String,
+                description: 'Webhook URL.',
+                format: 'uri',
+              },
+              security: {
+                required: false,
+                type: () => Boolean,
+                description:
+                  'Certificate verification, false for disabled or true for enabled.',
+              },
+              httpUser: {
+                required: false,
+                type: () => String,
+                description: 'Webhook HTTP user. Max length: 256 chars.',
+                maxLength: 256,
+              },
+              httpPass: {
+                required: false,
+                type: () => String,
+                description: 'Webhook HTTP password. Max length: 256 chars.',
+                maxLength: 256,
+              },
+            },
+            UpdateWebhookDTO: {},
+            WebhookParamsDTO: {
+              webhookId: {
+                required: true,
+                type: () => String,
+                description: 'Webhook unique ID.',
+              },
+            },
+          },
+        ],
+        [
+          import('./projects/metadata/DTO/exposed-schemas.dto.js'),
+          {
+            UpdateExposedSchemasDTO: {
+              schemas: { required: true, type: () => [String] },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/column-privilege-grant.dto.js'),
+          {
+            ColumnPrivilegeGrantDTO: {
+              grantee: { required: true, type: () => String },
+              privilege_type: { required: true, type: () => Object },
+              column_id: { required: true, type: () => String },
+              is_grantable: { required: false, type: () => Boolean },
+            },
+          },
+        ],
+        [
+          import(
+            '../../../libs/pg-meta/src/DTO/column-privilege-revoke.dto.js'
+          ),
+          {
+            ColumnPrivilegeRevokeDTO: {
+              column_id: { required: true, type: () => String },
+              grantee: { required: true, type: () => String },
+              privilege_type: { required: true, type: () => Object },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/table-create.dto.js'),
+          {
+            TableCreateDTO: {
+              name: { required: true, type: () => String },
+              schema: { required: false, type: () => String },
+              comment: { required: false, type: () => String },
+              columns: { required: false, type: () => [Object] },
+              primaryKeys: { required: false, type: () => [Object] },
+              foreignKeys: { required: false, type: () => [Object] },
+              isPartition: { required: false, type: () => Boolean },
+              partitionOf: { required: false, type: () => String },
+              partitioning: {
+                required: false,
+                type: () => ({
+                  strategy: { required: true, type: () => String },
+                  columns: { required: true, type: () => [Object] },
+                }),
+              },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/table-update.dto.js'),
+          {
+            TableUpdateDTO: {
+              name: { required: false, type: () => String },
+              schema: { required: false, type: () => String },
+              comment: { required: false, type: () => String },
+              rls_enabled: { required: false, type: () => Boolean },
+              rls_forced: { required: false, type: () => Boolean },
+              replica_identity: { required: false, type: () => Object },
+              replica_identity_index: { required: false, type: () => String },
+              primary_keys: {
+                required: false,
+                type: () => [{ name: { required: true, type: () => String } }],
+              },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/function-create.dto.js'),
+          {
+            FunctionCreateDTO: {
+              name: { required: true, type: () => String },
+              definition: { required: true, type: () => String },
+              schema: { required: false, type: () => String },
+              language: { required: false, type: () => String },
+              args: { required: false, type: () => [String] },
+              return_type: { required: false, type: () => String },
+              behavior: { required: false, type: () => Object },
+              security_definer: { required: false, type: () => Boolean },
+              config_params: { required: false, type: () => Object },
+              comment: { required: false, type: () => String },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/role-create.dto.js'),
+          {
+            RoleCreateDTO: {
+              name: { required: true, type: () => String },
+              is_superuser: { required: false, type: () => Boolean },
+              can_create_db: { required: false, type: () => Boolean },
+              can_create_role: { required: false, type: () => Boolean },
+              inherit_role: { required: false, type: () => Boolean },
+              can_login: { required: false, type: () => Boolean },
+              is_replication_role: { required: false, type: () => Boolean },
+              can_bypass_rls: { required: false, type: () => Boolean },
+              connection_limit: { required: false, type: () => Number },
+              password: { required: false, type: () => String },
+              valid_until: { required: false, type: () => String },
+              member_of: { required: false, type: () => [String] },
+              members: { required: false, type: () => [String] },
+              admins: { required: false, type: () => [String] },
+              config: { required: false, type: () => Object },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/role-update.dto.js'),
+          {
+            RoleUpdateDTO: {
+              name: { required: false, type: () => String },
+              is_superuser: { required: false, type: () => Boolean },
+              can_create_db: { required: false, type: () => Boolean },
+              can_create_role: { required: false, type: () => Boolean },
+              inherit_role: { required: false, type: () => Boolean },
+              can_login: { required: false, type: () => Boolean },
+              is_replication_role: { required: false, type: () => Boolean },
+              can_bypass_rls: { required: false, type: () => Boolean },
+              connection_limit: { required: false, type: () => Number },
+              password: { required: false, type: () => String },
+              valid_until: { required: false, type: () => String },
+              config: { required: false },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/schema-create.dto.js'),
+          {
+            SchemaCreateDTO: {
+              name: { required: true, type: () => String },
+              owner: { required: false, type: () => String },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/schema-update.dto.js'),
+          {
+            SchemaUpdateDTO: {
+              name: { required: false, type: () => String },
+              owner: { required: false, type: () => String },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/table-privilege-grant.dto.js'),
+          {
+            TablePrivilegeGrantDTO: {
+              relation_id: { required: true, type: () => Number },
+              grantee: { required: true, type: () => String },
+              privilege_type: { required: true, type: () => Object },
+              is_grantable: { required: false, type: () => Boolean },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/table-privilege-revoke.dto.js'),
+          {
+            TablePrivilegeRevokeDTO: {
+              relation_id: { required: true, type: () => Number },
+              grantee: { required: true, type: () => String },
+              privilege_type: { required: true, type: () => Object },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/generator.dto.js'),
+          {
+            GeneratorQueryDTO: {
+              excluded_schemas: { required: false, type: () => String },
+              included_schemas: { required: false, type: () => String },
+              detect_one_to_one_relationships: {
+                required: false,
+                type: () => Boolean,
+              },
+              access_control: { required: false, type: () => Object },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/query.dto.js'),
+          {
+            QueryDTO: { query: { required: true, type: () => String } },
+            DeparseDTO: { ast: { required: true, type: () => Object } },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/schema.dto.js'),
+          {
+            SchemaQueryDTO: {
+              include_system_schemas: { required: false, type: () => Boolean },
+              limit: { required: false, type: () => Number },
+              offset: { required: false, type: () => Number },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/schema-id.dto.js'),
+          {
+            SchemaIdParamDTO: {
+              id: { required: true, type: () => Number, minimum: 1 },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/schema-delete.dto.js'),
+          {
+            SchemaDeleteQueryDTO: {
+              cascade: { required: false, type: () => Boolean },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/table-id.dto.js'),
+          {
+            TableIdParamDTO: {
+              id: { required: true, type: () => Number, minimum: 1 },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/column-create.dto.js'),
+          {
+            ColumnCreateDTO: {
+              name: { required: true, type: () => String },
+              table_id: { required: true, type: () => Number },
+              type: { required: true, type: () => String },
+              is_identity: { required: false, type: () => Boolean },
+              identity_generation: { required: false, type: () => Object },
+              is_nullable: { required: false, type: () => Boolean },
+              is_primary_key: { required: false, type: () => Boolean },
+              is_unique: { required: false, type: () => Boolean },
+              default_value: { required: false, type: () => Object },
+              default_value_format: { required: false, type: () => Object },
+              comment: { required: false, type: () => String },
+              check: { required: false, type: () => String },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/column-update.dto.js'),
+          {
+            ColumnUpdateDTO: {
+              name: { required: false, type: () => String },
+              type: { required: false, type: () => String },
+              drop_default: { required: false, type: () => Boolean },
+              default_value: { required: false, type: () => Object },
+              default_value_format: { required: false, type: () => Object },
+              is_identity: { required: false, type: () => Boolean },
+              identity_generation: { required: false, type: () => Object },
+              is_nullable: { required: false, type: () => Boolean },
+              is_unique: { required: false, type: () => Boolean },
+              comment: { required: false, type: () => String },
+              check: { required: false, type: () => String },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/extension.dto.js'),
+          {
+            ExtensionQueryDTO: {
+              limit: { required: false, type: () => Number },
+              offset: { required: false, type: () => Number },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/extension-name.dto.js'),
+          {
+            ExtensionNameParamDTO: {
+              name: { required: true, type: () => String },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/extension-create.dto.js'),
+          {
+            ExtensionCreateDTO: {
+              name: { required: true, type: () => String },
+              schema: { required: false, type: () => String },
+              version: { required: false, type: () => String },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/extension-update.dto.js'),
+          {
+            ExtensionUpdateDTO: {
+              schema: { required: false, type: () => String },
+              version: { required: false, type: () => String },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/extension-delete.dto.js'),
+          {
+            ExtensionDeleteQueryDTO: {
+              cascade: { required: false, type: () => Boolean },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/role.dto.js'),
+          {
+            RoleQueryDTO: {
+              include_default_roles: { required: false, type: () => Boolean },
+              limit: { required: false, type: () => Number },
+              offset: { required: false, type: () => Number },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/role-id.dto.js'),
+          {
+            RoleIdParamDTO: {
+              id: { required: true, type: () => Number, minimum: 1 },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/function.dto.js'),
+          {
+            FunctionQueryDTO: {
+              include_system_schemas: { required: false, type: () => Boolean },
+              included_schemas: { required: false, type: () => String },
+              excluded_schemas: { required: false, type: () => String },
+              limit: { required: false, type: () => Number },
+              offset: { required: false, type: () => Number },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/function-id.dto.js'),
+          {
+            FunctionIdParamDTO: {
+              id: { required: true, type: () => Number, minimum: 1 },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/function-update.dto.js'),
+          {
+            FunctionUpdateDTO: {
+              name: { required: false, type: () => String },
+              schema: { required: false, type: () => String },
+              definition: { required: false, type: () => String },
+              language: { required: false, type: () => String },
+              args: { required: false, type: () => [String] },
+              return_type: { required: false, type: () => String },
+              behavior: { required: false, type: () => Object },
+              security_definer: { required: false, type: () => Boolean },
+              config_params: { required: false, type: () => Object },
+              comment: { required: false, type: () => String },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/index.dto.js'),
+          {
+            IndexQueryDTO: {
+              include_system_schemas: { required: false, type: () => Boolean },
+              included_schemas: { required: false, type: () => String },
+              excluded_schemas: { required: false, type: () => String },
+              limit: { required: false, type: () => Number },
+              offset: { required: false, type: () => Number },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/index-id.dto.js'),
+          {
+            IndexIdParamDTO: {
+              id: { required: true, type: () => Number, minimum: 1 },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/view.dto.js'),
+          {
+            ViewQueryDTO: {
+              include_system_schemas: { required: false, type: () => Boolean },
+              included_schemas: { required: false, type: () => String },
+              excluded_schemas: { required: false, type: () => String },
+              limit: { required: false, type: () => Number },
+              offset: { required: false, type: () => Number },
+              include_columns: { required: false, type: () => Boolean },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/view-id.dto.js'),
+          {
+            ViewIdParamDTO: {
+              id: { required: true, type: () => Number, minimum: 1 },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/foreign-table.dto.js'),
+          {
+            ForeignTableQueryDTO: {
+              limit: { required: false, type: () => Number },
+              offset: { required: false, type: () => Number },
+              include_columns: { required: false, type: () => Boolean },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/foreign-table-id.dto.js'),
+          {
+            ForeignTableIdParamDTO: {
+              id: { required: true, type: () => Number, minimum: 1 },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/column-privilege.dto.js'),
+          {
+            ColumnPrivilegeQueryDTO: {
+              include_system_schemas: { required: false, type: () => Boolean },
+              included_schemas: { required: false, type: () => String },
+              excluded_schemas: { required: false, type: () => String },
+              limit: { required: false, type: () => Number },
+              offset: { required: false, type: () => Number },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/materialized-view.dto.js'),
+          {
+            MaterializedViewQueryDTO: {
+              included_schemas: { required: false, type: () => String },
+              excluded_schemas: { required: false, type: () => String },
+              limit: { required: false, type: () => Number },
+              offset: { required: false, type: () => Number },
+              include_columns: { required: false, type: () => Boolean },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/materialized-view-id.dto.js'),
+          {
+            MaterializedViewIdParamDTO: {
+              id: { required: true, type: () => Number, minimum: 1 },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/config.dto.js'),
+          {
+            ConfigQueryDTO: {
+              limit: { required: false, type: () => Number },
+              offset: { required: false, type: () => Number },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/policy.dto.js'),
+          {
+            PolicyQueryDTO: {
+              include_system_schemas: { required: false, type: () => Boolean },
+              included_schemas: { required: false, type: () => String },
+              excluded_schemas: { required: false, type: () => String },
+              limit: { required: false, type: () => Number },
+              offset: { required: false, type: () => Number },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/policy-create.dto.js'),
+          {
+            PolicyCreateDTO: {
+              name: { required: true, type: () => String },
+              table: { required: true, type: () => String },
+              schema: { required: false, type: () => String },
+              definition: { required: false, type: () => String },
+              check: { required: false, type: () => String },
+              action: { required: false, type: () => Object },
+              command: { required: false, type: () => Object },
+              roles: { required: false, type: () => [String], minItems: 1 },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/policy-update.dto.js'),
+          {
+            PolicyUpdateDTO: {
+              name: { required: true, type: () => String },
+              definition: { required: false, type: () => String },
+              check: { required: false, type: () => String },
+              action: { required: false, type: () => Object },
+              command: { required: false, type: () => Object },
+              roles: { required: false, type: () => [String], minItems: 1 },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/publication.dto.js'),
+          {
+            PublicationQueryDTO: {
+              limit: { required: false, type: () => Number },
+              offset: { required: false, type: () => Number },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/publication-create.dto.js'),
+          {
+            PublicationCreateDTO: {
+              name: { required: true, type: () => String },
+              publish_insert: { required: false, type: () => Boolean },
+              publish_update: { required: false, type: () => Boolean },
+              publish_delete: { required: false, type: () => Boolean },
+              publish_truncate: { required: false, type: () => Boolean },
+              tables: { required: false, type: () => [String], minItems: 1 },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/publication-update.dto.js'),
+          {
+            PublicationUpdateDTO: {
+              name: { required: false, type: () => String },
+              owner: { required: false, type: () => String },
+              publish_insert: { required: false, type: () => Boolean },
+              publish_update: { required: false, type: () => Boolean },
+              publish_delete: { required: false, type: () => Boolean },
+              publish_truncate: { required: false, type: () => Boolean },
+              tables: {
+                required: false,
+                type: () => [String],
+                nullable: true,
+                minItems: 1,
+              },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/table-privilege.dto.js'),
+          {
+            TablePrivilegeQueryDTO: {
+              include_system_schemas: { required: false, type: () => Boolean },
+              included_schemas: { required: false, type: () => String },
+              excluded_schemas: { required: false, type: () => String },
+              limit: { required: false, type: () => Number },
+              offset: { required: false, type: () => Number },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/trigger.dto.js'),
+          {
+            TriggerQueryDTO: {
+              include_system_schemas: { required: false, type: () => Boolean },
+              included_schemas: { required: false, type: () => String },
+              excluded_schemas: { required: false, type: () => String },
+              limit: {
+                required: false,
+                type: () => Number,
+                minimum: 1,
+                maximum: 1000,
+              },
+              offset: { required: false, type: () => Number, minimum: 0 },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/trigger-create.dto.js'),
+          {
+            TriggerCreateDTO: {
+              name: { required: true, type: () => String },
+              table: { required: true, type: () => String },
+              function_name: { required: true, type: () => String },
+              activation: { required: true, type: () => String },
+              events: { required: true, type: () => [String], minItems: 1 },
+              function_schema: { required: false, type: () => String },
+              schema: { required: false, type: () => String },
+              orientation: { required: false, type: () => String },
+              condition: { required: false, type: () => String },
+              function_args: { required: false, type: () => [String] },
+              comment: { required: false, type: () => String },
+              enabled_mode: { required: false, type: () => Object },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/trigger-update.dto.js'),
+          {
+            TriggerUpdateDTO: {
+              name: { required: false, type: () => String },
+              enabled_mode: { required: false, type: () => Object },
+              table: { required: false, type: () => String },
+              schema: { required: false, type: () => String },
+              condition: { required: false, type: () => String },
+              orientation: { required: false, type: () => Object },
+              activation: { required: false, type: () => Object },
+              events: { required: false, type: () => [String] },
+              function_schema: { required: false, type: () => String },
+              function_name: { required: false, type: () => String },
+              function_args: { required: false, type: () => [String] },
+              comment: { required: false, type: () => String },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/trigger-delete.dto.js'),
+          {
+            TriggerDeleteQueryDTO: {
+              cascade: { required: false, type: () => Boolean },
+            },
+          },
+        ],
+        [
+          import('../../../libs/pg-meta/src/DTO/type.dto.js'),
+          {
+            TypeQueryDTO: {
+              include_array_types: { required: false, type: () => Boolean },
+              include_system_schemas: { required: false, type: () => Boolean },
+              included_schemas: { required: false, type: () => String },
+              excluded_schemas: { required: false, type: () => String },
+              limit: {
+                required: false,
+                type: () => Number,
+                minimum: 1,
+                maximum: 1000,
+              },
+              offset: { required: false, type: () => Number, minimum: 0 },
             },
           },
         ],
       ],
       controllers: [
-        [
-          import('./app.controller.js'),
-          { AppController: { main: {}, getFavicon: {} } },
-        ],
-        [
-          import('./database/database.controller.js'),
-          {
-            DatabaseController: {
-              getSchemas: {},
-              createSchema: { type: Object },
-              getSchema: { type: Object },
-            },
-          },
-        ],
-        [
-          import('./avatars/avatars.controller.js'),
-          { AvatarsController: { generateAvatar: {} } },
-        ],
-        [
-          import('./users/users.controller.js'),
-          {
-            UsersController: {
-              create: { type: Object },
-              createWithArgon2: { type: Object },
-              createWithBcrypt: { type: Object },
-              createWithMd5: { type: Object },
-              createWithSha: { type: Object },
-              createWithPhpass: { type: Object },
-              createWithScrypt: { type: Object },
-              createWithScryptModified: { type: Object },
-              findAll: {},
-              getUsage: { type: Object },
-              getIdentities: {},
-              deleteIdentity: {},
-              findOne: { type: Object },
-              getPrefs: { type: Object },
-              updatePrefs: { type: Object },
-              updateStatus: { type: Object },
-              updateLabels: { type: Object },
-              updateName: { type: Object },
-              updatePassword: { type: Object },
-              updateEmail: { type: Object },
-              updatePhone: { type: Object },
-              createJwt: {},
-              getMemberships: {},
-              createToken: { type: Object },
-              getLogs: {},
-              verify: { type: Object },
-              verifyPhone: { type: Object },
-              remove: {},
-            },
-          },
-        ],
-        [
-          import('./users/sessions/sessions.controller.js'),
-          {
-            SessionsController: {
-              getSessions: {},
-              createSession: { type: Object },
-              deleteSessions: {},
-              deleteSession: {},
-            },
-          },
-        ],
-        [
-          import('./users/targets/targets.controller.js'),
-          {
-            TargetsController: {
-              addTarget: { type: Object },
-              getTargets: {},
-              getTarget: { type: Object },
-              updateTarget: { type: Object },
-              deleteTarget: {},
-            },
-          },
-        ],
-        [
-          import('./users/mfa/mfa.controller.js'),
-          {
-            MfaController: {
-              updateMfa: { type: Object },
-              getMfaFactors: { type: Object },
-              getMfaRecoveryCodes: {},
-              generateMfaRecoveryCodes: {},
-              regenerateMfaRecoveryCodes: {},
-              deleteMfaAuthenticator: {},
-            },
-          },
-        ],
+        [import('./app.controller.js'), { AppController: { main: {} } }],
         [
           import('./account/account.controller.js'),
           {
@@ -5473,310 +4660,245 @@ export default async () => {
               createAccount: { type: Object },
               getAccount: { type: Object },
               deleteAccount: {},
-              getPrefs: { type: Object },
-              updatePrefs: { type: Object },
-              updateName: { type: Object },
-              updatePassword: { type: Object },
-              updateEmail: { type: Object },
-              updatePhone: { type: Object },
-              updateStatus: { type: Object },
-              createEmailVerification: { type: Object },
-              updateEmailVerification: { type: Object },
-              createPhoneVerification: { type: Object },
-              updatePhoneVerification: {},
-            },
-          },
-        ],
-        [
-          import('./account/identities/identity.controller.js'),
-          { IdentityController: { getIdentities: {}, deleteIdentity: {} } },
-        ],
-        [
-          import('./account/mfa/mfa.controller.js'),
-          {
-            MfaController: {
-              updateMfa: { type: Object },
-              getMfaFactors: {},
-              createMfaAuthenticator: {},
-              verifyMfaAuthenticator: { type: Object },
-              createMfaRecoveryCodes: {},
-              updateMfaRecoveryCodes: {},
-              getMfaRecoveryCodes: {},
-              deleteMfaAuthenticator: {},
-              createMfaChallenge: { type: Object },
-              updateMfaChallenge: { type: Object },
-            },
-          },
-        ],
-        [
-          import('./account/recovery/recovery.controller.js'),
-          {
-            RecoveryController: {
-              createRecovery: { type: Object },
-              updateRecovery: { type: Object },
-            },
-          },
-        ],
-        [
-          import('./account/sessions/session.controller.js'),
-          {
-            SessionsController: {
               getSessions: {},
               deleteSessions: {},
               getSession: { type: Object },
               deleteSession: {},
               updateSession: { type: Object },
-              createEmailSession: { type: Object },
-              createAnonymousSession: { type: Object },
-              createSession: { type: Object },
-              createOAuth2Session: {},
-              OAuth2Callback: {},
-              OAuth2CallbackWithProject: {},
-              OAuth2Redirect: {},
-              createOAuth2Token: {},
-              createMagicURLToken: {},
-              createEmailToken: {},
-              updateMagicURLSession: {},
-              updatePhoneSession: {},
-              createPhoneToken: {},
-              createJWT: {},
+              createEmailSession: {},
+              getPrefs: { type: Object },
+              updatePrefs: { type: Object },
+              updateName: { type: Object },
+              updatePassword: { type: Object },
+              updateEmail: {},
             },
           },
         ],
         [
-          import('./account/targets/targets.controller.js'),
+          import('./projects/projects.controller.js'),
           {
-            TargetsController: {
-              createPushTarget: { type: Object },
-              updatePushTarget: { type: Object },
-              deletePushTarget: {},
-            },
-          },
-        ],
-        [
-          import('./teams/teams.controller.js'),
-          {
-            TeamsController: {
-              create: { type: Object },
+            ProjectsController: {
               findAll: {},
               findOne: { type: Object },
               update: { type: Object },
-              remove: {},
-              getPrefs: { type: Object },
-              setPrefs: { type: Object },
-              teamLogs: {},
+              createJwt: {},
+              updateService: { type: Object },
+              updateServiceAll: { type: Object },
+              updateApi: { type: Object },
+              updateApiAll: { type: Object },
+              updateOAuth2: { type: Object },
+              updateSMTP: { type: Object },
+              testSMTP: {},
             },
           },
         ],
         [
-          import('./teams/memberships/memberships.controller.js'),
+          import('./projects/project.controller.js'),
+          { ProjectController: { getUsage: {}, getLogs: { type: [Object] } } },
+        ],
+        [
+          import('./projects/auth-settings/auth-settings.controller.js'),
           {
-            MembershipsController: {
-              addMember: { type: Object },
-              getMembers: {},
-              getMember: { type: Object },
-              updateMember: { type: Object },
-              updateMemberStatus: { type: Object },
-              removeMember: {},
+            AuthSettingsController: {
+              updateSessionAlerts: { type: Object },
+              updateAuthLimit: { type: Object },
+              updateAuthDuration: { type: Object },
+              updatePasswordHistory: { type: Object },
+              updatePasswordDictionary: { type: Object },
+              updatePersonalData: { type: Object },
+              updateMaxSessions: { type: Object },
+              updateMockNumbers: { type: Object },
+              updateMembershipsPrivacy: { type: Object },
+              updateAuthMethod: { type: Object },
             },
           },
         ],
         [
-          import('./storage/storage.controller.js'),
+          import('./projects/keys/keys.controller.js'),
           {
-            StorageController: {
-              getBuckets: {},
-              createBucket: { type: Object },
-              getBucket: { type: Object },
-              updateBucket: { type: Object },
-              deleteBucket: {},
-              getUsage: { type: Object },
-              getBucketUsage: { type: Object },
+            KeysController: {
+              getKeys: {},
+              createKey: { type: Object },
+              getKey: { type: Object },
+              updateKey: { type: Object },
+              deleteKey: {},
             },
           },
         ],
         [
-          import('./storage/files/files.controller.js'),
+          import('./projects/platforms/platforms.controller.js'),
           {
-            FilesController: {
-              getFiles: {},
-              createFile: { type: Object },
-              getFile: { type: Object },
-              previewFile: {},
-              downloadFile: {},
-              viewFile: {},
-              getFileForPushNotification: {},
-              updateFile: { type: Object },
-              deleteFile: {},
+            PlatformsController: {
+              getPlatforms: {},
+              createPlatform: { type: Object },
+              getPlatform: { type: Object },
+              updatePlatform: { type: Object },
+              deletePlatform: {},
             },
           },
         ],
         [
-          import('./messaging/messaging.controller.js'),
+          import('./projects/templates/templates.controller.js'),
           {
-            MessagingController: {
-              createEmail: { type: Object },
-              createSms: { type: Object },
-              createPush: { type: Object },
-              listMessages: {},
-              getMessage: { type: Object },
-              listTargets: {},
-              updateEmail: { type: Object },
-              updateSms: { type: Object },
-              updatePush: { type: Object },
-              deleteMessage: {},
+            TemplatesController: {
+              getSMSTemplate: {},
+              updateSmsTemplate: {},
+              deleteSmsTemplate: {},
+              getEmailTemplate: {},
+              updateEmailTemplate: {},
+              deleteEmailTemplate: {},
             },
           },
         ],
         [
-          import('./messaging/providers/providers.controller.js'),
+          import('./projects/webhooks/webhooks.controller.js'),
           {
-            ProvidersController: {
-              createMailgunProvider: { type: Object },
-              createSendgridProvider: { type: Object },
-              createSMTPProvider: { type: Object },
-              createMsg91Provider: { type: Object },
-              createTelesignProvider: { type: Object },
-              createTextmagicProvider: { type: Object },
-              createTwilioProvider: { type: Object },
-              createVonageProvider: { type: Object },
-              createFcmProvider: { type: Object },
-              createApnsProvider: { type: Object },
-              listProviders: {},
-              getProvider: { type: Object },
-              updateMailgunProvider: { type: Object },
-              updateSendgridProvider: { type: Object },
-              updateSmtpProvider: { type: Object },
-              updateMsg91Provider: { type: Object },
-              updateTelesignProvider: { type: Object },
-              updateTextmagicProvider: { type: Object },
-              updateTwilioProvider: { type: Object },
-              updateVonageProvider: { type: Object },
-              updateFcmProvider: { type: Object },
-              updateApnsProvider: { type: Object },
-              deleteProvider: {},
+            WebhooksController: {
+              getWebhooks: {},
+              createWebhook: { type: Object },
+              getWebhook: { type: Object },
+              updateWebhook: { type: Object },
+              updateWebhookSignature: { type: Object },
+              deleteWebhook: {},
             },
           },
         ],
         [
-          import('./messaging/topics/topics.controller.js'),
-          {
-            TopicsController: {
-              createTopic: { type: Object },
-              listTopics: {},
-              getTopic: { type: Object },
-              updateTopic: { type: Object },
-              deleteTopic: {},
-            },
-          },
+          import('./projects/metadata/metadata.controller.js'),
+          { MetadataController: { updateExposedSchemas: { type: Object } } },
         ],
         [
-          import('./messaging/topics/subscribers/subscribers.controller.js'),
+          import('../../../libs/pg-meta/src/pg-meta.controller.js'),
           {
-            SubscribersController: {
-              createSubscriber: { type: Object },
-              listSubscribers: {},
-              getSubscriber: { type: Object },
-              deleteSubscriber: {},
-            },
-          },
-        ],
-        [
-          import('./schemas/schemas.controller.js'),
-          {
-            SchemasController: {
-              queryTable: { type: Object },
-              insertIntoTable: { type: Object },
-              updateTables: { type: Object },
-              deleteTables: { type: Object },
-              callFunction: { type: Object },
-              manageTablePermissions: { type: [String] },
-              manageRowPermissions: { type: [String] },
-              getTablePermissions: { type: [String] },
-              getRowPermissions: { type: [String] },
-            },
-          },
-        ],
-        [
-          import('./schemas/collections/collections.controller.js'),
-          {
-            CollectionsController: {
-              findCollections: {},
-              createCollection: { type: Object },
-              findCollection: { type: Object },
-              updateCollection: { type: Object },
-              removeCollection: {},
-              getCollectionUsage: { type: Object },
-              findCollectionLogs: {},
-            },
-          },
-        ],
-        [
-          import('./schemas/collections/documents/documents.controller.js'),
-          {
-            DocumentsController: {
-              findDocuments: {},
-              createDocument: {},
-              findDocument: {},
-              updateDocument: {},
-              removeDocument: {},
-              findDocumentLogs: {},
-            },
-          },
-        ],
-        [
-          import('./schemas/collections/attributes/attributes.controller.js'),
-          {
-            AttributesController: {
-              findAttributes: {},
-              createStringAttribute: { type: Object },
-              createEmailAttribute: { type: Object },
-              createEnumAttribute: { type: Object },
-              createIpAttribute: { type: Object },
-              createUrlAttribute: { type: Object },
-              createIntegerAttribute: { type: Object },
-              createFloatAttribute: { type: Object },
-              createBooleanAttribute: { type: Object },
-              createDatetimeAttribute: { type: Object },
-              createRelationAttribute: { type: Object },
-              findAttribute: { type: Object },
-              updateStringAttribute: { type: Object },
-              updateEmailAttribute: { type: Object },
-              updateEnumAttribute: { type: Object },
-              updateIpAttribute: { type: Object },
-              updateUrlAttribute: { type: Object },
-              updateIntegerAttribute: { type: Object },
-              updateFloatAttribute: { type: Object },
-              updateBooleanAttribute: { type: Object },
-              updateDatetimeAttribute: { type: Object },
-              updateRelationAttribute: { type: Object },
-              removeAttribute: {},
-            },
-          },
-        ],
-        [
-          import('./schemas/collections/indexes/indexes.controller.js'),
-          {
-            IndexesController: {
-              createIndex: { type: Object },
-              findIndexes: {},
-              findIndex: { type: Object },
-              removeIndex: {},
-            },
-          },
-        ],
-        [
-          import('./locale/locale.controller.js'),
-          {
-            LocaleController: {
-              getUserLocale: { type: Object },
-              getLocaleCodes: {},
-              getCountries: {},
-              getEuCountries: {},
-              getCountriesPhone: {},
-              getContinents: {},
-              getCurrencies: {},
-              getLanguages: {},
+            PgMetaController: {
+              query: { type: Object },
+              format: { type: Object },
+              parse: { type: Object },
+              deparse: { type: Object },
+              getSchemas: {
+                summary:
+                  '************************* Schemas ********************************',
+              },
+              getSchemaById: { type: Object },
+              createSchema: { type: Object },
+              updateSchema: { type: Object },
+              deleteSchema: { type: Object },
+              getTables: {
+                summary:
+                  '************************* Tables ********************************',
+                type: [Object],
+              },
+              getTableById: { type: Object },
+              createTable: { type: Object },
+              updateTable: { type: Object },
+              deleteTable: { type: Object },
+              getColumns: {
+                summary:
+                  '************************* Columns ********************************',
+              },
+              getColumnsByTable: { type: Object },
+              createColumn: { type: Object },
+              updateColumn: { type: Object },
+              deleteColumn: { type: Object },
+              getExtensions: {
+                summary:
+                  '************************* Extensions ********************************',
+              },
+              getExtensionByName: { type: Object },
+              createExtension: { type: Object },
+              updateExtension: { type: Object },
+              deleteExtension: { type: Object },
+              getRoles: {
+                summary:
+                  '************************* Roles ********************************',
+              },
+              getRoleById: { type: Object },
+              createRole: { type: Object },
+              updateRole: { type: Object },
+              deleteRole: { type: Object },
+              getFunctions: {
+                summary:
+                  '************************* Functions ********************************',
+              },
+              getFunctionById: { type: Object },
+              createFunction: { type: Object },
+              updateFunction: { type: Object },
+              deleteFunction: { type: Object },
+              getIndexes: {
+                summary:
+                  '************************* Indexes ********************************',
+              },
+              getIndexById: { type: Object },
+              getViews: {
+                summary:
+                  '************************* Views ********************************',
+                type: [Object],
+              },
+              getViewById: { type: Object },
+              getForeignTables: {
+                summary:
+                  '************************* Foreign Tables ********************************',
+                type: [Object],
+              },
+              getForeignTableById: { type: Object },
+              getColumnPrivileges: {
+                summary:
+                  '************************* Column Privileges ********************************',
+              },
+              grantColumnPrivileges: { type: Object },
+              revokeColumnPrivileges: { type: Object },
+              getMaterializedViews: {
+                summary:
+                  '************************* Materialized Views ********************************',
+                type: [Object],
+              },
+              getMaterializedViewById: { type: Object },
+              getConfig: {
+                summary:
+                  '************************* Config ********************************',
+              },
+              getVersion: { type: Object },
+              getPolicies: {
+                summary:
+                  '************************* Policies ********************************',
+              },
+              getPolicyById: { type: Object },
+              createPolicy: { type: Object },
+              updatePolicy: { type: Object },
+              deletePolicy: { type: Object },
+              getPublications: {
+                summary:
+                  '************************* Publications ********************************',
+              },
+              getPublicationById: { type: Object },
+              createPublication: { type: Object },
+              updatePublication: { type: Object },
+              deletePublication: { type: Object },
+              getTablePrivileges: {
+                summary:
+                  '************************* Table Privileges ********************************',
+              },
+              grantTablePrivileges: { type: Object },
+              revokeTablePrivileges: { type: Object },
+              getTriggers: {
+                summary:
+                  '************************* Triggers ********************************',
+              },
+              getTriggerById: { type: Object },
+              createTrigger: { type: Object },
+              updateTrigger: { type: Object },
+              deleteTrigger: { type: Object },
+              getTypes: {
+                summary:
+                  '************************* Types ********************************',
+              },
+              generateTypescript: {
+                summary:
+                  '************************* Generators ********************************',
+                type: String,
+              },
+              generateGo: { type: String },
+              generateSwift: { type: String },
             },
           },
         ],

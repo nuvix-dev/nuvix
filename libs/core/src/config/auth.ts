@@ -59,4 +59,4 @@ const authMethods: Record<string, AuthMethod> = {
   },
 }
 
-export default authMethods
+export { authMethods }

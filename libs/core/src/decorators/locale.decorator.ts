@@ -1,6 +1,6 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common'
-import { LocaleTranslator } from '../helper/locale.helper'
-import ParamsHelper from '../helper/params.helper'
+import { LocaleTranslator } from '../helpers/locale.helper'
+import ParamsHelper from '../helpers/params.helper'
 
 export const Locale = createParamDecorator<any, any>(
   (data: unknown, ctx: ExecutionContext): any => {

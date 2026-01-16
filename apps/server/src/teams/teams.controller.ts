@@ -6,7 +6,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 import { TeamsService } from './teams.service'
-import { ResponseInterceptor } from '@nuvix/core/resolvers/interceptors/response.interceptor'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
 import {
   Auth,
   AuthType,
@@ -15,18 +15,18 @@ import {
   QuerySearch,
 } from '@nuvix/core/decorators'
 
-import { Models } from '@nuvix/core/helper/response.helper'
+import { Models } from '@nuvix/core/helpers'
 import {
   CreateTeamDTO,
   TeamsParamDTO,
   UpdateTeamDTO,
   UpdateTeamPrefsDTO,
 } from './DTO/team.dto'
-import { User } from '@nuvix/core/decorators/project-user.decorator'
+import { User } from '@nuvix/core/decorators'
 import { Database, Query as Queries } from '@nuvix/db'
-import { ProjectGuard } from '@nuvix/core/resolvers/guards/project.guard'
-import { ApiInterceptor } from '@nuvix/core/resolvers/interceptors/api.interceptor'
-import { AuthDatabase } from '@nuvix/core/decorators/project.decorator'
+import { ProjectGuard } from '@nuvix/core/resolvers'
+import { ApiInterceptor } from '@nuvix/core/resolvers'
+import { AuthDatabase } from '@nuvix/core/decorators'
 import { TeamsQueryPipe } from '@nuvix/core/pipes/queries'
 import { Delete, Get, Post, Put } from '@nuvix/core'
 import { IListResponse, IResponse } from '@nuvix/utils'

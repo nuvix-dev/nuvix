@@ -1,5 +1,5 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common'
-import ParamsHelper from '../helper/params.helper'
+import ParamsHelper from '../helpers/params.helper'
 import { AppMode } from '@nuvix/utils'
 
 export const Mode = createParamDecorator(

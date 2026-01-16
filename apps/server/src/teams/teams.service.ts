@@ -4,7 +4,7 @@ import {
   UpdateTeamDTO,
   UpdateTeamPrefsDTO,
 } from './DTO/team.dto'
-import { ID } from '@nuvix/core/helper/ID.helper'
+import { ID } from '@nuvix/core/helpers'
 import { Exception } from '@nuvix/core/extend/exception'
 import {
   Database,
@@ -14,9 +14,9 @@ import {
   Query,
   Role,
 } from '@nuvix/db'
-import { Auth } from '@nuvix/core/helper/auth.helper'
+import { Auth } from '@nuvix/core/helpers'
 import type { UsersDoc } from '@nuvix/utils/types'
-import { DeletesQueue } from '@nuvix/core/resolvers/queues/deletes.queue'
+import { DeletesQueue } from '@nuvix/core/resolvers'
 import { CoreService } from '@nuvix/core'
 
 @Injectable()
