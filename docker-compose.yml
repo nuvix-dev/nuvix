@@ -84,7 +84,6 @@ services:
       args:
         - APP_NAME=server
     container_name: server
-    command: ['bun', 'main.js']
     ports:
       - '4000:4000'
     env_file:
@@ -119,7 +118,6 @@ services:
       args:
         - APP_NAME=platform
     container_name: platform
-    command: ['bun', 'main.js']
     ports:
       - '4100:4100'
     env_file:

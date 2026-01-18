@@ -7,9 +7,7 @@ export default async () => {
     ['../../../libs/core/src/models/User.model.js']: await import(
       '../../../libs/core/src/models/User.model.js'
     ),
-    ['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']: await import(
-      '.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db'
-    ),
+    ['@nuvix/db']: await import('@nuvix/db'),
     ['../../../libs/utils/src/constants.js']: await import(
       '../../../libs/utils/src/constants.js'
     ),
@@ -255,8 +253,7 @@ export default async () => {
               type: {
                 required: true,
                 description: 'Attribute type.',
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .AttributeType,
+                enum: t['@nuvix/db'].AttributeType,
               },
               status: {
                 required: true,
@@ -326,8 +323,7 @@ export default async () => {
                 required: false,
                 description:
                   'Relation type, possible values are: `oneToOne`, `oneToMany`, `manyToOne`, `manyToMany` (for relationship type only).',
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .RelationType,
+                enum: t['@nuvix/db'].RelationType,
               },
               twoWay: {
                 required: false,
@@ -345,15 +341,13 @@ export default async () => {
                 required: false,
                 description:
                   'On delete action, possible values are: `cascade`, `restrict`, or `setNull` (for relationship type only).',
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .OnDelete,
+                enum: t['@nuvix/db'].OnDelete,
               },
               side: {
                 required: false,
                 description:
                   'Attribute side (for relationship type only).\nPossible values are `parent` or `child`.',
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .RelationSide,
+                enum: t['@nuvix/db'].RelationSide,
               },
             },
           },
@@ -555,11 +549,7 @@ export default async () => {
           import('../../../libs/core/src/models/Attributes.model.js'),
           {
             AttributeBooleanModel: {
-              type: {
-                required: true,
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .AttributeType,
-              },
+              type: { required: true, enum: t['@nuvix/db'].AttributeType },
               default: {
                 required: true,
                 type: () => Boolean,
@@ -568,11 +558,7 @@ export default async () => {
               },
             },
             AttributeDatetimeModel: {
-              type: {
-                required: true,
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .AttributeType,
-              },
+              type: { required: true, enum: t['@nuvix/db'].AttributeType },
               format: {
                 required: true,
                 enum: t['../../../libs/utils/src/constants.js'].AttributeFormat,
@@ -585,11 +571,7 @@ export default async () => {
               },
             },
             AttributeEmailModel: {
-              type: {
-                required: true,
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .AttributeType,
-              },
+              type: { required: true, enum: t['@nuvix/db'].AttributeType },
               format: {
                 required: true,
                 enum: t['../../../libs/utils/src/constants.js'].AttributeFormat,
@@ -602,11 +584,7 @@ export default async () => {
               },
             },
             AttributeEnumModel: {
-              type: {
-                required: true,
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .AttributeType,
-              },
+              type: { required: true, enum: t['@nuvix/db'].AttributeType },
               elements: { required: true, type: () => [String] },
               format: {
                 required: true,
@@ -620,11 +598,7 @@ export default async () => {
               },
             },
             AttributeFloatModel: {
-              type: {
-                required: true,
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .AttributeType,
-              },
+              type: { required: true, enum: t['@nuvix/db'].AttributeType },
               min: {
                 required: true,
                 type: () => Number,
@@ -645,11 +619,7 @@ export default async () => {
               },
             },
             AttributeIPModel: {
-              type: {
-                required: true,
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .AttributeType,
-              },
+              type: { required: true, enum: t['@nuvix/db'].AttributeType },
               format: {
                 required: true,
                 enum: t['../../../libs/utils/src/constants.js'].AttributeFormat,
@@ -662,11 +632,7 @@ export default async () => {
               },
             },
             AttributeIntegerModel: {
-              type: {
-                required: true,
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .AttributeType,
-              },
+              type: { required: true, enum: t['@nuvix/db'].AttributeType },
               min: {
                 required: true,
                 type: () => Number,
@@ -699,28 +665,15 @@ export default async () => {
               },
               relationType: {
                 required: true,
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .RelationType,
+                enum: t['@nuvix/db'].RelationType,
               },
               twoWay: { required: true, type: () => Boolean, default: false },
               twoWayKey: { required: false, type: () => String },
-              onDelete: {
-                required: true,
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .OnDelete,
-              },
-              side: {
-                required: true,
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .RelationSide,
-              },
+              onDelete: { required: true, enum: t['@nuvix/db'].OnDelete },
+              side: { required: true, enum: t['@nuvix/db'].RelationSide },
             },
             AttributeStringModel: {
-              type: {
-                required: true,
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .AttributeType,
-              },
+              type: { required: true, enum: t['@nuvix/db'].AttributeType },
               size: { required: true, type: () => Number, default: 0 },
               default: {
                 required: true,
@@ -730,11 +683,7 @@ export default async () => {
               },
             },
             AttributeURLModel: {
-              type: {
-                required: true,
-                enum: t['.bun/@nuvix+db@0.1.29-alpha.4/node_modules/@nuvix/db']
-                  .AttributeType,
-              },
+              type: { required: true, enum: t['@nuvix/db'].AttributeType },
               format: {
                 required: true,
                 enum: t['../../../libs/utils/src/constants.js'].AttributeFormat,

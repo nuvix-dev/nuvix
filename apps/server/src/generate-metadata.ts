@@ -25,8 +25,11 @@ generator.generate({
 // --- Post-process step ---
 let content = fs.readFileSync(outputFile, 'utf8')
 
+// Replace `.bun/@nuvix+db@<any_version>/node_modules/@nuvix/db` with clean `@nuvix/db`
 // Replace `@nuvix/db/dist` with clean `@nuvix/db`
 content = content
+  .replace(/\.bun\/@nuvix\+db@[^/]+\/node_modules\/@nuvix\/db\//g, '@nuvix/db/')
+  .replace(/\.bun\/@nuvix\+db@[^/]+\/node_modules\/@nuvix\/db\b/g, '@nuvix/db')
   .replace(/@nuvix\/db\/dist\//g, '@nuvix/db/')
   .replace(/@nuvix\/db\/dist\b/g, '@nuvix/db')
 

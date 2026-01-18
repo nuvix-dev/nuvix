@@ -1,34 +1,53 @@
 # -------------------------------
-# STAGE 1: BUILDER
+# STAGE 1: BASE DEPS
 # -------------------------------
-FROM oven/bun:1.3.5 AS builder
+FROM oven/bun:1.3.5 AS deps
+
+WORKDIR /app
+
+# Copy only dependency manifests required for monorepo resolution
+COPY package.json bun.lock ./
+COPY apps/server/package.json apps/server/package.json
+COPY apps/platform/package.json apps/platform/package.json
+COPY libs/core/package.json libs/core/package.json
+COPY libs/pg-meta/package.json libs/pg-meta/package.json
+COPY libs/utils/package.json libs/utils/package.json
+
+RUN bun install --frozen-lockfile
+
+# -------------------------------
+# STAGE 2: BUILD
+# -------------------------------
+FROM deps AS build
 
 ARG APP_NAME
 ENV APP_NAME=$APP_NAME
 
 WORKDIR /app
 
-# 1. Install monorepo toolchain dependencies
-COPY package.json bun.lock ./
-COPY apps/server/package.json ./apps/server/package.json
-COPY apps/platform/package.json ./apps/platform/package.json
-COPY libs/core/package.json ./libs/core/package.json
-COPY libs/pg-meta/package.json ./libs/pg-meta/package.json
-COPY libs/utils/package.json ./libs/utils/package.json
-
-RUN bun install --frozen-lockfile
-
-# 2. Copy full source and build the app
+# Copy source only after deps are cached
 COPY . .
+
 RUN bun turbo build --filter=@nuvix/${APP_NAME} --force
 
-# 3. Resolve *production* dependency graph ONCE
-#    This generates the production bun.lockb
-WORKDIR /app/dist/${APP_NAME}
-RUN bun install --production
+# -------------------------------
+# STAGE 3: PROD DEPS
+# -------------------------------
+FROM oven/bun:1.3.5 AS prod-deps
+
+ARG APP_NAME
+ENV APP_NAME=$APP_NAME
+
+WORKDIR /prod/${APP_NAME}
+
+# Copy ONLY generated dependency manifests
+COPY --from=build /app/dist/${APP_NAME}/package.json ./
+
+# This layer is now perfectly cacheable
+RUN bun install --production 
 
 # -------------------------------
-# STAGE 2: RUNTIME
+# STAGE 4: RUNTIME
 # -------------------------------
 FROM oven/bun:1.3.5-slim AS runtime
 
@@ -38,11 +57,10 @@ ENV NODE_ENV=production
 
 WORKDIR /app
 
-# 4. Copy the fully prepared production artifact
-COPY --from=builder /app/dist/${APP_NAME} ./
+# Copy runtime code
+COPY --from=build /app/dist/${APP_NAME} ./
 
-# 5. Replay the resolved graph deterministically
-RUN bun install --production --frozen-lockfile
+# Attach resolved production node_modules
+COPY --from=prod-deps /prod/${APP_NAME}/node_modules ./node_modules
 
-# 6. Run the bundled server
 CMD ["bun", "run", "start"]

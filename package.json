@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Nuvix is an Open Source Backend providing a set of tools and services to help developers build and deploy applications quickly and efficiently.",
   "author": "Nuvix-Tech",
-  "license": "BSD-3-Clause",
+  "license": "FSL-1.1-Apache-2.0",
   "type": "module",
   "repository": {
     "type": "git",
