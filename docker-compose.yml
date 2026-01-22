@@ -2,6 +2,7 @@
 # if you want to deploy nuvix in production, please refer to the documentation
 # https://docs.nuvix.in/deployment/docker
 
+name: nuvix
 services:
   postgres:
     image: nuvix/postgres
@@ -48,33 +49,33 @@ services:
       retries: 5
       start_period: 10s
 
-  pgcat:
-    image: ghcr.io/postgresml/pgcat:latest
-    container_name: nuvix-pgcat
-    ports:
-      - "9930:9930"  # Metrics port
-      - "6432:6432"  
-    environment:
-      NUVIX_PGCAT_ADMIN_USER: ${NUVIX_PGCAT_ADMIN_USER:-admin}
-      NUVIX_PGCAT_ADMIN_PASSWORD: ${NUVIX_PGCAT_ADMIN_PASSWORD:-password}
-      NUVIX_DATABASE_PASSWORD: ${NUVIX_DATABASE_PASSWORD}
-      NUVIX_DATABASE_ADMIN_PASSWORD: ${NUVIX_DATABASE_ADMIN_PASSWORD}
-      NUVIX_DATABASE_POOL_HOST: localhost
-      NUVIX_DATABASE_POOL_PORT: 6432
-      NUVIX_DATABASE_HOST: postgres
-      NUVIX_DATABASE_PORT: 5432
-    env_file:
-      - .env
-    volumes:
-      - ./configs/pgcat.toml.template:/etc/pgcat/pgcat.toml.template:ro
-      - ./configs/pgcat-entrypoint.sh:/usr/local/bin/pgcat-entrypoint.sh:ro
-    networks:
-      - nuvix
-    depends_on:
-      postgres:
-        condition: service_healthy
-    restart: unless-stopped
-    entrypoint: ["/usr/local/bin/pgcat-entrypoint.sh"]
+  # pgcat:
+  #   image: ghcr.io/postgresml/pgcat:latest
+  #   container_name: nuvix-pgcat
+  #   ports:
+  #     - "9930:9930"  # Metrics port
+  #     - "6432:6432"  
+  #   environment:
+  #     NUVIX_PGCAT_ADMIN_USER: ${NUVIX_PGCAT_ADMIN_USER:-admin}
+  #     NUVIX_PGCAT_ADMIN_PASSWORD: ${NUVIX_PGCAT_ADMIN_PASSWORD:-password}
+  #     NUVIX_DATABASE_PASSWORD: ${NUVIX_DATABASE_PASSWORD}
+  #     NUVIX_DATABASE_ADMIN_PASSWORD: ${NUVIX_DATABASE_ADMIN_PASSWORD}
+  #     NUVIX_DATABASE_POOL_HOST: localhost
+  #     NUVIX_DATABASE_POOL_PORT: 6432
+  #     NUVIX_DATABASE_HOST: postgres
+  #     NUVIX_DATABASE_PORT: 5432
+  #   env_file:
+  #     - .env
+  #   volumes:
+  #     - ./configs/pgcat.toml.template:/etc/pgcat/pgcat.toml.template:ro
+  #     - ./configs/pgcat-entrypoint.sh:/usr/local/bin/pgcat-entrypoint.sh:ro
+  #   networks:
+  #     - nuvix
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   restart: unless-stopped
+  #   entrypoint: ["/usr/local/bin/pgcat-entrypoint.sh"]
 
   server:
     build:
@@ -100,9 +101,8 @@ services:
         condition: service_healthy
     networks:
       - nuvix
-      - caddy
     volumes:
-      - nuvix_storage:/usr/src/app/storage
+      - nuvix_storage:/app/storage
     restart: unless-stopped
     logging:
       driver: 'json-file'
@@ -134,7 +134,6 @@ services:
         condition: service_healthy
     networks:
       - nuvix
-      - caddy
     restart: unless-stopped
     logging:
       driver: 'json-file'
@@ -149,6 +148,4 @@ volumes:
 
 networks:
   nuvix:
-    driver: bridge
-  caddy:
     driver: bridge

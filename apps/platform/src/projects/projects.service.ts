@@ -501,7 +501,7 @@ export class ProjectService {
   }
 }
 
-function loadAuthConfig(authMethods: Record<string, AuthMethod>) {
+export function loadAuthConfig(authMethods: Record<string, AuthMethod>) {
   const authConfig: Record<string, any> = { ...defaultAuthConfig }
 
   Object.values(authMethods).forEach(method => {
