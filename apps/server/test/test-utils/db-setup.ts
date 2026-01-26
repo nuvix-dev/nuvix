@@ -224,7 +224,6 @@ export async function dbSetup(
           projectId,
           name: 'My Project',
           password: config.getDatabaseConfig().postgres.adminPassword || '',
-          region: 'local',
         })
         logger.log(`✓ Default project created with ID: ${projectId}`)
       }
@@ -244,7 +243,6 @@ async function createProject({
   org,
   coreService,
   projectId: _projectId,
-  teamId,
   password,
   name,
   ...rest
@@ -255,9 +253,9 @@ async function createProject({
   org: Doc<Teams>
   password: string
   name: string
-  [key: string]: any
 }): Promise<Doc<Projects>> {
   const projectId = _projectId === 'unique()' ? ID.unique() : _projectId
+  const teamId = org.getId()
 
   try {
     const auths = loadAuthConfig(authMethods)
