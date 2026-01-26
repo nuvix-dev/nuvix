@@ -22,7 +22,7 @@
   },
   "scripts": {
     "lint": "eslint src/**/*.ts --fix",
-    "test": "vitest run",
+    "test:unit": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

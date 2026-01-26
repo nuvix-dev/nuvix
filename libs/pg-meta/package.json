@@ -7,7 +7,6 @@
   },
   "scripts": {
     "lint": "eslint src/**/*.ts --fix",
-    "test": "jest",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

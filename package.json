@@ -22,7 +22,9 @@
     "gen:types": "turbo gen:types",
     "typecheck": "turbo typecheck",
     "format": "biome format --write .",
-    "test:deps": "docker compose -f docker-compose.test.yml down -v && docker compose -f docker-compose.test.yml up -d"
+    "test:unit": "turbo test:unit",
+    "test:e2e": "turbo test:e2e",
+    "test:reset": "docker compose -f docker-compose.test.yml down -v && docker compose -f docker-compose.test.yml up -d"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",
