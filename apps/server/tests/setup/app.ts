@@ -11,9 +11,8 @@ import { ConsoleLogger, LOG_LEVELS, Logger } from '@nestjs/common'
 import { validateRequiredConfig } from '@nuvix/utils'
 import { Authorization } from '@nuvix/db'
 import { AppConfigService } from '@nuvix/core'
-import { initSetup } from '../../../platform/src/utils/initial-setup'
 import { applyAppConfig } from '../../src/core'
-import { dbSetup } from './db-setup'
+import { dbSetup } from './db'
 
 configurePgTypeParsers()
 configureDbFiltersAndFormats()

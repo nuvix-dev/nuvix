@@ -1,5 +1,5 @@
 import { beforeAll, afterAll } from 'vitest'
-import { getApp, closeApp } from './test-app'
+import { getApp, closeApp } from './app'
 
 beforeAll(async () => {
   await getApp() // boot once globally
