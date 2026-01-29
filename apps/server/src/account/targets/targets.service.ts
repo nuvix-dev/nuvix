@@ -13,7 +13,12 @@ import { Auth } from '@nuvix/core/helpers'
 import { Detector } from '@nuvix/core/helpers'
 import { DeleteType, MessageType, QueueFor, Schemas } from '@nuvix/utils'
 import { CreatePushTargetDTO, UpdatePushTargetDTO } from './DTO/target.dto'
-import type { ProjectsDoc, Targets, UsersDoc } from '@nuvix/utils/types'
+import type {
+  ProjectsDoc,
+  ProvidersDoc,
+  Targets,
+  UsersDoc,
+} from '@nuvix/utils/types'
 import { InjectQueue } from '@nestjs/bullmq'
 import type { DeletesJobData } from '@nuvix/core/resolvers'
 import { Queue } from 'bullmq'
@@ -38,11 +43,14 @@ export class TargetsService {
   }: WithDB<WithUser<CreatePushTargetDTO & { userAgent: string }>>) {
     const finalTargetId = targetId === 'unique()' ? ID.unique() : targetId
 
-    const provider = await Authorization.skip(() =>
-      db.withSchema(Schemas.Core, () =>
-        db.getDocument('providers', providerId!),
-      ),
-    )
+    let provider: ProvidersDoc | null = null
+    if (providerId) {
+      provider = await Authorization.skip(() =>
+        db.withSchema(Schemas.Core, () =>
+          db.getDocument('providers', providerId!),
+        ),
+      )
+    }
 
     const target = await Authorization.skip(() =>
       db.getDocument('targets', finalTargetId),
@@ -68,8 +76,8 @@ export class TargetsService {
             Permission.update(Role.user(user.getId())),
             Permission.delete(Role.user(user.getId())),
           ],
-          providerId: providerId || null,
-          providerInternalId: providerId ? provider.getSequence() : null,
+          providerId: provider ? provider.getId() : null,
+          providerInternalId: provider ? provider.getSequence() : null,
           providerType: MessageType.PUSH,
           userId: user.getId(),
           userInternalId: user.getSequence(),

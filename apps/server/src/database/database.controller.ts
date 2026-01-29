@@ -21,7 +21,7 @@ import {
 
 // DTO's
 import {
-  CreateSchema,
+  CreateSchemaDTO,
   SchemaParamsDTO,
   SchemaQueryDTO,
 } from './DTO/create-schema.dto'
@@ -67,7 +67,7 @@ export class DatabaseController {
   })
   async createSchema(
     @ProjectPg() pg: DataSource,
-    @Body() body: CreateSchema,
+    @Body() body: CreateSchemaDTO,
     @Project() project: ProjectsDoc,
   ) {
     const result = await (body.type !== SchemaType.Document

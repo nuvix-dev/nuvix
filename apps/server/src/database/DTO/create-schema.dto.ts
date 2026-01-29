@@ -8,7 +8,7 @@ import {
   Matches,
 } from 'class-validator'
 
-export class CreateSchema {
+export class CreateSchemaDTO {
   @ApiProperty({
     description: 'Schema name',
     example: 'my_schema',

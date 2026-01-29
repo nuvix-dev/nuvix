@@ -124,6 +124,7 @@ export class AccountService {
         ],
         email: email,
         emailVerification: false,
+        phoneVerification: false,
         status: true,
         password: hashedPassword ?? undefined,
         passwordHistory:
@@ -185,7 +186,7 @@ export class AccountService {
     Authorization.setRole(Role.user(user.getId()).toString())
     Authorization.setRole(Role.users().toString())
 
-    return user
+    return db.getDocument('users', user.getId())
   }
 
   async updatePrefs(

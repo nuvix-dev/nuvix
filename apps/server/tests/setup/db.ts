@@ -12,11 +12,11 @@ import collections from '@nuvix/utils/collections'
 import { Audit } from '@nuvix/audit'
 import { AppConfigService, CoreService } from '@nuvix/core'
 import { NestFastifyApplication } from '@nestjs/platform-fastify'
-import { Schemas } from '@nuvix/utils'
+import { ApiKey, Schemas } from '@nuvix/utils'
 import { Auth } from '@nuvix/core/helpers'
-import type { Projects, Teams } from '@nuvix/utils/types'
+import type { Keys, Projects, Teams } from '@nuvix/utils/types'
 import { Exception } from '@nuvix/core/extend/exception'
-import { oAuthProviders, OAuthProviderType } from '@nuvix/core/config'
+import { oAuthProviders, OAuthProviderType, scopes } from '@nuvix/core/config'
 import { authMethods, defaultSmtpConfig, services } from '@nuvix/core/config'
 import { setupDatabase } from '@nuvix/utils/database'
 import { loadAuthConfig } from '../../../platform/src/projects/projects.service'
@@ -217,7 +217,7 @@ export async function dbSetup(
         )
 
         const projectId = 'test'
-        await createProject({
+        const project = await createProject({
           db,
           coreService,
           org: team,
@@ -226,6 +226,31 @@ export async function dbSetup(
           password: config.getDatabaseConfig().postgres.adminPassword || '',
         })
         logger.log(`✓ Default project created with ID: ${projectId}`)
+
+        const apiKey = config.get('app').testApiKey
+        if (apiKey) {
+          logger.log('🔑 Creating test API key for default project')
+          const key = new Doc<Keys>({
+            $id: ID.unique(),
+            $permissions: [
+              Permission.read(Role.any()),
+              Permission.update(Role.any()),
+              Permission.delete(Role.any()),
+            ],
+            projectInternalId: project.getSequence(),
+            projectId: project.getId(),
+            name: 'Test Api Key',
+            scopes: Object.keys(scopes),
+            expire: null,
+            sdks: [],
+            accessedAt: null,
+            secret: ApiKey.STANDARD + '_' + apiKey,
+          })
+
+          await db.createDocument('keys', key)
+          await db.purgeCachedDocument('projects', project.getId())
+          logger.log('✓ Test API key created successfully')
+        }
       }
 
       logger.log('✅ Nuvix test setup completed successfully!')

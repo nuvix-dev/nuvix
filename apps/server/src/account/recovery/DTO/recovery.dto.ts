@@ -1,5 +1,5 @@
 import { IsUID } from '@nuvix/core/validators'
-import { IsEmail, IsString, IsNotEmpty, IsUrl } from 'class-validator'
+import { IsEmail, IsString, IsNotEmpty, IsUrl, Length } from 'class-validator'
 
 export class CreateRecoveryDTO {
   /**
@@ -35,5 +35,6 @@ export class UpdateRecoveryDTO {
    */
   @IsNotEmpty()
   @IsString()
+  @Length(8, 256, { message: 'Password must be between 8 and 256 characters.' })
   declare password: string
 }

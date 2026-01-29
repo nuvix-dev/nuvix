@@ -23,6 +23,7 @@ const nxconfig = () =>
       debug: {
         colors: parseBoolean(process.env['NUVIX_DEBUG_COLORS'], true),
         json: parseBoolean(process.env['NUVIX_DEBUG_JSON'], false),
+        errors: parseBoolean(process.env['NUVIX_DEBUG_ERRORS'], false),
       },
       region: process.env['NUVIX_REGION'] || 'local',
       enableLogs: parseBoolean(process.env['NUVIX_ENABLE_LOGS'], true),
@@ -33,6 +34,7 @@ const nxconfig = () =>
       ),
       docsRoot: process.env['NUVIX_DOCS_ROOT'] || PROJECT_ROOT,
       projectId: process.env['NUVIX_PROJECT_ID'] || 'default',
+      testApiKey: process.env['NUVIX_TEST_API_KEY'] || '',
     },
 
     assets: {

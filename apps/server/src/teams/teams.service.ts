@@ -136,7 +136,7 @@ export class TeamsService {
       throw new Exception(Exception.TEAM_NOT_FOUND)
     }
 
-    const deleted = await db.deleteDocument('teams', id)
+    const deleted = await db.deleteDocument('teams', team.getId())
     if (!deleted) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
@@ -156,7 +156,7 @@ export class TeamsService {
   async findOne(db: Database, id: string) {
     const team = await db.getDocument('teams', id)
 
-    if (!team) {
+    if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
     }
 

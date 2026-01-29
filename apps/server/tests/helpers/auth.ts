@@ -1,66 +1,106 @@
-import request from 'supertest'
-import { INestApplication } from '@nestjs/common'
-import { faker } from '@faker-js/faker'
+import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { buildCreateAccountDTO } from '../factories/dto/account.factory'
+import { buildCreateEmailSessionDTO } from '../factories/dto/session.factory'
+import { parseJson } from '../setup/test-utils'
+import { ApiKey, configuration } from '@nuvix/utils'
 
-export interface TestSession {
-  sessionId: string
+/**
+ * Creates a new user account and establishes a session.
+ * Returns the session secret for use in x-nuvix-session header.
+ */
+export async function createUserAndSession(
+  app: NestFastifyApplication,
+): Promise<{
   userId: string
-  cookies: string[]
-}
+  email: string
+  password: string
+  sessionHeader: string
+}> {
+  const account = buildCreateAccountDTO()
+  const createAccountRes = await app.inject({
+    method: 'POST',
+    url: '/v1/account',
+    headers: { 'content-type': 'application/json' },
+    payload: JSON.stringify(account),
+  })
 
-export async function createTestSession(
-  app: INestApplication,
-): Promise<TestSession> {
-  const email = faker.internet.email().toLowerCase()
-  const password = faker.internet.password({ length: 16 })
-
-  const createRes = await request(app.getHttpServer())
-    .post('/v1/account')
-    .send({
-      userId: faker.string.alphanumeric(12),
-      email,
-      password,
-      name: faker.person.fullName(),
-    })
-
-  if (createRes.status !== 201) {
-    throw new Error(`Failed to create account: ${createRes.status}`)
+  // Keep helper strict: if this breaks, tests should fail loudly.
+  if (createAccountRes.statusCode !== 201) {
+    throw new Error(
+      `Expected account creation 201, got ${createAccountRes.statusCode}: ${createAccountRes.payload}`,
+    )
   }
 
-  const userId = createRes.body.$id
+  const sessionDto = buildCreateEmailSessionDTO({
+    email: account.email,
+    password: account.password,
+  })
+  const createSessionRes = await app.inject({
+    method: 'POST',
+    url: '/v1/account/sessions/email',
+    headers: { 'content-type': 'application/json' },
+    payload: JSON.stringify(sessionDto),
+  })
 
-  const sessionRes = await request(app.getHttpServer())
-    .post('/v1/account/sessions/email')
-    .send({
-      email,
-      password,
-    })
-
-  if (![200, 201].includes(sessionRes.status)) {
-    throw new Error(`Failed to create session: ${sessionRes.status}`)
+  if (createSessionRes.statusCode !== 201) {
+    throw new Error(
+      `Expected session creation 201, got ${createSessionRes.statusCode}: ${createSessionRes.payload}`,
+    )
   }
 
-  const cookies = (sessionRes.headers['set-cookie'] || []) as string[]
-  const sessionId = sessionRes.body.token
+  const session = parseJson(createSessionRes.payload)
+  const sessionHeader = session?.secret
+  if (typeof sessionHeader !== 'string' || sessionHeader.length === 0) {
+    throw new Error('Expected session response to include a non-empty secret')
+  }
 
   return {
-    sessionId,
-    userId,
-    cookies,
+    userId: account.userId,
+    email: account.email,
+    password: account.password,
+    sessionHeader,
   }
 }
 
-export function withSession(
-  req: request.Test,
-  session: TestSession,
-): request.Test {
-  if (session.cookies.length > 0) {
-    return req.set('Cookie', session.cookies)
+/**
+ * Returns headers object with x-nuvix-key for API key authentication.
+ * Reads the API key from NUVIX_TEST_API_KEY environment variable.
+ * @throws Error if NUVIX_TEST_API_KEY is not set
+ */
+export function getApiKeyHeaders(): Record<string, string> {
+  const apiKey = configuration.app.testApiKey
+  if (!apiKey) {
+    throw new Error(
+      'NUVIX_TEST_API_KEY environment variable is required for KEY auth tests',
+    )
   }
-
-  if (session.sessionId) {
-    return req.set('X-Nuvix-Session', session.sessionId)
+  return {
+    'x-nuvix-key': ApiKey.STANDARD + '_' + apiKey,
   }
+}
 
-  return req
+/**
+ * Creates headers object with x-nuvix-key and content-type for JSON requests.
+ */
+export function getApiKeyJsonHeaders(): Record<string, string> {
+  return {
+    ...getApiKeyHeaders(),
+    'content-type': 'application/json',
+  }
+}
+
+/**
+ * Placeholder for creating admin session headers.
+ * For routes that ONLY accept ADMIN auth, not KEY auth.
+ * Currently throws - implement when needed.
+ */
+export async function createAdminSession(
+  _app: NestFastifyApplication,
+): Promise<Record<string, string>> {
+  // TODO: Implement admin session creation
+  // This could use the existing admin user from db.ts setup
+  // For now, most ADMIN routes also accept KEY auth, so use getApiKeyHeaders instead
+  throw new Error(
+    'createAdminSession not yet implemented - use getApiKeyHeaders() for routes that accept both ADMIN and KEY auth',
+  )
 }

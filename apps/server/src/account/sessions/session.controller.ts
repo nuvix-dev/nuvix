@@ -6,6 +6,7 @@ import {
   Query,
   Req,
   Res,
+  Session,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
@@ -136,12 +137,17 @@ export class SessionsController {
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
     @Project() project: ProjectsDoc,
+    @Session() session: SessionsDoc,
   ): Promise<void> {
+    let sessionId = params.sessionId
+    if (params.sessionId === 'current') {
+      sessionId = session.getId()
+    }
     return this.sessionService.deleteSession(
       db,
       user,
       project,
-      params.sessionId,
+      sessionId,
       request,
       response,
       locale,

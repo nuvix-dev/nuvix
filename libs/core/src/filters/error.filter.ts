@@ -117,15 +117,16 @@ export class ErrorFilter implements ExceptionFilter {
 
     message ??= (exception as any)?.message
 
+    const debugErrors = this.appConfig.get('app').debug.errors
     if (status >= 500) {
       this.logger.error(exception)
-    } else {
+    } else if (debugErrors) {
       this.logger.debug(exception)
     }
 
     request['error'] = { message, type, ...extra }
 
-    if (!this.appConfig.get('app').isProduction) {
+    if (!this.appConfig.get('app').isProduction && debugErrors) {
       extra['exception'] = (exception as any)?.stack
     }
 

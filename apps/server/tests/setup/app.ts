@@ -7,7 +7,7 @@ import {
   configurePgTypeParsers,
 } from '@nuvix/core'
 import { NestFastifyApplication } from '@nestjs/platform-fastify'
-import { ConsoleLogger, LOG_LEVELS, Logger } from '@nestjs/common'
+import { ConsoleLogger, LOG_LEVELS } from '@nestjs/common'
 import { validateRequiredConfig } from '@nuvix/utils'
 import { Authorization } from '@nuvix/db'
 import { AppConfigService } from '@nuvix/core'
@@ -53,7 +53,6 @@ export async function getApp(): Promise<NestFastifyApplication> {
     logger.setLogLevels([])
     await app.init()
     logger.setLogLevels(LOG_LEVELS)
-    await app.listen(0) // required for Fastify hooks
   }
   return app
 }

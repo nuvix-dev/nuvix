@@ -74,7 +74,7 @@ export class MfaController {
 
   @Get('factors', {
     summary: 'List factors',
-    model: Models.MFA_CHALLENGE,
+    model: Models.MFA_FACTORS,
     sdk: {
       name: 'listMfaFactors',
       descMd: '/docs/references/account/list-mfa-factors.md',

@@ -19,6 +19,8 @@ export default defineConfig({
     include: ['tests/integration/**/*.spec.ts'],
     setupFiles: ['./tests/setup/global.ts'],
     maxWorkers: 1,
+    isolate: false,
+    env: process.env,
   },
   plugins: [
     tsconfigPaths(),

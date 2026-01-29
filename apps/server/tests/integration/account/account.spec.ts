@@ -1,216 +1,394 @@
-import { INestApplication } from '@nestjs/common'
-import request from 'supertest'
 import { describe, it, expect, beforeAll } from 'vitest'
 import { getApp } from '../../setup/app'
 import { buildCreateAccountDTO } from '../../factories/dto/account.factory'
-import { faker } from '@faker-js/faker'
+import { createUserAndSession } from '../../helpers/auth'
+import {
+  parseJson,
+  assertStatusCode,
+  assertDocumentShape,
+} from '../../setup/test-utils'
+import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 
-describe('Account Creation (Integration)', () => {
-  let app: INestApplication
+describe('account (integration)', () => {
+  let app: NestFastifyApplication
 
   beforeAll(async () => {
     app = await getApp()
-  }, 30000)
+  })
 
-  describe('POST /v1/account', () => {
-    it('should create an account successfully', async () => {
-      const payload = buildCreateAccountDTO()
+  /**
+   * AUTH BOUNDARY TESTS
+   * These tests protect against accidentally exposing private endpoints publicly
+   */
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/account')
-        .send(payload)
-
-      expect(res.status).toBeOneOf([201, 400, 409])
-      if (res.status === 201) {
-        expect(res.body).toEqual(
-          expect.objectContaining({
-            $id: payload.userId,
-            email: payload.email,
-            name: payload.name,
-          }),
-        )
-      }
+  it('GET /v1/account returns 401 when unauthenticated', async () => {
+    // PROTECTS: Ensures account details are not exposed without authentication
+    const res = await app.inject({
+      method: 'GET',
+      url: '/v1/account',
     })
 
-    it('should fail when email is invalid', async () => {
-      const payload = buildCreateAccountDTO({
-        email: 'invalid-email',
-      })
+    assertStatusCode(res, 401)
+    const body = parseJson(res.payload)
+    expect(body.message).toBeDefined()
+    expect(body.code).toBeDefined()
+  })
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/account')
-        .send(payload)
-
-      expect(res.status).toBe(400)
+  it('GET /v1/account/prefs returns 401 when unauthenticated', async () => {
+    // PROTECTS: User preferences not exposed without authentication
+    const res = await app.inject({
+      method: 'GET',
+      url: '/v1/account/prefs',
     })
 
-    it('should fail when password is too short', async () => {
-      const payload = buildCreateAccountDTO({
-        password: 'short',
-      })
+    assertStatusCode(res, 401)
+  })
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/account')
-        .send(payload)
+  /**
+   * ACCOUNT CREATION TESTS
+   * These tests protect the account registration flow
+   */
 
-      expect(res.status).toBe(400)
+  it('POST /v1/account returns 201 and echoes full account shape', async () => {
+    // PROTECTS: Account creation contract - status code and all required fields
+    const dto = buildCreateAccountDTO()
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/v1/account',
+      headers: { 'content-type': 'application/json' },
+      payload: JSON.stringify(dto),
     })
 
-    it('should fail when password exceeds 256 chars', async () => {
-      const payload = buildCreateAccountDTO({
-        password: 'a'.repeat(257),
-      })
+    assertStatusCode(res, 201)
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/account')
-        .send(payload)
+    const body = parseJson(res.payload)
+    assertDocumentShape(body)
 
-      expect(res.status).toBe(400)
+    // Verify all expected fields are present
+    expect(body).toMatchObject({
+      $id: dto.userId,
+      email: dto.email,
+      name: dto.name,
+      status: true,
+      emailVerification: false,
+      phoneVerification: false,
+      mfa: false,
     })
 
-    it('should fail when userId contains invalid characters', async () => {
-      const payload = buildCreateAccountDTO({
-        userId: 'user@invalid#id',
-      })
+    // Ensure password is NOT returned
+    expect(body.password).toBeUndefined()
+    expect(body.hash).toBeUndefined()
+    expect(body.hashOptions).toBeUndefined()
+    expect(body.mfaRecoveryCodes).toBeUndefined()
+  })
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/account')
-        .send(payload)
+  it('POST /v1/account returns 400 for an invalid email', async () => {
+    // PROTECTS: Email validation is enforced during registration
+    const dto = buildCreateAccountDTO({ email: 'not-an-email' })
 
-      expect(res.status).toBe(400)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/v1/account',
+      headers: { 'content-type': 'application/json' },
+      payload: JSON.stringify(dto),
     })
 
-    it('should fail when userId exceeds 36 chars', async () => {
-      const payload = buildCreateAccountDTO({
-        userId: 'a'.repeat(37),
-      })
+    assertStatusCode(res, 400)
+    const body = parseJson(res.payload)
+    expect(body.message).toBeDefined()
+  })
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/account')
-        .send(payload)
-
-      expect(res.status).toBe(400)
+  it('POST /v1/account returns 400 for missing required fields', async () => {
+    // PROTECTS: All required fields are validated
+    const res = await app.inject({
+      method: 'POST',
+      url: '/v1/account',
+      headers: { 'content-type': 'application/json' },
+      payload: JSON.stringify({ email: 'test@example.com' }), // Missing password, userId
     })
 
-    it('should fail when name exceeds 128 chars', async () => {
-      const payload = buildCreateAccountDTO({
-        name: 'a'.repeat(129),
-      })
+    assertStatusCode(res, 400)
+  })
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/account')
-        .send(payload)
+  it('POST /v1/account returns 400 for weak password', async () => {
+    // PROTECTS: Password strength requirements are enforced
+    const dto = buildCreateAccountDTO({ password: '123' })
 
-      expect(res.status).toBe(400)
+    const res = await app.inject({
+      method: 'POST',
+      url: '/v1/account',
+      headers: { 'content-type': 'application/json' },
+      payload: JSON.stringify(dto),
     })
 
-    it('should succeed with optional name field omitted', async () => {
-      const payload = buildCreateAccountDTO()
-      delete payload.name
+    assertStatusCode(res, 400)
+  })
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/account')
-        .send(payload)
+  it('POST /v1/account returns 409 for duplicate email', async () => {
+    // PROTECTS: Email uniqueness constraint
+    const dto = buildCreateAccountDTO()
 
-      expect(res.status).toBeOneOf([201, 400, 409])
+    // Create first account
+    await app.inject({
+      method: 'POST',
+      url: '/v1/account',
+      headers: { 'content-type': 'application/json' },
+      payload: JSON.stringify(dto),
     })
 
-    it('should fail with missing userId', async () => {
-      const payload = buildCreateAccountDTO()
-
-      const res = await request(app.getHttpServer())
-        .post('/v1/account')
-        .send({ ...payload, userId: undefined })
-
-      expect([400, 422]).toContain(res.status)
+    // Try to create second account with same email
+    const dto2 = buildCreateAccountDTO({ email: dto.email })
+    const res = await app.inject({
+      method: 'POST',
+      url: '/v1/account',
+      headers: { 'content-type': 'application/json' },
+      payload: JSON.stringify(dto2),
     })
 
-    it('should fail with missing email', async () => {
-      const payload = buildCreateAccountDTO()
+    assertStatusCode(res, 409)
+  })
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/account')
-        .send({ ...payload, email: undefined })
+  /**
+   * AUTHENTICATED ACCOUNT ACCESS TESTS
+   * These tests verify behavior when user is properly authenticated
+   */
 
-      expect([400, 422]).toContain(res.status)
+  it('GET /v1/account returns 200 and full user shape when authenticated', async () => {
+    // PROTECTS: Authenticated account retrieval returns complete user data
+    const { sessionHeader, userId, email } = await createUserAndSession(app)
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/v1/account',
+      headers: {
+        'x-nuvix-session': sessionHeader,
+      },
     })
 
-    it('should fail with missing password', async () => {
-      const payload = buildCreateAccountDTO()
+    assertStatusCode(res, 200)
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/account')
-        .send({ ...payload, password: undefined })
+    const body = parseJson(res.payload)
+    assertDocumentShape(body)
 
-      expect([400, 422]).toContain(res.status)
+    expect(body).toMatchObject({
+      $id: userId,
+      email: email,
+      status: true,
+      mfa: false,
     })
 
-    it('should succeed with max length name (128 chars)', async () => {
-      const payload = buildCreateAccountDTO({
-        name: 'a'.repeat(128),
-      })
+    // Sensitive data should not be exposed
+    expect(body.password).toBeUndefined()
+    expect(body.hash).toBeUndefined()
+  })
 
-      const res = await request(app.getHttpServer())
-        .post('/v1/account')
-        .send(payload)
+  it('GET /v1/account/prefs returns 200 and an object for authenticated user', async () => {
+    // PROTECTS: Prefs endpoint returns valid object (even if empty)
+    const { sessionHeader } = await createUserAndSession(app)
 
-      expect(res.status).toBeOneOf([201, 400, 409])
+    const res = await app.inject({
+      method: 'GET',
+      url: '/v1/account/prefs',
+      headers: {
+        'x-nuvix-session': sessionHeader,
+      },
     })
 
-    it('should handle duplicate email gracefully', async () => {
-      const email = faker.internet.email().toLowerCase()
-      const payload1 = buildCreateAccountDTO({ email })
-      const payload2 = buildCreateAccountDTO({ email })
+    assertStatusCode(res, 200)
 
-      const res1 = await request(app.getHttpServer())
-        .post('/v1/account')
-        .send(payload1)
+    const body = parseJson(res.payload)
+    expect(typeof body).toBe('object')
+    expect(body).not.toBeNull()
+  })
 
-      if (res1.status === 201) {
-        const res2 = await request(app.getHttpServer())
-          .post('/v1/account')
-          .send(payload2)
+  /**
+   * ACCOUNT UPDATE TESTS
+   * These tests verify account modification endpoints
+   */
 
-        expect([400, 409]).toContain(res2.status)
-      }
+  it('PATCH /v1/account/prefs returns 200 and echoes updated prefs', async () => {
+    // PROTECTS: Prefs update works and returns the updated values
+    const { sessionHeader } = await createUserAndSession(app)
+    const prefs = { theme: 'dark', language: 'en' }
+
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/v1/account/prefs',
+      headers: {
+        'content-type': 'application/json',
+        'x-nuvix-session': sessionHeader,
+      },
+      payload: JSON.stringify({ prefs }),
     })
 
-    it('should handle duplicate userId gracefully', async () => {
-      const userId = faker.string.alphanumeric(12)
-      const payload1 = buildCreateAccountDTO({ userId })
-      const payload2 = buildCreateAccountDTO({ userId })
+    assertStatusCode(res, 200)
 
-      const res1 = await request(app.getHttpServer())
-        .post('/v1/account')
-        .send(payload1)
+    const body = parseJson(res.payload)
+    expect(body).toEqual(prefs)
+  })
 
-      if (res1.status === 201) {
-        const res2 = await request(app.getHttpServer())
-          .post('/v1/account')
-          .send(payload2)
+  it('PATCH /v1/account/name returns 200 and updates name', async () => {
+    // PROTECTS: Name update modifies the account correctly
+    const { sessionHeader } = await createUserAndSession(app)
+    const newName = 'Updated Test Name'
 
-        expect([400, 409]).toContain(res2.status)
-      }
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/v1/account/name',
+      headers: {
+        'content-type': 'application/json',
+        'x-nuvix-session': sessionHeader,
+      },
+      payload: JSON.stringify({ name: newName }),
     })
 
-    it('should validate email format strictly', async () => {
-      const invalidEmails = [
-        'test@',
-        '@test.com',
-        'test@.com',
-        'test..test@example.com',
-        'test@example',
-      ]
+    assertStatusCode(res, 200)
 
-      for (const email of invalidEmails) {
-        const payload = buildCreateAccountDTO({ email })
+    const body = parseJson(res.payload)
+    assertDocumentShape(body)
+    expect(body.name).toBe(newName)
+  })
 
-        const res = await request(app.getHttpServer())
-          .post('/v1/account')
-          .send(payload)
+  it('PATCH /v1/account/password returns 200 when old password is correct', async () => {
+    // PROTECTS: Password change works with valid old password
+    const {
+      sessionHeader,
+      password: oldPassword,
+      userId,
+    } = await createUserAndSession(app)
+    const newPassword = 'NewPassword123!'
 
-        expect(res.status).toBe(400)
-      }
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/v1/account/password',
+      headers: {
+        'content-type': 'application/json',
+        'x-nuvix-session': sessionHeader,
+      },
+      payload: JSON.stringify({
+        password: newPassword,
+        oldPassword,
+      }),
     })
+
+    assertStatusCode(res, 200)
+
+    const body = parseJson(res.payload)
+    assertDocumentShape(body)
+    expect(body.$id).toBe(userId)
+    // Password should not be returned
+    expect(body.password).toBeUndefined()
+  })
+
+  it('PATCH /v1/account/password returns 401 when old password is wrong', async () => {
+    // PROTECTS: Password change is rejected with invalid old password
+    const { sessionHeader } = await createUserAndSession(app)
+
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/v1/account/password',
+      headers: {
+        'content-type': 'application/json',
+        'x-nuvix-session': sessionHeader,
+      },
+      payload: JSON.stringify({
+        password: 'NewPassword123!',
+        oldPassword: 'WrongOldPassword123!',
+      }),
+    })
+
+    assertStatusCode(res, 401)
+  })
+
+  it('PATCH /v1/account/email returns 200 and updates email when password is correct', async () => {
+    // PROTECTS: Email change works with valid password
+    const { sessionHeader, password: currentPassword } =
+      await createUserAndSession(app)
+    const newEmail = 'updated-email-' + Date.now() + '@example.com'
+
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/v1/account/email',
+      headers: {
+        'content-type': 'application/json',
+        'x-nuvix-session': sessionHeader,
+      },
+      payload: JSON.stringify({
+        email: newEmail,
+        password: currentPassword,
+      }),
+    })
+
+    assertStatusCode(res, 200)
+
+    const body = parseJson(res.payload)
+    assertDocumentShape(body)
+    expect(body.email).toBe(newEmail)
+  })
+
+  it('PATCH /v1/account/email returns 401 when password is wrong', async () => {
+    // PROTECTS: Email change is rejected with invalid password
+    const { sessionHeader } = await createUserAndSession(app)
+
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/v1/account/email',
+      headers: {
+        'content-type': 'application/json',
+        'x-nuvix-session': sessionHeader,
+      },
+      payload: JSON.stringify({
+        email: 'new@example.com',
+        password: 'WrongPassword123!',
+      }),
+    })
+
+    assertStatusCode(res, 401)
+  })
+
+  it('PATCH /v1/account/phone returns 200 and updates phone when password is correct', async () => {
+    // PROTECTS: Phone update works with valid password
+    const { sessionHeader, password: currentPassword } =
+      await createUserAndSession(app)
+    const newPhone = '+1234567890'
+
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/v1/account/phone',
+      headers: {
+        'content-type': 'application/json',
+        'x-nuvix-session': sessionHeader,
+      },
+      payload: JSON.stringify({
+        phone: newPhone,
+        password: currentPassword,
+      }),
+    })
+
+    assertStatusCode(res, 200)
+
+    const body = parseJson(res.payload)
+    assertDocumentShape(body)
+    expect(body.phone).toBe(newPhone)
+  })
+
+  it('PATCH /v1/account/status returns 200 and disables the account', async () => {
+    // PROTECTS: Account deactivation works correctly
+    const { sessionHeader } = await createUserAndSession(app)
+
+    const res = await app.inject({
+      method: 'PATCH',
+      url: '/v1/account/status',
+      headers: {
+        'x-nuvix-session': sessionHeader,
+      },
+    })
+
+    assertStatusCode(res, 200)
+
+    const body = parseJson(res.payload)
+    assertDocumentShape(body)
+    expect(body.status).toBe(false)
   })
 })

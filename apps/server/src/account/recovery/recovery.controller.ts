@@ -6,7 +6,7 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 import { Database } from '@nuvix/db'
-import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
+import { Namespace } from '@nuvix/core/decorators'
 import { Locale } from '@nuvix/core/decorators'
 import { AuthDatabase, Project } from '@nuvix/core/decorators'
 import { User } from '@nuvix/core/decorators'
@@ -25,13 +25,11 @@ import type { IResponse } from '@nuvix/utils'
 @Namespace('account')
 @UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
-@Auth([AuthType.SESSION, AuthType.JWT])
 export class RecoveryController {
   constructor(private readonly recoveryService: RecoveryService) {}
 
   @Post('', {
     summary: 'Create password recovery',
-    scopes: 'sessions.update',
     throttle: {
       limit: 10,
       key: ({ body, ip }) => [`email:${body['email']}`, `ip:${ip}`],
@@ -67,7 +65,6 @@ export class RecoveryController {
 
   @Put('', {
     summary: 'Update password recovery (confirmation)',
-    scopes: 'sessions.update',
     model: Models.TOKEN,
     throttle: {
       limit: 10,

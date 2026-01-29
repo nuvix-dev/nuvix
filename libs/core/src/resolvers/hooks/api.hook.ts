@@ -73,6 +73,7 @@ export class ApiHook implements Hook {
       if (apiKey.getRole() === 'apps') {
         user = new Doc({
           $id: '',
+          $sequence: -1,
           status: true,
           type: AuthActivity.APP,
           email: 'app.' + project.getId() + '@service.' + req.host,
@@ -84,9 +85,7 @@ export class ApiHook implements Hook {
       if (apiKey.getType() === ApiKey.STANDARD) {
         const dbKey = project.findWhere(
           'keys',
-          (key: KeysDoc) =>
-            key.get('key') === apiKey.getKey() &&
-            key.get('type') === ApiKey.STANDARD,
+          (key: KeysDoc) => key.get('secret') === apiKey.getKey(),
         )
         if (!dbKey || dbKey.empty()) {
           throw new Exception(Exception.USER_UNAUTHORIZED)

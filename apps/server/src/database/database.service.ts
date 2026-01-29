@@ -7,7 +7,7 @@ import { SchemaJob, SchemaQueueOptions } from '@nuvix/core/resolvers'
 import { QueueFor, Schema, Schemas, SchemaType } from '@nuvix/utils'
 
 // DTO's
-import { CreateSchema } from './DTO/create-schema.dto'
+import { CreateSchemaDTO } from './DTO/create-schema.dto'
 import type { ProjectsDoc } from '@nuvix/utils/types'
 
 @Injectable()
@@ -20,7 +20,7 @@ export class DatabaseService {
   public async createDocumentSchema(
     db: DataSource,
     project: ProjectsDoc,
-    data: CreateSchema,
+    data: CreateSchemaDTO,
   ) {
     const isExists = await db
       .table<Schemas>('schemas')
@@ -91,7 +91,7 @@ export class DatabaseService {
   /**
    * Create a schema
    */
-  public async createSchema(pg: DataSource, data: CreateSchema) {
+  public async createSchema(pg: DataSource, data: CreateSchemaDTO) {
     const isExists = await pg
       .table<Schema>('schemas')
       .withSchema(Schemas.System)
