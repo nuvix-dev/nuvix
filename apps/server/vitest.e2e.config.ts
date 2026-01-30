@@ -16,7 +16,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
-    include: ['**/*.e2e-spec.ts'],
+    include: ['**/*.e2e-spec.ts', '**/*.e2e.spec.ts'],
     setupFiles: ['./tests/setup/global.ts'],
   },
   plugins: [

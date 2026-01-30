@@ -125,7 +125,7 @@ export class FilesController {
     @Project() project: Doc,
   ): Promise<IResponse<FilesDoc>> {
     if (!fileId)
-      throw new Exception(Exception.INVALID_PARAMS, 'fileId is required')
+      throw new Exception(Exception.INVALID_PARAMS, 'fileId is required', 400)
     return this.filesService.createFile(
       db,
       bucketId,
