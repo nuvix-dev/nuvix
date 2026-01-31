@@ -1,5 +1,12 @@
 import { Logger } from '@nestjs/common'
-import { Database, Doc, DuplicateException, type Collection } from '@nuvix/db'
+import {
+  Database,
+  Doc,
+  DuplicateException,
+  Permission,
+  Role,
+  type Collection,
+} from '@nuvix/db'
 import { Schemas } from '@nuvix/utils'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Audit } from '@nuvix/audit'
@@ -139,6 +146,8 @@ async function setupCollections(
           id: collectionId,
           attributes,
           indexes,
+          documentSecurity: true,
+          permissions: [Permission.create(Role.any())],
         })
 
         successCount++

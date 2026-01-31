@@ -1311,6 +1311,6 @@ export class AttributesService {
       project,
     })
 
-    return
+    return attribute
   }
 }

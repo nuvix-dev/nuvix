@@ -134,7 +134,7 @@ export class FilesService {
     if (!Auth.isTrustedActor) {
       permissions.forEach(permission => {
         const parsedPermission = Permission.parse(permission)
-        if (!Authorization.isRole(parsedPermission.toString())) {
+        if (!Authorization.isRole(parsedPermission.role.toString())) {
           throw new Exception(
             Exception.USER_UNAUTHORIZED,
             `Permissions must be one of: (${roles.join(', ')})`,

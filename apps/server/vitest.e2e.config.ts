@@ -18,6 +18,9 @@ export default defineConfig({
     globals: true,
     include: ['**/*.e2e-spec.ts', '**/*.e2e.spec.ts'],
     setupFiles: ['./tests/setup/global.ts'],
+    maxConcurrency: 1,
+    isolate: true,
+    maxWorkers: 1,
   },
   plugins: [
     tsconfigPaths(),

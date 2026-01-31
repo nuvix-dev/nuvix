@@ -91,6 +91,7 @@ export class AttributesController {
     sdk: {
       name: 'createStringAttribute',
       descMd: '/docs/references/schemas/collections/create-string-attribute.md',
+      code: 202,
     },
   })
   async createStringAttribute(
@@ -118,6 +119,7 @@ export class AttributesController {
     sdk: {
       name: 'createEmailAttribute',
       descMd: '/docs/references/schemas/collections/create-email-attribute.md',
+      code: 202,
     },
   })
   async createEmailAttribute(
@@ -145,6 +147,7 @@ export class AttributesController {
     sdk: {
       name: 'createEnumAttribute',
       descMd: '/docs/references/schemas/collections/create-attribute-enum.md',
+      code: 202,
     },
   })
   async createEnumAttribute(
@@ -172,6 +175,7 @@ export class AttributesController {
     sdk: {
       name: 'createIpAttribute',
       descMd: '/docs/references/schemas/collections/create-ip-attribute.md',
+      code: 202,
     },
   })
   async createIpAttribute(
@@ -199,6 +203,7 @@ export class AttributesController {
     sdk: {
       name: 'createUrlAttribute',
       descMd: '/docs/references/schemas/collections/create-url-attribute.md',
+      code: 202,
     },
   })
   async createUrlAttribute(
@@ -227,6 +232,7 @@ export class AttributesController {
       name: 'createIntegerAttribute',
       descMd:
         '/docs/references/schemas/collections/create-integer-attribute.md',
+      code: 202,
     },
   })
   async createIntegerAttribute(
@@ -254,6 +260,7 @@ export class AttributesController {
     sdk: {
       name: 'createFloatAttribute',
       descMd: '/docs/references/schemas/collections/create-float-attribute.md',
+      code: 202,
     },
   })
   async createFloatAttribute(
@@ -282,6 +289,7 @@ export class AttributesController {
       name: 'createBooleanAttribute',
       descMd:
         '/docs/references/schemas/collections/create-boolean-attribute.md',
+      code: 202,
     },
   })
   async createBooleanAttribute(
@@ -310,6 +318,7 @@ export class AttributesController {
       name: 'createDatetimeAttribute',
       descMd:
         '/docs/references/schemas/collections/create-datetime-attribute.md',
+      code: 202,
     },
   })
   async createDatetimeAttribute(
@@ -338,6 +347,7 @@ export class AttributesController {
       name: 'createRelationshipAttribute',
       descMd:
         '/docs/references/schemas/collections/create-relationship-attribute.md',
+      code: 202,
     },
   })
   async createRelationAttribute(
@@ -637,6 +647,7 @@ export class AttributesController {
   @Delete(':key', {
     summary: 'Delete attribute',
     scopes: ['collections.update', 'attributes.delete'],
+    model: Models.ATTRIBUTE,
     audit: {
       key: 'attribute.delete',
       resource: 'schema/{params.schemaId}/collection/{params.collectionId}',
@@ -644,13 +655,14 @@ export class AttributesController {
     sdk: {
       name: 'deleteAttribute',
       descMd: '/docs/references/schemas/collections/delete-attribute.md',
+      code: 202,
     },
   })
   async removeAttribute(
     @CurrentDatabase() db: Database,
     @Param() { collectionId, key }: AttributeParamsDTO,
     @Project() project: ProjectsDoc,
-  ): Promise<void> {
+  ): Promise<AttributesDoc> {
     return this.attributesService.deleteAttribute(
       db,
       collectionId,

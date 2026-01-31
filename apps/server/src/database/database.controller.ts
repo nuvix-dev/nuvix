@@ -63,6 +63,7 @@ export class DatabaseController {
     model: Models.SCHEMA,
     sdk: {
       name: 'createSchema',
+      code: 202,
     },
   })
   async createSchema(

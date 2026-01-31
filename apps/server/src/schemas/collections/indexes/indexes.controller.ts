@@ -50,6 +50,7 @@ export class IndexesController {
     sdk: {
       name: 'createIndex',
       descMd: '/docs/references/schemas/collections/create-index.md',
+      code: 202,
     },
   })
   async createIndex(
@@ -97,6 +98,7 @@ export class IndexesController {
   @Delete(':key', {
     summary: 'Delete index',
     scopes: ['collections.update', 'indexes.delete'],
+    model: Models.INDEX,
     audit: {
       key: 'index.delete',
       resource: 'schema/{params.schemaId}/collection/{params.collectionId}',
@@ -104,13 +106,14 @@ export class IndexesController {
     sdk: {
       name: 'deleteIndex',
       descMd: '/docs/references/schemas/collections/delete-index.md',
+      code: 202,
     },
   })
   async removeIndex(
     @CurrentDatabase() db: Database,
     @Param() { collectionId, key }: IndexParamsDTO,
     @Project() project: ProjectsDoc,
-  ): Promise<void> {
+  ): Promise<IndexesDoc> {
     return this.indexesService.deleteIndex(db, collectionId, key, project)
   }
 }

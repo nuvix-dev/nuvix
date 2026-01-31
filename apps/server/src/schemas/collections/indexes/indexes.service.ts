@@ -277,6 +277,6 @@ export class IndexesService {
       project,
     })
 
-    return
+    return index
   }
 }
