@@ -424,7 +424,7 @@ export class MessagingQueue extends Queue {
           .set('status', MessageStatus.FAILED)
           .set('deliveryErrors', ['No enabled provider found.']),
       )
-      console.warn('No enabled provider found.')
+      this.logger.warn('No enabled provider found.')
       return
     }
 

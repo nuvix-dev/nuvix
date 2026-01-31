@@ -93,7 +93,6 @@ class OrderParser extends BaseParser {
 
       // Parse path (column or json path)
       const fieldPath = this.fieldToString(this.parseFieldPath())
-      console.log({ fieldPath })
 
       let direction: 'asc' | 'desc' = 'asc'
       let nulls: 'nullsfirst' | 'nullslast' | null = null

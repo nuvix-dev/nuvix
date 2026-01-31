@@ -3,7 +3,7 @@ import { AppConfigService } from './config.service.js'
 import { Client, Pool, PoolClient } from 'pg'
 import IORedis from 'ioredis'
 import { Cache, Redis } from '@nuvix/cache'
-import { Adapter, Database, Doc } from '@nuvix/db'
+import { Adapter, Database, Doc, Logger as DbLogger } from '@nuvix/db'
 import { Audit } from '@nuvix/audit'
 import { Local } from '@nuvix/storage'
 import { DataSource, Context } from '@nuvix/pg'
@@ -28,6 +28,13 @@ export class CoreService implements OnModuleDestroy {
     this.projectPool = this.createMainPool()
   }
 
+  dbLogger(): DbLogger {
+    return new DbLogger({
+      level: 'error',
+      enabled: this.appConfig.get('logLevels').length > 0,
+    })
+  }
+
   async onModuleDestroy() {
     if (this.projectPool) {
       try {
@@ -45,11 +52,13 @@ export class CoreService implements OnModuleDestroy {
 
   public getPlatformDb(): Database {
     if (!this.projectPool) throw new Exception('Project DB not initialized')
-    const adapter = new Adapter(this.projectPool).setMeta({
-      schema: Schemas.Internal,
-      sharedTables: false,
-      namespace: 'platform',
-    })
+    const adapter = new Adapter(this.projectPool)
+      .setMeta({
+        schema: Schemas.Internal,
+        sharedTables: false,
+        namespace: 'platform',
+      })
+      .setLogger(this.dbLogger())
 
     return new Database(adapter, this.getCache())
   }
@@ -183,11 +192,13 @@ export class CoreService implements OnModuleDestroy {
     { projectId, ...options }: GetProjectDBOptions,
   ) {
     const adapter = new Adapter(client)
-    adapter.setMeta({
-      metadata: {
-        projectId: projectId,
-      },
-    })
+    adapter
+      .setMeta({
+        metadata: {
+          projectId: projectId,
+        },
+      })
+      .setLogger(this.dbLogger())
     const connection = new Database(adapter, this.getCache())
     connection.setMeta({
       schema: options.schema ?? Schemas.Core,

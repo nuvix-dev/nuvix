@@ -687,7 +687,7 @@ export class CollectionsQueue extends Queue {
 
       sum = results.length
 
-      console.info(`Deleting chunk #${chunk}. Found ${sum} documents`)
+      this.logger.log(`Deleting chunk #${chunk}. Found ${sum} documents`)
 
       for (const document of results) {
         if (
@@ -696,13 +696,13 @@ export class CollectionsQueue extends Queue {
             document.getId(),
           )
         ) {
-          console.info(`Deleted document "${document.getId()}" successfully`)
+          this.logger.log(`Deleted document "${document.getId()}" successfully`)
 
           if (callback) {
             await callback(document)
           }
         } else {
-          console.warn(`Failed to delete document: ${document.getId()}`)
+          this.logger.warn(`Failed to delete document: ${document.getId()}`)
         }
         count++
       }
@@ -710,7 +710,7 @@ export class CollectionsQueue extends Queue {
 
     const executionEnd = Date.now()
 
-    console.info(
+    this.logger.log(
       `Deleted ${count} documents by group in ${(executionEnd - executionStart) / 1000} seconds`,
     )
   }

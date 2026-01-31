@@ -223,7 +223,6 @@ describe('schemas/collections/attributes (integration)', () => {
     const body = parseJson(res.payload)
     expect(body.key).toBe(key)
     expect(body.format).toBe('enum')
-    console.log(body)
     expect(body.elements).toEqual(['one', 'two', 'three'])
 
     await waitForAttribute(key)

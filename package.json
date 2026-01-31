@@ -17,7 +17,7 @@
     "dev": "turbo dev",
     "start": "turbo start",
     "lint": "biome check",
-    "test": "turbo test",
+    "test": "bun run test:reset && sleep 2 && turbo test",
     "gen:types": "turbo gen:types",
     "typecheck": "turbo typecheck",
     "format": "biome format --write .",

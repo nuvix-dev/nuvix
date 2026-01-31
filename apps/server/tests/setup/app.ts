@@ -8,7 +8,7 @@ import {
 } from '@nuvix/core'
 import { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { ConsoleLogger, LOG_LEVELS } from '@nestjs/common'
-import { validateRequiredConfig } from '@nuvix/utils'
+import { configuration, validateRequiredConfig } from '@nuvix/utils'
 import { Authorization } from '@nuvix/db'
 import { AppConfigService } from '@nuvix/core'
 import { applyAppConfig } from '../../src/core'
@@ -22,6 +22,7 @@ let app: NestFastifyApplication
 
 export async function getApp(): Promise<NestFastifyApplication> {
   if (!app) {
+    const logLevels = configuration.logLevels as typeof LOG_LEVELS
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile()
@@ -29,6 +30,7 @@ export async function getApp(): Promise<NestFastifyApplication> {
       prefix: 'nx-test',
       colors: false,
       forceConsole: true,
+      logLevels,
     })
     app = moduleFixture.createNestApplication(
       new NuvixAdapter({
@@ -52,7 +54,7 @@ export async function getApp(): Promise<NestFastifyApplication> {
 
     logger.setLogLevels([])
     await app.init()
-    logger.setLogLevels(LOG_LEVELS)
+    logger.setLogLevels(logLevels)
   }
   return app
 }
