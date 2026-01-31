@@ -1,7 +1,8 @@
-import { Exclude, Expose } from 'class-transformer'
+import { Exclude, Expose, Transform } from 'class-transformer'
 import { AttributeModel } from './Attribute.model'
 import { AttributeType, OnDelete, RelationSide, RelationType } from '@nuvix/db'
 import { AttributeFormat } from '@nuvix/utils'
+import { Attributes } from '@nuvix/utils/types'
 
 @Exclude()
 export class AttributeBooleanModel extends AttributeModel {
@@ -40,8 +41,14 @@ export class AttributeEmailModel extends AttributeModel {
 
 @Exclude()
 export class AttributeEnumModel extends AttributeModel {
+  @Expose({ toClassOnly: true }) formatOptions: Attributes['formatOptions']
+
   @Expose() override type: AttributeType = AttributeType.String
-  @Expose() override elements: string[] = []
+  @Transform(({ obj }) => {
+    return obj.formatOptions?.['elements'] || []
+  })
+  @Expose()
+  declare elements: string[]
   @Expose() override format: AttributeFormat = AttributeFormat.ENUM
   @Expose() override default: string | null = null
 
@@ -54,8 +61,10 @@ export class AttributeEnumModel extends AttributeModel {
 @Exclude()
 export class AttributeFloatModel extends AttributeModel {
   @Expose() override type: AttributeType = AttributeType.Float
-  @Expose() override min: number | null = null
-  @Expose() override max: number | null = null
+  @Expose()
+  declare min: number | null
+  @Expose()
+  declare max: number | null
   @Expose() override default: number | null = null
 
   constructor(partial: Partial<AttributeFloatModel>) {
@@ -79,8 +88,10 @@ export class AttributeIPModel extends AttributeModel {
 @Exclude()
 export class AttributeIntegerModel extends AttributeModel {
   @Expose() override type: AttributeType = AttributeType.Integer
-  @Expose() override min: number | null = null
-  @Expose() override max: number | null = null
+  @Expose()
+  declare min: number | null
+  @Expose()
+  declare max: number | null
   @Expose() override default: number | null = null
 
   constructor(partial: Partial<AttributeIntegerModel>) {
@@ -102,12 +113,39 @@ export class AttributeListModel extends AttributeModel {
 
 @Exclude()
 export class AttributeRelationshipModel extends AttributeModel {
-  @Expose() override relatedCollection: string | null = null
-  @Expose() override relationType: RelationType = RelationType.OneToOne
-  @Expose() override twoWay: boolean = false
-  @Expose() override twoWayKey?: string | undefined = undefined
-  @Expose() override onDelete: OnDelete = OnDelete.Restrict
-  @Expose() override side: RelationSide = RelationSide.Parent
+  @Expose({ toClassOnly: true }) options: Attributes['options']
+
+  @Transform(({ obj }) => {
+    return obj.options?.['relatedCollection'] || null
+  })
+  @Expose()
+  declare relatedCollection: string | null
+  @Transform(({ obj }) => {
+    return obj.options?.['relationType'] || RelationType.OneToOne
+  })
+  @Expose()
+  declare relationType: RelationType
+  @Transform(({ obj }) => {
+    return obj.options?.['twoWay'] || false
+  })
+  @Expose()
+  declare twoWay: boolean
+  @Transform(({ obj }) => {
+    return obj.options?.['twoWayKey']
+  })
+  @Expose()
+  declare twoWayKey: string | undefined
+  @Transform(({ obj }) => {
+    return obj.options?.['onDelete'] || OnDelete.Restrict
+  })
+  @Expose()
+  declare onDelete: OnDelete
+  @Transform(({ obj }) => {
+    return obj.options?.['side'] || RelationSide.Parent
+  })
+  @Expose()
+  declare side: RelationSide
+  @Expose() override type: AttributeType = AttributeType.Relationship
 
   constructor(partial: Partial<AttributeRelationshipModel>) {
     super(partial)

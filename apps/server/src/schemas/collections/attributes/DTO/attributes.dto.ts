@@ -144,7 +144,7 @@ export class CreateBooleanAttributeDTO extends OmitType(
    */
   @IsOptional()
   @IsBoolean()
-  default?: boolean = false
+  default?: boolean
 }
 
 export class CreateDatetimeAttributeDTO extends OmitType(
