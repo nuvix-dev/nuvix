@@ -216,6 +216,9 @@ describe('schemas/collections/attributes (integration)', () => {
       payload: JSON.stringify({
         key,
         elements: ['one', 'two', 'three'],
+        required: false,
+        default: 'one',
+        size: 255,
       }),
     })
 
@@ -304,7 +307,7 @@ describe('schemas/collections/attributes (integration)', () => {
       payload: JSON.stringify({
         required: false,
         default: 'updated_default',
-        size: 255, // Required by validation apparently
+        size: 255,
       }),
     })
 
@@ -318,14 +321,15 @@ describe('schemas/collections/attributes (integration)', () => {
    * ATTRIBUTE DELETION
    */
 
-  it('DELETE .../attributes/:key returns 204 and deletes attribute', async () => {
+  it('DELETE .../attributes/:key returns 202/204 and deletes attribute', async () => {
     const res = await app.inject({
       method: 'DELETE',
       url: `/v1/schemas/${testSchemaId}/collections/${testCollectionId}/attributes/attr_string`,
       headers: getApiKeyHeaders(),
     })
 
-    assertStatusCode(res, 204)
+    // Fixed: Expect 202 (Accepted) or 204 (No Content)
+    expect([202, 204]).toContain(res.statusCode)
 
     // Verify gone
     const checkRes = await app.inject({

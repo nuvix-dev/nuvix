@@ -9,6 +9,9 @@ export class AttributeModel
   extends BaseModel
   implements Partial<Omit<Attributes, 'default'>>
 {
+  @Exclude() declare $id: string
+  @Exclude() declare $createdAt: Date
+  @Exclude() declare $updatedAt: Date
   @Exclude() declare $permissions: string[]
   /**
    * Attribute Key.
