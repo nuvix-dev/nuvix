@@ -20,7 +20,7 @@ export class RatelimitService {
   private redisClient: Redis
 
   constructor(private readonly coreService: CoreService) {
-    this.redisClient = this.coreService.createCacheDb()
+    this.redisClient = this.coreService.getRedisInstance()
   }
 
   /**

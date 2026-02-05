@@ -8,6 +8,7 @@ import {
   assertDocumentShape,
 } from '../../setup/test-utils'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { faker } from '@faker-js/faker'
 
 describe('account (integration)', () => {
   let app: NestFastifyApplication
@@ -351,7 +352,7 @@ describe('account (integration)', () => {
     // PROTECTS: Phone update works with valid password
     const { sessionHeader, password: currentPassword } =
       await createUserAndSession(app)
-    const newPhone = '+1234567890'
+    const newPhone = faker.phone.number({ style: 'international' })
 
     const res = await app.inject({
       method: 'PATCH',

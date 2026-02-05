@@ -3,6 +3,7 @@ import {
   Controller,
   Param,
   Query,
+  Res,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
@@ -63,17 +64,22 @@ export class DatabaseController {
     model: Models.SCHEMA,
     sdk: {
       name: 'createSchema',
-      code: 202,
     },
   })
   async createSchema(
     @ProjectPg() pg: DataSource,
     @Body() body: CreateSchemaDTO,
     @Project() project: ProjectsDoc,
+    @Res({ passthrough: true }) res: NuvixRes,
   ) {
     const result = await (body.type !== SchemaType.Document
       ? this.databaseService.createSchema(pg, body)
       : this.databaseService.createDocumentSchema(pg, project, body))
+    if (body.type === SchemaType.Document) {
+      res.status(202)
+    } else {
+      res.status(201)
+    }
     return result
   }
 

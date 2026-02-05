@@ -229,7 +229,7 @@ describe('schemas/collections/indexes (integration)', () => {
    * INDEX DELETION TESTS
    */
 
-  it('DELETE /v1/schemas/:schemaId/collections/:collectionId/indexes/:key returns 204 for existing index', async () => {
+  it('DELETE /v1/schemas/:schemaId/collections/:collectionId/indexes/:key returns 202 for existing index', async () => {
     // PROTECTS: Index deletion works correctly
     const dto = buildCreateIndexDTO()
 
@@ -251,7 +251,7 @@ describe('schemas/collections/indexes (integration)', () => {
       headers: getApiKeyHeaders(),
     })
 
-    assertStatusCode(res, 204)
+    assertStatusCode(res, 202)
 
     // Verify it's gone or in deleting state
     let checkRes = await app.inject({

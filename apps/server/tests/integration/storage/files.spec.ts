@@ -22,12 +22,13 @@ describe('storage/files (integration)', () => {
     const bucketDto = buildCreateBucketDTO()
     testBucketId = bucketDto.bucketId
 
-    await app.inject({
+    const res = await app.inject({
       method: 'POST',
       url: '/v1/storage/buckets',
       headers: getApiKeyJsonHeaders(),
       payload: JSON.stringify(bucketDto),
     })
+    assertStatusCode(res, 201)
   })
 
   /**

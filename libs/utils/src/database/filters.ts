@@ -6,7 +6,7 @@ import {
   Filter,
   FilterValue,
 } from '@nuvix/db'
-import { SchemaMeta, Schemas } from '../constants'
+import { SchemaMeta } from '../constants'
 import crypto from 'crypto'
 import { configuration } from '../configuration'
 
@@ -342,15 +342,7 @@ export const filters: Record<
         ])
         return subscribers.map(subscriber => subscriber.get('targetInternalId'))
       })
-
-      if (targetIds.length > 0) {
-        return database.skipValidation(() =>
-          database.withSchema(Schemas.Auth, () =>
-            database.find('targets', [Query.equal('$sequence', targetIds)]),
-          ),
-        )
-      }
-      return []
+      return targetIds
     },
   },
   providerSearch: {

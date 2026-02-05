@@ -20,19 +20,9 @@ import { EventEmitterModule } from '@nestjs/event-emitter'
       load: [() => configuration],
     }),
     BullModule.forRootAsync({
-      useFactory(config: AppConfigService) {
-        const redisConfig = config.getRedisConfig()
+      useFactory(coreService: CoreService) {
         return {
-          connection: {
-            ...redisConfig,
-            tls: redisConfig.secure
-              ? {
-                  rejectUnauthorized: false,
-                }
-              : undefined,
-            enableOfflineQueue: true,
-            enableReadyCheck: true,
-          },
+          connection: coreService.getRedisInstance(),
           defaultJobOptions: {
             attempts: 2,
             backoff: { type: 'exponential', delay: 5000 },
@@ -42,7 +32,7 @@ import { EventEmitterModule } from '@nestjs/event-emitter'
           prefix: 'nuvix', // TODO: we have to include a instance key that should be unique per app instance
         }
       },
-      inject: [AppConfigService],
+      inject: [CoreService],
     }),
     EventEmitterModule.forRoot({
       global: true,

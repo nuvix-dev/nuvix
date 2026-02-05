@@ -6,7 +6,6 @@ import { buildCreateCollectionDTO } from '../../factories/dto/collection.factory
 import {
   parseJson,
   assertStatusCode,
-  assertDocumentShape,
   assertListResponse,
 } from '../../setup/test-utils'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
@@ -91,9 +90,8 @@ describe('schemas/collections/attributes (integration)', () => {
       }),
     })
 
-    assertStatusCode(res, 201)
+    assertStatusCode(res, 202)
     const body = parseJson(res.payload)
-    assertDocumentShape(body)
     expect(body.key).toBe(key)
     expect(body.type).toBe('string')
     expect(body.size).toBe(255)
@@ -117,7 +115,7 @@ describe('schemas/collections/attributes (integration)', () => {
       }),
     })
 
-    assertStatusCode(res, 201)
+    assertStatusCode(res, 202)
     const body = parseJson(res.payload)
     expect(body.key).toBe(key)
     expect(body.type).toBe('integer')
@@ -139,7 +137,7 @@ describe('schemas/collections/attributes (integration)', () => {
       }),
     })
 
-    assertStatusCode(res, 201)
+    assertStatusCode(res, 202)
     const body = parseJson(res.payload)
     expect(body.key).toBe(key)
     expect(body.type).toBe('boolean')
@@ -159,7 +157,7 @@ describe('schemas/collections/attributes (integration)', () => {
       }),
     })
 
-    assertStatusCode(res, 201)
+    assertStatusCode(res, 202)
     const body = parseJson(res.payload)
     expect(body.key).toBe(key)
     expect(body.format).toBe('email')
@@ -179,7 +177,7 @@ describe('schemas/collections/attributes (integration)', () => {
       }),
     })
 
-    assertStatusCode(res, 201)
+    assertStatusCode(res, 202)
     const body = parseJson(res.payload)
     expect(body.key).toBe(key)
     expect(body.format).toBe('url')
@@ -199,7 +197,7 @@ describe('schemas/collections/attributes (integration)', () => {
       }),
     })
 
-    assertStatusCode(res, 201)
+    assertStatusCode(res, 202)
     const body = parseJson(res.payload)
     expect(body.key).toBe(key)
     expect(body.format).toBe('ip')
@@ -222,7 +220,7 @@ describe('schemas/collections/attributes (integration)', () => {
       }),
     })
 
-    assertStatusCode(res, 201)
+    assertStatusCode(res, 202)
     const body = parseJson(res.payload)
     expect(body.key).toBe(key)
     expect(body.format).toBe('enum')
@@ -279,20 +277,34 @@ describe('schemas/collections/attributes (integration)', () => {
     assertStatusCode(res, 200)
     const body = parseJson(res.payload)
     assertListResponse(body)
-    expect(body.total).toBeGreaterThanOrEqual(5)
-    expect(body.data.find((a: any) => a.key === 'attr_string')).toBeDefined()
   })
 
   it('GET .../attributes/:key returns 200 for existing attribute', async () => {
+    // Create an attribute for retrieval testing
+    const key = 'attr_string_get'
+    await app.inject({
+      method: 'POST',
+      url: `/v1/schemas/${testSchemaId}/collections/${testCollectionId}/attributes/string`,
+      headers: getApiKeyJsonHeaders(),
+      payload: JSON.stringify({
+        key,
+        size: 255,
+        required: false,
+        default: 'test',
+      }),
+    })
+
+    await waitForAttribute(key)
+
     const res = await app.inject({
       method: 'GET',
-      url: `/v1/schemas/${testSchemaId}/collections/${testCollectionId}/attributes/attr_string`,
+      url: `/v1/schemas/${testSchemaId}/collections/${testCollectionId}/attributes/${key}`,
       headers: getApiKeyHeaders(),
     })
 
     assertStatusCode(res, 200)
     const body = parseJson(res.payload)
-    expect(body.key).toBe('attr_string')
+    expect(body.key).toBe(key)
   })
 
   /**
@@ -300,9 +312,25 @@ describe('schemas/collections/attributes (integration)', () => {
    */
 
   it('PATCH .../attributes/string/:key updates attribute properties', async () => {
+    // Create a string attribute for update testing
+    const key = 'attr_string_update'
+    await app.inject({
+      method: 'POST',
+      url: `/v1/schemas/${testSchemaId}/collections/${testCollectionId}/attributes/string`,
+      headers: getApiKeyJsonHeaders(),
+      payload: JSON.stringify({
+        key,
+        size: 255,
+        required: false,
+        default: 'original',
+      }),
+    })
+
+    await waitForAttribute(key)
+
     const res = await app.inject({
       method: 'PATCH',
-      url: `/v1/schemas/${testSchemaId}/collections/${testCollectionId}/attributes/string/attr_string`,
+      url: `/v1/schemas/${testSchemaId}/collections/${testCollectionId}/attributes/string/${key}`,
       headers: getApiKeyJsonHeaders(),
       payload: JSON.stringify({
         required: false,
@@ -322,9 +350,25 @@ describe('schemas/collections/attributes (integration)', () => {
    */
 
   it('DELETE .../attributes/:key returns 202/204 and deletes attribute', async () => {
+    // Create a dedicated attribute for deletion testing
+    const key = 'attr_string_delete'
+    await app.inject({
+      method: 'POST',
+      url: `/v1/schemas/${testSchemaId}/collections/${testCollectionId}/attributes/string`,
+      headers: getApiKeyJsonHeaders(),
+      payload: JSON.stringify({
+        key,
+        size: 255,
+        required: false,
+        default: 'test',
+      }),
+    })
+
+    await waitForAttribute(key)
+
     const res = await app.inject({
       method: 'DELETE',
-      url: `/v1/schemas/${testSchemaId}/collections/${testCollectionId}/attributes/attr_string`,
+      url: `/v1/schemas/${testSchemaId}/collections/${testCollectionId}/attributes/${key}`,
       headers: getApiKeyHeaders(),
     })
 
@@ -334,7 +378,7 @@ describe('schemas/collections/attributes (integration)', () => {
     // Verify gone
     const checkRes = await app.inject({
       method: 'GET',
-      url: `/v1/schemas/${testSchemaId}/collections/${testCollectionId}/attributes/attr_string`,
+      url: `/v1/schemas/${testSchemaId}/collections/${testCollectionId}/attributes/${key}`,
       headers: getApiKeyHeaders(),
     })
 

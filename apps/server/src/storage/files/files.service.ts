@@ -50,7 +50,9 @@ export class FilesService {
     queries: Query[] = [],
     search?: string,
   ) {
-    const bucket = await db.getDocument('buckets', bucketId)
+    const bucket = await Authorization.skip(() =>
+      db.getDocument('buckets', bucketId),
+    )
 
     if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)

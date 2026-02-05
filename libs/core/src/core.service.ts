@@ -20,10 +20,12 @@ export class CoreService implements OnModuleDestroy {
   private readonly logger = new Logger(CoreService.name)
   private cache: Cache | null = null
   private geoDb: Reader<CountryResponse> | null = null
+  private redisInstance: IORedis | null = null
   private readonly projectPool: Pool | null = null
 
   constructor(private readonly appConfig: AppConfigService) {
     this.geoDb = this.createGeoDb()
+    this.redisInstance = this.createRedisInstance()
     this.cache = this.createCache()
     this.projectPool = this.createMainPool()
   }
@@ -41,6 +43,13 @@ export class CoreService implements OnModuleDestroy {
         await this.projectPool.end()
       } catch (error) {
         this.logger.error('Failed to disconnect project database pool', error)
+      }
+    }
+    if (this.redisInstance) {
+      try {
+        await this.redisInstance.quit()
+      } catch (error) {
+        this.logger.error('Failed to disconnect redis instance', error)
       }
     }
   }
@@ -142,26 +151,32 @@ export class CoreService implements OnModuleDestroy {
     return pool
   }
 
-  createCacheDb() {
+  createRedisInstance() {
+    if (this.redisInstance) {
+      return this.redisInstance
+    }
     const redisConfig = this.appConfig.getRedisConfig()
     const connection = new IORedis({
-      connectionName: 'CACHE_DB',
+      connectionName: 'nuvix-core',
       ...redisConfig,
       username: redisConfig.user,
       tls: redisConfig.secure ? { rejectUnauthorized: false } : undefined,
+      maxRetriesPerRequest: 10,
     })
     return connection
+  }
+
+  public getRedisInstance(): IORedis {
+    if (!this.redisInstance)
+      throw new Exception('Redis instance not initialized')
+    return this.redisInstance
   }
 
   createCache() {
     if (this.cache) {
       return this.cache
     }
-    const redisConfig = this.appConfig.getRedisConfig()
-    const adapter = new Redis({
-      ...redisConfig,
-      username: redisConfig.user,
-      tls: redisConfig.secure ? { rejectUnauthorized: false } : undefined,
+    const adapter = new Redis(this.getRedisInstance() as any, {
       namespace: 'nuvix',
     })
     const cache = new Cache(adapter)

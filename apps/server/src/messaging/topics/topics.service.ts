@@ -5,7 +5,7 @@ import { Exception } from '@nuvix/core/extend/exception'
 import type { ProjectsDoc, Topics } from '@nuvix/utils/types'
 import { InjectQueue } from '@nestjs/bullmq'
 import type { DeletesJobData } from '@nuvix/core/resolvers'
-import { QueueFor, DeleteType } from '@nuvix/utils'
+import { QueueFor, DeleteType, Schemas } from '@nuvix/utils'
 import { Queue } from 'bullmq'
 
 @Injectable()
@@ -50,12 +50,32 @@ export class TopicsService {
     const { filters } = Query.groupByType(queries)
 
     const topics = await db.find('topics', queries)
+    const data = await this.populateTargets(db, topics)
     const total = await db.count('topics', filters)
 
     return {
-      data: topics,
+      data,
       total,
     }
+  }
+
+  private populateTargets(db: Database, topics: Doc<Topics>[]) {
+    return db.withSchema(Schemas.Auth, () =>
+      db.skipValidation(() =>
+        Promise.all(
+          topics.map(async topic => {
+            const targetIds = topic.get('targets', [])
+            if (targetIds.length > 0) {
+              const targets = await db.find('targets', [
+                Query.equal('$sequence', [...targetIds]),
+              ])
+              topic.set('targets', targets)
+            }
+            return topic
+          }),
+        ),
+      ),
+    )
   }
 
   /**
@@ -68,7 +88,10 @@ export class TopicsService {
       throw new Exception(Exception.TOPIC_NOT_FOUND)
     }
 
-    return topic
+    const populatedTopic = await this.populateTargets(db, [topic]).then(
+      ([populated]) => populated!,
+    )
+    return populatedTopic
   }
 
   /**
@@ -91,7 +114,10 @@ export class TopicsService {
 
     const updatedTopic = await db.updateDocument('topics', topicId, topic)
 
-    return updatedTopic
+    const populatedTopic = await this.populateTargets(db, [updatedTopic]).then(
+      ([populated]) => populated!,
+    )
+    return populatedTopic
   }
 
   /**
