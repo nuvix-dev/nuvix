@@ -9,6 +9,7 @@ import fs from 'fs/promises'
 import { default as fsSync } from 'fs'
 import { browserCodes, creditCards, flags } from 'libs/core/src/config'
 import { Exception } from 'libs/core/src/extend/exception'
+import { CodesQuerDTO } from './DTO/misc.dto'
 
 @Injectable()
 export class AvatarsService {
@@ -136,35 +137,41 @@ export class AvatarsService {
     }
   }
 
-  async getCreditCard({ code, res }: { code: string; res: NuvixRes }) {
+  async getCreditCard({
+    code,
+    res,
+    ...query
+  }: { code: string; res: NuvixRes } & CodesQuerDTO) {
     return this.avatarCallback({
       type: 'credit-cards',
       code,
-      width: 400,
-      height: 250,
-      quality: 90,
+      ...query,
       res,
     })
   }
 
-  async getBrowser({ code, res }: { code: string; res: NuvixRes }) {
+  async getBrowser({
+    code,
+    res,
+    ...query
+  }: { code: string; res: NuvixRes } & CodesQuerDTO) {
     return this.avatarCallback({
       type: 'browsers',
       code,
-      width: 128,
-      height: 128,
-      quality: 90,
+      ...query,
       res,
     })
   }
 
-  async getFlag({ code, res }: { code: string; res: NuvixRes }) {
+  async getFlag({
+    code,
+    res,
+    ...query
+  }: { code: string; res: NuvixRes } & CodesQuerDTO) {
     return this.avatarCallback({
       type: 'flags',
       code,
-      width: 640,
-      height: 480,
-      quality: 100,
+      ...query,
       res,
     })
   }

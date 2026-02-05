@@ -171,3 +171,38 @@ export function IsPermissionsArray(
     })
   }
 }
+
+/**
+ * Decorator that transforms an array to its last element.
+ * If the value is not an array, it keeps it as is.
+ */
+export function ArrayToLastElement() {
+  return function (target: any, propertyKey: string) {
+    Transform(({ value }) => {
+      if (Array.isArray(value)) {
+        return value[value.length - 1]
+      }
+      return value
+    })(target, propertyKey)
+  }
+}
+
+/**
+ * Decorator that attempts to transform a value to the specified type.
+ * If the transformation fails, it keeps the original value.
+ * @param type - The target type to transform to. Currently supports "number".
+ */
+export function TryTransformTo(type: 'number' | 'int') {
+  return function (target: any, propertyKey: string) {
+    Transform(({ value }) => {
+      if (type === 'number') {
+        const parsed = Number(value)
+        return isNaN(parsed) ? value : parsed
+      } else if (type === 'int') {
+        const parsed = parseInt(value, 10)
+        return isNaN(parsed) ? value : parsed
+      }
+      return value
+    })(target, propertyKey)
+  }
+}
