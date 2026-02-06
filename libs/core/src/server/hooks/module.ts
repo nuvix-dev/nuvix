@@ -23,15 +23,15 @@ import {
   Entrypoint,
   MiddlewareEntrypointMetadata,
 } from '@nestjs/core/inspector/interfaces/entrypoint.interface.js'
+import { MiddlewareBuilder } from '@nestjs/core/middleware/builder.js'
+import { MiddlewareResolver } from '@nestjs/core/middleware/resolver.js'
+import { RouteInfoPathExtractor } from '@nestjs/core/middleware/route-info-path-extractor.js'
+import { RoutesMapper } from '@nestjs/core/middleware/routes-mapper.js'
 import { REQUEST_CONTEXT_ID } from '@nestjs/core/router/request/request-constants.js'
 import { RouterExceptionFilters } from '@nestjs/core/router/router-exception-filters.js'
 import { RouterProxy } from '@nestjs/core/router/router-proxy.js'
 import { isRequestMethodAll } from '@nestjs/core/router/utils/index.js'
-import { MiddlewareBuilder } from '@nestjs/core/middleware/builder.js'
 import { HooksContainer } from './container'
-import { MiddlewareResolver } from '@nestjs/core/middleware/resolver.js'
-import { RouteInfoPathExtractor } from '@nestjs/core/middleware/route-info-path-extractor.js'
-import { RoutesMapper } from '@nestjs/core/middleware/routes-mapper.js'
 import { Hook, HookMethods } from './interface'
 
 export class HooksModule<
@@ -118,7 +118,7 @@ export class HooksModule<
       }
       const warningMessage =
         `Warning! "${moduleRef.name}" module exposes a "configure" method that throws an exception in the preview mode` +
-        ` (possibly due to missing dependencies). Note: you can ignore this message, just be aware that some of those conditional middlewares will not be reflected in your graph.`
+        ' (possibly due to missing dependencies). Note: you can ignore this message, just be aware that some of those conditional middlewares will not be reflected in your graph.'
       this.logger.warn(warningMessage)
     }
 
@@ -258,7 +258,7 @@ export class HooksModule<
     )
 
     if (!hasAnyHookMethod.size) {
-      throw new InvalidHookException(metatype!.name)
+      throw new InvalidHookException(metatype?.name ?? 'unknown')
     }
 
     const isStatic = wrapper.isDependencyTreeStatic()
@@ -338,7 +338,7 @@ export class HooksModule<
       undefined,
       contextId,
     )
-    const middleware = instance[method as keyof Hook]!.bind(instance) as any
+    const middleware = instance[method as keyof Hook]?.bind(instance) as any
     return this.routerProxy.createProxy(middleware, exceptionsHandler) as any
   }
 
@@ -382,7 +382,7 @@ export class HooksModule<
 
   private getContextId(request: unknown, isTreeDurable: boolean): ContextId {
     const contextId = ContextIdFactory.getByRequest(request as object)
-    if (!request![REQUEST_CONTEXT_ID as keyof object]) {
+    if (!request?.[REQUEST_CONTEXT_ID as keyof object]) {
       Object.defineProperty(request, REQUEST_CONTEXT_ID, {
         value: contextId,
         enumerable: false,

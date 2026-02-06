@@ -1,19 +1,19 @@
 import { OmitType } from '@nestjs/swagger'
-import {
-  IsString,
-  IsArray,
-  ArrayMaxSize,
-  IsOptional,
-  Length,
-  IsIn,
-  IsNumber,
-  Min,
-  Max,
-} from 'class-validator'
 import { IsCustomID, IsUID } from '@nuvix/core/validators'
 import { configuration } from '@nuvix/utils'
-import { BucketParamsDTO } from '../../DTO/bucket.dto'
 import { Type } from 'class-transformer'
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Length,
+  Max,
+  Min,
+} from 'class-validator'
+import { BucketParamsDTO } from '../../DTO/bucket.dto'
 
 export class CreateFileDTO {
   @IsString()

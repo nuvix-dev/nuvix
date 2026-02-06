@@ -1,5 +1,5 @@
 import { IsUID } from '@nuvix/core/validators'
-import { IsInt, Min, Max, IsOptional } from 'class-validator'
+import { IsInt, IsOptional, Max, Min } from 'class-validator'
 
 export class CreateJwtDTO {
   /**
@@ -16,5 +16,5 @@ export class CreateJwtDTO {
   @IsInt()
   @Min(0)
   @Max(3600)
-  duration: number = 900
+  duration = 900
 }

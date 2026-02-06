@@ -6,12 +6,12 @@ export class HeadersModel extends BaseModel {
   /**
    * Header name.
    */
-  @Expose() name: string = ''
+  @Expose() name = ''
 
   /**
    * Header value.
    */
-  @Expose() value: string = ''
+  @Expose() value = ''
 
   constructor(partial: Partial<HeadersModel>) {
     super()

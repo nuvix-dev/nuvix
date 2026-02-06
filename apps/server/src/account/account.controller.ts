@@ -7,17 +7,25 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { Database } from '@nuvix/db'
-import { AuthType, Namespace } from '@nuvix/core/decorators'
-import { Locale } from '@nuvix/core/decorators'
-import { AuthDatabase, Project } from '@nuvix/core/decorators'
-import { User } from '@nuvix/core/decorators'
+import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
+import {
+  AuthDatabase,
+  AuthType,
+  Locale,
+  Namespace,
+  Project,
+  User,
+} from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
-import { LocaleTranslator } from '@nuvix/core/helpers'
-import { Models } from '@nuvix/core/helpers'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { ApiInterceptor } from '@nuvix/core/resolvers'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
+import { LocaleTranslator, Models } from '@nuvix/core/helpers'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers'
+import { Database } from '@nuvix/db'
+import type { IResponse } from '@nuvix/utils'
+import type { ProjectsDoc, TokensDoc, UsersDoc } from '@nuvix/utils/types'
 import { AccountService } from './account.service'
 import {
   CreateAccountDTO,
@@ -32,9 +40,6 @@ import {
   UpdateEmailVerificationDTO,
   UpdatePhoneVerificationDTO,
 } from './DTO/verification.dto'
-import type { ProjectsDoc, TokensDoc, UsersDoc } from '@nuvix/utils/types'
-import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
-import type { IResponse } from '@nuvix/utils'
 
 @Controller({ version: ['1'], path: 'account' })
 @Namespace('account')

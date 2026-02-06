@@ -7,8 +7,8 @@ export function buildCreateSmtpProviderDTO(
 ): CreateSMTPProviderDTO {
   return {
     providerId: faker.string.alphanumeric(12),
-    name: faker.company.name() + ' SMTP',
-    host: 'smtp.' + faker.internet.domainName(),
+    name: `${faker.company.name()} SMTP`,
+    host: `smtp.${faker.internet.domainName()}`,
     port: 587,
     username: faker.internet.email(),
     password: faker.internet.password(),
@@ -26,7 +26,7 @@ export function buildCreateFcmProviderDTO(
 ): CreateFcmProviderDTO {
   return {
     providerId: faker.string.alphanumeric(12),
-    name: faker.company.name() + ' FCM',
+    name: `${faker.company.name()} FCM`,
     serviceAccountJSON: {
       type: 'service_account',
       project_id: faker.string.alphanumeric(12),

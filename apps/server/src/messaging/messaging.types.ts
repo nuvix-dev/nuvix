@@ -1,4 +1,5 @@
 import { Database, Query } from '@nuvix/db'
+import type { ProjectsDoc } from '@nuvix/utils/types'
 import {
   CreateEmailMessageDTO,
   CreatePushMessageDTO,
@@ -7,7 +8,6 @@ import {
   UpdatePushMessageDTO,
   UpdateSmsMessageDTO,
 } from './DTO/message.dto'
-import type { ProjectsDoc } from '@nuvix/utils/types'
 
 interface DB {
   db: Database

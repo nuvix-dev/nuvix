@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeAll } from 'vitest'
-import { getApp } from '../../setup/app'
+import { faker } from '@faker-js/faker'
+import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { buildCreateAccountDTO } from '../../factories/dto/account.factory'
 import { createUserAndSession } from '../../helpers/auth'
+import { getApp } from '../../setup/app'
 import {
-  parseJson,
-  assertStatusCode,
   assertDocumentShape,
+  assertStatusCode,
+  parseJson,
 } from '../../setup/test-utils'
-import type { NestFastifyApplication } from '@nestjs/platform-fastify'
-import { faker } from '@faker-js/faker'
 
 describe('account (integration)', () => {
   let app: NestFastifyApplication
@@ -306,7 +306,7 @@ describe('account (integration)', () => {
     // PROTECTS: Email change works with valid password
     const { sessionHeader, password: currentPassword } =
       await createUserAndSession(app)
-    const newEmail = 'updated-email-' + Date.now() + '@example.com'
+    const newEmail = `updated-email-${Date.now()}@example.com`
 
     const res = await app.inject({
       method: 'PATCH',

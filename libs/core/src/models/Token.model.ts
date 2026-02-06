@@ -6,22 +6,22 @@ export class TokenModel extends BaseModel {
   /**
    * User ID.
    */
-  @Expose() userId: string = '' // Default to empty string
+  @Expose() userId = '' // Default to empty string
 
   /**
    * Token secret key. This will return an empty string unless the response is returned using an API key or as part of a webhook payload.
    */
-  @Expose() secret: string = '' // Default to empty string
+  @Expose() secret = '' // Default to empty string
 
   /**
    * Token expiration date in ISO 8601 format.
    */
-  @Expose() expire: string = '' // Default to empty string
+  @Expose() expire = '' // Default to empty string
 
   /**
    * Security phrase of a token. Empty if security phrase was not requested when creating a token.
    */
-  @Expose() phrase: string = '' // Default to empty string
+  @Expose() phrase = '' // Default to empty string
 
   constructor(partial: Partial<TokenModel>) {
     super(partial)

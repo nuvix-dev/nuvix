@@ -1,27 +1,31 @@
+import { BullModule } from '@nestjs/bullmq'
 import {
   MiddlewareConsumer,
   Module,
   NestModule,
   OnModuleInit,
 } from '@nestjs/common'
-import { AppService } from './app.service'
-import { AppController } from './app.controller'
-import { AccountModule } from './account/account.module'
-import { ProjectModule } from './projects/project.module'
-import { CoreModule } from '@nuvix/core'
-import { MailsQueue } from '@nuvix/core/resolvers'
-import { BullModule } from '@nestjs/bullmq'
-import { ScheduleModule } from '@nestjs/schedule'
 import { JwtModule, JwtService } from '@nestjs/jwt'
-import { configuration, QueueFor } from '@nuvix/utils'
-import { HostHook, AuthHook, CorsHook, ApiHook } from '@nuvix/core/resolvers'
-import { ProjectHook } from './resolvers/hooks/project.hook'
-import { PgMetaModule } from '@nuvix/pg-meta'
-import { AccountController } from './account/account.controller'
-import { AuditHook } from '@nuvix/core/resolvers'
-import { AuditsQueue } from './resolvers/queues/audits.queue'
+import { ScheduleModule } from '@nestjs/schedule'
+import { CoreModule } from '@nuvix/core'
 import { Key } from '@nuvix/core/helpers'
-import { CoreService } from '@nuvix/core'
+import {
+  ApiHook,
+  AuditHook,
+  AuthHook,
+  CorsHook,
+  HostHook,
+  MailsQueue,
+} from '@nuvix/core/resolvers'
+import { PgMetaModule } from '@nuvix/pg-meta'
+import { configuration, QueueFor } from '@nuvix/utils'
+import { AccountController } from './account/account.controller'
+import { AccountModule } from './account/account.module'
+import { AppController } from './app.controller'
+import { AppService } from './app.service'
+import { ProjectModule } from './projects/project.module'
+import { ProjectHook } from './resolvers/hooks/project.hook'
+import { AuditsQueue } from './resolvers/queues/audits.queue'
 
 @Module({
   imports: [

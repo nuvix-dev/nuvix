@@ -1,8 +1,8 @@
+import { deparse, parse } from 'pgsql-parser'
 import * as prettier from 'prettier'
 import SqlFormatter from 'prettier-plugin-sql'
-import { parse, deparse } from 'pgsql-parser'
-import { FormatterOptions } from './types'
 import { PgMetaException } from '../extra/execption'
+import { FormatterOptions } from './types'
 
 const DEFAULT_FORMATTER_OPTIONS = {
   plugins: [SqlFormatter],

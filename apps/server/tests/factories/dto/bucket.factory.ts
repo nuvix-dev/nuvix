@@ -6,7 +6,7 @@ export function buildCreateBucketDTO(
 ): CreateBucketDTO {
   return {
     bucketId: faker.string.alphanumeric(12),
-    name: faker.word.noun() + '-bucket',
+    name: `${faker.word.noun()}-bucket`,
     permissions: [],
     fileSecurity: false,
     enabled: true,
@@ -23,7 +23,7 @@ export function buildUpdateBucketDTO(
   overrides: Partial<Omit<CreateBucketDTO, 'bucketId'>> = {},
 ): Omit<CreateBucketDTO, 'bucketId'> {
   return {
-    name: faker.word.noun() + '-updated-bucket',
+    name: `${faker.word.noun()}-updated-bucket`,
     permissions: [],
     fileSecurity: false,
     enabled: true,

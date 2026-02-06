@@ -3,7 +3,7 @@ import { Validator } from '@nuvix/db'
 export class EmailValidator implements Validator {
   private allowEmpty: boolean
 
-  constructor(allowEmpty: boolean = false) {
+  constructor(allowEmpty = false) {
     this.allowEmpty = allowEmpty
   }
 

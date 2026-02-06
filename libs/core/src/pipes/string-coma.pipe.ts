@@ -1,16 +1,12 @@
 import { ArgumentMetadata, PipeTransform } from '@nestjs/common'
 import { Exception } from '../extend/exception'
 
-interface Options {}
+type Options = {}
 
 export class ParseComaStringPipe
   implements PipeTransform<string, string[] | undefined>
 {
-  private readonly options: Options
-
-  constructor(options: Options = {}) {
-    this.options = options
-  }
+  constructor() {}
 
   transform(value: any, metadata: ArgumentMetadata): string[] | undefined {
     if (metadata.type !== 'query' && metadata.type !== 'param') {

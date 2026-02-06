@@ -1,22 +1,20 @@
 import {
-  Controller,
   Body,
+  Controller,
   Param,
   UseInterceptors,
   VERSION_NEUTRAL,
 } from '@nestjs/common'
-
-// DTO
-import { CreateKeyDTO, KeyParamsDTO, UpdateKeyDTO } from './DTO/keys.dto'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
-import { Models } from '@nuvix/core/helpers'
-import { ConsoleInterceptor } from '@nuvix/core/resolvers'
-import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
-import { KeysService } from './keys.service'
 import { Delete, Get, Post, Put } from '@nuvix/core'
-import { ProjectParamsDTO } from '../DTO/create-project.dto'
+import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
+import { Models } from '@nuvix/core/helpers'
+import { ConsoleInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { IListResponse, IResponse } from '@nuvix/utils'
 import { KeysDoc } from '@nuvix/utils/types'
+import { ProjectParamsDTO } from '../DTO/create-project.dto'
+// DTO
+import { CreateKeyDTO, KeyParamsDTO, UpdateKeyDTO } from './DTO/keys.dto'
+import { KeysService } from './keys.service'
 
 @Namespace('projects')
 @Controller({

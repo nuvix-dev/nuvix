@@ -5,24 +5,25 @@
  * @version 0.1.0
  * @alpha
  */
+
+import fs from 'node:fs/promises'
+import { ConsoleLogger, LOG_LEVELS, LogLevel } from '@nestjs/common'
+import { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { SwaggerModule } from '@nestjs/swagger'
 import {
   AppConfigService,
   configureDbFiltersAndFormats,
   configurePgTypeParsers,
 } from '@nuvix/core'
 import { NuvixAdapter, NuvixFactory } from '@nuvix/core/server'
-import { AppModule } from './app.module'
-import { NestFastifyApplication } from '@nestjs/platform-fastify'
-import { ConsoleLogger, LOG_LEVELS, LogLevel } from '@nestjs/common'
+import { Authorization } from '@nuvix/db'
 import {
   configuration,
   PROJECT_ROOT,
   validateRequiredConfig,
 } from '@nuvix/utils'
-import { Authorization } from '@nuvix/db'
 import QueryString from 'qs'
-import fs from 'fs/promises'
-import { SwaggerModule } from '@nestjs/swagger'
+import { AppModule } from './app.module'
 import { applyAppConfig, openApiSetup } from './core'
 
 configurePgTypeParsers()
@@ -66,7 +67,7 @@ async function bootstrap() {
   )
 
   app.useStaticAssets({
-    root: PROJECT_ROOT + '/public',
+    root: `${PROJECT_ROOT}/public`,
     prefix: '/public/',
   })
 
@@ -82,7 +83,7 @@ async function bootstrap() {
 
   await SwaggerModule.loadPluginMetadata(async () => {
     try {
-      // @ts-ignore
+      // @ts-nocheck
       return await (await import('./metadata')).default()
     } catch (err) {
       logger.warn('No swagger metadata found, skipping...')
@@ -103,7 +104,7 @@ async function bootstrap() {
     }
   })
 
-  const port = parseInt(config.root.get('APP_SERVER_PORT', '4000'), 10)
+  const port = Number.parseInt(config.root.get('APP_SERVER_PORT', '4000'), 10)
   const host = '0.0.0.0'
 
   logger.setLogLevels(

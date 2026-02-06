@@ -1,44 +1,45 @@
 import {
-  Controller,
   Body,
+  Controller,
   Param,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
-import { DocumentsService } from './documents.service'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { Models } from '@nuvix/core/helpers'
-import type { Database, Doc, Query as Queries } from '@nuvix/db'
-import { ParseQueryPipe } from '@nuvix/core/pipes'
-import { CurrentDatabase } from '@nuvix/core/decorators'
+import { Delete, Get, Patch, Post } from '@nuvix/core'
 import {
   AuthType,
+  CurrentDatabase,
   CurrentSchemaType,
   Namespace,
   QueryFilter,
   AuthUser as User,
 } from '@nuvix/core/decorators'
-
-// DTOs
+import { Exception } from '@nuvix/core/extend/exception'
+import { Models } from '@nuvix/core/helpers'
+import { ParseQueryPipe } from '@nuvix/core/pipes'
+import { LogsQueryPipe } from '@nuvix/core/pipes/queries'
 import {
-  CreateDocumentDTO,
-  DocumentParamsDTO,
-  UpdateDocumentDTO,
-} from './DTO/document.dto'
-import { ApiInterceptor } from '@nuvix/core/resolvers'
-import { SchemaGuard } from '@nuvix/core/resolvers'
-import type { UsersDoc } from '@nuvix/utils/types'
-import { Delete, Get, Patch, Post } from '@nuvix/core'
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+  SchemaGuard,
+} from '@nuvix/core/resolvers'
+import type { Database, Doc, Query as Queries } from '@nuvix/db'
 import {
   configuration,
   IListResponse,
   IResponse,
   SchemaType,
 } from '@nuvix/utils'
+import type { UsersDoc } from '@nuvix/utils/types'
 import { CollectionParamsDTO } from '../DTO/collection.dto'
-import { LogsQueryPipe } from '@nuvix/core/pipes/queries'
-import { Exception } from '@nuvix/core/extend/exception'
+// DTOs
+import {
+  CreateDocumentDTO,
+  DocumentParamsDTO,
+  UpdateDocumentDTO,
+} from './DTO/document.dto'
+import { DocumentsService } from './documents.service'
 
 @Controller({
   version: ['1'],

@@ -1,20 +1,20 @@
+import { BullModule } from '@nestjs/bullmq'
 import {
-  Module,
   type MiddlewareConsumer,
+  Module,
   type NestModule,
 } from '@nestjs/common'
-import { UsersService } from './users.service'
-import { UsersController } from './users.controller'
 import { JwtModule } from '@nestjs/jwt'
+import { ApiHook, AuditHook, AuthHook, StatsHook } from '@nuvix/core/resolvers'
 import { configuration, QueueFor } from '@nuvix/utils'
-import { BullModule } from '@nestjs/bullmq'
-import { AuthHook, ApiHook, StatsHook, AuditHook } from '@nuvix/core/resolvers'
-import { SessionsController } from './sessions/sessions.controller'
-import { TargetsController } from './targets/targets.controller'
 import { MfaController } from './mfa/mfa.controller'
-import { SessionsService } from './sessions/sessions.service'
 import { MfaService } from './mfa/mfa.service'
+import { SessionsController } from './sessions/sessions.controller'
+import { SessionsService } from './sessions/sessions.service'
+import { TargetsController } from './targets/targets.controller'
 import { TargetsService } from './targets/targets.service'
+import { UsersController } from './users.controller'
+import { UsersService } from './users.service'
 
 @Module({
   controllers: [

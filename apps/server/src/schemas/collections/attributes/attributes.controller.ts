@@ -1,24 +1,33 @@
 import {
-  Controller,
   Body,
+  Controller,
   Param,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
-import { AttributesService } from './attributes.service'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { Models } from '@nuvix/core/helpers'
-import type { Database, Query as Queries } from '@nuvix/db'
-import { CurrentDatabase, Project } from '@nuvix/core/decorators'
+import { Delete, Get, Patch, Post } from '@nuvix/core'
 import {
   Auth,
   AuthType,
+  CurrentDatabase,
   CurrentSchemaType,
   Namespace,
+  Project,
   QueryFilter,
 } from '@nuvix/core/decorators'
-
+import { Models } from '@nuvix/core/helpers'
+import { AttributesQueryPipe } from '@nuvix/core/pipes/queries'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+  SchemaGuard,
+} from '@nuvix/core/resolvers'
+import type { Database, Query as Queries } from '@nuvix/db'
+import { IListResponse, IResponse, SchemaType } from '@nuvix/utils'
+import type { AttributesDoc, ProjectsDoc } from '@nuvix/utils/types'
+import { CollectionParamsDTO } from '../DTO/collection.dto'
+import { AttributesService } from './attributes.service'
 // DTOs
 import {
   AttributeParamsDTO,
@@ -43,13 +52,6 @@ import {
   UpdateStringAttributeDTO,
   UpdateURLAttributeDTO,
 } from './DTO/attributes.dto'
-import { ApiInterceptor } from '@nuvix/core/resolvers'
-import { SchemaGuard } from '@nuvix/core/resolvers'
-import type { AttributesDoc, ProjectsDoc } from '@nuvix/utils/types'
-import { AttributesQueryPipe } from '@nuvix/core/pipes/queries'
-import { Delete, Get, Patch, Post } from '@nuvix/core'
-import { CollectionParamsDTO } from '../DTO/collection.dto'
-import { IListResponse, IResponse, SchemaType } from '@nuvix/utils'
 
 @Controller({
   version: ['1'],

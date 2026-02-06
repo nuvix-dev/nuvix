@@ -1,4 +1,4 @@
-import { IsIn, IsOptional, IsString, IsArray } from 'class-validator'
+import { IsArray, IsIn, IsOptional, IsString } from 'class-validator'
 
 export class TriggerUpdateDTO {
   @IsOptional()

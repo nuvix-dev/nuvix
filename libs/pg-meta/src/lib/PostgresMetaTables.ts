@@ -1,11 +1,11 @@
 import { ident, literal } from 'pg-format'
+import { TableCreateDTO } from '../DTO/table-create.dto'
+import { TableUpdateDTO } from '../DTO/table-update.dto'
+import { PgMetaException } from '../extra/execption'
 import { DEFAULT_SYSTEM_SCHEMAS } from './constants'
 import { coalesceRowsToArray, filterByList } from './helpers'
 import { columnsSql, tablesSql } from './sql/index'
 import { PostgresMetaResult, PostgresTable } from './types'
-import { TableCreateDTO } from '../DTO/table-create.dto'
-import { TableUpdateDTO } from '../DTO/table-update.dto'
-import { PgMetaException } from '../extra/execption'
 
 export default class PostgresMetaTables {
   query: (sql: string) => Promise<PostgresMetaResult<any>>
@@ -91,28 +91,28 @@ export default class PostgresMetaTables {
       const { data, error } = await this.query(sql)
       if (error) {
         return { data, error }
-      } else if (data.length === 0) {
-        throw new PgMetaException(`Cannot find a table with ID ${id}`)
-      } else {
-        return { data: data[0], error }
       }
-    } else if (name) {
+      if (data.length === 0) {
+        throw new PgMetaException(`Cannot find a table with ID ${id}`)
+      }
+      return { data: data[0], error }
+    }
+    if (name) {
       const sql = `${generateEnrichedTablesSql({
         includeColumns: true,
       })} where tables.name = ${literal(name)} and tables.schema = ${literal(schema)};`
       const { data, error } = await this.query(sql)
       if (error) {
         return { data, error }
-      } else if (data.length === 0) {
+      }
+      if (data.length === 0) {
         throw new PgMetaException(
           `Cannot find a table named ${name} in schema ${schema}`,
         )
-      } else {
-        return { data: data[0], error }
       }
-    } else {
-      throw new PgMetaException('Invalid parameters on table retrieve')
+      return { data: data[0], error }
     }
+    throw new PgMetaException('Invalid parameters on table retrieve')
   }
 
   async create({
@@ -151,13 +151,13 @@ export default class PostgresMetaTables {
       return { data: null, error }
     }
 
-    const alter = `ALTER TABLE ${ident(old!.schema)}.${ident(old!.name)}`
+    const alter = `ALTER TABLE ${ident(old?.schema)}.${ident(old?.name)}`
     const schemaSql =
       schema === undefined ? '' : `${alter} SET SCHEMA ${ident(schema)};`
     let nameSql = ''
-    if (name !== undefined && name !== old!.name) {
-      const currentSchema = schema === undefined ? old!.schema : schema
-      nameSql = `ALTER TABLE ${ident(currentSchema)}.${ident(old!.name)} RENAME TO ${ident(name)};`
+    if (name !== undefined && name !== old?.name) {
+      const currentSchema = schema === undefined ? old?.schema : schema
+      nameSql = `ALTER TABLE ${ident(currentSchema)}.${ident(old?.name)} RENAME TO ${ident(name)};`
     }
     let enableRls = ''
     if (rls_enabled !== undefined) {
@@ -183,7 +183,7 @@ export default class PostgresMetaTables {
     if (primary_keys === undefined) {
       // skip
     } else {
-      if (old!.primary_keys.length !== 0) {
+      if (old?.primary_keys.length !== 0) {
         primaryKeysSql += `
 DO $$
 DECLARE
@@ -210,7 +210,7 @@ $$;
     const commentSql =
       comment === undefined
         ? ''
-        : `COMMENT ON TABLE ${ident(old!.schema)}.${ident(old!.name)} IS ${literal(comment)};`
+        : `COMMENT ON TABLE ${ident(old?.schema)}.${ident(old?.name)} IS ${literal(comment)};`
     // nameSql must be last, right below schemaSql
     const sql = `
 BEGIN;
@@ -239,7 +239,7 @@ COMMIT;`
     if (error) {
       return { data: null, error }
     }
-    const sql = `DROP TABLE ${ident(table!.schema)}.${ident(table!.name)} ${
+    const sql = `DROP TABLE ${ident(table?.schema)}.${ident(table?.name)} ${
       cascade ? 'CASCADE' : 'RESTRICT'
     };`
     {

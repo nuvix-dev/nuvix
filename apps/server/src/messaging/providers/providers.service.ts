@@ -1,4 +1,8 @@
 import { Injectable } from '@nestjs/common'
+import { Exception } from '@nuvix/core/extend/exception'
+import { Database, Doc, DuplicateException, ID, Query } from '@nuvix/db'
+import { MessageType } from '@nuvix/utils'
+import type { Providers } from '@nuvix/utils/types'
 import type {
   CreateApnsProvider,
   CreateFcmProvider,
@@ -23,15 +27,9 @@ import type {
   UpdateTwilioProvider,
   UpdateVonageProvider,
 } from './providers.types'
-import { Database, Doc, DuplicateException, ID, Query } from '@nuvix/db'
-import { Exception } from '@nuvix/core/extend/exception'
-import { MessageType } from '@nuvix/utils'
-import type { Providers } from '@nuvix/utils/types'
 
 @Injectable()
 export class ProvidersService {
-  constructor() {}
-
   /**
    * Common method to create a provider.
    */
@@ -119,10 +117,10 @@ export class ProvidersService {
         replyToEmail: 'replyToEmail',
       },
       enabledCondition: (credentials, options) =>
-        !!options['fromEmail'] &&
-        credentials.hasOwnProperty('isEuRegion') &&
-        credentials.hasOwnProperty('apiKey') &&
-        credentials.hasOwnProperty('domain'),
+        !!options.fromEmail &&
+        Object.hasOwn(credentials, 'isEuRegion') &&
+        Object.hasOwn(credentials, 'apiKey') &&
+        Object.hasOwn(credentials, 'domain'),
     })
   }
 
@@ -145,7 +143,7 @@ export class ProvidersService {
         replyToEmail: 'replyToEmail',
       },
       enabledCondition: (credentials, options) =>
-        !!options['fromEmail'] && credentials.hasOwnProperty('apiKey'),
+        !!options.fromEmail && Object.hasOwn(credentials, 'apiKey'),
     })
   }
 
@@ -174,7 +172,7 @@ export class ProvidersService {
         mailer: 'mailer',
       },
       enabledCondition: (credentials, options) =>
-        !!options['fromEmail'] && credentials.hasOwnProperty('host'),
+        !!options.fromEmail && Object.hasOwn(credentials, 'host'),
     })
   }
 
@@ -194,9 +192,9 @@ export class ProvidersService {
       },
       optionFields: {},
       enabledCondition: (credentials, options) =>
-        credentials.hasOwnProperty('senderId') &&
-        credentials.hasOwnProperty('authKey') &&
-        options.hasOwnProperty('from'),
+        Object.hasOwn(credentials, 'senderId') &&
+        Object.hasOwn(credentials, 'authKey') &&
+        Object.hasOwn(options, 'from'),
     })
   }
 
@@ -217,9 +215,9 @@ export class ProvidersService {
         from: 'from',
       },
       enabledCondition: (credentials, options) =>
-        credentials.hasOwnProperty('customerId') &&
-        credentials.hasOwnProperty('apiKey') &&
-        options.hasOwnProperty('from'),
+        Object.hasOwn(credentials, 'customerId') &&
+        Object.hasOwn(credentials, 'apiKey') &&
+        Object.hasOwn(options, 'from'),
     })
   }
 
@@ -240,9 +238,9 @@ export class ProvidersService {
         from: 'from',
       },
       enabledCondition: (credentials, options) =>
-        credentials.hasOwnProperty('username') &&
-        credentials.hasOwnProperty('apiKey') &&
-        options.hasOwnProperty('from'),
+        Object.hasOwn(credentials, 'username') &&
+        Object.hasOwn(credentials, 'apiKey') &&
+        Object.hasOwn(options, 'from'),
     })
   }
 
@@ -263,9 +261,9 @@ export class ProvidersService {
         from: 'from',
       },
       enabledCondition: (credentials, options) =>
-        credentials.hasOwnProperty('accountSid') &&
-        credentials.hasOwnProperty('authToken') &&
-        options.hasOwnProperty('from'),
+        Object.hasOwn(credentials, 'accountSid') &&
+        Object.hasOwn(credentials, 'authToken') &&
+        Object.hasOwn(options, 'from'),
     })
   }
 
@@ -286,9 +284,9 @@ export class ProvidersService {
         from: 'from',
       },
       enabledCondition: (credentials, options) =>
-        credentials.hasOwnProperty('apiKey') &&
-        credentials.hasOwnProperty('apiSecret') &&
-        options.hasOwnProperty('from'),
+        Object.hasOwn(credentials, 'apiKey') &&
+        Object.hasOwn(credentials, 'apiSecret') &&
+        Object.hasOwn(options, 'from'),
     })
   }
 
@@ -306,7 +304,7 @@ export class ProvidersService {
       },
       optionFields: {},
       enabledCondition: credentials =>
-        credentials.hasOwnProperty('serviceAccountJSON'),
+        Object.hasOwn(credentials, 'serviceAccountJSON'),
     })
   }
 
@@ -329,10 +327,10 @@ export class ProvidersService {
         sandbox: 'sandbox',
       },
       enabledCondition: credentials =>
-        credentials.hasOwnProperty('authKey') &&
-        credentials.hasOwnProperty('authKeyId') &&
-        credentials.hasOwnProperty('teamId') &&
-        credentials.hasOwnProperty('bundleId'),
+        Object.hasOwn(credentials, 'authKey') &&
+        Object.hasOwn(credentials, 'authKeyId') &&
+        Object.hasOwn(credentials, 'teamId') &&
+        Object.hasOwn(credentials, 'bundleId'),
     })
   }
 
@@ -401,8 +399,8 @@ export class ProvidersService {
       throw new Exception(Exception.PROVIDER_INCORRECT_TYPE)
     }
 
-    if (updatedFields['name']) {
-      provider.set('name', updatedFields['name'])
+    if (updatedFields.name) {
+      provider.set('name', updatedFields.name)
     }
 
     // Update credentials
@@ -430,11 +428,8 @@ export class ProvidersService {
     provider.set('options', options)
 
     // Update enabled status
-    if (
-      updatedFields['enabled'] !== undefined &&
-      updatedFields['enabled'] !== null
-    ) {
-      if (updatedFields['enabled']) {
+    if (updatedFields.enabled !== undefined && updatedFields.enabled !== null) {
+      if (updatedFields.enabled) {
         if (enabledCondition(credentials, options)) {
           provider.set('enabled', true)
         } else {
@@ -479,10 +474,10 @@ export class ProvidersService {
         replyToEmail: 'replyToEmail',
       },
       enabledCondition: (credentials, options) =>
-        options.hasOwnProperty('fromEmail') &&
-        credentials.hasOwnProperty('isEuRegion') &&
-        credentials.hasOwnProperty('apiKey') &&
-        credentials.hasOwnProperty('domain'),
+        Object.hasOwn(options, 'fromEmail') &&
+        Object.hasOwn(credentials, 'isEuRegion') &&
+        Object.hasOwn(credentials, 'apiKey') &&
+        Object.hasOwn(credentials, 'domain'),
     })
   }
 
@@ -509,8 +504,8 @@ export class ProvidersService {
         replyToEmail: 'replyToEmail',
       },
       enabledCondition: (credentials, options) =>
-        options.hasOwnProperty('fromEmail') &&
-        credentials.hasOwnProperty('apiKey'),
+        Object.hasOwn(options, 'fromEmail') &&
+        Object.hasOwn(credentials, 'apiKey'),
     })
   }
 
@@ -539,8 +534,8 @@ export class ProvidersService {
         mailer: 'mailer',
       },
       enabledCondition: (credentials, options) =>
-        options.hasOwnProperty('fromEmail') &&
-        credentials.hasOwnProperty('host'),
+        Object.hasOwn(options, 'fromEmail') &&
+        Object.hasOwn(credentials, 'host'),
     })
   }
 
@@ -560,9 +555,9 @@ export class ProvidersService {
       },
       optionFields: {},
       enabledCondition: (credentials, options) =>
-        credentials.hasOwnProperty('senderId') &&
-        credentials.hasOwnProperty('authKey') &&
-        options.hasOwnProperty('from'),
+        Object.hasOwn(credentials, 'senderId') &&
+        Object.hasOwn(credentials, 'authKey') &&
+        Object.hasOwn(options, 'from'),
     })
   }
 
@@ -587,9 +582,9 @@ export class ProvidersService {
         from: 'from',
       },
       enabledCondition: (credentials, options) =>
-        credentials.hasOwnProperty('customerId') &&
-        credentials.hasOwnProperty('apiKey') &&
-        options.hasOwnProperty('from'),
+        Object.hasOwn(credentials, 'customerId') &&
+        Object.hasOwn(credentials, 'apiKey') &&
+        Object.hasOwn(options, 'from'),
     })
   }
 
@@ -614,9 +609,9 @@ export class ProvidersService {
         from: 'from',
       },
       enabledCondition: (credentials, options) =>
-        credentials.hasOwnProperty('username') &&
-        credentials.hasOwnProperty('apiKey') &&
-        options.hasOwnProperty('from'),
+        Object.hasOwn(credentials, 'username') &&
+        Object.hasOwn(credentials, 'apiKey') &&
+        Object.hasOwn(options, 'from'),
     })
   }
 
@@ -637,9 +632,9 @@ export class ProvidersService {
         from: 'from',
       },
       enabledCondition: (credentials, options) =>
-        credentials.hasOwnProperty('accountSid') &&
-        credentials.hasOwnProperty('authToken') &&
-        options.hasOwnProperty('from'),
+        Object.hasOwn(credentials, 'accountSid') &&
+        Object.hasOwn(credentials, 'authToken') &&
+        Object.hasOwn(options, 'from'),
     })
   }
 
@@ -660,9 +655,9 @@ export class ProvidersService {
         from: 'from',
       },
       enabledCondition: (credentials, options) =>
-        credentials.hasOwnProperty('apiKey') &&
-        credentials.hasOwnProperty('apiSecret') &&
-        options.hasOwnProperty('from'),
+        Object.hasOwn(credentials, 'apiKey') &&
+        Object.hasOwn(credentials, 'apiSecret') &&
+        Object.hasOwn(options, 'from'),
     })
   }
 
@@ -688,7 +683,7 @@ export class ProvidersService {
       },
       optionFields: {},
       enabledCondition: credentials =>
-        credentials.hasOwnProperty('serviceAccountJSON'),
+        Object.hasOwn(credentials, 'serviceAccountJSON'),
     })
   }
 
@@ -711,10 +706,10 @@ export class ProvidersService {
         sandbox: 'sandbox',
       },
       enabledCondition: credentials =>
-        credentials.hasOwnProperty('authKey') &&
-        credentials.hasOwnProperty('authKeyId') &&
-        credentials.hasOwnProperty('teamId') &&
-        credentials.hasOwnProperty('bundleId'),
+        Object.hasOwn(credentials, 'authKey') &&
+        Object.hasOwn(credentials, 'authKeyId') &&
+        Object.hasOwn(credentials, 'teamId') &&
+        Object.hasOwn(credentials, 'bundleId'),
     })
   }
 

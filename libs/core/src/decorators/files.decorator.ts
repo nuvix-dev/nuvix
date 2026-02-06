@@ -1,17 +1,17 @@
-import { createParamDecorator, ExecutionContext } from '@nestjs/common'
-
-import { Exception } from '../extend/exception'
 import { MultipartValue } from '@fastify/multipart'
+import { createParamDecorator, ExecutionContext } from '@nestjs/common'
 import { configuration } from '@nuvix/utils'
+import { Exception } from '../extend/exception'
 
 export const UploadedFile = createParamDecorator(
-  async (data: string = 'file', ctx: ExecutionContext) => {
+  async (data, ctx: ExecutionContext) => {
+    const fieldname = data ?? 'file'
     const request: NuvixRequest = ctx.switchToHttp().getRequest<NuvixRequest>()
 
     const files = await request.saveRequestFiles({
       tmpdir: configuration.storage.temp,
     })
-    const file = files.find(f => f.fieldname === data)
+    const file = files.find(f => f.fieldname === fieldname)
     if (!file) {
       throw new Exception(Exception.STORAGE_INVALID_FILE)
     }

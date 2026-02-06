@@ -1,16 +1,16 @@
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsPhoneNumber,
-  IsString,
-  MaxLength,
-  IsArray,
-  ArrayMaxSize,
-  IsUrl,
-  IsOptional,
-} from 'class-validator'
 import { IsUID } from '@nuvix/core/validators'
 import { configuration } from '@nuvix/utils'
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsPhoneNumber,
+  IsString,
+  IsUrl,
+  MaxLength,
+} from 'class-validator'
 import { TeamsParamDTO } from '../../DTO/team.dto'
 
 export class CreateMembershipDTO {

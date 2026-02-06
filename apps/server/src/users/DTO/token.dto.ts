@@ -1,5 +1,5 @@
-import { IsInt, Min, Max, IsOptional } from 'class-validator'
 import { Auth } from '@nuvix/core/helpers'
+import { IsInt, IsOptional, Max, Min } from 'class-validator'
 
 export class CreateTokenDTO {
   /**
@@ -9,7 +9,7 @@ export class CreateTokenDTO {
   @IsInt()
   @Min(4)
   @Max(128)
-  length: number = 6
+  length = 6
 
   /**
    * Token expiration period in seconds.

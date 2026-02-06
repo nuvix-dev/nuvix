@@ -1,9 +1,9 @@
 import {
+  ArrayNotEmpty,
+  IsArray,
+  IsBoolean,
   IsOptional,
   IsString,
-  IsBoolean,
-  IsArray,
-  ArrayNotEmpty,
 } from 'class-validator'
 
 export class PublicationUpdateDTO {

@@ -1,3 +1,4 @@
+import { oAuthProvidersList } from '@nuvix/core/config'
 import { configuration } from '@nuvix/utils'
 import { Type } from 'class-transformer'
 import {
@@ -5,15 +6,15 @@ import {
   IsArray,
   IsBoolean,
   IsIn,
+  IsInt,
   IsOptional,
   IsPhoneNumber,
   IsString,
+  Max,
+  Min,
   ValidateNested,
 } from 'class-validator'
-import { IsInt, Min, Max } from 'class-validator'
 import { ProjectParamsDTO } from '../../DTO/create-project.dto'
-import { oAuthProvidersList } from '@nuvix/core/config'
-import { ApiExtraModels } from '@nestjs/swagger'
 
 export class AuthSessionAlertsDTO {
   /**

@@ -31,8 +31,6 @@ export class HooksContainer {
     return this.configurationSets
   }
 
-  private a = 0
-
   public insertConfig(
     configList: MiddlewareConfiguration[],
     moduleKey: string,
@@ -57,7 +55,6 @@ export class HooksContainer {
       ;[].concat(config.middleware).map(insertMiddleware)
       targetConfig.add(config)
     })
-    this.a++
   }
 
   private getTargetConfig(moduleName: string) {

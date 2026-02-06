@@ -1,15 +1,15 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
-import { Exception } from '../../extend/exception'
 import { Reflector } from '@nestjs/core'
 import { Context } from '@nuvix/utils'
 import { ProjectsDoc } from '@nuvix/utils/types'
+import { Exception } from '../../extend/exception'
 
 @Injectable()
 /**
  *  ProjectGuard, check if the project exists.
  */
 export class ProjectGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(_reflector: Reflector) {}
 
   canActivate(context: ExecutionContext) {
     const request = context.switchToHttp().getRequest()

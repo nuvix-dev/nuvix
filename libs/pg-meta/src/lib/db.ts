@@ -1,7 +1,7 @@
 import pg from 'pg'
-// import * as Sentry from '@sentry/node'
-import { PostgresMetaResult, PoolConfig } from './types'
 import { PgMetaException } from '../extra/execption'
+// import * as Sentry from '@sentry/node'
+import { PoolConfig, PostgresMetaResult } from './types'
 
 // Ensure any query will have an appropriate error handler on the pool to prevent connections errors
 // to bubble up all the stack eventually killing the server
@@ -88,10 +88,10 @@ export const init: (config: PoolConfig | any) => {
   // need to call `pool.end()`, but since the server needs this, we make a
   // compromise: if we run `query` after `pool.end()` is called (i.e. pool is
   // `null`), we temporarily create a pool and close it right after.
-  let pool: pg.Pool | null = config //new pg.Pool(config);
+  const pool: pg.Pool | null = config //new pg.Pool(config);
 
   return {
-    async query(sql, trackQueryInSentry = true) {
+    async query(sql, _trackQueryInSentry = true) {
       // return Sentry.startSpan(
       //   // For metrics purposes, log the query that will be run if it's not an user provided query (with possibly sentitives infos)
       //   {
@@ -122,50 +122,48 @@ export const init: (config: PoolConfig | any) => {
           // - https://github.com/postgres/postgres/blob/fc4089f3c65a5f1b413a3299ba02b66a8e5e37d0/src/interfaces/libpq/fe-protocol3.c#L1018
           // - https://github.com/brianc/node-postgres/blob/b1a8947738ce0af004cb926f79829bb2abc64aa6/packages/pg/lib/native/query#L33
           let formattedError = ''
-          {
-            if (error.severity) {
-              formattedError += `${error.severity}:  `
-            }
-            if (error.code) {
-              formattedError += `${error.code}: `
-            }
-            if (error.message) {
-              formattedError += error.message
-            }
-            formattedError += '\n'
-            if (error.position) {
-              // error.position is 1-based
-              const position = Number(error.position) - 1
+          if (error.severity) {
+            formattedError += `${error.severity}:  `
+          }
+          if (error.code) {
+            formattedError += `${error.code}: `
+          }
+          if (error.message) {
+            formattedError += error.message
+          }
+          formattedError += '\n'
+          if (error.position) {
+            // error.position is 1-based
+            const position = Number(error.position) - 1
 
-              let line = ''
-              let lineNumber = 0
-              let lineOffset = 0
+            let line = ''
+            let lineNumber = 0
+            let lineOffset = 0
 
-              const lines = sql.split('\n')
-              let currentOffset = 0
-              for (let i = 0; i < lines.length; i++) {
-                if (currentOffset + lines[i]!.length > position) {
-                  line = lines[i]!
-                  lineNumber = i + 1 // 1-based
-                  lineOffset = position - currentOffset
-                  break
-                }
-                currentOffset += lines[i]!.length + 1 // 1 extra offset for newline
+            const lines = sql.split('\n')
+            let currentOffset = 0
+            for (let i = 0; i < lines.length; i++) {
+              if (currentOffset + (lines[i]?.length ?? 0) > position) {
+                line = lines[i]!
+                lineNumber = i + 1 // 1-based
+                lineOffset = position - currentOffset
+                break
               }
-              formattedError += `LINE ${lineNumber}: ${line}\n${' '.repeat(5 + lineNumber.toString().length + 2 + lineOffset)}^\n`
+              currentOffset += (lines[i]?.length ?? 0) + 1 // 1 extra offset for newline
             }
-            if (error.detail) {
-              formattedError += `DETAIL:  ${error.detail}\n`
-            }
-            if (error.hint) {
-              formattedError += `HINT:  ${error.hint}\n`
-            }
-            if (error.internalQuery) {
-              formattedError += `QUERY:  ${error.internalQuery}\n`
-            }
-            if (error.where) {
-              formattedError += `CONTEXT:  ${error.where}\n`
-            }
+            formattedError += `LINE ${lineNumber}: ${line}\n${' '.repeat(5 + lineNumber.toString().length + 2 + lineOffset)}^\n`
+          }
+          if (error.detail) {
+            formattedError += `DETAIL:  ${error.detail}\n`
+          }
+          if (error.hint) {
+            formattedError += `HINT:  ${error.hint}\n`
+          }
+          if (error.internalQuery) {
+            formattedError += `QUERY:  ${error.internalQuery}\n`
+          }
+          if (error.where) {
+            formattedError += `CONTEXT:  ${error.where}\n`
           }
 
           throw new PgMetaException(error.message, {

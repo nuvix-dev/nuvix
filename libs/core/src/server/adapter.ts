@@ -1,12 +1,12 @@
 import { RequestMethod } from '@nestjs/common'
+import { LegacyRouteConverter } from '@nestjs/core/router/legacy-route-converter.js'
 import { FastifyAdapter } from '@nestjs/platform-fastify'
 import { pathToRegexp } from 'path-to-regexp'
-import { LegacyRouteConverter } from '@nestjs/core/router/legacy-route-converter.js'
 import { HookMethods } from './hooks/interface'
 
 export class NuvixAdapter extends FastifyAdapter {
   override async createMiddlewareFactory(
-    requestMethod: RequestMethod,
+    _requestMethod: RequestMethod,
   ): Promise<(path: string, callback: Function) => any> {
     return (
       path: string,
@@ -32,7 +32,7 @@ export class NuvixAdapter extends FastifyAdapter {
       try {
         let { regexp: re } = pathToRegexp(normalizedPath)
         re = hasEndOfStringCharacter
-          ? new RegExp(re.source + '$', re.flags)
+          ? new RegExp(`${re.source}$`, re.flags)
           : re
 
         this.applyHook(re, hookName, callback, normalizedPath)
@@ -72,7 +72,7 @@ export class NuvixAdapter extends FastifyAdapter {
             : request.originalUrl
 
         // Match the path
-        if (!regexp.exec(pathname + '/') && normalizedPath) {
+        if (!regexp.exec(`${pathname}/`) && normalizedPath) {
           return Promise.resolve()
         }
 
@@ -80,13 +80,15 @@ export class NuvixAdapter extends FastifyAdapter {
           typeof args[args.length - 1] === 'function'
             ? args[args.length - 1]
             : (e: Error) => {
-                if (e) throw e
+                if (e) {
+                  throw e
+                }
               }
 
         const extra = args.slice(2, -1)
         if (extra.length) {
-          request['hooks_args'] = {
-            ...request['hooks_args'],
+          request.hooks_args = {
+            ...request.hooks_args,
             [hookName]: { args: extra },
           }
         }
@@ -108,6 +110,6 @@ export class NuvixAdapter extends FastifyAdapter {
     }
 
     // Add callback to the stack
-    this.hookRegistry.get(key)!.push(callback)
+    this.hookRegistry.get(key)?.push(callback)
   }
 }

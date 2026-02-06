@@ -6,22 +6,22 @@ export class TemplateRuntimeModel extends BaseModel {
   /**
    * Runtime Name.
    */
-  @Expose() name: string = '' // Default to empty string
+  @Expose() name = '' // Default to empty string
 
   /**
    * The build command used to build the deployment.
    */
-  @Expose() commands: string = '' // Default to empty string
+  @Expose() commands = '' // Default to empty string
 
   /**
    * The entrypoint file used to execute the deployment.
    */
-  @Expose() entrypoint: string = '' // Default to empty string
+  @Expose() entrypoint = '' // Default to empty string
 
   /**
    * Path to function in VCS (Version Control System) repository.
    */
-  @Expose() providerRootDirectory: string = '' // Default to empty string
+  @Expose() providerRootDirectory = '' // Default to empty string
 
   constructor(partial: Partial<TemplateRuntimeModel>) {
     super(partial)

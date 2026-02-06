@@ -1,24 +1,24 @@
+import * as path from 'node:path'
 import { PROJECT_ROOT } from '@nuvix/utils'
-import * as path from 'path'
 
 const assetsPath = path.resolve(PROJECT_ROOT, 'assets/storage/logos')
 
 export const logos = {
   // Based on this list @see http://stackoverflow.com/a/4212908/2299554
-  default: assetsPath + '/none.png',
-  default_image: assetsPath + '/image.png',
+  default: `${assetsPath}/none.png`,
+  default_image: `${assetsPath}/image.png`,
 
   // Video Files
 
-  'video/mp4': assetsPath + '/video.png',
-  'video/x-flv': assetsPath + '/video.png',
-  'video/webm': assetsPath + '/video.png',
-  'application/x-mpegURL': assetsPath + '/video.png',
-  'video/MP2T': assetsPath + '/video.png',
-  'video/3gpp': assetsPath + '/video.png',
-  'video/quicktime': assetsPath + '/video.png',
-  'video/x-msvideo': assetsPath + '/video.png',
-  'video/x-ms-wmv': assetsPath + '/video.png',
+  'video/mp4': `${assetsPath}/video.png`,
+  'video/x-flv': `${assetsPath}/video.png`,
+  'video/webm': `${assetsPath}/video.png`,
+  'application/x-mpegURL': `${assetsPath}/video.png`,
+  'video/MP2T': `${assetsPath}/video.png`,
+  'video/3gpp': `${assetsPath}/video.png`,
+  'video/quicktime': `${assetsPath}/video.png`,
+  'video/x-msvideo': `${assetsPath}/video.png`,
+  'video/x-ms-wmv': `${assetsPath}/video.png`,
 
   // // Microsoft Word
   // 'application/msword' :  assetsPath +'/word.png',

@@ -3,9 +3,9 @@ import { BaseModel } from './base.model'
 
 @Exclude()
 export class UsageBucketsModel extends BaseModel {
-  @Expose() range: string = '' // Default to empty string
-  @Expose() filesTotal: number = 0 // Default to 0
-  @Expose() filesStorageTotal: number = 0 // Default to 0
+  @Expose() range = '' // Default to empty string
+  @Expose() filesTotal = 0 // Default to 0
+  @Expose() filesStorageTotal = 0 // Default to 0
   @Expose() files: any[] = [] // Default to empty array
   @Expose() storage: any[] = [] // Default to empty array
 
@@ -17,8 +17,8 @@ export class UsageBucketsModel extends BaseModel {
 
 @Exclude()
 export class UsageCollectionModel extends BaseModel {
-  @Expose() range: string = '' // Default to empty string
-  @Expose() documentsTotal: number = 0 // Default to 0
+  @Expose() range = '' // Default to empty string
+  @Expose() documentsTotal = 0 // Default to 0
   @Expose() documents: any[] = [] // Default to empty array
 
   constructor(partial: Partial<UsageCollectionModel>) {
@@ -29,9 +29,9 @@ export class UsageCollectionModel extends BaseModel {
 
 @Exclude()
 export class UsageDatabaseModel extends BaseModel {
-  @Expose() range: string = '' // Default to empty string
-  @Expose() collectionsTotal: number = 0 // Default to 0
-  @Expose() documentsTotal: number = 0 // Default to 0
+  @Expose() range = '' // Default to empty string
+  @Expose() collectionsTotal = 0 // Default to 0
+  @Expose() documentsTotal = 0 // Default to 0
   @Expose() collections: any[] = [] // Default to empty array
   @Expose() documents: any[] = [] // Default to empty array
 
@@ -43,10 +43,10 @@ export class UsageDatabaseModel extends BaseModel {
 
 @Exclude()
 export class UsageDatabasesModel extends BaseModel {
-  @Expose() range: string = '' // Default to empty string
-  @Expose() databasesTotal: number = 0 // Default to 0
-  @Expose() collectionsTotal: number = 0 // Default to 0
-  @Expose() documentsTotal: number = 0 // Default to 0
+  @Expose() range = '' // Default to empty string
+  @Expose() databasesTotal = 0 // Default to 0
+  @Expose() collectionsTotal = 0 // Default to 0
+  @Expose() documentsTotal = 0 // Default to 0
   @Expose() databases: any[] = [] // Default to empty array
   @Expose() collections: any[] = [] // Default to empty array
   @Expose() documents: any[] = [] // Default to empty array
@@ -59,16 +59,16 @@ export class UsageDatabasesModel extends BaseModel {
 
 @Exclude()
 export class UsageFunctionModel extends BaseModel {
-  @Expose() range: string = '' // Default to empty string
-  @Expose() deploymentsTotal: number = 0 // Default to 0
-  @Expose() deploymentsStorageTotal: number = 0 // Default to 0
-  @Expose() buildsTotal: number = 0 // Default to 0
-  @Expose() buildsStorageTotal: number = 0 // Default to 0
-  @Expose() buildsTimeTotal: number = 0 // Default to 0
-  @Expose() buildsMbSecondsTotal: number = 0 // Default to 0
-  @Expose() executionsTotal: number = 0 // Default to 0
-  @Expose() executionsTimeTotal: number = 0 // Default to 0
-  @Expose() executionsMbSecondsTotal: number = 0 // Default to 0
+  @Expose() range = '' // Default to empty string
+  @Expose() deploymentsTotal = 0 // Default to 0
+  @Expose() deploymentsStorageTotal = 0 // Default to 0
+  @Expose() buildsTotal = 0 // Default to 0
+  @Expose() buildsStorageTotal = 0 // Default to 0
+  @Expose() buildsTimeTotal = 0 // Default to 0
+  @Expose() buildsMbSecondsTotal = 0 // Default to 0
+  @Expose() executionsTotal = 0 // Default to 0
+  @Expose() executionsTimeTotal = 0 // Default to 0
+  @Expose() executionsMbSecondsTotal = 0 // Default to 0
   @Expose() deployments: any[] = [] // Default to empty array
   @Expose() deploymentsStorage: any[] = [] // Default to empty array
   @Expose() builds: any[] = [] // Default to empty array
@@ -87,17 +87,17 @@ export class UsageFunctionModel extends BaseModel {
 
 @Exclude()
 export class UsageFunctionsModel extends BaseModel {
-  @Expose() range: string = '' // Default to empty string
-  @Expose() functionsTotal: number = 0 // Default to 0
-  @Expose() deploymentsTotal: number = 0 // Default to 0
-  @Expose() deploymentsStorageTotal: number = 0 // Default to 0
-  @Expose() buildsTotal: number = 0 // Default to 0
-  @Expose() buildsStorageTotal: number = 0 // Default to 0
-  @Expose() buildsTimeTotal: number = 0 // Default to 0
-  @Expose() buildsMbSecondsTotal: number = 0 // Default to 0
-  @Expose() executionsTotal: number = 0 // Default to 0
-  @Expose() executionsTimeTotal: number = 0 // Default to 0
-  @Expose() executionsMbSecondsTotal: number = 0 // Default to 0
+  @Expose() range = '' // Default to empty string
+  @Expose() functionsTotal = 0 // Default to 0
+  @Expose() deploymentsTotal = 0 // Default to 0
+  @Expose() deploymentsStorageTotal = 0 // Default to 0
+  @Expose() buildsTotal = 0 // Default to 0
+  @Expose() buildsStorageTotal = 0 // Default to 0
+  @Expose() buildsTimeTotal = 0 // Default to 0
+  @Expose() buildsMbSecondsTotal = 0 // Default to 0
+  @Expose() executionsTotal = 0 // Default to 0
+  @Expose() executionsTimeTotal = 0 // Default to 0
+  @Expose() executionsMbSecondsTotal = 0 // Default to 0
   @Expose() functions: any[] = [] // Default to empty array
   @Expose() deployments: any[] = [] // Default to empty array
   @Expose() deploymentsStorage: any[] = [] // Default to empty array
@@ -117,17 +117,17 @@ export class UsageFunctionsModel extends BaseModel {
 
 @Exclude()
 export class UsageProjectModel extends BaseModel {
-  @Expose() executionsTotal: number = 0 // Default to 0
-  @Expose() documentsTotal: number = 0 // Default to 0
-  @Expose() databasesTotal: number = 0 // Default to 0
-  @Expose() usersTotal: number = 0 // Default to 0
-  @Expose() filesStorageTotal: number = 0 // Default to 0
-  @Expose() functionsStorageTotal: number = 0 // Default to 0
-  @Expose() buildsStorageTotal: number = 0 // Default to 0
-  @Expose() deploymentsStorageTotal: number = 0 // Default to 0
-  @Expose() bucketsTotal: number = 0 // Default to 0
-  @Expose() executionsMbSecondsTotal: number = 0 // Default to 0
-  @Expose() buildsMbSecondsTotal: number = 0 // Default to 0
+  @Expose() executionsTotal = 0 // Default to 0
+  @Expose() documentsTotal = 0 // Default to 0
+  @Expose() databasesTotal = 0 // Default to 0
+  @Expose() usersTotal = 0 // Default to 0
+  @Expose() filesStorageTotal = 0 // Default to 0
+  @Expose() functionsStorageTotal = 0 // Default to 0
+  @Expose() buildsStorageTotal = 0 // Default to 0
+  @Expose() deploymentsStorageTotal = 0 // Default to 0
+  @Expose() bucketsTotal = 0 // Default to 0
+  @Expose() executionsMbSecondsTotal = 0 // Default to 0
+  @Expose() buildsMbSecondsTotal = 0 // Default to 0
   @Expose() requests: any[] = [] // Default to empty array
   @Expose() network: any[] = [] // Default to empty array
   @Expose() users: any[] = [] // Default to empty array
@@ -146,10 +146,10 @@ export class UsageProjectModel extends BaseModel {
 
 @Exclude()
 export class UsageStorageModel extends BaseModel {
-  @Expose() range: string = '' // Default to empty string
-  @Expose() bucketsTotal: number = 0 // Default to 0
-  @Expose() filesTotal: number = 0 // Default to 0
-  @Expose() filesStorageTotal: number = 0 // Default to 0
+  @Expose() range = '' // Default to empty string
+  @Expose() bucketsTotal = 0 // Default to 0
+  @Expose() filesTotal = 0 // Default to 0
+  @Expose() filesStorageTotal = 0 // Default to 0
   @Expose() buckets: any[] = [] // Default to empty array
   @Expose() files: any[] = [] // Default to empty array
   @Expose() storage: any[] = [] // Default to empty array
@@ -162,9 +162,9 @@ export class UsageStorageModel extends BaseModel {
 
 @Exclude()
 export class UsageUsersModel extends BaseModel {
-  @Expose() range: string = '' // Default to empty string
-  @Expose() usersTotal: number = 0 // Default to 0
-  @Expose() sessionsTotal: number = 0 // Default to 0
+  @Expose() range = '' // Default to empty string
+  @Expose() usersTotal = 0 // Default to 0
+  @Expose() sessionsTotal = 0 // Default to 0
   @Expose() users: any[] = [] // Default to empty array
   @Expose() sessions: any[] = [] // Default to empty array
 

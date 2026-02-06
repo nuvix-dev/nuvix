@@ -6,12 +6,12 @@ export class MFATypeModel extends BaseModel {
   /**
    * Secret token used for TOTP factor.
    */
-  @Expose() secret: string = ''
+  @Expose() secret = ''
 
   /**
    * URI for authenticator apps.
    */
-  @Expose() uri: string = ''
+  @Expose() uri = ''
 
   constructor(partial: Partial<MFATypeModel>) {
     super()

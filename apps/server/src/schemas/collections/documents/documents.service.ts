@@ -1,4 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
+import { EventEmitter2 } from '@nestjs/event-emitter'
+import { Exception } from '@nuvix/core/extend/exception'
+import { Auth } from '@nuvix/core/helpers'
 import {
   Authorization,
   AuthorizationException,
@@ -7,27 +10,21 @@ import {
   DuplicateException,
   ID,
   Permission,
+  PermissionsValidator,
+  PermissionType,
   Query,
   QueryException,
-  StructureException,
-  PermissionType,
   Role,
-  PermissionsValidator,
+  StructureException,
 } from '@nuvix/db'
 import { configuration, SchemaMeta } from '@nuvix/utils'
-import { Auth } from '@nuvix/core/helpers'
-import { Exception } from '@nuvix/core/extend/exception'
-
+import type { CollectionsDoc, UsersDoc } from '@nuvix/utils/types'
 // DTOs
 import type { CreateDocumentDTO, UpdateDocumentDTO } from './DTO/document.dto'
-import { EventEmitter2 } from '@nestjs/event-emitter'
-import type { CollectionsDoc, UsersDoc } from '@nuvix/utils/types'
 
 @Injectable()
 export class DocumentsService {
-  private readonly logger = new Logger(DocumentsService.name)
-
-  constructor(private readonly event: EventEmitter2) {}
+  constructor(readonly _event: EventEmitter2) {}
 
   private isEmpty(collection: CollectionsDoc) {
     return (
@@ -50,9 +47,8 @@ export class DocumentsService {
 
     if (this.isEmpty(collection)) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
-    } else {
-      db.setCollectionEnabledValidate(false)
     }
+    db.setCollectionEnabledValidate(false)
 
     const filterQueries = Query.groupByType(queries).filters
     const documents = await db.find(collection.getId(), queries)
@@ -84,9 +80,8 @@ export class DocumentsService {
 
     if (this.isEmpty(collection)) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
-    } else {
-      db.setCollectionEnabledValidate(false)
     }
+    db.setCollectionEnabledValidate(false)
 
     const allowedPermissions = [
       PermissionType.Read,
@@ -103,9 +98,9 @@ export class DocumentsService {
       throw new Exception(Exception.USER_UNAUTHORIZED)
     }
 
-    data['$collection'] = collection.getId()
-    data['$id'] = documentId === 'unique()' ? ID.unique() : documentId
-    data['$permissions'] = aggregatedPermissions
+    data.$collection = collection.getId()
+    data.$id = documentId === 'unique()' ? ID.unique() : documentId
+    data.$permissions = aggregatedPermissions
 
     const document = new Doc(data)
 
@@ -135,7 +130,9 @@ export class DocumentsService {
     document: Doc,
     permission: PermissionType,
   ) {
-    if (Auth.isTrustedActor) return
+    if (Auth.isTrustedActor) {
+      return
+    }
     const documentSecurity = collection.get('documentSecurity', false)
     const validator = new Authorization(permission)
     const valid = validator.$valid(collection.getPermissionsByType(permission))
@@ -197,7 +194,9 @@ export class DocumentsService {
       for (const type of Database.PERMISSIONS) {
         for (const p of permissions ?? []) {
           const parsed = Permission.parse(p)
-          if (parsed.getPermission() !== type) continue
+          if (parsed.getPermission() !== type) {
+            continue
+          }
 
           const role = new Role(
             parsed.getRole(),
@@ -233,9 +232,8 @@ export class DocumentsService {
 
     if (this.isEmpty(collection)) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
-    } else {
-      db.setCollectionEnabledValidate(false)
     }
+    db.setCollectionEnabledValidate(false)
 
     try {
       const document = await db.getDocument(
@@ -265,10 +263,10 @@ export class DocumentsService {
    * TODO: Implement audit logs and return real data.
    */
   async getDocumentLogs(
-    db: Database,
-    collectionId: string,
-    documentId: string,
-    queries: Query[] = [],
+    _db: Database,
+    _collectionId: string,
+    _documentId: string,
+    _queries: Query[] = [],
   ) {
     // TODO: Implement this method
     return {
@@ -296,9 +294,8 @@ export class DocumentsService {
 
     if (this.isEmpty(collection)) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
-    } else {
-      db.setCollectionEnabledValidate(false)
     }
+    db.setCollectionEnabledValidate(false)
 
     const document = await Authorization.skip(() =>
       db.getDocument(collection.getId(), documentId),
@@ -316,9 +313,9 @@ export class DocumentsService {
       throw new Exception(Exception.USER_UNAUTHORIZED)
     }
 
-    data!['$id'] = documentId
-    data!['$permissions'] = aggregatedPermissions
-    data!['$updatedAt'] = new Date()
+    data!.$id = documentId
+    data!.$permissions = aggregatedPermissions
+    data!.$updatedAt = new Date()
     const newDocument = new Doc(data)
 
     try {
@@ -358,9 +355,8 @@ export class DocumentsService {
 
     if (this.isEmpty(collection)) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
-    } else {
-      db.setCollectionEnabledValidate(false)
     }
+    db.setCollectionEnabledValidate(false)
 
     const document = await Authorization.skip(async () =>
       db.getDocument(collection.getId(), documentId),

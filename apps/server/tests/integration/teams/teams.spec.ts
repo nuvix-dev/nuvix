@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeAll } from 'vitest'
-import { getApp } from '../../setup/app'
-import { createUserAndSession, getApiKeyHeaders } from '../../helpers/auth'
+import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { buildCreateTeamDTO } from '../../factories/dto/team.factory'
+import { createUserAndSession, getApiKeyHeaders } from '../../helpers/auth'
+import { getApp } from '../../setup/app'
 import {
-  parseJson,
-  assertStatusCode,
   assertDocumentShape,
   assertListResponse,
+  assertStatusCode,
+  parseJson,
 } from '../../setup/test-utils'
-import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 
 describe('teams (integration)', () => {
   let app: NestFastifyApplication

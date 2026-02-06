@@ -1,14 +1,14 @@
 import { ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger'
-import {
-  IsString,
-  Length,
-  IsArray,
-  ArrayMaxSize,
-  IsOptional,
-  IsObject,
-} from 'class-validator'
 import { IsCustomID, IsUID } from '@nuvix/core/validators'
 import { configuration } from '@nuvix/utils'
+import {
+  ArrayMaxSize,
+  IsArray,
+  IsObject,
+  IsOptional,
+  IsString,
+  Length,
+} from 'class-validator'
 
 export class CreateTeamDTO {
   /**

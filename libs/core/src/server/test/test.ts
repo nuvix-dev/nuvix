@@ -14,6 +14,6 @@ export class Test {
     metadata: ModuleMetadata,
     options?: TestingModuleOptions,
   ) {
-    return new TestingModuleBuilder(this.metadataScanner, metadata, options)
+    return new TestingModuleBuilder(Test.metadataScanner, metadata, options)
   }
 }

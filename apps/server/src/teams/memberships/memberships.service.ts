@@ -1,13 +1,12 @@
-import { Injectable, Logger } from '@nestjs/common'
-import { ID } from '@nuvix/core/helpers'
+import * as fs from 'node:fs'
+import { InjectQueue } from '@nestjs/bullmq'
+import { Injectable } from '@nestjs/common'
+import { AppConfigService, CoreService } from '@nuvix/core'
+import type { SmtpConfig } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
+import { Auth, Detector, ID, LocaleTranslator } from '@nuvix/core/helpers'
+import { MailJob, MailQueueOptions } from '@nuvix/core/resolvers'
 import { TOTP } from '@nuvix/core/validators'
-import {
-  CreateMembershipDTO,
-  UpdateMembershipDTO,
-  UpdateMembershipStatusDTO,
-} from './DTO/membership.dto'
-import { configuration, QueueFor, SessionProvider } from '@nuvix/utils'
 import {
   Authorization,
   AuthorizationException,
@@ -18,23 +17,19 @@ import {
   Query,
   Role,
 } from '@nuvix/db'
-import { Auth } from '@nuvix/core/helpers'
-import { InjectQueue } from '@nestjs/bullmq'
-import type { Queue } from 'bullmq'
-import { MailJob, MailQueueOptions } from '@nuvix/core/resolvers'
-import { LocaleTranslator } from '@nuvix/core/helpers'
-import { sprintf } from 'sprintf-js'
-import * as fs from 'fs'
-import * as Template from 'handlebars'
-import { AppConfigService, CoreService } from '@nuvix/core'
+import { configuration, QueueFor, SessionProvider } from '@nuvix/utils'
 import type { Memberships, ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
-import type { SmtpConfig } from '@nuvix/core/config'
-import { Detector } from '@nuvix/core/helpers'
+import type { Queue } from 'bullmq'
+import * as Template from 'handlebars'
+import { sprintf } from 'sprintf-js'
+import {
+  CreateMembershipDTO,
+  UpdateMembershipDTO,
+  UpdateMembershipStatusDTO,
+} from './DTO/membership.dto'
 
 @Injectable()
 export class MembershipsService {
-  private logger: Logger = new Logger(MembershipsService.name)
-
   constructor(
     private readonly appConfig: AppConfigService,
     private readonly coreService: CoreService,
@@ -133,7 +128,7 @@ export class MembershipsService {
       const userId = ID.unique()
 
       // Check user limit if not privileged or app user
-      const limit = project.get('auths', {})['limit'] ?? 0
+      const limit = project.get('auths', {}).limit ?? 0
       if (!Auth.isTrustedActor && limit !== 0) {
         const total = await db.count('users', [])
         if (total >= limit) {
@@ -179,11 +174,12 @@ export class MembershipsService {
       } catch (error) {
         if (error instanceof DuplicateException) {
           throw new Exception(Exception.USER_ALREADY_EXISTS)
-        } else throw error
+        }
+        throw error
       }
     }
 
-    const isOwner = Authorization.isRole('team:' + team.getId() + '/owner')
+    const isOwner = Authorization.isRole(`team:${team.getId()}/owner`)
 
     if (!isOwner && !Auth.isTrustedActor) {
       throw new Exception(
@@ -260,10 +256,9 @@ export class MembershipsService {
         )
         const customTemplate =
           project.get('templates', {})?.[
-            'email.invitation-' + locale.default
+            `email.invitation-${locale.default}`
           ] ?? {}
-        const templatePath =
-          this.appConfig.assetConfig.templates + '/email-inner-base.tpl'
+        const templatePath = `${this.appConfig.assetConfig.templates}/email-inner-base.tpl`
         const templateSource = fs.readFileSync(templatePath, 'utf8')
         const template = Template.compile(templateSource)
 
@@ -278,29 +273,39 @@ export class MembershipsService {
         let body = template(emailData)
 
         const smtp = project.get('smtp', {}) as SmtpConfig
-        const smtpEnabled = smtp['enabled'] ?? false
+        const smtpEnabled = smtp.enabled ?? false
         const systemConfig = this.appConfig.get('system')
 
         let senderEmail =
           systemConfig.emailAddress || configuration.app.emailTeam
         let senderName =
-          systemConfig.emailName || configuration.app.name + ' Server'
+          systemConfig.emailName || `${configuration.app.name} Server`
         let replyTo = ''
 
         if (smtpEnabled) {
-          if (smtp['senderEmail']) senderEmail = smtp['senderEmail']
-          if (smtp['senderName']) senderName = smtp['senderName']
-          if (smtp['replyTo']) replyTo = smtp['replyTo']
+          if (smtp.senderEmail) {
+            senderEmail = smtp.senderEmail
+          }
+          if (smtp.senderName) {
+            senderName = smtp.senderName
+          }
+          if (smtp.replyTo) {
+            replyTo = smtp.replyTo
+          }
 
           if (customTemplate) {
-            if (customTemplate['senderEmail'])
-              senderEmail = customTemplate['senderEmail']
-            if (customTemplate['senderName'])
-              senderName = customTemplate['senderName']
-            if (customTemplate['replyTo']) replyTo = customTemplate['replyTo']
+            if (customTemplate.senderEmail) {
+              senderEmail = customTemplate.senderEmail
+            }
+            if (customTemplate.senderName) {
+              senderName = customTemplate.senderName
+            }
+            if (customTemplate.replyTo) {
+              replyTo = customTemplate.replyTo
+            }
 
-            body = customTemplate['message'] || body
-            subject = customTemplate['subject'] || subject
+            body = customTemplate.message || body
+            subject = customTemplate.subject || subject
           }
         }
 
@@ -318,11 +323,11 @@ export class MembershipsService {
           subject,
           body,
           server: {
-            host: smtp['host'],
-            port: smtp['port'],
-            username: smtp['username'],
-            password: smtp['password'],
-            secure: smtp['secure'],
+            host: smtp.host,
+            port: smtp.port,
+            username: smtp.username,
+            password: smtp.password,
+            secure: smtp.secure,
             from: senderEmail,
             replyTo,
             senderEmail,
@@ -360,7 +365,7 @@ export class MembershipsService {
     }
     queries.push(Query.equal('teamInternalId', [team.getSequence()]))
 
-    const filterQueries = Query.groupByType(queries)['filters']
+    const filterQueries = Query.groupByType(queries).filters
     const memberships = await db.find('memberships', queries)
     const total = await db.count('memberships', filterQueries)
 
@@ -372,7 +377,7 @@ export class MembershipsService {
         let mfa = user.get('mfa', false)
         if (mfa) {
           const totp = TOTP.getAuthenticatorFromUser(user)
-          const totpEnabled = totp && totp.get('verified', false)
+          const totpEnabled = totp?.get('verified', false)
           const emailEnabled =
             user.get('email') && user.get('emailVerification')
           const phoneEnabled =
@@ -417,7 +422,7 @@ export class MembershipsService {
     let mfa = user.get('mfa', false)
     if (mfa) {
       const totp = TOTP.getAuthenticatorFromUser(user)
-      const totpEnabled = totp && totp.get('verified', false)
+      const totpEnabled = totp?.get('verified', false)
       const emailEnabled = user.get('email') && user.get('emailVerification')
       const phoneEnabled = user.get('phone') && user.get('phoneVerification')
 
@@ -559,7 +564,7 @@ export class MembershipsService {
       const detector = new Detector(request.headers['user-agent'] ?? 'UNKNWON')
       const record = this.coreService.getGeoDb().get(request.ip)
       const authDuration =
-        project.get('auths', {})['duration'] ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
+        project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
       const expire = new Date(Date.now() + authDuration * 1000)
       const sessionSecret = Auth.tokenGenerator()
 

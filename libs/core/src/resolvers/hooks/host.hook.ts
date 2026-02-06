@@ -1,11 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Authorization, Database, Query } from '@nuvix/db'
-import { Exception } from '../../extend/exception'
 import { Context } from '@nuvix/utils'
-import { Hook } from '../../server/hooks/interface'
 import { ProjectsDoc } from '@nuvix/utils/types'
-import { CoreService } from '../../core.service.js'
 import { AppConfigService } from '../../config.service'
+import { CoreService } from '../../core.service.js'
+import { Exception } from '../../extend/exception'
+import { Hook } from '../../server/hooks/interface'
 
 @Injectable()
 export class HostHook implements Hook {
@@ -18,7 +18,7 @@ export class HostHook implements Hook {
     this.dbForPlatform = coreService.getPlatformDb()
   }
 
-  async onRequest(req: NuvixRequest, reply: NuvixRes): Promise<void> {
+  async onRequest(req: NuvixRequest, _reply: NuvixRes): Promise<void> {
     if (
       !this.appConfig.get('app').isProduction ||
       this.appConfig.isSelfHosted
@@ -52,7 +52,7 @@ export class HostHook implements Hook {
 
     const services = project.get('services', {})
     if ('proxy' in services) {
-      const status = services['proxy']
+      const status = services.proxy
       if (!status) {
         throw new Exception(Exception.GENERAL_SERVICE_DISABLED)
       }

@@ -1,15 +1,15 @@
-import { describe, it, expect, beforeAll } from 'vitest'
-import { getApp } from '../../setup/app'
-import { getApiKeyJsonHeaders, getApiKeyHeaders } from '../../helpers/auth'
-import { buildCreateDocumentSchemaDTO } from '../../factories/dto/schema.factory'
+import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { buildCreateCollectionDTO } from '../../factories/dto/collection.factory'
 import { buildCreateIndexDTO } from '../../factories/dto/index.factory'
+import { buildCreateDocumentSchemaDTO } from '../../factories/dto/schema.factory'
+import { getApiKeyHeaders, getApiKeyJsonHeaders } from '../../helpers/auth'
+import { getApp } from '../../setup/app'
 import {
-  parseJson,
-  assertStatusCode,
   assertListResponse,
+  assertStatusCode,
+  parseJson,
 } from '../../setup/test-utils'
-import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 
 describe('schemas/collections/indexes (integration)', () => {
   let app: NestFastifyApplication
@@ -254,7 +254,7 @@ describe('schemas/collections/indexes (integration)', () => {
     assertStatusCode(res, 202)
 
     // Verify it's gone or in deleting state
-    let checkRes = await app.inject({
+    const checkRes = await app.inject({
       method: 'GET',
       url: `/v1/schemas/${testSchemaId}/collections/${testCollectionId}/indexes/${dto.key}`,
       headers: getApiKeyHeaders(),

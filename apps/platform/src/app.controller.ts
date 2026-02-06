@@ -1,12 +1,11 @@
 import { Controller, Get, UseInterceptors } from '@nestjs/common'
+import { Public, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { AppService } from './app.service'
-import { Public } from '@nuvix/core/resolvers'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
 
 @Controller()
 @UseInterceptors(ResponseInterceptor)
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(readonly _appService: AppService) {}
 
   @Get()
   @Public()

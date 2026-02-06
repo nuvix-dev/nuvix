@@ -6,27 +6,27 @@ export class MembershipModel extends BaseModel {
   /**
    * User ID.
    */
-  @Expose() userId: string = ''
+  @Expose() userId = ''
 
   /**
    * User name.
    */
-  @Expose() userName: string = ''
+  @Expose() userName = ''
 
   /**
    * User email address.
    */
-  @Expose() userEmail: string = ''
+  @Expose() userEmail = ''
 
   /**
    * Team ID.
    */
-  @Expose() teamId: string = ''
+  @Expose() teamId = ''
 
   /**
    * Team name.
    */
-  @Expose() teamName: string = ''
+  @Expose() teamName = ''
 
   /**
    * Date the user has been invited to join the team in ISO 8601 format.
@@ -41,12 +41,12 @@ export class MembershipModel extends BaseModel {
   /**
    * User confirmation status, true if the user has joined the team or false otherwise.
    */
-  @Expose() confirm: boolean = false
+  @Expose() confirm = false
 
   /**
    * Multi-factor authentication status, true if the user has MFA enabled or false otherwise.
    */
-  @Expose() mfa: boolean = false
+  @Expose() mfa = false
 
   /**
    * User list of roles.

@@ -1,7 +1,50 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { InjectQueue } from '@nestjs/bullmq'
+import { Injectable } from '@nestjs/common'
+import { EventEmitter2 } from '@nestjs/event-emitter'
+import { JwtService } from '@nestjs/jwt'
+import { Audit, AuditDoc } from '@nuvix/audit'
+import { CoreService } from '@nuvix/core'
+import { usageConfig } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
-import { ID } from '@nuvix/core/helpers'
-import { PersonalDataValidator } from '@nuvix/core/validators'
+import { Hooks } from '@nuvix/core/extend/hooks'
+import type { LocaleTranslator } from '@nuvix/core/helpers'
+import { Auth, Detector, ID } from '@nuvix/core/helpers'
+import type { DeletesJobData } from '@nuvix/core/resolvers'
+import { StatsQueue } from '@nuvix/core/resolvers'
+import {
+  PasswordHistoryValidator,
+  PersonalDataValidator,
+} from '@nuvix/core/validators'
+import {
+  Authorization,
+  Database,
+  Doc,
+  DuplicateException,
+  Permission,
+  Query,
+  Role,
+} from '@nuvix/db'
+import {
+  configuration,
+  DeleteType,
+  HashAlgorithm,
+  MetricFor,
+  MetricPeriod,
+  QueueFor,
+  TokenType,
+} from '@nuvix/utils'
+import type {
+  ProjectsDoc,
+  SessionsDoc,
+  TargetsDoc,
+  Tokens,
+  Users,
+  UsersDoc,
+} from '@nuvix/utils/types'
+import { Queue } from 'bullmq'
+import { CountryResponse, Reader } from 'maxmind'
+import { CreateJwtDTO } from './DTO/jwt.dto'
+import { CreateTokenDTO } from './DTO/token.dto'
 import {
   CreateUserDTO,
   CreateUserWithScryptDTO,
@@ -14,55 +57,9 @@ import {
   UpdateUserPoneVerificationDTO,
   UpdateUserStatusDTO,
 } from './DTO/user.dto'
-import {
-  configuration,
-  DeleteType,
-  HashAlgorithm,
-  MetricFor,
-  MetricPeriod,
-  QueueFor,
-  TokenType,
-} from '@nuvix/utils'
-import { Auth } from '@nuvix/core/helpers'
-import { PasswordHistoryValidator } from '@nuvix/core/validators'
-import { Detector } from '@nuvix/core/helpers'
-
-import { CreateTokenDTO } from './DTO/token.dto'
-import { CreateJwtDTO } from './DTO/jwt.dto'
-import { JwtService } from '@nestjs/jwt'
-import {
-  Authorization,
-  Database,
-  Doc,
-  DuplicateException,
-  Permission,
-  Query,
-  Role,
-} from '@nuvix/db'
-import { CountryResponse, Reader } from 'maxmind'
-import { EventEmitter2 } from '@nestjs/event-emitter'
-import { CoreService } from '@nuvix/core'
-import type {
-  MembershipsDoc,
-  ProjectsDoc,
-  SessionsDoc,
-  TargetsDoc,
-  Tokens,
-  Users,
-  UsersDoc,
-} from '@nuvix/utils/types'
-import { Audit, AuditDoc } from '@nuvix/audit'
-import type { LocaleTranslator } from '@nuvix/core/helpers'
-import { usageConfig } from '@nuvix/core/config'
-import { StatsQueue } from '@nuvix/core/resolvers'
-import { Hooks } from '@nuvix/core/extend/hooks'
-import { InjectQueue } from '@nestjs/bullmq'
-import type { DeletesJobData } from '@nuvix/core/resolvers'
-import { Queue } from 'bullmq'
 
 @Injectable()
 export class UsersService {
-  private logger: Logger = new Logger(UsersService.name)
   private readonly geoDb: Reader<CountryResponse>
 
   constructor(
@@ -82,7 +79,7 @@ export class UsersService {
     if (search) {
       queries.push(Query.search('search', search))
     }
-    const filterQueries = Query.groupByType(queries)['filters']
+    const filterQueries = Query.groupByType(queries).filters
 
     return {
       data: await db.find('users', queries),
@@ -200,7 +197,7 @@ export class UsersService {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
-    if (project.get('auths', {})['personalDataCheck'] ?? false) {
+    if (project.get('auths', {}).personalDataCheck ?? false) {
       const personalDataValidator = new PersonalDataValidator(
         id,
         user.get('email'),
@@ -236,7 +233,7 @@ export class UsersService {
       Auth.DEFAULT_ALGO_OPTIONS,
     )
 
-    const historyLimit = project.get('auths', {})['passwordHistory'] ?? 0
+    const historyLimit = project.get('auths', {}).passwordHistory ?? 0
     let history = user.get('passwordHistory', [])
 
     if (newPassword && historyLimit > 0) {
@@ -317,27 +314,22 @@ export class UsersService {
         } else {
           await db.deleteDocument('targets', oldTarget.getId())
         }
-      } else {
-        if (email.length !== 0) {
-          const target = await db.createDocument(
-            'targets',
-            new Doc({
-              $permissions: [
-                Permission.read(Role.user(user.getId())),
-                Permission.update(Role.user(user.getId())),
-                Permission.delete(Role.user(user.getId())),
-              ],
-              userId: user.getId(),
-              userInternalId: user.getSequence(),
-              providerType: 'email',
-              identifier: email,
-            }),
-          )
-          updatedUser.set('targets', [
-            ...updatedUser.get('targets', []),
-            target,
-          ])
-        }
+      } else if (email.length !== 0) {
+        const target = await db.createDocument(
+          'targets',
+          new Doc({
+            $permissions: [
+              Permission.read(Role.user(user.getId())),
+              Permission.update(Role.user(user.getId())),
+              Permission.delete(Role.user(user.getId())),
+            ],
+            userId: user.getId(),
+            userInternalId: user.getSequence(),
+            providerType: 'email',
+            identifier: email,
+          }),
+        )
+        updatedUser.set('targets', [...updatedUser.get('targets', []), target])
       }
 
       await db.purgeCachedDocument('users', user.getId())
@@ -390,27 +382,22 @@ export class UsersService {
         } else {
           await db.deleteDocument('targets', oldTarget.getId())
         }
-      } else {
-        if (phone.length !== 0) {
-          const target = await db.createDocument(
-            'targets',
-            new Doc({
-              $permissions: [
-                Permission.read(Role.user(user.getId())),
-                Permission.update(Role.user(user.getId())),
-                Permission.delete(Role.user(user.getId())),
-              ],
-              userId: user.getId(),
-              userInternalId: user.getSequence(),
-              providerType: 'sms',
-              identifier: phone,
-            }),
-          )
-          updatedUser.set('targets', [
-            ...updatedUser.get('targets', []),
-            target,
-          ])
-        }
+      } else if (phone.length !== 0) {
+        const target = await db.createDocument(
+          'targets',
+          new Doc({
+            $permissions: [
+              Permission.read(Role.user(user.getId())),
+              Permission.update(Role.user(user.getId())),
+              Permission.delete(Role.user(user.getId())),
+            ],
+            userId: user.getId(),
+            userInternalId: user.getSequence(),
+            providerType: 'sms',
+            identifier: phone,
+          }),
+        )
+        updatedUser.set('targets', [...updatedUser.get('targets', []), target])
       }
       await db.purgeCachedDocument('users', user.getId())
       return updatedUser
@@ -703,7 +690,7 @@ export class UsersService {
     }
 
     const grouped = Query.groupByType(queries)
-    const limit = grouped['limit']
+    const limit = grouped.limit
     if (limit === undefined) {
       queries.push(Query.limit(configuration.limits.limitCount))
     }
@@ -734,18 +721,18 @@ export class UsersService {
           userName: log.data.userName || null,
           ip: log.ip,
           time: log.time,
-          osCode: os['osCode'],
-          osName: os['osName'],
-          osVersion: os['osVersion'],
-          clientType: client['clientType'],
-          clientCode: client['clientCode'],
-          clientName: client['clientName'],
-          clientVersion: client['clientVersion'],
-          clientEngine: client['clientEngine'],
-          clientEngineVersion: client['clientEngineVersion'],
-          deviceName: device['deviceName'],
-          deviceBrand: device['deviceBrand'],
-          deviceModel: device['deviceModel'],
+          osCode: os.osCode,
+          osName: os.osName,
+          osVersion: os.osVersion,
+          clientType: client.clientType,
+          clientCode: client.clientCode,
+          clientName: client.clientName,
+          clientVersion: client.clientVersion,
+          clientEngine: client.clientEngine,
+          clientEngineVersion: client.clientEngineVersion,
+          deviceName: device.deviceName,
+          deviceBrand: device.deviceBrand,
+          deviceModel: device.deviceModel,
           countryCode,
           countryName,
         }) as unknown as AuditDoc,
@@ -766,7 +753,7 @@ export class UsersService {
       queries.push(Query.search('search', search))
     }
 
-    const filterQueries = Query.groupByType(queries)['filters']
+    const filterQueries = Query.groupByType(queries).filters
     return {
       data: await db.find('identities', queries),
       total: await db.count(
@@ -914,7 +901,7 @@ export class UsersService {
     const hashOptionsObject =
       typeof hashOptions === 'string' ? JSON.parse(hashOptions) : hashOptions
     const auths = project.get('auths', {})
-    const passwordHistory = auths?.['passwordHistory'] ?? 0
+    const passwordHistory = auths?.passwordHistory ?? 0
 
     if (email) {
       email = email.toLowerCase()
@@ -932,7 +919,7 @@ export class UsersService {
       userId =
         !userId || userId === 'unique()' ? ID.unique() : ID.custom(userId)
 
-      if (auths?.['personalDataCheck'] ?? false) {
+      if (auths?.personalDataCheck ?? false) {
         const personalDataValidator = new PersonalDataValidator(
           userId,
           email,
@@ -1010,7 +997,9 @@ export class UsersService {
             if (existingTarget) {
               createdUser.append('targets', existingTarget)
             }
-          } else throw error
+          } else {
+            throw error
+          }
         }
       }
 
@@ -1042,7 +1031,9 @@ export class UsersService {
             if (existingTarget) {
               createdUser.append('targets', existingTarget)
             }
-          } else throw error
+          } else {
+            throw error
+          }
         }
       }
 
@@ -1061,7 +1052,7 @@ export class UsersService {
   /**
    * Get usage statistics
    */
-  async getUsage(db: Database, range: string = '1d') {
+  async getUsage(db: Database, range = '1d') {
     const periods = usageConfig
     const stats: Record<string, any> = {}
     const usage: Record<string, any> = {}

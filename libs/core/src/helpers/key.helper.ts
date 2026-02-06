@@ -1,8 +1,8 @@
-import { ApiKey } from '@nuvix/utils'
-import { roles } from '../config/roles'
-import { Doc, RoleName } from '@nuvix/db'
 import { JwtService } from '@nestjs/jwt'
+import { Doc, RoleName } from '@nuvix/db'
+import { ApiKey } from '@nuvix/utils'
 import { KeysDoc, ProjectsDoc } from '@nuvix/utils/types'
+import { roles } from '../config/roles'
 import { UserRole } from './auth.helper'
 
 interface JWTPayload {
@@ -95,7 +95,7 @@ export class Key {
     )
 
     switch (type) {
-      case ApiKey.DYNAMIC:
+      case ApiKey.DYNAMIC: {
         if (!Key.jwtService) {
           throw new Error('JWT Service is not set for Key decoding')
         }
@@ -103,7 +103,7 @@ export class Key {
         let payload: JWTPayload = {}
         try {
           payload = (await Key.jwtService.verifyAsync(secret)) as JWTPayload
-        } catch (error) {
+        } catch (_error) {
           expired = true
         }
 
@@ -117,8 +117,9 @@ export class Key {
         }
 
         return new Key(projectId, type, role, scopes, name, key, expired)
+      }
 
-      case ApiKey.STANDARD:
+      case ApiKey.STANDARD: {
         const keyDoc = project.findWhere(
           'keys',
           (item: Doc) => item.get('secret') === key,
@@ -148,6 +149,7 @@ export class Key {
           key,
           expired,
         )
+      }
 
       default:
         return guestKey

@@ -234,10 +234,17 @@ export class PhraseGenerator {
    */
   public static generate(): string {
     const adjective =
-      this.adjectives[Math.floor(Math.random() * this.adjectives.length)]
-    const noun = this.nouns[Math.floor(Math.random() * this.nouns.length)]
+      PhraseGenerator.adjectives[
+        Math.floor(Math.random() * PhraseGenerator.adjectives.length)
+      ]
+    const noun =
+      PhraseGenerator.nouns[
+        Math.floor(Math.random() * PhraseGenerator.nouns.length)
+      ]
     const descriptor =
-      this.descriptors[Math.floor(Math.random() * this.descriptors.length)]
+      PhraseGenerator.descriptors[
+        Math.floor(Math.random() * PhraseGenerator.descriptors.length)
+      ]
 
     // Generate a short random alphanumeric suffix (e.g., "a1b2")
     // This significantly increases the number of possible unique phrases and helps prevent collisions.

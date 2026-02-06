@@ -1,6 +1,6 @@
 import { ArgumentMetadata, Logger, PipeTransform } from '@nestjs/common'
-import { Exception } from '../extend/exception'
 import { Validator } from '@nuvix/db'
+import { Exception } from '../extend/exception'
 
 interface Options {
   allowEmpty?: boolean
@@ -38,16 +38,15 @@ export class ParseValidatorPipe implements PipeTransform<string, any> {
     if (this.isEmpty(value)) {
       if (this.options.allowEmpty) {
         return value
-      } else {
-        throw new Exception(
-          Exception.GENERAL_BAD_REQUEST,
-          `${metadata.type} parameter "${metadata.data}" cannot be empty`,
-        )
       }
+      throw new Exception(
+        Exception.GENERAL_BAD_REQUEST,
+        `${metadata.type} parameter "${metadata.data}" cannot be empty`,
+      )
     }
 
     let isValid = false
-    let mayBePromise = this.validator.$valid(value)
+    const mayBePromise = this.validator.$valid(value)
     if (mayBePromise instanceof Promise) {
       isValid = await mayBePromise
     } else {

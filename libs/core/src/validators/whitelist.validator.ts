@@ -4,7 +4,7 @@ export class WhiteList implements Validator {
   private list: string[]
   private strict: boolean
 
-  constructor(list: string[], strict: boolean = false) {
+  constructor(list: string[], strict = false) {
     this.list = list
     this.strict = strict
 

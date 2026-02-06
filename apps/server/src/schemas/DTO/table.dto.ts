@@ -7,7 +7,7 @@ export class TableParamsDTO {
    */
   @IsOptional()
   @IsString()
-  schemaId: string = 'public'
+  schemaId = 'public'
 
   /**
    * Table ID.
@@ -22,7 +22,7 @@ export class FunctionParamsDTO {
    */
   @IsOptional()
   @IsString()
-  schemaId: string = 'public'
+  schemaId = 'public'
 
   /**
    * Function ID.

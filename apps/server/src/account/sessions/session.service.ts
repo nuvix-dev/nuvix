@@ -1,44 +1,54 @@
+import * as fs from 'node:fs/promises'
+import path from 'node:path'
+import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
-import { InjectQueue } from '@nestjs/bullmq'
-
-import { Queue } from 'bullmq'
-import { CountryResponse, Reader } from 'maxmind'
-import * as Template from 'handlebars'
-import * as fs from 'fs/promises'
-import path from 'path'
-
+import { JwtService } from '@nestjs/jwt'
+import { AppConfigService, CoreService } from '@nuvix/core'
+import type { SmtpConfig } from '@nuvix/core/config'
+import { type OAuthProviders, type OAuthProviderType } from '@nuvix/core/config'
+import { Exception } from '@nuvix/core/extend/exception'
+import { Auth, Detector, LocaleTranslator, Models } from '@nuvix/core/helpers'
+import { getOAuth2Class, OAuth2 } from '@nuvix/core/OAuth2'
 import {
-  Doc,
+  DeletesJobData,
+  MailJob,
+  MailQueueOptions,
+} from '@nuvix/core/resolvers'
+import { URLValidator } from '@nuvix/core/validators'
+import {
+  Authorization,
   Database,
-  Query,
+  Doc,
+  DuplicateException,
   ID,
   Permission,
+  Query,
   Role,
-  Authorization,
-  DuplicateException,
 } from '@nuvix/db'
-import { Exception } from '@nuvix/core/extend/exception'
-import { Auth } from '@nuvix/core/helpers'
-import { LocaleTranslator } from '@nuvix/core/helpers'
-import { Models } from '@nuvix/core/helpers'
-import { Detector } from '@nuvix/core/helpers'
-import { URLValidator } from '@nuvix/core/validators'
-import { MailJob, MailQueueOptions } from '@nuvix/core/resolvers'
-import { getOAuth2Class, OAuth2 } from '@nuvix/core/OAuth2'
-import { type OAuthProviders, type OAuthProviderType } from '@nuvix/core/config'
 import {
   AppEvents,
   AuthFactor,
   configuration,
   DeleteType,
+  type HashAlgorithm,
   MessageType,
   QueueFor,
   SessionProvider,
   TokenType,
-  type HashAlgorithm,
 } from '@nuvix/utils'
 import { PhraseGenerator } from '@nuvix/utils/auth'
+import type {
+  ProjectsDoc,
+  Sessions,
+  SessionsDoc,
+  TargetsDoc,
+  Tokens,
+  UsersDoc,
+} from '@nuvix/utils/types'
+import { Queue } from 'bullmq'
+import * as Template from 'handlebars'
+import { CountryResponse, Reader } from 'maxmind'
 import {
   CreateEmailSessionDTO,
   CreateOAuth2SessionDTO,
@@ -51,18 +61,6 @@ import {
   CreateOAuth2TokenDTO,
   CreatePhoneTokenDTO,
 } from './DTO/token.dto'
-import type {
-  ProjectsDoc,
-  Sessions,
-  SessionsDoc,
-  TargetsDoc,
-  Tokens,
-  UsersDoc,
-} from '@nuvix/utils/types'
-import { CoreService, AppConfigService } from '@nuvix/core'
-import type { SmtpConfig } from '@nuvix/core/config'
-import { JwtService } from '@nestjs/jwt'
-import { DeletesJobData } from '@nuvix/core/resolvers'
 
 @Injectable()
 export class SessionService {
@@ -93,7 +91,7 @@ export class SessionService {
 
     const updatedSessions = sessions.map(session => {
       const countryName = locale.getText(
-        'countries' + session.get('countryCode', '')?.toLowerCase(),
+        `countries${session.get('countryCode', '')?.toLowerCase()}`,
         locale.getText('locale.country.unknown'),
       )
 
@@ -135,7 +133,7 @@ export class SessionService {
       session.set(
         'countryName',
         locale.getText(
-          'countries' + session.get('countryCode', '')?.toLowerCase(),
+          `countries${session.get('countryCode', '')?.toLowerCase()}`,
           locale.getText('locale.country.unknown'),
         ),
       )
@@ -191,7 +189,7 @@ export class SessionService {
     for (const session of sessions) {
       if (sessionId === session.getId()) {
         const countryName = locale.getText(
-          'countries' + session.get('countryCode', '')?.toLowerCase(),
+          `countries${session.get('countryCode', '')?.toLowerCase()}`,
           locale.getText('locale.country.unknown'),
         )
 
@@ -236,7 +234,7 @@ export class SessionService {
         session.set(
           'countryName',
           locale.getText(
-            'countries' + session.get('countryCode', '')?.toLowerCase(),
+            `countries${session.get('countryCode', '')?.toLowerCase()}`,
             locale.getText('locale.country.unknown'),
           ),
         )
@@ -305,7 +303,7 @@ export class SessionService {
 
     const auths = project.get('auths', {})
 
-    const authDuration = auths['duration'] ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
+    const authDuration = auths.duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
     session.set('expire', new Date(Date.now() + authDuration * 1000))
 
     const provider: string = session.get('provider', '')
@@ -314,8 +312,8 @@ export class SessionService {
     const OAuth2Class = await getOAuth2Class(provider)
     if (provider) {
       const providerInfo = this.getProviderConfig(project, provider)
-      const appId = providerInfo['appId']
-      const appSecret = providerInfo['secret']
+      const appId = providerInfo.appId
+      const appSecret = providerInfo.secret
 
       const oauth2: OAuth2 = new OAuth2Class(appId, appSecret, '', [], [])
       await oauth2.refreshTokens(refreshToken)
@@ -382,7 +380,7 @@ export class SessionService {
     user.setAll(profile.toObject())
 
     const auths = project.get('auths', {})
-    const duration = auths['duration'] ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
+    const duration = auths.duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
     const record = this.geodb.get(request.ip)
     const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
@@ -452,7 +450,7 @@ export class SessionService {
       .status(201)
 
     const countryName = locale.getText(
-      'countries' + createdSession.get('countryCode', '')?.toLowerCase(),
+      `countries${createdSession.get('countryCode', '')?.toLowerCase()}`,
       locale.getText('locale.country.unknown'),
     )
 
@@ -470,7 +468,7 @@ export class SessionService {
       },
     })
 
-    if (project.get('auths', {})['sessionAlerts'] ?? false) {
+    if (project.get('auths', {}).sessionAlerts ?? false) {
       const sessionCount = await db.count('sessions', [
         Query.equal('userId', [user.getId()]),
       ])
@@ -499,7 +497,7 @@ export class SessionService {
     db: Database
   }) {
     const protocol = request.protocol
-    const limit = project.get('auths', {})['limit'] ?? 0
+    const limit = project.get('auths', {}).limit ?? 0
     const maxUsers = this.appConfig.appLimits.users
 
     if (limit !== 0) {
@@ -534,7 +532,7 @@ export class SessionService {
 
     // Create session token
     const duration =
-      project.get('auths', {})['duration'] ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
+      project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
     const record = this.geodb.get(request.ip)
     const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
@@ -594,7 +592,7 @@ export class SessionService {
       .status(201)
 
     const countryName = locale.getText(
-      'countries.' + createdSession.get('countryCode', '')?.toLowerCase(),
+      `countries.${createdSession.get('countryCode', '')?.toLowerCase()}`,
       locale.getText('locale.country.unknown'),
     )
 
@@ -718,7 +716,7 @@ export class SessionService {
     if (input.state) {
       try {
         state = { ...defaultState, ...oauth2.parseState(input.state) }
-      } catch (error) {
+      } catch (_error) {
         throw new Exception(
           Exception.GENERAL_SERVER_ERROR,
           'Failed to parse login state params as passed from OAuth2 provider',
@@ -726,11 +724,11 @@ export class SessionService {
       }
     }
 
-    if (!validateURL.$valid(state['success'])) {
+    if (!validateURL.$valid(state.success)) {
       throw new Exception(Exception.PROJECT_INVALID_SUCCESS_URL)
     }
 
-    if (state['failure'] && !validateURL.$valid(state['failure'])) {
+    if (state.failure && !validateURL.$valid(state.failure)) {
       throw new Exception(Exception.PROJECT_INVALID_FAILURE_URL)
     }
 
@@ -803,18 +801,18 @@ export class SessionService {
     let name = ''
     const nameOAuth = await oauth2.getUserName(accessToken)
     const userParam = JSON.parse(
-      (request.query as { user: string })['user'] || '{}',
+      (request.query as { user: string }).user || '{}',
     )
     if (nameOAuth) {
       name = nameOAuth
     } else if (Array.isArray(userParam) || typeof userParam === 'object') {
-      const nameParam = userParam['name']
+      const nameParam = userParam.name
       if (
         typeof nameParam === 'object' &&
-        nameParam['firstName'] &&
-        nameParam['lastName']
+        nameParam.firstName &&
+        nameParam.lastName
       ) {
-        name = nameParam['firstName'] + ' ' + nameParam['lastName']
+        name = `${nameParam.firstName} ${nameParam.lastName}`
       }
     }
 
@@ -897,7 +895,7 @@ export class SessionService {
       }
 
       if (user.empty()) {
-        const limit = project.get('auths', {})['limit'] ?? 0
+        const limit = project.get('auths', {}).limit ?? 0
         const maxUsers = this.appConfig.appLimits.users
 
         if (limit !== 0) {
@@ -1031,7 +1029,7 @@ export class SessionService {
     await db.updateDocument('users', user.getId(), user)
 
     const duration =
-      project.get('auths', {})['duration'] ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
+      project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
     const expire = new Date(Date.now() + duration * 1000)
 
     const parsedState = new URL(state.success)
@@ -1285,7 +1283,7 @@ export class SessionService {
     if (!result.empty()) {
       user.setAll(result.toObject())
     } else {
-      const limit = project.get('auths', {})['limit'] ?? 0
+      const limit = project.get('auths', {}).limit ?? 0
       const maxUsers = this.appConfig.appLimits.users
 
       if (limit !== 0) {
@@ -1401,40 +1399,50 @@ export class SessionService {
     let body = template(emailData)
 
     const smtp = project.get('smtp', {}) as SmtpConfig
-    const smtpEnabled = smtp['enabled'] ?? false
+    const smtpEnabled = smtp.enabled ?? false
     const systemConfig = this.appConfig.get('system')
 
     let senderEmail = systemConfig.emailAddress || configuration.app.emailTeam
     let senderName =
-      systemConfig.emailName || configuration.app.name + ' Server'
+      systemConfig.emailName || `${configuration.app.name} Server`
     let replyTo = ''
 
     const smtpServer: SmtpConfig = {} as SmtpConfig
     if (smtpEnabled) {
-      if (smtp['senderEmail']) senderEmail = smtp['senderEmail']
-      if (smtp['senderName']) senderName = smtp['senderName']
-      if (smtp['replyTo']) replyTo = smtp['replyTo']
-
-      smtpServer['host'] = smtp['host'] || ''
-      smtpServer['port'] = smtp['port']
-      smtpServer['username'] = smtp['username'] || ''
-      smtpServer['password'] = smtp['password'] || ''
-      smtpServer['secure'] = smtp['secure'] ?? false
-
-      if (customTemplate) {
-        if (customTemplate['senderEmail'])
-          senderEmail = customTemplate['senderEmail']
-        if (customTemplate['senderName'])
-          senderName = customTemplate['senderName']
-        if (customTemplate['replyTo']) replyTo = customTemplate['replyTo']
-
-        body = customTemplate['message'] || body
-        subject = customTemplate['subject'] || subject
+      if (smtp.senderEmail) {
+        senderEmail = smtp.senderEmail
+      }
+      if (smtp.senderName) {
+        senderName = smtp.senderName
+      }
+      if (smtp.replyTo) {
+        replyTo = smtp.replyTo
       }
 
-      smtpServer['replyTo'] = replyTo
-      smtpServer['senderEmail'] = senderEmail
-      smtpServer['senderName'] = senderName
+      smtpServer.host = smtp.host || ''
+      smtpServer.port = smtp.port
+      smtpServer.username = smtp.username || ''
+      smtpServer.password = smtp.password || ''
+      smtpServer.secure = smtp.secure ?? false
+
+      if (customTemplate) {
+        if (customTemplate.senderEmail) {
+          senderEmail = customTemplate.senderEmail
+        }
+        if (customTemplate.senderName) {
+          senderName = customTemplate.senderName
+        }
+        if (customTemplate.replyTo) {
+          replyTo = customTemplate.replyTo
+        }
+
+        body = customTemplate.message || body
+        subject = customTemplate.subject || subject
+      }
+
+      smtpServer.replyTo = replyTo
+      smtpServer.senderEmail = senderEmail
+      smtpServer.senderName = senderName
     }
 
     const emailVariables = {
@@ -1442,9 +1450,9 @@ export class SessionService {
       user: user.get('name'),
       project: project.get('name'),
       redirect: url,
-      agentDevice: agentDevice['deviceBrand'] || 'UNKNOWN',
-      agentClient: agentClient['clientName'] || 'UNKNOWN',
-      agentOs: agentOs['osName'] || 'UNKNOWN',
+      agentDevice: agentDevice.deviceBrand || 'UNKNOWN',
+      agentClient: agentClient.clientName || 'UNKNOWN',
+      agentOs: agentOs.osName || 'UNKNOWN',
       phrase: phrase! || '',
     }
 
@@ -1501,7 +1509,7 @@ export class SessionService {
     if (!result.empty()) {
       user.setAll(result.toObject())
     } else {
-      const limit = project.get('auths', {})['limit'] ?? 0
+      const limit = project.get('auths', {}).limit ?? 0
       const maxUsers = this.appConfig.appLimits.users
 
       if (limit !== 0) {
@@ -1602,41 +1610,51 @@ export class SessionService {
     let body = template(emailData)
 
     const smtp = project.get('smtp', {}) as SmtpConfig
-    const smtpEnabled = smtp['enabled'] ?? false
+    const smtpEnabled = smtp.enabled ?? false
     const systemConfig = this.appConfig.get('system')
 
     let senderEmail = systemConfig.emailAddress || configuration.app.emailTeam
     let senderName =
-      systemConfig.emailName || configuration.app.name + ' Server'
+      systemConfig.emailName || `${configuration.app.name} Server`
     let replyTo = ''
 
     const smtpServer: any = {}
 
     if (smtpEnabled) {
-      if (smtp['senderEmail']) senderEmail = smtp['senderEmail']
-      if (smtp['senderName']) senderName = smtp['senderName']
-      if (smtp['replyTo']) replyTo = smtp['replyTo']
-
-      smtpServer['host'] = smtp['host'] || ''
-      smtpServer['port'] = smtp['port'] || ''
-      smtpServer['username'] = smtp['username'] || ''
-      smtpServer['password'] = smtp['password'] || ''
-      smtpServer['secure'] = smtp['secure'] ?? false
-
-      if (customTemplate) {
-        if (customTemplate['senderEmail'])
-          senderEmail = customTemplate['senderEmail']
-        if (customTemplate['senderName'])
-          senderName = customTemplate['senderName']
-        if (customTemplate['replyTo']) replyTo = customTemplate['replyTo']
-
-        body = customTemplate['message'] || body
-        subject = customTemplate['subject'] || subject
+      if (smtp.senderEmail) {
+        senderEmail = smtp.senderEmail
+      }
+      if (smtp.senderName) {
+        senderName = smtp.senderName
+      }
+      if (smtp.replyTo) {
+        replyTo = smtp.replyTo
       }
 
-      smtpServer['replyTo'] = replyTo
-      smtpServer['senderEmail'] = senderEmail
-      smtpServer['senderName'] = senderName
+      smtpServer.host = smtp.host || ''
+      smtpServer.port = smtp.port || ''
+      smtpServer.username = smtp.username || ''
+      smtpServer.password = smtp.password || ''
+      smtpServer.secure = smtp.secure ?? false
+
+      if (customTemplate) {
+        if (customTemplate.senderEmail) {
+          senderEmail = customTemplate.senderEmail
+        }
+        if (customTemplate.senderName) {
+          senderName = customTemplate.senderName
+        }
+        if (customTemplate.replyTo) {
+          replyTo = customTemplate.replyTo
+        }
+
+        body = customTemplate.message || body
+        subject = customTemplate.subject || subject
+      }
+
+      smtpServer.replyTo = replyTo
+      smtpServer.senderEmail = senderEmail
+      smtpServer.senderName = senderName
     }
 
     const emailVariables = {
@@ -1644,9 +1662,9 @@ export class SessionService {
       user: user.get('name'),
       project: project.get('name'),
       otp: tokenSecret,
-      agentDevice: agentDevice['deviceBrand'] || 'UNKNOWN',
-      agentClient: agentClient['clientName'] || 'UNKNOWN',
-      agentOs: agentOs['osName'] || 'UNKNOWN',
+      agentDevice: agentDevice.deviceBrand || 'UNKNOWN',
+      agentClient: agentClient.clientName || 'UNKNOWN',
+      agentOs: agentOs.osName || 'UNKNOWN',
       phrase: phrase! || '',
     }
 
@@ -1702,7 +1720,7 @@ export class SessionService {
     if (!result.empty()) {
       user.setAll(result.toObject())
     } else {
-      const limit = project.get('auths', {})['limit'] ?? 0
+      const limit = project.get('auths', {}).limit ?? 0
       const maxUsers = this.appConfig.appLimits.users
 
       if (limit !== 0) {
@@ -1768,11 +1786,11 @@ export class SessionService {
 
     let secret: string | null = null
     let sendSMS = true
-    const mockNumbers = project.get('auths', {})['mockNumbers'] ?? []
+    const mockNumbers = project.get('auths', {}).mockNumbers ?? []
 
     for (const mockNumber of mockNumbers) {
-      if (mockNumber['phone'] === phone) {
-        secret = mockNumber['otp']
+      if (mockNumber.phone === phone) {
+        secret = mockNumber.otp
         sendSMS = false
         break
       }
@@ -1809,8 +1827,8 @@ export class SessionService {
         project.get('templates', {})[`sms.login-${locale.default}`] ?? {}
 
       let message = locale.getText('sms.verification.body')
-      if (customTemplate && customTemplate['message']) {
-        message = customTemplate['message']
+      if (customTemplate?.message) {
+        message = customTemplate.message
       }
 
       const messageContent = message
@@ -1869,7 +1887,7 @@ export class SessionService {
   ) {
     let subject: string = locale.getText('emails.sessionAlert.subject')
     const customTemplate =
-      project.get('templates', {})?.['email.sessionAlert-' + locale.default] ??
+      project.get('templates', {})?.[`email.sessionAlert-${locale.default}`] ??
       {}
     const templatePath = path.join(
       this.appConfig.assetConfig.templates,
@@ -1902,7 +1920,7 @@ export class SessionService {
       device: session.get('clientName'),
       ipAddress: session.get('ip'),
       country: locale.getText(
-        'countries.' + session.get('countryCode'),
+        `countries.${session.get('countryCode')}`,
         locale.getText('locale.country.unknown'),
       ),
     }
@@ -1912,39 +1930,49 @@ export class SessionService {
     let body = template(emailData)
 
     const smtp = project.get('smtp', {}) as SmtpConfig
-    const smtpEnabled = smtp['enabled'] ?? false
+    const smtpEnabled = smtp.enabled ?? false
     const systemConfig = this.appConfig.get('system')
 
     let senderEmail = systemConfig.emailAddress || configuration.app.emailTeam
     let senderName =
-      systemConfig.emailName || configuration.app.name + ' Server'
+      systemConfig.emailName || `${configuration.app.name} Server`
     let replyTo = ''
 
     if (smtpEnabled) {
-      if (smtp['senderEmail']) senderEmail = smtp['senderEmail']
-      if (smtp['senderName']) senderName = smtp['senderName']
-      if (smtp['replyTo']) replyTo = smtp['replyTo']
-
-      smtpServer['host'] = smtp['host']
-      smtpServer['port'] = smtp['port']
-      smtpServer['username'] = smtp['username']
-      smtpServer['password'] = smtp['password']
-      smtpServer['secure'] = smtp['secure'] ?? false
-
-      if (customTemplate) {
-        if (customTemplate['senderEmail'])
-          senderEmail = customTemplate['senderEmail']
-        if (customTemplate['senderName'])
-          senderName = customTemplate['senderName']
-        if (customTemplate['replyTo']) replyTo = customTemplate['replyTo']
-
-        body = customTemplate['message'] || body
-        subject = customTemplate['subject'] || subject
+      if (smtp.senderEmail) {
+        senderEmail = smtp.senderEmail
+      }
+      if (smtp.senderName) {
+        senderName = smtp.senderName
+      }
+      if (smtp.replyTo) {
+        replyTo = smtp.replyTo
       }
 
-      smtpServer['replyTo'] = replyTo
-      smtpServer['senderEmail'] = senderEmail
-      smtpServer['senderName'] = senderName
+      smtpServer.host = smtp.host
+      smtpServer.port = smtp.port
+      smtpServer.username = smtp.username
+      smtpServer.password = smtp.password
+      smtpServer.secure = smtp.secure ?? false
+
+      if (customTemplate) {
+        if (customTemplate.senderEmail) {
+          senderEmail = customTemplate.senderEmail
+        }
+        if (customTemplate.senderName) {
+          senderName = customTemplate.senderName
+        }
+        if (customTemplate.replyTo) {
+          replyTo = customTemplate.replyTo
+        }
+
+        body = customTemplate.message || body
+        subject = customTemplate.subject || subject
+      }
+
+      smtpServer.replyTo = replyTo
+      smtpServer.senderEmail = senderEmail
+      smtpServer.senderName = senderName
     }
 
     const email = user.get('email')
@@ -1999,7 +2027,7 @@ export class SessionService {
     user.setAll(userFromRequest.toObject())
 
     const duration =
-      project.get('auths', {})['duration'] ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
+      project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
     const record = this.geodb.get(request.ip)
     const sessionSecret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
@@ -2064,7 +2092,7 @@ export class SessionService {
 
     try {
       await db.updateDocument('users', user.getId(), user)
-    } catch (error) {
+    } catch (_error) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
         'Failed saving user to DB',
@@ -2075,7 +2103,7 @@ export class SessionService {
       tokenType !== TokenType.MAGIC_URL && tokenType !== TokenType.EMAIL
     const hasUserEmail = user.get('email', false) !== false
     const isSessionAlertsEnabled =
-      project.get('auths', {})['sessionAlerts'] ?? false
+      project.get('auths', {}).sessionAlerts ?? false
 
     const sessionCount = await db.count('sessions', [
       Query.equal('userId', [user.getId()]),
@@ -2128,7 +2156,7 @@ export class SessionService {
       .status(201)
 
     const countryName = locale.getText(
-      'countries.' + createdSession.get('countryCode', '')?.toLowerCase(),
+      `countries.${createdSession.get('countryCode', '')?.toLowerCase()}`,
       locale.getText('locale.country.unknown'),
     )
 
@@ -2145,7 +2173,9 @@ export class SessionService {
     const providers = project.get('oAuthProviders', []) as OAuthProviderType[]
     const _provider = providers.find(p => p.key === provider)
 
-    if (!_provider) throw new Exception(Exception.PROVIDER_NOT_FOUND) // TODO: improve & clear error
+    if (!_provider) {
+      throw new Exception(Exception.PROVIDER_NOT_FOUND) // TODO: improve & clear error
+    }
 
     return _provider
   }

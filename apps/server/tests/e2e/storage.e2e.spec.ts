@@ -12,22 +12,25 @@
  * This flow represents how applications manage file storage.
  */
 
-import { describe, it, expect, beforeAll } from 'vitest'
-import { getApp } from '../setup/app'
-import { getApiKeyJsonHeaders, getApiKeyHeaders } from '../helpers/auth'
-import { createUserAndSession } from '../helpers/auth'
+import { faker } from '@faker-js/faker'
+import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { beforeAll, describe, expect, it } from 'vitest'
 import {
   buildCreateBucketDTO,
   buildUpdateBucketDTO,
 } from '../factories/dto/bucket.factory'
 import {
-  parseJson,
-  assertStatusCode,
+  createUserAndSession,
+  getApiKeyHeaders,
+  getApiKeyJsonHeaders,
+} from '../helpers/auth'
+import { getApp } from '../setup/app'
+import {
   assertDocumentShape,
   assertListResponse,
+  assertStatusCode,
+  parseJson,
 } from '../setup/test-utils'
-import type { NestFastifyApplication } from '@nestjs/platform-fastify'
-import { faker } from '@faker-js/faker'
 
 describe('E2E: Storage Flow', () => {
   let app: NestFastifyApplication
@@ -186,7 +189,7 @@ describe('E2E: Storage Flow', () => {
     const fileId = faker.string.alphanumeric(12)
 
     // Create multipart form data for file upload
-    const boundary = '----FormBoundary' + faker.string.alphanumeric(16)
+    const boundary = `----FormBoundary${faker.string.alphanumeric(16)}`
 
     const formData = [
       `--${boundary}`,
@@ -344,7 +347,7 @@ describe('E2E: Storage Flow', () => {
     const fileName = 'user-file.txt'
     const fileContent = 'User uploaded content'
     const fileId = faker.string.alphanumeric(12)
-    const boundary = '----FormBoundary' + faker.string.alphanumeric(16)
+    const boundary = `----FormBoundary${faker.string.alphanumeric(16)}`
 
     const formData = [
       `--${boundary}`,
@@ -433,7 +436,7 @@ describe('E2E: Storage Flow', () => {
     // =========================================================================
     const largeContent = 'x'.repeat(200) // 200 bytes
     const fileId = faker.string.alphanumeric(12)
-    const boundary = '----FormBoundary' + faker.string.alphanumeric(16)
+    const boundary = `----FormBoundary${faker.string.alphanumeric(16)}`
 
     const formData = [
       `--${boundary}`,

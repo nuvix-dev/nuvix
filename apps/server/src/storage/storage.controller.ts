@@ -6,33 +6,33 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
-import { StorageService } from './storage.service'
-import { Models } from '@nuvix/core/helpers'
-import { Database, Query as Queries } from '@nuvix/db'
-import { ProjectGuard } from '@nuvix/core/resolvers'
+import { Delete, Get, Post, Put } from '@nuvix/core'
 import {
-  ProjectDatabase,
-  Namespace,
   Auth,
   AuthType,
+  Namespace,
+  Project,
+  ProjectDatabase,
   QueryFilter,
   QuerySearch,
-  Project,
 } from '@nuvix/core/decorators'
-
+import { Models } from '@nuvix/core/helpers'
+import { BucketsQueryPipe } from '@nuvix/core/pipes/queries'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers'
+import { Database, Query as Queries } from '@nuvix/db'
+import { IListResponse, IResponse } from '@nuvix/utils'
+import type { BucketsDoc, ProjectsDoc } from '@nuvix/utils/types'
 import {
   BucketParamsDTO,
   CreateBucketDTO,
   UpdateBucketDTO,
   UsageQueryDTO,
 } from './DTO/bucket.dto'
-import { ApiInterceptor } from '@nuvix/core/resolvers'
-import { BucketsQueryPipe } from '@nuvix/core/pipes/queries'
-import { Delete, Get, Post, Put } from '@nuvix/core'
-import { IListResponse, IResponse } from '@nuvix/utils'
-import type { BucketsDoc, ProjectsDoc } from '@nuvix/utils/types'
+import { StorageService } from './storage.service'
 
 @Namespace('storage')
 @UseGuards(ProjectGuard)

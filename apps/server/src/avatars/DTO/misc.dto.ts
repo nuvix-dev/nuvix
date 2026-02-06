@@ -1,4 +1,12 @@
-import { IsNotEmpty, IsNumber, IsString, Max, Min } from 'class-validator'
+import {
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Length,
+  Max,
+  Min,
+} from 'class-validator'
 import {
   ArrayToLastElement,
   TransformStringToBoolean,
@@ -36,6 +44,7 @@ export class InitialsQueryDTO {
   /**
    * User's name to generate initials from (e.g., 'John Doe')
    */
+  @IsOptional()
   @ArrayToLastElement()
   @IsString()
   declare name: string
@@ -43,86 +52,96 @@ export class InitialsQueryDTO {
   /**
    * Width of the generated avatar image (default: 100)
    */
+  @IsOptional()
   @ArrayToLastElement()
   @TryTransformTo('number')
   @IsNumber()
   @Min(1)
   @Max(2000)
-  width: number = 100
+  width = 100
 
   /**
    * Height of the generated avatar image (default: 100)
    */
+  @IsOptional()
   @ArrayToLastElement()
   @TryTransformTo('number')
   @IsNumber()
   @Min(1)
   @Max(2000)
-  height: number = 100
+  height = 100
 
   /**
    * Background color for the avatar (e.g., '#ff0000')
    */
+  @IsOptional()
   @ArrayToLastElement()
   @IsString()
-  background: string = ''
+  @Length(0, 7)
+  declare background: string
 
   /**
    * Whether to generate a circular avatar (default: false)
    */
+  @IsOptional()
   @ArrayToLastElement()
   @TransformStringToBoolean()
-  circle: boolean = false
+  circle = false
 
   /**
    * Opacity of the generated avatar image (default: 100, range: 0-100)
    */
+  @IsOptional()
   @ArrayToLastElement()
   @TryTransformTo('int')
   @IsNumber()
   @Min(0)
   @Max(100)
-  opacity: number = 100
+  opacity = 100
 
   /**
    * Quality of the generated avatar image (default: -1, range: 0-100)
    */
+  @IsOptional()
   @ArrayToLastElement()
   @TryTransformTo('int')
   @IsNumber()
   @Min(0)
   @Max(100)
-  quality: number = 100
+  quality = 100
 }
 
 export class CodesQuerDTO {
   /**
    * Width of the image (default: 100)
    */
+  @IsOptional()
   @ArrayToLastElement()
   @TryTransformTo('int')
   @IsNumber()
   @Min(1)
   @Max(2000)
-  width: number = 100
+  width = 100
 
   /**
    * Height of the image (default: 100)
    */
+  @IsOptional()
   @ArrayToLastElement()
   @TryTransformTo('int')
   @IsNumber()
   @Min(1)
   @Max(2000)
-  height: number = 100
+  height = 100
 
   /**
    * Quality of the image (default: 90, range: 0-100)
    */
+  @IsOptional()
   @ArrayToLastElement()
   @TryTransformTo('int')
   @IsNumber()
   @Min(0)
   @Max(100)
-  quality: number = 90
+  quality = 90
 }

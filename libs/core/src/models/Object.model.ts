@@ -6,7 +6,7 @@ export class ObjectModel extends BaseModel {
   /**
    * Bucket ID.
    */
-  @Expose() bucketId: string = ''
+  @Expose() bucketId = ''
 
   /**
    * Object permissions.
@@ -16,12 +16,12 @@ export class ObjectModel extends BaseModel {
   /**
    * Object name.
    */
-  @Expose() name: string = ''
+  @Expose() name = ''
 
   /**
    * Object version.
    */
-  @Expose() version: string = ''
+  @Expose() version = ''
 
   /**
    * Object metadata.

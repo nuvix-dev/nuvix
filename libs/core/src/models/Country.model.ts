@@ -6,12 +6,12 @@ export class CountryModel extends BaseModel {
   /**
    * Country name.
    */
-  @Expose() name: string = ''
+  @Expose() name = ''
 
   /**
    * Country two-character ISO 3166-1 alpha code.
    */
-  @Expose() code: string = ''
+  @Expose() code = ''
 
   constructor(partial: Partial<CountryModel>) {
     super()

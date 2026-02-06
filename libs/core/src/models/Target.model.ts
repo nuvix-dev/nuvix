@@ -6,27 +6,27 @@ export class TargetModel extends BaseModel {
   /**
    * Target Name.
    */
-  @Expose() name: string = '' // Default to empty string
+  @Expose() name = '' // Default to empty string
 
   /**
    * User ID.
    */
-  @Expose() userId: string = '' // Default to empty string
+  @Expose() userId = '' // Default to empty string
 
   /**
    * Provider ID.
    */
-  @Expose() providerId: string = '' // Default to empty string
+  @Expose() providerId = '' // Default to empty string
 
   /**
    * The target provider type. Can be one of the following: `email`, `sms` or `push`.
    */
-  @Expose() providerType: string = '' // Default to empty string
+  @Expose() providerType = '' // Default to empty string
 
   /**
    * The target identifier.
    */
-  @Expose() identifier: string = '' // Default to empty string
+  @Expose() identifier = '' // Default to empty string
 
   constructor(partial: Partial<TargetModel>) {
     super()

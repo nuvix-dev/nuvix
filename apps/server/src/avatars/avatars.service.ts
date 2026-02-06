@@ -1,15 +1,14 @@
+import crypto from 'node:crypto'
+import { default as fsSync } from 'node:fs'
+import fs from 'node:fs/promises'
+import { default as path } from 'node:path'
 import { Injectable, Logger, StreamableFile } from '@nestjs/common'
-import { createCanvas, registerFont } from 'canvas'
-import sharp from 'sharp'
-import crypto from 'crypto'
-import { default as path } from 'path'
-
 import { PROJECT_ROOT } from '@nuvix/utils'
-import fs from 'fs/promises'
-import { default as fsSync } from 'fs'
+import { createCanvas, registerFont } from 'canvas'
 import { browserCodes, creditCards, flags } from 'libs/core/src/config'
 import { Exception } from 'libs/core/src/extend/exception'
-import { CodesQuerDTO } from './DTO/misc.dto'
+import sharp from 'sharp'
+import { CodesQuerDTO, InitialsQueryDTO } from './DTO/misc.dto'
 
 @Injectable()
 export class AvatarsService {
@@ -40,29 +39,25 @@ export class AvatarsService {
    */
   async generateAvatar({
     name,
-    width = 100,
-    height = 100,
+    width,
+    height,
     background,
     circle,
+    quality,
+    opacity,
     res,
   }: {
-    name: string
-    width: number | string
-    height: number | string
-    background: string
-    circle: boolean | string
     res: NuvixRes
-  }) {
+  } & InitialsQueryDTO) {
     try {
-      const MAX_DIM = 1024
-      const MIN_DIM = 16
+      const MAX_DIM = 2000
+      const MIN_DIM = 0
       const toNum = (v: number | string, fallback: number) => {
         const n = Number(v)
         return Number.isFinite(n) ? n : fallback
       }
       width = Math.min(MAX_DIM, Math.max(MIN_DIM, toNum(width, 100)))
       height = Math.min(MAX_DIM, Math.max(MIN_DIM, toNum(height, 100)))
-      circle = circle === true || circle === 'true' // Handle boolean query
       // Sanitize hex; fallback to deterministic HSL if invalid length
       if (background) {
         const hex = background.replace(/[^0-9a-fA-F]/g, '')
@@ -120,7 +115,12 @@ export class AvatarsService {
       // Process Image with Sharp (for better output)
       const processedImage = await sharp(buffer)
         .resize(width, height)
-        .png()
+        .png({
+          quality,
+          compressionLevel: 9,
+          adaptiveFiltering: true,
+          force: true,
+        })
         .toBuffer()
 
       // Cache the generated image
@@ -129,7 +129,7 @@ export class AvatarsService {
       // Send Image Response
       res.header('Content-Type', 'image/png')
       return new StreamableFile(processedImage)
-    } catch (error) {
+    } catch (_error) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
         'Avatar generation failed',
@@ -178,7 +178,9 @@ export class AvatarsService {
 
   private getInitials(name: string): string {
     const words = name.trim().split(/\s+/).filter(Boolean)
-    if (words.length === 0) return 'NA'
+    if (words.length === 0) {
+      return 'NA'
+    }
     const first = Array.from(words[0]!)[0]?.toUpperCase() ?? 'N'
     const second =
       words.length > 1
@@ -263,7 +265,7 @@ export class AvatarsService {
       throw new Exception(Exception.AVATAR_NOT_FOUND)
     }
 
-    const filePath = set[code]!.path
+    const filePath = set[code]?.path as string
 
     const fileBuffer = await fs.readFile(filePath).catch(() => {
       throw new Exception(Exception.AVATAR_NOT_FOUND)

@@ -1,8 +1,8 @@
 import { Injectable } from '@nestjs/common'
 import { CoreService } from '@nuvix/core'
+import { currencies, euList } from '@nuvix/core/config'
 import type { CountryResponse, Reader } from 'maxmind'
 import type { ILocaleResponse, TLocalService } from './locale.types'
-import { currencies, euList } from '@nuvix/core/config'
 
 @Injectable()
 export class LocaleService {
@@ -44,7 +44,7 @@ export class LocaleService {
         defaultValue,
       )
 
-      output.eu = continentCode && euList.includes(continentCode) ? true : false
+      output.eu = !!(continentCode && euList.includes(continentCode))
 
       if (countryCode) {
         output.currency =

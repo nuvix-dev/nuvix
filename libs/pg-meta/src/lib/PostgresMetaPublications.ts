@@ -1,7 +1,7 @@
 import { ident, literal } from 'pg-format'
-import { publicationsSql } from './sql/index'
-import { PostgresMetaResult, PostgresPublication, PostgresTable } from './types'
 import { PgMetaException } from '../extra/execption'
+import { publicationsSql } from './sql/index'
+import { PostgresMetaResult, PostgresPublication } from './types'
 
 export default class PostgresMetaPublications {
   query: (sql: string) => Promise<PostgresMetaResult<any>>
@@ -49,24 +49,24 @@ export default class PostgresMetaPublications {
       const { data, error } = await this.query(sql)
       if (error) {
         return { data, error }
-      } else if (data.length === 0) {
-        throw new PgMetaException(`Cannot find a publication with ID ${id}`)
-      } else {
-        return { data: data[0], error }
       }
-    } else if (name) {
+      if (data.length === 0) {
+        throw new PgMetaException(`Cannot find a publication with ID ${id}`)
+      }
+      return { data: data[0], error }
+    }
+    if (name) {
       const sql = `${publicationsSql} WHERE p.pubname = ${literal(name)};`
       const { data, error } = await this.query(sql)
       if (error) {
         return { data, error }
-      } else if (data.length === 0) {
-        throw new PgMetaException(`Cannot find a publication named ${name}`)
-      } else {
-        return { data: data[0], error }
       }
-    } else {
-      throw new PgMetaException('Invalid parameters on publication retrieve')
+      if (data.length === 0) {
+        throw new PgMetaException(`Cannot find a publication named ${name}`)
+      }
+      return { data: data[0], error }
     }
+    throw new PgMetaException('Invalid parameters on publication retrieve')
   }
 
   async create({
@@ -103,11 +103,19 @@ export default class PostgresMetaPublications {
         .join(',')}`
     }
 
-    let publishOps = []
-    if (publish_insert) publishOps.push('insert')
-    if (publish_update) publishOps.push('update')
-    if (publish_delete) publishOps.push('delete')
-    if (publish_truncate) publishOps.push('truncate')
+    const publishOps = []
+    if (publish_insert) {
+      publishOps.push('insert')
+    }
+    if (publish_update) {
+      publishOps.push('update')
+    }
+    if (publish_delete) {
+      publishOps.push('delete')
+    }
+    if (publish_truncate) {
+      publishOps.push('truncate')
+    }
 
     const sql = `
 CREATE PUBLICATION ${ident(name)} ${tableClause}
@@ -246,7 +254,7 @@ with publications as (${publicationsSql}) select * from publications where name 
     if (error) {
       return { data: null, error }
     }
-    const sql = `DROP PUBLICATION IF EXISTS ${ident(publication!.name)};`
+    const sql = `DROP PUBLICATION IF EXISTS ${ident(publication?.name)};`
     {
       const { error } = await this.query(sql)
       if (error) {

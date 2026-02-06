@@ -6,14 +6,14 @@ export class DatabaseModel extends BaseModel {
   /**
    * Database name.
    */
-  @Expose() name: string = ''
+  @Expose() name = ''
 
   /**
    * If database is enabled. Can be 'enabled' or 'disabled'.
    * When disabled, the database is inaccessible to users,
    * but remains accessible to Server SDKs using API keys.
    */
-  @Expose() enabled: boolean = true
+  @Expose() enabled = true
 
   constructor(partial: Partial<DatabaseModel>) {
     super()

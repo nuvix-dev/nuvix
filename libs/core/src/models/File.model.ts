@@ -6,7 +6,7 @@ export class FileModel extends BaseModel {
   /**
    * Bucket ID.
    */
-  @Expose() bucketId: string = ''
+  @Expose() bucketId = ''
 
   /**
    * File permissions.
@@ -16,32 +16,32 @@ export class FileModel extends BaseModel {
   /**
    * File name.
    */
-  @Expose() name: string = ''
+  @Expose() name = ''
 
   /**
    * File MD5 signature.
    */
-  @Expose() signature: string = ''
+  @Expose() signature = ''
 
   /**
    * File mime type.
    */
-  @Expose() mimeType: string = ''
+  @Expose() mimeType = ''
 
   /**
    * File original size in bytes.
    */
-  @Expose() sizeOriginal: number = 0
+  @Expose() sizeOriginal = 0
 
   /**
    * Total number of chunks available.
    */
-  @Expose() chunksTotal: number = 0
+  @Expose() chunksTotal = 0
 
   /**
    * Total number of chunks uploaded.
    */
-  @Expose() chunksUploaded: number = 0
+  @Expose() chunksUploaded = 0
 
   constructor(partial: Partial<FileModel>) {
     super()

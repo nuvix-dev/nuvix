@@ -1,7 +1,7 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'
 import { BullModule } from '@nestjs/bullmq'
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'
+import { ApiHook, AuditHook, AuthHook, StatsHook } from '@nuvix/core/resolvers'
 import { QueueFor } from '@nuvix/utils'
-import { AuthHook, ApiHook, StatsHook, AuditHook } from '@nuvix/core/resolvers'
 import { LocaleController } from './locale.controller'
 import { LocaleService } from './locale.service'
 

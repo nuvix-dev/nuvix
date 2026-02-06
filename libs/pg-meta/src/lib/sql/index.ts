@@ -1,6 +1,6 @@
-import { configuration } from '@nuvix/utils'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { configuration } from '@nuvix/utils'
 
 const _dirname = join(configuration.assets.root, 'sql')
 

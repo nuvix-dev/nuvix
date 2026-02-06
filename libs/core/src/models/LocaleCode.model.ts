@@ -6,12 +6,12 @@ export class LocaleCodeModel extends BaseModel {
   /**
    * Locale codes in ISO 639-1.
    */
-  @Expose() code: string = ''
+  @Expose() code = ''
 
   /**
    * Locale name.
    */
-  @Expose() name: string = ''
+  @Expose() name = ''
 
   constructor(partial: Partial<LocaleCodeModel>) {
     super()

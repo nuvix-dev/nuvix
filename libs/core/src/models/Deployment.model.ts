@@ -6,107 +6,107 @@ export class DeploymentModel extends BaseModel {
   /**
    * Type of deployment.
    */
-  @Expose() type: string = ''
+  @Expose() type = ''
 
   /**
    * Resource ID.
    */
-  @Expose() resourceId: string = ''
+  @Expose() resourceId = ''
 
   /**
    * Resource type.
    */
-  @Expose() resourceType: string = ''
+  @Expose() resourceType = ''
 
   /**
    * The entrypoint file to use to execute the deployment code.
    */
-  @Expose() entrypoint: string = ''
+  @Expose() entrypoint = ''
 
   /**
    * The code size in bytes.
    */
-  @Expose() size: number = 0
+  @Expose() size = 0
 
   /**
    * The build output size in bytes.
    */
-  @Expose() buildSize: number = 0
+  @Expose() buildSize = 0
 
   /**
    * The current build ID.
    */
-  @Expose() buildId: string = ''
+  @Expose() buildId = ''
 
   /**
    * Whether the deployment should be automatically activated.
    */
-  @Expose() activate: boolean = false
+  @Expose() activate = false
 
   /**
    * The deployment status. Possible values are "processing", "building", "waiting", "ready", and "failed".
    */
-  @Expose() status: string = ''
+  @Expose() status = ''
 
   /**
    * The build logs.
    */
-  @Expose() buildLogs: string = ''
+  @Expose() buildLogs = ''
 
   /**
    * The current build time in seconds.
    */
-  @Expose() buildTime: number = 0
+  @Expose() buildTime = 0
 
   /**
    * The name of the VCS provider repository.
    */
-  @Expose() providerRepositoryName: string = ''
+  @Expose() providerRepositoryName = ''
 
   /**
    * The name of the VCS provider repository owner.
    */
-  @Expose() providerRepositoryOwner: string = ''
+  @Expose() providerRepositoryOwner = ''
 
   /**
    * The URL of the VCS provider repository.
    */
-  @Expose() providerRepositoryUrl: string = ''
+  @Expose() providerRepositoryUrl = ''
 
   /**
    * The branch name of the VCS provider repository.
    */
-  @Expose() providerBranch: string = ''
+  @Expose() providerBranch = ''
 
   /**
    * The commit hash of the VCS commit.
    */
-  @Expose() providerCommitHash: string = ''
+  @Expose() providerCommitHash = ''
 
   /**
    * The URL of the VCS commit author.
    */
-  @Expose() providerCommitAuthorUrl: string = ''
+  @Expose() providerCommitAuthorUrl = ''
 
   /**
    * The name of the VCS commit author.
    */
-  @Expose() providerCommitAuthor: string = ''
+  @Expose() providerCommitAuthor = ''
 
   /**
    * The commit message.
    */
-  @Expose() providerCommitMessage: string = ''
+  @Expose() providerCommitMessage = ''
 
   /**
    * The URL of the VCS commit.
    */
-  @Expose() providerCommitUrl: string = ''
+  @Expose() providerCommitUrl = ''
 
   /**
    * The branch of the VCS repository.
    */
-  @Expose() providerBranchUrl: string = ''
+  @Expose() providerBranchUrl = ''
 
   constructor(partial: Partial<DeploymentModel>) {
     super()

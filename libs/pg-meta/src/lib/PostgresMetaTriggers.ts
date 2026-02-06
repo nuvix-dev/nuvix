@@ -1,9 +1,9 @@
 import { ident, literal } from 'pg-format'
+import { PgMetaException } from '../extra/execption'
 import { DEFAULT_SYSTEM_SCHEMAS } from './constants'
 import { filterByList } from './helpers'
 import { triggersSql } from './sql/index'
 import { PostgresMetaResult, PostgresTrigger } from './types'
-import { PgMetaException } from '../extra/execption'
 
 export default class PostgresMetaTriggers {
   query: (sql: string) => Promise<PostgresMetaResult<any>>
@@ -77,7 +77,7 @@ export default class PostgresMetaTriggers {
         return { data: null, error }
       }
 
-      const triggerRecord = data && data[0]
+      const triggerRecord = data?.[0]
 
       if (triggerRecord) {
         return { data: triggerRecord, error: null }
@@ -97,7 +97,7 @@ export default class PostgresMetaTriggers {
         return { data: null, error }
       }
 
-      const triggerRecord = data && data[0]
+      const triggerRecord = data?.[0]
 
       if (triggerRecord) {
         return { data: triggerRecord, error: null }
@@ -196,28 +196,28 @@ export default class PostgresMetaTriggers {
     let enabledModeSql = ''
     switch (enabled_mode) {
       case 'ORIGIN':
-        enabledModeSql = `ALTER TABLE ${ident(old!.schema)}.${ident(
-          old!.table,
-        )} ENABLE TRIGGER ${ident(old!.name)};`
+        enabledModeSql = `ALTER TABLE ${ident(old?.schema)}.${ident(
+          old?.table,
+        )} ENABLE TRIGGER ${ident(old?.name)};`
         break
       case 'DISABLED':
-        enabledModeSql = `ALTER TABLE ${ident(old!.schema)}.${ident(
-          old!.table,
-        )} DISABLE TRIGGER ${ident(old!.name)};`
+        enabledModeSql = `ALTER TABLE ${ident(old?.schema)}.${ident(
+          old?.table,
+        )} DISABLE TRIGGER ${ident(old?.name)};`
         break
       case 'REPLICA':
       case 'ALWAYS':
-        enabledModeSql = `ALTER TABLE ${ident(old!.schema)}.${ident(
-          old!.table,
-        )} ENABLE ${enabled_mode} TRIGGER ${ident(old!.name)};`
+        enabledModeSql = `ALTER TABLE ${ident(old?.schema)}.${ident(
+          old?.table,
+        )} ENABLE ${enabled_mode} TRIGGER ${ident(old?.name)};`
         break
       default:
         break
     }
     const nameSql =
-      name && name !== old!.name
-        ? `ALTER TRIGGER ${ident(old!.name)} ON ${ident(old!.schema)}.${ident(
-            old!.table,
+      name && name !== old?.name
+        ? `ALTER TRIGGER ${ident(old?.name)} ON ${ident(old?.schema)}.${ident(
+            old?.table,
           )} RENAME TO ${ident(name)};`
         : ''
 

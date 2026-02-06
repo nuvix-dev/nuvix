@@ -23,7 +23,8 @@ export const filterByList = (
   }
   if (include?.length) {
     return `IN (${include.map(literal).join(',')})`
-  } else if (exclude?.length) {
+  }
+  if (exclude?.length) {
     return `NOT IN (${exclude.map(literal).join(',')})`
   }
   return ''

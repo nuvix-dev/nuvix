@@ -6,7 +6,7 @@ export class MessageModel extends BaseModel {
   /**
    * Message provider type.
    */
-  @Expose() providerType: string = ''
+  @Expose() providerType = ''
 
   /**
    * Topic IDs set as recipients.
@@ -41,7 +41,7 @@ export class MessageModel extends BaseModel {
   /**
    * Number of recipients the message was delivered to.
    */
-  @Expose() deliveredTotal: number = 0
+  @Expose() deliveredTotal = 0
 
   /**
    * Data of the message.
@@ -51,7 +51,7 @@ export class MessageModel extends BaseModel {
   /**
    * Status of delivery.
    */
-  @Expose() status: string = 'draft' // Default to 'draft'
+  @Expose() status = 'draft' // Default to 'draft'
 
   constructor(partial: Partial<MessageModel>) {
     super()

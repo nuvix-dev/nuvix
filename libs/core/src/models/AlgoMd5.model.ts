@@ -6,7 +6,7 @@ export class AlgoMd5Model extends BaseModel {
   /**
    * Algo type.
    */
-  @Expose() type: string = 'md5'
+  @Expose() type = 'md5'
 
   constructor(partial: Partial<AlgoMd5Model>) {
     super()

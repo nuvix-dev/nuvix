@@ -1,12 +1,12 @@
+import { IsCustomID } from '@nuvix/core/validators'
 import {
   IsEmail,
+  IsNotEmpty,
+  IsObject,
+  IsOptional,
   IsString,
   Length,
-  IsOptional,
-  IsObject,
-  IsNotEmpty,
 } from 'class-validator'
-import { IsCustomID } from '@nuvix/core/validators'
 
 export class CreateAccountDTO {
   /**

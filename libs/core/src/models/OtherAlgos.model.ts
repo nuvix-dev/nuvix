@@ -3,7 +3,7 @@ import { BaseModel } from './base.model'
 
 @Exclude()
 export class AlgoPhpassModel extends BaseModel {
-  @Expose() type: string = 'phpass'
+  @Expose() type = 'phpass'
 
   constructor(partial: Partial<AlgoPhpassModel>) {
     super()
@@ -13,7 +13,7 @@ export class AlgoPhpassModel extends BaseModel {
 
 @Exclude()
 export class AlgoShaModel extends BaseModel {
-  @Expose() type: string = 'sha'
+  @Expose() type = 'sha'
 
   constructor(partial: Partial<AlgoShaModel>) {
     super()
@@ -23,11 +23,11 @@ export class AlgoShaModel extends BaseModel {
 
 @Exclude()
 export class AlgoScryptModel extends BaseModel {
-  @Expose() type: string = 'scrypt'
-  @Expose() costCpu: number = 8
-  @Expose() costMemory: number = 14
-  @Expose() costParallel: number = 1
-  @Expose() length: number = 64
+  @Expose() type = 'scrypt'
+  @Expose() costCpu = 8
+  @Expose() costMemory = 14
+  @Expose() costParallel = 1
+  @Expose() length = 64
 
   constructor(partial: Partial<AlgoScryptModel>) {
     super()
@@ -37,10 +37,10 @@ export class AlgoScryptModel extends BaseModel {
 
 @Exclude()
 export class AlgoScryptModifiedModel extends BaseModel {
-  @Expose() type: string = 'scryptMod'
-  @Expose() salt: string = ''
-  @Expose() saltSeparator: string = ''
-  @Expose() signerKey: string = ''
+  @Expose() type = 'scryptMod'
+  @Expose() salt = ''
+  @Expose() saltSeparator = ''
+  @Expose() signerKey = ''
 
   constructor(partial: Partial<AlgoScryptModifiedModel>) {
     super()

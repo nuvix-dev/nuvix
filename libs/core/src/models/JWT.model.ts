@@ -6,7 +6,7 @@ export class JWTModel extends BaseModel {
   /**
    * JWT encoded string.
    */
-  @Expose() jwt: string = ''
+  @Expose() jwt = ''
 
   constructor(partial: Partial<JWTModel>) {
     super()

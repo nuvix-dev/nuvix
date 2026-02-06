@@ -1,17 +1,28 @@
 import {
-  Controller,
   Body,
+  Controller,
   Param,
   UseInterceptors,
   VERSION_NEUTRAL,
 } from '@nestjs/common'
-import { ProjectService } from './projects.service'
-
-// DTO
-import { oAuth2DTO } from './DTO/oauth2.dto'
+import { Get, Patch, Post } from '@nuvix/core'
+import {
+  Auth,
+  AuthType,
+  Namespace,
+  QueryFilter,
+  QuerySearch,
+} from '@nuvix/core/decorators'
+import { Models } from '@nuvix/core/helpers'
+import { ProjectsQueryPipe } from '@nuvix/core/pipes/queries'
+import { ConsoleInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
+import type { Query as Queries } from '@nuvix/db'
+import { IListResponse, IResponse } from '@nuvix/utils'
+import { ProjectsDoc } from '@nuvix/utils/types'
 import { CreateJwtDTO } from './DTO/create-jwt.dto'
 import { ProjectParamsDTO } from './DTO/create-project.dto'
-import { UpdateProjectDTO } from './DTO/update-project.dto'
+// DTO
+import { oAuth2DTO } from './DTO/oauth2.dto'
 import {
   ProjectApiStatusAllDTO,
   ProjectApiStatusDTO,
@@ -21,22 +32,8 @@ import {
   UpdateProjectServiceDTO,
 } from './DTO/project-service.dto'
 import { SmtpTestsDTO, UpdateSmtpDTO } from './DTO/smtp.dto'
-
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
-import { Models } from '@nuvix/core/helpers'
-import type { Query as Queries } from '@nuvix/db'
-import { ConsoleInterceptor } from '@nuvix/core/resolvers'
-import {
-  Auth,
-  AuthType,
-  Namespace,
-  QueryFilter,
-  QuerySearch,
-} from '@nuvix/core/decorators'
-import { ProjectsQueryPipe } from '@nuvix/core/pipes/queries'
-import { Get, Patch, Post } from '@nuvix/core'
-import { ProjectsDoc } from '@nuvix/utils/types'
-import { IListResponse, IResponse } from '@nuvix/utils'
+import { UpdateProjectDTO } from './DTO/update-project.dto'
+import { ProjectService } from './projects.service'
 
 @Namespace('projects')
 @Controller({ version: ['1', VERSION_NEUTRAL], path: 'projects' })

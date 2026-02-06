@@ -5,12 +5,12 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common'
-import { QueueFor } from '@nuvix/utils'
 import { Audit, type AuditCreateInput } from '@nuvix/audit'
-import { Job } from 'bullmq'
-import { Queue } from '@nuvix/core/resolvers'
 import { CoreService } from '@nuvix/core'
+import { Queue } from '@nuvix/core/resolvers'
+import { QueueFor } from '@nuvix/utils'
 import type { Users } from '@nuvix/utils/types'
+import { Job } from 'bullmq'
 
 interface AuditLog extends AuditCreateInput {
   data: {
@@ -36,7 +36,7 @@ export class AuditsQueue
   private interval!: NodeJS.Timeout
   private readonly audit: Audit
 
-  constructor(private coreService: CoreService) {
+  constructor(coreService: CoreService) {
     super()
     this.audit = coreService.getPlatformAudit()
   }

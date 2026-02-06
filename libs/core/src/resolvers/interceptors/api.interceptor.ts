@@ -1,27 +1,27 @@
+import { InjectQueue } from '@nestjs/bullmq'
 import {
   CallHandler,
   ExecutionContext,
   Injectable,
   NestInterceptor,
 } from '@nestjs/common'
-import { Observable } from 'rxjs'
-import { Context, CORE_SCHEMA_DB, MetricFor, QueueFor } from '@nuvix/utils'
-import { Database, Events, Doc } from '@nuvix/db'
 import { Reflector } from '@nestjs/core'
-import { Auth } from '../../helpers/auth.helper'
-import { Exception } from '../../extend/exception'
-import { TOTP } from '../../validators/MFA.validator'
-import {
-  Scope,
-  Auth as Auths,
-  type AuthType,
-  _Namespace,
-} from '../../decorators'
-import { Scopes } from '../../config/roles'
+import { Database, Doc, Events } from '@nuvix/db'
+import { CORE_SCHEMA_DB, Context, MetricFor, QueueFor } from '@nuvix/utils'
 import type { ProjectsDoc, SessionsDoc, UsersDoc } from '@nuvix/utils/types'
 import type { Queue } from 'bullmq'
+import { Observable } from 'rxjs'
+import { Scopes } from '../../config/roles'
+import {
+  _Namespace,
+  Auth as Auths,
+  type AuthType,
+  Scope,
+} from '../../decorators'
+import { Exception } from '../../extend/exception'
+import { Auth } from '../../helpers/auth.helper'
+import { TOTP } from '../../validators/MFA.validator'
 import { StatsQueueJob, type StatsQueueOptions } from '../queues'
-import { InjectQueue } from '@nestjs/bullmq'
 
 @Injectable()
 export class ApiInterceptor implements NestInterceptor {
@@ -41,7 +41,7 @@ export class ApiInterceptor implements NestInterceptor {
   ): Promise<Observable<any>> {
     const request = context.switchToHttp().getRequest<NuvixRequest>()
     const project = request[Context.Project] as ProjectsDoc
-    let user = request[Context.User] as UsersDoc
+    const user = request[Context.User] as UsersDoc
     const scopes: Scopes[] = request[Context.Scopes] || []
 
     if (project.empty()) {
@@ -79,7 +79,7 @@ export class ApiInterceptor implements NestInterceptor {
       if (missingScopes.length > 0) {
         throw new Exception(
           Exception.GENERAL_UNAUTHORIZED_SCOPE,
-          `${user.get('email', 'User')} (role: ${request['role'] ?? '#'}) missing scopes [${missingScopes.join(', ')}]`,
+          `${user.get('email', 'User')} (role: ${request.role ?? '#'}) missing scopes [${missingScopes.join(', ')}]`,
         )
       }
     }
@@ -233,7 +233,7 @@ export class ApiInterceptor implements NestInterceptor {
           reduce.push(document)
         }
         break
-      case collection.startsWith('bucket_'):
+      case collection.startsWith('bucket_'): {
         const bucketParts = collection.split('_')
         const bucketInternalId = bucketParts[1]
 
@@ -251,13 +251,14 @@ export class ApiInterceptor implements NestInterceptor {
           value: document.get('sizeOriginal') * value,
         })
         break
+      }
       case collection === 'functions':
         metrics.push({ key: MetricFor.FUNCTIONS, value })
         if (event === Events.DocumentDelete) {
           reduce.push(document)
         }
         break
-      case collection === 'deployments':
+      case collection === 'deployments': {
         const resourceType = document.get('resourceType')
         const resourceInternalId = document.get('resourceInternalId')
         const size = document.get('size')
@@ -287,6 +288,7 @@ export class ApiInterceptor implements NestInterceptor {
           value: size * value,
         })
         break
+      }
       default:
         break
     }

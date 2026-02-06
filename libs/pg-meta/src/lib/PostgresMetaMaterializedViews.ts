@@ -1,8 +1,8 @@
 import { literal } from 'pg-format'
+import { PgMetaException } from '../extra/execption'
 import { coalesceRowsToArray, filterByList } from './helpers'
 import { columnsSql, materializedViewsSql } from './sql/index'
-import { PostgresMetaResult, PostgresMaterializedView } from './types'
-import { PgMetaException } from '../extra/execption'
+import { PostgresMaterializedView, PostgresMetaResult } from './types'
 
 export default class PostgresMetaMaterializedViews {
   query: (sql: string) => Promise<PostgresMetaResult<any>>
@@ -84,14 +84,15 @@ export default class PostgresMetaMaterializedViews {
       const { data, error } = await this.query(sql)
       if (error) {
         return { data, error }
-      } else if (data.length === 0) {
+      }
+      if (data.length === 0) {
         throw new PgMetaException(
           `Cannot find a materialized view with ID ${id}`,
         )
-      } else {
-        return { data: data[0], error }
       }
-    } else if (name) {
+      return { data: data[0], error }
+    }
+    if (name) {
       const sql = `${generateEnrichedMaterializedViewsSql({
         includeColumns: true,
       })} where materialized_views.name = ${literal(
@@ -100,18 +101,17 @@ export default class PostgresMetaMaterializedViews {
       const { data, error } = await this.query(sql)
       if (error) {
         return { data, error }
-      } else if (data.length === 0) {
+      }
+      if (data.length === 0) {
         throw new PgMetaException(
           `Cannot find a materialized view named ${name} in schema ${schema}`,
         )
-      } else {
-        return { data: data[0], error }
       }
-    } else {
-      throw new PgMetaException(
-        'Invalid parameters on materialized view retrieve',
-      )
+      return { data: data[0], error }
     }
+    throw new PgMetaException(
+      'Invalid parameters on materialized view retrieve',
+    )
   }
 }
 

@@ -1,4 +1,4 @@
-import { ArgumentMetadata, Logger, PipeTransform } from '@nestjs/common'
+import { ArgumentMetadata, PipeTransform } from '@nestjs/common'
 import { Exception } from '../extend/exception'
 
 interface Options {
@@ -8,7 +8,6 @@ interface Options {
 
 export class ParseDuplicatePipe implements PipeTransform<string, any> {
   private readonly options: Options
-  private readonly logger = new Logger(ParseDuplicatePipe.name)
   constructor(options: Options = {}) {
     this.options = options
     this.options.split = this.options?.split ?? ',' // default split value

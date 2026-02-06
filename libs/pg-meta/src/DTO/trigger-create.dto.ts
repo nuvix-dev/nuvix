@@ -1,10 +1,10 @@
 import {
-  IsString,
+  ArrayNotEmpty,
+  IsArray,
+  IsIn,
   IsNotEmpty,
   IsOptional,
-  IsArray,
-  ArrayNotEmpty,
-  IsIn,
+  IsString,
 } from 'class-validator'
 
 export class TriggerCreateDTO {

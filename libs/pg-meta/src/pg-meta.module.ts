@@ -1,8 +1,8 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'
-import { PgMetaService } from './pg-meta.service'
-import { PgMetaController } from './pg-meta.controller'
-import { ResolveClient } from './hooks'
 import { ApiHook, AuthHook } from '@nuvix/core/resolvers'
+import { ResolveClient } from './hooks'
+import { PgMetaController } from './pg-meta.controller'
+import { PgMetaService } from './pg-meta.service'
 
 @Module({
   providers: [PgMetaService],

@@ -1,15 +1,15 @@
+import { BullModule } from '@nestjs/bullmq'
 import {
-  Module,
   type MiddlewareConsumer,
+  Module,
   type NestModule,
 } from '@nestjs/common'
-import { TeamsService } from './teams.service'
-import { TeamsController } from './teams.controller'
-import { BullModule } from '@nestjs/bullmq'
+import { ApiHook, AuditHook, AuthHook, StatsHook } from '@nuvix/core/resolvers'
 import { QueueFor } from '@nuvix/utils'
-import { AuthHook, ApiHook, StatsHook, AuditHook } from '@nuvix/core/resolvers'
 import { MembershipsController } from './memberships/memberships.controller'
 import { MembershipsService } from './memberships/memberships.service'
+import { TeamsController } from './teams.controller'
+import { TeamsService } from './teams.service'
 
 @Module({
   imports: [

@@ -1,5 +1,5 @@
-import { BaseModel } from './base.model'
 import { Exclude, Expose } from 'class-transformer'
+import { BaseModel } from './base.model'
 
 @Exclude()
 export class EnvToken extends BaseModel {

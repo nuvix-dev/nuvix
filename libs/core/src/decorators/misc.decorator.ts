@@ -1,14 +1,14 @@
+import { applyDecorators } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
-import { services } from '../config/services'
+import { ApiTags } from '@nestjs/swagger'
 import {
   APP_AUTH_TYPE_ADMIN,
   APP_AUTH_TYPE_JWT,
   APP_AUTH_TYPE_KEY,
   APP_AUTH_TYPE_SESSION,
+  SchemaType,
 } from '@nuvix/utils'
-import { applyDecorators } from '@nestjs/common'
-import { ApiTags } from '@nestjs/swagger'
-import { SchemaType } from '@nuvix/utils'
+import { services } from '../config/services'
 
 export const _Namespace = Reflector.createDecorator<keyof typeof services>()
 export const Namespace = (ns: keyof typeof services) => {

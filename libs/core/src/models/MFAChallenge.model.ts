@@ -6,7 +6,7 @@ export class MFAChallengeModel extends BaseModel {
   /**
    * User ID.
    */
-  @Expose() userId: string = ''
+  @Expose() userId = ''
 
   /**
    * Token expiration date in ISO 8601 format.

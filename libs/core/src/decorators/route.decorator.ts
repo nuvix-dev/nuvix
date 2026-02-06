@@ -1,41 +1,41 @@
-import { configuration, PROJECT_ROOT, type ThrottleOptions } from '@nuvix/utils'
+import * as fs from 'node:fs'
+import path from 'node:path'
 import {
-  applyDecorators,
-  Get,
-  Post,
-  Patch,
-  Put,
-  Delete,
-  Options,
-  Head,
   All,
-  type Type,
-  HttpStatus,
+  applyDecorators,
+  Delete,
+  Get,
+  Head,
   HttpCode,
+  HttpStatus,
+  Options,
+  Patch,
+  Post,
+  Put,
+  type Type,
 } from '@nestjs/common'
 import {
-  AuditEvent,
+  ApiExcludeEndpoint,
+  ApiExtension,
+  ApiExtraModels,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  getSchemaPath,
+} from '@nestjs/swagger'
+import { configuration, type ThrottleOptions } from '@nuvix/utils'
+import type { Scopes } from '../config'
+import { Models } from '../helpers'
+import type { ResolverTypeContextOptions } from '../resolvers'
+import {
   type _AuditEvent,
+  AuditEvent,
   type AuditEventKey,
 } from './events.decorator'
 import { Auth, type AuthType } from './misc.decorator'
-import { Scope } from './scope.decorator'
-import type { Scopes } from '../config'
-import { Throttle } from './throttle.decorator'
 import { ResModel } from './res-model.decorator'
-import type { ResolverTypeContextOptions } from '../resolvers'
-import {
-  ApiOperation,
-  ApiTags,
-  ApiResponse,
-  ApiExtraModels,
-  getSchemaPath,
-  ApiExcludeEndpoint,
-  ApiExtension,
-} from '@nestjs/swagger'
-import * as fs from 'fs'
-import { Models } from '../helpers'
-import path from 'path'
+import { Scope } from './scope.decorator'
+import { Throttle } from './throttle.decorator'
 
 type RouteMethod =
   | 'GET'
@@ -160,7 +160,7 @@ const validateRouteOptions = (options: RouteOptions): void => {
     }
   }
 
-  if (options.sdk && options.sdk.responses) {
+  if (options.sdk?.responses) {
     const invalidStatuses = options.sdk.responses.filter(
       response =>
         typeof response.status !== 'number' ||
@@ -283,8 +283,12 @@ export const Route = ({ docs = true, ...options }: RouteOptions) => {
   // -------------------------------
   // 2. Security / Scopes / Audit
   // -------------------------------
-  if (options.auth !== undefined) decorators.push(Auth(options.auth))
-  if (options.scopes) decorators.push(Scope(options.scopes))
+  if (options.auth !== undefined) {
+    decorators.push(Auth(options.auth))
+  }
+  if (options.scopes) {
+    decorators.push(Scope(options.scopes))
+  }
   if (options.audit) {
     const { key, ...rest } = options.audit
     decorators.push(AuditEvent(key as AuditEventKey, rest))
@@ -292,7 +296,7 @@ export const Route = ({ docs = true, ...options }: RouteOptions) => {
   if (options.throttle) {
     decorators.push(Throttle(options.throttle as any))
     if (docs) {
-      let properties: Record<string, any> = {
+      const properties: Record<string, any> = {
         limit:
           typeof options.throttle === 'number'
             ? options.throttle
@@ -318,8 +322,9 @@ export const Route = ({ docs = true, ...options }: RouteOptions) => {
   ) {
     isList = true
     responseModel = options.model.type
-    if (responseModel)
+    if (responseModel) {
       decorators.push(ApiExtraModels(responseModel as Type<any>))
+    }
   }
 
   if (options.model) {
@@ -339,13 +344,17 @@ export const Route = ({ docs = true, ...options }: RouteOptions) => {
   let description = options.description
   if (options.sdk?.descMd && docs) {
     const markdownContent = readMarkdownFile(options.sdk.descMd)
-    if (markdownContent) description = markdownContent
+    if (markdownContent) {
+      description = markdownContent
+    }
   }
 
   // -------------------------------
   // 5. Tags & Operation Metadata
   // -------------------------------
-  if (options.tags?.length && docs) decorators.push(ApiTags(...options.tags))
+  if (options.tags?.length && docs) {
+    decorators.push(ApiTags(...options.tags))
+  }
 
   if (docs) {
     decorators.push(
@@ -414,15 +423,13 @@ export const Route = ({ docs = true, ...options }: RouteOptions) => {
             content[ct] = {
               schema: { type: 'string', format: 'binary' },
             }
+          } else if (isList && response.type) {
+            content[ct] = { schema: buildListSchema(response.type) }
           } else {
-            if (isList && response.type) {
-              content[ct] = { schema: buildListSchema(response.type) }
-            } else {
-              content[ct] = {
-                schema: response.type
-                  ? { $ref: getSchemaPath(response.type) }
-                  : { type: 'object' },
-              }
+            content[ct] = {
+              schema: response.type
+                ? { $ref: getSchemaPath(response.type) }
+                : { type: 'object' },
             }
           }
         }
@@ -434,24 +441,22 @@ export const Route = ({ docs = true, ...options }: RouteOptions) => {
             content,
           }),
         )
+      } else if (isList && response.type) {
+        decorators.push(
+          ApiResponse({
+            status: response.status,
+            description: response.description,
+            schema: buildListSchema(response.type),
+          }),
+        )
       } else {
-        if (isList && response.type) {
-          decorators.push(
-            ApiResponse({
-              status: response.status,
-              description: response.description,
-              schema: buildListSchema(response.type),
-            }),
-          )
-        } else {
-          decorators.push(
-            ApiResponse({
-              status: response.status,
-              description: response.description,
-              type: response.type,
-            }),
-          )
-        }
+        decorators.push(
+          ApiResponse({
+            status: response.status,
+            description: response.description,
+            type: response.type,
+          }),
+        )
       }
     })
   }

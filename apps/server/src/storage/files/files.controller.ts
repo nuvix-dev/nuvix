@@ -1,3 +1,4 @@
+import { type SavedMultipartFile } from '@fastify/multipart'
 import {
   Body,
   Controller,
@@ -9,37 +10,36 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
-import { FilesService } from './files.service'
-import { Models } from '@nuvix/core/helpers'
-import { Database, Doc, Query as Queries } from '@nuvix/db'
-import { ProjectGuard } from '@nuvix/core/resolvers'
+import { ApiBody } from '@nestjs/swagger'
+import { Delete, Get, Post, Put } from '@nuvix/core'
 import {
   MultipartParam,
-  ProjectDatabase,
-  UploadedFile,
-  Project,
   Namespace,
-  AuthType,
-  Auth,
+  Project,
+  ProjectDatabase,
   QueryFilter,
   QuerySearch,
+  UploadedFile,
+  User,
 } from '@nuvix/core/decorators'
+import { Exception } from '@nuvix/core/extend/exception'
+import { Models } from '@nuvix/core/helpers'
+import { FilesQueryPipe } from '@nuvix/core/pipes/queries'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers'
+import { Database, Doc, Query as Queries } from '@nuvix/db'
+import { configuration, IListResponse, IResponse } from '@nuvix/utils'
+import { FilesDoc } from '@nuvix/utils/types'
+import { BucketParamsDTO } from '../DTO/bucket.dto'
 import {
   FileParamsDTO,
   PreviewFileQueryDTO,
   UpdateFileDTO,
 } from './DTO/file.dto'
-import { ApiInterceptor } from '@nuvix/core/resolvers'
-import { type SavedMultipartFile } from '@fastify/multipart'
-import { User } from '@nuvix/core/decorators'
-import { Exception } from '@nuvix/core/extend/exception'
-import { FilesQueryPipe } from '@nuvix/core/pipes/queries'
-import { Delete, Get, Post, Put } from '@nuvix/core'
-import { configuration, IListResponse, IResponse } from '@nuvix/utils'
-import { BucketParamsDTO } from '../DTO/bucket.dto'
-import { FilesDoc } from '@nuvix/utils/types'
-import { ApiBody } from '@nestjs/swagger'
+import { FilesService } from './files.service'
 
 @Namespace('storage')
 @UseGuards(ProjectGuard)
@@ -118,14 +118,15 @@ export class FilesController {
     @ProjectDatabase() db: Database,
     @Param() { bucketId }: BucketParamsDTO,
     @MultipartParam('fileId') fileId: string,
-    @MultipartParam('permissions') permissions: string[] = [],
+    @MultipartParam('permissions') permissions: string[],
     @UploadedFile() file: SavedMultipartFile,
     @Req() req: NuvixRequest,
     @User() user: Doc,
     @Project() project: Doc,
   ): Promise<IResponse<FilesDoc>> {
-    if (!fileId)
+    if (!fileId) {
       throw new Exception(Exception.INVALID_PARAMS, 'fileId is required', 400)
+    }
     return this.filesService.createFile(
       db,
       bucketId,

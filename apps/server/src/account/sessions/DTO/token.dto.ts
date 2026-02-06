@@ -2,16 +2,16 @@ import { OmitType, PickType } from '@nestjs/swagger'
 import { IsUID } from '@nuvix/core/validators'
 import { configuration } from '@nuvix/utils'
 import {
+  ArrayMaxSize,
+  IsArray,
+  IsBoolean,
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsPhoneNumber,
   IsString,
   IsUrl,
-  IsOptional,
-  IsArray,
   MaxLength,
-  ArrayMaxSize,
-  IsNotEmpty,
-  IsEmail,
-  IsBoolean,
-  IsPhoneNumber,
 } from 'class-validator'
 
 export class CreateOAuth2TokenDTO {

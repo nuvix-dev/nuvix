@@ -6,7 +6,7 @@ export class MetricModel extends BaseModel {
   /**
    * The value of this metric at the timestamp.
    */
-  @Expose() value: number = -1 // Default to -1
+  @Expose() value = -1 // Default to -1
 
   /**
    * The date at which this metric was aggregated in ISO 8601 format.

@@ -1,5 +1,5 @@
 import { OmitType, PartialType } from '@nestjs/swagger'
-import { IsString, IsEmail, IsOptional, MaxLength } from 'class-validator'
+import { IsEmail, IsOptional, IsString, MaxLength } from 'class-validator'
 import { CreateProviderDTO } from './base.dto'
 
 export class CreateSendgridProviderDTO extends CreateProviderDTO {

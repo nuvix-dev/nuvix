@@ -1,16 +1,16 @@
-import { NuvixAdapter } from '@nuvix/core/server'
-import { Test, TestingModule } from '@nuvix/core/server/test'
-import { AppModule } from 'apps/server/src/app.module'
-import QueryString from 'qs'
+import { ConsoleLogger, LOG_LEVELS } from '@nestjs/common'
+import { NestFastifyApplication } from '@nestjs/platform-fastify'
 import {
+  AppConfigService,
   configureDbFiltersAndFormats,
   configurePgTypeParsers,
 } from '@nuvix/core'
-import { NestFastifyApplication } from '@nestjs/platform-fastify'
-import { ConsoleLogger, LOG_LEVELS } from '@nestjs/common'
-import { configuration, validateRequiredConfig } from '@nuvix/utils'
+import { NuvixAdapter } from '@nuvix/core/server'
+import { Test, TestingModule } from '@nuvix/core/server/test'
 import { Authorization } from '@nuvix/db'
-import { AppConfigService } from '@nuvix/core'
+import { configuration, validateRequiredConfig } from '@nuvix/utils'
+import { AppModule } from 'apps/server/src/app.module'
+import QueryString from 'qs'
 import { applyAppConfig } from '../../src/core'
 import { dbSetup } from './db'
 

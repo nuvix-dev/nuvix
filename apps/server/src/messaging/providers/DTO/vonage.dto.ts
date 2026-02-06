@@ -1,4 +1,4 @@
-import { PartialType, OmitType } from '@nestjs/swagger'
+import { OmitType, PartialType } from '@nestjs/swagger'
 import { IsOptional, IsPhoneNumber, IsString } from 'class-validator'
 import { CreateProviderDTO } from './base.dto'
 

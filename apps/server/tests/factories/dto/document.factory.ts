@@ -20,7 +20,7 @@ export function buildUpdateDocumentDTO(
 ): Omit<CreateDocumentDTO, 'documentId'> {
   return {
     data: {
-      title: faker.lorem.sentence() + ' (updated)',
+      title: `${faker.lorem.sentence()} (updated)`,
       content: faker.lorem.paragraph(),
     },
     permissions: [],

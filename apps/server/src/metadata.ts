@@ -1,29 +1,29 @@
 /* eslint-disable */
 export default async () => {
   const t = {
-    ['../../../libs/core/src/models/Target.model.js']: await import(
+    '../../../libs/core/src/models/Target.model.js': await import(
       '../../../libs/core/src/models/Target.model.js'
     ),
-    ['../../../libs/core/src/models/User.model.js']: await import(
+    '../../../libs/core/src/models/User.model.js': await import(
       '../../../libs/core/src/models/User.model.js'
     ),
-    ['@nuvix/db']: await import('@nuvix/db'),
-    ['../../../libs/utils/src/constants.js']: await import(
+    '@nuvix/db': await import('@nuvix/db'),
+    '../../../libs/utils/src/constants.js': await import(
       '../../../libs/utils/src/constants.js'
     ),
-    ['../../../libs/core/src/models/Index.model.js']: await import(
+    '../../../libs/core/src/models/Index.model.js': await import(
       '../../../libs/core/src/models/Index.model.js'
     ),
-    ['../../../libs/core/src/models/AuthProvider.model.js']: await import(
+    '../../../libs/core/src/models/AuthProvider.model.js': await import(
       '../../../libs/core/src/models/AuthProvider.model.js'
     ),
-    ['../../../libs/core/src/models/Platform.model.js']: await import(
+    '../../../libs/core/src/models/Platform.model.js': await import(
       '../../../libs/core/src/models/Platform.model.js'
     ),
-    ['../../../libs/core/src/models/Webhook.model.js']: await import(
+    '../../../libs/core/src/models/Webhook.model.js': await import(
       '../../../libs/core/src/models/Webhook.model.js'
     ),
-    ['../../../libs/core/src/models/Key.model.js']: await import(
+    '../../../libs/core/src/models/Key.model.js': await import(
       '../../../libs/core/src/models/Key.model.js'
     ),
   }
@@ -3340,6 +3340,118 @@ export default async () => {
           },
         ],
         [
+          import('./avatars/DTO/misc.dto.js'),
+          {
+            CreditCardParamDTO: {
+              code: {
+                required: true,
+                type: () => String,
+                description:
+                  "Credit card code (e.g., 'visa', 'mastercard', etc.)",
+              },
+            },
+            BrowsersParamDTO: {
+              code: {
+                required: true,
+                type: () => String,
+                description: "Browser code (e.g., 'ch', 'ff', etc.)",
+              },
+            },
+            FlagsParamDTO: {
+              code: {
+                required: true,
+                type: () => String,
+                description: "Country code (e.g., 'us', 'in', etc.)",
+              },
+            },
+            InitialsQueryDTO: {
+              name: {
+                required: true,
+                type: () => String,
+                description:
+                  "User's name to generate initials from (e.g., 'John Doe')",
+              },
+              width: {
+                required: true,
+                type: () => Number,
+                description:
+                  'Width of the generated avatar image (default: 100)',
+                default: 100,
+                minimum: 1,
+                maximum: 2000,
+              },
+              height: {
+                required: true,
+                type: () => Number,
+                description:
+                  'Height of the generated avatar image (default: 100)',
+                default: 100,
+                minimum: 1,
+                maximum: 2000,
+              },
+              background: {
+                required: true,
+                type: () => String,
+                description:
+                  "Background color for the avatar (e.g., '#ff0000')",
+                minLength: 0,
+                maxLength: 7,
+              },
+              circle: {
+                required: true,
+                type: () => Boolean,
+                description:
+                  'Whether to generate a circular avatar (default: false)',
+                default: false,
+              },
+              opacity: {
+                required: true,
+                type: () => Number,
+                description:
+                  'Opacity of the generated avatar image (default: 100, range: 0-100)',
+                default: 100,
+                minimum: 0,
+                maximum: 100,
+              },
+              quality: {
+                required: true,
+                type: () => Number,
+                description:
+                  'Quality of the generated avatar image (default: -1, range: 0-100)',
+                default: 100,
+                minimum: 0,
+                maximum: 100,
+              },
+            },
+            CodesQuerDTO: {
+              width: {
+                required: true,
+                type: () => Number,
+                description: 'Width of the image (default: 100)',
+                default: 100,
+                minimum: 1,
+                maximum: 2000,
+              },
+              height: {
+                required: true,
+                type: () => Number,
+                description: 'Height of the image (default: 100)',
+                default: 100,
+                minimum: 1,
+                maximum: 2000,
+              },
+              quality: {
+                required: true,
+                type: () => Number,
+                description: 'Quality of the image (default: 90, range: 0-100)',
+                default: 90,
+                minimum: 0,
+                maximum: 100,
+              },
+            },
+          },
+        ],
+        [
           import('./users/DTO/user.dto.js'),
           {
             CreateUserDTO: {
@@ -5323,7 +5435,14 @@ export default async () => {
         ],
         [
           import('./avatars/avatars.controller.js'),
-          { AvatarsController: { generateAvatar: {} } },
+          {
+            AvatarsController: {
+              getCreditCard: {},
+              getBrowser: {},
+              getFlag: {},
+              generateAvatar: {},
+            },
+          },
         ],
         [
           import('./users/users.controller.js'),

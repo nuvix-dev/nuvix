@@ -1,8 +1,8 @@
 import { literal } from 'pg-format'
+import { PgMetaException } from '../extra/execption'
 import { coalesceRowsToArray, filterByList } from './helpers'
 import { columnsSql, foreignTablesSql } from './sql/index'
-import { PostgresMetaResult, PostgresForeignTable } from './types'
-import { PgMetaException } from '../extra/execption'
+import { PostgresForeignTable, PostgresMetaResult } from './types'
 
 export default class PostgresMetaForeignTables {
   query: (sql: string) => Promise<PostgresMetaResult<any>>
@@ -82,12 +82,13 @@ export default class PostgresMetaForeignTables {
       const { data, error } = await this.query(sql)
       if (error) {
         return { data, error }
-      } else if (data.length === 0) {
-        throw new PgMetaException(`Cannot find a foreign table with ID ${id}`)
-      } else {
-        return { data: data[0], error }
       }
-    } else if (name) {
+      if (data.length === 0) {
+        throw new PgMetaException(`Cannot find a foreign table with ID ${id}`)
+      }
+      return { data: data[0], error }
+    }
+    if (name) {
       const sql = `${generateEnrichedForeignTablesSql({
         includeColumns: true,
       })} where foreign_tables.name = ${literal(name)} and foreign_tables.schema = ${literal(
@@ -96,16 +97,15 @@ export default class PostgresMetaForeignTables {
       const { data, error } = await this.query(sql)
       if (error) {
         return { data, error }
-      } else if (data.length === 0) {
+      }
+      if (data.length === 0) {
         throw new PgMetaException(
           `Cannot find a foreign table named ${name} in schema ${schema}`,
         )
-      } else {
-        return { data: data[0], error }
       }
-    } else {
-      throw new PgMetaException('Invalid parameters on foreign table retrieve')
+      return { data: data[0], error }
     }
+    throw new PgMetaException('Invalid parameters on foreign table retrieve')
   }
 }
 

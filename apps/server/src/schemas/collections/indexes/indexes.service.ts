@@ -1,20 +1,18 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { InjectQueue } from '@nestjs/bullmq'
+import { Injectable } from '@nestjs/common'
+import { EventEmitter2 } from '@nestjs/event-emitter'
+import { Exception } from '@nuvix/core/extend/exception'
+import { CollectionsJob, CollectionsJobData } from '@nuvix/core/resolvers'
 import {
+  AttributeType,
   Database,
   Doc,
   DuplicateException,
   ID,
   IndexValidator,
   Query,
-  AttributeType,
 } from '@nuvix/db'
 import { configuration, QueueFor, SchemaMeta, Status } from '@nuvix/utils'
-import { InjectQueue } from '@nestjs/bullmq'
-import type { Queue } from 'bullmq'
-import { Exception } from '@nuvix/core/extend/exception'
-import type { CreateIndexDTO } from './DTO/indexes.dto'
-import { EventEmitter2 } from '@nestjs/event-emitter'
-import { CollectionsJob, CollectionsJobData } from '@nuvix/core/resolvers'
 import type {
   Attributes,
   AttributesDoc,
@@ -22,11 +20,11 @@ import type {
   IndexesDoc,
   ProjectsDoc,
 } from '@nuvix/utils/types'
+import type { Queue } from 'bullmq'
+import type { CreateIndexDTO } from './DTO/indexes.dto'
 
 @Injectable()
 export class IndexesService {
-  private readonly logger = new Logger(IndexesService.name)
-
   constructor(
     @InjectQueue(QueueFor.COLLECTIONS)
     private readonly collectionsQueue: Queue<
@@ -34,7 +32,7 @@ export class IndexesService {
       unknown,
       CollectionsJob
     >,
-    private readonly event: EventEmitter2,
+    readonly _event: EventEmitter2,
   ) {}
 
   getRelatedAttrId(collectionSequence: number, key: string): string {
@@ -121,14 +119,14 @@ export class IndexesService {
       if (attributeType === AttributeType.Relationship) {
         throw new Exception(
           Exception.ATTRIBUTE_TYPE_INVALID,
-          `Cannot create an index for a relationship attribute: ${oldAttributes[attributeIndex]!.key}`,
+          `Cannot create an index for a relationship attribute: ${oldAttributes[attributeIndex]?.key}`,
         )
       }
 
       if (attributeStatus !== Status.AVAILABLE) {
         throw new Exception(
           Exception.ATTRIBUTE_NOT_AVAILABLE,
-          `Attribute not available: ${oldAttributes[attributeIndex]!.key}`,
+          `Attribute not available: ${oldAttributes[attributeIndex]?.key}`,
         )
       }
 

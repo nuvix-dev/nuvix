@@ -5,21 +5,26 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { MessagingService } from './messaging.service'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
+import { Delete, Get, Patch, Post } from '@nuvix/core'
 import {
-  ProjectDatabase,
+  Auth,
   AuthType,
   Namespace,
   Project,
-  Auth,
+  ProjectDatabase,
   QueryFilter,
   QuerySearch,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
-
+import { MessagesQueryPipe, TargetsQueryPipe } from '@nuvix/core/pipes/queries'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers'
 import { Database, Query as Queries } from '@nuvix/db'
+import { IListResponse, IResponse } from '@nuvix/utils'
+import type { MessagesDoc, ProjectsDoc, TargetsDoc } from '@nuvix/utils/types'
 import {
   CreateEmailMessageDTO,
   CreatePushMessageDTO,
@@ -29,10 +34,7 @@ import {
   UpdatePushMessageDTO,
   UpdateSmsMessageDTO,
 } from './DTO/message.dto'
-import type { MessagesDoc, ProjectsDoc, TargetsDoc } from '@nuvix/utils/types'
-import { MessagesQueryPipe, TargetsQueryPipe } from '@nuvix/core/pipes/queries'
-import { Delete, Get, Patch, Post } from '@nuvix/core'
-import { IListResponse, IResponse } from '@nuvix/utils'
+import { MessagingService } from './messaging.service'
 
 @Namespace('messaging')
 @UseGuards(ProjectGuard)

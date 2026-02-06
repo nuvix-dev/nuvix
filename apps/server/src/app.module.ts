@@ -1,34 +1,38 @@
+// Modules
+import { BullModule } from '@nestjs/bullmq'
 import {
   MiddlewareConsumer,
   Module,
   NestModule,
   OnModuleInit,
 } from '@nestjs/common'
-import { AppController } from './app.controller'
-import { AppService } from './app.service'
-import { MailsQueue } from '@nuvix/core/resolvers'
-import { AuditsQueue } from '@nuvix/core/resolvers'
-import { configuration, QueueFor } from '@nuvix/utils'
 import { JwtModule, JwtService } from '@nestjs/jwt'
-// Hooks
-import { CorsHook, HostHook, ProjectHook } from '@nuvix/core/resolvers'
-// Modules
-import { BullModule } from '@nestjs/bullmq'
 import { ScheduleModule } from '@nestjs/schedule'
 import { CoreModule } from '@nuvix/core'
-import { DatabaseModule } from './database/database.module'
-import { AvatarsModule } from './avatars/avatars.module'
-import { UsersModule } from './users/users.module'
+import { Key } from '@nuvix/core/helpers'
+// Hooks
+import {
+  ApiLogsQueue,
+  AuditsQueue,
+  CorsHook,
+  HostHook,
+  LogsHook,
+  MailsQueue,
+  ProjectHook,
+  StatsQueue,
+} from '@nuvix/core/resolvers'
+import { configuration, QueueFor } from '@nuvix/utils'
 import { AccountModule } from './account/account.module'
-import { TeamsModule } from './teams/teams.module'
-import { StorageModule } from './storage/storage.module'
+import { AppController } from './app.controller'
+import { AppService } from './app.service'
+import { AvatarsModule } from './avatars/avatars.module'
+import { DatabaseModule } from './database/database.module'
+import { LocaleModule } from './locale/locale.module'
 import { MessagingModule } from './messaging/messaging.module'
 import { SchemasModule } from './schemas/schemas.module'
-import { Key } from '@nuvix/core/helpers'
-import { StatsQueue } from '@nuvix/core/resolvers'
-import { LogsHook } from '@nuvix/core/resolvers'
-import { ApiLogsQueue } from '@nuvix/core/resolvers'
-import { LocaleModule } from './locale/locale.module'
+import { StorageModule } from './storage/storage.module'
+import { TeamsModule } from './teams/teams.module'
+import { UsersModule } from './users/users.module'
 
 @Module({
   imports: [

@@ -6,22 +6,22 @@ export class ProviderModel extends BaseModel {
   /**
    * The name for the provider instance.
    */
-  @Expose() name: string = '' // Default to empty string
+  @Expose() name = '' // Default to empty string
 
   /**
    * The name of the provider service.
    */
-  @Expose() provider: string = '' // Default to empty string
+  @Expose() provider = '' // Default to empty string
 
   /**
    * Is provider enabled?
    */
-  @Expose() enabled: boolean = true // Default to true
+  @Expose() enabled = true // Default to true
 
   /**
    * Type of provider.
    */
-  @Expose() type: string = '' // Default to empty string
+  @Expose() type = '' // Default to empty string
 
   /**
    * Provider credentials.

@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger'
 import { IsUID, TOTP } from '@nuvix/core/validators'
-import { IsBoolean, IsNotEmpty, IsString, IsIn } from 'class-validator'
+import { IsBoolean, IsIn, IsNotEmpty, IsString } from 'class-validator'
 
 export class UpdateAccountMfaDTO {
   /**

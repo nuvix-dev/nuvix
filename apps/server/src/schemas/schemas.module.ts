@@ -1,11 +1,16 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'
-import { SchemasService } from './schemas.service'
-import { SchemasController } from './schemas.controller'
-import { SchemaHook } from '@nuvix/core/resolvers'
-import { CollectionsModule } from './collections/collections.module'
 import { BullModule } from '@nestjs/bullmq'
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'
+import {
+  ApiHook,
+  AuditHook,
+  AuthHook,
+  SchemaHook,
+  StatsHook,
+} from '@nuvix/core/resolvers'
 import { QueueFor } from '@nuvix/utils'
-import { AuthHook, ApiHook, StatsHook, AuditHook } from '@nuvix/core/resolvers'
+import { CollectionsModule } from './collections/collections.module'
+import { SchemasController } from './schemas.controller'
+import { SchemasService } from './schemas.service'
 
 @Module({
   imports: [

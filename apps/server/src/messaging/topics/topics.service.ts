@@ -1,12 +1,12 @@
-import { Injectable } from '@nestjs/common'
-import type { CreateTopic, ListTopics, UpdateTopic } from './topics.types'
-import { Database, Doc, DuplicateException, ID, Query } from '@nuvix/db'
-import { Exception } from '@nuvix/core/extend/exception'
-import type { ProjectsDoc, Topics } from '@nuvix/utils/types'
 import { InjectQueue } from '@nestjs/bullmq'
+import { Injectable } from '@nestjs/common'
+import { Exception } from '@nuvix/core/extend/exception'
 import type { DeletesJobData } from '@nuvix/core/resolvers'
-import { QueueFor, DeleteType, Schemas } from '@nuvix/utils'
+import { Database, Doc, DuplicateException, ID, Query } from '@nuvix/db'
+import { DeleteType, QueueFor, Schemas } from '@nuvix/utils'
+import type { ProjectsDoc, Topics } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
+import type { CreateTopic, ListTopics, UpdateTopic } from './topics.types'
 
 @Injectable()
 export class TopicsService {

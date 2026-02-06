@@ -1,15 +1,14 @@
 import { Controller, Param, Query, Res, UseInterceptors } from '@nestjs/common'
-import { AvatarsService } from './avatars.service'
-import { ParseDuplicatePipe, ParseValidatorPipe } from '@nuvix/core/pipes'
 import { Get } from '@nuvix/core'
 import { Namespace, Scope } from '@nuvix/core/decorators'
+import { ParseDuplicatePipe } from '@nuvix/core/pipes'
 import { ApiInterceptor } from '@nuvix/core/resolvers'
+import { AvatarsService } from './avatars.service'
 import {
   CodesQuerDTO,
   CreditCardParamDTO,
   InitialsQueryDTO,
 } from './DTO/misc.dto'
-import { RangeValidator } from '@nuvix/db'
 
 @Controller({ version: ['1'], path: 'avatars' })
 @Namespace('avatars')

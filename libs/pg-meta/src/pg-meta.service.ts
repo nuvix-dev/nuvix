@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common'
+import { CoreService } from '@nuvix/core'
 import { DataSource } from '@nuvix/pg'
 import { Schema, SchemaMeta, Schemas, SchemaType } from '@nuvix/utils'
 import type { CollectionsDoc, ProjectsDoc } from '@nuvix/utils/types'
-import { apply as applyTypescriptTemplate } from './templates/typescript'
-import type { PostgresMeta } from './lib'
 import type { GeneratorQueryDTO } from './DTO/generator.dto'
+import type { PostgresMeta } from './lib'
 import { getGeneratorMetadata } from './lib/generators'
-import { CoreService } from '@nuvix/core'
+import { apply as applyTypescriptTemplate } from './templates/typescript'
 
 @Injectable()
 export class PgMetaService {

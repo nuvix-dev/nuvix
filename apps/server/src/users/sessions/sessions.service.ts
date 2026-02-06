@@ -1,16 +1,13 @@
 import { Injectable } from '@nestjs/common'
-import { Exception } from '@nuvix/core/extend/exception'
-import { ID } from '@nuvix/core/helpers'
-import { SessionProvider } from '@nuvix/utils'
-import { Auth } from '@nuvix/core/helpers'
-import { Detector } from '@nuvix/core/helpers'
-
-import { Database, Doc, Permission, Role } from '@nuvix/db'
-import { CountryResponse, Reader } from 'maxmind'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { CoreService } from '@nuvix/core'
-import type { ProjectsDoc, Sessions, SessionsDoc } from '@nuvix/utils/types'
+import { Exception } from '@nuvix/core/extend/exception'
 import type { LocaleTranslator } from '@nuvix/core/helpers'
+import { Auth, Detector, ID } from '@nuvix/core/helpers'
+import { Database, Doc, Permission, Role } from '@nuvix/db'
+import { SessionProvider } from '@nuvix/utils'
+import type { ProjectsDoc, Sessions, SessionsDoc } from '@nuvix/utils/types'
+import { CountryResponse, Reader } from 'maxmind'
 
 @Injectable()
 export class SessionsService {
@@ -18,7 +15,7 @@ export class SessionsService {
 
   constructor(
     private readonly coreService: CoreService,
-    private readonly event: EventEmitter2,
+    readonly _event: EventEmitter2,
   ) {
     this.geoDb = this.coreService.getGeoDb()
   }
@@ -73,7 +70,7 @@ export class SessionsService {
     const record = this.geoDb.get(ip)
 
     const duration =
-      project.get('auths', {})['duration'] ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
+      project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
     const expire = new Date(Date.now() + duration * 1000)
 
     const session = new Doc<Sessions>({

@@ -1,11 +1,11 @@
 import { ident, literal } from 'pg-format'
+import { TablePrivilegeGrantDTO } from '../DTO/table-privilege-grant.dto'
+import { TablePrivilegeRevokeDTO } from '../DTO/table-privilege-revoke.dto'
+import { PgMetaException } from '../extra/execption'
 import { DEFAULT_SYSTEM_SCHEMAS } from './constants'
 import { filterByList } from './helpers'
 import { tablePrivilegesSql } from './sql/index'
 import { PostgresMetaResult, PostgresTablePrivileges } from './types'
-import { TablePrivilegeGrantDTO } from '../DTO/table-privilege-grant.dto'
-import { TablePrivilegeRevokeDTO } from '../DTO/table-privilege-revoke.dto'
-import { PgMetaException } from '../extra/execption'
 
 export default class PostgresMetaTablePrivileges {
   query: (sql: string) => Promise<PostgresMetaResult<any>>
@@ -79,12 +79,13 @@ where table_privileges.relation_id = ${literal(id)};`
       const { data, error } = await this.query(sql)
       if (error) {
         return { data, error }
-      } else if (data.length === 0) {
-        throw new PgMetaException(`Cannot find a relation with ID ${id}`)
-      } else {
-        return { data: data[0], error }
       }
-    } else if (name) {
+      if (data.length === 0) {
+        throw new PgMetaException(`Cannot find a relation with ID ${id}`)
+      }
+      return { data: data[0], error }
+    }
+    if (name) {
       const sql = `
 with table_privileges as (${tablePrivilegesSql})
 select *
@@ -95,18 +96,17 @@ where table_privileges.schema = ${literal(schema)}
       const { data, error } = await this.query(sql)
       if (error) {
         return { data, error }
-      } else if (data.length === 0) {
+      }
+      if (data.length === 0) {
         throw new PgMetaException(
           `Cannot find a relation named ${name} in schema ${schema}`,
         )
-      } else {
-        return { data: data[0], error }
       }
-    } else {
-      throw new PgMetaException(
-        'Invalid parameters on retrieving table privileges',
-      )
+      return { data: data[0], error }
     }
+    throw new PgMetaException(
+      'Invalid parameters on retrieving table privileges',
+    )
   }
 
   async grant(

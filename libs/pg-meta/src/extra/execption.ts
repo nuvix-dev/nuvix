@@ -15,7 +15,7 @@ export class PgMetaException extends HttpException {
       formattedError?: string
       [key: string]: any
     },
-    statusCode: number = 500,
+    statusCode = 500,
   ) {
     super(
       {

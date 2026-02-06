@@ -5,34 +5,35 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { TeamsService } from './teams.service'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
+import { AuditDoc } from '@nuvix/audit'
+import { Delete, Get, Post, Put } from '@nuvix/core'
 import {
   Auth,
+  AuthDatabase,
   AuthType,
   Namespace,
   QueryFilter,
   QuerySearch,
+  User,
 } from '@nuvix/core/decorators'
-
+import { Exception } from '@nuvix/core/extend/exception'
 import { Models } from '@nuvix/core/helpers'
+import { TeamsQueryPipe } from '@nuvix/core/pipes/queries'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers'
+import { Database, Query as Queries } from '@nuvix/db'
+import { IListResponse, IResponse } from '@nuvix/utils'
+import { TeamsDoc } from '@nuvix/utils/types'
 import {
   CreateTeamDTO,
   TeamsParamDTO,
   UpdateTeamDTO,
   UpdateTeamPrefsDTO,
 } from './DTO/team.dto'
-import { User } from '@nuvix/core/decorators'
-import { Database, Query as Queries } from '@nuvix/db'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { ApiInterceptor } from '@nuvix/core/resolvers'
-import { AuthDatabase } from '@nuvix/core/decorators'
-import { TeamsQueryPipe } from '@nuvix/core/pipes/queries'
-import { Delete, Get, Post, Put } from '@nuvix/core'
-import { IListResponse, IResponse } from '@nuvix/utils'
-import { TeamsDoc } from '@nuvix/utils/types'
-import { AuditDoc } from '@nuvix/audit'
-import { Exception } from '@nuvix/core/extend/exception'
+import { TeamsService } from './teams.service'
 
 @Namespace('teams')
 @UseGuards(ProjectGuard)
@@ -188,7 +189,7 @@ export class TeamsController {
     docs: false, // remove or set true after implementation
   })
   async teamLogs(
-    @AuthDatabase() db: Database,
+    @AuthDatabase() _db: Database,
     @Param() { teamId }: TeamsParamDTO,
   ): Promise<IListResponse<AuditDoc>> {
     throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)

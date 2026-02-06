@@ -11,32 +11,32 @@ export class FunctionModel extends BaseModel {
   /**
    * Function name.
    */
-  @Expose() name: string = ''
+  @Expose() name = ''
 
   /**
    * Function enabled.
    */
-  @Expose() enabled: boolean = true
+  @Expose() enabled = true
 
   /**
    * Is the function deployed with the latest configuration?
    */
-  @Expose() live: boolean = true
+  @Expose() live = true
 
   /**
    * Whether executions will be logged.
    */
-  @Expose() logging: boolean = true
+  @Expose() logging = true
 
   /**
    * Function execution runtime.
    */
-  @Expose() runtime: string = ''
+  @Expose() runtime = ''
 
   /**
    * Function's active deployment ID.
    */
-  @Expose() deployment: string = ''
+  @Expose() deployment = ''
 
   /**
    * Allowed permission scopes.
@@ -56,57 +56,57 @@ export class FunctionModel extends BaseModel {
   /**
    * Function execution schedule in CRON format.
    */
-  @Expose() schedule: string = ''
+  @Expose() schedule = ''
 
   /**
    * Function execution timeout in seconds.
    */
-  @Expose() timeout: number = 15
+  @Expose() timeout = 15
 
   /**
    * The entrypoint file used to execute the deployment.
    */
-  @Expose() entrypoint: string = ''
+  @Expose() entrypoint = ''
 
   /**
    * The build command used to build the deployment.
    */
-  @Expose() commands: string = ''
+  @Expose() commands = ''
 
   /**
    * Version of Open Runtimes used for the function.
    */
-  @Expose() version: string = 'v4'
+  @Expose() version = 'v4'
 
   /**
    * Function VCS (Version Control System) installation id.
    */
-  @Expose() installationId: string = ''
+  @Expose() installationId = ''
 
   /**
    * VCS (Version Control System) Repository ID.
    */
-  @Expose() providerRepositoryId: string = ''
+  @Expose() providerRepositoryId = ''
 
   /**
    * VCS (Version Control System) branch name.
    */
-  @Expose() providerBranch: string = ''
+  @Expose() providerBranch = ''
 
   /**
    * Path to function in VCS (Version Control System) repository.
    */
-  @Expose() providerRootDirectory: string = ''
+  @Expose() providerRootDirectory = ''
 
   /**
    * Is VCS (Version Control System) connection in silent mode?
    */
-  @Expose() providerSilentMode: boolean = false
+  @Expose() providerSilentMode = false
 
   /**
    * Machine specification for builds and executions.
    */
-  @Expose() specification: string = '' // Adjust default value based on your needs
+  @Expose() specification = '' // Adjust default value based on your needs
 
   constructor(partial: Partial<FunctionModel>) {
     super()

@@ -1,6 +1,6 @@
+import { localeCodes } from '@nuvix/core/config'
 import { IsIn, IsString } from 'class-validator'
 import { ProjectParamsDTO } from '../../DTO/create-project.dto'
-import { localeCodes } from '@nuvix/core/config'
 
 export class TemplateParamsDTO extends ProjectParamsDTO {
   /**

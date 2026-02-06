@@ -27,6 +27,4 @@ export abstract class BaseModel {
 @Exclude()
 export abstract class BaseListModel {
   @Expose() declare total: number
-
-  constructor() {}
 }

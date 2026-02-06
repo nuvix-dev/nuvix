@@ -1,18 +1,16 @@
 import { Database, Query } from '@nuvix/db'
+import { CreateApnsProviderDTO, UpdateApnsProviderDTO } from './DTO/apns.dto'
+import { CreateFcmProviderDTO, UpdateFcmProviderDTO } from './DTO/fcm.dto'
 import {
   CreateMailgunProviderDTO,
   UpdateMailgunProviderDTO,
 } from './DTO/mailgun.dto'
+import { CreateMsg91ProviderDTO, UpdateMsg91ProviderDTO } from './DTO/msg91.dto'
 import {
   CreateSendgridProviderDTO,
   UpdateSendgridProviderDTO,
 } from './DTO/sendgrid.dto'
-import {
-  CreateTwilioProviderDTO,
-  UpdateTwilioProviderDTO,
-} from './DTO/twilio.dto'
 import { CreateSMTPProviderDTO, UpdateSMTPProviderDTO } from './DTO/smtp.dto'
-import { CreateMsg91ProviderDTO, UpdateMsg91ProviderDTO } from './DTO/msg91.dto'
 import {
   CreateTelesignProviderDTO,
   UpdateTelesignProviderDTO,
@@ -22,11 +20,13 @@ import {
   UpdateTextmagicProviderDTO,
 } from './DTO/textmagic.dto'
 import {
+  CreateTwilioProviderDTO,
+  UpdateTwilioProviderDTO,
+} from './DTO/twilio.dto'
+import {
   CreateVonageProviderDTO,
   UpdateVonageProviderDTO,
 } from './DTO/vonage.dto'
-import { CreateFcmProviderDTO, UpdateFcmProviderDTO } from './DTO/fcm.dto'
-import { CreateApnsProviderDTO, UpdateApnsProviderDTO } from './DTO/apns.dto'
 
 interface DB {
   db: Database

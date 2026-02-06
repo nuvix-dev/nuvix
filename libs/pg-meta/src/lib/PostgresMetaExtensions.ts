@@ -1,7 +1,7 @@
 import { ident, literal } from 'pg-format'
-import { extensionsSql } from './sql/index'
-import { PostgresMetaResult, PostgresExtension } from './types'
 import { PgMetaException } from '../extra/execption'
+import { extensionsSql } from './sql/index'
+import { PostgresExtension, PostgresMetaResult } from './types'
 
 export default class PostgresMetaExtensions {
   query: (sql: string) => Promise<PostgresMetaResult<any>>
@@ -36,11 +36,11 @@ export default class PostgresMetaExtensions {
     const { data, error } = await this.query(sql)
     if (error) {
       return { data, error }
-    } else if (data.length === 0) {
-      throw new PgMetaException(`Cannot find an extension named ${name}`)
-    } else {
-      return { data: data[0], error }
     }
+    if (data.length === 0) {
+      throw new PgMetaException(`Cannot find an extension named ${name}`)
+    }
+    return { data: data[0], error }
   }
 
   async create({

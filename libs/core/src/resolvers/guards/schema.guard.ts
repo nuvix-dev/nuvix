@@ -1,8 +1,8 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
+import { Context, Schema } from '@nuvix/utils'
 import { CurrentSchemaType } from '../../decorators'
 import { Exception } from '../../extend/exception'
-import { Context, Schema } from '@nuvix/utils'
 
 @Injectable()
 export class SchemaGuard implements CanActivate {

@@ -1,39 +1,41 @@
 import {
-  Controller,
   Body,
+  Controller,
   Param,
+  Query,
   UseGuards,
   UseInterceptors,
-  Query,
 } from '@nestjs/common'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
-import { CollectionsService } from './collections.service'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { Models } from '@nuvix/core/helpers'
-import type { Database, Query as Queries } from '@nuvix/db'
-import { CurrentDatabase, Project } from '@nuvix/core/decorators'
+import { Delete, Get, Post, Put } from '@nuvix/core'
 import {
   Auth,
   AuthType,
+  CurrentDatabase,
   CurrentSchemaType,
   Namespace,
+  Project,
   QueryFilter,
   QuerySearch,
 } from '@nuvix/core/decorators'
-
+import { Exception } from '@nuvix/core/extend/exception'
+import { Models } from '@nuvix/core/helpers'
+import { CollectionsQueryPipe, LogsQueryPipe } from '@nuvix/core/pipes/queries'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+  SchemaGuard,
+} from '@nuvix/core/resolvers'
+import type { Database, Query as Queries } from '@nuvix/db'
+import { IListResponse, IResponse, SchemaType } from '@nuvix/utils'
+import type { CollectionsDoc, ProjectsDoc } from '@nuvix/utils/types'
+import { CollectionsService } from './collections.service'
 // DTOs
 import {
   CollectionParamsDTO,
   CreateCollectionDTO,
   UpdateCollectionDTO,
 } from './DTO/collection.dto'
-import { ApiInterceptor } from '@nuvix/core/resolvers'
-import { SchemaGuard } from '@nuvix/core/resolvers'
-import type { CollectionsDoc, ProjectsDoc } from '@nuvix/utils/types'
-import { CollectionsQueryPipe, LogsQueryPipe } from '@nuvix/core/pipes/queries'
-import { Delete, Get, Post, Put } from '@nuvix/core'
-import { IListResponse, IResponse, SchemaType } from '@nuvix/utils'
-import { Exception } from '@nuvix/core/extend/exception'
 
 @Namespace('schemas')
 @Auth([AuthType.ADMIN, AuthType.KEY])

@@ -1,6 +1,5 @@
-import { configuration, PROJECT_ROOT } from '@nuvix/utils'
-import * as fs from 'fs'
-import * as path from 'path'
+import * as fs from 'node:fs'
+import { configuration } from '@nuvix/utils'
 
 // We could later improve this to use cache for translations to avoid reading files multiple times
 
@@ -12,7 +11,7 @@ export class LocaleTranslator {
 
   default = 'en'
 
-  constructor(private locale: string = 'en') {
+  constructor(private locale = 'en') {
     this.translations = this.loadTranslations(this.locale)
   }
 
@@ -25,9 +24,8 @@ export class LocaleTranslator {
     if (fs.existsSync(filePath)) {
       const fileContent = fs.readFileSync(filePath, 'utf-8')
       return JSON.parse(fileContent)
-    } else {
-      throw new Error(`Translation file for locale ${locale} not found.`)
     }
+    throw new Error(`Translation file for locale ${locale} not found.`)
   }
 
   public setLocale(locale: string): void {

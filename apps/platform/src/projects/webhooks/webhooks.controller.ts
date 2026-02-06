@@ -1,24 +1,23 @@
 import {
-  Controller,
   Body,
+  Controller,
   Param,
   UseInterceptors,
   VERSION_NEUTRAL,
 } from '@nestjs/common'
+import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
+import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
+import { Models } from '@nuvix/core/helpers'
+import { ConsoleInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
+import { IListResponse, IResponse } from '@nuvix/utils'
+import { WebhooksDoc } from '@nuvix/utils/types'
+import { ProjectParamsDTO } from '../DTO/create-project.dto'
 import {
   CreateWebhookDTO,
   UpdateWebhookDTO,
   WebhookParamsDTO,
 } from './DTO/webhook.dto'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
-import { Models } from '@nuvix/core/helpers'
-import { ConsoleInterceptor } from '@nuvix/core/resolvers'
-import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
 import { WebhooksService } from './webhooks.service'
-import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
-import { ProjectParamsDTO } from '../DTO/create-project.dto'
-import { IListResponse, IResponse } from '@nuvix/utils'
-import { WebhooksDoc } from '@nuvix/utils/types'
 
 @Namespace('projects')
 @Controller({

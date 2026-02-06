@@ -6,17 +6,17 @@ export class LanguageModel extends BaseModel {
   /**
    * Language name.
    */
-  @Expose() name: string = ''
+  @Expose() name = ''
 
   /**
    * Language two-character ISO 639-1 codes.
    */
-  @Expose() code: string = ''
+  @Expose() code = ''
 
   /**
    * Language native name.
    */
-  @Expose() nativeName: string = ''
+  @Expose() nativeName = ''
 
   constructor(partial: Partial<LanguageModel>) {
     super()

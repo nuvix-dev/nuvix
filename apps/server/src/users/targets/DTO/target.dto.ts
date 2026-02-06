@@ -1,8 +1,8 @@
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger'
-import { Database } from '@nuvix/db'
 import { IsCustomID, IsUID } from '@nuvix/core/validators'
+import { Database } from '@nuvix/db'
 import { MessageType } from '@nuvix/utils'
-import { IsString, IsOptional, Length, IsEnum } from 'class-validator'
+import { IsEnum, IsOptional, IsString, Length } from 'class-validator'
 import { UserParamDTO } from '../../DTO/user.dto'
 
 export class CreateTargetDTO {
@@ -18,7 +18,8 @@ export class CreateTargetDTO {
   @IsString()
   @ApiProperty({
     enum: MessageType,
-    description: `The target provider type. Can be one of the following: \`email\`, \`sms\` or \`push\`.`,
+    description:
+      'The target provider type. Can be one of the following: `email`, `sms` or `push`.',
   })
   @IsEnum(MessageType)
   declare providerType: string

@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common'
-import { Exception } from '@nuvix/core/extend/exception'
+import { CoreService } from '@nuvix/core'
 import { authMethods } from '@nuvix/core/config'
+import { Exception } from '@nuvix/core/extend/exception'
+import { Database } from '@nuvix/db'
 import {
   AuthMembershipPrivacyDTO,
   AuthMockNumbersDTO,
 } from './DTO/project-auth.dto'
-import { Database } from '@nuvix/db'
-import { CoreService } from '@nuvix/core'
 
 @Injectable()
 export class AuthSettingsService {
@@ -19,7 +19,7 @@ export class AuthSettingsService {
   /**
    * Update session alerts of a project.
    */
-  async updateSessionAlerts(id: string, status: boolean = false) {
+  async updateSessionAlerts(id: string, status = false) {
     let project = await this.db.getDocument('projects', id)
 
     if (project.empty()) {
@@ -27,7 +27,7 @@ export class AuthSettingsService {
     }
 
     const auths = project.get('auths', {})
-    auths['sessionAlerts'] = status
+    auths.sessionAlerts = status
 
     project = await this.db.updateDocument(
       'projects',
@@ -49,7 +49,7 @@ export class AuthSettingsService {
     }
 
     const auths = project.get('auths', {})
-    auths['limit'] = limit
+    auths.limit = limit
 
     project = await this.db.updateDocument(
       'projects',
@@ -71,7 +71,7 @@ export class AuthSettingsService {
     }
 
     const auths = project.get('auths', {})
-    auths['duration'] = duration
+    auths.duration = duration
 
     project = await this.db.updateDocument(
       'projects',
@@ -118,7 +118,7 @@ export class AuthSettingsService {
     }
 
     const auths = project.get('auths', {})
-    auths['passwordHistory'] = limit
+    auths.passwordHistory = limit
 
     project = await this.db.updateDocument(
       'projects',
@@ -140,7 +140,7 @@ export class AuthSettingsService {
     }
 
     const auths = project.get('auths', {})
-    auths['passwordDictionary'] = enabled
+    auths.passwordDictionary = enabled
 
     project = await this.db.updateDocument(
       'projects',
@@ -162,7 +162,7 @@ export class AuthSettingsService {
     }
 
     const auths = project.get('auths', {})
-    auths['personalDataCheck'] = enabled
+    auths.personalDataCheck = enabled
 
     project = await this.db.updateDocument(
       'projects',
@@ -184,7 +184,7 @@ export class AuthSettingsService {
     }
 
     const auths = project.get('auths', {})
-    auths['maxSessions'] = limit
+    auths.maxSessions = limit
 
     project = await this.db.updateDocument(
       'projects',
@@ -217,7 +217,7 @@ export class AuthSettingsService {
     })
 
     const auths = project.get('auths', {})
-    auths['mockNumbers'] = input.numbers
+    auths.mockNumbers = input.numbers
 
     project = await this.db.updateDocument(
       'projects',
@@ -241,13 +241,13 @@ export class AuthSettingsService {
     const auths = project.get('auths', {})
 
     if (input.userName !== undefined) {
-      auths['membershipsUserName'] = input.userName
+      auths.membershipsUserName = input.userName
     }
     if (input.userEmail !== undefined) {
-      auths['membershipsUserEmail'] = input.userEmail
+      auths.membershipsUserEmail = input.userEmail
     }
     if (input.mfa !== undefined) {
-      auths['membershipsMfa'] = input.mfa
+      auths.membershipsMfa = input.mfa
     }
 
     project = await this.db.updateDocument(

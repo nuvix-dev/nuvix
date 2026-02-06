@@ -1,5 +1,4 @@
 import { HttpException } from '@nestjs/common'
-import { MessageStatus } from '@nuvix/utils'
 
 export class Exception extends HttpException {
   static readonly GENERAL_UNKNOWN = 'general_unknown'
@@ -308,7 +307,7 @@ export class Exception extends HttpException {
     return new Exception(undefined, `Validation failed: ${messages}`)
   }
 
-  protected type: string = ''
+  protected type = ''
   protected publish: boolean
   protected details: Record<string, any> = {}
 
@@ -339,8 +338,8 @@ export class Exception extends HttpException {
 
     const errorCode = code ?? errorCodes[type]?.code
     const parsedCode =
-      typeof errorCode === 'string' && !isNaN(Number(errorCode))
-        ? parseInt(errorCode)
+      typeof errorCode === 'string' && !Number.isNaN(Number(errorCode))
+        ? Number.parseInt(errorCode, 10)
         : errorCode
     const finalCode = parsedCode ?? 500
 
@@ -1503,10 +1502,7 @@ export const errorCodes: Record<string, ErrorCode> = {
   },
   [Exception.MESSAGE_MISSING_SCHEDULE]: {
     name: Exception.MESSAGE_MISSING_SCHEDULE,
-    description:
-      'Message can not have status ' +
-      MessageStatus.SCHEDULED +
-      ' without a schedule.',
+    description: 'Message can not have status "scheduled" without a schedule.',
     code: 400,
   },
   [Exception.SCHEDULE_NOT_FOUND]: {

@@ -1,10 +1,10 @@
 import {
-  ID,
-  Database,
   AttributeType,
+  Collection,
+  Database,
+  ID,
   IndexType,
   Order,
-  Collection,
 } from '@nuvix/db'
 import { commonCollections } from './common'
 

@@ -1,2 +1,2 @@
-export { TestingModule } from './testing-module'
 export { Test } from './test'
+export { TestingModule } from './testing-module'

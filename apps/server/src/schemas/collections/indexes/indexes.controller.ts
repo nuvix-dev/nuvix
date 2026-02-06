@@ -1,31 +1,34 @@
 import {
-  Controller,
   Body,
+  Controller,
   Param,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
-import { IndexesService } from './indexes.service'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { Models } from '@nuvix/core/helpers'
-import type { Database, Query as Queries } from '@nuvix/db'
-import { CurrentDatabase, Project } from '@nuvix/core/decorators'
+import { Delete, Get, Post } from '@nuvix/core'
 import {
   Auth,
   AuthType,
+  CurrentDatabase,
   CurrentSchemaType,
   Namespace,
+  Project,
   QueryFilter,
 } from '@nuvix/core/decorators'
-import { CreateIndexDTO, IndexParamsDTO } from './DTO/indexes.dto'
-import { ApiInterceptor } from '@nuvix/core/resolvers'
-import { SchemaGuard } from '@nuvix/core/resolvers'
-import type { IndexesDoc, ProjectsDoc } from '@nuvix/utils/types'
+import { Models } from '@nuvix/core/helpers'
 import { IndexesQueryPipe } from '@nuvix/core/pipes/queries'
-import { Delete, Get, Post } from '@nuvix/core'
-import { CollectionParamsDTO } from '../DTO/collection.dto'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+  SchemaGuard,
+} from '@nuvix/core/resolvers'
+import type { Database, Query as Queries } from '@nuvix/db'
 import { IListResponse, IResponse, SchemaType } from '@nuvix/utils'
+import type { IndexesDoc, ProjectsDoc } from '@nuvix/utils/types'
+import { CollectionParamsDTO } from '../DTO/collection.dto'
+import { CreateIndexDTO, IndexParamsDTO } from './DTO/indexes.dto'
+import { IndexesService } from './indexes.service'
 
 @Controller({
   version: ['1'],

@@ -6,22 +6,22 @@ export class TopicModel extends BaseModel {
   /**
    * The name of the topic.
    */
-  @Expose() name: string = '' // Default to empty string
+  @Expose() name = '' // Default to empty string
 
   /**
    * Total count of email subscribers subscribed to the topic.
    */
-  @Expose() emailTotal: number = 0 // Default to 0
+  @Expose() emailTotal = 0 // Default to 0
 
   /**
    * Total count of SMS subscribers subscribed to the topic.
    */
-  @Expose() smsTotal: number = 0 // Default to 0
+  @Expose() smsTotal = 0 // Default to 0
 
   /**
    * Total count of push subscribers subscribed to the topic.
    */
-  @Expose() pushTotal: number = 0 // Default to 0
+  @Expose() pushTotal = 0 // Default to 0
 
   /**
    * Subscribe permissions.

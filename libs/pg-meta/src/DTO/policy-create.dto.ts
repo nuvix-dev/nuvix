@@ -1,10 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger'
 import {
-  IsString,
-  IsOptional,
-  IsArray,
   ArrayNotEmpty,
+  IsArray,
   IsEnum,
+  IsOptional,
+  IsString,
 } from 'class-validator'
 
 export class PolicyCreateDTO {

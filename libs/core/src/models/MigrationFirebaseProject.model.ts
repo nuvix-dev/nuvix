@@ -6,12 +6,12 @@ export class MigrationFirebaseProjectModel extends BaseModel {
   /**
    * Project ID.
    */
-  @Expose() projectId: string = ''
+  @Expose() projectId = ''
 
   /**
    * Project display name.
    */
-  @Expose() displayName: string = ''
+  @Expose() displayName = ''
 
   constructor(partial: Partial<MigrationFirebaseProjectModel>) {
     super()

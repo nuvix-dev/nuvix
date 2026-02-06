@@ -14,12 +14,12 @@ class ParamsHelper {
    * and can be accessed directly in query.
    * If the parameter is not found, it returns the default value.
    */
-  get<T extends any = null>(
+  get<T = null>(
     param: string,
     defaultValue = null,
   ): T | string | string[] | undefined {
     let value: string | string[] | undefined
-    let headerParam = `x-nuvix-${param.toLowerCase()}`
+    const headerParam = `x-nuvix-${param.toLowerCase()}`
     // Check in headers
     value = this.req.headers[headerParam]
     if (value) {
@@ -54,12 +54,12 @@ class ParamsHelper {
   private processValue(value: string | string[]): string {
     if (Array.isArray(value)) {
       return value[value.length - 1]!
-    } else if (typeof value === 'string' && value.includes(',')) {
+    }
+    if (typeof value === 'string' && value.includes(',')) {
       const parts = value.split(',')
       return parts[parts.length - 1]!
-    } else {
-      return value
     }
+    return value
   }
 
   private getQueryParams(): Record<string, string | string[]> {

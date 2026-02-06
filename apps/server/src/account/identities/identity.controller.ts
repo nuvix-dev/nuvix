@@ -1,25 +1,26 @@
 import { Controller, Param, UseGuards, UseInterceptors } from '@nestjs/common'
-import { Database } from '@nuvix/db'
-import { Query as Queries } from '@nuvix/db'
+import { Delete, Get } from '@nuvix/core'
 import {
   Auth,
+  AuthDatabase,
   AuthType,
   Namespace,
   QueryFilter,
   Scope,
+  User,
 } from '@nuvix/core/decorators'
-import { AuthDatabase } from '@nuvix/core/decorators'
-import { User } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { ApiInterceptor } from '@nuvix/core/resolvers'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
-import { IdentityService } from './identity.service'
-import { IdentityIdParamDTO } from './DTO/identity.dto'
-import type { IdentitiesDoc, UsersDoc } from '@nuvix/utils/types'
 import { IdentitiesQueryPipe } from '@nuvix/core/pipes/queries'
-import { Delete, Get } from '@nuvix/core'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers'
+import { Database, Query as Queries } from '@nuvix/db'
 import type { IListResponse } from '@nuvix/utils'
+import type { IdentitiesDoc, UsersDoc } from '@nuvix/utils/types'
+import { IdentityIdParamDTO } from './DTO/identity.dto'
+import { IdentityService } from './identity.service'
 
 @Controller({ version: ['1'], path: 'account/identities' })
 @Namespace('account')

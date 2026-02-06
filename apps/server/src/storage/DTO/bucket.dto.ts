@@ -1,18 +1,18 @@
+import { ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger'
+import { IsCustomID, IsUID } from '@nuvix/core/validators'
+import { configuration } from '@nuvix/utils'
 import {
+  ArrayMaxSize,
+  IsArray,
   IsBoolean,
+  IsIn,
   IsInt,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
   Min,
-  IsArray,
-  ArrayMaxSize,
-  IsIn,
-  Max,
 } from 'class-validator'
-import { IsCustomID, IsUID } from '@nuvix/core/validators'
-import { configuration } from '@nuvix/utils'
-import { ApiPropertyOptional, OmitType, PartialType } from '@nestjs/swagger'
 
 export class CreateBucketDTO {
   /**
@@ -43,14 +43,14 @@ export class CreateBucketDTO {
    */
   @IsBoolean()
   @IsOptional()
-  fileSecurity: boolean = false
+  fileSecurity = false
 
   /**
    * Is bucket enabled? When set to \'disabled\', users cannot access the files in this bucket but Server SDKs with and API key can still access the bucket. No files are lost when this is toggled.
    */
   @IsBoolean()
   @IsOptional()
-  enabled: boolean = true
+  enabled = true
 
   /**
    * Maximum file size allowed in bytes.
@@ -79,21 +79,21 @@ export class CreateBucketDTO {
   })
   @IsIn(['none', 'gzip', 'zstd'])
   @IsOptional()
-  compression: string = 'none'
+  compression = 'none'
 
   /**
    * Is encryption enabled?
    */
   @IsBoolean()
   @IsOptional()
-  encryption: boolean = false
+  encryption = false
 
   /**
    * Is virus scanning enabled?
    */
   @IsBoolean()
   @IsOptional()
-  antivirus: boolean = false
+  antivirus = false
 }
 
 export class UpdateBucketDTO extends PartialType(

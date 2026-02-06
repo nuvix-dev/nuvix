@@ -6,13 +6,13 @@ export class PersonalDataValidator extends PasswordValidator {
     private email: string | null = null,
     private name: string | null = null,
     private phone: string | null = null,
-    private strict: boolean = false,
-    allowEmpty: boolean = false,
+    private strict = false,
+    allowEmpty = false,
   ) {
     super(allowEmpty)
   }
 
-  override $description: string =
+  override $description =
     'Password must not include any personal data like your name, email, phone number, etc.'
 
   /**
@@ -44,8 +44,7 @@ export class PersonalDataValidator extends PasswordValidator {
     }
 
     if (
-      this.email &&
-      this.email.includes('@') &&
+      this.email?.includes('@') &&
       password.includes(this.email.split('@')[0]!)
     ) {
       return false

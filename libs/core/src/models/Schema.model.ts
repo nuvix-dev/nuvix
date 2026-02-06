@@ -4,7 +4,7 @@ import { BaseModel } from './base.model'
 @Exclude()
 export class SchemaModel extends BaseModel {
   @Expose()
-  // @ts-ignore
+  // @ts-expect-error
   override get $id() {
     return this.name
   }

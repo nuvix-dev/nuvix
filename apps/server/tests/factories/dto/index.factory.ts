@@ -6,7 +6,7 @@ export function buildCreateIndexDTO(
   overrides: Partial<CreateIndexDTO> = {},
 ): CreateIndexDTO {
   return {
-    key: 'idx_' + faker.string.alphanumeric(8),
+    key: `idx_${faker.string.alphanumeric(8)}`,
     type: IndexType.Key,
     attributes: ['title'],
     orders: [Order.Asc],

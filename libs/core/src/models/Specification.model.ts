@@ -6,22 +6,22 @@ export class SpecificationModel extends BaseModel {
   /**
    * Memory size in MB.
    */
-  @Expose() memory: number = 0 // Default to 0
+  @Expose() memory = 0 // Default to 0
 
   /**
    * Number of CPUs.
    */
-  @Expose() cpus: number = 0 // Default to 0
+  @Expose() cpus = 0 // Default to 0
 
   /**
    * Is size enabled.
    */
-  @Expose() enabled: boolean = false // Default to false
+  @Expose() enabled = false // Default to false
 
   /**
    * Size slug.
    */
-  @Expose() slug: string = '' // Default to empty string
+  @Expose() slug = '' // Default to empty string
 
   constructor(partial: Partial<SpecificationModel>) {
     super()

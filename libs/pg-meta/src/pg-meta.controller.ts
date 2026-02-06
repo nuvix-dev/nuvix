@@ -1,82 +1,85 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
-  Post,
-  Query,
   Param,
   Patch,
-  Delete,
+  Post,
+  Query,
   UseFilters,
   UseGuards,
-  VERSION_NEUTRAL,
   UseInterceptors,
+  VERSION_NEUTRAL,
 } from '@nestjs/common'
-import { Client } from './decorators'
-import { PostgresMeta } from './lib'
-import { DeparseDTO, QueryDTO } from './DTO/query.dto'
-import * as Parser from './lib/Parser'
-import { SchemaQueryDTO } from './DTO/schema.dto'
-import { SchemaIdParamDTO } from './DTO/schema-id.dto'
-import { SchemaCreateDTO } from './DTO/schema-create.dto'
-import { SchemaUpdateDTO } from './DTO/schema-update.dto'
-import { SchemaDeleteQueryDTO } from './DTO/schema-delete.dto'
-import { TableIdParamDTO } from './DTO/table-id.dto'
-import { TableCreateDTO } from './DTO/table-create.dto'
-import { TableUpdateDTO } from './DTO/table-update.dto'
+import { Auth, AuthType, Project } from '@nuvix/core/decorators'
+import { Exception } from '@nuvix/core/extend/exception'
+import { ParseComaStringPipe } from '@nuvix/core/pipes'
+import {
+  AuthGuard,
+  ConsoleInterceptor,
+  ProjectGuard,
+} from '@nuvix/core/resolvers'
+import type { ProjectsDoc } from '@nuvix/utils/types'
 import { ColumnCreateDTO } from './DTO/column-create.dto'
-import { ColumnUpdateDTO } from './DTO/column-update.dto'
-import { ExtensionQueryDTO } from './DTO/extension.dto'
-import { ExtensionNameParamDTO } from './DTO/extension-name.dto'
-import { ExtensionCreateDTO } from './DTO/extension-create.dto'
-import { ExtensionUpdateDTO } from './DTO/extension-update.dto'
-import { ExtensionDeleteQueryDTO } from './DTO/extension-delete.dto'
-import { RoleQueryDTO } from './DTO/role.dto'
-import { RoleIdParamDTO } from './DTO/role-id.dto'
-import { RoleCreateDTO } from './DTO/role-create.dto'
-import { RoleUpdateDTO } from './DTO/role-update.dto'
-import { FunctionQueryDTO } from './DTO/function.dto'
-import { FunctionIdParamDTO } from './DTO/function-id.dto'
-import { FunctionCreateDTO } from './DTO/function-create.dto'
-import { FunctionUpdateDTO } from './DTO/function-update.dto'
-import { IndexQueryDTO } from './DTO/index.dto'
-import { IndexIdParamDTO } from './DTO/index-id.dto'
-import { ViewQueryDTO } from './DTO/view.dto'
-import { ViewIdParamDTO } from './DTO/view-id.dto'
-import { ForeignTableQueryDTO } from './DTO/foreign-table.dto'
-import { ForeignTableIdParamDTO } from './DTO/foreign-table-id.dto'
 import { ColumnPrivilegeQueryDTO } from './DTO/column-privilege.dto'
 import { ColumnPrivilegeGrantDTO } from './DTO/column-privilege-grant.dto'
 import { ColumnPrivilegeRevokeDTO } from './DTO/column-privilege-revoke.dto'
+import { ColumnUpdateDTO } from './DTO/column-update.dto'
+import { ConfigQueryDTO } from './DTO/config.dto'
+import { ExtensionQueryDTO } from './DTO/extension.dto'
+import { ExtensionCreateDTO } from './DTO/extension-create.dto'
+import { ExtensionDeleteQueryDTO } from './DTO/extension-delete.dto'
+import { ExtensionNameParamDTO } from './DTO/extension-name.dto'
+import { ExtensionUpdateDTO } from './DTO/extension-update.dto'
+import { ForeignTableQueryDTO } from './DTO/foreign-table.dto'
+import { ForeignTableIdParamDTO } from './DTO/foreign-table-id.dto'
+import { FunctionQueryDTO } from './DTO/function.dto'
+import { FunctionCreateDTO } from './DTO/function-create.dto'
+import { FunctionIdParamDTO } from './DTO/function-id.dto'
+import { FunctionUpdateDTO } from './DTO/function-update.dto'
+import { GeneratorQueryDTO } from './DTO/generator.dto'
+import { IndexQueryDTO } from './DTO/index.dto'
+import { IndexIdParamDTO } from './DTO/index-id.dto'
 import { MaterializedViewQueryDTO } from './DTO/materialized-view.dto'
 import { MaterializedViewIdParamDTO } from './DTO/materialized-view-id.dto'
-import { ConfigQueryDTO } from './DTO/config.dto'
 import { PolicyQueryDTO } from './DTO/policy.dto'
 import { PolicyCreateDTO } from './DTO/policy-create.dto'
 import { PolicyUpdateDTO } from './DTO/policy-update.dto'
 import { PublicationQueryDTO } from './DTO/publication.dto'
 import { PublicationCreateDTO } from './DTO/publication-create.dto'
 import { PublicationUpdateDTO } from './DTO/publication-update.dto'
+import { DeparseDTO, QueryDTO } from './DTO/query.dto'
+import { RoleQueryDTO } from './DTO/role.dto'
+import { RoleCreateDTO } from './DTO/role-create.dto'
+import { RoleIdParamDTO } from './DTO/role-id.dto'
+import { RoleUpdateDTO } from './DTO/role-update.dto'
+import { SchemaQueryDTO } from './DTO/schema.dto'
+import { SchemaCreateDTO } from './DTO/schema-create.dto'
+import { SchemaDeleteQueryDTO } from './DTO/schema-delete.dto'
+import { SchemaIdParamDTO } from './DTO/schema-id.dto'
+import { SchemaUpdateDTO } from './DTO/schema-update.dto'
+import { TableCreateDTO } from './DTO/table-create.dto'
+import { TableIdParamDTO } from './DTO/table-id.dto'
 import { TablePrivilegeQueryDTO } from './DTO/table-privilege.dto'
 import { TablePrivilegeGrantDTO } from './DTO/table-privilege-grant.dto'
 import { TablePrivilegeRevokeDTO } from './DTO/table-privilege-revoke.dto'
+import { TableUpdateDTO } from './DTO/table-update.dto'
 import { TriggerQueryDTO } from './DTO/trigger.dto'
 import { TriggerCreateDTO } from './DTO/trigger-create.dto'
-import { TriggerUpdateDTO } from './DTO/trigger-update.dto'
 import { TriggerDeleteQueryDTO } from './DTO/trigger-delete.dto'
+import { TriggerUpdateDTO } from './DTO/trigger-update.dto'
 import { TypeQueryDTO } from './DTO/type.dto'
-import { GeneratorQueryDTO } from './DTO/generator.dto'
+import { ViewQueryDTO } from './DTO/view.dto'
+import { ViewIdParamDTO } from './DTO/view-id.dto'
+import { Client } from './decorators'
+import { PgMetaExceptionFilter } from './extra/exception.filter'
+import { PostgresMeta } from './lib'
 import { getGeneratorMetadata } from './lib/generators'
+import * as Parser from './lib/Parser'
+import { PgMetaService } from './pg-meta.service'
 import { apply as applyGoTemplate } from './templates/go'
 import { apply as applySwiftTemplate } from './templates/swift'
-import { PgMetaExceptionFilter } from './extra/exception.filter'
-import { ParseComaStringPipe } from '@nuvix/core/pipes'
-import { Exception } from '@nuvix/core/extend/exception'
-import { AuthGuard, ProjectGuard } from '@nuvix/core/resolvers'
-import { Auth, AuthType, Project } from '@nuvix/core/decorators'
-import { PgMetaService } from './pg-meta.service'
-import type { ProjectsDoc } from '@nuvix/utils/types'
-import { ConsoleInterceptor } from '@nuvix/core/resolvers'
 
 @Controller({ path: 'database', version: ['1', VERSION_NEUTRAL] })
 @UseGuards(ProjectGuard, AuthGuard)
@@ -173,10 +176,10 @@ export class PgMetaController {
   @Get('tables')
   async getTables(
     @Client() client: PostgresMeta,
-    @Query('include_system_schemas') includeSystemSchemas: boolean = false,
-    @Query('limit') limit: number = 0,
-    @Query('offset') offset: number = 0,
-    @Query('include_columns') includeColumns: boolean = false,
+    @Query('include_system_schemas') includeSystemSchemas = false,
+    @Query('limit') limit = 0,
+    @Query('offset') offset = 0,
+    @Query('include_columns') includeColumns = false,
     @Query('included_schemas') includedSchemas?: string,
     @Query('excluded_schemas') excludedSchemas?: string,
   ) {
@@ -263,16 +266,17 @@ export class PgMetaController {
     @Query('included_schemas', ParseComaStringPipe) includedSchemas?: string[],
     @Query('excluded_schemas', ParseComaStringPipe) excludedSchemas?: string[],
   ) {
-    let tableId: number, ordinalPosition!: string
+    let tableId: number
+    let ordinalPosition!: string
     if (id.includes('.')) {
       const [tableIdString, ordinalPositionString] = id.split('.') as [
         string,
         string,
       ]
-      tableId = parseInt(tableIdString)
+      tableId = Number.parseInt(tableIdString, 10)
       ordinalPosition = ordinalPositionString
     } else {
-      tableId = parseInt(id)
+      tableId = Number.parseInt(id, 10)
     }
 
     if (ordinalPosition) {
@@ -285,17 +289,19 @@ export class PgMetaController {
         includedSchemas,
         excludedSchemas,
       })
-      if (data?.[0]) return data[0]
+      if (data?.[0]) {
+        return data[0]
+      }
       throw new Exception(Exception.GENERAL_NOT_FOUND)
-    } else if (/^\.\d+$/.test(ordinalPosition)) {
+    }
+    if (/^\.\d+$/.test(ordinalPosition)) {
       // Get specific column by tableId.ordinalPosition
       const position = ordinalPosition.slice(1)
       const id = `${tableId}.${position}`
       const { data } = await client.columns.retrieve({ id })
       return data
-    } else {
-      throw new Exception(Exception.GENERAL_NOT_FOUND)
     }
+    throw new Exception(Exception.GENERAL_NOT_FOUND)
   }
 
   @Post('columns')

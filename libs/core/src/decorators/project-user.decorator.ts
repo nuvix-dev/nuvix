@@ -1,10 +1,10 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common'
+import { Doc } from '@nuvix/db'
 import { AppMode, Context } from '@nuvix/utils'
 import { ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
-import { Doc } from '@nuvix/db'
 
 export const User = createParamDecorator<any, UsersDoc | null>(
-  (data: unknown, ctx: ExecutionContext): UsersDoc => {
+  (_data: unknown, ctx: ExecutionContext): UsersDoc => {
     const request: NuvixRequest = ctx.switchToHttp().getRequest()
 
     const project: ProjectsDoc = request[Context.Project]

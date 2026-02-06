@@ -1,12 +1,12 @@
 import { OnWorkerEvent, Processor } from '@nestjs/bullmq'
-import { Queue } from './queue'
-import { Job } from 'bullmq'
 import { Logger } from '@nestjs/common'
 import { Database, Doc, DuplicateException } from '@nuvix/db'
 import { QueueFor } from '@nuvix/utils'
-import { CoreService } from '../../core.service.js'
-import type { Projects, ProjectsDoc } from '@nuvix/utils/types'
 import collections from '@nuvix/utils/collections'
+import type { Projects, ProjectsDoc } from '@nuvix/utils/types'
+import { Job } from 'bullmq'
+import { CoreService } from '../../core.service.js'
+import { Queue } from './queue'
 
 @Processor(QueueFor.DATABASE, { concurrency: 10000 })
 export class DatabaseQueue extends Queue {
@@ -18,15 +18,16 @@ export class DatabaseQueue extends Queue {
 
   async process(
     { data, name, ...job }: Job<SchemaQueueOptions, any, SchemaJob>,
-    token?: string,
+    _token?: string,
   ): Promise<void> {
     switch (name) {
-      case SchemaJob.INIT_DOC:
+      case SchemaJob.INIT_DOC: {
         const project = new Doc(
           data.project as unknown as Projects,
         ) as ProjectsDoc
         await this.initDocumentSchema(project, data.schema)
         return
+      }
       default:
         throw Error(`Unknown job type: ${name}`)
     }
@@ -42,18 +43,16 @@ export class DatabaseQueue extends Queue {
     try {
       await dbForProject.create(schema)
 
-      for (const [key, collection] of Object.entries(collections.database)) {
-        if (collection['$collection'] !== Database.METADATA) {
+      for (const [_key, collection] of Object.entries(collections.database)) {
+        if (collection.$collection !== Database.METADATA) {
           continue
         }
 
-        const attributes = collection['attributes'].map(
+        const attributes = collection.attributes.map(
           attribute => new Doc(attribute),
         )
 
-        const indexes = (collection['indexes'] ?? []).map(
-          index => new Doc(index),
-        )
+        const indexes = (collection.indexes ?? []).map(index => new Doc(index))
 
         try {
           await dbForProject.createCollection({

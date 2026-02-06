@@ -6,7 +6,7 @@ export class AlgoBcryptModel extends BaseModel {
   /**
    * Algo type.
    */
-  @Expose() type: string = 'bcrypt'
+  @Expose() type = 'bcrypt'
 
   constructor(partial: Partial<AlgoBcryptModel>) {
     super()

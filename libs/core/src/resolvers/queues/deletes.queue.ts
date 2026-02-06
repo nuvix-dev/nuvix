@@ -1,5 +1,7 @@
 import { Processor } from '@nestjs/bullmq'
-import { Queue } from './queue'
+import { Logger } from '@nestjs/common'
+import { Audit } from '@nuvix/audit'
+import { Database, Doc, IEntity, Query } from '@nuvix/db'
 import {
   configuration,
   DeleteDocumentType,
@@ -7,8 +9,6 @@ import {
   QueueFor,
   Schemas,
 } from '@nuvix/utils'
-import { Job } from 'bullmq'
-import { Database, Doc, IEntity, Query } from '@nuvix/db'
 import type {
   Memberships,
   ProjectsDoc,
@@ -17,15 +17,15 @@ import type {
   TopicsDoc,
   UsersDoc,
 } from '@nuvix/utils/types'
+import { Job } from 'bullmq'
 import { CoreService } from '../../core.service'
+import { Auth } from '../../helpers'
 import {
   deleteIdentities,
   deleteSubscribers,
   deleteTargets,
 } from '../../helpers/misc.helper'
-import { Auth } from '../../helpers'
-import { Audit } from '@nuvix/audit'
-import { Logger } from '@nestjs/common'
+import { Queue } from './queue'
 
 @Processor(QueueFor.DELETES, { concurrency: 1000 })
 export class DeletesQueue extends Queue {
@@ -43,7 +43,7 @@ export class DeletesQueue extends Queue {
     const document = new Doc(job.data.document) as Doc<any>
     const { datetime, hourlyUsageRetentionDatetime, resource, resourceType } =
       job.data
-    let project: ProjectsDoc = new Doc(
+    const project: ProjectsDoc = new Doc(
       job.data.project,
     ) as unknown as ProjectsDoc
 
@@ -116,7 +116,7 @@ export class DeletesQueue extends Queue {
         await this.deleteSessionTargets(project, document)
         break
       default:
-        throw new Error('No delete operation for type: ' + job.name)
+        throw new Error(`No delete operation for type: ${job.name}`)
     }
   }
 
@@ -143,7 +143,7 @@ export class DeletesQueue extends Queue {
         if (project.empty()) {
           await this.dbForPlatform.deleteDocument('schedules', document.getId())
           this.logger.log(
-            'Deleted schedule for deleted project ' + document.get('projectId'),
+            `Deleted schedule for deleted project ${document.get('projectId')}`,
           )
           return
         }
@@ -223,7 +223,7 @@ export class DeletesQueue extends Queue {
         ],
         db,
       ).catch((e: any) => {
-        this.logger.error('Failed to delete subscribers: ' + e.message)
+        this.logger.error(`Failed to delete subscribers: ${e.message}`)
       })
     })
   }
@@ -389,7 +389,7 @@ export class DeletesQueue extends Queue {
     }
 
     await this.withDatabase(project, async db => {
-      await db.deleteCollection('bucket_' + bucket.getSequence())
+      await db.deleteCollection(`bucket_${bucket.getSequence()}`)
     })
 
     const device = this.coreService.getProjectDevice(project.getId())
@@ -404,7 +404,7 @@ export class DeletesQueue extends Queue {
       project,
       async db => {
         const duration =
-          project.get('auths')?.['duration'] ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
+          project.get('auths')?.duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
         const expired = new Date(Date.now() - duration * 1000).toISOString()
 
         await this.deleteByGroup(
@@ -454,7 +454,9 @@ export class DeletesQueue extends Queue {
     callback: (db: Database) => Promise<T>,
     schema = Schemas.Core,
   ) {
-    if (project.getId() === 'console') return callback(this.dbForPlatform)
+    if (project.getId() === 'console') {
+      return callback(this.dbForPlatform)
+    }
 
     let _client: any
     try {

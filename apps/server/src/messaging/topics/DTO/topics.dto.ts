@@ -1,14 +1,7 @@
-import { PartialType } from '@nestjs/swagger'
-import { OmitType } from '@nestjs/swagger'
+import { OmitType, PartialType } from '@nestjs/swagger'
 import { IsCustomID, IsPermissionsArray, IsUID } from '@nuvix/core/validators'
 import { configuration } from '@nuvix/utils'
-import {
-  IsString,
-  IsArray,
-  IsOptional,
-  MaxLength,
-  ArrayMaxSize,
-} from 'class-validator'
+import { IsArray, IsOptional, IsString, MaxLength } from 'class-validator'
 
 export class CreateTopicDTO {
   /**

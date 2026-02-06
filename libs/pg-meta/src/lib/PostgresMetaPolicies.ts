@@ -1,9 +1,9 @@
 import { ident, literal } from 'pg-format'
+import { PgMetaException } from '../extra/execption'
 import { DEFAULT_SYSTEM_SCHEMAS } from './constants'
 import { filterByList } from './helpers'
 import { policiesSql } from './sql/index'
 import { PostgresMetaResult, PostgresPolicy } from './types'
-import { PgMetaException } from '../extra/execption'
 
 export default class PostgresMetaPolicies {
   query: (sql: string) => Promise<PostgresMetaResult<any>>
@@ -73,28 +73,28 @@ export default class PostgresMetaPolicies {
       const { data, error } = await this.query(sql)
       if (error) {
         return { data, error }
-      } else if (data.length === 0) {
-        throw new PgMetaException(`Cannot find a policy with ID ${id}`)
-      } else {
-        return { data: data[0], error }
       }
-    } else if (name && table) {
+      if (data.length === 0) {
+        throw new PgMetaException(`Cannot find a policy with ID ${id}`)
+      }
+      return { data: data[0], error }
+    }
+    if (name && table) {
       const sql = `${policiesSql} WHERE pol.polname = ${literal(name)} AND n.nspname = ${literal(
         schema,
       )} AND c.relname = ${literal(table)};`
       const { data, error } = await this.query(sql)
       if (error) {
         return { data, error }
-      } else if (data.length === 0) {
+      }
+      if (data.length === 0) {
         throw new PgMetaException(
           `Cannot find a policy named ${name} for table ${schema}.${table}`,
         )
-      } else {
-        return { data: data[0], error }
       }
-    } else {
-      throw new PgMetaException('Invalid parameters on policy retrieve')
+      return { data: data[0], error }
     }
+    throw new PgMetaException('Invalid parameters on policy retrieve')
   }
 
   async create({
@@ -151,7 +151,7 @@ CREATE POLICY ${ident(name)} ON ${ident(schema)}.${ident(table)}
       return { data: null, error }
     }
 
-    const alter = `ALTER POLICY ${ident(old!.name)} ON ${ident(old!.schema)}.${ident(old!.table)}`
+    const alter = `ALTER POLICY ${ident(old?.name)} ON ${ident(old?.schema)}.${ident(old?.table)}`
     const nameSql =
       name === undefined ? '' : `${alter} RENAME TO ${ident(name)};`
     const definitionSql =
@@ -177,8 +177,8 @@ CREATE POLICY ${ident(name)} ON ${ident(schema)}.${ident(table)}
     if (error) {
       return { data: null, error }
     }
-    const sql = `DROP POLICY ${ident(policy!.name)} ON ${ident(policy!.schema)}.${ident(
-      policy!.table,
+    const sql = `DROP POLICY ${ident(policy?.name)} ON ${ident(policy?.schema)}.${ident(
+      policy?.table,
     )};`
     {
       const { error } = await this.query(sql)

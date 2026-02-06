@@ -9,10 +9,11 @@ export class ID extends BaseID {
    *
    * @returns {string}
    */
-  public static auto(id?: string, padding: number = 7): string {
+  public static auto(id?: string, padding = 7): string {
     if (id === 'unique()') {
       return ID.unique(padding)
-    } else if (id && id.length > 5) {
+    }
+    if (id && id.length > 5) {
       return ID.custom(id)
     }
     return ID.unique(padding)

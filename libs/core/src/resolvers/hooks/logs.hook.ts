@@ -1,14 +1,14 @@
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
-import { Hook } from '../../server'
 import { Doc } from '@nuvix/db'
 import { Context, QueueFor } from '@nuvix/utils'
-import type { Queue } from 'bullmq'
 import type { ProjectsDoc } from '@nuvix/utils/types'
-import type { ApiLogsQueueJobData } from '../queues/logs.queue'
-import { Auth, type Key } from '../../helpers'
+import type { Queue } from 'bullmq'
 import { AppConfigService } from '../../config.service'
 import { AuthType } from '../../decorators'
+import { Auth, type Key } from '../../helpers'
+import { Hook } from '../../server'
+import type { ApiLogsQueueJobData } from '../queues/logs.queue'
 
 @Injectable()
 export class LogsHook implements Hook {
@@ -33,8 +33,9 @@ export class LogsHook implements Hook {
       project?.getId() === 'console' ||
       Auth.isPlatformActor ||
       skipLogging
-    )
+    ) {
       return next()
+    }
 
     const namespace = req[Context.Namespace]
     const path = req.url.split('?')[0] || '/'
@@ -68,17 +69,17 @@ export class LogsHook implements Hook {
     }
 
     if (!user.empty()) {
-      metadata['user'] = {
+      metadata.user = {
         $id: user.getId(),
         name: user.get('name'),
         email: user.get('email'),
       }
     }
 
-    if (req['error']) {
-      metadata['error'] = req['error']
+    if (req.error) {
+      metadata.error = req.error
     } else if (reply.statusCode >= 400) {
-      metadata['error'] = { message: reply.raw.statusMessage }
+      metadata.error = { message: reply.raw.statusMessage }
     }
 
     await this.logsQueue.add('log', {

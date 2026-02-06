@@ -1,8 +1,8 @@
-import { Exclude, Expose, Transform } from 'class-transformer'
-import { AttributeModel } from './Attribute.model'
 import { AttributeType, OnDelete, RelationSide, RelationType } from '@nuvix/db'
 import { AttributeFormat } from '@nuvix/utils'
 import { Attributes } from '@nuvix/utils/types'
+import { Exclude, Expose, Transform } from 'class-transformer'
+import { AttributeModel } from './Attribute.model'
 
 @Exclude()
 export class AttributeBooleanModel extends AttributeModel {
@@ -45,7 +45,7 @@ export class AttributeEnumModel extends AttributeModel {
 
   @Expose() override type: AttributeType = AttributeType.String
   @Transform(({ obj }) => {
-    return obj.formatOptions?.['elements'] || []
+    return obj.formatOptions?.elements || []
   })
   @Expose()
   declare elements: string[]
@@ -102,7 +102,7 @@ export class AttributeIntegerModel extends AttributeModel {
 
 @Exclude()
 export class AttributeListModel extends AttributeModel {
-  @Expose() total: number = 0
+  @Expose() total = 0
   @Expose() attributes: any[] = []
 
   constructor(partial: Partial<AttributeListModel>) {
@@ -116,32 +116,32 @@ export class AttributeRelationshipModel extends AttributeModel {
   @Expose({ toClassOnly: true }) options: Attributes['options']
 
   @Transform(({ obj }) => {
-    return obj.options?.['relatedCollection'] || null
+    return obj.options?.relatedCollection || null
   })
   @Expose()
   declare relatedCollection: string | null
   @Transform(({ obj }) => {
-    return obj.options?.['relationType'] || RelationType.OneToOne
+    return obj.options?.relationType || RelationType.OneToOne
   })
   @Expose()
   declare relationType: RelationType
   @Transform(({ obj }) => {
-    return obj.options?.['twoWay'] || false
+    return obj.options?.twoWay || false
   })
   @Expose()
   declare twoWay: boolean
   @Transform(({ obj }) => {
-    return obj.options?.['twoWayKey']
+    return obj.options?.twoWayKey
   })
   @Expose()
   declare twoWayKey: string | undefined
   @Transform(({ obj }) => {
-    return obj.options?.['onDelete'] || OnDelete.Restrict
+    return obj.options?.onDelete || OnDelete.Restrict
   })
   @Expose()
   declare onDelete: OnDelete
   @Transform(({ obj }) => {
-    return obj.options?.['side'] || RelationSide.Parent
+    return obj.options?.side || RelationSide.Parent
   })
   @Expose()
   declare side: RelationSide
@@ -156,7 +156,7 @@ export class AttributeRelationshipModel extends AttributeModel {
 @Exclude()
 export class AttributeStringModel extends AttributeModel {
   @Expose() override type: AttributeType = AttributeType.String
-  @Expose() override size: number = 0
+  @Expose() override size = 0
   @Expose() override default: string | null = null
 
   constructor(partial: Partial<AttributeStringModel>) {

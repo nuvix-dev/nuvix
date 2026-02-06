@@ -1,18 +1,18 @@
-import { describe, it, expect, beforeAll } from 'vitest'
-import { getApp } from '../../setup/app'
-import { getApiKeyJsonHeaders, getApiKeyHeaders } from '../../helpers/auth'
+import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { beforeAll, describe, expect, it } from 'vitest'
 import {
   buildCreateEmailMessageDTO,
-  buildCreateSmsMessageDTO,
   buildCreatePushMessageDTO,
+  buildCreateSmsMessageDTO,
 } from '../../factories/dto/message.factory'
+import { getApiKeyHeaders, getApiKeyJsonHeaders } from '../../helpers/auth'
+import { getApp } from '../../setup/app'
 import {
-  parseJson,
-  assertStatusCode,
   assertDocumentShape,
   assertListResponse,
+  assertStatusCode,
+  parseJson,
 } from '../../setup/test-utils'
-import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 
 describe('messaging/messages (integration)', () => {
   let app: NestFastifyApplication

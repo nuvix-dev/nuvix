@@ -1,23 +1,23 @@
+import { BullModule } from '@nestjs/bullmq'
 import {
-  Module,
   type MiddlewareConsumer,
+  Module,
   type NestModule,
 } from '@nestjs/common'
-import { AccountService } from './account.service'
-import { AccountController } from './account.controller'
-import { BullModule } from '@nestjs/bullmq'
-import { QueueFor } from '@nuvix/utils'
-import { IdentityController } from './identities/identity.controller'
-import { MfaController } from './mfa/mfa.controller'
-import { RecoveryController } from './recovery/recovery.controller'
-import { SessionsController } from './sessions/session.controller'
-import { TargetsController } from './targets/targets.controller'
-import { IdentityService } from './identities/identity.service'
-import { MfaService } from './mfa/mfa.service'
-import { RecoveryService } from './recovery/recovery.service'
-import { SessionService } from './sessions/session.service'
-import { TargetsService } from './targets/targets.service'
 import { ApiHook, AuditHook, AuthHook, StatsHook } from '@nuvix/core/resolvers'
+import { QueueFor } from '@nuvix/utils'
+import { AccountController } from './account.controller'
+import { AccountService } from './account.service'
+import { IdentityController } from './identities/identity.controller'
+import { IdentityService } from './identities/identity.service'
+import { MfaController } from './mfa/mfa.controller'
+import { MfaService } from './mfa/mfa.service'
+import { RecoveryController } from './recovery/recovery.controller'
+import { RecoveryService } from './recovery/recovery.service'
+import { SessionsController } from './sessions/session.controller'
+import { SessionService } from './sessions/session.service'
+import { TargetsController } from './targets/targets.controller'
+import { TargetsService } from './targets/targets.service'
 
 @Module({
   imports: [

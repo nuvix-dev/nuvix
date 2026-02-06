@@ -1,5 +1,5 @@
 import { IsUID } from '@nuvix/core/validators'
-import { IsEmail, IsString, IsNotEmpty, IsUrl, Length } from 'class-validator'
+import { IsEmail, IsNotEmpty, IsString, IsUrl, Length } from 'class-validator'
 
 export class CreateRecoveryDTO {
   /**

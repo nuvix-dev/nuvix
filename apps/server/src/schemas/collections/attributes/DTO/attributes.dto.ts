@@ -1,10 +1,16 @@
 import {
+  ApiProperty,
+  IntersectionType,
   OmitType,
   PartialType,
   PickType,
-  IntersectionType,
-  ApiProperty,
 } from '@nestjs/swagger'
+import { IsKey, IsUID } from '@nuvix/core/validators'
+import { OnDelete, RelationType } from '@nuvix/db'
+import {
+  APP_DATABASE_ATTRIBUTE_STRING_MAX_LENGTH,
+  configuration,
+} from '@nuvix/utils'
 import {
   ArrayMaxSize,
   IsArray,
@@ -17,12 +23,6 @@ import {
   Max,
   Min,
 } from 'class-validator'
-import { IsKey, IsUID } from '@nuvix/core/validators'
-import {
-  APP_DATABASE_ATTRIBUTE_STRING_MAX_LENGTH,
-  configuration,
-} from '@nuvix/utils'
-import { OnDelete, RelationType } from '@nuvix/db'
 import { CollectionParamsDTO } from '../../DTO/collection.dto'
 
 export class CreateStringAttributeDTO {
@@ -39,7 +39,7 @@ export class CreateStringAttributeDTO {
   @IsInt()
   @Min(1)
   @Max(APP_DATABASE_ATTRIBUTE_STRING_MAX_LENGTH)
-  size: number = 0
+  size = 0
 
   /**
    * Is attribute required?

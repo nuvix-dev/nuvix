@@ -1,10 +1,10 @@
 import { JwtService } from '@nestjs/jwt'
-import { roles } from '../../src/config'
-import { Key, UserRole } from '../../src/helpers'
 import { Doc } from '@nuvix/db'
 import { ApiKey } from '@nuvix/utils'
 import { Projects } from '@nuvix/utils/types'
-import { describe, it, expect } from 'vitest'
+import { describe, expect, it } from 'vitest'
+import { roles } from '../../src/config'
+import { Key, UserRole } from '../../src/helpers'
 
 describe('Key', () => {
   beforeAll(() => {
@@ -18,7 +18,7 @@ describe('Key', () => {
     const projectId = 'test'
     const usage = false
     const scopes = ['databases.read', 'collections.read', 'documents.read']
-    const roleScopes = roles['apps']?.scopes || []
+    const roleScopes = roles.apps?.scopes || []
 
     const key = await generateKey(projectId, usage, scopes)
     const project = new Doc<Projects>({ $id: projectId })

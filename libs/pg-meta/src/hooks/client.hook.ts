@@ -1,12 +1,11 @@
 import { Injectable, Logger } from '@nestjs/common'
+import { Exception } from '@nuvix/core/extend/exception'
 import { Hook } from '@nuvix/core/server'
-import { PROJECT_DB_CLIENT, Context } from '@nuvix/utils'
-
+import { Doc } from '@nuvix/db'
+import { Context, PROJECT_DB_CLIENT } from '@nuvix/utils'
+import { Client } from 'pg'
 import { CLIENT } from '../constants'
 import { PostgresMeta } from '../lib'
-import { Doc } from '@nuvix/db'
-import { Exception } from '@nuvix/core/extend/exception'
-import { Client } from 'pg'
 
 @Injectable()
 export class ResolveClient implements Hook {

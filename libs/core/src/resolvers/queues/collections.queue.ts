@@ -1,3 +1,6 @@
+import { OnWorkerEvent, Processor } from '@nestjs/bullmq'
+import { Logger } from '@nestjs/common'
+import { Audit } from '@nuvix/audit'
 import {
   AttributeType,
   Authorization,
@@ -6,12 +9,7 @@ import {
   Doc,
   Query,
 } from '@nuvix/db'
-import { Queue } from './queue'
-import { Exception } from '../../extend/exception'
-import { OnWorkerEvent, Processor } from '@nestjs/bullmq'
-import { Job } from 'bullmq'
 import { QueueFor, SchemaMeta } from '@nuvix/utils'
-import { Logger } from '@nestjs/common'
 import type {
   Attributes,
   AttributesDoc,
@@ -22,21 +20,21 @@ import type {
   Projects,
   ProjectsDoc,
 } from '@nuvix/utils/types'
+import { Job } from 'bullmq'
 import { CoreService } from '../../core.service.js'
-import { Audit } from '@nuvix/audit'
+import { Exception } from '../../extend/exception'
+import { Queue } from './queue'
 
 @Processor(QueueFor.COLLECTIONS, { concurrency: 10000 })
 export class CollectionsQueue extends Queue {
   private readonly logger = new Logger(CollectionsQueue.name)
-  private readonly dbForPlatform: Database
   constructor(private readonly coreService: CoreService) {
     super()
-    this.dbForPlatform = coreService.getPlatformDb()
   }
 
   async process(
     job: Job<JobData, unknown, CollectionsJob>,
-    token?: string,
+    _token?: string,
   ): Promise<void> {
     switch (job.name) {
       case CollectionsJob.CREATE_ATTRIBUTE:
@@ -146,33 +144,33 @@ export class CollectionsQueue extends Queue {
             case AttributeType.Relationship:
               relatedCollection = await dbForProject.getDocument(
                 SchemaMeta.collections,
-                options['relatedCollection'],
+                options.relatedCollection,
               )
               if (relatedCollection.empty()) {
                 throw new DatabaseException(
-                  `Collection '${options['relatedCollection']}' not found`,
+                  `Collection '${options.relatedCollection}' not found`,
                 )
               }
               if (
                 !(await dbForProject.createRelationship({
                   collectionId: collection.getId(),
                   relatedCollectionId: relatedCollection.getId(),
-                  type: options['relationType'],
-                  twoWay: options['twoWay'],
+                  type: options.relationType,
+                  twoWay: options.twoWay,
                   id: key,
-                  twoWayKey: options['twoWayKey'],
-                  onDelete: options['onDelete'],
+                  twoWayKey: options.twoWayKey,
+                  onDelete: options.onDelete,
                 }))
               ) {
                 throw new DatabaseException('Failed to create Attribute')
               }
 
-              if (options['twoWay']) {
+              if (options.twoWay) {
                 relatedAttribute = await dbForProject.getDocument(
                   SchemaMeta.attributes,
                   this.getRelatedAttrId(
                     relatedCollection.getSequence(),
-                    options['twoWayKey'],
+                    options.twoWayKey,
                   ),
                 )
                 await dbForProject.updateDocument(
@@ -232,7 +230,7 @@ export class CollectionsQueue extends Queue {
           // this.trigger(database, collection, attribute, projectDoc, projectId, events);
         }
 
-        if (type === AttributeType.Relationship && options['twoWay']) {
+        if (type === AttributeType.Relationship && options.twoWay) {
           await dbForProject.purgeCachedDocument(
             SchemaMeta.collections,
             relatedCollection.getId(),
@@ -290,10 +288,10 @@ export class CollectionsQueue extends Queue {
         try {
           if (status !== Status.FAILED) {
             if (type === AttributeType.Relationship) {
-              if (options['twoWay']) {
+              if (options.twoWay) {
                 relatedCollection = await dbForProject.getDocument(
                   SchemaMeta.collections,
-                  options['relatedCollection'],
+                  options.relatedCollection,
                 )
                 if (relatedCollection.empty()) {
                   throw new DatabaseException('Collection not found')
@@ -302,7 +300,7 @@ export class CollectionsQueue extends Queue {
                   SchemaMeta.attributes,
                   this.getRelatedAttrId(
                     relatedCollection.getSequence(),
-                    options['twoWayKey'],
+                    options.twoWayKey,
                   ),
                 )
                 if (relatedAttribute.empty()) {
@@ -318,8 +316,11 @@ export class CollectionsQueue extends Queue {
               ) {
                 await dbForProject.updateDocument(
                   SchemaMeta.attributes,
-                  relatedAttribute!.getId(),
-                  relatedAttribute!.set('status', Status.STUCK),
+                  relatedAttribute?.getId() as string,
+                  relatedAttribute?.set(
+                    'status',
+                    Status.STUCK,
+                  ) as Doc<Attributes>,
                 )
                 throw new DatabaseException('Failed to delete Relationship')
               }
@@ -376,7 +377,9 @@ export class CollectionsQueue extends Queue {
 
           if (found !== -1) {
             attributes.splice(found, 1)
-            if (orders[found]) orders.splice(found, 1)
+            if (orders[found]) {
+              orders.splice(found, 1)
+            }
 
             if (attributes.length === 0) {
               await dbForProject.deleteDocument(
@@ -642,7 +645,7 @@ export class CollectionsQueue extends Queue {
         )
 
         await this.deleteAuditLogsByResource(
-          '/collection/' + collectionId,
+          `/collection/${collectionId}`,
           project,
           dbForProject,
         )
@@ -654,7 +657,7 @@ export class CollectionsQueue extends Queue {
 
   private async deleteAuditLogsByResource(
     resource: string,
-    project: ProjectsDoc,
+    _project: ProjectsDoc,
     dbForProject: Database,
   ): Promise<void> {
     await this.deleteByGroup(

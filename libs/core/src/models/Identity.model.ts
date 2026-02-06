@@ -6,27 +6,27 @@ export class IdentityModel extends BaseModel {
   /**
    * User ID.
    */
-  @Expose() userId: string = ''
+  @Expose() userId = ''
 
   /**
    * Identity Provider.
    */
-  @Expose() provider: string = ''
+  @Expose() provider = ''
 
   /**
    * ID of the User in the Identity Provider.
    */
-  @Expose() providerUid: string = ''
+  @Expose() providerUid = ''
 
   /**
    * Email of the User in the Identity Provider.
    */
-  @Expose() providerEmail: string = ''
+  @Expose() providerEmail = ''
 
   /**
    * Identity Provider Access Token.
    */
-  @Expose() providerAccessToken: string = ''
+  @Expose() providerAccessToken = ''
 
   /**
    * The date of when the access token expires in ISO 8601 format.
@@ -36,7 +36,7 @@ export class IdentityModel extends BaseModel {
   /**
    * Identity Provider Refresh Token.
    */
-  @Expose() providerRefreshToken: string = ''
+  @Expose() providerRefreshToken = ''
 
   constructor(partial: Partial<IdentityModel>) {
     super()

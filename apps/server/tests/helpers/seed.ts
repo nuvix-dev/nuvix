@@ -16,7 +16,9 @@ export async function ensureCoreProvider(
 
   await Authorization.skip(async () => {
     const existing = await db.getDocument('providers', providerId)
-    if (!existing.empty()) return
+    if (!existing.empty()) {
+      return
+    }
 
     await db.createDocument(
       'providers',

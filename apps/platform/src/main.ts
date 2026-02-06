@@ -3,13 +3,9 @@
  * @author Nuvix-Tech
  * @version 1.0
  */
-import {
-  configureDbFiltersAndFormats,
-  configurePgTypeParsers,
-} from '@nuvix/core'
-import { NuvixAdapter, NuvixFactory } from '@nuvix/core/server'
-import { AppModule } from './app.module'
-import { NestFastifyApplication } from '@nestjs/platform-fastify'
+
+import cookieParser from '@fastify/cookie'
+import fastifyMultipart from '@fastify/multipart'
 import {
   ConsoleLogger,
   LOG_LEVELS,
@@ -18,21 +14,26 @@ import {
   VERSION_NEUTRAL,
   VersioningType,
 } from '@nestjs/common'
+import { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { SwaggerModule } from '@nestjs/swagger'
+import {
+  AppConfigService,
+  configureDbFiltersAndFormats,
+  configurePgTypeParsers,
+} from '@nuvix/core'
+import { ErrorFilter } from '@nuvix/core/filters'
+import { Auth } from '@nuvix/core/helpers'
+import { NuvixAdapter, NuvixFactory } from '@nuvix/core/server'
+import { Authorization, Role, storage } from '@nuvix/db'
 import {
   configuration,
-  parseNumber,
   PROJECT_ROOT,
+  parseNumber,
   validateRequiredConfig,
 } from '@nuvix/utils'
-import { Authorization, Role, storage } from '@nuvix/db'
-import cookieParser from '@fastify/cookie'
-import fastifyMultipart from '@fastify/multipart'
 import QueryString from 'qs'
+import { AppModule } from './app.module'
 import { initSetup } from './utils/initial-setup'
-import { ErrorFilter } from '@nuvix/core/filters'
-import { AppConfigService } from '@nuvix/core'
-import { Auth } from '@nuvix/core/helpers'
-import { SwaggerModule } from '@nestjs/swagger'
 import { openApiSetup } from './utils/open-api'
 
 configurePgTypeParsers()
@@ -79,9 +80,9 @@ export async function bootstrap() {
     },
   )
 
-  // @ts-ignore
+  // @ts-expect-error
   app.register(cookieParser)
-  // @ts-ignore
+  // @ts-expect-error
   app.register(fastifyMultipart, {
     limits: {
       fileSize: 50 * 1024 * 1024, // 50MB
@@ -119,12 +120,14 @@ export async function bootstrap() {
      */
     const origin = req.headers.origin
     res.header('Access-Control-Allow-Origin', origin || '*')
-    if (origin) res.header('Access-Control-Allow-Credentials', 'true')
+    if (origin) {
+      res.header('Access-Control-Allow-Credentials', 'true')
+    }
     done()
   })
 
   app.useStaticAssets({
-    root: PROJECT_ROOT + '/public',
+    root: `${PROJECT_ROOT}/public`,
     prefix: '/public/',
   })
 
@@ -150,7 +153,7 @@ export async function bootstrap() {
   await initSetup(app, config as AppConfigService)
   await SwaggerModule.loadPluginMetadata(async () => {
     try {
-      // @ts-ignore
+      // @ts-nocheck
       return await (await import('./metadata')).default()
     } catch (err) {
       logger.warn('No swagger metadata found, skipping...')

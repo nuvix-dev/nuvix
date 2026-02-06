@@ -6,37 +6,37 @@ export class CurrencyModel extends BaseModel {
   /**
    * Currency symbol.
    */
-  @Expose() symbol: string = ''
+  @Expose() symbol = ''
 
   /**
    * Currency name.
    */
-  @Expose() name: string = ''
+  @Expose() name = ''
 
   /**
    * Currency native symbol.
    */
-  @Expose() symbolNative: string = ''
+  @Expose() symbolNative = ''
 
   /**
    * Number of decimal digits.
    */
-  @Expose() decimalDigits: number = 0
+  @Expose() decimalDigits = 0
 
   /**
    * Currency digit rounding.
    */
-  @Expose() rounding: number = 0
+  @Expose() rounding = 0
 
   /**
    * Currency code in ISO 4217 three-character format.
    */
-  @Expose() code: string = ''
+  @Expose() code = ''
 
   /**
    * Currency plural name.
    */
-  @Expose() namePlural: string = ''
+  @Expose() namePlural = ''
 
   constructor(partial: Partial<CurrencyModel>) {
     super()

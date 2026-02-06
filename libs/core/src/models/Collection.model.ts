@@ -1,8 +1,6 @@
-import { Exclude, Expose, Transform, Type } from 'class-transformer'
-import { BaseModel } from './base.model'
-
-import { IndexModel } from './Index.model'
 import { AttributeType } from '@nuvix/db'
+import { AttributeFormat } from '@nuvix/utils'
+import { Exclude, Expose, Transform, Type } from 'class-transformer'
 import {
   AttributeBooleanModel,
   AttributeDatetimeModel,
@@ -15,19 +13,20 @@ import {
   AttributeStringModel,
   AttributeURLModel,
 } from './Attributes.model'
-import { AttributeFormat } from '@nuvix/utils'
+import { BaseModel } from './base.model'
+import { IndexModel } from './Index.model'
 
 @Exclude()
 export class CollectionModel extends BaseModel {
   /**
    * Schema ID.
    */
-  @Expose() $schema: string = ''
+  @Expose() $schema = ''
 
   /**
    * Collection name.
    */
-  @Expose() name: string = ''
+  @Expose() name = ''
 
   /**
    * Collection enabled. Can be 'enabled' or 'disabled'.

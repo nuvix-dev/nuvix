@@ -1,12 +1,5 @@
 import { Controller, Ip, UseGuards, UseInterceptors } from '@nestjs/common'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { ResponseInterceptor, ApiInterceptor } from '@nuvix/core/resolvers'
-import { Auth, AuthType, Locale, Namespace } from '@nuvix/core/decorators'
 import { Get } from '@nuvix/core'
-import { LocaleService } from './locale.service'
-import { LocaleTranslator, Models } from '@nuvix/core/helpers'
-import type { IListResponse, IResponse } from '@nuvix/utils'
-import type { ILocaleResponse } from './locale.types'
 import {
   continents,
   countries,
@@ -16,6 +9,16 @@ import {
   localeCodes,
   phoneCodes,
 } from '@nuvix/core/config'
+import { Locale, Namespace } from '@nuvix/core/decorators'
+import { LocaleTranslator, Models } from '@nuvix/core/helpers'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers'
+import type { IListResponse, IResponse } from '@nuvix/utils'
+import { LocaleService } from './locale.service'
+import type { ILocaleResponse } from './locale.types'
 
 @Controller({ version: ['1'], path: 'locale' })
 @UseGuards(ProjectGuard)
@@ -125,7 +128,9 @@ export class LocaleController {
         `countries.${name.toLowerCase()}`,
         false,
       )
-      if (!countryName) continue
+      if (!countryName) {
+        continue
+      }
 
       data.push({
         code: `+${code}`,

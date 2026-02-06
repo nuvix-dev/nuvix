@@ -1,11 +1,11 @@
 import {
   type Attribute,
-  Doc,
   AttributeType,
+  CursorValidator,
+  Doc,
+  FilterValidator,
   LimitValidator,
   OffsetValidator,
-  CursorValidator,
-  FilterValidator,
   OrderValidator,
 } from '@nuvix/db'
 import collections from '@nuvix/utils/collections'
@@ -31,7 +31,9 @@ export class BaseQueryPipe extends ParseQueryPipe {
     const attributes: Doc<Attribute>[] = []
 
     for (const attr of collection.attributes) {
-      if (!allowed.includes(attr.key)) continue
+      if (!allowed.includes(attr.key)) {
+        continue
+      }
 
       attributes.push(
         new Doc({

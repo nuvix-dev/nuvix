@@ -6,32 +6,32 @@ export class LogModel extends BaseModel {
   /**
    * Event name.
    */
-  @Expose() event: string = ''
+  @Expose() event = ''
 
   /**
    * User ID.
    */
-  @Expose() userId: string = ''
+  @Expose() userId = ''
 
   /**
    * User Email.
    */
-  @Expose() userEmail: string = ''
+  @Expose() userEmail = ''
 
   /**
    * User Name.
    */
-  @Expose() userName: string = ''
+  @Expose() userName = ''
 
   /**
    * API mode when event triggered.
    */
-  @Expose() mode: string = ''
+  @Expose() mode = ''
 
   /**
    * IP session in use when the session was created.
    */
-  @Expose() ip: string = ''
+  @Expose() ip = ''
 
   /**
    * Log creation date in ISO 8601 format.
@@ -41,72 +41,72 @@ export class LogModel extends BaseModel {
   /**
    * Operating system code name.
    */
-  @Expose() osCode: string = ''
+  @Expose() osCode = ''
 
   /**
    * Operating system name.
    */
-  @Expose() osName: string = ''
+  @Expose() osName = ''
 
   /**
    * Operating system version.
    */
-  @Expose() osVersion: string = ''
+  @Expose() osVersion = ''
 
   /**
    * Client type.
    */
-  @Expose() clientType: string = ''
+  @Expose() clientType = ''
 
   /**
    * Client code name.
    */
-  @Expose() clientCode: string = ''
+  @Expose() clientCode = ''
 
   /**
    * Client name.
    */
-  @Expose() clientName: string = ''
+  @Expose() clientName = ''
 
   /**
    * Client version.
    */
-  @Expose() clientVersion: string = ''
+  @Expose() clientVersion = ''
 
   /**
    * Client engine name.
    */
-  @Expose() clientEngine: string = ''
+  @Expose() clientEngine = ''
 
   /**
    * Client engine version.
    */
-  @Expose() clientEngineVersion: string = ''
+  @Expose() clientEngineVersion = ''
 
   /**
    * Device name.
    */
-  @Expose() deviceName: string = ''
+  @Expose() deviceName = ''
 
   /**
    * Device brand name.
    */
-  @Expose() deviceBrand: string = ''
+  @Expose() deviceBrand = ''
 
   /**
    * Device model name.
    */
-  @Expose() deviceModel: string = ''
+  @Expose() deviceModel = ''
 
   /**
    * Country two-character ISO 3166-1 alpha code.
    */
-  @Expose() countryCode: string = ''
+  @Expose() countryCode = ''
 
   /**
    * Country name.
    */
-  @Expose() countryName: string = ''
+  @Expose() countryName = ''
 
   constructor(partial: Partial<LogModel>) {
     super()

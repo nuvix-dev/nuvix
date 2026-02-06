@@ -1,12 +1,12 @@
-import type { Condition, JsonFieldType } from './types'
-import { Token, TokenType } from './tokenizer'
 import { Exception } from '@nuvix/core/extend/exception'
+import { Token, TokenType } from './tokenizer'
+import type { Condition, JsonFieldType } from './types'
 
 export abstract class BaseParser {
   protected tableName!: string
   protected mainTable!: string
   protected tokens: Token[] = []
-  protected current: number = 0
+  protected current = 0
 
   // Token navigation methods
   protected match(...types: TokenType[]): boolean {
@@ -20,12 +20,16 @@ export abstract class BaseParser {
   }
 
   protected check(type: TokenType): boolean {
-    if (this.isAtEnd()) return false
+    if (this.isAtEnd()) {
+      return false
+    }
     return this.peek().type === type
   }
 
   protected advance(): Token {
-    if (!this.isAtEnd()) this.current++
+    if (!this.isAtEnd()) {
+      this.current++
+    }
     return this.previous()
   }
 
@@ -38,7 +42,9 @@ export abstract class BaseParser {
   }
 
   protected peekNext(): Token | undefined {
-    if (this.current + 1 >= this.tokens.length) return undefined
+    if (this.current + 1 >= this.tokens.length) {
+      return undefined
+    }
     return this.tokens[this.current + 1]
   }
 
@@ -47,7 +53,9 @@ export abstract class BaseParser {
   }
 
   protected consume(type: TokenType, message: string): Token {
-    if (this.check(type)) return this.advance()
+    if (this.check(type)) {
+      return this.advance()
+    }
     this.throwError(message, this.peek())
   }
 
@@ -260,7 +268,6 @@ export class GroupParser extends BaseParser {
       const field = this.fieldToString(this.parseFieldPath())
       fields.push(this.parseFieldString(field))
       if (this.match(TokenType.COMMA)) {
-        continue
       } else {
         break
       }

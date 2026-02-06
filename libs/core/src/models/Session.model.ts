@@ -6,117 +6,117 @@ export class SessionModel extends BaseModel {
   /**
    * User ID.
    */
-  @Expose() userId: string = '' // Default to empty string
+  @Expose() userId = '' // Default to empty string
 
   /**
    * Session expiration date in ISO 8601 format.
    */
-  @Expose() expire: string = '' // Default to empty string
+  @Expose() expire = '' // Default to empty string
 
   /**
    * Session Provider.
    */
-  @Expose() provider: string = '' // Default to empty string
+  @Expose() provider = '' // Default to empty string
 
   /**
    * Session Provider User ID.
    */
-  @Expose() providerUid: string = '' // Default to empty string
+  @Expose() providerUid = '' // Default to empty string
 
   /**
    * Session Provider Access Token.
    */
-  @Expose() providerAccessToken: string = '' // Default to empty string
+  @Expose() providerAccessToken = '' // Default to empty string
 
   /**
    * The date of when the access token expires in ISO 8601 format.
    */
-  @Expose() providerAccessTokenExpiry: string = '' // Default to empty string
+  @Expose() providerAccessTokenExpiry = '' // Default to empty string
 
   /**
    * Session Provider Refresh Token.
    */
-  @Expose() providerRefreshToken: string = '' // Default to empty string
+  @Expose() providerRefreshToken = '' // Default to empty string
 
   /**
    * IP in use when the session was created.
    */
-  @Expose() ip: string = '' // Default to empty string
+  @Expose() ip = '' // Default to empty string
 
   /**
    * Operating system code name.
    */
-  @Expose() osCode: string = '' // Default to empty string
+  @Expose() osCode = '' // Default to empty string
 
   /**
    * Operating system name.
    */
-  @Expose() osName: string = '' // Default to empty string
+  @Expose() osName = '' // Default to empty string
 
   /**
    * Operating system version.
    */
-  @Expose() osVersion: string = '' // Default to empty string
+  @Expose() osVersion = '' // Default to empty string
 
   /**
    * Client type.
    */
-  @Expose() clientType: string = '' // Default to empty string
+  @Expose() clientType = '' // Default to empty string
 
   /**
    * Client code name.
    */
-  @Expose() clientCode: string = '' // Default to empty string
+  @Expose() clientCode = '' // Default to empty string
 
   /**
    * Client name.
    */
-  @Expose() clientName: string = '' // Default to empty string
+  @Expose() clientName = '' // Default to empty string
 
   /**
    * Client version.
    */
-  @Expose() clientVersion: string = '' // Default to empty string
+  @Expose() clientVersion = '' // Default to empty string
 
   /**
    * Client engine name.
    */
-  @Expose() clientEngine: string = '' // Default to empty string
+  @Expose() clientEngine = '' // Default to empty string
 
   /**
    * Client engine version.
    */
-  @Expose() clientEngineVersion: string = '' // Default to empty string
+  @Expose() clientEngineVersion = '' // Default to empty string
 
   /**
    * Device name.
    */
-  @Expose() deviceName: string = '' // Default to empty string
+  @Expose() deviceName = '' // Default to empty string
 
   /**
    * Device brand name.
    */
-  @Expose() deviceBrand: string = '' // Default to empty string
+  @Expose() deviceBrand = '' // Default to empty string
 
   /**
    * Device model name.
    */
-  @Expose() deviceModel: string = '' // Default to empty string
+  @Expose() deviceModel = '' // Default to empty string
 
   /**
    * Country two-character ISO 3166-1 alpha code.
    */
-  @Expose() countryCode: string = '' // Default to empty string
+  @Expose() countryCode = '' // Default to empty string
 
   /**
    * Country name.
    */
-  @Expose() countryName: string = '' // Default to empty string
+  @Expose() countryName = '' // Default to empty string
 
   /**
    * Returns true if this is the current user session.
    */
-  @Expose() current: boolean = false // Default to false
+  @Expose() current = false // Default to false
 
   /**
    * Returns a list of active session factors.
@@ -126,12 +126,12 @@ export class SessionModel extends BaseModel {
   /**
    * Secret used to authenticate the user.
    */
-  @Expose() secret: string = '' // Default to empty string
+  @Expose() secret = '' // Default to empty string
 
   /**
    * Most recent date when the session successfully passed MFA challenge.
    */
-  @Expose() mfaUpdatedAt: string = '' // Default to empty string
+  @Expose() mfaUpdatedAt = '' // Default to empty string
 
   constructor(partial: Partial<SessionModel>) {
     super()

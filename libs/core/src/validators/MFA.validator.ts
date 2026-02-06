@@ -1,7 +1,7 @@
+import { Doc } from '@nuvix/db'
+import { type AuthenticatorsDoc, UsersDoc } from '@nuvix/utils/types'
 import { TOTP as BaseTOTP, NobleCryptoPlugin, ScureBase32Plugin } from 'otplib'
 import { Auth } from '../helpers/auth.helper'
-import { Doc } from '@nuvix/db'
-import { UsersDoc, type AuthenticatorsDoc } from '@nuvix/utils/types'
 
 enum MfaType {
   TOTP = 'totp',
@@ -22,8 +22,6 @@ abstract class Mfa {
   public static readonly PHONE = 'phone'
   public static readonly RECOVERY_CODE = 'recoveryCode'
 
-  constructor() {}
-
   public setLabel(label: string): this {
     this.options.label = label
     return this
@@ -39,7 +37,7 @@ abstract class Mfa {
   }
 
   public getIssuer(): string | null {
-    return this.options['issuer'] || null
+    return this.options.issuer || null
   }
 
   public getSecret(): string {
@@ -63,10 +61,7 @@ abstract class Mfa {
     })
   }
 
-  public static generateBackupCodes(
-    length: number = 10,
-    total: number = 6,
-  ): string[] {
+  public static generateBackupCodes(length = 10, total = 6): string[] {
     const backups: string[] = []
 
     for (let i = 0; i < total; i++) {
@@ -78,10 +73,6 @@ abstract class Mfa {
 }
 
 class TOTP extends Mfa {
-  constructor() {
-    super()
-  }
-
   public static getAuthenticatorFromUser(
     user: UsersDoc,
   ): AuthenticatorsDoc | null {

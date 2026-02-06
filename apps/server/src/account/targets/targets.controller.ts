@@ -6,24 +6,30 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-
-import { Database } from '@nuvix/db'
-import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
-import { AuthDatabase, Project } from '@nuvix/core/decorators'
-import { User } from '@nuvix/core/decorators'
+import { Delete, Post, Put } from '@nuvix/core'
+import {
+  Auth,
+  AuthDatabase,
+  AuthType,
+  Namespace,
+  Project,
+  User,
+} from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { ApiInterceptor } from '@nuvix/core/resolvers'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
-import { TargetsService } from './targets.service'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers'
+import { Database } from '@nuvix/db'
+import type { IResponse } from '@nuvix/utils'
+import type { ProjectsDoc, TargetsDoc, UsersDoc } from '@nuvix/utils/types'
 import {
   CreatePushTargetDTO,
   TargetIdParamDTO,
   UpdatePushTargetDTO,
 } from './DTO/target.dto'
-import type { ProjectsDoc, TargetsDoc, UsersDoc } from '@nuvix/utils/types'
-import { Delete, Post, Put } from '@nuvix/core'
-import type { IResponse } from '@nuvix/utils'
+import { TargetsService } from './targets.service'
 
 @Controller({ version: ['1'], path: 'account/targets' })
 @Namespace('account')

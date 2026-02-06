@@ -6,22 +6,22 @@ export class AlgoArgon2Model extends BaseModel {
   /**
    * Algo type.
    */
-  @Expose() type: string = 'argon2'
+  @Expose() type = 'argon2'
 
   /**
    * Memory used to compute hash.
    */
-  @Expose() memoryCost: number = 65536
+  @Expose() memoryCost = 65536
 
   /**
    * Amount of time consumed to compute hash.
    */
-  @Expose() timeCost: number = 4
+  @Expose() timeCost = 4
 
   /**
    * Number of threads used to compute hash.
    */
-  @Expose() threads: number = 3
+  @Expose() threads = 3
 
   constructor(partial: Partial<AlgoArgon2Model>) {
     super()

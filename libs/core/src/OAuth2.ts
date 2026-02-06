@@ -94,7 +94,7 @@ export abstract class OAuth2 {
    */
   public async getAccessToken(code: string): Promise<string> {
     const tokens = await this.getTokens(code)
-    return tokens['access_token'] || ''
+    return tokens.access_token || ''
   }
 
   /**
@@ -102,7 +102,7 @@ export abstract class OAuth2 {
    */
   public async getRefreshToken(code: string): Promise<string> {
     const tokens = await this.getTokens(code)
-    return tokens['refresh_token'] || ''
+    return tokens.refresh_token || ''
   }
 
   /**
@@ -110,7 +110,7 @@ export abstract class OAuth2 {
    */
   public async getAccessTokenExpiry(code: string): Promise<number> {
     const tokens = await this.getTokens(code)
-    return tokens['expires_in'] || 0
+    return tokens.expires_in || 0
   }
 
   /**
@@ -127,7 +127,7 @@ export abstract class OAuth2 {
     method: string,
     url: string,
     headers: Record<string, string> = {},
-    payload: string = '',
+    payload = '',
   ): Promise<Record<string, unknown>> {
     const requestOptions: RequestInit = {
       method,
@@ -153,14 +153,10 @@ export abstract class OAuth2 {
  * OAuth2Error class for handling OAuth2 errors
  */
 export class OAuth2Error extends Exception {
-  protected error: string = ''
-  protected errorDescription: string = ''
+  protected error = ''
+  protected errorDescription = ''
 
-  constructor(
-    response: Record<string, unknown>,
-    code: number = 0,
-    previous?: Error,
-  ) {
+  constructor(response: Record<string, unknown>, code = 0, previous?: Error) {
     super()
     this.message = JSON.stringify(response)
     try {
@@ -193,7 +189,7 @@ export class OAuth2Error extends Exception {
       if (previous) {
         this.cause = previous
       }
-    } catch (e) {
+    } catch (_e) {
       // If parsing fails, keep the original response as the message
     }
   }

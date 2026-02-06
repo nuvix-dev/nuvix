@@ -5,18 +5,20 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { MfaService } from './mfa.service'
-import { MfaTypeParamDTO, UpdateMfaStatusDTO } from './DTO/mfa.dto'
-import { Models } from '@nuvix/core/helpers'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
-import { Namespace, AuthDatabase, Auth, AuthType } from '@nuvix/core/decorators'
-import type { Database, Doc } from '@nuvix/db'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { ApiInterceptor } from '@nuvix/core/resolvers'
-import { UserParamDTO } from '../DTO/user.dto'
 import { Delete, Get, Patch, Put } from '@nuvix/core'
+import { Auth, AuthDatabase, AuthType, Namespace } from '@nuvix/core/decorators'
+import { Models } from '@nuvix/core/helpers'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers'
+import type { Database, Doc } from '@nuvix/db'
 import { IResponse } from '@nuvix/utils'
 import { UsersDoc } from '@nuvix/utils/types'
+import { UserParamDTO } from '../DTO/user.dto'
+import { MfaTypeParamDTO, UpdateMfaStatusDTO } from './DTO/mfa.dto'
+import { MfaService } from './mfa.service'
 
 @Namespace('users')
 @Controller({ version: ['1'], path: 'users/:userId/mfa' })

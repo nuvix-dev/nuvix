@@ -72,13 +72,13 @@ export enum QueueFor {
 
 export const EVENT_DELIMITER = '.'
 export enum AppEvents {
-  USER_CREATE = 'user' + EVENT_DELIMITER + 'create',
-  USER_DELETE = 'user' + EVENT_DELIMITER + 'delete',
-  USER_UPDATE = 'user' + EVENT_DELIMITER + 'update',
-  SESSION_CREATE = 'session' + EVENT_DELIMITER + 'create',
-  SESSION_DELETE = 'session' + EVENT_DELIMITER + 'delete',
-  SESSIONS_DELETE = 'sessions' + EVENT_DELIMITER + 'delete',
-  SESSION_UPDATE = 'session' + EVENT_DELIMITER + 'update',
+  USER_CREATE = `user${EVENT_DELIMITER}create`,
+  USER_DELETE = `user${EVENT_DELIMITER}delete`,
+  USER_UPDATE = `user${EVENT_DELIMITER}update`,
+  SESSION_CREATE = `session${EVENT_DELIMITER}create`,
+  SESSION_DELETE = `session${EVENT_DELIMITER}delete`,
+  SESSIONS_DELETE = `sessions${EVENT_DELIMITER}delete`,
+  SESSION_UPDATE = `session${EVENT_DELIMITER}update`,
 }
 
 export enum MetricFor {
@@ -298,25 +298,25 @@ export enum MetricPeriod {
   YEAR = '1y',
 }
 
-export class MessageStatus {
+export enum MessageStatus {
   /**
    * Message that is not ready to be sent
    */
-  static readonly DRAFT = 'draft'
+  DRAFT = 'draft',
   /**
    * Scheduled to be sent for a later time
    */
-  static readonly SCHEDULED = 'scheduled'
+  SCHEDULED = 'scheduled',
   /**
    * Picked up by the worker and starting to send
    */
-  static readonly PROCESSING = 'processing'
+  PROCESSING = 'processing',
   /**
    * Sent without errors
    */
-  static readonly SENT = 'sent'
+  SENT = 'sent',
   /**
    * Sent with some errors
    */
-  static readonly FAILED = 'failed'
+  FAILED = 'failed',
 }

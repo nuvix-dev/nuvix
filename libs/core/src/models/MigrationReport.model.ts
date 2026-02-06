@@ -6,47 +6,47 @@ export class MigrationReportModel extends BaseModel {
   /**
    * Number of users to be migrated.
    */
-  @Expose() users: number = 0 // Default to 0
+  @Expose() users = 0 // Default to 0
 
   /**
    * Number of teams to be migrated.
    */
-  @Expose() teams: number = 0 // Default to 0
+  @Expose() teams = 0 // Default to 0
 
   /**
    * Number of databases to be migrated.
    */
-  @Expose() databases: number = 0 // Default to 0
+  @Expose() databases = 0 // Default to 0
 
   /**
    * Number of documents to be migrated.
    */
-  @Expose() documents: number = 0 // Default to 0
+  @Expose() documents = 0 // Default to 0
 
   /**
    * Number of files to be migrated.
    */
-  @Expose() files: number = 0 // Default to 0
+  @Expose() files = 0 // Default to 0
 
   /**
    * Number of buckets to be migrated.
    */
-  @Expose() buckets: number = 0 // Default to 0
+  @Expose() buckets = 0 // Default to 0
 
   /**
    * Number of functions to be migrated.
    */
-  @Expose() functions: number = 0 // Default to 0
+  @Expose() functions = 0 // Default to 0
 
   /**
    * Size of files to be migrated in MB.
    */
-  @Expose() size: number = 0 // Default to 0
+  @Expose() size = 0 // Default to 0
 
   /**
    * Version of the nuvix instance to be migrated.
    */
-  @Expose() version: string = '' // Default to empty string
+  @Expose() version = '' // Default to empty string
 
   constructor(partial: Partial<MigrationReportModel>) {
     super()

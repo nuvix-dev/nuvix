@@ -7,34 +7,40 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-
-import { Database, type Doc } from '@nuvix/db'
-import { Auth, AuthType, Namespace, Scope } from '@nuvix/core/decorators'
-import { Locale } from '@nuvix/core/decorators'
-import { AuthDatabase, Project } from '@nuvix/core/decorators'
-import { User } from '@nuvix/core/decorators'
-import { Exception } from '@nuvix/core/extend/exception'
-import { LocaleTranslator } from '@nuvix/core/helpers'
-import { Models } from '@nuvix/core/helpers'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { ApiInterceptor } from '@nuvix/core/resolvers'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
-import { MfaService } from './mfa.service'
+import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
 import {
-  CreateMfaChallengeDTO,
-  MfaAuthenticatorTypeParamDTO,
-  UpdateAccountMfaDTO,
-  VerifyMfaChallengeDTO,
-  VerifyMfaAuthenticatorDTO,
-} from './DTO/mfa.dto'
+  Auth,
+  AuthDatabase,
+  AuthType,
+  Locale,
+  Namespace,
+  Project,
+  Scope,
+  User,
+} from '@nuvix/core/decorators'
+import { Exception } from '@nuvix/core/extend/exception'
+import { LocaleTranslator, Models } from '@nuvix/core/helpers'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers'
+import { Database, type Doc } from '@nuvix/db'
+import type { IResponse } from '@nuvix/utils'
 import type {
   ChallengesDoc,
   ProjectsDoc,
   SessionsDoc,
   UsersDoc,
 } from '@nuvix/utils/types'
-import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
-import type { IResponse } from '@nuvix/utils'
+import {
+  CreateMfaChallengeDTO,
+  MfaAuthenticatorTypeParamDTO,
+  UpdateAccountMfaDTO,
+  VerifyMfaAuthenticatorDTO,
+  VerifyMfaChallengeDTO,
+} from './DTO/mfa.dto'
+import { MfaService } from './mfa.service'
 
 @Controller({ version: ['1'], path: 'account/mfa' })
 @Namespace('account')

@@ -6,17 +6,17 @@ export class MetricBreakdownModel extends BaseModel {
   /**
    * Resource ID.
    */
-  @Expose() resourceId: string = ''
+  @Expose() resourceId = ''
 
   /**
    * Resource name.
    */
-  @Expose() name: string = ''
+  @Expose() name = ''
 
   /**
    * The value of this metric at the timestamp.
    */
-  @Expose() value: number = 0 // Default to 0
+  @Expose() value = 0 // Default to 0
 
   constructor(partial: Partial<MetricBreakdownModel>) {
     super()

@@ -15,7 +15,7 @@ export class Hostname implements Validator {
   /**
    * Get description of the validator
    */
-  $description: string =
+  $description =
     'Value must be a valid hostname without path, port and protocol.'
 
   /**

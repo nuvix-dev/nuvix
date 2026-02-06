@@ -1,7 +1,7 @@
 import { applyDecorators, UseGuards } from '@nestjs/common'
-import { ThrottlerGuard } from '../resolvers/guards'
 import { RouteConfig } from '@nestjs/platform-fastify'
 import { RouteContext, type ThrottleOptions } from '@nuvix/utils'
+import { ThrottlerGuard } from '../resolvers/guards'
 
 export function Throttle(limit: number): any
 export function Throttle(options: ThrottleOptions): any

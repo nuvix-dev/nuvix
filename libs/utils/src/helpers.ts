@@ -1,7 +1,7 @@
-import * as crypto from 'crypto'
-import * as fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import * as crypto from 'node:crypto'
+import * as fs from 'node:fs'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 /**
  *  Generates a MD5 hash of the given input string
@@ -35,8 +35,9 @@ export function fnv1a128(str: string): string {
  * @throws Error if project root directory cannot be found
  */
 export function findProjectRoot(): string {
-  if (process.env['NODE_ENV'] !== 'production')
+  if (process.env.NODE_ENV !== 'production') {
     return path.join(process.cwd(), '../../')
+  }
   try {
     // Start from current file's directory
     let currentDir: string
@@ -78,15 +79,19 @@ export const parseNumber = (
   value: string | undefined,
   defaultValue: number,
 ) => {
-  if (!value) return defaultValue
-  const parsed = parseInt(value, 10)
-  return isNaN(parsed) ? defaultValue : parsed
+  if (!value) {
+    return defaultValue
+  }
+  const parsed = Number.parseInt(value, 10)
+  return Number.isNaN(parsed) ? defaultValue : parsed
 }
 
 export const parseBoolean = (
   value: string | undefined,
   defaultValue: boolean,
 ) => {
-  if (!value) return defaultValue
+  if (!value) {
+    return defaultValue
+  }
   return value.toLowerCase() === 'true'
 }

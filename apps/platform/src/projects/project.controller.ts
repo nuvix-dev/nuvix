@@ -1,19 +1,20 @@
 import {
   Controller,
-  UseInterceptors,
-  Query,
   ParseDatePipe,
-  UseGuards,
+  Query,
   Req,
+  UseGuards,
+  UseInterceptors,
   VERSION_NEUTRAL,
 } from '@nestjs/common'
-import { Authorization, type Database } from '@nuvix/db'
+import { Get } from '@nuvix/core'
 import {
   Auth,
   AuthType,
   ProjectDatabase,
   ProjectPg,
 } from '@nuvix/core/decorators'
+import { Exception } from '@nuvix/core/extend/exception'
 import { Models } from '@nuvix/core/helpers'
 import {
   ConsoleInterceptor,
@@ -21,9 +22,9 @@ import {
   ResponseInterceptor,
   StatsQueue,
 } from '@nuvix/core/resolvers'
-import { MetricFor, MetricPeriod, Schemas } from '@nuvix/utils'
-import { Get } from '@nuvix/core'
+import { Authorization, type Database } from '@nuvix/db'
 import { DataSource } from '@nuvix/pg'
+import { MetricFor, MetricPeriod, Schemas } from '@nuvix/utils'
 import {
   ASTToQueryBuilder,
   Expression,
@@ -34,15 +35,12 @@ import {
   SelectNode,
   SelectParser,
 } from '@nuvix/utils/query'
-import { Exception } from '@nuvix/core/extend/exception'
 
 @Controller({ version: ['1', VERSION_NEUTRAL], path: 'project' })
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 @UseGuards(ProjectGuard)
 @Auth([AuthType.ADMIN])
 export class ProjectController {
-  constructor() {}
-
   @Get('usage', {
     summary: 'Get project usage stats',
     scopes: 'project.read',
@@ -293,7 +291,7 @@ export class ProjectController {
 
     try {
       return await qb
-    } catch (e) {
+    } catch (_e) {
       throw new Exception(Exception.GENERAL_SERVER_ERROR)
     }
   }

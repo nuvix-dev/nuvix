@@ -1,7 +1,6 @@
-import { ExceptionFilter, Catch, ArgumentsHost, Logger } from '@nestjs/common'
-
-import { PgMetaException } from './execption'
+import { ArgumentsHost, Catch, ExceptionFilter, Logger } from '@nestjs/common'
 import { Exception } from '@nuvix/core/extend/exception'
+import { PgMetaException } from './execption'
 
 @Catch(PgMetaException)
 export class PgMetaExceptionFilter implements ExceptionFilter {
@@ -12,7 +11,7 @@ export class PgMetaExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<NuvixRes>()
     const request = ctx.getRequest<NuvixRequest>()
 
-    let status = getStatusCodeFromError(exception)
+    const status = getStatusCodeFromError(exception)
 
     this.logger.error(
       `${request.method} ${request.url}`,
@@ -29,16 +28,21 @@ export class PgMetaExceptionFilter implements ExceptionFilter {
 
     // Add useful debug info while excluding sensitive information
     if (exception.extra) {
-      if (exception.extra.formattedError)
-        responseBody['formattedError'] = exception.extra.formattedError
-      if (exception.extra['severity'])
-        responseBody['severity'] = exception.extra['severity']
-      if (exception.extra['position'])
-        responseBody['position'] = exception.extra['position']
-      if (exception.extra['routine'])
-        responseBody['routine'] = exception.extra['routine']
-      if (exception.extra['hint'])
-        responseBody['hint'] = exception.extra['hint']
+      if (exception.extra.formattedError) {
+        responseBody.formattedError = exception.extra.formattedError
+      }
+      if (exception.extra.severity) {
+        responseBody.severity = exception.extra.severity
+      }
+      if (exception.extra.position) {
+        responseBody.position = exception.extra.position
+      }
+      if (exception.extra.routine) {
+        responseBody.routine = exception.extra.routine
+      }
+      if (exception.extra.hint) {
+        responseBody.hint = exception.extra.hint
+      }
     }
 
     response.status(status).send(responseBody)
@@ -51,9 +55,11 @@ const getStatusCodeFromError = (
 ): number => {
   if (error.message === 'Connection terminated due to connection timeout') {
     return 504
-  } else if (error.message === 'sorry, too many clients already') {
+  }
+  if (error.message === 'sorry, too many clients already') {
     return 503
-  } else if (error.message === 'Query read timeout') {
+  }
+  if (error.message === 'Query read timeout') {
     return 408
   }
   return defaultResponseCode

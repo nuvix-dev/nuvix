@@ -1,4 +1,6 @@
 import { OmitType, PartialType } from '@nestjs/swagger'
+import { IsCustomID, IsUID } from '@nuvix/core/validators'
+import { configuration } from '@nuvix/utils'
 import {
   ArrayMaxSize,
   IsArray,
@@ -7,8 +9,6 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator'
-import { IsCustomID, IsUID } from '@nuvix/core/validators'
-import { configuration } from '@nuvix/utils'
 
 export class CreateCollectionDTO {
   /**
@@ -38,14 +38,14 @@ export class CreateCollectionDTO {
    */
   @IsOptional()
   @IsBoolean()
-  documentSecurity: boolean = false
+  documentSecurity = false
 
   /**
    * Is collection enabled? When set to \'disabled\', users cannot access the collection but Server SDKs with and API key can still read and write to the collection. No data is lost when this is toggled.
    */
   @IsOptional()
   @IsBoolean()
-  enabled: boolean = true
+  enabled = true
 }
 
 export class UpdateCollectionDTO extends PartialType(

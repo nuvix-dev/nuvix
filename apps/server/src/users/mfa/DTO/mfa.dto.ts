@@ -1,6 +1,6 @@
+import { MfaType } from '@nuvix/core/validators'
 import { IsBoolean, IsIn, IsNotEmpty } from 'class-validator'
 import { UserParamDTO } from '../../DTO/user.dto'
-import { MfaType } from '@nuvix/core/validators'
 
 export class UpdateMfaStatusDTO {
   /**

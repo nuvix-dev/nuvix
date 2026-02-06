@@ -80,7 +80,7 @@ const errorMapArray: [string, ErrorMapEntry][] = [
   // Custom logic for insufficient privilege
   [
     '42501',
-    (err: DatabaseError, authed: boolean) =>
+    (_err: DatabaseError, authed: boolean) =>
       authed
         ? {
             status: 403,
@@ -224,7 +224,7 @@ const CLASS_ERROR_MAP: Map<
  */
 export function transformPgError(
   error: unknown,
-  authed: boolean = true,
+  authed = true,
 ): PgTransformedError | null {
   if (!(error instanceof DatabaseError)) {
     return null

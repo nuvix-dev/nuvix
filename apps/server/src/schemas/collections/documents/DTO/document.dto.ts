@@ -1,6 +1,6 @@
 import { OmitType, PartialType } from '@nestjs/swagger'
-import { IsOptional, IsArray, IsObject } from 'class-validator'
 import { IsCustomID, IsUID } from '@nuvix/core/validators'
+import { IsArray, IsObject, IsOptional } from 'class-validator'
 import { CollectionParamsDTO } from '../../DTO/collection.dto'
 
 export class CreateDocumentDTO {

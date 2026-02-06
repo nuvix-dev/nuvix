@@ -6,17 +6,17 @@ export class TemplateFunctionModel extends BaseModel {
   /**
    * Function Template Icon.
    */
-  @Expose() icon: string = '' // Default to empty string
+  @Expose() icon = '' // Default to empty string
 
   /**
    * Function Template Name.
    */
-  @Expose() name: string = '' // Default to empty string
+  @Expose() name = '' // Default to empty string
 
   /**
    * Function Template Tagline.
    */
-  @Expose() tagline: string = '' // Default to empty string
+  @Expose() tagline = '' // Default to empty string
 
   /**
    * Execution permissions.
@@ -31,12 +31,12 @@ export class TemplateFunctionModel extends BaseModel {
   /**
    * Function execution schedule in CRON format.
    */
-  @Expose() cron: string = '' // Default to empty string
+  @Expose() cron = '' // Default to empty string
 
   /**
    * Function execution timeout in seconds.
    */
-  @Expose() timeout: number = 15 // Default to 15 seconds
+  @Expose() timeout = 15 // Default to 15 seconds
 
   /**
    * Function use cases.
@@ -51,27 +51,27 @@ export class TemplateFunctionModel extends BaseModel {
   /**
    * Function Template Instructions.
    */
-  @Expose() instructions: string = '' // Default to empty string
+  @Expose() instructions = '' // Default to empty string
 
   /**
    * VCS (Version Control System) Provider.
    */
-  @Expose() vcsProvider: string = '' // Default to empty string
+  @Expose() vcsProvider = '' // Default to empty string
 
   /**
    * VCS (Version Control System) Repository ID.
    */
-  @Expose() providerRepositoryId: string = '' // Default to empty string
+  @Expose() providerRepositoryId = '' // Default to empty string
 
   /**
    * VCS (Version Control System) Owner.
    */
-  @Expose() providerOwner: string = '' // Default to empty string
+  @Expose() providerOwner = '' // Default to empty string
 
   /**
    * VCS (Version Control System) branch version (tag).
    */
-  @Expose() providerVersion: string = '' // Default to empty string
+  @Expose() providerVersion = '' // Default to empty string
 
   /**
    * Function variables.

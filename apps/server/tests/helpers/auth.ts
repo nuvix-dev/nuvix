@@ -1,8 +1,8 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { ApiKey, configuration } from '@nuvix/utils'
 import { buildCreateAccountDTO } from '../factories/dto/account.factory'
 import { buildCreateEmailSessionDTO } from '../factories/dto/session.factory'
 import { parseJson } from '../setup/test-utils'
-import { ApiKey, configuration } from '@nuvix/utils'
 
 /**
  * Creates a new user account and establishes a session.
@@ -75,7 +75,7 @@ export function getApiKeyHeaders(): Record<string, string> {
     )
   }
   return {
-    'x-nuvix-key': ApiKey.STANDARD + '_' + apiKey,
+    'x-nuvix-key': `${ApiKey.STANDARD}_${apiKey}`,
   }
 }
 

@@ -3,11 +3,11 @@ import type { Validator } from '@nuvix/db'
 export class PhoneValidator implements Validator {
   private allowEmpty: boolean
 
-  constructor(allowEmpty: boolean = false) {
+  constructor(allowEmpty = false) {
     this.allowEmpty = allowEmpty
   }
 
-  $description: string =
+  $description =
     "Phone number must start with a '+' and can have a maximum of fifteen digits."
 
   /**

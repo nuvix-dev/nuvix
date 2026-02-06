@@ -1,16 +1,15 @@
+import { BullModule } from '@nestjs/bullmq'
 import { Global, Module, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
-
-import { configuration } from '@nuvix/utils'
+import { ConfigModule } from '@nestjs/config'
+import { EventEmitterModule } from '@nestjs/event-emitter'
 import { Database, StructureValidator } from '@nuvix/db'
+import { configuration } from '@nuvix/utils'
+import { filters, formats } from '@nuvix/utils/database'
 import pg from 'pg'
 import { parse as parseArray } from 'postgres-array'
-import { filters, formats } from '@nuvix/utils/database'
 import { AppConfigService } from './config.service.js'
 import { CoreService } from './core.service.js'
-import { ConfigModule } from '@nestjs/config'
 import { RatelimitService } from './rate-limit.service.js'
-import { BullModule } from '@nestjs/bullmq'
-import { EventEmitterModule } from '@nestjs/event-emitter'
 
 @Global()
 @Module({
@@ -78,9 +77,9 @@ export function configurePgTypeParsers() {
     return Number.isSafeInteger(asNumber) ? asNumber : x
   })
 
-  types.setTypeParser(types.builtins.NUMERIC, parseFloat)
-  types.setTypeParser(types.builtins.FLOAT4, parseFloat)
-  types.setTypeParser(types.builtins.FLOAT8, parseFloat)
+  types.setTypeParser(types.builtins.NUMERIC, Number.parseFloat)
+  types.setTypeParser(types.builtins.FLOAT4, Number.parseFloat)
+  types.setTypeParser(types.builtins.FLOAT8, Number.parseFloat)
   types.setTypeParser(types.builtins.BOOL, val => val === 't')
 
   types.setTypeParser(types.builtins.DATE, x => x)

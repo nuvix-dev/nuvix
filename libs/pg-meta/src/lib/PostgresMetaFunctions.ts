@@ -1,10 +1,10 @@
 import { ident, literal } from 'pg-format'
+import { FunctionCreateDTO } from '../DTO/function-create.dto'
+import { PgMetaException } from '../extra/execption'
 import { DEFAULT_SYSTEM_SCHEMAS } from './constants'
 import { filterByList } from './helpers'
 import { functionsSql } from './sql/index'
-import { PostgresMetaResult, PostgresFunction } from './types'
-import { FunctionCreateDTO } from '../DTO/function-create.dto'
-import { PgMetaException } from '../extra/execption'
+import { PostgresFunction, PostgresMetaResult } from './types'
 
 export default class PostgresMetaFunctions {
   query: (sql: string) => Promise<PostgresMetaResult<any>>
@@ -74,26 +74,26 @@ export default class PostgresMetaFunctions {
       const { data, error } = await this.query(sql)
       if (error) {
         return { data, error }
-      } else if (data.length === 0) {
-        throw new PgMetaException(`Cannot find a function with ID ${id}`)
-      } else {
-        return { data: data[0], error }
       }
-    } else if (name && schema && args) {
+      if (data.length === 0) {
+        throw new PgMetaException(`Cannot find a function with ID ${id}`)
+      }
+      return { data: data[0], error }
+    }
+    if (name && schema && args) {
       const sql = this.generateRetrieveFunctionSql({ name, schema, args })
       const { data, error } = await this.query(sql)
       if (error) {
         return { data, error }
-      } else if (data.length === 0) {
+      }
+      if (data.length === 0) {
         throw new PgMetaException(
           `Cannot find function "${schema}"."${name}"(${args.join(', ')})`,
         )
-      } else {
-        return { data: data[0], error }
       }
-    } else {
-      throw new PgMetaException('Invalid parameters on function retrieve')
+      return { data: data[0], error }
     }
+    throw new PgMetaException('Invalid parameters on function retrieve')
   }
 
   async create({
@@ -142,8 +142,8 @@ export default class PostgresMetaFunctions {
       return { data: null, error }
     }
 
-    const args = currentFunc!.argument_types.split(', ')
-    const identityArgs = currentFunc!.identity_argument_types
+    const args = currentFunc?.argument_types.split(', ')
+    const identityArgs = currentFunc?.identity_argument_types
 
     const updateDefinitionSql =
       typeof definition === 'string'
@@ -152,23 +152,23 @@ export default class PostgresMetaFunctions {
               ...currentFunc!,
               definition,
               args,
-              config_params: currentFunc!.config_params ?? {},
+              config_params: currentFunc?.config_params ?? {},
             },
             { replace: true },
           )
         : ''
 
     const updateNameSql =
-      name && name !== currentFunc!.name
-        ? `ALTER FUNCTION ${ident(currentFunc!.schema)}.${ident(
-            currentFunc!.name,
+      name && name !== currentFunc?.name
+        ? `ALTER FUNCTION ${ident(currentFunc?.schema)}.${ident(
+            currentFunc?.name,
           )}(${identityArgs}) RENAME TO ${ident(name)};`
         : ''
 
     const updateSchemaSql =
-      schema && schema !== currentFunc!.schema
-        ? `ALTER FUNCTION ${ident(currentFunc!.schema)}.${ident(
-            name || currentFunc!.name,
+      schema && schema !== currentFunc?.schema
+        ? `ALTER FUNCTION ${ident(currentFunc?.schema)}.${ident(
+            name || currentFunc?.name,
           )}(${identityArgs})  SET SCHEMA ${ident(schema)};`
         : ''
 
@@ -181,12 +181,12 @@ export default class PostgresMetaFunctions {
           IF (
             SELECT id
             FROM (${functionsSql}) AS f
-            WHERE f.schema = ${literal(currentFunc!.schema)}
-            AND f.name = ${literal(currentFunc!.name)}
+            WHERE f.schema = ${literal(currentFunc?.schema)}
+            AND f.name = ${literal(currentFunc?.name)}
             AND f.identity_argument_types = ${literal(identityArgs)}
           ) != ${id} THEN
-            RAISE EXCEPTION 'Cannot find function "${currentFunc!.schema}"."${
-              currentFunc!.name
+            RAISE EXCEPTION 'Cannot find function "${currentFunc?.schema}"."${
+              currentFunc?.name
             }"(${identityArgs})';
           END IF;
         END IF;
@@ -217,8 +217,8 @@ export default class PostgresMetaFunctions {
     if (error) {
       return { data: null, error }
     }
-    const sql = `DROP FUNCTION ${ident(func!.schema)}.${ident(func!.name)}
-    (${func!.identity_argument_types})
+    const sql = `DROP FUNCTION ${ident(func?.schema)}.${ident(func?.name)}
+    (${func?.identity_argument_types})
     ${cascade ? 'CASCADE' : 'RESTRICT'};`
     {
       const { error } = await this.query(sql)
@@ -258,7 +258,7 @@ export default class PostgresMetaFunctions {
           ? Object.entries(config_params)
               .map(
                 ([param, value]: string[]) =>
-                  `SET ${param} ${value?.[0] === 'FROM CURRENT' ? 'FROM CURRENT' : 'TO ' + value}`,
+                  `SET ${param} ${value?.[0] === 'FROM CURRENT' ? 'FROM CURRENT' : `TO ${value}`}`,
               )
               .join('\n')
           : ''

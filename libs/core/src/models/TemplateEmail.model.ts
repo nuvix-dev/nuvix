@@ -6,22 +6,22 @@ export class TemplateEmailModel extends TemplateModel {
   /**
    * Name of the sender.
    */
-  @Expose() senderName: string = '' // Default to empty string
+  @Expose() senderName = '' // Default to empty string
 
   /**
    * Email of the sender.
    */
-  @Expose() senderEmail: string = '' // Default to empty string
+  @Expose() senderEmail = '' // Default to empty string
 
   /**
    * Reply to email address.
    */
-  @Expose() replyTo: string = '' // Default to empty string
+  @Expose() replyTo = '' // Default to empty string
 
   /**
    * Email subject.
    */
-  @Expose() subject: string = '' // Default to empty string
+  @Expose() subject = '' // Default to empty string
 
   constructor(partial: Partial<TemplateEmailModel>) {
     super(partial)

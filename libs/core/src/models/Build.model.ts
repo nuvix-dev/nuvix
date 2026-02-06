@@ -6,7 +6,7 @@ export class BuildModel extends BaseModel {
   /**
    * The deployment that created this build.
    */
-  @Expose() deploymentId: string = ''
+  @Expose() deploymentId = ''
 
   /**
    * The build status.
@@ -15,37 +15,37 @@ export class BuildModel extends BaseModel {
    * - Processing: The deployment is currently waiting to have a build triggered.
    * - Building: The deployment is currently being built.
    */
-  @Expose() status: string = ''
+  @Expose() status = ''
 
   /**
    * The stdout of the build.
    */
-  @Expose() stdout: string = ''
+  @Expose() stdout = ''
 
   /**
    * The stderr of the build.
    */
-  @Expose() stderr: string = ''
+  @Expose() stderr = ''
 
   /**
    * The deployment creation date in ISO 8601 format.
    */
-  @Expose() startTime: string = ''
+  @Expose() startTime = ''
 
   /**
    * The time the build was finished in ISO 8601 format.
    */
-  @Expose() endTime: string = ''
+  @Expose() endTime = ''
 
   /**
    * The build duration in seconds.
    */
-  @Expose() duration: number = 0
+  @Expose() duration = 0
 
   /**
    * The code size in bytes.
    */
-  @Expose() size: number = 0
+  @Expose() size = 0
 
   constructor(partial: Partial<BuildModel>) {
     super()

@@ -17,8 +17,4 @@ export class AccountModel extends UserModel {
   @Exclude() declare hashOptions?: object
 
   @Exclude() declare mfaRecoveryCodes: string[]
-
-  constructor(data: Partial<AccountModel>) {
-    super(data)
-  }
 }

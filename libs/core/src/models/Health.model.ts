@@ -3,8 +3,8 @@ import { BaseModel } from './base.model'
 
 @Exclude()
 export class HealthAntivirusModel extends BaseModel {
-  @Expose() version: string = ''
-  @Expose() status: string = ''
+  @Expose() version = ''
+  @Expose() status = ''
 
   constructor(partial: Partial<HealthAntivirusModel>) {
     super()
@@ -18,12 +18,12 @@ export class HealthAntivirusModel extends BaseModel {
 
 @Exclude()
 export class HealthCertificateModel extends BaseModel {
-  @Expose() name: string = ''
-  @Expose() subjectSN: string = 'www.google.com'
-  @Expose() issuerOrganisation: string = 'Google Trust Services LLC'
-  @Expose() validFrom: string = ''
-  @Expose() validTo: string = ''
-  @Expose() signatureTypeSN: string = ''
+  @Expose() name = ''
+  @Expose() subjectSN = 'www.google.com'
+  @Expose() issuerOrganisation = 'Google Trust Services LLC'
+  @Expose() validFrom = ''
+  @Expose() validTo = ''
+  @Expose() signatureTypeSN = ''
 
   constructor(partial: Partial<HealthCertificateModel>) {
     super()
@@ -37,7 +37,7 @@ export class HealthCertificateModel extends BaseModel {
 
 @Exclude()
 export class HealthQueueModel extends BaseModel {
-  @Expose() size: number = 0
+  @Expose() size = 0
 
   constructor(partial: Partial<HealthQueueModel>) {
     super()
@@ -51,9 +51,9 @@ export class HealthQueueModel extends BaseModel {
 
 @Exclude()
 export class HealthStatusModel extends BaseModel {
-  @Expose() name: string = ''
-  @Expose() ping: number = 0
-  @Expose() status: string = ''
+  @Expose() name = ''
+  @Expose() ping = 0
+  @Expose() status = ''
 
   constructor(partial: Partial<HealthStatusModel>) {
     super()
@@ -67,9 +67,9 @@ export class HealthStatusModel extends BaseModel {
 
 @Exclude()
 export class HealthTimeModel extends BaseModel {
-  @Expose() remoteTime: number = 0
-  @Expose() localTime: number = 0
-  @Expose() diff: number = 0
+  @Expose() remoteTime = 0
+  @Expose() localTime = 0
+  @Expose() diff = 0
 
   constructor(partial: Partial<HealthTimeModel>) {
     super()
@@ -83,7 +83,7 @@ export class HealthTimeModel extends BaseModel {
 
 @Exclude()
 export class HealthVersionModel extends BaseModel {
-  @Expose() version: string = ''
+  @Expose() version = ''
 
   constructor(partial: Partial<HealthVersionModel>) {
     super()

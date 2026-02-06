@@ -6,17 +6,17 @@ export class InstallationModel extends BaseModel {
   /**
    * VCS (Version Control System) provider name.
    */
-  @Expose() provider: string = ''
+  @Expose() provider = ''
 
   /**
    * VCS (Version Control System) organization name.
    */
-  @Expose() organization: string = ''
+  @Expose() organization = ''
 
   /**
    * VCS (Version Control System) installation ID.
    */
-  @Expose() providerInstallationId: string = ''
+  @Expose() providerInstallationId = ''
 
   constructor(partial: Partial<InstallationModel>) {
     super()

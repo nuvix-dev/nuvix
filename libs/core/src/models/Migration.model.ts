@@ -6,17 +6,17 @@ export class MigrationModel extends BaseModel {
   /**
    * Migration status (pending, processing, failed, completed).
    */
-  @Expose() status: string = ''
+  @Expose() status = ''
 
   /**
    * Migration stage (init, processing, source-check, destination-check, migrating, finished).
    */
-  @Expose() stage: string = ''
+  @Expose() stage = ''
 
   /**
    * A string containing the type of source of the migration.
    */
-  @Expose() source: string = ''
+  @Expose() source = ''
 
   /**
    * Resources to migrate.

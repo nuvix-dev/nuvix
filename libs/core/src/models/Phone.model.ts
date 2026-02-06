@@ -6,17 +6,17 @@ export class PhoneModel extends BaseModel {
   /**
    * Phone code.
    */
-  @Expose() code: string = '' // Default to empty string
+  @Expose() code = '' // Default to empty string
 
   /**
    * Country two-character ISO 3166-1 alpha code.
    */
-  @Expose() countryCode: string = '' // Default to empty string
+  @Expose() countryCode = '' // Default to empty string
 
   /**
    * Country name.
    */
-  @Expose() countryName: string = '' // Default to empty string
+  @Expose() countryName = '' // Default to empty string
 
   constructor(partial: Partial<PhoneModel>) {
     super()

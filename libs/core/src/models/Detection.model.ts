@@ -6,7 +6,7 @@ export class DetectionModel extends BaseModel {
   /**
    * Runtime.
    */
-  @Expose() runtime: string = ''
+  @Expose() runtime = ''
 
   constructor(partial: Partial<DetectionModel>) {
     super()

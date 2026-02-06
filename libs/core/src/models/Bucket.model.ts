@@ -6,22 +6,22 @@ export class BucketModel extends BaseModel {
   /**
    * Whether file-level security is enabled.
    */
-  @Expose() fileSecurity: boolean = false
+  @Expose() fileSecurity = false
 
   /**
    * Bucket name.
    */
-  @Expose() name: string = ''
+  @Expose() name = ''
 
   /**
    * Bucket enabled.
    */
-  @Expose() enabled: boolean = true
+  @Expose() enabled = true
 
   /**
    * Maximum file size supported.
    */
-  @Expose() maximumFileSize: number = 0
+  @Expose() maximumFileSize = 0
 
   /**
    * Allowed file extensions.
@@ -31,17 +31,17 @@ export class BucketModel extends BaseModel {
   /**
    * Compression algorithm chosen for compression.
    */
-  @Expose() compression: string = ''
+  @Expose() compression = ''
 
   /**
    * Bucket is encrypted.
    */
-  @Expose() encryption: boolean = true
+  @Expose() encryption = true
 
   /**
    * Virus scanning is enabled.
    */
-  @Expose() antivirus: boolean = true
+  @Expose() antivirus = true
 
   constructor(partial: Partial<BucketModel>) {
     super()

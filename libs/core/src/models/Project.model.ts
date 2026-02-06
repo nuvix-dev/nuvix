@@ -1,17 +1,17 @@
-import { Permission } from '@nuvix/db'
+import { Exclude, Expose, Transform } from 'class-transformer'
 import { AuthProviderModel } from './AuthProvider.model'
 import { BaseModel } from './base.model'
+import { KeyModel } from './Key.model'
 import { MockNumberModel } from './MockNumber.model'
 import { PlatformModel } from './Platform.model'
 import { WebhookModel } from './Webhook.model'
-import { Exclude, Expose, Transform } from 'class-transformer'
-import { KeyModel } from './Key.model'
 
 @Exclude()
 export class ProjectModel extends BaseModel {
   @Expose({ toClassOnly: true }) auths: any
   @Expose({ toClassOnly: true }) services: any
   @Expose({ toClassOnly: true }) smtp: any
+  @Expose({ toClassOnly: true }) metadata: any
 
   @Exclude() declare $permissions: string[]
   /**
@@ -351,25 +351,35 @@ export class ProjectModel extends BaseModel {
    * Database
    */
   @Transform(({ value }) => {
-    if (!value) return {}
+    if (!value) {
+      return {}
+    }
     const dbConfig = {
       postgres: {
-        host: value['postgres']['host'] || 'localhost',
-        port: value['postgres']['port'] || 5432,
-        database: value['postgres']['database'] || 'postgres',
-        user: value['postgres']['user'] || 'postgres',
+        host: value.postgres.host || 'localhost',
+        port: value.postgres.port || 5432,
+        database: value.postgres.database || 'postgres',
+        user: value.postgres.user || 'postgres',
       },
       pool: {
-        host: value['pool']['host'] || 'localhost',
-        port: value['pool']['port'] || 6432,
-        database: value['pool']['database'] || 'postgres',
-        user: value['pool']['user'] || 'postgres',
+        host: value.pool.host || 'localhost',
+        port: value.pool.port || 6432,
+        database: value.pool.database || 'postgres',
+        user: value.pool.user || 'postgres',
       },
     }
     return dbConfig
   })
   @Expose()
   declare database: Record<string, any>
+
+  /**
+   * Exposed Schemas.
+   */
+  @Expose()
+  get exposedSchemas() {
+    return this.metadata.allowedSchemas ?? []
+  }
 
   constructor() {
     super()

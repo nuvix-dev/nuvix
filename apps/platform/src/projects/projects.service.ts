@@ -1,22 +1,17 @@
 import { Injectable } from '@nestjs/common'
-import { CreateProjectDTO } from './DTO/create-project.dto'
-import {
-  UpdateProjectDTO,
-  UpdateProjectTeamDTO,
-} from './DTO/update-project.dto'
-import { Exception } from '@nuvix/core/extend/exception'
-import { ApiKey, configuration } from '@nuvix/utils'
-import { authMethods, AuthMethod, defaultAuthConfig } from '@nuvix/core/config'
-import { oAuthProviders, type OAuthProviderType } from '@nuvix/core/config'
-import { defaultSmtpConfig } from '@nuvix/core/config'
-import { services } from '@nuvix/core/config'
-import { UpdateProjectServiceDTO } from './DTO/project-service.dto'
-import { ProjectApiStatusDTO } from './DTO/project-api.dto'
-import { apis } from '@nuvix/core/config'
-import { oAuth2DTO } from './DTO/oauth2.dto'
 import { JwtService } from '@nestjs/jwt'
-import { CreateJwtDTO } from './DTO/create-jwt.dto'
-import { SmtpTestsDTO, UpdateSmtpDTO } from './DTO/smtp.dto'
+import { CoreService } from '@nuvix/core'
+import {
+  AuthMethod,
+  apis,
+  authMethods,
+  defaultAuthConfig,
+  defaultSmtpConfig,
+  type OAuthProviderType,
+  oAuthProviders,
+  services,
+} from '@nuvix/core/config'
+import { Exception } from '@nuvix/core/extend/exception'
 import {
   Database,
   Doc,
@@ -26,9 +21,19 @@ import {
   Query,
   Role,
 } from '@nuvix/db'
-import { CoreService } from '@nuvix/core'
-import type { Projects } from '@nuvix/utils/types'
+import { ApiKey, configuration } from '@nuvix/utils'
 import { setupDatabase } from '@nuvix/utils/database'
+import type { Projects } from '@nuvix/utils/types'
+import { CreateJwtDTO } from './DTO/create-jwt.dto'
+import { CreateProjectDTO } from './DTO/create-project.dto'
+import { oAuth2DTO } from './DTO/oauth2.dto'
+import { ProjectApiStatusDTO } from './DTO/project-api.dto'
+import { UpdateProjectServiceDTO } from './DTO/project-service.dto'
+import { SmtpTestsDTO, UpdateSmtpDTO } from './DTO/smtp.dto'
+import {
+  UpdateProjectDTO,
+  UpdateProjectTeamDTO,
+} from './DTO/update-project.dto'
 
 @Injectable()
 export class ProjectService {
@@ -56,8 +61,9 @@ export class ProjectService {
     try {
       const org = await this.db.getDocument('teams', teamId)
 
-      if (org.empty())
+      if (org.empty()) {
         throw new Exception(Exception.TEAM_NOT_FOUND, 'Organization not found.')
+      }
 
       if (projectId === 'console') {
         throw new Exception(
@@ -132,7 +138,8 @@ export class ProjectService {
     } catch (error) {
       if (error instanceof DuplicateException) {
         throw new Exception(Exception.PROJECT_ALREADY_EXISTS)
-      } else throw error
+      }
+      throw error
     }
   }
 
@@ -141,7 +148,7 @@ export class ProjectService {
       queries.push(Query.search('search', search))
     }
 
-    const filterQueries = Query.groupByType(queries)['filters']
+    const filterQueries = Query.groupByType(queries).filters
     return {
       data: await this.db.find('projects', queries),
       total: await this.db.count(
@@ -155,7 +162,9 @@ export class ProjectService {
   async findOne(id: string) {
     const project = await this.db.getDocument('projects', id)
 
-    if (project.empty()) throw new Exception(Exception.PROJECT_NOT_FOUND)
+    if (project.empty()) {
+      throw new Exception(Exception.PROJECT_NOT_FOUND)
+    }
 
     return project
   }
@@ -163,7 +172,9 @@ export class ProjectService {
   async update(id: string, updateProjectDTO: UpdateProjectDTO) {
     let project = await this.db.getDocument('projects', id)
 
-    if (project.empty()) throw new Exception(Exception.PROJECT_NOT_FOUND)
+    if (project.empty()) {
+      throw new Exception(Exception.PROJECT_NOT_FOUND)
+    }
 
     project
       .update('name', updateProjectDTO.name)
@@ -285,7 +296,7 @@ export class ProjectService {
     )
 
     return {
-      jwt: ApiKey.DYNAMIC + '_' + jwt,
+      jwt: `${ApiKey.DYNAMIC}_${jwt}`,
     }
   }
 
@@ -496,7 +507,7 @@ export class ProjectService {
    * @todo :- Impliment the function...
    * Test SMTP
    */
-  async testSMTP(id: string, input: SmtpTestsDTO) {
+  async testSMTP(_id: string, _input: SmtpTestsDTO) {
     throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
   }
 }

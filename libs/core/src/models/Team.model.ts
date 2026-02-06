@@ -6,12 +6,12 @@ export class TeamModel extends BaseModel {
   /**
    * Team name.
    */
-  @Expose() name: string = '' // Default to empty string
+  @Expose() name = '' // Default to empty string
 
   /**
    * Total number of team members.
    */
-  @Expose() total: number = 0 // Default to 0
+  @Expose() total = 0 // Default to 0
 
   /**
    * Team preferences as a key-value object.

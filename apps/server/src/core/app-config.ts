@@ -1,13 +1,13 @@
-import { NestFastifyApplication } from '@nestjs/platform-fastify'
+import * as crypto from 'node:crypto'
 import cookieParser from '@fastify/cookie'
 import fastifyMultipart from '@fastify/multipart'
-import * as crypto from 'crypto'
-import { AppConfigService } from '@nuvix/core'
 import { ValidationPipe } from '@nestjs/common'
-import { Authorization, Doc, Role, storage } from '@nuvix/db'
-import { Auth } from '@nuvix/core/helpers'
-import { Context } from '@nuvix/utils'
+import { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { AppConfigService } from '@nuvix/core'
 import { ErrorFilter } from '@nuvix/core/filters'
+import { Auth } from '@nuvix/core/helpers'
+import { Authorization, Doc, Role, storage } from '@nuvix/db'
+import { Context } from '@nuvix/utils'
 
 /**
  * Applies common app configuration to the given NestFastifyApplication instance.
@@ -18,9 +18,9 @@ export const applyAppConfig = (
 ): void => {
   app.enableShutdownHooks()
   app.enableVersioning()
-  // @ts-ignore
+  // @ts-expect-error
   app.register(cookieParser)
-  // @ts-ignore
+  // @ts-expect-error
   app.register(fastifyMultipart, {
     limits: {
       fileSize: 50 * 1024 * 1024, // 50MB
@@ -56,7 +56,9 @@ export const applyAppConfig = (
      */
     const origin = req.headers.origin
     res.header('Access-Control-Allow-Origin', origin || '*')
-    if (origin) res.header('Access-Control-Allow-Credentials', 'true')
+    if (origin) {
+      res.header('Access-Control-Allow-Credentials', 'true')
+    }
     done()
   })
 
@@ -75,7 +77,7 @@ export const applyAppConfig = (
       return origPush.call(this, chunk, encoding)
     }
 
-    req['hooks_args'] = { onRequest: { sizeRef: () => size } }
+    req.hooks_args = { onRequest: { sizeRef: () => size } }
     storage.run(new Map(), () => {
       req[Context.Project] = new Doc()
       Authorization.setDefaultStatus(true) // Set per-request default status

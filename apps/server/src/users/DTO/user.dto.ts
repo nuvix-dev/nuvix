@@ -1,3 +1,6 @@
+import { ApiPropertyOptional } from '@nestjs/swagger'
+import { IsCustomID, IsUID } from '@nuvix/core/validators'
+import { configuration } from '@nuvix/utils'
 import {
   ArrayMaxSize,
   IsBoolean,
@@ -12,9 +15,6 @@ import {
   Length,
   Matches,
 } from 'class-validator'
-import { IsCustomID, IsUID } from '@nuvix/core/validators'
-import { ApiPropertyOptional } from '@nestjs/swagger'
-import { configuration } from '@nuvix/utils'
 
 export class CreateUserDTO {
   /**

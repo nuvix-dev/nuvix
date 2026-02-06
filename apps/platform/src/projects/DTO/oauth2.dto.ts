@@ -1,3 +1,4 @@
+import { oAuthProviders } from '@nuvix/core/config'
 import {
   IsBoolean,
   IsIn,
@@ -5,7 +6,6 @@ import {
   IsString,
   MaxLength,
 } from 'class-validator'
-import { oAuthProviders } from '@nuvix/core/config'
 
 export class oAuth2DTO {
   /**

@@ -59,7 +59,8 @@
         "useSelfClosingElements": "error",
         "useShorthandAssign": "error",
         "useSingleVarDeclarator": "error",
-        "useTemplate": "error"
+        "useTemplate": "error",
+        "useImportType": "off"
       },
       "suspicious": {
         "noApproximativeNumericConstant": "error",
@@ -137,12 +138,12 @@
       "**/*.jsx",
       "**/*.tsx",
       "**/*.json",
-      "!**/public/**",
-      "!node_modules/**",
-      "!dist/**",
-      "!**/dist/**",
-      "!build/**",
-      "!coverage/**",
+      "!**/public",
+      "!node_modules",
+      "!dist",
+      "!**/dist",
+      "!build",
+      "!coverage",
       "!*.d.ts"
     ]
   }

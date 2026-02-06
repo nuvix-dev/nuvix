@@ -1,5 +1,5 @@
-import { IsBoolean, IsIn, IsOptional, IsString } from 'class-validator'
 import { TransformStringToBoolean } from '@nuvix/core/validators'
+import { IsBoolean, IsIn, IsOptional, IsString } from 'class-validator'
 
 export class GeneratorQueryDTO {
   @IsOptional()

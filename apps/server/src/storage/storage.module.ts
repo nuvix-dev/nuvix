@@ -1,15 +1,15 @@
+import { BullModule } from '@nestjs/bullmq'
 import {
-  Module,
   type MiddlewareConsumer,
+  Module,
   type NestModule,
 } from '@nestjs/common'
-import { StorageService } from './storage.service'
-import { StorageController } from './storage.controller'
-import { BullModule } from '@nestjs/bullmq'
+import { ApiHook, AuditHook, AuthHook, StatsHook } from '@nuvix/core/resolvers'
 import { QueueFor } from '@nuvix/utils'
-import { AuthHook, ApiHook, StatsHook, AuditHook } from '@nuvix/core/resolvers'
 import { FilesController } from './files/files.controller'
 import { FilesService } from './files/files.service'
+import { StorageController } from './storage.controller'
+import { StorageService } from './storage.service'
 
 @Module({
   imports: [

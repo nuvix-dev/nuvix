@@ -1,9 +1,9 @@
-import { IsString, IsArray, ArrayMaxSize, IsEnum, IsIn } from 'class-validator'
+import { ApiProperty } from '@nestjs/swagger'
+import { IsKey } from '@nuvix/core/validators'
 import { IndexType, Order } from '@nuvix/db'
 import { configuration } from '@nuvix/utils'
-import { ApiProperty } from '@nestjs/swagger'
+import { ArrayMaxSize, IsArray, IsEnum, IsIn, IsString } from 'class-validator'
 import { CollectionParamsDTO } from '../../DTO/collection.dto'
-import { IsKey } from '@nuvix/core/validators'
 
 export class CreateIndexDTO {
   /**

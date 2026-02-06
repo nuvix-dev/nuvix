@@ -1,8 +1,8 @@
-import { Auth } from '../../src/helpers'
 import { Authorization, Doc, ID, Role, UserDimension } from '@nuvix/db'
 import { HashAlgorithm, SessionProvider, TokenType } from '@nuvix/utils'
 import { Sessions, Tokens, Users } from '@nuvix/utils/types'
-import { describe, test, expect, afterEach } from 'vitest'
+import { afterEach, describe, expect, test } from 'vitest'
+import { Auth } from '../../src/helpers'
 
 describe('Auth', () => {
   /**
@@ -167,14 +167,14 @@ describe('Auth', () => {
         secret: hash,
         provider: SessionProvider.EMAIL,
         providerUid: 'test@example.com',
-        expire: new Date(new Date().getTime() + expireTime1).toISOString(),
+        expire: new Date(Date.now() + expireTime1).toISOString(),
       }),
       new Doc<Sessions>({
         $id: ID.custom('token2'),
         secret: 'secret2',
         provider: SessionProvider.EMAIL,
         providerUid: 'test@example.com',
-        expire: new Date(new Date().getTime() + expireTime1).toISOString(),
+        expire: new Date(Date.now() + expireTime1).toISOString(),
       }),
     ]
 
@@ -187,14 +187,14 @@ describe('Auth', () => {
         secret: hash,
         provider: SessionProvider.EMAIL,
         providerUid: 'test@example.com',
-        expire: new Date(new Date().getTime() + expireTime2).toISOString(),
+        expire: new Date(Date.now() + expireTime2).toISOString(),
       }),
       new Doc<Sessions>({
         $id: ID.custom('token2'),
         secret: 'secret2',
         provider: SessionProvider.EMAIL,
         providerUid: 'test@example.com',
-        expire: new Date(new Date().getTime() + expireTime2).toISOString(),
+        expire: new Date(Date.now() + expireTime2).toISOString(),
       }),
     ]
 
@@ -211,13 +211,13 @@ describe('Auth', () => {
       new Doc<Tokens>({
         $id: ID.custom('token1'),
         type: TokenType.RECOVERY,
-        expire: new Date(new Date().getTime() + 60 * 60 * 24).toISOString(),
+        expire: new Date(Date.now() + 60 * 60 * 24).toISOString(),
         secret: hash,
       }),
       new Doc<Tokens>({
         $id: ID.custom('token2'),
         type: TokenType.RECOVERY,
-        expire: new Date(new Date().getTime() - 60 * 60 * 24).toISOString(),
+        expire: new Date(Date.now() - 60 * 60 * 24).toISOString(),
         secret: 'secret2',
       }),
     ]
@@ -227,17 +227,13 @@ describe('Auth', () => {
         // Correct secret and type time, wrong expire time
         $id: ID.custom('token1'),
         type: TokenType.RECOVERY,
-        expire: new Date(
-          new Date().getTime() - 60 * 60 * 24 * 1000,
-        ).toISOString(),
+        expire: new Date(Date.now() - 60 * 60 * 24 * 1000).toISOString(),
         secret: hash,
       }),
       new Doc<Tokens>({
         $id: ID.custom('token2'),
         type: TokenType.RECOVERY,
-        expire: new Date(
-          new Date().getTime() - 60 * 60 * 24 * 1000,
-        ).toISOString(),
+        expire: new Date(Date.now() - 60 * 60 * 24 * 1000).toISOString(),
         secret: 'secret2',
       }),
     ]
@@ -247,13 +243,13 @@ describe('Auth', () => {
       new Doc<Tokens>({
         $id: ID.custom('token1'),
         type: TokenType.INVITE,
-        expire: new Date(new Date().getTime() + 60 * 60 * 24).toISOString(),
+        expire: new Date(Date.now() + 60 * 60 * 24).toISOString(),
         secret: hash,
       }),
       new Doc<Tokens>({
         $id: ID.custom('token2'),
         type: TokenType.RECOVERY,
-        expire: new Date(new Date().getTime() - 60 * 60 * 24).toISOString(),
+        expire: new Date(Date.now() - 60 * 60 * 24).toISOString(),
         secret: 'secret2',
       }),
     ]

@@ -8,7 +8,7 @@ export function buildCreateAccountDTO(
   const id = ID.unique()
   return {
     userId: id,
-    email: id + '_' + faker.internet.email().toLowerCase(),
+    email: `${id}_${faker.internet.email().toLowerCase()}`,
     password: faker.internet.password({ length: 16 }),
     name: faker.person.fullName(),
     ...overrides,

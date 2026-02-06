@@ -72,11 +72,10 @@ class OrderParser extends BaseParser {
     if (Array.isArray(ordering)) {
       this.tokens = ordering
       return this.parseOrderingClause()
-    } else {
-      const tokenizer = new OrderTokenizer(ordering)
-      this.tokens = tokenizer.tokenize()
-      return this.parseOrderingClause()
     }
+    const tokenizer = new OrderTokenizer(ordering)
+    this.tokens = tokenizer.tokenize()
+    return this.parseOrderingClause()
   }
 
   private parseOrderingClause(): ParsedOrdering[] {
@@ -89,7 +88,9 @@ class OrderParser extends BaseParser {
       // Skip leading commas (in case of malformed input)
       while (this.match(TokenType.COMMA)) {}
 
-      if (this.isAtEnd()) break
+      if (this.isAtEnd()) {
+        break
+      }
 
       // Parse path (column or json path)
       const fieldPath = this.fieldToString(this.parseFieldPath())

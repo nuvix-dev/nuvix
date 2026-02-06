@@ -1,20 +1,20 @@
-import { describe, it, expect, beforeAll } from 'vitest'
-import { getApp } from '../../setup/app'
-import { getApiKeyJsonHeaders, getApiKeyHeaders } from '../../helpers/auth'
-import { buildCreateTopicDTO } from '../../factories/dto/topic.factory'
-import { buildCreateSubscriberDTO } from '../../factories/dto/subscriber.factory'
-import { buildCreateUserDTO } from '../../factories/dto/user.factory'
-import { buildCreateUserTargetDTO } from '../../factories/dto/userTarget.factory'
-import { buildCreateSmtpProviderDTO } from '../../factories/dto/provider.factory'
-import {
-  parseJson,
-  assertStatusCode,
-  assertDocumentShape,
-  assertListResponse,
-} from '../../setup/test-utils'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { ID } from '@nuvix/db'
 import { CreateUserDTO } from 'apps/server/src/users/DTO/user.dto'
+import { beforeAll, describe, expect, it } from 'vitest'
+import { buildCreateSmtpProviderDTO } from '../../factories/dto/provider.factory'
+import { buildCreateSubscriberDTO } from '../../factories/dto/subscriber.factory'
+import { buildCreateTopicDTO } from '../../factories/dto/topic.factory'
+import { buildCreateUserDTO } from '../../factories/dto/user.factory'
+import { buildCreateUserTargetDTO } from '../../factories/dto/userTarget.factory'
+import { getApiKeyHeaders, getApiKeyJsonHeaders } from '../../helpers/auth'
+import { getApp } from '../../setup/app'
+import {
+  assertDocumentShape,
+  assertListResponse,
+  assertStatusCode,
+  parseJson,
+} from '../../setup/test-utils'
 
 describe('messaging/topics/subscribers (integration)', () => {
   let app: NestFastifyApplication

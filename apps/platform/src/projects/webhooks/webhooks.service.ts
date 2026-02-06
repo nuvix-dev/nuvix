@@ -1,10 +1,10 @@
+import { randomBytes } from 'node:crypto'
 import { Injectable } from '@nestjs/common'
-import { Exception } from '@nuvix/core/extend/exception'
-import { CreateWebhookDTO, UpdateWebhookDTO } from './DTO/webhook.dto'
-import { randomBytes } from 'crypto'
-import { Database, Doc, ID, Permission, Query, Role } from '@nuvix/db'
 import { CoreService } from '@nuvix/core'
+import { Exception } from '@nuvix/core/extend/exception'
+import { Database, Doc, ID, Permission, Query, Role } from '@nuvix/db'
 import { Webhooks } from '@nuvix/utils/types'
+import { CreateWebhookDTO, UpdateWebhookDTO } from './DTO/webhook.dto'
 
 @Injectable()
 export class WebhooksService {

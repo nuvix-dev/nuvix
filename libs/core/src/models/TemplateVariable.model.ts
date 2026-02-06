@@ -6,32 +6,32 @@ export class TemplateVariableModel extends BaseModel {
   /**
    * Variable Name.
    */
-  @Expose() name: string = '' // Default to empty string
+  @Expose() name = '' // Default to empty string
 
   /**
    * Variable Description.
    */
-  @Expose() description: string = '' // Default to empty string
+  @Expose() description = '' // Default to empty string
 
   /**
    * Variable Value.
    */
-  @Expose() value: string = '' // Default to empty string
+  @Expose() value = '' // Default to empty string
 
   /**
    * Variable Placeholder.
    */
-  @Expose() placeholder: string = '' // Default to empty string
+  @Expose() placeholder = '' // Default to empty string
 
   /**
    * Is the variable required?
    */
-  @Expose() required: boolean = false // Default to false
+  @Expose() required = false // Default to false
 
   /**
    * Variable Type.
    */
-  @Expose() type: string = '' // Default to empty string
+  @Expose() type = '' // Default to empty string
 
   constructor(partial: Partial<TemplateVariableModel>) {
     super(partial)

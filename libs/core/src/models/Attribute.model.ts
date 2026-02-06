@@ -1,8 +1,8 @@
-import { Exclude, Expose } from 'class-transformer'
-import { BaseModel } from './base.model'
-import type { Attributes } from '@nuvix/utils/types'
 import { AttributeType, OnDelete, RelationSide, RelationType } from '@nuvix/db'
 import { AttributeFormat } from '@nuvix/utils'
+import type { Attributes } from '@nuvix/utils/types'
+import { Exclude, Expose } from 'class-transformer'
+import { BaseModel } from './base.model'
 
 @Exclude()
 export class AttributeModel
@@ -26,7 +26,7 @@ export class AttributeModel
   /**
    * Attribute status. Possible values: `available`, `processing`, `deleting`, `stuck`, or `failed`.
    */
-  @Expose() status: string = 'available'
+  @Expose() status = 'available'
 
   /**
    * Error message. Displays error generated on failure of creating or deleting an attribute.
@@ -36,12 +36,12 @@ export class AttributeModel
   /**
    * Is attribute required?
    */
-  @Expose() required: boolean = false
+  @Expose() required = false
 
   /**
    * Is attribute an array?
    */
-  @Expose() array: boolean = false
+  @Expose() array = false
 
   /**
    * Attribute default value.

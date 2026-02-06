@@ -11,29 +11,32 @@
  * This flow represents how applications send notifications to users.
  */
 
-import { describe, it, expect, beforeAll } from 'vitest'
-import { getApp } from '../setup/app'
-import { getApiKeyJsonHeaders, getApiKeyHeaders } from '../helpers/auth'
-import { createUserAndSession } from '../helpers/auth'
-import { ensureCoreProvider } from '../helpers/seed'
-import {
-  buildCreateTopicDTO,
-  buildUpdateTopicDTO,
-} from '../factories/dto/topic.factory'
-import { buildCreatePushTargetDTO } from '../factories/dto/target.factory'
+import { faker } from '@faker-js/faker'
+import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { beforeAll, describe, expect, it } from 'vitest'
 import {
   buildCreateEmailMessageDTO,
   buildCreatePushMessageDTO,
   buildCreateSmsMessageDTO,
 } from '../factories/dto/message.factory'
+import { buildCreatePushTargetDTO } from '../factories/dto/target.factory'
 import {
-  parseJson,
-  assertStatusCode,
+  buildCreateTopicDTO,
+  buildUpdateTopicDTO,
+} from '../factories/dto/topic.factory'
+import {
+  createUserAndSession,
+  getApiKeyHeaders,
+  getApiKeyJsonHeaders,
+} from '../helpers/auth'
+import { ensureCoreProvider } from '../helpers/seed'
+import { getApp } from '../setup/app'
+import {
   assertDocumentShape,
   assertListResponse,
+  assertStatusCode,
+  parseJson,
 } from '../setup/test-utils'
-import type { NestFastifyApplication } from '@nestjs/platform-fastify'
-import { faker } from '@faker-js/faker'
 
 describe('E2E: Messaging Flow', () => {
   let app: NestFastifyApplication

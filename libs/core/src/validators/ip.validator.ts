@@ -14,7 +14,7 @@ export class IPValidator implements Validator {
     this.type = type
   }
 
-  $description: string = 'Value must be a valid IP address'
+  $description = 'Value must be a valid IP address'
 
   $valid(value: any): boolean {
     switch (this.type) {

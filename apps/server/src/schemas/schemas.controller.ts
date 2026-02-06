@@ -10,9 +10,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { SchemasService } from './schemas.service'
-import { ProjectGuard, SchemaGuard } from '@nuvix/core/resolvers'
-import { ApiInterceptor } from '@nuvix/core/resolvers'
+import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
 import {
   AuthType,
   CurrentSchema,
@@ -20,17 +18,22 @@ import {
   Namespace,
   Project,
 } from '@nuvix/core/decorators'
-import { DataSource } from '@nuvix/pg'
 import { ParseDuplicatePipe } from '@nuvix/core/pipes'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  SchemaGuard,
+} from '@nuvix/core/resolvers'
+import { DataSource } from '@nuvix/pg'
+import { Context, SchemaType } from '@nuvix/utils'
+import type { ProjectsDoc } from '@nuvix/utils/types'
 import { PermissionsDTO } from './DTO/permissions.dto'
-import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
 import {
   FunctionParamsDTO,
   RowParamsDTO,
   TableParamsDTO,
 } from './DTO/table.dto'
-import type { ProjectsDoc } from '@nuvix/utils/types'
-import { Context, SchemaType } from '@nuvix/utils'
+import { SchemasService } from './schemas.service'
 
 // Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
 @Controller({ version: ['1'], path: ['schemas/:schemaId', 'public'] })
@@ -121,7 +124,7 @@ export class SchemasController {
     @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
     offset?: number,
     @Query('force', ParseDuplicatePipe, new ParseBoolPipe({ optional: true }))
-    force: boolean = false,
+    force = false,
   ) {
     return this.schemasService.update({
       pg,
@@ -176,7 +179,7 @@ export class SchemasController {
     @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
     offset?: number,
     @Query('force', ParseDuplicatePipe, new ParseBoolPipe({ optional: true }))
-    force: boolean = false,
+    force = false,
   ) {
     return this.schemasService.delete({
       pg,

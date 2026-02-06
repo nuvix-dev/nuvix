@@ -1,4 +1,6 @@
+import { Exception } from '@nuvix/core/extend/exception'
 import { DataSource } from '@nuvix/pg'
+import { ASTToQueryBuilder } from './builder'
 import {
   EmbedNode,
   EmbedParserResult,
@@ -6,8 +8,6 @@ import {
   ParsedOrdering,
   SelectNode,
 } from './types'
-import { ASTToQueryBuilder } from './builder'
-import { Exception } from '@nuvix/core/extend/exception'
 
 type QueryBuilder = ReturnType<DataSource['queryBuilder']>
 
@@ -201,12 +201,11 @@ export class JoinBuilder<T extends ASTToQueryBuilder<QueryBuilder>> {
         select to_jsonb(${aliasedSubqueryResult}) as ${wrappedAlias}
         from (${subQuerySQL}) as ${wrappedAlias}
       `
-    } else {
-      return `
+    }
+    return `
         select coalesce(jsonb_agg(to_jsonb(${aliasedSubqueryResult})), '[]'::jsonb) as ${wrappedAlias}
         from (${subQuerySQL}) as ${wrappedAlias}
       `
-    }
   }
 
   private _buildJoinConditionSQL(

@@ -1,5 +1,6 @@
 import { Processor } from '@nestjs/bullmq'
-import { Queue } from './queue'
+import { Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
+import { type Database, Doc } from '@nuvix/db'
 import {
   configuration,
   fnv1a128,
@@ -8,12 +9,11 @@ import {
   QueueFor,
   Schemas,
 } from '@nuvix/utils'
-import { Job } from 'bullmq'
-import { Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
-import { Doc, type Database } from '@nuvix/db'
-import { CoreService } from '../../core.service.js'
 import type { ProjectsDoc, Stats } from '@nuvix/utils/types'
+import { Job } from 'bullmq'
 import { AppConfigService } from '../../config.service'
+import { CoreService } from '../../core.service.js'
+import { Queue } from './queue'
 
 @Processor(QueueFor.STATS, {
   concurrency: 10000,
@@ -84,7 +84,9 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
 
         // Process each metric key-value pair
         for (const [key, value] of entries as [MetricFor, number][]) {
-          if (value === 0) continue
+          if (value === 0) {
+            continue
+          }
           this.logger.debug(`${key} processing with value ${value}`)
 
           for (const period of StatsQueue.periods) {
@@ -146,7 +148,7 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
     const projectId = project.getSequence()
 
     switch (job.name) {
-      case StatsQueueJob.ADD_METRIC:
+      case StatsQueueJob.ADD_METRIC: {
         if (!this.buffer.has(projectId)) {
           this.buffer.set(projectId, {
             project: new Doc({
@@ -193,7 +195,7 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
         }
 
         if (
-          Object.keys(this.buffer.get(projectId)!.keys).length >=
+          Object.keys(this.buffer.get(projectId)?.keys ?? {}).length >=
           StatsQueue.BATCH_SIZE
         ) {
           // Temporarily stop the timer to avoid a race condition where the timer
@@ -203,6 +205,7 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
           this.startTimer()
         }
         break
+      }
 
       default:
         this.logger.warn(`Unknown job name: ${job.name}`)
@@ -221,9 +224,9 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
       case MetricPeriod.INF:
         return null
       case MetricPeriod.HOUR:
-        return date.toISOString().slice(0, 13) + ':00:00Z'
+        return `${date.toISOString().slice(0, 13)}:00:00Z`
       case MetricPeriod.DAY:
-        return date.toISOString().slice(0, 10) + 'T00:00:00Z'
+        return `${date.toISOString().slice(0, 10)}T00:00:00Z`
       default:
         throw new Error(`Unsupported period: ${period}`)
     }
@@ -235,7 +238,9 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
     metrics: Array<{ key: MetricFor; value: number }>,
     dbForProject: Database,
   ): Promise<void> {
-    if (document.empty()) return
+    if (document.empty()) {
+      return
+    }
 
     try {
       const collection = document.getCollection()

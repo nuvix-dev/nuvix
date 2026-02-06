@@ -1,4 +1,5 @@
 import type { Client } from 'pg'
+import { init } from './db'
 import * as Parser from './Parser'
 import PostgresMetaColumnPrivileges from './PostgresMetaColumnPrivileges'
 import PostgresMetaColumns from './PostgresMetaColumns'
@@ -19,8 +20,7 @@ import PostgresMetaTriggers from './PostgresMetaTriggers'
 import PostgresMetaTypes from './PostgresMetaTypes'
 import PostgresMetaVersion from './PostgresMetaVersion'
 import PostgresMetaViews from './PostgresMetaViews'
-import { init } from './db'
-import { PostgresMetaResult, PoolConfig } from './types'
+import { PoolConfig, PostgresMetaResult } from './types'
 
 export default class PostgresMeta {
   query: (

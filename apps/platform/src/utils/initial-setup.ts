@@ -1,18 +1,18 @@
 import { Logger } from '@nestjs/common'
-import {
-  Database,
-  Doc,
-  Permission,
-  Role,
-  DuplicateException,
-  Authorization,
-  ID,
-} from '@nuvix/db'
-import collections from '@nuvix/utils/collections'
+import { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { Audit } from '@nuvix/audit'
 import { AppConfigService, CoreService } from '@nuvix/core'
-import { NestFastifyApplication } from '@nestjs/platform-fastify'
+import {
+  Authorization,
+  Database,
+  Doc,
+  DuplicateException,
+  ID,
+  Permission,
+  Role,
+} from '@nuvix/db'
 import { Schemas } from '@nuvix/utils'
+import collections from '@nuvix/utils/collections'
 import { AccountService } from '../account/account.service'
 import { ProjectService } from '../projects/projects.service'
 
@@ -41,7 +41,9 @@ export async function initSetup(
         .then(is => (is ? undefined : db.create()))
       logger.log('✓ Platform database initialized successfully')
     } catch (e) {
-      if (!(e instanceof DuplicateException)) throw e
+      if (!(e instanceof DuplicateException)) {
+        throw e
+      }
       logger.log('✓ Platform database already exists')
     }
 
@@ -103,7 +105,7 @@ export async function initSetup(
         const bucket = await db.getDocument('buckets', 'default')
         logger.log('  ➜ Creating files collection for default bucket')
 
-        const files = collections.bucket['files']
+        const files = collections.bucket.files
         if (!files) {
           throw new Error('Files collection is not configured.')
         }
@@ -131,8 +133,8 @@ export async function initSetup(
       if (!hasSuperUser.empty()) {
         logger.log('✓ Admin user already exists, skipping creation')
       } else {
-        const adminEmail = process.env['NUVIX_ADMIN_EMAIL']
-        const adminPassword = process.env['NUVIX_ADMIN_PASSWORD']
+        const adminEmail = process.env.NUVIX_ADMIN_EMAIL
+        const adminPassword = process.env.NUVIX_ADMIN_PASSWORD
 
         if (!adminEmail || !adminPassword) {
           throw new Error(

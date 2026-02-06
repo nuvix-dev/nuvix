@@ -1,8 +1,8 @@
-import { describe, it, expect, beforeAll } from 'vitest'
-import { getApp } from '../../setup/app'
-import { createUserAndSession } from '../../helpers/auth'
-import { parseJson, assertStatusCode } from '../../setup/test-utils'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { beforeAll, describe, expect, it } from 'vitest'
+import { createUserAndSession } from '../../helpers/auth'
+import { getApp } from '../../setup/app'
+import { assertStatusCode, parseJson } from '../../setup/test-utils'
 
 describe('account/recovery (integration)', () => {
   let app: NestFastifyApplication

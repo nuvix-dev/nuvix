@@ -48,7 +48,7 @@ export class UserModel extends BaseModel {
   /**
    * User phone number in E.164 format.
    */
-  @Expose() phone: string = ''
+  @Expose() phone = ''
   /**
    * Email verification status.
    */
@@ -86,7 +86,7 @@ export class UsersListModel {
   /**
    * Total number of Users.
    */
-  total: number = 0
+  total = 0
 
   /**
    * List of users.

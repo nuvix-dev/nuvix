@@ -12,23 +12,22 @@
  * This flow represents how applications interact with the database service.
  */
 
-import { describe, it, expect, beforeAll } from 'vitest'
-import { getApp } from '../setup/app'
-import { getApiKeyJsonHeaders, getApiKeyHeaders } from '../helpers/auth'
+import { faker } from '@faker-js/faker'
+import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import QueryString from 'qs'
+import { beforeAll, describe, expect, it } from 'vitest'
 import {
-  buildCreateSchemaDTO,
   buildCreateDocumentSchemaDTO,
+  buildCreateSchemaDTO,
 } from '../factories/dto/schema.factory'
+import { getApiKeyHeaders, getApiKeyJsonHeaders } from '../helpers/auth'
+import { getApp } from '../setup/app'
 import {
-  parseJson,
-  assertStatusCode,
   assertDocumentShape,
   assertListResponse,
+  assertStatusCode,
+  parseJson,
 } from '../setup/test-utils'
-import type { NestFastifyApplication } from '@nestjs/platform-fastify'
-import { faker } from '@faker-js/faker'
-import QueryString from 'qs'
-import { Query } from '@nuvix/db'
 
 describe('E2E: Data Management Flow', () => {
   let app: NestFastifyApplication
@@ -39,7 +38,7 @@ describe('E2E: Data Management Flow', () => {
 
   const waitForAttribute = async (
     key: string,
-    status: 'available' | 'stuck' = 'available',
+    status: 'available' | 'stuck',
     testSchemaId: string,
     testCollectionId: string,
   ) => {
@@ -53,9 +52,12 @@ describe('E2E: Data Management Flow', () => {
 
       if (res.statusCode === 200) {
         const body = parseJson(res.payload)
-        if (body.status === 'available') return true
-        if (body.status === 'failed')
+        if (body.status === 'available') {
+          return true
+        }
+        if (body.status === 'failed') {
           throw new Error(`Attribute ${key} creation failed`)
+        }
       }
 
       await new Promise(resolve => setTimeout(resolve, 500))
@@ -169,7 +171,7 @@ describe('E2E: Data Management Flow', () => {
     // STEP 2: Create a collection within the document schema
     // Collections organize documents within a schema
     // =========================================================================
-    const collectionName = 'products_' + faker.string.alphanumeric(6)
+    const collectionName = `products_${faker.string.alphanumeric(6)}`
 
     const createCollectionRes = await app.inject({
       method: 'POST',

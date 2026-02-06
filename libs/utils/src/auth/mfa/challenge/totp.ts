@@ -1,7 +1,7 @@
-import { TOTP as BaseTOTP, NobleCryptoPlugin, ScureBase32Plugin } from 'otplib'
 import { MfaType, TOTP as TOTPType } from '@nuvix/core/validators'
+import { type ChallengesDoc, UsersDoc } from '@nuvix/utils/types'
+import { TOTP as BaseTOTP, NobleCryptoPlugin, ScureBase32Plugin } from 'otplib'
 import { Challenge } from '../challenge'
-import { UsersDoc, type ChallengesDoc } from '@nuvix/utils/types'
 
 export class TOTP extends Challenge {
   public static override async verify(
@@ -32,7 +32,7 @@ export class TOTP extends Challenge {
     otp: string,
   ): Promise<boolean> {
     if (challenge.has('type') && challenge.get('type') === MfaType.TOTP) {
-      return this.verify(user, otp)
+      return TOTP.verify(user, otp)
     }
 
     return false

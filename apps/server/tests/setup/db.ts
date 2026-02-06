@@ -1,24 +1,30 @@
 import { Logger } from '@nestjs/common'
-import {
-  Database,
-  Doc,
-  Permission,
-  Role,
-  DuplicateException,
-  Authorization,
-  ID,
-} from '@nuvix/db'
-import collections from '@nuvix/utils/collections'
+import { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { Audit } from '@nuvix/audit'
 import { AppConfigService, CoreService } from '@nuvix/core'
-import { NestFastifyApplication } from '@nestjs/platform-fastify'
-import { ApiKey, Schemas } from '@nuvix/utils'
-import { Auth } from '@nuvix/core/helpers'
-import type { Keys, Projects, Teams } from '@nuvix/utils/types'
+import {
+  authMethods,
+  defaultSmtpConfig,
+  OAuthProviderType,
+  oAuthProviders,
+  scopes,
+  services,
+} from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
-import { oAuthProviders, OAuthProviderType, scopes } from '@nuvix/core/config'
-import { authMethods, defaultSmtpConfig, services } from '@nuvix/core/config'
+import { Auth } from '@nuvix/core/helpers'
+import {
+  Authorization,
+  Database,
+  Doc,
+  DuplicateException,
+  ID,
+  Permission,
+  Role,
+} from '@nuvix/db'
+import { ApiKey, Schemas } from '@nuvix/utils'
+import collections from '@nuvix/utils/collections'
 import { setupDatabase } from '@nuvix/utils/database'
+import type { Keys, Projects, Teams } from '@nuvix/utils/types'
 import { loadAuthConfig } from '../../../platform/src/projects/projects.service'
 
 export async function dbSetup(
@@ -46,7 +52,9 @@ export async function dbSetup(
         .then(is => (is ? undefined : db.create()))
       logger.log('✓ Platform database initialized successfully')
     } catch (e) {
-      if (!(e instanceof DuplicateException)) throw e
+      if (!(e instanceof DuplicateException)) {
+        throw e
+      }
       logger.log('✓ Platform database already exists')
     }
 
@@ -108,7 +116,7 @@ export async function dbSetup(
         const bucket = await db.getDocument('buckets', 'default')
         logger.log('  ➜ Creating files collection for default bucket')
 
-        const files = collections.bucket['files']
+        const files = collections.bucket.files
         if (!files) {
           throw new Error('Files collection is not configured.')
         }
@@ -134,8 +142,8 @@ export async function dbSetup(
       if (!hasSuperUser.empty()) {
         logger.log('✓ Admin user already exists, skipping creation')
       } else {
-        const adminEmail = process.env['NUVIX_ADMIN_EMAIL']
-        const adminPassword = process.env['NUVIX_ADMIN_PASSWORD']
+        const adminEmail = process.env.NUVIX_ADMIN_EMAIL
+        const adminPassword = process.env.NUVIX_ADMIN_PASSWORD
 
         if (!adminEmail || !adminPassword) {
           throw new Error(
@@ -244,7 +252,7 @@ export async function dbSetup(
             expire: null,
             sdks: [],
             accessedAt: null,
-            secret: ApiKey.STANDARD + '_' + apiKey,
+            secret: `${ApiKey.STANDARD}_${apiKey}`,
           })
 
           await db.createDocument('keys', key)
@@ -349,6 +357,7 @@ async function createProject({
   } catch (error) {
     if (error instanceof DuplicateException) {
       throw new Exception(Exception.PROJECT_ALREADY_EXISTS)
-    } else throw error
+    }
+    throw error
   }
 }

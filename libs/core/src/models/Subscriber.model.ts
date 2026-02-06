@@ -6,7 +6,7 @@ export class SubscriberModel extends BaseModel {
   /**
    * Target ID.
    */
-  @Expose() targetId: string = '' // Default to empty string
+  @Expose() targetId = '' // Default to empty string
 
   /**
    * Target.
@@ -16,22 +16,22 @@ export class SubscriberModel extends BaseModel {
   /**
    * User ID.
    */
-  @Expose() userId: string = '' // Default to empty string
+  @Expose() userId = '' // Default to empty string
 
   /**
    * User Name.
    */
-  @Expose() userName: string = '' // Default to empty string
+  @Expose() userName = '' // Default to empty string
 
   /**
    * Topic ID.
    */
-  @Expose() topicId: string = '' // Default to empty string
+  @Expose() topicId = '' // Default to empty string
 
   /**
    * The target provider type. Can be one of the following: `email`, `sms` or `push`.
    */
-  @Expose() providerType: string = '' // Default to empty string
+  @Expose() providerType = '' // Default to empty string
 
   constructor(partial: Partial<SubscriberModel>) {
     super()

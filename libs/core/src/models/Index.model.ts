@@ -1,4 +1,3 @@
-import { Permission } from '@nuvix/db'
 import { Exclude, Expose } from 'class-transformer'
 import { BaseModel } from './base.model'
 
@@ -10,22 +9,22 @@ export class IndexModel extends BaseModel {
   /**
    * Index Key.
    */
-  @Expose() key: string = ''
+  @Expose() key = ''
 
   /**
    * Index type.
    */
-  @Expose() type: string = ''
+  @Expose() type = ''
 
   /**
    * Index status. Possible values: `available`, `processing`, `deleting`, `stuck`, or `failed`.
    */
-  @Expose() status: string = ''
+  @Expose() status = ''
 
   /**
    * Error message. Displays error generated on failure of creating or deleting an index.
    */
-  @Expose() error: string = ''
+  @Expose() error = ''
 
   /**
    * Index attributes.

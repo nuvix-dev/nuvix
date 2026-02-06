@@ -1,10 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger'
 import {
-  IsString,
-  IsOptional,
   IsBoolean,
-  IsNumber,
   IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
 } from 'class-validator'
 
 export class ColumnCreateDTO {

@@ -1,8 +1,8 @@
 import { Query } from '@nestjs/common'
 import { ApiQuery } from '@nestjs/swagger'
-import type { BaseQueryPipe } from '../pipes/queries/base'
 import { configuration } from '@nuvix/utils'
 import { ParseQueryPipe } from '../pipes'
+import type { BaseQueryPipe } from '../pipes/queries/base'
 
 /**
  * A decorator that:
@@ -51,7 +51,8 @@ export function QuerySearch() {
         name: 'search',
         required: false,
         type: String,
-        description: `Search term to filter your list results. Max length: 256 chars.`,
+        description:
+          'Search term to filter your list results. Max length: 256 chars.',
       })(target, propertyKey, descriptor)
     }
   }

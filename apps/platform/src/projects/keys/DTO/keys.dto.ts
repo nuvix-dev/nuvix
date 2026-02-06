@@ -1,4 +1,5 @@
 import { PartialType } from '@nestjs/swagger'
+import { IsUID } from '@nuvix/core/validators'
 import { configuration } from '@nuvix/utils'
 import {
   ArrayMaxSize,
@@ -10,7 +11,6 @@ import {
   MinLength,
 } from 'class-validator'
 import { ProjectParamsDTO } from '../../DTO/create-project.dto'
-import { IsUID } from '@nuvix/core/validators'
 
 export class CreateKeyDTO {
   /**

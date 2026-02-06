@@ -5,26 +5,28 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { SubscribersService } from './subscribers.service'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
+import { Delete, Get, Post } from '@nuvix/core'
 import {
-  ProjectDatabase,
+  Auth,
   AuthType,
   Namespace,
-  Auth,
+  ProjectDatabase,
   QueryFilter,
   QuerySearch,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
-
-import { Database, Query as Queries } from '@nuvix/db'
 import { SubscribersQueryPipe } from '@nuvix/core/pipes/queries'
-import { CreateSubscriberDTO, SubscriberParamsDTO } from './DTO/subscriber.dto'
-import { Delete, Get, Post } from '@nuvix/core'
-import { TopicParamsDTO } from '../DTO/topics.dto'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers'
+import { Database, Query as Queries } from '@nuvix/db'
 import { IListResponse, IResponse } from '@nuvix/utils'
 import { SubscribersDoc } from '@nuvix/utils/types'
+import { TopicParamsDTO } from '../DTO/topics.dto'
+import { CreateSubscriberDTO, SubscriberParamsDTO } from './DTO/subscriber.dto'
+import { SubscribersService } from './subscribers.service'
 
 @Namespace('messaging')
 @UseGuards(ProjectGuard)

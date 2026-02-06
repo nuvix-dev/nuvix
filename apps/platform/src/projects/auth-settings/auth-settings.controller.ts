@@ -1,33 +1,31 @@
 import {
-  Controller,
   Body,
+  Controller,
   Param,
   UseInterceptors,
   VERSION_NEUTRAL,
 } from '@nestjs/common'
-
-import {
-  AuthSessionAlertsDTO,
-  AuthLimitDTO,
-  AuthDurationDTO,
-  AuthMethodStatusDTO,
-  AuthPasswordHistoryDTO,
-  AuthPasswordDictionaryDTO,
-  AuthPersonalDataDTO,
-  AuthMaxSessionsDTO,
-  AuthMockNumbersDTO,
-  AuthMethodParamsDTO,
-  AuthMembershipPrivacyDTO,
-} from './DTO/project-auth.dto'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
-import { Models } from '@nuvix/core/helpers'
-import { ConsoleInterceptor } from '@nuvix/core/resolvers'
-import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
-import { AuthSettingsService } from './auth-settings.service'
 import { Patch } from '@nuvix/core'
+import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
+import { Models } from '@nuvix/core/helpers'
+import { ConsoleInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { IResponse } from '@nuvix/utils'
 import { ProjectsDoc } from '@nuvix/utils/types'
 import { ProjectParamsDTO } from '../DTO/create-project.dto'
+import { AuthSettingsService } from './auth-settings.service'
+import {
+  AuthDurationDTO,
+  AuthLimitDTO,
+  AuthMaxSessionsDTO,
+  AuthMembershipPrivacyDTO,
+  AuthMethodParamsDTO,
+  AuthMethodStatusDTO,
+  AuthMockNumbersDTO,
+  AuthPasswordDictionaryDTO,
+  AuthPasswordHistoryDTO,
+  AuthPersonalDataDTO,
+  AuthSessionAlertsDTO,
+} from './DTO/project-auth.dto'
 
 @Namespace('projects')
 @Controller({

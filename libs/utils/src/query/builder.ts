@@ -1,21 +1,20 @@
-import { DataSource } from '@nuvix/pg'
 import { Logger } from '@nestjs/common'
 import { Exception } from '@nuvix/core/extend/exception'
+import { DataSource, PG } from '@nuvix/pg'
+import { JoinBuilder } from './join-builder'
 import type {
-  Expression,
-  Condition,
-  NotExpression,
-  OrExpression,
   AndExpression,
   ColumnNode,
+  Condition,
   EmbedNode,
-  SelectNode,
+  Expression,
+  NotExpression,
+  OrExpression,
   ParsedOrdering,
-  ValueType,
   ParserResult,
+  SelectNode,
+  ValueType,
 } from './types'
-import { PG } from '@nuvix/pg'
-import { JoinBuilder } from './join-builder'
 
 type QueryBuilder = ReturnType<DataSource['queryBuilder']>
 
@@ -139,7 +138,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
   /**
    *apply ordering to QueryBuilder order clauses
    */
-  applyOrder(orderings: ParsedOrdering[] = [], table: string = ''): T {
+  applyOrder(orderings: ParsedOrdering[] = [], table = ''): T {
     if (!orderings || orderings.length === 0) {
       return this.qb
     }
@@ -168,7 +167,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
    * Apply GROUP BY clauses to the QueryBuilder
    */
   applyGroupBy(columns?: Condition['field'][], tableName?: string) {
-    if (columns && columns.length) {
+    if (columns?.length) {
       const _columns = columns.map(
         column => this._rawField(column, tableName).toSQL().sql,
       )
@@ -200,8 +199,12 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
           ? Number(offset)
           : undefined
 
-    if (Number.isInteger(limit)) this.qb.limit(limit as number)
-    if (Number.isInteger(offset)) this.qb.offset(offset as number)
+    if (Number.isInteger(limit)) {
+      this.qb.limit(limit as number)
+    }
+    if (Number.isInteger(offset)) {
+      this.qb.offset(offset as number)
+    }
 
     return this.qb
   }
@@ -332,43 +335,43 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
       case 'neq':
         return queryBuilder.whereRaw(`?? <> ${right}`, [field, value])
       case 'like':
-        return queryBuilder.whereRaw(`?? like ?`, [
+        return queryBuilder.whereRaw('?? like ?', [
           field,
           this._valueToPattern(value),
         ])
       case 'ilike':
-        return queryBuilder.whereRaw(`?? ilike ?`, [
+        return queryBuilder.whereRaw('?? ilike ?', [
           field,
           this._valueToPattern(value),
         ])
       case 'match':
-        return queryBuilder.whereRaw(`?? ~ ?`, [
+        return queryBuilder.whereRaw('?? ~ ?', [
           field,
           this._valueToPattern(value),
         ])
       case 'imatch':
-        return queryBuilder.whereRaw(`?? ~* ?`, [
+        return queryBuilder.whereRaw('?? ~* ?', [
           field,
           this._valueToPattern(value),
         ])
       case 'in':
-        return queryBuilder.whereRaw(`?? in (?)`, [field, filteredValues])
+        return queryBuilder.whereRaw('?? in (?)', [field, filteredValues])
       case 'notin':
-        return queryBuilder.whereRaw(`?? not in (?)`, [field, filteredValues])
+        return queryBuilder.whereRaw('?? not in (?)', [field, filteredValues])
 
       case 'is':
       case 'isnot':
         switch (String(value)) {
           case 'null':
-            return queryBuilder.whereRaw(`?? is null`, [field])
+            return queryBuilder.whereRaw('?? is null', [field])
           case 'not_null':
-            return queryBuilder.whereRaw(`?? is not null`, [field])
+            return queryBuilder.whereRaw('?? is not null', [field])
           case 'true':
-            return queryBuilder.whereRaw(`?? is true`, [field])
+            return queryBuilder.whereRaw('?? is true', [field])
           case 'false':
-            return queryBuilder.whereRaw(`?? is false`, [field])
+            return queryBuilder.whereRaw('?? is false', [field])
           case 'unknown':
-            return queryBuilder.whereRaw(`?? is unknown`, [field])
+            return queryBuilder.whereRaw('?? is unknown', [field])
           default:
             throw new Exception(
               Exception.GENERAL_PARSER_ERROR,
@@ -377,9 +380,9 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
         }
 
       case 'null':
-        return queryBuilder.whereRaw(`?? is null`, [field])
+        return queryBuilder.whereRaw('?? is null', [field])
       case 'notnull':
-        return queryBuilder.whereRaw(`?? is not null`, [field])
+        return queryBuilder.whereRaw('?? is not null', [field])
       case 'isdistinct':
         return queryBuilder.whereRaw(`?? is distinct from ${right}`, [
           field,
@@ -403,29 +406,29 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
 
       // Array/JSON
       case 'cs':
-        return queryBuilder.whereRaw(`?? @> ?`, [field, JSON.stringify(values)])
+        return queryBuilder.whereRaw('?? @> ?', [field, JSON.stringify(values)])
       case 'cd':
-        return queryBuilder.whereRaw(`?? <@ ?`, [field, JSON.stringify(values)])
+        return queryBuilder.whereRaw('?? <@ ?', [field, JSON.stringify(values)])
       case 'ov':
-        return queryBuilder.whereRaw(`?? && ?`, [field, JSON.stringify(values)])
+        return queryBuilder.whereRaw('?? && ?', [field, JSON.stringify(values)])
 
       // Range
       case 'sl':
-        return queryBuilder.whereRaw(`?? << ?`, [field, filteredValues])
+        return queryBuilder.whereRaw('?? << ?', [field, filteredValues])
       case 'sr':
-        return queryBuilder.whereRaw(`?? >> ?`, [field, filteredValues])
+        return queryBuilder.whereRaw('?? >> ?', [field, filteredValues])
       case 'nxl':
-        return queryBuilder.whereRaw(`?? &> ?`, [field, filteredValues])
+        return queryBuilder.whereRaw('?? &> ?', [field, filteredValues])
       case 'nxr':
-        return queryBuilder.whereRaw(`?? &< ?`, [field, filteredValues])
+        return queryBuilder.whereRaw('?? &< ?', [field, filteredValues])
       case 'adj':
-        return queryBuilder.whereRaw(`?? -|- ?`, [field, filteredValues])
+        return queryBuilder.whereRaw('?? -|- ?', [field, filteredValues])
 
       // Modifiers
       case 'all':
-        return queryBuilder.whereRaw(`?? = all(?)`, [field, filteredValues])
+        return queryBuilder.whereRaw('?? = all(?)', [field, filteredValues])
       case 'any':
-        return queryBuilder.whereRaw(`?? = any(?)`, [field, filteredValues])
+        return queryBuilder.whereRaw('?? = any(?)', [field, filteredValues])
 
       case 'between':
         if (values.length !== 2) {
@@ -434,7 +437,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
             `'between' operator expects exactly two values.`,
           )
         }
-        return queryBuilder.whereRaw(`?? between ? and ?`, [
+        return queryBuilder.whereRaw('?? between ? and ?', [
           field,
           values[0],
           values[1],
@@ -461,12 +464,11 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
         `to_tsvector(?, ??) @@ ${tsFunction}(?, ?)`,
         [language, field, language, query],
       )
-    } else {
-      return queryBuilder.whereRaw(`to_tsvector(??) @@ ${tsFunction}(?)`, [
-        field,
-        values[0],
-      ])
     }
+    return queryBuilder.whereRaw(`to_tsvector(??) @@ ${tsFunction}(?)`, [
+      field,
+      values[0],
+    ])
   }
 
   private _valueToPattern(value: any): string {
@@ -481,17 +483,17 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
       typeof value === 'object' &&
       '__type' in value &&
       value.__type === 'column'
-    )
+    ) {
       return true
-    else return false
+    }
+    return false
   }
 
   private _valueTypeToPlaceholder(values: Condition['values']): '?' | '??' {
     if (this._isValueColumnName(values[0])) {
       return '??'
-    } else {
-      return '?'
     }
+    return '?'
   }
 
   public _rawField(
@@ -500,7 +502,8 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
   ): ReturnType<(typeof this.pg)['raw']> {
     if (typeof _field === 'string') {
       return this.pg.raw('??.??', [table, _field])
-    } else if (Array.isArray(_field)) {
+    }
+    if (Array.isArray(_field)) {
       // Handle complex field paths with JSON operators
       const sqlParts: string[] = []
       const bindings: any[] = []
@@ -522,7 +525,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
           if (isAfterOperator) {
             // Try to convert to number if possible
             const numericValue = Number(part)
-            if (!isNaN(numericValue) && isFinite(numericValue)) {
+            if (!Number.isNaN(numericValue) && Number.isFinite(numericValue)) {
               sqlParts.push(part)
             } else {
               sqlParts.push(`'${part}'`)
@@ -537,17 +540,18 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
           }
         } else if (typeof part === 'object' && 'operator' in part) {
           // Handle JSON operators (->, ->>)
-          if (isLastPart)
+          if (isLastPart) {
             throw new Exception(
               Exception.GENERAL_PARSER_ERROR,
               'Invalid syntax, should be string or number after `->` or `->>`',
             )
+          }
           if (!hasObjectPartsBefore) {
             sqlParts.push(`"${part.name}"`)
           } else {
             // Try to convert to number if possible when i > 0
             const numericValue = Number(part.name)
-            if (!isNaN(numericValue) && isFinite(numericValue)) {
+            if (!Number.isNaN(numericValue) && Number.isFinite(numericValue)) {
               sqlParts.push(part.name)
             } else {
               sqlParts.push(`'${part.name}'`)
@@ -558,9 +562,8 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
       }
 
       return this.pg.raw(sqlParts.join(''), bindings)
-    } else {
-      throw new Error('Invalid field type: field must be string or array')
     }
+    throw new Error('Invalid field type: field must be string or array')
   }
 
   private _applyNotExpression(

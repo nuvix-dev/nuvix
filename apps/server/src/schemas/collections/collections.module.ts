@@ -1,26 +1,26 @@
+import { BullModule } from '@nestjs/bullmq'
 import {
-  Module,
   type MiddlewareConsumer,
+  Module,
   type NestModule,
 } from '@nestjs/common'
-import { BullModule } from '@nestjs/bullmq'
-import { CollectionsQueue } from '@nuvix/core/resolvers'
+import {
+  ApiHook,
+  AuditHook,
+  AuthHook,
+  CollectionsQueue,
+  SchemaHook,
+  StatsHook,
+} from '@nuvix/core/resolvers'
 import { QueueFor } from '@nuvix/utils'
+import { AttributesController } from './attributes/attributes.controller'
+import { AttributesService } from './attributes/attributes.service'
 import { CollectionsController } from './collections.controller'
 import { CollectionsService } from './collections.service'
-import {
-  AuthHook,
-  ApiHook,
-  StatsHook,
-  AuditHook,
-  SchemaHook,
-} from '@nuvix/core/resolvers'
 import { DocumentsController } from './documents/documents.controller'
-import { AttributesController } from './attributes/attributes.controller'
-import { IndexesController } from './indexes/indexes.controller'
-import { AttributesService } from './attributes/attributes.service'
-import { IndexesService } from './indexes/indexes.service'
 import { DocumentsService } from './documents/documents.service'
+import { IndexesController } from './indexes/indexes.controller'
+import { IndexesService } from './indexes/indexes.service'
 
 @Module({
   imports: [

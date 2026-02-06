@@ -5,12 +5,12 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common'
-import { Queue } from './queue'
-import { configuration, QueueFor, Schemas } from '@nuvix/utils'
 import { Doc } from '@nuvix/db'
+import { configuration, QueueFor, Schemas } from '@nuvix/utils'
+import type { ProjectsDoc } from '@nuvix/utils/types'
 import { Job } from 'bullmq'
 import { CoreService } from '../../core.service.js'
-import type { ProjectsDoc } from '@nuvix/utils/types'
+import { Queue } from './queue'
 
 interface ApiLogsBuffer {
   project: ProjectsDoc
@@ -111,9 +111,11 @@ export class ApiLogsQueue
       })
     }
 
-    this.buffer.get(projectId)!.logs.push(log)
+    this.buffer.get(projectId)?.logs.push(log)
 
-    if (this.buffer.get(projectId)!.logs.length >= ApiLogsQueue.BATCH_SIZE) {
+    if (
+      (this.buffer.get(projectId)?.logs.length ?? 0) >= ApiLogsQueue.BATCH_SIZE
+    ) {
       // Temporarily stop the timer to avoid a race condition where the timer
       // and a full buffer try to flush at the same exact time.
       clearInterval(this.interval)

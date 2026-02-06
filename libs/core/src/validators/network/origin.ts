@@ -1,14 +1,14 @@
 import type { Validator } from '@nuvix/db'
-import { Platform } from './platform'
 import type { PlatformsDoc } from '@nuvix/utils/types'
 import { Hostname } from './hostname'
+import { Platform } from './platform'
 
 export class Origin implements Validator {
   private hostnames: string[] = []
   private schemes: string[] = []
   private scheme: string | undefined
   private host: string | null = null
-  private origin: string = ''
+  private origin = ''
 
   /**
    * Constructor

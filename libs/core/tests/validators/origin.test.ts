@@ -1,7 +1,7 @@
+import { Doc, ID } from '@nuvix/db'
+import { describe, expect, it } from 'vitest'
 import { Origin } from '../../src/validators/network/origin'
 import { Platform } from '../../src/validators/network/platform'
-import { Doc, ID } from '@nuvix/db'
-import { describe, it, expect } from 'vitest'
 
 describe('Origin', () => {
   it('should validate origins correctly', () => {

@@ -1,7 +1,5 @@
 import { Injectable } from '@nestjs/common'
 import { DataSource, Context as DataSourceContext } from '@nuvix/pg'
-import { Exception } from '../../extend/exception'
-import { Hook } from '../../server'
 import {
   AppMode,
   Context,
@@ -10,14 +8,16 @@ import {
   DatabaseRole,
   PROJECT_DB_CLIENT,
   PROJECT_PG,
+  type Schema,
   Schemas,
   SchemaType,
-  type Schema,
 } from '@nuvix/utils'
 import type { ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
-import { CoreService } from '../../core.service.js'
 import type { Client } from 'pg'
+import { CoreService } from '../../core.service.js'
+import { Exception } from '../../extend/exception'
 import { Auth } from '../../helpers'
+import { Hook } from '../../server'
 
 @Injectable()
 export class SchemaHook implements Hook {
@@ -43,7 +43,9 @@ export class SchemaHook implements Hook {
     const schemaId =
       (request.params as { schemaId: string | undefined }).schemaId || 'public'
 
-    if (schemaId === undefined) return
+    if (schemaId === undefined) {
+      return
+    }
     const schema = await pg
       .table<Schema>('schemas')
       .withSchema(Schemas.System)
@@ -56,7 +58,7 @@ export class SchemaHook implements Hook {
         if (!schema.enabled) {
           throw new Exception(Exception.SCHEMA_NOT_FOUND)
         }
-        const allowed = project.get('metadata')?.['allowedSchemas'] ?? []
+        const allowed = project.get('metadata')?.allowedSchemas ?? []
         // May be we will add Document schema too in future
         if (
           !allowed.includes(schema.name) &&
@@ -83,12 +85,10 @@ export class SchemaHook implements Hook {
           schema: schema.name,
         })
         request[CURRENT_SCHEMA_DB] = db
-      } else {
-        if (mode !== AppMode.ADMIN || !Auth.isPlatformActor) {
-          request[Context.AuthMeta] = {
-            ...(request[Context.AuthMeta] || {}),
-            role,
-          }
+      } else if (mode !== AppMode.ADMIN || !Auth.isPlatformActor) {
+        request[Context.AuthMeta] = {
+          ...(request[Context.AuthMeta] || {}),
+          role,
         }
       }
     } else {

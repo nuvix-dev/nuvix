@@ -1,15 +1,15 @@
-import swc from 'unplugin-swc'
-import { defineConfig } from 'vitest/config'
-import tsconfigPaths from 'vite-tsconfig-paths'
+import { existsSync } from 'node:fs'
+import path from 'node:path'
 import { config } from 'dotenv'
-import path from 'path'
-import { existsSync } from 'fs'
+import swc from 'unplugin-swc'
+import tsconfigPaths from 'vite-tsconfig-paths'
+import { defineConfig } from 'vitest/config'
 
 const localEnvPath = path.resolve(process.cwd(), '../../.env.test')
 if (existsSync(localEnvPath)) {
   config({ path: localEnvPath, override: true })
 } else {
-  throw new Error('.env.test file is missing at ' + localEnvPath)
+  throw new Error(`.env.test file is missing at ${localEnvPath}`)
 }
 
 export default defineConfig({

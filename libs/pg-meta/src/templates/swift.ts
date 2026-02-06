@@ -1,3 +1,4 @@
+import type { GeneratorMetadata } from '../lib/generators'
 import type {
   PostgresColumn,
   PostgresMaterializedView,
@@ -5,7 +6,6 @@ import type {
   PostgresType,
   PostgresView,
 } from '../lib/index'
-import type { GeneratorMetadata } from '../lib/generators'
 import { PostgresForeignTable } from '../lib/types'
 
 type Operation = 'Select' | 'Insert' | 'Update'
@@ -147,11 +147,15 @@ function pgCompositeTypeToSwiftStruct(
     typeWithRetrievedAttributes.attributes.map(attribute => {
       return {
         formattedAttributeName: formatForSwiftTypeName(attribute.name),
-        formattedType: pgTypeToSwiftType(attribute.type!.format, false, {
-          types,
-          views,
-          tables,
-        }),
+        formattedType: pgTypeToSwiftType(
+          attribute.type?.format as string,
+          false,
+          {
+            types,
+            views,
+            tables,
+          },
+        ),
         rawName: attribute.name,
         isIdentity: false,
       }
@@ -189,12 +193,12 @@ function generateStruct(
 ): string[] {
   const identity = struct.attributes.find(column => column.isIdentity)
 
-  let protocolConformances = struct.protocolConformances
+  const protocolConformances = struct.protocolConformances
   if (identity) {
     protocolConformances.push('Identifiable')
   }
 
-  let output = [
+  const output = [
     `${ident(level)}${accessControl} struct ${struct.formattedStructName}${generateProtocolConformances(struct.protocolConformances)} {`,
   ]
 
@@ -247,7 +251,7 @@ export const apply = async ({
     .sort(({ name: a }, { name: b }) => a.localeCompare(b))
     .forEach(c => columnsByTableId[c.table_id]?.push(c))
 
-  let output = [
+  const output = [
     'import Foundation',
     'import Supabase',
     '',
@@ -428,9 +432,8 @@ function formatForSwiftTypeName(name: string): string {
       .map(word => {
         if (word) {
           return `${word[0]?.toUpperCase()}${word.slice(1)}`
-        } else {
-          return ''
         }
+        return ''
       })
       .join('')
   )

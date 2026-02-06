@@ -1,6 +1,6 @@
 import { OmitType } from '@nestjs/swagger'
-import { IsBoolean, IsIn } from 'class-validator'
 import { services } from '@nuvix/core/config'
+import { IsBoolean, IsIn } from 'class-validator'
 
 export class UpdateProjectServiceDTO {
   /**

@@ -1,19 +1,19 @@
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable, Logger } from '@nestjs/common'
+import { Doc } from '@nuvix/db'
+import {
+  AppMode,
+  AuthActivity,
+  Context,
+  QueueFor,
+  RouteContext,
+} from '@nuvix/utils'
+import { ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
+import { Queue } from 'bullmq'
 import { AuditEventType } from '../../decorators'
 import { Exception } from '../../extend/exception'
 import { Hook } from '../../server'
-import { Doc } from '@nuvix/db'
-import {
-  QueueFor,
-  AppMode,
-  Context,
-  AuthActivity,
-  RouteContext,
-} from '@nuvix/utils'
-import { Queue } from 'bullmq'
 import { AuditsQueueJobData } from '../queues/audits.queue'
-import { ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
 
 @Injectable()
 export class AuditHook implements Hook {
@@ -33,7 +33,7 @@ export class AuditHook implements Hook {
     try {
       const project = req[Context.Project] as ProjectsDoc
       const user = req[Context.User] as UsersDoc
-      const res = req['hooks_args']?.['preSerialization']?.['args']?.[0]
+      const res = req.hooks_args?.preSerialization?.args?.[0]
       await this.handleAudit(req, res, { audit, user, project })
     } catch (e) {
       this.logger.error('Unexpected error during audit handling', { error: e })
@@ -78,7 +78,7 @@ export class AuditHook implements Hook {
         status: true,
         $sequence: -1,
         type: AuthActivity.GUEST,
-        email: 'guest.' + project.getId() + '@service.' + req.host,
+        email: `guest.${project.getId()}@service.${req.host}`,
         password: '',
         name: 'Guest',
       }) as unknown as UsersDoc

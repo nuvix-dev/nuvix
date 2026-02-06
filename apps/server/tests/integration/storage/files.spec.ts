@@ -1,15 +1,15 @@
-import { describe, it, expect, beforeAll } from 'vitest'
-import { getApp } from '../../setup/app'
-import { getApiKeyJsonHeaders, getApiKeyHeaders } from '../../helpers/auth'
+import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { buildCreateBucketDTO } from '../../factories/dto/bucket.factory'
 import { buildUpdateFileDTO } from '../../factories/dto/file.factory'
+import { getApiKeyHeaders, getApiKeyJsonHeaders } from '../../helpers/auth'
+import { getApp } from '../../setup/app'
 import {
-  parseJson,
-  assertStatusCode,
   assertDocumentShape,
   assertListResponse,
+  assertStatusCode,
+  parseJson,
 } from '../../setup/test-utils'
-import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 
 describe('storage/files (integration)', () => {
   let app: NestFastifyApplication
@@ -110,7 +110,7 @@ describe('storage/files (integration)', () => {
 
   it('POST /v1/storage/buckets/:bucketId/files returns 201 for valid file upload', async () => {
     // PROTECTS: File creation contract
-    const fileId = 'testfile' + Date.now()
+    const fileId = `testfile${Date.now()}`
     const boundary = '----FormBoundary7MA4YWxkTrZu0gW'
     const fileContent = 'Test file content for upload'
 
@@ -208,7 +208,7 @@ describe('storage/files (integration)', () => {
 
   it('GET /v1/storage/buckets/:bucketId/files/:fileId returns 200 for existing file', async () => {
     // PROTECTS: Single file retrieval works correctly
-    const fileId = 'getfile' + Date.now()
+    const fileId = `getfile${Date.now()}`
     const boundary = '----FormBoundary7MA4YWxkTrZu0gW'
     const fileContent = 'Test file content for get'
 
@@ -267,7 +267,7 @@ describe('storage/files (integration)', () => {
 
   it('PUT /v1/storage/buckets/:bucketId/files/:fileId returns 200 and updates file', async () => {
     // PROTECTS: File update works correctly
-    const fileId = 'updatefile' + Date.now()
+    const fileId = `updatefile${Date.now()}`
     const boundary = '----FormBoundary7MA4YWxkTrZu0gW'
     const fileContent = 'Test file content for update'
 
@@ -331,7 +331,7 @@ describe('storage/files (integration)', () => {
 
   it('GET /v1/storage/buckets/:bucketId/files/:fileId/download returns 200 for existing file', async () => {
     // PROTECTS: File download works correctly
-    const fileId = 'downloadfile' + Date.now()
+    const fileId = `downloadfile${Date.now()}`
     const boundary = '----FormBoundary7MA4YWxkTrZu0gW'
     const fileContent = 'Test file content for download'
 
@@ -387,7 +387,7 @@ describe('storage/files (integration)', () => {
 
   it('GET /v1/storage/buckets/:bucketId/files/:fileId/view returns 200 for existing file', async () => {
     // PROTECTS: File view works correctly
-    const fileId = 'viewfile' + Date.now()
+    const fileId = `viewfile${Date.now()}`
     const boundary = '----FormBoundary7MA4YWxkTrZu0gW'
     const fileContent = 'Test file content for view'
 
@@ -431,7 +431,7 @@ describe('storage/files (integration)', () => {
 
   it('DELETE /v1/storage/buckets/:bucketId/files/:fileId returns 204 for existing file', async () => {
     // PROTECTS: File deletion works correctly
-    const fileId = 'deletefile' + Date.now()
+    const fileId = `deletefile${Date.now()}`
     const boundary = '----FormBoundary7MA4YWxkTrZu0gW'
     const fileContent = 'Test file content for delete'
 

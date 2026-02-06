@@ -1,34 +1,33 @@
-import { Injectable } from '@nestjs/common'
+import * as fs from 'node:fs/promises'
+import path from 'node:path'
 import { InjectQueue } from '@nestjs/bullmq'
-import { Queue } from 'bullmq'
-import * as Template from 'handlebars'
-import * as fs from 'fs/promises'
-import path from 'path'
+import { Injectable } from '@nestjs/common'
+import { AppConfigService } from '@nuvix/core'
+import type { SmtpConfig } from '@nuvix/core/config'
+import { Exception } from '@nuvix/core/extend/exception'
+import { Hooks } from '@nuvix/core/extend/hooks'
+import { Auth, LocaleTranslator } from '@nuvix/core/helpers'
+import { MailJob, MailQueueOptions } from '@nuvix/core/resolvers'
+import { PasswordHistoryValidator } from '@nuvix/core/validators'
 import {
-  Doc,
+  Authorization,
   Database,
-  Query,
+  Doc,
   ID,
   Permission,
+  Query,
   Role,
-  Authorization,
 } from '@nuvix/db'
-import { Exception } from '@nuvix/core/extend/exception'
-import { Auth } from '@nuvix/core/helpers'
-import { LocaleTranslator } from '@nuvix/core/helpers'
-import { PasswordHistoryValidator } from '@nuvix/core/validators'
-import { MailJob, MailQueueOptions } from '@nuvix/core/resolvers'
-import { QueueFor, TokenType, type HashAlgorithm } from '@nuvix/utils'
-import { CreateRecoveryDTO, UpdateRecoveryDTO } from './DTO/recovery.dto'
+import { type HashAlgorithm, QueueFor, TokenType } from '@nuvix/utils'
 import type {
   ProjectsDoc,
   Tokens,
   TokensDoc,
   UsersDoc,
 } from '@nuvix/utils/types'
-import { AppConfigService } from '@nuvix/core'
-import type { SmtpConfig } from '@nuvix/core/config'
-import { Hooks } from '@nuvix/core/extend/hooks'
+import { Queue } from 'bullmq'
+import * as Template from 'handlebars'
+import { CreateRecoveryDTO, UpdateRecoveryDTO } from './DTO/recovery.dto'
 
 @Injectable()
 export class RecoveryService {
@@ -141,42 +140,52 @@ export class RecoveryService {
     body = template(emailData)
 
     const smtp = project.get('smtp', {}) as SmtpConfig
-    const smtpEnabled = smtp['enabled'] ?? false
+    const smtpEnabled = smtp.enabled ?? false
     const systemConfig = this.appConfig.get('system')
 
     let senderEmail =
       systemConfig.emailAddress || this.appConfig.get('app').emailTeam
     let senderName =
-      systemConfig.emailName || this.appConfig.get('app').name + ' Server'
+      systemConfig.emailName || `${this.appConfig.get('app').name} Server`
     let replyTo = ''
 
     const smtpServer: SmtpConfig = {} as SmtpConfig
 
     if (smtpEnabled) {
-      if (smtp['senderEmail']) senderEmail = smtp['senderEmail']
-      if (smtp['senderName']) senderName = smtp['senderName']
-      if (smtp['replyTo']) replyTo = smtp['replyTo']
-
-      smtpServer['host'] = smtp['host']
-      smtpServer['port'] = smtp['port']
-      smtpServer['username'] = smtp['username']
-      smtpServer['password'] = smtp['password']
-      smtpServer['secure'] = smtp['secure'] ?? false
-
-      if (customTemplate) {
-        if (customTemplate['senderEmail'])
-          senderEmail = customTemplate['senderEmail']
-        if (customTemplate['senderName'])
-          senderName = customTemplate['senderName']
-        if (customTemplate['replyTo']) replyTo = customTemplate['replyTo']
-
-        body = customTemplate['message'] || body
-        subject = customTemplate['subject'] || subject
+      if (smtp.senderEmail) {
+        senderEmail = smtp.senderEmail
+      }
+      if (smtp.senderName) {
+        senderName = smtp.senderName
+      }
+      if (smtp.replyTo) {
+        replyTo = smtp.replyTo
       }
 
-      smtpServer['replyTo'] = replyTo
-      smtpServer['senderEmail'] = senderEmail
-      smtpServer['senderName'] = senderName
+      smtpServer.host = smtp.host
+      smtpServer.port = smtp.port
+      smtpServer.username = smtp.username
+      smtpServer.password = smtp.password
+      smtpServer.secure = smtp.secure ?? false
+
+      if (customTemplate) {
+        if (customTemplate.senderEmail) {
+          senderEmail = customTemplate.senderEmail
+        }
+        if (customTemplate.senderName) {
+          senderName = customTemplate.senderName
+        }
+        if (customTemplate.replyTo) {
+          replyTo = customTemplate.replyTo
+        }
+
+        body = customTemplate.message || body
+        subject = customTemplate.subject || subject
+      }
+
+      smtpServer.replyTo = replyTo
+      smtpServer.senderEmail = senderEmail
+      smtpServer.senderName = senderName
     }
 
     const emailVariables = {
@@ -236,7 +245,7 @@ export class RecoveryService {
       Auth.DEFAULT_ALGO_OPTIONS,
     )
 
-    const historyLimit = project.get('auths', {})['passwordHistory'] ?? 0
+    const historyLimit = project.get('auths', {}).passwordHistory ?? 0
     let history = profile.get('passwordHistory', [])
 
     if (newPassword && historyLimit > 0) {

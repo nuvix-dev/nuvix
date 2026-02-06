@@ -1,8 +1,8 @@
-import type { configuration } from './configuration.js'
 import { UsersDoc } from '../types/'
+import { nxconfig } from './configuration.js'
 import { SchemaType } from './constants.js'
 
-export type Configuration = typeof configuration
+export type Configuration = ReturnType<typeof nxconfig>
 
 export type DatabaseConfig = {
   postgres: {

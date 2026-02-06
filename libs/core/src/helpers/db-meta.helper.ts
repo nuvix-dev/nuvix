@@ -38,7 +38,7 @@ export const setupDatabaseMeta = async ({
   }
 
   if (extra) {
-    const processValue = (obj: any, prefix: string = '') => {
+    const processValue = (obj: any, prefix = '') => {
       for (const [key, value] of Object.entries(obj)) {
         if (key && value != null) {
           const fullKey = prefix ? `${prefix}.${key}` : key
@@ -62,7 +62,9 @@ export const setupDatabaseMeta = async ({
     processValue(extra)
   }
 
-  if (!sqlChunks.length) return
+  if (!sqlChunks.length) {
+    return
+  }
 
   const finalSQL = sqlChunks.join('\n')
   await client.execute(finalSQL)

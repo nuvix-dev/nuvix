@@ -7,11 +7,7 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { DatabaseService } from './database.service'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { ResponseInterceptor, ApiInterceptor } from '@nuvix/core/resolvers'
-import { DataSource } from '@nuvix/pg'
-import { Models } from '@nuvix/core/helpers'
+import { Get, Post } from '@nuvix/core'
 import {
   Auth,
   AuthType,
@@ -19,16 +15,22 @@ import {
   Project,
   ProjectPg,
 } from '@nuvix/core/decorators'
-
+import { Models } from '@nuvix/core/helpers'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers'
+import { DataSource } from '@nuvix/pg'
+import { IListResponse, SchemaType } from '@nuvix/utils'
+import type { ProjectsDoc } from '@nuvix/utils/types'
 // DTO's
 import {
   CreateSchemaDTO,
   SchemaParamsDTO,
   SchemaQueryDTO,
 } from './DTO/create-schema.dto'
-import type { ProjectsDoc } from '@nuvix/utils/types'
-import { IListResponse, SchemaType } from '@nuvix/utils'
-import { Get, Post } from '@nuvix/core'
+import { DatabaseService } from './database.service'
 
 @Controller({ version: ['1'], path: ['database'] })
 @UseGuards(ProjectGuard)

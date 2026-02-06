@@ -5,26 +5,28 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { SessionsService } from './sessions.service'
-import { Models } from '@nuvix/core/helpers'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
+import { Delete, Get, Post } from '@nuvix/core'
 import {
+  Auth,
+  AuthDatabase,
+  AuthType,
+  Locale,
   Namespace,
   Project,
-  AuthDatabase,
-  Locale,
-  Auth,
-  AuthType,
 } from '@nuvix/core/decorators'
-import type { Database } from '@nuvix/db'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { ApiInterceptor } from '@nuvix/core/resolvers'
-import type { ProjectsDoc, SessionsDoc } from '@nuvix/utils/types'
 import type { LocaleTranslator } from '@nuvix/core/helpers'
-import { UserParamDTO } from '../DTO/user.dto'
-import { Delete, Get, Post } from '@nuvix/core'
+import { Models } from '@nuvix/core/helpers'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers'
+import type { Database } from '@nuvix/db'
 import { IListResponse, IResponse } from '@nuvix/utils'
+import type { ProjectsDoc, SessionsDoc } from '@nuvix/utils/types'
+import { UserParamDTO } from '../DTO/user.dto'
 import { SessionParamDTO } from './DTO/session.dto'
+import { SessionsService } from './sessions.service'
 
 @Namespace('users')
 @Controller({ version: ['1'], path: 'users/:userId/sessions' })

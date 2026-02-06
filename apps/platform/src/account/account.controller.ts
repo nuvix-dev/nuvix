@@ -13,22 +13,24 @@ import {
   UseInterceptors,
   VERSION_NEUTRAL,
 } from '@nestjs/common'
-import { AccountService } from './account.service'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
-import { Models } from '@nuvix/core/helpers'
-import { User } from '@nuvix/core/decorators'
 import {
   AuditEvent,
   Locale,
   ResModel,
   Scope,
   Throttle,
+  User,
 } from '@nuvix/core/decorators'
-
-import { AuthGuard, Public } from '@nuvix/core/resolvers'
-import { ConsoleInterceptor } from '@nuvix/core/resolvers'
 import { Exception } from '@nuvix/core/extend/exception'
-import { LocaleTranslator } from '@nuvix/core/helpers'
+import { LocaleTranslator, Models } from '@nuvix/core/helpers'
+import {
+  AuthGuard,
+  ConsoleInterceptor,
+  Public,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers'
+import type { SessionsDoc, UsersDoc } from '@nuvix/utils/types'
+import { AccountService } from './account.service'
 import {
   CreateAccountDTO,
   UpdateEmailDTO,
@@ -37,7 +39,6 @@ import {
   UpdatePrefsDTO,
 } from './DTO/account.dto'
 import { CreateEmailSessionDTO } from './DTO/session.dto'
-import type { SessionsDoc, UsersDoc } from '@nuvix/utils/types'
 
 @Controller({ version: ['1', VERSION_NEUTRAL], path: 'account' })
 @UseGuards(AuthGuard)
@@ -83,7 +84,7 @@ export class AccountController {
   @Scope('account')
   @ResModel(Models.NONE)
   @AuditEvent('user.delete', 'user/{res.$id}')
-  async deleteAccount(@User() user: UsersDoc) {
+  async deleteAccount(@User() _user: UsersDoc) {
     throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
     // return this.accountService.deleteAccount(user)
   }

@@ -1,4 +1,13 @@
+import {
+  AttributeType,
+  RelationOptions,
+  RelationSide,
+  RelationType,
+} from '@nuvix/db'
+import { AttributeFormat, Schema } from '@nuvix/utils'
+import type { AttributesDoc, CollectionsDoc } from '@nuvix/utils/types'
 import prettier from 'prettier'
+import type { GeneratorMetadata } from '../lib/generators'
 import type {
   PostgresColumn,
   PostgresFunction,
@@ -7,16 +16,6 @@ import type {
   PostgresType,
   PostgresView,
 } from '../lib/index'
-import type { GeneratorMetadata } from '../lib/generators'
-import { GENERATE_TYPES_DEFAULT_SCHEMA } from '../constants'
-import type { AttributesDoc, CollectionsDoc } from '@nuvix/utils/types'
-import {
-  AttributeType,
-  RelationOptions,
-  RelationSide,
-  RelationType,
-} from '@nuvix/db'
-import { AttributeFormat, Schema } from '@nuvix/utils'
 
 export const apply = async ({
   schemas,
@@ -124,7 +123,7 @@ export type Database = {
                       table => `${JSON.stringify(table.name)}: {
                   Row: {
                     ${[
-                      ...columnsByTableId[table.id]!.map(
+                      ...(columnsByTableId[table.id] ?? []).map(
                         column =>
                           `${JSON.stringify(column.name)}: ${pgTypeToTsType(
                             column.format,
@@ -156,7 +155,7 @@ export type Database = {
                     ]}
                   }
                   Insert: {
-                    ${columnsByTableId[table.id]!.map(column => {
+                    ${columnsByTableId[table.id]?.map(column => {
                       let output = JSON.stringify(column.name)
 
                       if (column.identity_generation === 'ALWAYS') {
@@ -188,7 +187,7 @@ export type Database = {
                     })}
                   }
                   Update: {
-                    ${columnsByTableId[table.id]!.map(column => {
+                    ${columnsByTableId[table.id]?.map(column => {
                       let output = JSON.stringify(column.name)
 
                       if (column.identity_generation === 'ALWAYS') {
@@ -248,7 +247,7 @@ export type Database = {
                   : schemaViews.map(
                       view => `${JSON.stringify(view.name)}: {
                   Row: {
-                    ${columnsByTableId[view.id]!.map(
+                    ${columnsByTableId[view.id]?.map(
                       column =>
                         `${JSON.stringify(column.name)}: ${pgTypeToTsType(
                           column.format,
@@ -264,7 +263,7 @@ export type Database = {
                   ${
                     'is_updatable' in view && view.is_updatable
                       ? `Insert: {
-                           ${columnsByTableId[view.id]!.map(column => {
+                           ${columnsByTableId[view.id]?.map(column => {
                              let output = JSON.stringify(column.name)
 
                              if (!column.is_updatable) {
@@ -277,7 +276,7 @@ export type Database = {
                            })}
                          }
                          Update: {
-                           ${columnsByTableId[view.id]!.map(column => {
+                           ${columnsByTableId[view.id]?.map(column => {
                              let output = JSON.stringify(column.name)
 
                              if (!column.is_updatable) {
@@ -337,7 +336,7 @@ export type Database = {
                 const schemaFunctionsGroupedByName = schemaFunctions.reduce(
                   (acc, curr) => {
                     acc[curr.name] ??= []
-                    acc[curr.name]!.push(curr)
+                    acc[curr.name]?.push(curr)
                     return acc
                   },
                   {} as Record<string, PostgresFunction[]>,
@@ -380,9 +379,9 @@ export type Database = {
                         .join(' | ')}
                       Returns: ${(() => {
                         // Case 1: `returns table`.
-                        const tableArgs = fns[0]!.args.filter(
-                          ({ mode }) => mode === 'table',
-                        )
+                        const tableArgs =
+                          fns[0]?.args.filter(({ mode }) => mode === 'table') ??
+                          []
                         if (tableArgs.length > 0) {
                           const argsNameAndType = tableArgs.map(
                             ({ name, type_id }) => {
@@ -416,7 +415,7 @@ export type Database = {
                         )
                         if (relation) {
                           return `{
-                            ${columnsByTableId[relation.id]!.map(
+                            ${columnsByTableId[relation.id]?.map(
                               column =>
                                 `${JSON.stringify(column.name)}: ${pgTypeToTsType(
                                   column.format,
@@ -653,11 +652,13 @@ const pgTypeToTsType = (
 ): string => {
   if (pgType === 'bool') {
     return 'boolean'
-  } else if (
+  }
+  if (
     ['int2', 'int4', 'int8', 'float4', 'float8', 'numeric'].includes(pgType)
   ) {
     return 'number'
-  } else if (
+  }
+  if (
     [
       'bytea',
       'bpchar',
@@ -674,61 +675,64 @@ const pgTypeToTsType = (
     ].includes(pgType)
   ) {
     return 'string'
-  } else if (['json', 'jsonb'].includes(pgType)) {
+  }
+  if (['json', 'jsonb'].includes(pgType)) {
     return 'Json'
-  } else if (pgType === 'void') {
+  }
+  if (pgType === 'void') {
     return 'undefined'
-  } else if (pgType === 'record') {
+  }
+  if (pgType === 'record') {
     return 'Record<string, unknown>'
-  } else if (pgType.startsWith('_')) {
+  }
+  if (pgType.startsWith('_')) {
     return `(${pgTypeToTsType(pgType.substring(1), { types, schemas, tables, views })})[]`
-  } else {
-    const enumType = types.find(
-      type => type.name === pgType && type.enums.length > 0,
-    )
-    if (enumType) {
-      if (schemas.some(({ name }) => name === enumType.schema)) {
-        return `Database[${JSON.stringify(enumType.schema)}]['Enums'][${JSON.stringify(
-          enumType.name,
-        )}]`
-      }
-      return enumType.enums.map(variant => JSON.stringify(variant)).join('|')
+  }
+  const enumType = types.find(
+    type => type.name === pgType && type.enums.length > 0,
+  )
+  if (enumType) {
+    if (schemas.some(({ name }) => name === enumType.schema)) {
+      return `Database[${JSON.stringify(enumType.schema)}]['Enums'][${JSON.stringify(
+        enumType.name,
+      )}]`
     }
+    return enumType.enums.map(variant => JSON.stringify(variant)).join('|')
+  }
 
-    const compositeType = types.find(
-      type => type.name === pgType && type.attributes.length > 0,
-    )
-    if (compositeType) {
-      if (schemas.some(({ name }) => name === compositeType.schema)) {
-        return `Database[${JSON.stringify(
-          compositeType.schema,
-        )}]['CompositeTypes'][${JSON.stringify(compositeType.name)}]`
-      }
-      return 'unknown'
+  const compositeType = types.find(
+    type => type.name === pgType && type.attributes.length > 0,
+  )
+  if (compositeType) {
+    if (schemas.some(({ name }) => name === compositeType.schema)) {
+      return `Database[${JSON.stringify(
+        compositeType.schema,
+      )}]['CompositeTypes'][${JSON.stringify(compositeType.name)}]`
     }
-
-    const tableRowType = tables.find(table => table.name === pgType)
-    if (tableRowType) {
-      if (schemas.some(({ name }) => name === tableRowType.schema)) {
-        return `Database[${JSON.stringify(tableRowType.schema)}]['Tables'][${JSON.stringify(
-          tableRowType.name,
-        )}]['Row']`
-      }
-      return 'unknown'
-    }
-
-    const viewRowType = views.find(view => view.name === pgType)
-    if (viewRowType) {
-      if (schemas.some(({ name }) => name === viewRowType.schema)) {
-        return `Database[${JSON.stringify(viewRowType.schema)}]['Views'][${JSON.stringify(
-          viewRowType.name,
-        )}]['Row']`
-      }
-      return 'unknown'
-    }
-
     return 'unknown'
   }
+
+  const tableRowType = tables.find(table => table.name === pgType)
+  if (tableRowType) {
+    if (schemas.some(({ name }) => name === tableRowType.schema)) {
+      return `Database[${JSON.stringify(tableRowType.schema)}]['Tables'][${JSON.stringify(
+        tableRowType.name,
+      )}]['Row']`
+    }
+    return 'unknown'
+  }
+
+  const viewRowType = views.find(view => view.name === pgType)
+  if (viewRowType) {
+    if (schemas.some(({ name }) => name === viewRowType.schema)) {
+      return `Database[${JSON.stringify(viewRowType.schema)}]['Views'][${JSON.stringify(
+        viewRowType.name,
+      )}]['Row']`
+    }
+    return 'unknown'
+  }
+
+  return 'unknown'
 }
 
 /* -----------------------
@@ -745,7 +749,9 @@ const normalizeEnumName = (collectionId: string, key: string) =>
  * Generate Types block for document schema collections.
  */
 const generateDocSchemaTypes = (collections: CollectionsDoc[]): string => {
-  if (collections.length === 0) return '[_ in never]: never'
+  if (collections.length === 0) {
+    return '[_ in never]: never'
+  }
 
   return collections
     .map(collection => {
@@ -909,7 +915,6 @@ const relationshipTypeToTsType = (
       options.side === RelationSide.Parent)
   ) {
     return `Array<${baseType}>`
-  } else {
-    return `${baseType} | null`
   }
+  return `${baseType} | null`
 }

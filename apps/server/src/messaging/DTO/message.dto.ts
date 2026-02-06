@@ -6,17 +6,16 @@ import {
   IsUID,
 } from '@nuvix/core/validators'
 import {
-  IsString,
-  IsOptional,
   IsArray,
   IsBoolean,
-  IsObject,
-  IsInt,
   IsDateString,
   IsIn,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
   MaxLength,
   Min,
-  Validate,
 } from 'class-validator'
 
 abstract class CreateMessageDTO {

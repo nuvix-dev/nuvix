@@ -10,16 +10,16 @@
  * This flow represents the critical path for new users joining the platform.
  */
 
-import { describe, it, expect, beforeAll } from 'vitest'
-import { getApp } from '../setup/app'
+import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { buildCreateAccountDTO } from '../factories/dto/account.factory'
 import { buildCreateEmailSessionDTO } from '../factories/dto/session.factory'
+import { getApp } from '../setup/app'
 import {
-  parseJson,
-  assertStatusCode,
   assertDocumentShape,
+  assertStatusCode,
+  parseJson,
 } from '../setup/test-utils'
-import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 
 describe('E2E: User Onboarding Flow', () => {
   let app: NestFastifyApplication

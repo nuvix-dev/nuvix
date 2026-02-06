@@ -6,12 +6,12 @@ export class ContinentModel extends BaseModel {
   /**
    * Continent name.
    */
-  @Expose() name: string = ''
+  @Expose() name = ''
 
   /**
    * Continent two letter code.
    */
-  @Expose() code: string = ''
+  @Expose() code = ''
 
   constructor(partial: Partial<ContinentModel>) {
     super()

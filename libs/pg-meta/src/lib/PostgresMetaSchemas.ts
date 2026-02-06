@@ -1,10 +1,10 @@
 import { ident, literal } from 'pg-format'
-import { DEFAULT_SYSTEM_SCHEMAS } from './constants'
-import { schemasSql } from './sql/index'
-import { PostgresMetaResult, PostgresSchema } from './types'
 import { SchemaCreateDTO } from '../DTO/schema-create.dto'
 import { SchemaUpdateDTO } from '../DTO/schema-update.dto'
 import { PgMetaException } from '../extra/execption'
+import { DEFAULT_SYSTEM_SCHEMAS } from './constants'
+import { schemasSql } from './sql/index'
+import { PostgresMetaResult, PostgresSchema } from './types'
 
 export default class PostgresMetaSchemas {
   query: (sql: string) => Promise<PostgresMetaResult<any>>
@@ -57,24 +57,24 @@ export default class PostgresMetaSchemas {
       const { data, error } = await this.query(sql)
       if (error) {
         return { data, error }
-      } else if (data.length === 0) {
-        throw new PgMetaException(`Cannot find a schema with ID ${id}`)
-      } else {
-        return { data: data[0], error }
       }
-    } else if (name) {
+      if (data.length === 0) {
+        throw new PgMetaException(`Cannot find a schema with ID ${id}`)
+      }
+      return { data: data[0], error }
+    }
+    if (name) {
       const sql = `${schemasSql} AND n.nspname = ${literal(name)};`
       const { data, error } = await this.query(sql)
       if (error) {
         return { data, error }
-      } else if (data.length === 0) {
-        throw new PgMetaException(`Cannot find a schema named ${name}`)
-      } else {
-        return { data: data[0], error }
       }
-    } else {
-      throw new PgMetaException('Invalid parameters on schema retrieve')
+      if (data.length === 0) {
+        throw new PgMetaException(`Cannot find a schema named ${name}`)
+      }
+      return { data: data[0], error }
     }
+    throw new PgMetaException('Invalid parameters on schema retrieve')
   }
 
   async create({
@@ -100,11 +100,11 @@ export default class PostgresMetaSchemas {
     const nameSql =
       name === undefined
         ? ''
-        : `ALTER SCHEMA ${ident(old!.name)} RENAME TO ${ident(name)};`
+        : `ALTER SCHEMA ${ident(old?.name)} RENAME TO ${ident(name)};`
     const ownerSql =
       owner === undefined
         ? ''
-        : `ALTER SCHEMA ${ident(old!.name)} OWNER TO ${ident(owner)};`
+        : `ALTER SCHEMA ${ident(old?.name)} OWNER TO ${ident(owner)};`
     const sql = `BEGIN; ${ownerSql} ${nameSql} COMMIT;`
     {
       const { error } = await this.query(sql)
@@ -123,7 +123,7 @@ export default class PostgresMetaSchemas {
     if (error) {
       return { data: null, error }
     }
-    const sql = `DROP SCHEMA ${ident(schema!.name)} ${cascade ? 'CASCADE' : 'RESTRICT'};`
+    const sql = `DROP SCHEMA ${ident(schema?.name)} ${cascade ? 'CASCADE' : 'RESTRICT'};`
     {
       const { error } = await this.query(sql)
       if (error) {

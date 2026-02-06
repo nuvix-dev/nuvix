@@ -1,21 +1,21 @@
 import {
+  CallHandler,
+  ClassSerializerContextOptions,
+  ExecutionContext,
   Inject,
   Injectable,
   NestInterceptor,
   Optional,
   StreamableFile,
-  CallHandler,
-  ExecutionContext,
-  ClassSerializerContextOptions,
 } from '@nestjs/common'
-import { Observable } from 'rxjs'
-import { map } from 'rxjs/operators'
-import { isObject } from '@nestjs/common/utils/shared.utils.js'
 import { ClassTransformOptions } from '@nestjs/common/interfaces/external/class-transform-options.interface'
 import { TransformerPackage } from '@nestjs/common/interfaces/external/transformer-package.interface'
-import { Doc } from '@nuvix/db'
+import { isObject } from '@nestjs/common/utils/shared.utils.js'
 import { Reflector } from '@nestjs/core'
+import { Doc } from '@nuvix/db'
 import * as classTransformer from 'class-transformer'
+import { Observable } from 'rxjs'
+import { map } from 'rxjs/operators'
 
 export const CLASS_SERIALIZER_OPTIONS = 'CLASS_SERIALIZER_OPTIONS'
 
@@ -66,7 +66,7 @@ export class ResponseInterceptor implements NestInterceptor {
     return next
       .handle()
       .pipe(
-        map((res: PlainLiteralObject | Array<PlainLiteralObject>) =>
+        map((res: PlainLiteralObject | PlainLiteralObject[]) =>
           this.serialize(res, options),
         ),
       )
@@ -76,9 +76,9 @@ export class ResponseInterceptor implements NestInterceptor {
    * Serializes responses that are non-null objects nor streamable files.
    */
   serialize(
-    response: PlainLiteralObject | Array<PlainLiteralObject>,
+    response: PlainLiteralObject | PlainLiteralObject[],
     options: ResolverTypeContextOptions,
-  ): PlainLiteralObject | Array<PlainLiteralObject> {
+  ): PlainLiteralObject | PlainLiteralObject[] {
     if (!isObject(response) || response instanceof StreamableFile) {
       return response
     }
@@ -103,10 +103,10 @@ export class ResponseInterceptor implements NestInterceptor {
   }
 
   serializeList(
-    response: PlainLiteralObject | Array<PlainLiteralObject>,
+    response: PlainLiteralObject | PlainLiteralObject[],
     options: ResolverTypeContextOptions,
     keys?: string[],
-  ): PlainLiteralObject | Array<PlainLiteralObject> {
+  ): PlainLiteralObject | PlainLiteralObject[] {
     if (!isObject(response) || response instanceof StreamableFile) {
       return response
     }

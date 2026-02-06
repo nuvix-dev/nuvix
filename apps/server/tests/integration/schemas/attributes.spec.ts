@@ -1,14 +1,14 @@
-import { describe, it, expect, beforeAll } from 'vitest'
-import { getApp } from '../../setup/app'
-import { getApiKeyJsonHeaders, getApiKeyHeaders } from '../../helpers/auth'
-import { buildCreateDocumentSchemaDTO } from '../../factories/dto/schema.factory'
-import { buildCreateCollectionDTO } from '../../factories/dto/collection.factory'
-import {
-  parseJson,
-  assertStatusCode,
-  assertListResponse,
-} from '../../setup/test-utils'
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { beforeAll, describe, expect, it } from 'vitest'
+import { buildCreateCollectionDTO } from '../../factories/dto/collection.factory'
+import { buildCreateDocumentSchemaDTO } from '../../factories/dto/schema.factory'
+import { getApiKeyHeaders, getApiKeyJsonHeaders } from '../../helpers/auth'
+import { getApp } from '../../setup/app'
+import {
+  assertListResponse,
+  assertStatusCode,
+  parseJson,
+} from '../../setup/test-utils'
 
 describe('schemas/collections/attributes (integration)', () => {
   let app: NestFastifyApplication
@@ -58,9 +58,12 @@ describe('schemas/collections/attributes (integration)', () => {
 
       if (res.statusCode === 200) {
         const body = parseJson(res.payload)
-        if (body.status === 'available') return true
-        if (body.status === 'failed')
+        if (body.status === 'available') {
+          return true
+        }
+        if (body.status === 'failed') {
           throw new Error(`Attribute ${key} creation failed`)
+        }
       }
 
       await new Promise(resolve => setTimeout(resolve, 500))

@@ -1,7 +1,11 @@
 import { RolesValidator } from '@nuvix/db'
 import { Transform } from 'class-transformer'
-import { registerDecorator, ValidationOptions } from 'class-validator'
-import { ValidateIf, isBoolean } from 'class-validator'
+import {
+  isBoolean,
+  registerDecorator,
+  ValidateIf,
+  ValidationOptions,
+} from 'class-validator'
 
 /**
  * Decorator that checks if a property is a valid unique ID.
@@ -11,7 +15,7 @@ import { ValidateIf, isBoolean } from 'class-validator'
 export function IsUID(
   validationOptions?: ValidationOptions,
 ): PropertyDecorator {
-  return function (object: object, propertyName: string | Symbol) {
+  return (object: object, propertyName: string | symbol) => {
     registerDecorator({
       name: 'isUniqueID',
       target: object.constructor,
@@ -23,7 +27,7 @@ export function IsUID(
           return typeof value === 'string' && regex.test(value)
         },
         defaultMessage() {
-          return `${propertyName} must be alphanumeric and can include period, hyphen, and underscore. Cannot start with a special character. Max length is 36 chars.`
+          return `${String(propertyName)} must be alphanumeric and can include period, hyphen, and underscore. Cannot start with a special character. Max length is 36 chars.`
         },
       },
     })
@@ -39,7 +43,7 @@ export function IsUID(
 export function IsCustomID(
   validationOptions?: ValidationOptions,
 ): PropertyDecorator {
-  return function (object: object, propertyName: string | Symbol) {
+  return (object: object, propertyName: string | symbol) => {
     registerDecorator({
       name: 'isCustomID',
       target: object.constructor,
@@ -51,7 +55,7 @@ export function IsCustomID(
           return typeof value === 'string' && regex.test(value)
         },
         defaultMessage() {
-          return `${propertyName} must be either "unique()" or alphanumeric and can include period, hyphen, and underscore. Cannot start with a special character. Max length is 36 chars.`
+          return `${String(propertyName)} must be either "unique()" or alphanumeric and can include period, hyphen, and underscore. Cannot start with a special character. Max length is 36 chars.`
         },
       },
     })
@@ -66,7 +70,7 @@ export function IsCustomID(
 export function IsKey(
   validationOptions?: ValidationOptions,
 ): PropertyDecorator {
-  return function (object: object, propertyName: string | Symbol) {
+  return (object: object, propertyName: string | symbol) => {
     registerDecorator({
       name: 'isKey',
       target: object.constructor,
@@ -78,7 +82,7 @@ export function IsKey(
           return typeof value === 'string' && regex.test(value)
         },
         defaultMessage() {
-          return `${propertyName} must be alphanumeric and can include underscore. Cannot start with a special character.`
+          return `${String(propertyName)} must be alphanumeric and can include underscore. Cannot start with a special character.`
         },
       },
     })
@@ -91,9 +95,11 @@ export function IsKey(
  * a boolean, it keeps it as is.
  */
 export function TransformStringToBoolean() {
-  return function (target: any, propertyKey: string) {
+  return (target: any, propertyKey: string) => {
     Transform(({ value }) => {
-      if (isBoolean(value)) return value
+      if (isBoolean(value)) {
+        return value
+      }
       return value === 'true'
     })(target, propertyKey)
 
@@ -107,7 +113,7 @@ export function TransformStringToBoolean() {
 export function IsFutureDate(
   validationOptions?: ValidationOptions,
 ): PropertyDecorator {
-  return function (object: object, propertyName: string | Symbol) {
+  return (object: object, propertyName: string | symbol) => {
     registerDecorator({
       name: 'isFutureDate',
       target: object.constructor,
@@ -117,10 +123,10 @@ export function IsFutureDate(
         validate(value: any) {
           const date = typeof value === 'string' ? new Date(value) : value
           const now = new Date()
-          return !isNaN(date.getTime()) && date > now
+          return !Number.isNaN(date.getTime()) && date > now
         },
         defaultMessage() {
-          return `${propertyName} must be a valid date in the future.`
+          return `${String(propertyName)} must be a valid date in the future.`
         },
       },
     })
@@ -130,7 +136,7 @@ export function IsFutureDate(
 export function IsCompoundID(
   validationOptions?: ValidationOptions,
 ): PropertyDecorator {
-  return function (object: object, propertyName: string | Symbol) {
+  return (object: object, propertyName: string | symbol) => {
     registerDecorator({
       name: 'isCompoundID',
       target: object.constructor,
@@ -143,7 +149,7 @@ export function IsCompoundID(
           return typeof value === 'string' && regex.test(value)
         },
         defaultMessage() {
-          return `${propertyName} must be in the format <ID>:<ID> where each ID is alphanumeric and can include period, hyphen, and underscore. Cannot start with a special character. Max length for each ID is 36 chars.`
+          return `${String(propertyName)} must be in the format <ID>:<ID> where each ID is alphanumeric and can include period, hyphen, and underscore. Cannot start with a special character. Max length for each ID is 36 chars.`
         },
       },
     })
@@ -153,7 +159,7 @@ export function IsCompoundID(
 export function IsPermissionsArray(
   validationOptions?: ValidationOptions & { limit?: number },
 ): PropertyDecorator {
-  return function (object: object, propertyName: string | Symbol) {
+  return (object: object, propertyName: string | symbol) => {
     registerDecorator({
       name: 'isPermissionsArray',
       target: object.constructor,
@@ -165,7 +171,7 @@ export function IsPermissionsArray(
           return validator.$valid(value)
         },
         defaultMessage() {
-          return `${propertyName} must be a valid permissions array.`
+          return `${String(propertyName)} must be a valid permissions array.`
         },
       },
     })
@@ -177,7 +183,7 @@ export function IsPermissionsArray(
  * If the value is not an array, it keeps it as is.
  */
 export function ArrayToLastElement() {
-  return function (target: any, propertyKey: string) {
+  return (target: any, propertyKey: string) => {
     Transform(({ value }) => {
       if (Array.isArray(value)) {
         return value[value.length - 1]
@@ -193,14 +199,15 @@ export function ArrayToLastElement() {
  * @param type - The target type to transform to. Currently supports "number".
  */
 export function TryTransformTo(type: 'number' | 'int') {
-  return function (target: any, propertyKey: string) {
+  return (target: any, propertyKey: string) => {
     Transform(({ value }) => {
       if (type === 'number') {
         const parsed = Number(value)
-        return isNaN(parsed) ? value : parsed
-      } else if (type === 'int') {
-        const parsed = parseInt(value, 10)
-        return isNaN(parsed) ? value : parsed
+        return Number.isNaN(parsed) ? value : parsed
+      }
+      if (type === 'int') {
+        const parsed = Number.parseInt(value, 10)
+        return Number.isNaN(parsed) ? value : parsed
       }
       return value
     })(target, propertyKey)

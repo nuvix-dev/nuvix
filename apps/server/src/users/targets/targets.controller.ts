@@ -5,29 +5,31 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { TargetsService } from './targets.service'
+import { Delete, Get, Patch, Post } from '@nuvix/core'
+import {
+  Auth,
+  AuthDatabase,
+  AuthType,
+  Namespace,
+  QueryFilter,
+} from '@nuvix/core/decorators'
+import { Models } from '@nuvix/core/helpers'
+import { TargetsQueryPipe } from '@nuvix/core/pipes/queries'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers'
+import type { Database, Query } from '@nuvix/db'
+import { IListResponse, IResponse } from '@nuvix/utils'
+import { TargetsDoc } from '@nuvix/utils/types'
+import { UserParamDTO } from '../DTO/user.dto'
 import {
   CreateTargetDTO,
   TargetParamDTO,
   UpdateTargetDTO,
 } from './DTO/target.dto'
-import { Models } from '@nuvix/core/helpers'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
-import {
-  Namespace,
-  AuthDatabase,
-  Auth,
-  AuthType,
-  QueryFilter,
-} from '@nuvix/core/decorators'
-import type { Database, Query } from '@nuvix/db'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { ApiInterceptor } from '@nuvix/core/resolvers'
-import { Delete, Get, Patch, Post } from '@nuvix/core'
-import { UserParamDTO } from '../DTO/user.dto'
-import { IListResponse, IResponse } from '@nuvix/utils'
-import { TargetsDoc } from '@nuvix/utils/types'
-import { TargetsQueryPipe } from '@nuvix/core/pipes/queries'
+import { TargetsService } from './targets.service'
 
 @Namespace('users')
 @Controller({ version: ['1'], path: 'users/:userId/targets' })

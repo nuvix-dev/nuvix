@@ -7,9 +7,49 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { UsersService } from './users.service'
+import { AuditDoc } from '@nuvix/audit'
+import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
+import {
+  Auth,
+  AuthDatabase,
+  AuthType,
+  Locale,
+  Namespace,
+  Project,
+  QueryFilter,
+  QuerySearch,
+} from '@nuvix/core/decorators'
+import type { LocaleTranslator } from '@nuvix/core/helpers'
+import { Models } from '@nuvix/core/helpers'
+import {
+  IdentitiesQueryPipe,
+  LogsQueryPipe,
+  MembershipsQueryPipe,
+  UsersQueryPipe,
+} from '@nuvix/core/pipes/queries'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers'
+import type { Database, Query as Queries } from '@nuvix/db'
+import type { IListResponse, IResponse } from '@nuvix/utils'
+import type {
+  IdentitiesDoc,
+  MembershipsDoc,
+  ProjectsDoc,
+  TokensDoc,
+  UsersDoc,
+} from '@nuvix/utils/types'
+import { CreateJwtDTO } from './DTO/jwt.dto'
+import { CreateTokenDTO } from './DTO/token.dto'
 import {
   CreateUserDTO,
+  CreateUserWithScryptDTO,
+  CreateUserWithScryptModifedDTO,
+  CreateUserWithShaDTO,
+  IdentityParamDTO,
+  RangeQueryDTO,
   UpdateUserEmailDTO,
   UpdateUserEmailVerificationDTO,
   UpdateUserLabelDTO,
@@ -19,47 +59,9 @@ import {
   UpdateUserPoneVerificationDTO,
   UpdateUserPrefsDTO,
   UpdateUserStatusDTO,
-  CreateUserWithScryptDTO,
-  CreateUserWithShaDTO,
-  CreateUserWithScryptModifedDTO,
   UserParamDTO,
-  RangeQueryDTO,
-  IdentityParamDTO,
 } from './DTO/user.dto'
-import { Models } from '@nuvix/core/helpers'
-import { ResponseInterceptor } from '@nuvix/core/resolvers'
-import {
-  Namespace,
-  Project,
-  AuthType,
-  AuthDatabase,
-  Locale,
-  Auth,
-  QueryFilter,
-  QuerySearch,
-} from '@nuvix/core/decorators'
-import { CreateTokenDTO } from './DTO/token.dto'
-import { CreateJwtDTO } from './DTO/jwt.dto'
-import type { Database, Query as Queries } from '@nuvix/db'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { ApiInterceptor } from '@nuvix/core/resolvers'
-import type {
-  IdentitiesDoc,
-  MembershipsDoc,
-  ProjectsDoc,
-  TokensDoc,
-  UsersDoc,
-} from '@nuvix/utils/types'
-import {
-  IdentitiesQueryPipe,
-  LogsQueryPipe,
-  MembershipsQueryPipe,
-  UsersQueryPipe,
-} from '@nuvix/core/pipes/queries'
-import type { LocaleTranslator } from '@nuvix/core/helpers'
-import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
-import type { IListResponse, IResponse } from '@nuvix/utils'
-import { AuditDoc } from '@nuvix/audit'
+import { UsersService } from './users.service'
 
 @Namespace('users')
 @Controller({ version: ['1'], path: 'users' })

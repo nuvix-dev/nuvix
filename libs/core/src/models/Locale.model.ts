@@ -6,37 +6,37 @@ export class LocaleModel extends BaseModel {
   /**
    * User IP address.
    */
-  @Expose() ip: string = ''
+  @Expose() ip = ''
 
   /**
    * Country code in ISO 3166-1 two-character format.
    */
-  @Expose() countryCode: string = ''
+  @Expose() countryCode = ''
 
   /**
    * Country name. This field supports localization.
    */
-  @Expose() country: string = ''
+  @Expose() country = ''
 
   /**
    * Continent code. A two character continent code.
    */
-  @Expose() continentCode: string = ''
+  @Expose() continentCode = ''
 
   /**
    * Continent name. This field supports localization.
    */
-  @Expose() continent: string = ''
+  @Expose() continent = ''
 
   /**
    * True if country is part of the European Union.
    */
-  @Expose() eu: boolean = false
+  @Expose() eu = false
 
   /**
    * Currency code in ISO 4217 three-character format.
    */
-  @Expose() currency: string = ''
+  @Expose() currency = ''
 
   constructor(partial: Partial<LocaleModel>) {
     super()

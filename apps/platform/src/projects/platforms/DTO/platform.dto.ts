@@ -1,5 +1,6 @@
 import { ApiProperty, OmitType, PartialType } from '@nestjs/swagger'
 import { PlatformType } from '@nuvix/core/config'
+import { IsUID } from '@nuvix/core/validators'
 import {
   IsEnum,
   IsOptional,
@@ -8,7 +9,6 @@ import {
   MinLength,
 } from 'class-validator'
 import { ProjectParamsDTO } from '../../DTO/create-project.dto'
-import { IsUID } from '@nuvix/core/validators'
 
 export class CreatePlatformDTO {
   /**

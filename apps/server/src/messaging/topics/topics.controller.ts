@@ -5,30 +5,32 @@ import {
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
-import { TopicsService } from './topics.service'
-import { ProjectGuard } from '@nuvix/core/resolvers'
-import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
+import { Delete, Get, Patch, Post } from '@nuvix/core'
 import {
-  ProjectDatabase,
+  Auth,
   AuthType,
   Namespace,
-  Auth,
+  Project,
+  ProjectDatabase,
   QueryFilter,
   QuerySearch,
-  Project,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
-
+import { TopicsQueryPipe } from '@nuvix/core/pipes/queries'
+import {
+  ApiInterceptor,
+  ProjectGuard,
+  ResponseInterceptor,
+} from '@nuvix/core/resolvers'
 import { Database, Query as Queries } from '@nuvix/db'
+import type { IListResponse, IResponse } from '@nuvix/utils'
+import type { ProjectsDoc, TopicsDoc } from '@nuvix/utils/types'
 import {
   CreateTopicDTO,
   TopicParamsDTO,
   UpdateTopicDTO,
 } from './DTO/topics.dto'
-import { TopicsQueryPipe } from '@nuvix/core/pipes/queries'
-import { Delete, Get, Patch, Post } from '@nuvix/core'
-import type { IListResponse, IResponse } from '@nuvix/utils'
-import type { ProjectsDoc, TopicsDoc } from '@nuvix/utils/types'
+import { TopicsService } from './topics.service'
 
 @Namespace('messaging')
 @UseGuards(ProjectGuard)

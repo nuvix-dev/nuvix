@@ -1,4 +1,4 @@
-import { Query, Database } from '@nuvix/db'
+import { Database, Query } from '@nuvix/db'
 import { MessageType } from '@nuvix/utils'
 import type { TargetsDoc } from '@nuvix/utils/types'
 

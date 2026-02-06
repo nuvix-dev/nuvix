@@ -1,23 +1,23 @@
-import { describe, it, expect, beforeAll } from 'vitest'
-import { getApp } from '../../setup/app'
-import {
-  createUserAndSession,
-  getApiKeyJsonHeaders,
-  getApiKeyHeaders,
-} from '../../helpers/auth'
-import { buildCreateTeamDTO } from '../../factories/dto/team.factory'
+import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { beforeAll, describe, expect, it } from 'vitest'
 import {
   buildCreateMembershipDTO,
   buildUpdateMembershipDTO,
 } from '../../factories/dto/membership.factory'
+import { buildCreateTeamDTO } from '../../factories/dto/team.factory'
 import {
-  parseJson,
-  assertStatusCode,
+  createUserAndSession,
+  getApiKeyHeaders,
+  getApiKeyJsonHeaders,
+} from '../../helpers/auth'
+import { getApp } from '../../setup/app'
+import {
   assertDocumentShape,
   assertListResponse,
+  assertStatusCode,
+  parseJson,
   skipIfSMTPNotConfigured,
 } from '../../setup/test-utils'
-import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 
 describe('teams/memberships (integration)', () => {
   let app: NestFastifyApplication

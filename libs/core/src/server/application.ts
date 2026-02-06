@@ -5,16 +5,16 @@ import {
   NestApplication,
   NestContainer,
 } from '@nestjs/core'
-import { HooksModule } from './hooks/module'
-import { HooksContainer } from './hooks/container'
 import { optionalRequire } from '@nestjs/core/helpers/optional-require.js'
+import { HooksContainer } from './hooks/container'
+import { HooksModule } from './hooks/module'
 
 const { MicroservicesModule } = optionalRequire(
   '@nestjs/microservices/microservices-module',
   () => require('@nestjs/microservices/microservices-module.js'),
 )
 
-// @ts-ignore
+// @ts-expect-error
 export class NuvixApplication extends NestApplication {
   private readonly hooksModule: HooksModule
   private override readonly middlewareContainer = new HooksContainer(

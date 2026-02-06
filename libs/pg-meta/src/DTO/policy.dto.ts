@@ -1,6 +1,6 @@
-import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator'
-import { Type } from 'class-transformer'
 import { TransformStringToBoolean } from '@nuvix/core/validators'
+import { Type } from 'class-transformer'
+import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator'
 
 export class PolicyQueryDTO {
   @IsOptional()

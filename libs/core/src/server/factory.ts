@@ -9,6 +9,10 @@ import {
   NestApplicationOptions,
   Type,
 } from '@nestjs/common'
+import { NestMicroserviceOptions } from '@nestjs/common/interfaces/microservices/nest-microservice-options.interface'
+import { NestApplicationContextOptions } from '@nestjs/common/interfaces/nest-application-context-options.interface'
+import { loadPackage } from '@nestjs/common/utils/load-package.util.js'
+import { isFunction, isNil } from '@nestjs/common/utils/shared.utils.js'
 import {
   AbstractHttpAdapter,
   ApplicationConfig,
@@ -18,10 +22,6 @@ import {
   NestApplicationContext,
   NestContainer,
 } from '@nestjs/core'
-import { NestMicroserviceOptions } from '@nestjs/common/interfaces/microservices/nest-microservice-options.interface'
-import { loadPackage } from '@nestjs/common/utils/load-package.util.js'
-import { NestApplicationContextOptions } from '@nestjs/common/interfaces/nest-application-context-options.interface'
-
 import { MESSAGES } from '@nestjs/core/constants.js'
 import { ExceptionsZone } from '@nestjs/core/errors/exceptions-zone.js'
 import { loadAdapter } from '@nestjs/core/helpers/load-adapter.js'
@@ -34,7 +34,6 @@ import {
   UuidFactoryMode,
 } from '@nestjs/core/inspector/uuid-factory.js'
 import { DependenciesScanner } from '@nestjs/core/scanner.js'
-import { isFunction, isNil } from '@nestjs/common/utils/shared.utils.js'
 import { NuvixApplication } from './application'
 
 type IEntryNestModule =

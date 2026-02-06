@@ -11,23 +11,23 @@
  * This flow represents how users collaborate on the platform.
  */
 
-import { describe, it, expect, beforeAll } from 'vitest'
-import { getApp } from '../setup/app'
+import type { NestFastifyApplication } from '@nestjs/platform-fastify'
+import { beforeAll, describe, expect, it } from 'vitest'
+import { buildCreateMembershipDTO } from '../factories/dto/membership.factory'
+import { buildCreateTeamDTO } from '../factories/dto/team.factory'
 import {
   createUserAndSession,
   getApiKeyHeaders,
   getApiKeyJsonHeaders,
 } from '../helpers/auth'
-import { buildCreateTeamDTO } from '../factories/dto/team.factory'
-import { buildCreateMembershipDTO } from '../factories/dto/membership.factory'
+import { getApp } from '../setup/app'
 import {
-  parseJson,
-  assertStatusCode,
   assertDocumentShape,
   assertListResponse,
+  assertStatusCode,
+  parseJson,
   skipIfSMTPNotConfigured,
 } from '../setup/test-utils'
-import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 
 describe('E2E: Team Collaboration Flow', () => {
   let app: NestFastifyApplication
