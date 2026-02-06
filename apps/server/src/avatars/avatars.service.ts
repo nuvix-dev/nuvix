@@ -1,12 +1,12 @@
+import crypto from 'node:crypto'
+import { default as fsSync } from 'node:fs'
+import fs from 'node:fs/promises'
+import { default as path } from 'node:path'
 import { Injectable, Logger, StreamableFile } from '@nestjs/common'
 import { PROJECT_ROOT } from '@nuvix/utils'
 import { createCanvas, registerFont } from 'canvas'
-import crypto from 'crypto'
-import { default as fsSync } from 'fs'
-import fs from 'fs/promises'
 import { browserCodes, creditCards, flags } from 'libs/core/src/config'
 import { Exception } from 'libs/core/src/extend/exception'
-import { default as path } from 'path'
 import sharp from 'sharp'
 import { CodesQuerDTO, InitialsQueryDTO } from './DTO/misc.dto'
 
@@ -129,7 +129,7 @@ export class AvatarsService {
       // Send Image Response
       res.header('Content-Type', 'image/png')
       return new StreamableFile(processedImage)
-    } catch (error) {
+    } catch (_error) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
         'Avatar generation failed',
@@ -178,7 +178,9 @@ export class AvatarsService {
 
   private getInitials(name: string): string {
     const words = name.trim().split(/\s+/).filter(Boolean)
-    if (words.length === 0) return 'NA'
+    if (words.length === 0) {
+      return 'NA'
+    }
     const first = Array.from(words[0]!)[0]?.toUpperCase() ?? 'N'
     const second =
       words.length > 1
@@ -263,7 +265,7 @@ export class AvatarsService {
       throw new Exception(Exception.AVATAR_NOT_FOUND)
     }
 
-    const filePath = set[code]!.path
+    const filePath = set[code]?.path as string
 
     const fileBuffer = await fs.readFile(filePath).catch(() => {
       throw new Exception(Exception.AVATAR_NOT_FOUND)

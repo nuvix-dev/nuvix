@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import path from 'node:path'
 import { Injectable, Logger, type OnModuleDestroy } from '@nestjs/common'
 import { Audit } from '@nuvix/audit'
 import { Cache, Redis } from '@nuvix/cache'
@@ -6,10 +8,8 @@ import { Context, DataSource } from '@nuvix/pg'
 import { Local } from '@nuvix/storage'
 import { DatabaseRole, DEFAULT_DATABASE, Schemas } from '@nuvix/utils'
 import type { ProjectsDoc } from '@nuvix/utils/types'
-import { readFileSync } from 'fs'
 import IORedis from 'ioredis'
 import { CountryResponse, Reader } from 'maxmind'
-import path from 'path'
 import { Client, Pool, PoolClient } from 'pg'
 import type { OAuthProviderType } from './config/authProviders.js'
 import { AppConfigService } from './config.service.js'
@@ -55,12 +55,16 @@ export class CoreService implements OnModuleDestroy {
   }
 
   public getCache(): Cache {
-    if (!this.cache) throw new Exception('Cache not initialized')
+    if (!this.cache) {
+      throw new Exception('Cache not initialized')
+    }
     return this.cache
   }
 
   public getPlatformDb(): Database {
-    if (!this.projectPool) throw new Exception('Project DB not initialized')
+    if (!this.projectPool) {
+      throw new Exception('Project DB not initialized')
+    }
     const adapter = new Adapter(this.projectPool)
       .setMeta({
         schema: Schemas.Internal,
@@ -73,7 +77,9 @@ export class CoreService implements OnModuleDestroy {
   }
 
   public getGeoDb(): Reader<CountryResponse> {
-    if (!this.geoDb) throw new Exception('Geo DB not initialized')
+    if (!this.geoDb) {
+      throw new Exception('Geo DB not initialized')
+    }
     return this.geoDb
   }
 
@@ -167,8 +173,9 @@ export class CoreService implements OnModuleDestroy {
   }
 
   public getRedisInstance(): IORedis {
-    if (!this.redisInstance)
+    if (!this.redisInstance) {
       throw new Exception('Redis instance not initialized')
+    }
     return this.redisInstance
   }
 
@@ -226,7 +233,7 @@ export class CoreService implements OnModuleDestroy {
 
   getProjectDevice(projectId: string) {
     const store = new Local(
-      path.join(this.appConfig.get('storage')['uploads'], projectId),
+      path.join(this.appConfig.get('storage').uploads, projectId),
     )
     return store
   }
@@ -246,7 +253,7 @@ export class CoreService implements OnModuleDestroy {
         ),
       )
       return new Reader<CountryResponse>(buffer)
-    } catch (error) {
+    } catch (_error) {
       this.logger.warn(
         'GeoIP database not found, country detection will be disabled',
       )
@@ -268,7 +275,7 @@ export class CoreService implements OnModuleDestroy {
     return { client: this.projectPool, dbForProject }
   }
 
-  async createProjectPgClient(project: ProjectsDoc) {
+  async createProjectPgClient(_project: ProjectsDoc) {
     if (!this.projectPool) {
       throw new Error('Project pool is not initialized')
     }
@@ -278,7 +285,7 @@ export class CoreService implements OnModuleDestroy {
   /**
    * @deprecated Use connection pools instead
    */
-  async releaseDatabaseClient(client?: Pool | PoolClient) {
+  async releaseDatabaseClient(_client?: Pool | PoolClient) {
     // try {
     //   if (client && 'release' in client) {
     //     client.release()

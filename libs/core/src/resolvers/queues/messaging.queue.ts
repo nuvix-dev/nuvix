@@ -105,31 +105,28 @@ export class MessagingQueue extends Queue {
     switch (provider.get('provider') as MessageProvider) {
       case MessageProvider.TELESIGN:
         return new Telesign(
-          credentials['customerId'] || '',
-          credentials['apiKey'] || '',
+          credentials.customerId || '',
+          credentials.apiKey || '',
         )
       case MessageProvider.TEXTMAGIC:
         return new TextMagic(
-          credentials['username'] || '',
-          credentials['apiKey'] || '',
+          credentials.username || '',
+          credentials.apiKey || '',
         )
       case MessageProvider.TWILIO:
         return new Twilio(
-          credentials['accountSid'] || '',
-          credentials['authToken'] || '',
+          credentials.accountSid || '',
+          credentials.authToken || '',
           undefined,
-          credentials['messagingServiceSid'] || null,
+          credentials.messagingServiceSid || null,
         )
       case MessageProvider.VONAGE:
-        return new Vonage(
-          credentials['apiKey'] || '',
-          credentials['apiSecret'] || '',
-        )
+        return new Vonage(credentials.apiKey || '', credentials.apiSecret || '')
       case MessageProvider.MSG91:
         return new Msg91(
-          credentials['senderId'] || '',
-          credentials['authKey'] || '',
-          credentials['templateId'] || '',
+          credentials.senderId || '',
+          credentials.authKey || '',
+          credentials.templateId || '',
         )
       default:
         return null
@@ -143,14 +140,14 @@ export class MessagingQueue extends Queue {
     switch (provider.get('provider') as MessageProvider) {
       case MessageProvider.APNS:
         return new APNS(
-          credentials['authKey'] || '',
-          credentials['authKeyId'] || '',
-          credentials['teamId'] || '',
-          credentials['bundleId'] || '',
-          options['sandbox'] || false,
+          credentials.authKey || '',
+          credentials.authKeyId || '',
+          credentials.teamId || '',
+          credentials.bundleId || '',
+          options.sandbox || false,
         )
       case MessageProvider.FCM:
-        return new FCM(JSON.stringify(credentials['serviceAccountJSON']))
+        return new FCM(JSON.stringify(credentials.serviceAccountJSON))
       default:
         return null
     }
@@ -159,24 +156,24 @@ export class MessagingQueue extends Queue {
   private getEmailAdapter(provider: ProvidersDoc): EmailAdapter | null {
     const credentials = provider.get('credentials', {}) as Record<string, any>
     const options = provider.get('options') || {}
-    const apiKey = credentials['apiKey'] || ''
+    const apiKey = credentials.apiKey || ''
 
     switch (provider.get('provider') as MessageProvider) {
       case MessageProvider.SMTP:
         return new SMTP(
-          credentials['host'] ?? '',
-          credentials['port'] ?? 25,
-          credentials['username'] ?? '',
-          credentials['password'] ?? '',
-          options['autoTLS'] ?? false,
-          options['encryption'] || '',
-          options['mailer'] || '',
+          credentials.host ?? '',
+          credentials.port ?? 25,
+          credentials.username ?? '',
+          credentials.password ?? '',
+          options.autoTLS ?? false,
+          options.encryption || '',
+          options.mailer || '',
         )
       case MessageProvider.MAILGUN:
         return new Mailgun(
           apiKey,
-          credentials['domain'] || '',
-          credentials['isEuRegion'] || false,
+          credentials.domain || '',
+          credentials.isEuRegion || false,
         )
       case MessageProvider.SENDGRID:
         return new Sendgrid(apiKey)
@@ -191,18 +188,18 @@ export class MessagingQueue extends Queue {
     provider: ProvidersDoc,
     deviceForFiles: Device,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    project: ProjectsDoc,
+    _project: ProjectsDoc,
   ): Promise<Email> {
-    const fromName = provider.get('options')?.['fromName'] || null
-    const fromEmail = provider.get('options')?.['fromEmail'] || null
-    const replyToEmail = provider.get('options')?.['replyToEmail'] || null
-    const replyToName = provider.get('options')?.['replyToName'] || null
+    const fromName = provider.get('options')?.fromName || null
+    const fromEmail = provider.get('options')?.fromEmail || null
+    const replyToEmail = provider.get('options')?.replyToEmail || null
+    const replyToName = provider.get('options')?.replyToName || null
     const data = message.get('data') || {}
-    const ccTargets = data['cc'] || []
-    const bccTargets = data['bcc'] || []
+    const ccTargets = data.cc || []
+    const bccTargets = data.bcc || []
     const cc: Array<{ email: string }> = []
     const bcc: Array<{ email: string }> = []
-    const attachments = data['attachments'] || []
+    const attachments = data.attachments || []
 
     if (ccTargets.length > 0) {
       const ccTargetDocs = await dbForProject.withSchema(Schemas.Auth, () =>
@@ -242,7 +239,7 @@ export class MessagingQueue extends Queue {
         }
 
         const file = await dbForProject.getDocument<Files>(
-          'bucket_' + bucket.getSequence(),
+          `bucket_${bucket.getSequence()}`,
           fileId,
         )
         if (file.empty()) {
@@ -254,7 +251,7 @@ export class MessagingQueue extends Queue {
         const path = file.get('path', '')
 
         if (!(await deviceForFiles.exists(path))) {
-          throw new Error('File not found in ' + path)
+          throw new Error(`File not found in ${path}`)
         }
 
         let contentType = 'text/plain'
@@ -279,9 +276,9 @@ export class MessagingQueue extends Queue {
     }
 
     const to = message.get('to') as string[]
-    const subject = data['subject']
-    const content = data['content']
-    const html = data['html'] || false
+    const subject = data.subject
+    const content = data.content
+    const html = data.html || false
 
     return new Email({
       to,
@@ -300,8 +297,8 @@ export class MessagingQueue extends Queue {
 
   private buildSmsMessage(message: MessagesDoc, provider: ProvidersDoc): SMS {
     const to = message.get('to') as string[]
-    const content = message.get('data')['content']
-    const from = provider.get('options')['from']
+    const content = message.get('data').content
+    const from = provider.get('options').from
 
     return new SMS(to, content, from)
   }
@@ -309,19 +306,19 @@ export class MessagingQueue extends Queue {
   private buildPushMessage(message: MessagesDoc): Push {
     const data = message.get('data')
     const to = message.get('to') as string[]
-    let title = data['title'] || null
-    let body = data['body'] || null
-    const messageData = data['data'] || null
-    const action = data['action'] || null
-    const image = data['image']?.url || null
-    const sound = data['sound'] || null
-    const icon = data['icon'] || null
-    const color = data['color'] || null
-    const tag = data['tag'] || null
-    const badge = data['badge'] || null
-    const contentAvailable = data['contentAvailable'] || null
-    const critical = data['critical'] || null
-    let priority = data['priority'] || null
+    let title = data.title || null
+    let body = data.body || null
+    const messageData = data.data || null
+    const action = data.action || null
+    const image = data.image?.url || null
+    const sound = data.sound || null
+    const icon = data.icon || null
+    const color = data.color || null
+    const tag = data.tag || null
+    const badge = data.badge || null
+    const contentAvailable = data.contentAvailable || null
+    const critical = data.critical || null
+    let priority = data.priority || null
 
     if (title === '') {
       title = null
@@ -357,7 +354,7 @@ export class MessagingQueue extends Queue {
     deviceForFiles: Device,
     project: ProjectsDoc,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    queueForStatsUsage: any,
+    _queueForStatsUsage: any,
   ): Promise<void> {
     const topicIds = message.get('topics', [])
     const targetIds = message.get('targets', [])

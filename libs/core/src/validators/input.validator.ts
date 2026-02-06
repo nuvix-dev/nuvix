@@ -97,7 +97,9 @@ export function IsKey(
 export function TransformStringToBoolean() {
   return (target: any, propertyKey: string) => {
     Transform(({ value }) => {
-      if (isBoolean(value)) return value
+      if (isBoolean(value)) {
+        return value
+      }
       return value === 'true'
     })(target, propertyKey)
 
@@ -121,7 +123,7 @@ export function IsFutureDate(
         validate(value: any) {
           const date = typeof value === 'string' ? new Date(value) : value
           const now = new Date()
-          return !isNaN(date.getTime()) && date > now
+          return !Number.isNaN(date.getTime()) && date > now
         },
         defaultMessage() {
           return `${String(propertyName)} must be a valid date in the future.`
@@ -201,11 +203,11 @@ export function TryTransformTo(type: 'number' | 'int') {
     Transform(({ value }) => {
       if (type === 'number') {
         const parsed = Number(value)
-        return isNaN(parsed) ? value : parsed
+        return Number.isNaN(parsed) ? value : parsed
       }
       if (type === 'int') {
         const parsed = Number.parseInt(value, 10)
-        return isNaN(parsed) ? value : parsed
+        return Number.isNaN(parsed) ? value : parsed
       }
       return value
     })(target, propertyKey)

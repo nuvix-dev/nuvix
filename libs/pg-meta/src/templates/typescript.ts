@@ -7,7 +7,6 @@ import {
 import { AttributeFormat, Schema } from '@nuvix/utils'
 import type { AttributesDoc, CollectionsDoc } from '@nuvix/utils/types'
 import prettier from 'prettier'
-import { GENERATE_TYPES_DEFAULT_SCHEMA } from '../constants'
 import type { GeneratorMetadata } from '../lib/generators'
 import type {
   PostgresColumn,
@@ -124,7 +123,7 @@ export type Database = {
                       table => `${JSON.stringify(table.name)}: {
                   Row: {
                     ${[
-                      ...columnsByTableId[table.id]!.map(
+                      ...(columnsByTableId[table.id] ?? []).map(
                         column =>
                           `${JSON.stringify(column.name)}: ${pgTypeToTsType(
                             column.format,
@@ -156,7 +155,7 @@ export type Database = {
                     ]}
                   }
                   Insert: {
-                    ${columnsByTableId[table.id]!.map(column => {
+                    ${columnsByTableId[table.id]?.map(column => {
                       let output = JSON.stringify(column.name)
 
                       if (column.identity_generation === 'ALWAYS') {
@@ -188,7 +187,7 @@ export type Database = {
                     })}
                   }
                   Update: {
-                    ${columnsByTableId[table.id]!.map(column => {
+                    ${columnsByTableId[table.id]?.map(column => {
                       let output = JSON.stringify(column.name)
 
                       if (column.identity_generation === 'ALWAYS') {
@@ -248,7 +247,7 @@ export type Database = {
                   : schemaViews.map(
                       view => `${JSON.stringify(view.name)}: {
                   Row: {
-                    ${columnsByTableId[view.id]!.map(
+                    ${columnsByTableId[view.id]?.map(
                       column =>
                         `${JSON.stringify(column.name)}: ${pgTypeToTsType(
                           column.format,
@@ -264,7 +263,7 @@ export type Database = {
                   ${
                     'is_updatable' in view && view.is_updatable
                       ? `Insert: {
-                           ${columnsByTableId[view.id]!.map(column => {
+                           ${columnsByTableId[view.id]?.map(column => {
                              let output = JSON.stringify(column.name)
 
                              if (!column.is_updatable) {
@@ -277,7 +276,7 @@ export type Database = {
                            })}
                          }
                          Update: {
-                           ${columnsByTableId[view.id]!.map(column => {
+                           ${columnsByTableId[view.id]?.map(column => {
                              let output = JSON.stringify(column.name)
 
                              if (!column.is_updatable) {
@@ -337,7 +336,7 @@ export type Database = {
                 const schemaFunctionsGroupedByName = schemaFunctions.reduce(
                   (acc, curr) => {
                     acc[curr.name] ??= []
-                    acc[curr.name]!.push(curr)
+                    acc[curr.name]?.push(curr)
                     return acc
                   },
                   {} as Record<string, PostgresFunction[]>,
@@ -380,9 +379,9 @@ export type Database = {
                         .join(' | ')}
                       Returns: ${(() => {
                         // Case 1: `returns table`.
-                        const tableArgs = fns[0]!.args.filter(
-                          ({ mode }) => mode === 'table',
-                        )
+                        const tableArgs =
+                          fns[0]?.args.filter(({ mode }) => mode === 'table') ??
+                          []
                         if (tableArgs.length > 0) {
                           const argsNameAndType = tableArgs.map(
                             ({ name, type_id }) => {
@@ -416,7 +415,7 @@ export type Database = {
                         )
                         if (relation) {
                           return `{
-                            ${columnsByTableId[relation.id]!.map(
+                            ${columnsByTableId[relation.id]?.map(
                               column =>
                                 `${JSON.stringify(column.name)}: ${pgTypeToTsType(
                                   column.format,
@@ -750,7 +749,9 @@ const normalizeEnumName = (collectionId: string, key: string) =>
  * Generate Types block for document schema collections.
  */
 const generateDocSchemaTypes = (collections: CollectionsDoc[]): string => {
-  if (collections.length === 0) return '[_ in never]: never'
+  if (collections.length === 0) {
+    return '[_ in never]: never'
+  }
 
   return collections
     .map(collection => {

@@ -1,4 +1,3 @@
-import { Logger } from '@nestjs/common'
 import { Exception } from '@nuvix/core/extend/exception'
 import {
   AllowedOperators,
@@ -18,8 +17,6 @@ import type {
 } from './types'
 
 export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
-  private readonly logger = new Logger(Parser.name)
-
   private config: ParserConfig
   private extraData: Record<string, any> = {}
 
@@ -266,15 +263,17 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
 
     do {
       const expr = this.parseExpression(false)
-      if (expr) expressions.push(expr)
+      if (expr) {
+        expressions.push(expr)
+      }
     } while (this.match(TokenType.COMMA))
 
     const filteredExpressions =
       expressions.length === 1 &&
-      ((expressions[0] as AndExpression)['and'] ||
-        (expressions[0] as OrExpression)['or'])
-        ? ((expressions[0] as AndExpression)['and'] ??
-          (expressions[0] as OrExpression)['or'])
+      ((expressions[0] as AndExpression).and ||
+        (expressions[0] as OrExpression).or)
+        ? ((expressions[0] as AndExpression).and ??
+          (expressions[0] as OrExpression).or)
         : expressions
 
     return filteredExpressions
@@ -291,7 +290,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
       case TokenType.NUMBER: {
         this.advance()
         const num = Number(token.value)
-        return isNaN(num) ? token.value : num
+        return Number.isNaN(num) ? token.value : num
       }
 
       case TokenType.BOOLEAN:
@@ -361,16 +360,16 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
   private handleSpecialCase(operator: string, args: any[]): void {
     switch (operator) {
       case 'limit':
-        this.extraData['limit'] = this.integerOrThrow(args[0], operator)
+        this.extraData.limit = this.integerOrThrow(args[0], operator)
         break
       case 'offset':
-        this.extraData['offset'] = this.integerOrThrow(args[0], operator)
+        this.extraData.offset = this.integerOrThrow(args[0], operator)
         break
       case 'join': {
         const joinType = String(args[0]).toLowerCase()
         if (['inner', 'left', 'right'].includes(joinType)) {
           // 'full'
-          this.extraData['joinType'] = joinType
+          this.extraData.joinType = joinType
         } else {
           this.throwError(`Unsupported join type: ${args[0]}`, this.peek())
         }
@@ -379,7 +378,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
       case 'shape': {
         const shape = String(args[0]).toLowerCase()
         if (['object', 'array', '{}', '[]', 'true'].includes(shape)) {
-          this.extraData['shape'] =
+          this.extraData.shape =
             shape === 'object' || shape === '{}' || shape === 'true'
               ? 'object'
               : 'array'
@@ -391,14 +390,14 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
       case 'group':
         if (args.length > 0) {
           const parser = new GroupParser(args)
-          this.extraData['group'] = parser.parse()
+          this.extraData.group = parser.parse()
         }
         break
       case 'order':
         if (args.length > 0) {
           const orders = OrderParser.parse(args, this.tableName, this.mainTable)
           if (orders && orders.length > 0) {
-            this.extraData['order'] = orders
+            this.extraData.order = orders
           }
         }
         break
@@ -412,7 +411,11 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
 
   private integerOrThrow(value: any, field: string): number {
     const num = Number(value)
-    if (typeof num !== 'number' || isNaN(num) || !Number.isInteger(num)) {
+    if (
+      typeof num !== 'number' ||
+      Number.isNaN(num) ||
+      !Number.isInteger(num)
+    ) {
       this.throwError(
         `${field} value should be an integer: ${value}`,
         this.peek(),

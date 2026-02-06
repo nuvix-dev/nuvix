@@ -1,3 +1,5 @@
+import * as fs from 'node:fs/promises'
+import path from 'node:path'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
@@ -37,16 +39,14 @@ import type {
   UsersDoc,
 } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
-import * as fs from 'fs/promises'
 import * as Template from 'handlebars'
-import path from 'path'
 import { UpdateEmailDTO } from './DTO/account.dto'
 
 @Injectable()
 export class AccountService {
   constructor(
     private readonly appConfig: AppConfigService,
-    private eventEmitter: EventEmitter2,
+    _eventEmitter: EventEmitter2,
     @InjectQueue(QueueFor.MAILS)
     private readonly mailsQueue: Queue<MailQueueOptions>,
     @InjectQueue(QueueFor.DELETES)
@@ -68,7 +68,7 @@ export class AccountService {
     email = email.toLowerCase()
 
     const auths = project.get('auths', {})
-    const limit = auths['limit'] ?? 0
+    const limit = auths.limit ?? 0
     const maxUser = this.appConfig.appLimits.users
 
     if (limit !== 0) {
@@ -87,7 +87,7 @@ export class AccountService {
       throw new Exception(Exception.GENERAL_BAD_REQUEST) // Return a generic bad request to prevent exposing existing accounts
     }
 
-    if (auths['personalDataCheck'] ?? false) {
+    if (auths.personalDataCheck ?? false) {
       const personalDataValidator = new PersonalDataValidator(
         userId,
         email,
@@ -107,7 +107,7 @@ export class AccountService {
       true,
     ])
 
-    const passwordHistory = auths['passwordHistory'] ?? 0
+    const passwordHistory = auths.passwordHistory ?? 0
     const hashedPassword = await Auth.passwordHash(
       password,
       Auth.DEFAULT_ALGO,
@@ -347,7 +347,7 @@ export class AccountService {
       Auth.DEFAULT_ALGO,
       Auth.DEFAULT_ALGO_OPTIONS,
     )
-    const historyLimit = project.get('auths', {})['passwordHistory'] ?? 0
+    const historyLimit = project.get('auths', {}).passwordHistory ?? 0
     const history = user.get('passwordHistory', [])
 
     if (newPassword && historyLimit > 0) {
@@ -364,7 +364,7 @@ export class AccountService {
       history.splice(0, Math.max(0, history.length - historyLimit))
     }
 
-    if (project.get('auths', {})['personalDataCheck'] ?? false) {
+    if (project.get('auths', {}).personalDataCheck ?? false) {
       const personalDataValidator = new PersonalDataValidator(
         user.getId(),
         user.get('email'),
@@ -605,41 +605,51 @@ export class AccountService {
     body = template(emailData)
 
     const smtp = project.get('smtp', {}) as SmtpConfig
-    const smtpEnabled = smtp['enabled'] ?? false
+    const smtpEnabled = smtp.enabled ?? false
     const systemConfig = this.appConfig.get('system')
 
     let senderEmail = systemConfig.emailAddress || configuration.app.emailTeam
     let senderName =
-      systemConfig.emailName || configuration.app.name + ' Server'
+      systemConfig.emailName || `${configuration.app.name} Server`
     let replyTo = ''
 
     const smtpServer: SmtpConfig = {} as SmtpConfig
 
     if (smtpEnabled) {
-      if (smtp['senderEmail']) senderEmail = smtp['senderEmail']
-      if (smtp['senderName']) senderName = smtp['senderName']
-      if (smtp['replyTo']) replyTo = smtp['replyTo']
-
-      smtpServer['host'] = smtp['host']
-      smtpServer['port'] = smtp['port']
-      smtpServer['username'] = smtp['username']
-      smtpServer['password'] = smtp['password']
-      smtpServer['secure'] = smtp['secure'] ?? false
-
-      if (customTemplate) {
-        if (customTemplate['senderEmail'])
-          senderEmail = customTemplate['senderEmail']
-        if (customTemplate['senderName'])
-          senderName = customTemplate['senderName']
-        if (customTemplate['replyTo']) replyTo = customTemplate['replyTo']
-
-        body = customTemplate['message'] || body
-        subject = customTemplate['subject'] || subject
+      if (smtp.senderEmail) {
+        senderEmail = smtp.senderEmail
+      }
+      if (smtp.senderName) {
+        senderName = smtp.senderName
+      }
+      if (smtp.replyTo) {
+        replyTo = smtp.replyTo
       }
 
-      smtpServer['replyTo'] = replyTo
-      smtpServer['senderEmail'] = senderEmail
-      smtpServer['senderName'] = senderName
+      smtpServer.host = smtp.host
+      smtpServer.port = smtp.port
+      smtpServer.username = smtp.username
+      smtpServer.password = smtp.password
+      smtpServer.secure = smtp.secure ?? false
+
+      if (customTemplate) {
+        if (customTemplate.senderEmail) {
+          senderEmail = customTemplate.senderEmail
+        }
+        if (customTemplate.senderName) {
+          senderName = customTemplate.senderName
+        }
+        if (customTemplate.replyTo) {
+          replyTo = customTemplate.replyTo
+        }
+
+        body = customTemplate.message || body
+        subject = customTemplate.subject || subject
+      }
+
+      smtpServer.replyTo = replyTo
+      smtpServer.senderEmail = senderEmail
+      smtpServer.senderName = senderName
     }
 
     const emailVariables = {
@@ -745,11 +755,11 @@ export class AccountService {
 
     let secret: string | null = null
     let sendSMS = true
-    const mockNumbers = project.get('auths', {})['mockNumbers'] ?? []
+    const mockNumbers = project.get('auths', {}).mockNumbers ?? []
 
     for (const mockNumber of mockNumbers) {
-      if (mockNumber['phone'] === phone) {
-        secret = mockNumber['otp']
+      if (mockNumber.phone === phone) {
+        secret = mockNumber.otp
         sendSMS = false
         break
       }
@@ -785,11 +795,11 @@ export class AccountService {
         project.get('templates', {})[`sms.verification-${locale.default}`] ?? {}
 
       let message = locale.getText('sms.verification.body')
-      if (customTemplate && customTemplate['message']) {
-        message = customTemplate['message']
+      if (customTemplate?.message) {
+        message = customTemplate.message
       }
 
-      const messageContent = message
+      const _messageContent = message
         .replace('{{project}}', project.get('name'))
         .replace('{{secret}}', secret)
 

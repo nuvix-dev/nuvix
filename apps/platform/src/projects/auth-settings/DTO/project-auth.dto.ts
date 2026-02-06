@@ -1,4 +1,3 @@
-import { ApiExtraModels } from '@nestjs/swagger'
 import { oAuthProvidersList } from '@nuvix/core/config'
 import { configuration } from '@nuvix/utils'
 import { Type } from 'class-transformer'

@@ -147,11 +147,15 @@ function pgCompositeTypeToSwiftStruct(
     typeWithRetrievedAttributes.attributes.map(attribute => {
       return {
         formattedAttributeName: formatForSwiftTypeName(attribute.name),
-        formattedType: pgTypeToSwiftType(attribute.type!.format, false, {
-          types,
-          views,
-          tables,
-        }),
+        formattedType: pgTypeToSwiftType(
+          attribute.type?.format as string,
+          false,
+          {
+            types,
+            views,
+            tables,
+          },
+        ),
         rawName: attribute.name,
         isIdentity: false,
       }

@@ -1,5 +1,5 @@
 import { InjectQueue } from '@nestjs/bullmq'
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Exception } from '@nuvix/core/extend/exception'
 import { CollectionsJob, CollectionsJobData } from '@nuvix/core/resolvers'
@@ -59,8 +59,6 @@ import type {
 
 @Injectable()
 export class AttributesService {
-  private readonly logger = new Logger(AttributesService.name)
-
   constructor(
     @InjectQueue(QueueFor.COLLECTIONS)
     private readonly collectionsQueue: Queue<
@@ -309,8 +307,8 @@ export class AttributesService {
     const formatOptions = attribute.get('formatOptions', {})
 
     if (formatOptions) {
-      attribute.set('min', Number.parseInt(formatOptions['min']))
-      attribute.set('max', Number.parseInt(formatOptions['max']))
+      attribute.set('min', Number.parseInt(formatOptions.min, 10))
+      attribute.set('max', Number.parseInt(formatOptions.max, 10))
     }
 
     return attribute
@@ -370,8 +368,8 @@ export class AttributesService {
     const formatOptions = createdAttribute.get('formatOptions', {})
 
     if (formatOptions) {
-      createdAttribute.set('min', Number.parseFloat(formatOptions['min']))
-      createdAttribute.set('max', Number.parseFloat(formatOptions['max']))
+      createdAttribute.set('min', Number.parseFloat(formatOptions.min))
+      createdAttribute.set('max', Number.parseFloat(formatOptions.max))
     }
 
     return createdAttribute
@@ -472,9 +470,9 @@ export class AttributesService {
       }
 
       if (
-        attribute.get('options')?.['twoWayKey']?.toLowerCase() ===
+        attribute.get('options')?.twoWayKey?.toLowerCase() ===
           twoWayKey?.toLowerCase() &&
-        attribute.get('options')?.['relatedCollection'] ===
+        attribute.get('options')?.relatedCollection ===
           relatedCollection.getId()
       ) {
         throw new Exception(
@@ -487,9 +485,8 @@ export class AttributesService {
       //  we have to review it later & remove the conditions
       if (
         type === RelationType.ManyToMany &&
-        attribute.get('options')?.['relationType'] ===
-          RelationType.ManyToMany &&
-        attribute.get('options')?.['relatedCollection'] ===
+        attribute.get('options')?.relationType === RelationType.ManyToMany &&
+        attribute.get('options')?.relatedCollection ===
           relatedCollection.getId()
       ) {
         throw new Exception(
@@ -701,8 +698,8 @@ export class AttributesService {
     const formatOptions = attribute.get('formatOptions', [])
 
     if (formatOptions) {
-      attribute.set('min', Number.parseInt(formatOptions['min']))
-      attribute.set('max', Number.parseInt(formatOptions['max']))
+      attribute.set('min', Number.parseInt(formatOptions.min, 10))
+      attribute.set('max', Number.parseInt(formatOptions.max, 10))
     }
 
     return attribute
@@ -733,8 +730,8 @@ export class AttributesService {
     const formatOptions = attribute.get('formatOptions', [])
 
     if (formatOptions) {
-      attribute.set('min', Number.parseFloat(formatOptions['min']))
-      attribute.set('max', Number.parseFloat(formatOptions['max']))
+      attribute.set('min', Number.parseFloat(formatOptions.min))
+      attribute.set('max', Number.parseFloat(formatOptions.max))
     }
 
     return attribute
@@ -868,10 +865,10 @@ export class AttributesService {
 
     let relatedCollection!: CollectionsDoc
     if (type === AttributeType.Relationship) {
-      options['side'] = RelationSide.Parent
+      options.side = RelationSide.Parent
       relatedCollection = await db.getDocument(
         SchemaMeta.collections,
-        options['relatedCollection'] ?? '',
+        options.relatedCollection ?? '',
       )
       if (relatedCollection.empty()) {
         throw new Exception(
@@ -917,11 +914,11 @@ export class AttributesService {
     db.purgeCachedDocument(SchemaMeta.collections, collectionId)
     db.purgeCachedCollection(collection.getId())
 
-    if (type === AttributeType.Relationship && options['twoWay']) {
-      const twoWayKey = options['twoWayKey']
-      options['relatedCollection'] = collection.getId()
-      options['twoWayKey'] = key
-      options['side'] = RelationSide.Child
+    if (type === AttributeType.Relationship && options.twoWay) {
+      const twoWayKey = options.twoWayKey
+      options.relatedCollection = collection.getId()
+      options.twoWayKey = key
+      options.side = RelationSide.Child
 
       try {
         const twoWayAttribute = new Doc<Attributes>({
@@ -1138,25 +1135,25 @@ export class AttributesService {
         collectionId: collection.getId(),
         id: key,
         newKey,
-        onDelete: primaryDocumentOptions['onDelete'],
+        onDelete: primaryDocumentOptions.onDelete,
       })
 
-      if (primaryDocumentOptions['twoWay']) {
+      if (primaryDocumentOptions.twoWay) {
         const relatedCollection = await db.getDocument(
           SchemaMeta.collections,
-          primaryDocumentOptions['relatedCollection'],
+          primaryDocumentOptions.relatedCollection,
         )
 
         const relatedAttribute = await db.getDocument(
           SchemaMeta.attributes,
           this.getRelatedAttrId(
             relatedCollection.getSequence(),
-            primaryDocumentOptions['twoWayKey'],
+            primaryDocumentOptions.twoWayKey,
           ),
         )
 
         if (newKey && newKey !== key) {
-          options['twoWayKey'] = newKey
+          options.twoWayKey = newKey
         }
 
         const relatedOptions = {
@@ -1266,10 +1263,10 @@ export class AttributesService {
 
     if (attribute.get('type') === AttributeType.Relationship) {
       const options = attribute.get('options')
-      if (options['twoWay']) {
+      if (options.twoWay) {
         const relatedCollection = await db.getDocument(
           SchemaMeta.collections,
-          options['relatedCollection'],
+          options.relatedCollection,
         )
 
         if (relatedCollection.empty()) {
@@ -1280,7 +1277,7 @@ export class AttributesService {
           SchemaMeta.attributes,
           this.getRelatedAttrId(
             relatedCollection.getSequence(),
-            options['twoWayKey'],
+            options.twoWayKey,
           ),
         )
         if (relatedAttribute.empty()) {
@@ -1297,7 +1294,7 @@ export class AttributesService {
 
         db.purgeCachedDocument(
           SchemaMeta.collections,
-          options['relatedCollection'],
+          options.relatedCollection,
         )
         db.purgeCachedCollection(relatedCollection.getId())
       }

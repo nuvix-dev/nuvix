@@ -1,7 +1,7 @@
 import { Controller, Param, Query, Res, UseInterceptors } from '@nestjs/common'
 import { Get } from '@nuvix/core'
 import { Namespace, Scope } from '@nuvix/core/decorators'
-import { ParseDuplicatePipe, ParseValidatorPipe } from '@nuvix/core/pipes'
+import { ParseDuplicatePipe } from '@nuvix/core/pipes'
 import { ApiInterceptor } from '@nuvix/core/resolvers'
 import { AvatarsService } from './avatars.service'
 import {

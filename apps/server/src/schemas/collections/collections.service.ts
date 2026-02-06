@@ -1,5 +1,5 @@
 import { InjectQueue } from '@nestjs/bullmq'
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { usageConfig } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
@@ -34,8 +34,6 @@ import type {
 
 @Injectable()
 export class CollectionsService {
-  private readonly logger = new Logger(CollectionsService.name)
-
   constructor(
     @InjectQueue(QueueFor.COLLECTIONS)
     private readonly collectionsQueue: Queue<
@@ -140,11 +138,11 @@ export class CollectionsService {
    */
   async getCollectionLogs(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    db: Database,
+    _db: Database,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    collectionId: string,
+    _collectionId: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    queries: Query[] = [],
+    _queries: Query[] = [],
   ) {
     // TODO: Implement collection logs
     return {

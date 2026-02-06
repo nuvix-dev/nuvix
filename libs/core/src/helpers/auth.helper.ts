@@ -1,3 +1,5 @@
+import * as crypto from 'node:crypto'
+import { createHash, createHmac, randomBytes, scryptSync } from 'node:crypto'
 import { Logger } from '@nestjs/common'
 import { Role, UserDimension } from '@nuvix/db'
 import {
@@ -13,8 +15,6 @@ import {
   UsersDoc,
 } from '@nuvix/utils/types'
 import { hash, verify } from 'argon2'
-import * as crypto from 'crypto'
-import { createHash, createHmac, randomBytes, scryptSync } from 'crypto'
 import { Exception } from '../extend/exception'
 
 const algorithm = 'aes-256-cbc'
@@ -93,8 +93,6 @@ export class Auth {
         return SessionProvider.PHONE
       case TokenType.OAUTH2:
         return SessionProvider.OAUTH2
-      case TokenType.GENERIC:
-      case TokenType.EMAIL:
       default:
         return SessionProvider.TOKEN
     }
@@ -142,10 +140,10 @@ export class Auth {
           Object.keys(options).length === 0
             ? undefined
             : {
-                hashLength: options['hashLength'],
-                timeCost: options['timeCost'],
-                memoryCost: options['memoryCost'],
-                parallelism: options['parallelism'],
+                hashLength: options.hashLength,
+                timeCost: options.timeCost,
+                memoryCost: options.memoryCost,
+                parallelism: options.parallelism,
               }
         return hash(string, { raw: false, ...aOptions })
       }
@@ -270,8 +268,7 @@ export class Auth {
         token.get('type') !== null &&
         (type === null || token.get('type') === type) &&
         token.get('secret') === Auth.hash(secret) &&
-        new Date(token.get('expire') as string).getTime() >=
-          new Date().getTime()
+        new Date(token.get('expire') as string).getTime() >= Date.now()
       ) {
         return token
       }
@@ -290,8 +287,7 @@ export class Auth {
         session.get('expire') !== null &&
         session.get('provider') !== null &&
         session.get('secret') === Auth.hash(secret) &&
-        new Date(session.get('expire') as string).getTime() >=
-          new Date().getTime()
+        new Date(session.get('expire') as string).getTime() >= Date.now()
       ) {
         return session.getId()
       }
@@ -385,22 +381,24 @@ export class Auth {
   }
 
   static encrypt(text: string): string {
-    if (!key)
+    if (!key) {
       throw Error(
         'NUVIX_ENCRYPTION_KEY is required, make sure you have added in current environment.',
       )
+    }
     const iv = crypto.randomBytes(16)
     const cipher = crypto.createCipheriv(algorithm, key, iv)
     let encrypted = cipher.update(text)
     encrypted = Buffer.concat([encrypted, cipher.final()])
-    return iv.toString('hex') + ':' + encrypted.toString('hex')
+    return `${iv.toString('hex')}:${encrypted.toString('hex')}`
   }
 
   static decrypt(text: string): string {
-    if (!key)
+    if (!key) {
       throw Error(
         'NUVIX_ENCRYPTION_KEY is required, make sure you have added in current environment.',
       )
+    }
     const textParts = text.split(':')
     const iv = Buffer.from(textParts.shift() as string, 'hex')
     const encryptedText = Buffer.from(textParts.join(':'), 'hex')

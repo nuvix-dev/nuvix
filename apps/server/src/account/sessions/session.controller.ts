@@ -357,8 +357,8 @@ export class SessionsController {
     const protocol = request.protocol
 
     const params: Record<string, any> = { ...input }
-    params['provider'] = provider
-    params['project'] = projectId
+    params.provider = provider
+    params.project = projectId
 
     response
       .status(302)
@@ -385,8 +385,8 @@ export class SessionsController {
     const protocol = request.protocol
 
     const params: Record<string, any> = { ...input }
-    params['provider'] = provider
-    params['project'] = projectId
+    params.provider = provider
+    params.project = projectId
 
     response
       .status(302)
@@ -469,7 +469,7 @@ export class SessionsController {
     model: Models.TOKEN,
     throttle: {
       limit: 60,
-      key: ({ body, ip }) => [`email:${body['email']}`, `ip:${ip}`],
+      key: ({ body, ip }) => [`email:${body.email}`, `ip:${ip}`],
     },
     audit: {
       key: 'session.create',
@@ -508,7 +508,7 @@ export class SessionsController {
     model: Models.TOKEN,
     throttle: {
       limit: 10,
-      key: ({ body, ip }) => [`email:${body['email']}`, `ip:${ip}`],
+      key: ({ body, ip }) => [`email:${body.email}`, `ip:${ip}`],
     },
     audit: {
       key: 'session.create',
@@ -625,7 +625,7 @@ export class SessionsController {
     model: Models.SESSION,
     throttle: {
       limit: 10,
-      key: ({ body, ip }) => [`phone:${body['phone']}`, `ip:${ip}`],
+      key: ({ body, ip }) => [`phone:${body.phone}`, `ip:${ip}`],
     },
     audit: {
       key: 'session.create',

@@ -1,3 +1,5 @@
+import * as fs from 'node:fs/promises'
+import path from 'node:path'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable, UseInterceptors } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
@@ -41,10 +43,8 @@ import type {
   UsersDoc,
 } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
-import * as fs from 'fs/promises'
 import * as Template from 'handlebars'
 import { CountryResponse, Reader } from 'maxmind'
-import path from 'path'
 import { UpdateEmailDTO, UpdatePasswordDTO } from './DTO/account.dto'
 import { CreateEmailSessionDTO } from './DTO/session.dto'
 
@@ -425,7 +425,7 @@ export class AccountService {
 
     const updatedSessions = sessions.map((session: SessionsDoc) => {
       const countryName = locale.getText(
-        'countries' + session.get('countryCode', '')?.toLowerCase(),
+        `countries${session.get('countryCode', '')?.toLowerCase()}`,
         locale.getText('locale.country.unknown'),
       )
 
@@ -459,7 +459,7 @@ export class AccountService {
       session.set(
         'countryName',
         locale.getText(
-          'countries' + session.get('countryCode', '')?.toLowerCase(),
+          `countries${session.get('countryCode', '')?.toLowerCase()}`,
           locale.getText('locale.country.unknown'),
         ),
       )
@@ -488,21 +488,17 @@ export class AccountService {
   /**
    * Get a Session
    */
-  async getSession(
-    user: UsersDoc,
-    sessionId: string,
-    locale: LocaleTranslator,
-  ) {
+  async getSession(user: UsersDoc, id: string, locale: LocaleTranslator) {
     const sessions = user.get('sessions', []) as SessionsDoc[]
-    sessionId =
-      sessionId === 'current'
+    const sessionId =
+      id === 'current'
         ? (Auth.sessionVerify(user.get('sessions'), Auth.secret) as string)
-        : sessionId
+        : id
 
     for (const session of sessions) {
       if (sessionId === session.getId()) {
         const countryName = locale.getText(
-          'countries' + session.get('countryCode', '')?.toLowerCase(),
+          `countries${session.get('countryCode', '')?.toLowerCase()}`,
           locale.getText('locale.country.unknown'),
         )
 
@@ -560,11 +556,11 @@ export class AccountService {
   /**
    * Update a Session
    */
-  async updateSession(user: UsersDoc, sessionId: string) {
-    sessionId =
-      sessionId === 'current'
+  async updateSession(user: UsersDoc, _sessionId: string) {
+    const sessionId =
+      _sessionId === 'current'
         ? (Auth.sessionVerify(user.get('sessions'), Auth.secret) as string)
-        : sessionId
+        : _sessionId
 
     const sessions = user.get('sessions', []) as SessionsDoc[]
     let session: SessionsDoc | null = null
@@ -690,7 +686,7 @@ export class AccountService {
       .status(201)
 
     const countryName = locale.getText(
-      'countries' + session.get('countryCode', '')?.toLowerCase(),
+      `countries${session.get('countryCode', '')?.toLowerCase()}`,
       locale.getText('locale.country.unknown'),
     )
 
@@ -752,7 +748,7 @@ export class AccountService {
       device: session.get('clientName'),
       ipAddress: session.get('ip'),
       country: locale.getText(
-        'countries.' + session.get('countryCode'),
+        `countries.${session.get('countryCode')}`,
         locale.getText('locale.country.unknown'),
       ),
     }

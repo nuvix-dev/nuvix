@@ -25,7 +25,7 @@ export const formats: Record<string, Format> = {
   },
   [AttributeFormat.ENUM]: {
     callback: attribute => {
-      const elements = (attribute as Attribute).formatOptions?.['elements']
+      const elements = (attribute as Attribute).formatOptions?.elements
       return new WhiteList(elements, true)
     },
     type: AttributeType.String,

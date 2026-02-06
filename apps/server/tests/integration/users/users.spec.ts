@@ -227,7 +227,7 @@ describe('users (integration)', () => {
   it('PATCH /v1/users/:userId/email returns 200 and updates user email', async () => {
     // PROTECTS: User email update works correctly
     const createDto = buildCreateUserDTO()
-    const newEmail = 'newemail' + Date.now() + '@example.com'
+    const newEmail = `newemail${Date.now()}@example.com`
     const updateDto = buildUpdateUserEmailDTO({ email: newEmail })
 
     // Create user first

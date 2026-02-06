@@ -13,8 +13,6 @@ import {
 import { ApiBody } from '@nestjs/swagger'
 import { Delete, Get, Post, Put } from '@nuvix/core'
 import {
-  Auth,
-  AuthType,
   MultipartParam,
   Namespace,
   Project,
@@ -120,14 +118,15 @@ export class FilesController {
     @ProjectDatabase() db: Database,
     @Param() { bucketId }: BucketParamsDTO,
     @MultipartParam('fileId') fileId: string,
-    @MultipartParam('permissions') permissions: string[] = [],
+    @MultipartParam('permissions') permissions: string[],
     @UploadedFile() file: SavedMultipartFile,
     @Req() req: NuvixRequest,
     @User() user: Doc,
     @Project() project: Doc,
   ): Promise<IResponse<FilesDoc>> {
-    if (!fileId)
+    if (!fileId) {
       throw new Exception(Exception.INVALID_PARAMS, 'fileId is required', 400)
+    }
     return this.filesService.createFile(
       db,
       bucketId,

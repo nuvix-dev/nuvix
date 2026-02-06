@@ -1,7 +1,7 @@
+import * as fs from 'node:fs'
+import path from 'node:path'
 import { PluginMetadataGenerator } from '@nestjs/cli/lib/compiler/plugins/plugin-metadata-generator.js'
 import { ReadonlyVisitor } from '@nestjs/swagger/dist/plugin/visitors/readonly.visitor.js'
-import * as fs from 'fs'
-import path from 'path'
 
 const outputFile = path.resolve('src/metadata.ts')
 

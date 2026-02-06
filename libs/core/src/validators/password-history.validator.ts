@@ -25,7 +25,9 @@ export class PasswordHistoryValidator implements Validator {
    * @return bool
    */
   async $valid(value: string): Promise<boolean> {
-    if (!this.passwordValidator.$valid(value)) return false
+    if (!this.passwordValidator.$valid(value)) {
+      return false
+    }
     for (const hash of this.history) {
       if (
         hash &&

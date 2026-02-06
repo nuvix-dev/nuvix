@@ -7,7 +7,7 @@ import {
 } from '@nestjs/common'
 import { JwtModule, JwtService } from '@nestjs/jwt'
 import { ScheduleModule } from '@nestjs/schedule'
-import { CoreModule, CoreService } from '@nuvix/core'
+import { CoreModule } from '@nuvix/core'
 import { Key } from '@nuvix/core/helpers'
 import {
   ApiHook,

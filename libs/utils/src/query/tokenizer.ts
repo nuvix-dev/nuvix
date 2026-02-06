@@ -82,7 +82,7 @@ export class Tokenizer {
         )
         const context = this.input.slice(errorStart, errorEnd)
 
-        const pointer = ' '.repeat(this.position - errorStart) + '^'
+        const pointer = `${' '.repeat(this.position - errorStart)}^`
         const message = `Invalid token at line ${this.line}, column ${this.column}`
 
         const detail = `${context}\n${pointer}`

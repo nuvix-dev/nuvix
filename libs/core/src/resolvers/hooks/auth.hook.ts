@@ -43,7 +43,9 @@ export class AuthHook implements Hook {
       secret: '',
     }
     const cookie = req.cookies[Auth.cookieName] || null
-    if (cookie) session = Auth.decodeSession(cookie)
+    if (cookie) {
+      session = Auth.decodeSession(cookie)
+    }
 
     if (!session.id && !session.secret) {
       const sessionHeader = params.getFromHeaders('x-nuvix-session')
@@ -148,12 +150,12 @@ export class AuthHook implements Hook {
       } else if (
         (req.url.startsWith('/projects/') ||
           req.url.startsWith('/v1/projects/')) &&
-        (req.params as any)['projectId']
+        (req.params as any).projectId
       ) {
         const p = await Authorization.skip(() =>
           this.dbForPlatform.getDocument(
             'projects',
-            (req.params as any)['projectId'],
+            (req.params as any).projectId,
           ),
         )
         teamInternalId = p.get('teamInternalId')

@@ -33,7 +33,9 @@ export class AuthGuard implements CanActivate {
     const user: UsersDoc = request[Context.User]
     const err = request.err
 
-    if (err) throw err
+    if (err) {
+      throw err
+    }
 
     if (user.empty()) {
       throw new Exception(

@@ -84,7 +84,9 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
 
         // Process each metric key-value pair
         for (const [key, value] of entries as [MetricFor, number][]) {
-          if (value === 0) continue
+          if (value === 0) {
+            continue
+          }
           this.logger.debug(`${key} processing with value ${value}`)
 
           for (const period of StatsQueue.periods) {
@@ -193,7 +195,7 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
         }
 
         if (
-          Object.keys(this.buffer.get(projectId)!.keys).length >=
+          Object.keys(this.buffer.get(projectId)?.keys ?? {}).length >=
           StatsQueue.BATCH_SIZE
         ) {
           // Temporarily stop the timer to avoid a race condition where the timer
@@ -222,9 +224,9 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
       case MetricPeriod.INF:
         return null
       case MetricPeriod.HOUR:
-        return date.toISOString().slice(0, 13) + ':00:00Z'
+        return `${date.toISOString().slice(0, 13)}:00:00Z`
       case MetricPeriod.DAY:
-        return date.toISOString().slice(0, 10) + 'T00:00:00Z'
+        return `${date.toISOString().slice(0, 10)}T00:00:00Z`
       default:
         throw new Error(`Unsupported period: ${period}`)
     }
@@ -236,7 +238,9 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
     metrics: Array<{ key: MetricFor; value: number }>,
     dbForProject: Database,
   ): Promise<void> {
-    if (document.empty()) return
+    if (document.empty()) {
+      return
+    }
 
     try {
       const collection = document.getCollection()

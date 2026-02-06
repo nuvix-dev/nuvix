@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Database, Doc, Query } from '@nuvix/db'
+import { Database, Query } from '@nuvix/db'
 import { configuration } from '@nuvix/utils'
 import type { IdentitiesDoc, UsersDoc } from '@nuvix/utils/types'
 
@@ -19,7 +19,7 @@ export class IdentityService {
   }> {
     queries.push(Query.equal('userInternalId', [user.getSequence()]))
 
-    const filterQueries = Query.groupByType(queries)['filters']
+    const filterQueries = Query.groupByType(queries).filters
     try {
       const results = await db.find('identities', queries)
       const total = await db.count(

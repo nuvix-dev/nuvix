@@ -16,7 +16,6 @@ import {
   IsString,
   MaxLength,
   Min,
-  Validate,
 } from 'class-validator'
 
 abstract class CreateMessageDTO {

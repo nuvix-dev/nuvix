@@ -36,7 +36,7 @@ export class AuditsQueue
   private interval!: NodeJS.Timeout
   private readonly audit: Audit
 
-  constructor(private coreService: CoreService) {
+  constructor(coreService: CoreService) {
     super()
     this.audit = coreService.getPlatformAudit()
   }

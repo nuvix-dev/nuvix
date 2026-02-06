@@ -1,5 +1,5 @@
 import { InjectQueue } from '@nestjs/bullmq'
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { usageConfig } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
 import type { DeletesJobData } from '@nuvix/core/resolvers'
@@ -27,8 +27,6 @@ import { CreateBucketDTO, UpdateBucketDTO } from './DTO/bucket.dto'
 
 @Injectable()
 export class StorageService {
-  private readonly logger = new Logger(StorageService.name)
-
   constructor(
     @InjectQueue(QueueFor.DELETES)
     private readonly deletesQueue: Queue<DeletesJobData, unknown, DeleteType>,
@@ -68,7 +66,7 @@ export class StorageService {
     const permissions = Permission.aggregate(_perms ?? [])
 
     try {
-      const filesCollection = collections.bucket['files']
+      const filesCollection = collections.bucket.files
       if (!filesCollection) {
         throw new Exception(
           Exception.GENERAL_SERVER_ERROR,
@@ -123,7 +121,9 @@ export class StorageService {
   async getBucket(db: Database, id: string) {
     const bucket = await db.getDocument('buckets', id)
 
-    if (bucket.empty()) throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
+    if (bucket.empty()) {
+      throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
+    }
 
     return bucket
   }

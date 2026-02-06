@@ -128,15 +128,13 @@ async function setupCollections(
   )
 
   for (const [_, collection] of collectionEntries) {
-    if (collection['$collection'] !== Database.METADATA) {
+    if (collection.$collection !== Database.METADATA) {
       continue
     }
 
     const collectionId = collection.$id
-    const attributes = (collection['attributes'] || []).map(
-      attr => new Doc(attr),
-    )
-    const indexes = (collection['indexes'] || []).map(idx => new Doc(idx))
+    const attributes = (collection.attributes || []).map(attr => new Doc(attr))
+    const indexes = (collection.indexes || []).map(idx => new Doc(idx))
 
     let lastError: any = null
 

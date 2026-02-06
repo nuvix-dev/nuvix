@@ -12,11 +12,10 @@ export function buildCreateSchemaDTO(
     .replace(/[^a-z0-9_]/g, '')
   const name = baseName.charAt(0).match(/[a-z]/)
     ? baseName
-    : 'schema_' + baseName
+    : `schema_${baseName}`
 
   return {
-    name:
-      name.substring(0, 20) + '_' + faker.string.alphanumeric(6).toLowerCase(),
+    name: `${name.substring(0, 20)}_${faker.string.alphanumeric(6).toLowerCase()}`,
     description: faker.lorem.sentence(),
     type: SchemaType.Managed,
     ...overrides,

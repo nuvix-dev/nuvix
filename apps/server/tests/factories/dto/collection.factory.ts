@@ -6,7 +6,7 @@ export function buildCreateCollectionDTO(
 ): CreateCollectionDTO {
   return {
     collectionId: faker.string.alphanumeric(12),
-    name: faker.word.noun() + '-collection',
+    name: `${faker.word.noun()}-collection`,
     permissions: [],
     documentSecurity: false,
     enabled: true,
@@ -18,7 +18,7 @@ export function buildUpdateCollectionDTO(
   overrides: Partial<Omit<CreateCollectionDTO, 'collectionId'>> = {},
 ): Omit<CreateCollectionDTO, 'collectionId'> {
   return {
-    name: faker.word.noun() + '-updated-collection',
+    name: `${faker.word.noun()}-updated-collection`,
     permissions: [],
     documentSecurity: false,
     enabled: true,

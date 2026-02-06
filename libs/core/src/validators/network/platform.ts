@@ -53,7 +53,7 @@ export class Platform {
     return scheme ? Platform.names[scheme] || '' : ''
   }
 
-  public static getHostnames(platforms: Array<PlatformsDoc>): string[] {
+  public static getHostnames(platforms: PlatformsDoc[]): string[] {
     const hostnames: string[] = []
 
     for (const platform of platforms) {
@@ -91,7 +91,7 @@ export class Platform {
     return [...new Set(hostnames)]
   }
 
-  public static getSchemes(platforms: Array<PlatformsDoc>): string[] {
+  public static getSchemes(platforms: PlatformsDoc[]): string[] {
     const schemes: string[] = []
 
     for (const platform of platforms) {

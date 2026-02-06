@@ -32,7 +32,7 @@ export class ProjectHook implements Hook {
     const params = new ParamsHelper(req)
     const projectId =
       params.getFromHeaders('x-nuvix-project') ||
-      (req.params as { projectId: string })['projectId'] || // for OAuth2 callback route
+      (req.params as { projectId: string }).projectId || // for OAuth2 callback route
       params.getFromQuery('project', 'console')
 
     if (!projectId || projectId === 'console') {

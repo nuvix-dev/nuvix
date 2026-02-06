@@ -235,24 +235,24 @@ COMMIT;`
     }
 
     const nameSql =
-      name === undefined || name === old!.name
+      name === undefined || name === old?.name
         ? ''
-        : `ALTER TABLE ${ident(old!.schema)}.${ident(old!.table)} RENAME COLUMN ${ident(
-            old!.name,
+        : `ALTER TABLE ${ident(old?.schema)}.${ident(old?.table)} RENAME COLUMN ${ident(
+            old?.name,
           )} TO ${ident(name)};`
     // We use USING to allow implicit conversion of incompatible types (e.g. int4 -> text).
     const typeSql =
       type === undefined
         ? ''
-        : `ALTER TABLE ${ident(old!.schema)}.${ident(old!.table)} ALTER COLUMN ${ident(
-            old!.name,
-          )} SET DATA TYPE ${typeIdent(type)} USING ${ident(old!.name)}::${typeIdent(type)};`
+        : `ALTER TABLE ${ident(old?.schema)}.${ident(old?.table)} ALTER COLUMN ${ident(
+            old?.name,
+          )} SET DATA TYPE ${typeIdent(type)} USING ${ident(old?.name)}::${typeIdent(type)};`
 
     let defaultValueSql: string
     if (drop_default) {
-      defaultValueSql = `ALTER TABLE ${ident(old!.schema)}.${ident(
-        old!.table,
-      )} ALTER COLUMN ${ident(old!.name)} DROP DEFAULT;`
+      defaultValueSql = `ALTER TABLE ${ident(old?.schema)}.${ident(
+        old?.table,
+      )} ALTER COLUMN ${ident(old?.name)} DROP DEFAULT;`
     } else if (default_value === undefined) {
       defaultValueSql = ''
     } else {
@@ -260,9 +260,9 @@ COMMIT;`
         default_value_format === 'expression'
           ? default_value
           : literal(default_value)
-      defaultValueSql = `ALTER TABLE ${ident(old!.schema)}.${ident(
-        old!.table,
-      )} ALTER COLUMN ${ident(old!.name)} SET DEFAULT ${defaultValue};`
+      defaultValueSql = `ALTER TABLE ${ident(old?.schema)}.${ident(
+        old?.table,
+      )} ALTER COLUMN ${ident(old?.name)} SET DEFAULT ${defaultValue};`
     }
     // What identitySql does vary depending on the old and new values of
     // is_identity and identity_generation.
@@ -272,12 +272,12 @@ COMMIT;`
     // | true                   | maybe set identity | maybe set identity | drop if exists |
     // |------------------------+--------------------+--------------------+----------------|
     // | false                  | -                  | add identity       | drop if exists |
-    let identitySql = `ALTER TABLE ${ident(old!.schema)}.${ident(old!.table)} ALTER COLUMN ${ident(
-      old!.name,
+    let identitySql = `ALTER TABLE ${ident(old?.schema)}.${ident(old?.table)} ALTER COLUMN ${ident(
+      old?.name,
     )}`
     if (is_identity === false) {
       identitySql += ' DROP IDENTITY IF EXISTS;'
-    } else if (old!.is_identity === true) {
+    } else if (old?.is_identity === true) {
       if (identity_generation === undefined) {
         identitySql = ''
       } else {
@@ -293,15 +293,15 @@ COMMIT;`
       isNullableSql = ''
     } else {
       isNullableSql = is_nullable
-        ? `ALTER TABLE ${ident(old!.schema)}.${ident(old!.table)} ALTER COLUMN ${ident(
-            old!.name,
+        ? `ALTER TABLE ${ident(old?.schema)}.${ident(old?.table)} ALTER COLUMN ${ident(
+            old?.name,
           )} DROP NOT NULL;`
-        : `ALTER TABLE ${ident(old!.schema)}.${ident(old!.table)} ALTER COLUMN ${ident(
-            old!.name,
+        : `ALTER TABLE ${ident(old?.schema)}.${ident(old?.table)} ALTER COLUMN ${ident(
+            old?.name,
           )} SET NOT NULL;`
     }
     let isUniqueSql = ''
-    if (old!.is_unique === true && is_unique === false) {
+    if (old?.is_unique === true && is_unique === false) {
       isUniqueSql = `
 DO $$
 DECLARE
@@ -311,26 +311,26 @@ BEGIN
     SELECT conname FROM pg_constraint WHERE
       contype = 'u'
       AND cardinality(conkey) = 1
-      AND conrelid = ${literal(old!.table_id)}
-      AND conkey[1] = ${literal(old!.ordinal_position)}
+      AND conrelid = ${literal(old?.table_id)}
+      AND conkey[1] = ${literal(old?.ordinal_position)}
   LOOP
     EXECUTE ${literal(
-      `ALTER TABLE ${ident(old!.schema)}.${ident(old!.table)} DROP CONSTRAINT `,
+      `ALTER TABLE ${ident(old?.schema)}.${ident(old?.table)} DROP CONSTRAINT `,
     )} || quote_ident(r.conname);
   END LOOP;
 END
 $$;
 `
-    } else if (old!.is_unique === false && is_unique === true) {
-      isUniqueSql = `ALTER TABLE ${ident(old!.schema)}.${ident(old!.table)} ADD UNIQUE (${ident(
-        old!.name,
+    } else if (old?.is_unique === false && is_unique === true) {
+      isUniqueSql = `ALTER TABLE ${ident(old?.schema)}.${ident(old?.table)} ADD UNIQUE (${ident(
+        old?.name,
       )});`
     }
     const commentSql =
       comment === undefined
         ? ''
-        : `COMMENT ON COLUMN ${ident(old!.schema)}.${ident(old!.table)}.${ident(
-            old!.name,
+        : `COMMENT ON COLUMN ${ident(old?.schema)}.${ident(old?.table)}.${ident(
+            old?.name,
           )} IS ${literal(comment)};`
 
     const checkSql =
@@ -345,32 +345,32 @@ BEGIN
   SELECT conname into v_conname FROM pg_constraint WHERE
     contype = 'c'
     AND cardinality(conkey) = 1
-    AND conrelid = ${literal(old!.table_id)}
-    AND conkey[1] = ${literal(old!.ordinal_position)}
+    AND conrelid = ${literal(old?.table_id)}
+    AND conkey[1] = ${literal(old?.ordinal_position)}
     ORDER BY oid asc
     LIMIT 1;
 
   IF v_conname IS NOT NULL THEN
-    EXECUTE format('ALTER TABLE ${ident(old!.schema)}.${ident(
-      old!.table,
+    EXECUTE format('ALTER TABLE ${ident(old?.schema)}.${ident(
+      old?.table,
     )} DROP CONSTRAINT %s', v_conname);
   END IF;
 
   ${
     check !== null
       ? `
-  ALTER TABLE ${ident(old!.schema)}.${ident(old!.table)} ADD CONSTRAINT ${ident(
-    `${old!.table}_${old!.name}_check`,
+  ALTER TABLE ${ident(old?.schema)}.${ident(old?.table)} ADD CONSTRAINT ${ident(
+    `${old?.table}_${old?.name}_check`,
   )} CHECK (${check});
 
   SELECT conkey into v_conkey FROM pg_constraint WHERE conname = ${literal(
-    `${old!.table}_${old!.name}_check`,
+    `${old?.table}_${old?.name}_check`,
   )};
 
   ASSERT v_conkey IS NOT NULL, 'error creating column constraint: check condition must refer to this column';
   ASSERT cardinality(v_conkey) = 1, 'error creating column constraint: check condition cannot refer to multiple columns';
   ASSERT v_conkey[1] = ${literal(
-    old!.ordinal_position,
+    old?.ordinal_position,
   )}, 'error creating column constraint: check condition cannot refer to other columns';
   `
       : ''
@@ -412,8 +412,8 @@ COMMIT;`
     if (error) {
       return { data: null, error: error }
     }
-    const sql = `ALTER TABLE ${ident(column!.schema)}.${ident(column!.table)} DROP COLUMN ${ident(
-      column!.name,
+    const sql = `ALTER TABLE ${ident(column?.schema)}.${ident(column?.table)} DROP COLUMN ${ident(
+      column?.name,
     )} ${cascade ? 'CASCADE' : 'RESTRICT'};`
     {
       const { error } = await this.query(sql)

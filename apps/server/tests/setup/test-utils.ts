@@ -13,7 +13,7 @@ import { expect } from 'vitest'
 export function parseJson<T = any>(payload: string): T {
   try {
     return JSON.parse(payload) as T
-  } catch (error) {
+  } catch (_error) {
     throw new Error(
       `Failed to parse JSON response:\n${payload.substring(0, 500)}${payload.length > 500 ? '...' : ''}`,
     )
@@ -65,9 +65,9 @@ export function assertListResponse(payload: unknown): asserts payload is {
   expect(payload).not.toBeNull()
 
   const obj = payload as Record<string, unknown>
-  expect(Array.isArray(obj['data'])).toBe(true)
-  expect(typeof obj['total']).toBe('number')
-  expect(obj['total']).toBeGreaterThanOrEqual(0)
+  expect(Array.isArray(obj.data)).toBe(true)
+  expect(typeof obj.total).toBe('number')
+  expect(obj.total).toBeGreaterThanOrEqual(0)
 }
 
 /**
@@ -80,8 +80,8 @@ export function assertDocumentShape(payload: unknown): void {
   expect(payload).not.toBeNull()
 
   const obj = payload as Record<string, unknown>
-  expect(typeof obj['$id']).toBe('string')
-  expect(obj['$id']).toBeTruthy()
+  expect(typeof obj.$id).toBe('string')
+  expect(obj.$id).toBeTruthy()
 }
 
 /**
@@ -96,11 +96,11 @@ export function assertErrorResponse(
   expect(payload).not.toBeNull()
 
   const obj = payload as Record<string, unknown>
-  expect(typeof obj['message']).toBe('string')
-  expect(typeof obj['code']).toBe('number')
+  expect(typeof obj.message).toBe('string')
+  expect(typeof obj.code).toBe('number')
 
   if (expectedCode) {
-    expect(obj['type']).toBe(expectedCode)
+    expect(obj.type).toBe(expectedCode)
   }
 }
 
@@ -124,5 +124,5 @@ export function toPayload(obj: object): string {
 }
 
 export function skipIfSMTPNotConfigured(): boolean {
-  return !process.env['NUVIX_SMTP_HOST']
+  return !process.env.NUVIX_SMTP_HOST
 }

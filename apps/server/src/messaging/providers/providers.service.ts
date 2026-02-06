@@ -30,8 +30,6 @@ import type {
 
 @Injectable()
 export class ProvidersService {
-  constructor() {}
-
   /**
    * Common method to create a provider.
    */
@@ -119,7 +117,7 @@ export class ProvidersService {
         replyToEmail: 'replyToEmail',
       },
       enabledCondition: (credentials, options) =>
-        !!options['fromEmail'] &&
+        !!options.fromEmail &&
         Object.hasOwn(credentials, 'isEuRegion') &&
         Object.hasOwn(credentials, 'apiKey') &&
         Object.hasOwn(credentials, 'domain'),
@@ -145,7 +143,7 @@ export class ProvidersService {
         replyToEmail: 'replyToEmail',
       },
       enabledCondition: (credentials, options) =>
-        !!options['fromEmail'] && Object.hasOwn(credentials, 'apiKey'),
+        !!options.fromEmail && Object.hasOwn(credentials, 'apiKey'),
     })
   }
 
@@ -174,7 +172,7 @@ export class ProvidersService {
         mailer: 'mailer',
       },
       enabledCondition: (credentials, options) =>
-        !!options['fromEmail'] && Object.hasOwn(credentials, 'host'),
+        !!options.fromEmail && Object.hasOwn(credentials, 'host'),
     })
   }
 
@@ -401,8 +399,8 @@ export class ProvidersService {
       throw new Exception(Exception.PROVIDER_INCORRECT_TYPE)
     }
 
-    if (updatedFields['name']) {
-      provider.set('name', updatedFields['name'])
+    if (updatedFields.name) {
+      provider.set('name', updatedFields.name)
     }
 
     // Update credentials
@@ -430,11 +428,8 @@ export class ProvidersService {
     provider.set('options', options)
 
     // Update enabled status
-    if (
-      updatedFields['enabled'] !== undefined &&
-      updatedFields['enabled'] !== null
-    ) {
-      if (updatedFields['enabled']) {
+    if (updatedFields.enabled !== undefined && updatedFields.enabled !== null) {
+      if (updatedFields.enabled) {
         if (enabledCondition(credentials, options)) {
           provider.set('enabled', true)
         } else {

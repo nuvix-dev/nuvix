@@ -97,7 +97,7 @@ describe('account/sessions (integration)', () => {
   it('POST /v1/account/sessions/email returns 401 for non-existent user', async () => {
     // PROTECTS: Login fails for unknown email (prevents user enumeration if response is generic)
     const dto = buildCreateEmailSessionDTO({
-      email: 'nonexistent-' + Date.now() + '@example.com',
+      email: `nonexistent-${Date.now()}@example.com`,
       password: 'SomePassword123!',
     })
 
@@ -175,9 +175,9 @@ describe('account/sessions (integration)', () => {
 
     // Verify session shape in list
     const session = body.data[0] as Record<string, unknown>
-    expect(session['$id']).toBeDefined()
-    expect(session['userId']).toBeDefined()
-    expect(session['provider']).toBeDefined()
+    expect(session.$id).toBeDefined()
+    expect(session.userId).toBeDefined()
+    expect(session.provider).toBeDefined()
   })
 
   /**

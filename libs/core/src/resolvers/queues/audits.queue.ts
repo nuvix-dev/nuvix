@@ -133,9 +133,11 @@ export class AuditsQueue
       })
     }
 
-    this.buffer.get(projectId)!.logs.push(log)
+    this.buffer.get(projectId)?.logs.push(log)
 
-    if (this.buffer.get(projectId)!.logs.length >= AuditsQueue.BATCH_SIZE) {
+    if (
+      (this.buffer.get(projectId)?.logs.length ?? 0) >= AuditsQueue.BATCH_SIZE
+    ) {
       // Temporarily stop the timer to avoid a race condition where the timer
       // and a full buffer try to flush at the same exact time.
       clearInterval(this.interval)

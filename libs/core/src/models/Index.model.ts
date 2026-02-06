@@ -1,4 +1,3 @@
-import { Permission } from '@nuvix/db'
 import { Exclude, Expose } from 'class-transformer'
 import { BaseModel } from './base.model'
 

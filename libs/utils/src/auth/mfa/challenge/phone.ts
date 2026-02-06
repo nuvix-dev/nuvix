@@ -12,7 +12,7 @@ export class Phone extends Challenge {
 
   static override async challenge(
     challenge: ChallengesDoc,
-    user: UsersDoc,
+    _user: UsersDoc,
     otp: string,
   ): Promise<boolean> {
     if (challenge.has('type') && challenge.get('type') === MfaType.PHONE) {

@@ -61,8 +61,9 @@ export class ProjectService {
     try {
       const org = await this.db.getDocument('teams', teamId)
 
-      if (org.empty())
+      if (org.empty()) {
         throw new Exception(Exception.TEAM_NOT_FOUND, 'Organization not found.')
+      }
 
       if (projectId === 'console') {
         throw new Exception(
@@ -147,7 +148,7 @@ export class ProjectService {
       queries.push(Query.search('search', search))
     }
 
-    const filterQueries = Query.groupByType(queries)['filters']
+    const filterQueries = Query.groupByType(queries).filters
     return {
       data: await this.db.find('projects', queries),
       total: await this.db.count(
@@ -161,7 +162,9 @@ export class ProjectService {
   async findOne(id: string) {
     const project = await this.db.getDocument('projects', id)
 
-    if (project.empty()) throw new Exception(Exception.PROJECT_NOT_FOUND)
+    if (project.empty()) {
+      throw new Exception(Exception.PROJECT_NOT_FOUND)
+    }
 
     return project
   }
@@ -169,7 +172,9 @@ export class ProjectService {
   async update(id: string, updateProjectDTO: UpdateProjectDTO) {
     let project = await this.db.getDocument('projects', id)
 
-    if (project.empty()) throw new Exception(Exception.PROJECT_NOT_FOUND)
+    if (project.empty()) {
+      throw new Exception(Exception.PROJECT_NOT_FOUND)
+    }
 
     project
       .update('name', updateProjectDTO.name)
@@ -291,7 +296,7 @@ export class ProjectService {
     )
 
     return {
-      jwt: ApiKey.DYNAMIC + '_' + jwt,
+      jwt: `${ApiKey.DYNAMIC}_${jwt}`,
     }
   }
 
@@ -502,7 +507,7 @@ export class ProjectService {
    * @todo :- Impliment the function...
    * Test SMTP
    */
-  async testSMTP(id: string, input: SmtpTestsDTO) {
+  async testSMTP(_id: string, _input: SmtpTestsDTO) {
     throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
   }
 }

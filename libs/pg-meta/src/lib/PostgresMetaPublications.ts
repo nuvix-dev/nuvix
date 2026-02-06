@@ -1,7 +1,7 @@
 import { ident, literal } from 'pg-format'
 import { PgMetaException } from '../extra/execption'
 import { publicationsSql } from './sql/index'
-import { PostgresMetaResult, PostgresPublication, PostgresTable } from './types'
+import { PostgresMetaResult, PostgresPublication } from './types'
 
 export default class PostgresMetaPublications {
   query: (sql: string) => Promise<PostgresMetaResult<any>>
@@ -104,10 +104,18 @@ export default class PostgresMetaPublications {
     }
 
     const publishOps = []
-    if (publish_insert) publishOps.push('insert')
-    if (publish_update) publishOps.push('update')
-    if (publish_delete) publishOps.push('delete')
-    if (publish_truncate) publishOps.push('truncate')
+    if (publish_insert) {
+      publishOps.push('insert')
+    }
+    if (publish_update) {
+      publishOps.push('update')
+    }
+    if (publish_delete) {
+      publishOps.push('delete')
+    }
+    if (publish_truncate) {
+      publishOps.push('truncate')
+    }
 
     const sql = `
 CREATE PUBLICATION ${ident(name)} ${tableClause}
@@ -246,7 +254,7 @@ with publications as (${publicationsSql}) select * from publications where name 
     if (error) {
       return { data: null, error }
     }
-    const sql = `DROP PUBLICATION IF EXISTS ${ident(publication!.name)};`
+    const sql = `DROP PUBLICATION IF EXISTS ${ident(publication?.name)};`
     {
       const { error } = await this.query(sql)
       if (error) {

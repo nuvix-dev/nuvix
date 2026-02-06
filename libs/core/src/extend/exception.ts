@@ -338,8 +338,8 @@ export class Exception extends HttpException {
 
     const errorCode = code ?? errorCodes[type]?.code
     const parsedCode =
-      typeof errorCode === 'string' && !isNaN(Number(errorCode))
-        ? Number.parseInt(errorCode)
+      typeof errorCode === 'string' && !Number.isNaN(Number(errorCode))
+        ? Number.parseInt(errorCode, 10)
         : errorCode
     const finalCode = parsedCode ?? 500
 

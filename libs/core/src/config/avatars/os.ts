@@ -1,13 +1,13 @@
+import * as path from 'node:path'
 import { PROJECT_ROOT } from '@nuvix/utils'
-import * as path from 'path'
 
 const assetsPath = path.resolve(PROJECT_ROOT, 'assets/avatars/os')
 
 export const osCodes = {
   // Codes based on: https://github.com/matomo-org/device-detector/blob/master/Parser/Client/Browser.php
-  AND: assetsPath + '/android.png',
-  ATV: assetsPath + '/apple-tv.png',
-  COS: assetsPath + '/chrome-os.png',
+  AND: `${assetsPath}/android.png`,
+  ATV: `${assetsPath}/apple-tv.png`,
+  COS: `${assetsPath}/chrome-os.png`,
 
   /*
     'AIX' : 'AIX',

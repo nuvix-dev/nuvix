@@ -1,32 +1,32 @@
 /* eslint-disable */
 export default async () => {
   const t = {
-    ['../../../libs/core/src/models/Target.model.js']: await import(
+    '../../../libs/core/src/models/Target.model.js': await import(
       '../../../libs/core/src/models/Target.model.js'
     ),
-    ['../../../libs/core/src/models/User.model.js']: await import(
+    '../../../libs/core/src/models/User.model.js': await import(
       '../../../libs/core/src/models/User.model.js'
     ),
-    ['@nuvix/db']: await import('@nuvix/db'),
-    ['../../../libs/utils/src/constants.js']: await import(
+    '@nuvix/db': await import('@nuvix/db'),
+    '../../../libs/utils/src/constants.js': await import(
       '../../../libs/utils/src/constants.js'
     ),
-    ['../../../libs/core/src/models/Index.model.js']: await import(
+    '../../../libs/core/src/models/Index.model.js': await import(
       '../../../libs/core/src/models/Index.model.js'
     ),
-    ['../../../libs/core/src/models/AuthProvider.model.js']: await import(
+    '../../../libs/core/src/models/AuthProvider.model.js': await import(
       '../../../libs/core/src/models/AuthProvider.model.js'
     ),
-    ['../../../libs/core/src/models/Platform.model.js']: await import(
+    '../../../libs/core/src/models/Platform.model.js': await import(
       '../../../libs/core/src/models/Platform.model.js'
     ),
-    ['../../../libs/core/src/models/Webhook.model.js']: await import(
+    '../../../libs/core/src/models/Webhook.model.js': await import(
       '../../../libs/core/src/models/Webhook.model.js'
     ),
-    ['../../../libs/core/src/models/Key.model.js']: await import(
+    '../../../libs/core/src/models/Key.model.js': await import(
       '../../../libs/core/src/models/Key.model.js'
     ),
-    ['./projects/auth-settings/DTO/project-auth.dto.js']: await import(
+    './projects/auth-settings/DTO/project-auth.dto.js': await import(
       './projects/auth-settings/DTO/project-auth.dto.js'
     ),
   }

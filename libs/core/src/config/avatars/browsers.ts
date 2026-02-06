@@ -1,27 +1,27 @@
+import * as path from 'node:path'
 import { PROJECT_ROOT } from '@nuvix/utils'
-import * as path from 'path'
 
 const assetsPath = path.resolve(PROJECT_ROOT, 'assets/avatars/browsers')
 
 export const browserCodes = {
   // Codes based on: https://github.com/matomo-org/device-detector/blob/master/Parser/Client/Browser.pp
-  aa: { name: 'Avant Browser', path: assetsPath + '/avant-browser.png' },
+  aa: { name: 'Avant Browser', path: `${assetsPath}/avant-browser.png` },
   an: {
     name: 'Android WebView Beta',
-    path: assetsPath + '/android-webview-beta.png',
+    path: `${assetsPath}/android-webview-beta.png`,
   },
-  ch: { name: 'Google Chrome', path: assetsPath + '/chrome.png' },
-  ci: { name: 'Google Chrome (iOS)', path: assetsPath + '/chrome.png' },
-  cm: { name: 'Google Chrome (Mobile)', path: assetsPath + '/chrome.png' },
-  cr: { name: 'Chromium', path: assetsPath + '/chromium.png' },
-  ff: { name: 'Mozilla Firefox', path: assetsPath + '/firefox.png' },
-  sf: { name: 'Safari', path: assetsPath + '/safari.png' },
-  mf: { name: 'Mobile Safari', path: assetsPath + '/safari.png' },
-  ps: { name: 'Microsoft Edge', path: assetsPath + '/edge.png' },
-  oi: { name: 'Microsoft Edge (iOS)', path: assetsPath + '/edge.png' },
-  om: { name: 'Opera Mini', path: assetsPath + '/opera-mini.png' },
-  op: { name: 'Opera', path: assetsPath + '/opera.png' },
-  on: { name: 'Opera (Next)', path: assetsPath + '/opera.png' },
+  ch: { name: 'Google Chrome', path: `${assetsPath}/chrome.png` },
+  ci: { name: 'Google Chrome (iOS)', path: `${assetsPath}/chrome.png` },
+  cm: { name: 'Google Chrome (Mobile)', path: `${assetsPath}/chrome.png` },
+  cr: { name: 'Chromium', path: `${assetsPath}/chromium.png` },
+  ff: { name: 'Mozilla Firefox', path: `${assetsPath}/firefox.png` },
+  sf: { name: 'Safari', path: `${assetsPath}/safari.png` },
+  mf: { name: 'Mobile Safari', path: `${assetsPath}/safari.png` },
+  ps: { name: 'Microsoft Edge', path: `${assetsPath}/edge.png` },
+  oi: { name: 'Microsoft Edge (iOS)', path: `${assetsPath}/edge.png` },
+  om: { name: 'Opera Mini', path: `${assetsPath}/opera-mini.png` },
+  op: { name: 'Opera', path: `${assetsPath}/opera.png` },
+  on: { name: 'Opera (Next)', path: `${assetsPath}/opera.png` },
 
   /*
     '36' : '360 Phone Browser',

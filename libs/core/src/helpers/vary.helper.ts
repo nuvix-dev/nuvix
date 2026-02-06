@@ -8,7 +8,9 @@ export function validateFieldname(fieldname: string) {
 
 export function parse(header: string): string[] {
   const trimmed = header.trim().toLowerCase()
-  if (!trimmed) return []
+  if (!trimmed) {
+    return []
+  }
   return trimmed.split(/\s*,\s*/)
 }
 
@@ -20,7 +22,9 @@ export function createAddFieldnameToVary(fieldname: string) {
     const existing = reply.getHeader('Vary')?.toString() || ''
     const values = new Set(parse(existing))
 
-    if (values.has('*')) return
+    if (values.has('*')) {
+      return
+    }
     if (fieldLower === '*') {
       reply.raw.setHeader('Vary', '*')
       return

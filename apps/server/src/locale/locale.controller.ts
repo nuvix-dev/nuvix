@@ -9,7 +9,7 @@ import {
   localeCodes,
   phoneCodes,
 } from '@nuvix/core/config'
-import { Auth, AuthType, Locale, Namespace } from '@nuvix/core/decorators'
+import { Locale, Namespace } from '@nuvix/core/decorators'
 import { LocaleTranslator, Models } from '@nuvix/core/helpers'
 import {
   ApiInterceptor,
@@ -128,7 +128,9 @@ export class LocaleController {
         `countries.${name.toLowerCase()}`,
         false,
       )
-      if (!countryName) continue
+      if (!countryName) {
+        continue
+      }
 
       data.push({
         code: `+${code}`,

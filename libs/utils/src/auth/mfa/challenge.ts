@@ -1,13 +1,13 @@
 import { type ChallengesDoc, UsersDoc } from 'libs/utils/types'
 
 export abstract class Challenge {
-  public static async verify(user: UsersDoc, otp: string): Promise<boolean> {
+  public static async verify(_user: UsersDoc, _otp: string): Promise<boolean> {
     return false
   }
   public static async challenge(
-    challenge: ChallengesDoc,
-    user: UsersDoc,
-    otp: string,
+    _challenge: ChallengesDoc,
+    _user: UsersDoc,
+    _otp: string,
   ): Promise<boolean> {
     return false
   }

@@ -84,7 +84,7 @@ export class AccountController {
   @Scope('account')
   @ResModel(Models.NONE)
   @AuditEvent('user.delete', 'user/{res.$id}')
-  async deleteAccount(@User() user: UsersDoc) {
+  async deleteAccount(@User() _user: UsersDoc) {
     throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
     // return this.accountService.deleteAccount(user)
   }

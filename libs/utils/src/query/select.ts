@@ -1,4 +1,3 @@
-import { Logger } from '@nestjs/common'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Parser } from './parser'
 import type {
@@ -75,16 +74,20 @@ export class SelectParser {
         inBraces += char === '{' ? 1 : -1
         current += char
       } else if (this.isSeparator(char, inQuotes, inParens, inBraces)) {
-        if (current.trim()) tokens.push(current.trim())
+        if (current.trim()) {
+          tokens.push(current.trim())
+        }
         current = ''
       } else {
         current += char
       }
     }
 
-    if (current.trim()) tokens.push(current.trim())
+    if (current.trim()) {
+      tokens.push(current.trim())
+    }
 
-    if (inQuotes)
+    if (inQuotes) {
       throw new Exception(
         Exception.GENERAL_PARSER_ERROR,
         'Unmatched quotes in select string',
@@ -92,7 +95,8 @@ export class SelectParser {
         hint: 'Ensure all quotes are properly closed.',
         detail: `Unmatched quote at position ${str.length - current.length}, context: "${current}"`,
       })
-    if (inParens !== 0)
+    }
+    if (inParens !== 0) {
       throw new Exception(
         Exception.GENERAL_PARSER_ERROR,
         'Unmatched parentheses in select string',
@@ -100,7 +104,8 @@ export class SelectParser {
         hint: 'Ensure all parentheses are properly closed.',
         detail: `Unmatched parenthesis at position ${str.length - current.length}, context: "${current}"`,
       })
-    if (inBraces !== 0)
+    }
+    if (inBraces !== 0) {
       throw new Exception(
         Exception.GENERAL_PARSER_ERROR,
         'Unmatched braces in select string',
@@ -108,6 +113,7 @@ export class SelectParser {
         hint: 'Ensure all braces are properly closed.',
         detail: `Unmatched brace at position ${str.length - current.length}, context: "${current}"`,
       })
+    }
 
     return tokens
   }
@@ -158,7 +164,7 @@ export class SelectParser {
 
   private parseTokens(tokens: string[]): SelectNode[] {
     return tokens.map(token => {
-      if (!token.trim())
+      if (!token.trim()) {
         throw new Exception(
           Exception.GENERAL_PARSER_ERROR,
           'Empty token found in select string',
@@ -166,6 +172,7 @@ export class SelectParser {
           hint: 'Ensure all tokens are properly defined.',
           detail: `Empty token at position ${tokens.indexOf(token) + 1}`,
         })
+      }
       return this.isEmbedToken(token)
         ? this.parseEmbed(token)
         : this.parseColumn(token)
@@ -223,7 +230,7 @@ export class SelectParser {
       pathStr = workingToken
     }
 
-    if (!pathStr)
+    if (!pathStr) {
       throw new Exception(
         Exception.GENERAL_PARSER_ERROR,
         'Column path cannot be empty',
@@ -231,6 +238,7 @@ export class SelectParser {
         hint: 'Ensure the column path is correctly specified.',
         detail: `Invalid column path in token: "${token}"`,
       })
+    }
     finalAlias = alias ?? finalAlias
 
     const path = Parser.create({ tableName: this.tableName }).parseFieldString(
@@ -252,12 +260,14 @@ export class SelectParser {
     let parenDepth = 0
     for (let i = 0; i < token.length; i++) {
       const char = token[i]
-      if (char === '(') parenDepth++
-      else if (char === ')') parenDepth--
-      else if (char === this.ALIAS_DELIMITER && parenDepth === 0) {
+      if (char === '(') {
+        parenDepth++
+      } else if (char === ')') {
+        parenDepth--
+      } else if (char === this.ALIAS_DELIMITER && parenDepth === 0) {
         const alias = token.slice(0, i).trim()
         const value = token.slice(i + 1).trim()
-        if (!alias || !value)
+        if (!alias || !value) {
           throw new Exception(
             Exception.GENERAL_PARSER_ERROR,
             `Invalid alias syntax: ${token}`,
@@ -265,6 +275,7 @@ export class SelectParser {
             hint: 'Ensure alias and value are properly defined.',
             detail: `Invalid alias in token: "${token}"`,
           })
+        }
         return { value, alias }
       }
     }
@@ -276,9 +287,11 @@ export class SelectParser {
     let parenDepth = 0
     for (let i = token.length - 1; i >= 0; i--) {
       const char = token[i]
-      if (char === ')') parenDepth++
-      else if (char === '(') parenDepth--
-      else if (
+      if (char === ')') {
+        parenDepth++
+      } else if (char === '(') {
+        parenDepth--
+      } else if (
         token.slice(i - this.CAST_DELIMITER.length + 1, i + 1) ===
           this.CAST_DELIMITER &&
         parenDepth === 0
@@ -287,7 +300,7 @@ export class SelectParser {
         const value = token
           .substring(0, i - this.CAST_DELIMITER.length + 1)
           .trim()
-        if (!cast)
+        if (!cast) {
           throw new Exception(
             Exception.GENERAL_PARSER_ERROR,
             `Invalid cast syntax: ${token}`,
@@ -295,6 +308,7 @@ export class SelectParser {
             hint: 'Ensure cast is properly defined.',
             detail: `Invalid cast in token: "${token}"`,
           })
+        }
         return { value, cast }
       }
     }
@@ -326,11 +340,11 @@ export class SelectParser {
       selectPart,
     ] = match
 
-    let resource: string
+    let resource: string | undefined
     let cardinalityHint: 'one' | 'many' | undefined
 
     const parts = fullResourceString?.split('.')!
-    const lastPart = parts[parts.length - 1]!.trim()
+    const lastPart = parts[parts.length - 1]?.trim()
 
     if (
       parts.length > 1 &&
@@ -359,7 +373,7 @@ export class SelectParser {
         detail: `Invalid resource name in token: "${token}"`,
       })
     } else {
-      resource = fullResourceString!.trim()
+      resource = fullResourceString?.trim()
       cardinalityHint = undefined
     }
 
@@ -378,7 +392,7 @@ export class SelectParser {
     let joinType = 'left' as EmbedParserResult['joinType']
     const shape = cardinalityHint === 'one' ? 'object' : 'array'
 
-    if (!constraintPart?.trim())
+    if (!constraintPart?.trim()) {
       throw new Exception(
         Exception.GENERAL_PARSER_ERROR,
         `Filter constraint cannot be empty in embed: ${token}`,
@@ -386,6 +400,7 @@ export class SelectParser {
         hint: 'Ensure the constraint part is properly defined.',
         detail: `Invalid constraint in token: "${token}"`,
       })
+    }
     const constraint = Parser.create<EmbedParserResult>({
       tableName: alias || resource,
       mainTable: this.tableName,

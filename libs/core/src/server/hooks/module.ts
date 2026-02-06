@@ -258,7 +258,7 @@ export class HooksModule<
     )
 
     if (!hasAnyHookMethod.size) {
-      throw new InvalidHookException(metatype!.name)
+      throw new InvalidHookException(metatype?.name ?? 'unknown')
     }
 
     const isStatic = wrapper.isDependencyTreeStatic()
@@ -338,7 +338,7 @@ export class HooksModule<
       undefined,
       contextId,
     )
-    const middleware = instance[method as keyof Hook]!.bind(instance) as any
+    const middleware = instance[method as keyof Hook]?.bind(instance) as any
     return this.routerProxy.createProxy(middleware, exceptionsHandler) as any
   }
 
@@ -382,7 +382,7 @@ export class HooksModule<
 
   private getContextId(request: unknown, isTreeDurable: boolean): ContextId {
     const contextId = ContextIdFactory.getByRequest(request as object)
-    if (!request![REQUEST_CONTEXT_ID as keyof object]) {
+    if (!request?.[REQUEST_CONTEXT_ID as keyof object]) {
       Object.defineProperty(request, REQUEST_CONTEXT_ID, {
         value: contextId,
         enumerable: false,

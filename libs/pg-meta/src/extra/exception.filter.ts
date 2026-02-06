@@ -28,16 +28,21 @@ export class PgMetaExceptionFilter implements ExceptionFilter {
 
     // Add useful debug info while excluding sensitive information
     if (exception.extra) {
-      if (exception.extra.formattedError)
-        responseBody['formattedError'] = exception.extra.formattedError
-      if (exception.extra['severity'])
-        responseBody['severity'] = exception.extra['severity']
-      if (exception.extra['position'])
-        responseBody['position'] = exception.extra['position']
-      if (exception.extra['routine'])
-        responseBody['routine'] = exception.extra['routine']
-      if (exception.extra['hint'])
-        responseBody['hint'] = exception.extra['hint']
+      if (exception.extra.formattedError) {
+        responseBody.formattedError = exception.extra.formattedError
+      }
+      if (exception.extra.severity) {
+        responseBody.severity = exception.extra.severity
+      }
+      if (exception.extra.position) {
+        responseBody.position = exception.extra.position
+      }
+      if (exception.extra.routine) {
+        responseBody.routine = exception.extra.routine
+      }
+      if (exception.extra.hint) {
+        responseBody.hint = exception.extra.hint
+      }
     }
 
     response.status(status).send(responseBody)

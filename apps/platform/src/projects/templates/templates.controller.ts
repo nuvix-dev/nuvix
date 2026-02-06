@@ -19,7 +19,7 @@ import { TemplatesService } from './templates.service'
 @Auth(AuthType.ADMIN)
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class TemplatesController {
-  constructor(private readonly templatesService: TemplatesService) {}
+  constructor(readonly _templatesService: TemplatesService) {}
 
   @Get('sms/:type/:locale', {
     summary: 'Get custom SMS template',

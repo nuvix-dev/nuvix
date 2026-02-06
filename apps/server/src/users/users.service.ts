@@ -1,5 +1,5 @@
 import { InjectQueue } from '@nestjs/bullmq'
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { JwtService } from '@nestjs/jwt'
 import { Audit, AuditDoc } from '@nuvix/audit'
@@ -34,7 +34,6 @@ import {
   TokenType,
 } from '@nuvix/utils'
 import type {
-  MembershipsDoc,
   ProjectsDoc,
   SessionsDoc,
   TargetsDoc,
@@ -61,7 +60,6 @@ import {
 
 @Injectable()
 export class UsersService {
-  private logger: Logger = new Logger(UsersService.name)
   private readonly geoDb: Reader<CountryResponse>
 
   constructor(
@@ -81,7 +79,7 @@ export class UsersService {
     if (search) {
       queries.push(Query.search('search', search))
     }
-    const filterQueries = Query.groupByType(queries)['filters']
+    const filterQueries = Query.groupByType(queries).filters
 
     return {
       data: await db.find('users', queries),
@@ -199,7 +197,7 @@ export class UsersService {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
-    if (project.get('auths', {})['personalDataCheck'] ?? false) {
+    if (project.get('auths', {}).personalDataCheck ?? false) {
       const personalDataValidator = new PersonalDataValidator(
         id,
         user.get('email'),
@@ -235,7 +233,7 @@ export class UsersService {
       Auth.DEFAULT_ALGO_OPTIONS,
     )
 
-    const historyLimit = project.get('auths', {})['passwordHistory'] ?? 0
+    const historyLimit = project.get('auths', {}).passwordHistory ?? 0
     let history = user.get('passwordHistory', [])
 
     if (newPassword && historyLimit > 0) {
@@ -692,7 +690,7 @@ export class UsersService {
     }
 
     const grouped = Query.groupByType(queries)
-    const limit = grouped['limit']
+    const limit = grouped.limit
     if (limit === undefined) {
       queries.push(Query.limit(configuration.limits.limitCount))
     }
@@ -723,18 +721,18 @@ export class UsersService {
           userName: log.data.userName || null,
           ip: log.ip,
           time: log.time,
-          osCode: os['osCode'],
-          osName: os['osName'],
-          osVersion: os['osVersion'],
-          clientType: client['clientType'],
-          clientCode: client['clientCode'],
-          clientName: client['clientName'],
-          clientVersion: client['clientVersion'],
-          clientEngine: client['clientEngine'],
-          clientEngineVersion: client['clientEngineVersion'],
-          deviceName: device['deviceName'],
-          deviceBrand: device['deviceBrand'],
-          deviceModel: device['deviceModel'],
+          osCode: os.osCode,
+          osName: os.osName,
+          osVersion: os.osVersion,
+          clientType: client.clientType,
+          clientCode: client.clientCode,
+          clientName: client.clientName,
+          clientVersion: client.clientVersion,
+          clientEngine: client.clientEngine,
+          clientEngineVersion: client.clientEngineVersion,
+          deviceName: device.deviceName,
+          deviceBrand: device.deviceBrand,
+          deviceModel: device.deviceModel,
           countryCode,
           countryName,
         }) as unknown as AuditDoc,
@@ -755,7 +753,7 @@ export class UsersService {
       queries.push(Query.search('search', search))
     }
 
-    const filterQueries = Query.groupByType(queries)['filters']
+    const filterQueries = Query.groupByType(queries).filters
     return {
       data: await db.find('identities', queries),
       total: await db.count(
@@ -903,7 +901,7 @@ export class UsersService {
     const hashOptionsObject =
       typeof hashOptions === 'string' ? JSON.parse(hashOptions) : hashOptions
     const auths = project.get('auths', {})
-    const passwordHistory = auths?.['passwordHistory'] ?? 0
+    const passwordHistory = auths?.passwordHistory ?? 0
 
     if (email) {
       email = email.toLowerCase()
@@ -921,7 +919,7 @@ export class UsersService {
       userId =
         !userId || userId === 'unique()' ? ID.unique() : ID.custom(userId)
 
-      if (auths?.['personalDataCheck'] ?? false) {
+      if (auths?.personalDataCheck ?? false) {
         const personalDataValidator = new PersonalDataValidator(
           userId,
           email,
@@ -999,7 +997,9 @@ export class UsersService {
             if (existingTarget) {
               createdUser.append('targets', existingTarget)
             }
-          } else throw error
+          } else {
+            throw error
+          }
         }
       }
 
@@ -1031,7 +1031,9 @@ export class UsersService {
             if (existingTarget) {
               createdUser.append('targets', existingTarget)
             }
-          } else throw error
+          } else {
+            throw error
+          }
         }
       }
 

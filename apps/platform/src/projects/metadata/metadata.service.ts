@@ -14,7 +14,9 @@ export class MetadataService {
   async updateExposedSchemas(projectId: string, schemas: string[]) {
     const project = await this.db.getDocument('projects', projectId)
 
-    if (project.empty()) throw new Exception(Exception.PROJECT_NOT_FOUND)
+    if (project.empty()) {
+      throw new Exception(Exception.PROJECT_NOT_FOUND)
+    }
 
     const metadata = project.get('metadata')
 

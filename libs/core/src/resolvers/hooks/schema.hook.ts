@@ -43,7 +43,9 @@ export class SchemaHook implements Hook {
     const schemaId =
       (request.params as { schemaId: string | undefined }).schemaId || 'public'
 
-    if (schemaId === undefined) return
+    if (schemaId === undefined) {
+      return
+    }
     const schema = await pg
       .table<Schema>('schemas')
       .withSchema(Schemas.System)
@@ -56,7 +58,7 @@ export class SchemaHook implements Hook {
         if (!schema.enabled) {
           throw new Exception(Exception.SCHEMA_NOT_FOUND)
         }
-        const allowed = project.get('metadata')?.['allowedSchemas'] ?? []
+        const allowed = project.get('metadata')?.allowedSchemas ?? []
         // May be we will add Document schema too in future
         if (
           !allowed.includes(schema.name) &&

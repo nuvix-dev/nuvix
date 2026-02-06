@@ -18,26 +18,26 @@ export class ParseQueryPipe
   implements PipeTransform<string | string[], Query[]>
 {
   private readonly options: Options
-  private readonly fields: string[]
+  // private readonly fields: string[]
 
   constructor(...fields: string[])
   constructor(fields: string[], options?: Options)
   constructor(options: Options)
   constructor(...fieldsOrOptions: any[]) {
-    let fields: string[]
+    // let fields: string[]
     let options: Options
     if (Array.isArray(fieldsOrOptions[0])) {
-      fields = fieldsOrOptions[0] as string[]
+      // fields = fieldsOrOptions[0] as string[]
       options = (fieldsOrOptions[1] as Options) || {}
     } else if (typeof fieldsOrOptions[0] === 'string') {
-      fields = fieldsOrOptions as string[]
+      // fields = fieldsOrOptions as string[]
       options = {}
     } else {
-      fields = []
+      // fields = []
       options = (fieldsOrOptions[0] as Options) || {}
     }
     super(options.validators, options.maxLength)
-    this.fields = fields
+    // this.fields = fields
     this.options = {
       ...options,
       validate: options.validate ?? true,

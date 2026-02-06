@@ -40,7 +40,7 @@ export class URLValidator implements Validator {
         return false
       }
       return true
-    } catch (e) {
+    } catch (_e) {
       return false
     }
   }

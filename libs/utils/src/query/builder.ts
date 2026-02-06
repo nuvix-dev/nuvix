@@ -167,7 +167,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
    * Apply GROUP BY clauses to the QueryBuilder
    */
   applyGroupBy(columns?: Condition['field'][], tableName?: string) {
-    if (columns && columns.length) {
+    if (columns?.length) {
       const _columns = columns.map(
         column => this._rawField(column, tableName).toSQL().sql,
       )
@@ -199,8 +199,12 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
           ? Number(offset)
           : undefined
 
-    if (Number.isInteger(limit)) this.qb.limit(limit as number)
-    if (Number.isInteger(offset)) this.qb.offset(offset as number)
+    if (Number.isInteger(limit)) {
+      this.qb.limit(limit as number)
+    }
+    if (Number.isInteger(offset)) {
+      this.qb.offset(offset as number)
+    }
 
     return this.qb
   }
@@ -479,8 +483,9 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
       typeof value === 'object' &&
       '__type' in value &&
       value.__type === 'column'
-    )
+    ) {
       return true
+    }
     return false
   }
 
@@ -520,7 +525,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
           if (isAfterOperator) {
             // Try to convert to number if possible
             const numericValue = Number(part)
-            if (!isNaN(numericValue) && isFinite(numericValue)) {
+            if (!Number.isNaN(numericValue) && Number.isFinite(numericValue)) {
               sqlParts.push(part)
             } else {
               sqlParts.push(`'${part}'`)
@@ -535,17 +540,18 @@ export class ASTToQueryBuilder<T extends QueryBuilder> {
           }
         } else if (typeof part === 'object' && 'operator' in part) {
           // Handle JSON operators (->, ->>)
-          if (isLastPart)
+          if (isLastPart) {
             throw new Exception(
               Exception.GENERAL_PARSER_ERROR,
               'Invalid syntax, should be string or number after `->` or `->>`',
             )
+          }
           if (!hasObjectPartsBefore) {
             sqlParts.push(`"${part.name}"`)
           } else {
             // Try to convert to number if possible when i > 0
             const numericValue = Number(part.name)
-            if (!isNaN(numericValue) && isFinite(numericValue)) {
+            if (!Number.isNaN(numericValue) && Number.isFinite(numericValue)) {
               sqlParts.push(part.name)
             } else {
               sqlParts.push(`'${part.name}'`)

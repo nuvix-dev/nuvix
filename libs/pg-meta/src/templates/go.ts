@@ -23,7 +23,7 @@ export const apply = ({
     .reduce(
       (acc, curr) => {
         acc[curr.table_id] ??= []
-        acc[curr.table_id]!.push(curr)
+        acc[curr.table_id]?.push(curr)
         return acc
       },
       {} as Record<string, PostgresColumn[]>,
@@ -35,12 +35,12 @@ export const apply = ({
 package database
 
 ${tables
-  .filter(table => schemas.some(schema => schema.name === table['schema']))
+  .filter(table => schemas.some(schema => schema.name === table.schema))
   .flatMap(table =>
     generateTableStructsForOperations(
-      schemas.find(schema => schema.name === table['schema'])!,
+      schemas.find(schema => schema.name === table.schema)!,
       table,
-      columnsByTableId[table['id']],
+      columnsByTableId[table.id],
       types,
       ['Select', 'Insert', 'Update'],
     ),
@@ -48,12 +48,12 @@ ${tables
   .join('\n\n')}
 
 ${views
-  .filter(view => schemas.some(schema => schema.name === view['schema']))
+  .filter(view => schemas.some(schema => schema.name === view.schema))
   .flatMap(view =>
     generateTableStructsForOperations(
-      schemas.find(schema => schema.name === view['schema'])!,
+      schemas.find(schema => schema.name === view.schema)!,
       view,
-      columnsByTableId[view['id']],
+      columnsByTableId[view.id],
       types,
       ['Select'],
     ),
@@ -62,13 +62,13 @@ ${views
 
 ${materializedViews
   .filter(materializedView =>
-    schemas.some(schema => schema.name === materializedView['schema']),
+    schemas.some(schema => schema.name === materializedView.schema),
   )
   .flatMap(materializedView =>
     generateTableStructsForOperations(
-      schemas.find(schema => schema.name === materializedView['schema'])!,
+      schemas.find(schema => schema.name === materializedView.schema)!,
       materializedView,
-      columnsByTableId[materializedView['id']],
+      columnsByTableId[materializedView.id],
       types,
       ['Select'],
     ),
@@ -204,7 +204,7 @@ function generateCompositeTypeStruct(
   const attributeEntries: [string, string, string][] =
     typeWithRetrievedAttributes.attributes.map(attribute => [
       formatForGoTypeName(attribute.name),
-      pgTypeToGoType(attribute.type!.format, false),
+      pgTypeToGoType(attribute.type?.format as string, false),
       attribute.name,
     ])
 

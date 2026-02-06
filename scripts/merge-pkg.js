@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-import { existsSync, readFileSync, writeFileSync } from 'fs'
-import * as fs from 'fs/promises'
-import path from 'path'
-import { fileURLToPath } from 'url'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import * as fs from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -30,7 +30,9 @@ function loadPkg(filePath) {
  */
 function mergeDeps(base, source) {
   for (const field of DEP_FIELDS) {
-    if (!source[field]) continue
+    if (!source[field]) {
+      continue
+    }
     if (field === 'trustedDependencies') {
       base[field] = base[field] || []
       base[field].push(...source[field])
@@ -81,11 +83,17 @@ function resolveLibPath(pkgName) {
  */
 function collectLibDeps(pkg, visited = new Set()) {
   for (const field of ['devDependencies']) {
-    if (!pkg[field]) continue
+    if (!pkg[field]) {
+      continue
+    }
 
     for (const [dep, version] of Object.entries(pkg[field])) {
-      if (!isWorkspaceDep(version)) continue
-      if (visited.has(dep)) continue
+      if (!isWorkspaceDep(version)) {
+        continue
+      }
+      if (visited.has(dep)) {
+        continue
+      }
 
       const libPkgPath = resolveLibPath(dep)
       if (!libPkgPath) {
@@ -143,10 +151,8 @@ async function prepareDeploy(appName) {
     // Merge again to bring the newly collected deps into the final package
     mergeDeps(finalPkg, appPkg)
 
-    finalPkg['trustedDependencies'] = Array.isArray(
-      finalPkg['trustedDependencies'],
-    )
-      ? Array.from(new Set(finalPkg['trustedDependencies']))
+    finalPkg.trustedDependencies = Array.isArray(finalPkg.trustedDependencies)
+      ? Array.from(new Set(finalPkg.trustedDependencies))
       : []
 
     const outDir = path.join(__dirname, `../dist/${appName}`)

@@ -38,7 +38,7 @@ export class MfaService {
     const totp = TOTP.getAuthenticatorFromUser(user)
 
     return new Doc({
-      [MfaType.TOTP]: totp !== null && totp.get('verified', false),
+      [MfaType.TOTP]: totp?.get('verified', false),
       [MfaType.EMAIL]:
         user.get('email', false) && user.get('emailVerification', false),
       [MfaType.PHONE]:
@@ -123,7 +123,7 @@ export class MfaService {
   /**
    * Delete Mfa Authenticator
    */
-  async deleteMfaAuthenticator(db: Database, userId: string, type: string) {
+  async deleteMfaAuthenticator(db: Database, userId: string, _type: string) {
     const user = await db.getDocument('users', userId)
 
     if (user.empty()) {

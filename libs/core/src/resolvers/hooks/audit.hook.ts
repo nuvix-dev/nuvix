@@ -33,7 +33,7 @@ export class AuditHook implements Hook {
     try {
       const project = req[Context.Project] as ProjectsDoc
       const user = req[Context.User] as UsersDoc
-      const res = req['hooks_args']?.['preSerialization']?.['args']?.[0]
+      const res = req.hooks_args?.preSerialization?.args?.[0]
       await this.handleAudit(req, res, { audit, user, project })
     } catch (e) {
       this.logger.error('Unexpected error during audit handling', { error: e })
@@ -78,7 +78,7 @@ export class AuditHook implements Hook {
         status: true,
         $sequence: -1,
         type: AuthActivity.GUEST,
-        email: 'guest.' + project.getId() + '@service.' + req.host,
+        email: `guest.${project.getId()}@service.${req.host}`,
         password: '',
         name: 'Guest',
       }) as unknown as UsersDoc

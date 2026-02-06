@@ -306,7 +306,7 @@ describe('account (integration)', () => {
     // PROTECTS: Email change works with valid password
     const { sessionHeader, password: currentPassword } =
       await createUserAndSession(app)
-    const newEmail = 'updated-email-' + Date.now() + '@example.com'
+    const newEmail = `updated-email-${Date.now()}@example.com`
 
     const res = await app.inject({
       method: 'PATCH',

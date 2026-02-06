@@ -81,14 +81,14 @@ export default class PostgresMetaRelationships {
           }))
         }
 
-        const viewToTableKeyDeps = viewsKeyDependencies!.filter(
+        const viewToTableKeyDeps = viewsKeyDependencies?.filter(
           vkd =>
             vkd.table_schema === r.schema &&
             vkd.table_name === r.relation &&
             vkd.constraint_name === r.foreign_key_name &&
             vkd.constraint_type === 'f',
         )
-        const tableToViewKeyDeps = viewsKeyDependencies!.filter(
+        const tableToViewKeyDeps = viewsKeyDependencies?.filter(
           vkd =>
             vkd.table_schema === r.referenced_schema &&
             vkd.table_name === r.referenced_relation &&

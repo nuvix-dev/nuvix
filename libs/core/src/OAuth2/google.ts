@@ -61,8 +61,8 @@ export class GoogleOAuth2 extends OAuth2 {
       `https://oauth2.googleapis.com/token?${params.toString()}`,
     )
 
-    if (!this.tokens['refresh_token']) {
-      this.tokens['refresh_token'] = refreshToken
+    if (!this.tokens.refresh_token) {
+      this.tokens.refresh_token = refreshToken
     }
 
     return this.tokens
@@ -70,22 +70,22 @@ export class GoogleOAuth2 extends OAuth2 {
 
   public async getUserID(accessToken: string): Promise<string> {
     const user = await this.getUser(accessToken)
-    return user['sub'] || ''
+    return user.sub || ''
   }
 
   public async getUserEmail(accessToken: string): Promise<string> {
     const user = await this.getUser(accessToken)
-    return user['email'] || ''
+    return user.email || ''
   }
 
   public async isEmailVerified(accessToken: string): Promise<boolean> {
     const user = await this.getUser(accessToken)
-    return !!user['email_verified']
+    return !!user.email_verified
   }
 
   public async getUserName(accessToken: string): Promise<string> {
     const user = await this.getUser(accessToken)
-    return user['name'] || ''
+    return user.name || ''
   }
 
   protected async getUser(accessToken: string): Promise<Record<string, any>> {

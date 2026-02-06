@@ -1,3 +1,4 @@
+import * as crypto from 'node:crypto'
 import cookieParser from '@fastify/cookie'
 import fastifyMultipart from '@fastify/multipart'
 import { ValidationPipe } from '@nestjs/common'
@@ -7,7 +8,6 @@ import { ErrorFilter } from '@nuvix/core/filters'
 import { Auth } from '@nuvix/core/helpers'
 import { Authorization, Doc, Role, storage } from '@nuvix/db'
 import { Context } from '@nuvix/utils'
-import * as crypto from 'crypto'
 
 /**
  * Applies common app configuration to the given NestFastifyApplication instance.
@@ -56,7 +56,9 @@ export const applyAppConfig = (
      */
     const origin = req.headers.origin
     res.header('Access-Control-Allow-Origin', origin || '*')
-    if (origin) res.header('Access-Control-Allow-Credentials', 'true')
+    if (origin) {
+      res.header('Access-Control-Allow-Credentials', 'true')
+    }
     done()
   })
 
@@ -75,7 +77,7 @@ export const applyAppConfig = (
       return origPush.call(this, chunk, encoding)
     }
 
-    req['hooks_args'] = { onRequest: { sizeRef: () => size } }
+    req.hooks_args = { onRequest: { sizeRef: () => size } }
     storage.run(new Map(), () => {
       req[Context.Project] = new Doc()
       Authorization.setDefaultStatus(true) // Set per-request default status

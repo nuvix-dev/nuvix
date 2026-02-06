@@ -44,12 +44,14 @@ function printStylizedNuvix() {
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 `
-  console.log('\x1b[38;2;131;189;194m' + logo + '\x1b[0m')
+  console.log(`\x1b[38;2;131;189;194m${logo}\x1b[0m`)
 }
 
 export default defineConfig(options => {
   const isDev = !!options.watch
-  if (!isDev) printStylizedNuvix()
+  if (!isDev) {
+    printStylizedNuvix()
+  }
 
   return {
     entry: ['src/main.ts'],

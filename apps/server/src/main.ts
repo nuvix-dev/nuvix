@@ -6,6 +6,7 @@
  * @alpha
  */
 
+import fs from 'node:fs/promises'
 import { ConsoleLogger, LOG_LEVELS, LogLevel } from '@nestjs/common'
 import { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { SwaggerModule } from '@nestjs/swagger'
@@ -21,7 +22,6 @@ import {
   PROJECT_ROOT,
   validateRequiredConfig,
 } from '@nuvix/utils'
-import fs from 'fs/promises'
 import QueryString from 'qs'
 import { AppModule } from './app.module'
 import { applyAppConfig, openApiSetup } from './core'
@@ -67,7 +67,7 @@ async function bootstrap() {
   )
 
   app.useStaticAssets({
-    root: PROJECT_ROOT + '/public',
+    root: `${PROJECT_ROOT}/public`,
     prefix: '/public/',
   })
 

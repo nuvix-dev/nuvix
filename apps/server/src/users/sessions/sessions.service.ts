@@ -15,7 +15,7 @@ export class SessionsService {
 
   constructor(
     private readonly coreService: CoreService,
-    private readonly event: EventEmitter2,
+    readonly _event: EventEmitter2,
   ) {
     this.geoDb = this.coreService.getGeoDb()
   }
@@ -70,7 +70,7 @@ export class SessionsService {
     const record = this.geoDb.get(ip)
 
     const duration =
-      project.get('auths', {})['duration'] ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
+      project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
     const expire = new Date(Date.now() + duration * 1000)
 
     const session = new Doc<Sessions>({

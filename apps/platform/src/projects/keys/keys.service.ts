@@ -1,10 +1,10 @@
+import { randomBytes } from 'node:crypto'
 import { Injectable } from '@nestjs/common'
 import { CoreService } from '@nuvix/core'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Database, Doc, ID, Permission, Query, Role } from '@nuvix/db'
 import { ApiKey } from '@nuvix/utils'
 import { Keys } from '@nuvix/utils/types'
-import { randomBytes } from 'crypto'
 import { CreateKeyDTO, UpdateKeyDTO } from './DTO/keys.dto'
 
 @Injectable()
@@ -60,7 +60,7 @@ export class KeysService {
       expire: input.expire ?? null,
       sdks: [],
       accessedAt: null,
-      secret: ApiKey.STANDARD + '_' + randomBytes(128).toString('hex'),
+      secret: `${ApiKey.STANDARD}_${randomBytes(128).toString('hex')}`,
     })
 
     const createdKey = await this.db.createDocument('keys', key)

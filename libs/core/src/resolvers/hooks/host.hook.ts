@@ -18,7 +18,7 @@ export class HostHook implements Hook {
     this.dbForPlatform = coreService.getPlatformDb()
   }
 
-  async onRequest(req: NuvixRequest, reply: NuvixRes): Promise<void> {
+  async onRequest(req: NuvixRequest, _reply: NuvixRes): Promise<void> {
     if (
       !this.appConfig.get('app').isProduction ||
       this.appConfig.isSelfHosted
@@ -52,7 +52,7 @@ export class HostHook implements Hook {
 
     const services = project.get('services', {})
     if ('proxy' in services) {
-      const status = services['proxy']
+      const status = services.proxy
       if (!status) {
         throw new Exception(Exception.GENERAL_SERVICE_DISABLED)
       }

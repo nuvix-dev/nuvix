@@ -100,11 +100,11 @@ export default class PostgresMetaSchemas {
     const nameSql =
       name === undefined
         ? ''
-        : `ALTER SCHEMA ${ident(old!.name)} RENAME TO ${ident(name)};`
+        : `ALTER SCHEMA ${ident(old?.name)} RENAME TO ${ident(name)};`
     const ownerSql =
       owner === undefined
         ? ''
-        : `ALTER SCHEMA ${ident(old!.name)} OWNER TO ${ident(owner)};`
+        : `ALTER SCHEMA ${ident(old?.name)} OWNER TO ${ident(owner)};`
     const sql = `BEGIN; ${ownerSql} ${nameSql} COMMIT;`
     {
       const { error } = await this.query(sql)
@@ -123,7 +123,7 @@ export default class PostgresMetaSchemas {
     if (error) {
       return { data: null, error }
     }
-    const sql = `DROP SCHEMA ${ident(schema!.name)} ${cascade ? 'CASCADE' : 'RESTRICT'};`
+    const sql = `DROP SCHEMA ${ident(schema?.name)} ${cascade ? 'CASCADE' : 'RESTRICT'};`
     {
       const { error } = await this.query(sql)
       if (error) {

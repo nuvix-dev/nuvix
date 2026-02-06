@@ -36,7 +36,7 @@ export class RecoveryController {
     summary: 'Create password recovery',
     throttle: {
       limit: 10,
-      key: ({ body, ip }) => [`email:${body['email']}`, `ip:${ip}`],
+      key: ({ body, ip }) => [`email:${body.email}`, `ip:${ip}`],
     },
     audit: {
       key: 'recovery.create',

@@ -80,7 +80,7 @@ const errorMapArray: [string, ErrorMapEntry][] = [
   // Custom logic for insufficient privilege
   [
     '42501',
-    (err: DatabaseError, authed: boolean) =>
+    (_err: DatabaseError, authed: boolean) =>
       authed
         ? {
             status: 403,

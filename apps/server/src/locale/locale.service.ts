@@ -44,7 +44,7 @@ export class LocaleService {
         defaultValue,
       )
 
-      output.eu = continentCode && euList.includes(continentCode) ? true : false
+      output.eu = !!(continentCode && euList.includes(continentCode))
 
       if (countryCode) {
         output.currency =

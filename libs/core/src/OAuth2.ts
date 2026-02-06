@@ -94,7 +94,7 @@ export abstract class OAuth2 {
    */
   public async getAccessToken(code: string): Promise<string> {
     const tokens = await this.getTokens(code)
-    return tokens['access_token'] || ''
+    return tokens.access_token || ''
   }
 
   /**
@@ -102,7 +102,7 @@ export abstract class OAuth2 {
    */
   public async getRefreshToken(code: string): Promise<string> {
     const tokens = await this.getTokens(code)
-    return tokens['refresh_token'] || ''
+    return tokens.refresh_token || ''
   }
 
   /**
@@ -110,7 +110,7 @@ export abstract class OAuth2 {
    */
   public async getAccessTokenExpiry(code: string): Promise<number> {
     const tokens = await this.getTokens(code)
-    return tokens['expires_in'] || 0
+    return tokens.expires_in || 0
   }
 
   /**
@@ -189,7 +189,7 @@ export class OAuth2Error extends Exception {
       if (previous) {
         this.cause = previous
       }
-    } catch (e) {
+    } catch (_e) {
       // If parsing fails, keep the original response as the message
     }
   }

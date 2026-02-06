@@ -20,12 +20,16 @@ export abstract class BaseParser {
   }
 
   protected check(type: TokenType): boolean {
-    if (this.isAtEnd()) return false
+    if (this.isAtEnd()) {
+      return false
+    }
     return this.peek().type === type
   }
 
   protected advance(): Token {
-    if (!this.isAtEnd()) this.current++
+    if (!this.isAtEnd()) {
+      this.current++
+    }
     return this.previous()
   }
 
@@ -38,7 +42,9 @@ export abstract class BaseParser {
   }
 
   protected peekNext(): Token | undefined {
-    if (this.current + 1 >= this.tokens.length) return undefined
+    if (this.current + 1 >= this.tokens.length) {
+      return undefined
+    }
     return this.tokens[this.current + 1]
   }
 
@@ -47,7 +53,9 @@ export abstract class BaseParser {
   }
 
   protected consume(type: TokenType, message: string): Token {
-    if (this.check(type)) return this.advance()
+    if (this.check(type)) {
+      return this.advance()
+    }
     this.throwError(message, this.peek())
   }
 

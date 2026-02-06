@@ -1,5 +1,5 @@
 import { InjectQueue } from '@nestjs/bullmq'
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Exception } from '@nuvix/core/extend/exception'
 import { CollectionsJob, CollectionsJobData } from '@nuvix/core/resolvers'
@@ -25,8 +25,6 @@ import type { CreateIndexDTO } from './DTO/indexes.dto'
 
 @Injectable()
 export class IndexesService {
-  private readonly logger = new Logger(IndexesService.name)
-
   constructor(
     @InjectQueue(QueueFor.COLLECTIONS)
     private readonly collectionsQueue: Queue<
@@ -34,7 +32,7 @@ export class IndexesService {
       unknown,
       CollectionsJob
     >,
-    private readonly event: EventEmitter2,
+    readonly _event: EventEmitter2,
   ) {}
 
   getRelatedAttrId(collectionSequence: number, key: string): string {
@@ -121,14 +119,14 @@ export class IndexesService {
       if (attributeType === AttributeType.Relationship) {
         throw new Exception(
           Exception.ATTRIBUTE_TYPE_INVALID,
-          `Cannot create an index for a relationship attribute: ${oldAttributes[attributeIndex]!.key}`,
+          `Cannot create an index for a relationship attribute: ${oldAttributes[attributeIndex]?.key}`,
         )
       }
 
       if (attributeStatus !== Status.AVAILABLE) {
         throw new Exception(
           Exception.ATTRIBUTE_NOT_AVAILABLE,
-          `Attribute not available: ${oldAttributes[attributeIndex]!.key}`,
+          `Attribute not available: ${oldAttributes[attributeIndex]?.key}`,
         )
       }
 

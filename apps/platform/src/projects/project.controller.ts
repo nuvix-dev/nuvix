@@ -41,8 +41,6 @@ import {
 @UseGuards(ProjectGuard)
 @Auth([AuthType.ADMIN])
 export class ProjectController {
-  constructor() {}
-
   @Get('usage', {
     summary: 'Get project usage stats',
     scopes: 'project.read',
@@ -293,7 +291,7 @@ export class ProjectController {
 
     try {
       return await qb
-    } catch (e) {
+    } catch (_e) {
       throw new Exception(Exception.GENERAL_SERVER_ERROR)
     }
   }

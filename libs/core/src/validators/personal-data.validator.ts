@@ -44,8 +44,7 @@ export class PersonalDataValidator extends PasswordValidator {
     }
 
     if (
-      this.email &&
-      this.email.includes('@') &&
+      this.email?.includes('@') &&
       password.includes(this.email.split('@')[0]!)
     ) {
       return false

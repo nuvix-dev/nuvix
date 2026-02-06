@@ -210,7 +210,7 @@ COMMIT;`
     const nameSql =
       name === undefined
         ? ''
-        : `ALTER ROLE ${ident(old!.name)} RENAME TO ${ident(name)};`
+        : `ALTER ROLE ${ident(old?.name)} RENAME TO ${ident(name)};`
     let isSuperuserClause = ''
     if (is_superuser !== undefined) {
       isSuperuserClause = is_superuser ? 'SUPERUSER' : 'NOSUPERUSER'
@@ -261,9 +261,9 @@ COMMIT;`
         switch (op) {
           case 'add':
           case 'replace':
-            return `ALTER ROLE ${ident(old!.name)} SET ${ident(k)} = ${literal(v)};`
+            return `ALTER ROLE ${ident(old?.name)} SET ${ident(k)} = ${literal(v)};`
           case 'remove':
-            return `ALTER ROLE ${ident(old!.name)} RESET ${ident(k)};`
+            return `ALTER ROLE ${ident(old?.name)} RESET ${ident(k)};`
           default:
             throw new Error(`Invalid config op ${op}`)
         }
@@ -273,7 +273,7 @@ COMMIT;`
     // nameSql must be last
     const sql = `
 BEGIN;
-  ALTER ROLE ${ident(old!.name)}
+  ALTER ROLE ${ident(old?.name)}
     ${isSuperuserClause}
     ${canCreateDbClause}
     ${canCreateRoleClause}
@@ -301,7 +301,7 @@ COMMIT;`
     if (error) {
       return { data: null, error }
     }
-    const sql = `DROP ROLE ${ident(role!.name)};`
+    const sql = `DROP ROLE ${ident(role?.name)};`
     {
       const { error } = await this.query(sql)
       if (error) {

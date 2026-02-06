@@ -3,7 +3,7 @@ import { LocaleTranslator } from '../helpers/locale.helper'
 import ParamsHelper from '../helpers/params.helper'
 
 export const Locale = createParamDecorator<any, any>(
-  (data: unknown, ctx: ExecutionContext): any => {
+  (_data: unknown, ctx: ExecutionContext): any => {
     const request: NuvixRequest = ctx.switchToHttp().getRequest()
     const params = new ParamsHelper(request)
 

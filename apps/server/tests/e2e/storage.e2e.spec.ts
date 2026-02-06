@@ -189,7 +189,7 @@ describe('E2E: Storage Flow', () => {
     const fileId = faker.string.alphanumeric(12)
 
     // Create multipart form data for file upload
-    const boundary = '----FormBoundary' + faker.string.alphanumeric(16)
+    const boundary = `----FormBoundary${faker.string.alphanumeric(16)}`
 
     const formData = [
       `--${boundary}`,
@@ -347,7 +347,7 @@ describe('E2E: Storage Flow', () => {
     const fileName = 'user-file.txt'
     const fileContent = 'User uploaded content'
     const fileId = faker.string.alphanumeric(12)
-    const boundary = '----FormBoundary' + faker.string.alphanumeric(16)
+    const boundary = `----FormBoundary${faker.string.alphanumeric(16)}`
 
     const formData = [
       `--${boundary}`,
@@ -436,7 +436,7 @@ describe('E2E: Storage Flow', () => {
     // =========================================================================
     const largeContent = 'x'.repeat(200) // 200 bytes
     const fileId = faker.string.alphanumeric(12)
-    const boundary = '----FormBoundary' + faker.string.alphanumeric(16)
+    const boundary = `----FormBoundary${faker.string.alphanumeric(16)}`
 
     const formData = [
       `--${boundary}`,

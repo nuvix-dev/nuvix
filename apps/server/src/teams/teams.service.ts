@@ -30,7 +30,7 @@ export class TeamsService {
       queries.push(Query.search('search', search))
     }
 
-    const filterQueries = Query.groupByType(queries)['filters']
+    const filterQueries = Query.groupByType(queries).filters
     const results = await db.find('teams', queries)
     const total = await db.count('teams', filterQueries)
 
@@ -44,7 +44,7 @@ export class TeamsService {
    * Create a new team
    */
   async create(db: Database, user: UsersDoc | null, input: CreateTeamDTO) {
-    const teamId = input.teamId == 'unique()' ? ID.unique() : input.teamId
+    const teamId = input.teamId === 'unique()' ? ID.unique() : input.teamId
 
     const team = await db
       .createDocument(
@@ -72,7 +72,7 @@ export class TeamsService {
     if (!Auth.isTrustedActor && user) {
       // Don't add user on server mode
       if (!input.roles?.includes('owner')) {
-        input.roles!.push('owner')
+        input.roles?.push('owner')
       }
 
       const membershipId = ID.unique()

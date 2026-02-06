@@ -189,7 +189,7 @@ export class TeamsController {
     docs: false, // remove or set true after implementation
   })
   async teamLogs(
-    @AuthDatabase() db: Database,
+    @AuthDatabase() _db: Database,
     @Param() { teamId }: TeamsParamDTO,
   ): Promise<IListResponse<AuditDoc>> {
     throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)

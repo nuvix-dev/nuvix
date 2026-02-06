@@ -83,7 +83,7 @@ export class TargetsService {
           sessionId: session.getId(),
           sessionInternalId: session.getSequence(),
           identifier: identifier,
-          name: `${device['deviceBrand']} ${device['deviceModel']}`,
+          name: `${device.deviceBrand} ${device.deviceModel}`,
         }),
       )
 
@@ -129,7 +129,7 @@ export class TargetsService {
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
     const device = detector.getDevice()
 
-    target.set('name', `${device['deviceBrand']} ${device['deviceModel']}`)
+    target.set('name', `${device.deviceBrand} ${device.deviceModel}`)
 
     const updatedTarget = await db.updateDocument(
       'targets',

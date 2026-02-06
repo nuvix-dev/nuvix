@@ -113,7 +113,7 @@ export async function getGeneratorMetadata(
 
   return {
     data: {
-      schemas: schemas!.filter(
+      schemas: schemas?.filter(
         ({ name }) =>
           !excludedSchemas.includes(name) &&
           (includedSchemas.length === 0 || includedSchemas.includes(name)),
@@ -124,7 +124,7 @@ export async function getGeneratorMetadata(
       materializedViews: materializedViews!,
       columns: columns!,
       relationships: relationships!,
-      functions: functions!.filter(
+      functions: functions?.filter(
         ({ return_type }) =>
           !['trigger', 'event_trigger'].includes(return_type),
       ),

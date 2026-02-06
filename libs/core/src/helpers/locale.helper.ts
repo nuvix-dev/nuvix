@@ -1,6 +1,5 @@
-import { configuration, PROJECT_ROOT } from '@nuvix/utils'
-import * as fs from 'fs'
-import * as path from 'path'
+import * as fs from 'node:fs'
+import { configuration } from '@nuvix/utils'
 
 // We could later improve this to use cache for translations to avoid reading files multiple times
 

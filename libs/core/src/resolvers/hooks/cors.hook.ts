@@ -46,7 +46,9 @@ export class CorsHook implements Hook {
       const project: ProjectsDoc = req[Context.Project]
       const origin = req.headers.origin
       const host = req.host
-      if (!origin) return
+      if (!origin) {
+        return
+      }
 
       const validOrigin = this.determineOrigin(origin, project, host)
       const options: CorsOptions = {
@@ -83,7 +85,7 @@ export class CorsHook implements Hook {
         : false
     }
 
-    const validator = new Origin(project!.get('platforms', []))
+    const validator = new Origin(project?.get('platforms', []))
     return validator.$valid(origin) ? origin : false
   }
 
@@ -92,16 +94,23 @@ export class CorsHook implements Hook {
     allowedOrigins: string[],
     requestHost: string,
   ): boolean {
-    if (!allowedOrigins?.length) return false
-    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin))
+    if (!allowedOrigins?.length) {
+      return false
+    }
+    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
       return true
+    }
 
     try {
       const { hostname } = new URL(origin)
-      if (hostname === requestHost) return true
+      if (hostname === requestHost) {
+        return true
+      }
 
       return allowedOrigins.some(a => {
-        if (a.startsWith('*.') && hostname.endsWith(a.slice(1))) return true
+        if (a.startsWith('*.') && hostname.endsWith(a.slice(1))) {
+          return true
+        }
         if (a.includes('*')) {
           const regex = new RegExp(
             `^${a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\\*/g, '.*')}$`,
@@ -129,8 +138,9 @@ export class CorsHook implements Hook {
 
     reply.raw.setHeader('Access-Control-Allow-Origin', originHeader || 'null')
 
-    if (opts.credentials)
+    if (opts.credentials) {
       reply.raw.setHeader('Access-Control-Allow-Credentials', 'true')
+    }
     if (opts.exposedHeaders?.length) {
       reply.raw.setHeader(
         'Access-Control-Expose-Headers',
@@ -139,7 +149,9 @@ export class CorsHook implements Hook {
     }
 
     // Vary headers
-    if (opts.origin && opts.origin !== '*') addOriginToVaryHeader(reply)
+    if (opts.origin && opts.origin !== '*') {
+      addOriginToVaryHeader(reply)
+    }
     addAccessControlRequestHeadersToVaryHeader(reply)
   }
 
@@ -147,8 +159,10 @@ export class CorsHook implements Hook {
     req: NuvixRequest,
     reply: NuvixRes,
     opts: CorsOptions,
-  ): unknown | void {
-    if (!opts.origin) return reply.status(403).send('Origin not allowed')
+  ): unknown | undefined {
+    if (!opts.origin) {
+      return reply.status(403).send('Origin not allowed')
+    }
     if (opts.strictPreflight && !req.headers['access-control-request-method']) {
       return reply.status(400).send('Invalid Preflight Request')
     }
@@ -163,8 +177,9 @@ export class CorsHook implements Hook {
       (reqHeaders?.length ? reqHeaders : opts.allowedHeaders).join(', '),
     )
 
-    if (opts.maxAge)
+    if (opts.maxAge) {
       reply.raw.setHeader('Access-Control-Max-Age', String(opts.maxAge))
+    }
     reply.status(204).header('Content-Length', '0').send()
     return
   }

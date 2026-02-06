@@ -3,7 +3,7 @@ import { AppMode } from '@nuvix/utils'
 import ParamsHelper from '../helpers/params.helper'
 
 export const Mode = createParamDecorator(
-  (data: unknown, ctx: ExecutionContext) => {
+  (_data: unknown, ctx: ExecutionContext) => {
     const request: NuvixRequest = ctx.switchToHttp().getRequest<NuvixRequest>()
 
     const params = new ParamsHelper(request)

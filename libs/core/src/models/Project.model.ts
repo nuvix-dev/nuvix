@@ -1,4 +1,3 @@
-import { Permission } from '@nuvix/db'
 import { Exclude, Expose, Transform } from 'class-transformer'
 import { AuthProviderModel } from './AuthProvider.model'
 import { BaseModel } from './base.model'
@@ -351,19 +350,21 @@ export class ProjectModel extends BaseModel {
    * Database
    */
   @Transform(({ value }) => {
-    if (!value) return {}
+    if (!value) {
+      return {}
+    }
     const dbConfig = {
       postgres: {
-        host: value['postgres']['host'] || 'localhost',
-        port: value['postgres']['port'] || 5432,
-        database: value['postgres']['database'] || 'postgres',
-        user: value['postgres']['user'] || 'postgres',
+        host: value.postgres.host || 'localhost',
+        port: value.postgres.port || 5432,
+        database: value.postgres.database || 'postgres',
+        user: value.postgres.user || 'postgres',
       },
       pool: {
-        host: value['pool']['host'] || 'localhost',
-        port: value['pool']['port'] || 6432,
-        database: value['pool']['database'] || 'postgres',
-        user: value['pool']['user'] || 'postgres',
+        host: value.pool.host || 'localhost',
+        port: value.pool.port || 6432,
+        database: value.pool.database || 'postgres',
+        user: value.pool.user || 'postgres',
       },
     }
     return dbConfig

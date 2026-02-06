@@ -1,13 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { Exception } from '@nuvix/core/extend/exception'
 import { setupDatabaseMeta } from '@nuvix/core/helpers'
-import {
-  Database,
-  Doc,
-  Permission,
-  PermissionsValidator,
-  PermissionType,
-} from '@nuvix/db'
+import { Database, Doc, PermissionsValidator, PermissionType } from '@nuvix/db'
 import { DataSource, Raw } from '@nuvix/pg'
 import { transformPgError } from '@nuvix/utils/database'
 import {
@@ -33,8 +27,6 @@ import {
 
 @Injectable()
 export class SchemasService {
-  private readonly logger = new Logger(SchemasService.name)
-
   async select({
     pg,
     table,
@@ -46,7 +38,7 @@ export class SchemasService {
     context,
   }: Select) {
     const qb = pg.qb(table).withSchema(schema)
-    const allowedSchemas = project.get('metadata')?.['allowedSchemas'] || []
+    const allowedSchemas = project.get('metadata')?.allowedSchemas || []
     const astToQueryBuilder = new ASTToQueryBuilder(qb, pg, {
       allowedSchemas,
     })
@@ -180,7 +172,7 @@ export class SchemasService {
 
     const qb = pg.qb(table).withSchema(schema)
     const { select, filter, order } = this.getParamsFromUrl(url, table)
-    const allowedSchemas = project.get('metadata')?.['allowedSchemas'] || []
+    const allowedSchemas = project.get('metadata')?.allowedSchemas || []
     const astToQueryBuilder = new ASTToQueryBuilder(qb, pg, {
       allowedSchemas,
     })
@@ -220,7 +212,7 @@ export class SchemasService {
   }: Delete) {
     const qb = pg.table(table).withSchema(schema)
     const { select, filter, order } = this.getParamsFromUrl(url, table)
-    const allowedSchemas = project.get('metadata')?.['allowedSchemas'] || []
+    const allowedSchemas = project.get('metadata')?.allowedSchemas || []
     const astToQueryBuilder = new ASTToQueryBuilder(qb, pg, {
       allowedSchemas,
     })
@@ -394,7 +386,7 @@ export class SchemasService {
 
     const existingPermissions: Record<string, string[]> = {}
     for (const row of rows) {
-      existingPermissions[row['permission']] = Array.isArray(row.roles)
+      existingPermissions[row.permission] = Array.isArray(row.roles)
         ? row.roles
         : []
     }

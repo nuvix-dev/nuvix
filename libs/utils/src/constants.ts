@@ -72,13 +72,13 @@ export enum QueueFor {
 
 export const EVENT_DELIMITER = '.'
 export enum AppEvents {
-  USER_CREATE = 'user' + EVENT_DELIMITER + 'create',
-  USER_DELETE = 'user' + EVENT_DELIMITER + 'delete',
-  USER_UPDATE = 'user' + EVENT_DELIMITER + 'update',
-  SESSION_CREATE = 'session' + EVENT_DELIMITER + 'create',
-  SESSION_DELETE = 'session' + EVENT_DELIMITER + 'delete',
-  SESSIONS_DELETE = 'sessions' + EVENT_DELIMITER + 'delete',
-  SESSION_UPDATE = 'session' + EVENT_DELIMITER + 'update',
+  USER_CREATE = `user${EVENT_DELIMITER}create`,
+  USER_DELETE = `user${EVENT_DELIMITER}delete`,
+  USER_UPDATE = `user${EVENT_DELIMITER}update`,
+  SESSION_CREATE = `session${EVENT_DELIMITER}create`,
+  SESSION_DELETE = `session${EVENT_DELIMITER}delete`,
+  SESSIONS_DELETE = `sessions${EVENT_DELIMITER}delete`,
+  SESSION_UPDATE = `session${EVENT_DELIMITER}update`,
 }
 
 export enum MetricFor {

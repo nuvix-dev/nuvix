@@ -75,7 +75,7 @@ export function getApiKeyHeaders(): Record<string, string> {
     )
   }
   return {
-    'x-nuvix-key': ApiKey.STANDARD + '_' + apiKey,
+    'x-nuvix-key': `${ApiKey.STANDARD}_${apiKey}`,
   }
 }
 

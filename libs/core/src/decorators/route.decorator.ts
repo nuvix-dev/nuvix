@@ -1,3 +1,5 @@
+import * as fs from 'node:fs'
+import path from 'node:path'
 import {
   All,
   applyDecorators,
@@ -21,9 +23,7 @@ import {
   ApiTags,
   getSchemaPath,
 } from '@nestjs/swagger'
-import { configuration, PROJECT_ROOT, type ThrottleOptions } from '@nuvix/utils'
-import * as fs from 'fs'
-import path from 'path'
+import { configuration, type ThrottleOptions } from '@nuvix/utils'
 import type { Scopes } from '../config'
 import { Models } from '../helpers'
 import type { ResolverTypeContextOptions } from '../resolvers'
@@ -160,7 +160,7 @@ const validateRouteOptions = (options: RouteOptions): void => {
     }
   }
 
-  if (options.sdk && options.sdk.responses) {
+  if (options.sdk?.responses) {
     const invalidStatuses = options.sdk.responses.filter(
       response =>
         typeof response.status !== 'number' ||
@@ -283,8 +283,12 @@ export const Route = ({ docs = true, ...options }: RouteOptions) => {
   // -------------------------------
   // 2. Security / Scopes / Audit
   // -------------------------------
-  if (options.auth !== undefined) decorators.push(Auth(options.auth))
-  if (options.scopes) decorators.push(Scope(options.scopes))
+  if (options.auth !== undefined) {
+    decorators.push(Auth(options.auth))
+  }
+  if (options.scopes) {
+    decorators.push(Scope(options.scopes))
+  }
   if (options.audit) {
     const { key, ...rest } = options.audit
     decorators.push(AuditEvent(key as AuditEventKey, rest))
@@ -318,8 +322,9 @@ export const Route = ({ docs = true, ...options }: RouteOptions) => {
   ) {
     isList = true
     responseModel = options.model.type
-    if (responseModel)
+    if (responseModel) {
       decorators.push(ApiExtraModels(responseModel as Type<any>))
+    }
   }
 
   if (options.model) {
@@ -339,13 +344,17 @@ export const Route = ({ docs = true, ...options }: RouteOptions) => {
   let description = options.description
   if (options.sdk?.descMd && docs) {
     const markdownContent = readMarkdownFile(options.sdk.descMd)
-    if (markdownContent) description = markdownContent
+    if (markdownContent) {
+      description = markdownContent
+    }
   }
 
   // -------------------------------
   // 5. Tags & Operation Metadata
   // -------------------------------
-  if (options.tags?.length && docs) decorators.push(ApiTags(...options.tags))
+  if (options.tags?.length && docs) {
+    decorators.push(ApiTags(...options.tags))
+  }
 
   if (docs) {
     decorators.push(

@@ -62,7 +62,9 @@ export const setupDatabaseMeta = async ({
     processValue(extra)
   }
 
-  if (!sqlChunks.length) return
+  if (!sqlChunks.length) {
+    return
+  }
 
   const finalSQL = sqlChunks.join('\n')
   await client.execute(finalSQL)

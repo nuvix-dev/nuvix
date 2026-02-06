@@ -1,4 +1,4 @@
-import { ident, literal } from 'pg-format'
+import { literal } from 'pg-format'
 import { PgMetaException } from '../extra/execption'
 import { DEFAULT_SYSTEM_SCHEMAS } from './constants'
 import { filterByList } from './helpers'

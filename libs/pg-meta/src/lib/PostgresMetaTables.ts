@@ -151,13 +151,13 @@ export default class PostgresMetaTables {
       return { data: null, error }
     }
 
-    const alter = `ALTER TABLE ${ident(old!.schema)}.${ident(old!.name)}`
+    const alter = `ALTER TABLE ${ident(old?.schema)}.${ident(old?.name)}`
     const schemaSql =
       schema === undefined ? '' : `${alter} SET SCHEMA ${ident(schema)};`
     let nameSql = ''
-    if (name !== undefined && name !== old!.name) {
-      const currentSchema = schema === undefined ? old!.schema : schema
-      nameSql = `ALTER TABLE ${ident(currentSchema)}.${ident(old!.name)} RENAME TO ${ident(name)};`
+    if (name !== undefined && name !== old?.name) {
+      const currentSchema = schema === undefined ? old?.schema : schema
+      nameSql = `ALTER TABLE ${ident(currentSchema)}.${ident(old?.name)} RENAME TO ${ident(name)};`
     }
     let enableRls = ''
     if (rls_enabled !== undefined) {
@@ -183,7 +183,7 @@ export default class PostgresMetaTables {
     if (primary_keys === undefined) {
       // skip
     } else {
-      if (old!.primary_keys.length !== 0) {
+      if (old?.primary_keys.length !== 0) {
         primaryKeysSql += `
 DO $$
 DECLARE
@@ -210,7 +210,7 @@ $$;
     const commentSql =
       comment === undefined
         ? ''
-        : `COMMENT ON TABLE ${ident(old!.schema)}.${ident(old!.name)} IS ${literal(comment)};`
+        : `COMMENT ON TABLE ${ident(old?.schema)}.${ident(old?.name)} IS ${literal(comment)};`
     // nameSql must be last, right below schemaSql
     const sql = `
 BEGIN;
@@ -239,7 +239,7 @@ COMMIT;`
     if (error) {
       return { data: null, error }
     }
-    const sql = `DROP TABLE ${ident(table!.schema)}.${ident(table!.name)} ${
+    const sql = `DROP TABLE ${ident(table?.schema)}.${ident(table?.name)} ${
       cascade ? 'CASCADE' : 'RESTRICT'
     };`
     {

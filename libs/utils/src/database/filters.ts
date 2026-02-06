@@ -1,3 +1,4 @@
+import crypto from 'node:crypto'
 import {
   AttributeType,
   Authorization,
@@ -6,7 +7,6 @@ import {
   FilterValue,
   Query,
 } from '@nuvix/db'
-import crypto from 'crypto'
 import { configuration } from '../configuration'
 import { SchemaMeta } from '../constants'
 
@@ -38,8 +38,8 @@ export const filters: Record<
   },
   casting: {
     encode: value => {
-      return JSON.stringify({ value: value }, (key, value) => {
-        return typeof value === 'number' && !isFinite(value)
+      return JSON.stringify({ value: value }, (_key, value) => {
+        return typeof value === 'number' && !Number.isFinite(value)
           ? String(value)
           : value
       })
@@ -244,7 +244,9 @@ export const filters: Record<
       return `${VERSION}:${Buffer.concat([iv, tag, ciphertext]).toString('base64')}`
     },
     decode: (value: any) => {
-      if (!value) return value
+      if (!value) {
+        return value
+      }
 
       const [version, payload] = value.split(':')
       if (version !== VERSION) {
@@ -290,7 +292,7 @@ export const filters: Record<
       ]
 
       user.get('labels', []).forEach((label: string) => {
-        searchValues.push('label:' + label)
+        searchValues.push(`label:${label}`)
       })
 
       return searchValues.filter(Boolean).join(' ')

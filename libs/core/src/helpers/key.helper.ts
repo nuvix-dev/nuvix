@@ -103,7 +103,7 @@ export class Key {
         let payload: JWTPayload = {}
         try {
           payload = (await Key.jwtService.verifyAsync(secret)) as JWTPayload
-        } catch (error) {
+        } catch (_error) {
           expired = true
         }
 

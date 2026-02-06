@@ -18,7 +18,7 @@ export class DatabaseQueue extends Queue {
 
   async process(
     { data, name, ...job }: Job<SchemaQueueOptions, any, SchemaJob>,
-    token?: string,
+    _token?: string,
   ): Promise<void> {
     switch (name) {
       case SchemaJob.INIT_DOC: {
@@ -43,18 +43,16 @@ export class DatabaseQueue extends Queue {
     try {
       await dbForProject.create(schema)
 
-      for (const [key, collection] of Object.entries(collections.database)) {
-        if (collection['$collection'] !== Database.METADATA) {
+      for (const [_key, collection] of Object.entries(collections.database)) {
+        if (collection.$collection !== Database.METADATA) {
           continue
         }
 
-        const attributes = collection['attributes'].map(
+        const attributes = collection.attributes.map(
           attribute => new Doc(attribute),
         )
 
-        const indexes = (collection['indexes'] ?? []).map(
-          index => new Doc(index),
-        )
+        const indexes = (collection.indexes ?? []).map(index => new Doc(index))
 
         try {
           await dbForProject.createCollection({

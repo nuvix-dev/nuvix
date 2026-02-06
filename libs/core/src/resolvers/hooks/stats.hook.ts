@@ -17,19 +17,22 @@ export class StatsHook implements Hook {
   async onResponse(
     req: NuvixRequest,
     reply: NuvixRes,
-    next: (err?: Error) => void,
+    _next: (err?: Error) => void,
   ): Promise<unknown> {
-    if (configuration.app.enableStats === false) return
+    if (configuration.app.enableStats === false) {
+      return
+    }
 
     const project: ProjectsDoc = req[Context.Project]
     if (
       project.empty() ||
       project.getId() === 'console' ||
       Auth.isPlatformActor
-    )
+    ) {
       return
+    }
 
-    const reqBodySize: number = req['hooks_args']['onRequest']?.sizeRef?.() ?? 0
+    const reqBodySize: number = req.hooks_args.onRequest?.sizeRef?.() ?? 0
     const resBodySize: number = Number(reply.getHeader('Content-Length')) || 0
 
     await this.statsQueue.add(StatsQueueJob.ADD_METRIC, {

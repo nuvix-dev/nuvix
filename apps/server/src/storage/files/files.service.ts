@@ -1,5 +1,7 @@
+import * as fs from 'node:fs/promises'
+import path from 'node:path'
 import { type SavedMultipartFile } from '@fastify/multipart'
-import { Injectable, Logger, StreamableFile } from '@nestjs/common'
+import { Injectable, StreamableFile } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { CoreService } from '@nuvix/core'
 import { logos } from '@nuvix/core/config'
@@ -18,8 +20,6 @@ import {
 import { FileExt, FileSize } from '@nuvix/storage'
 import { configuration } from '@nuvix/utils'
 import type { Files, FilesDoc } from '@nuvix/utils/types'
-import * as fs from 'fs/promises'
-import path from 'path'
 import sharp from 'sharp'
 import {
   CreateFileDTO,
@@ -29,8 +29,6 @@ import {
 
 @Injectable()
 export class FilesService {
-  private readonly logger = new Logger(FilesService.name)
-
   constructor(
     private readonly coreService: CoreService,
     private readonly jwtService: JwtService,
@@ -237,104 +235,64 @@ export class FilesService {
     }
 
     const _path = deviceForFiles.getPath(
-      path.join(bucket.getId(), fileId + '.' + fileExt),
+      path.join(bucket.getId(), `${fileId}.${fileExt}`),
     )
 
     let fileDocument: FilesDoc
     let metadata: Record<string, any> = { content_type: file.mimetype }
     let chunksUploaded = 0
+    // Fetch existing document
+    fileDocument = await db.getDocument<Files>(
+      this.getCollectionName(bucket.getSequence()),
+      fileId,
+    )
+    if (!fileDocument.empty()) {
+      const chunksTotal = fileDocument.get('chunksTotal', 1)
+      chunksUploaded = fileDocument.get('chunksUploaded', 0)
+      metadata = fileDocument.get('metadata', {})
+      chunks = chunksTotal
 
-    try {
-      // Fetch existing document
-      fileDocument = await db.getDocument<Files>(
-        this.getCollectionName(bucket.getSequence()),
-        fileId,
+      if (chunk === -1) {
+        chunk = chunksTotal
+      }
+      if (chunksUploaded === chunksTotal) {
+        throw new Exception(Exception.STORAGE_FILE_ALREADY_EXISTS)
+      }
+    }
+
+    chunksUploaded = await deviceForFiles.upload(
+      file.filepath,
+      _path,
+      chunk,
+      chunks,
+      metadata,
+    )
+
+    if (!chunksUploaded) {
+      throw new Exception(
+        Exception.GENERAL_SERVER_ERROR,
+        'Failed uploading file',
       )
-      if (!fileDocument.empty()) {
-        const chunksTotal = fileDocument.get('chunksTotal', 1)
-        chunksUploaded = fileDocument.get('chunksUploaded', 0)
-        metadata = fileDocument.get('metadata', {})
-        chunks = chunksTotal
+    }
 
-        if (chunk === -1) chunk = chunksTotal
-        if (chunksUploaded === chunksTotal) {
-          throw new Exception(Exception.STORAGE_FILE_ALREADY_EXISTS)
+    if (chunksUploaded === chunks) {
+      // Validate file
+      const sizeActual = fileSize
+      const fileHash = await deviceForFiles.getFileHash(_path)
+      const mimeType = file.mimetype
+
+      const data = await deviceForFiles.read(_path)
+      if (data) {
+        if (!(await deviceForFiles.write(_path, data, mimeType))) {
+          throw new Exception(
+            Exception.GENERAL_SERVER_ERROR,
+            'Failed to save file',
+          )
         }
       }
 
-      chunksUploaded = await deviceForFiles.upload(
-        file.filepath,
-        _path,
-        chunk,
-        chunks,
-        metadata,
-      )
-
-      if (!chunksUploaded) {
-        throw new Exception(
-          Exception.GENERAL_SERVER_ERROR,
-          'Failed uploading file',
-        )
-      }
-
-      if (chunksUploaded === chunks) {
-        // Validate file
-        const sizeActual = fileSize
-        const fileHash = await deviceForFiles.getFileHash(_path)
-        const mimeType = file.mimetype
-
-        const data = await deviceForFiles.read(_path)
-        if (data) {
-          if (!(await deviceForFiles.write(_path, data, mimeType))) {
-            throw new Exception(
-              Exception.GENERAL_SERVER_ERROR,
-              'Failed to save file',
-            )
-          }
-        }
-
-        // Create or update file document
-        if (fileDocument.empty()) {
-          fileDocument = await db.createDocument<Files>(
-            this.getCollectionName(bucket.getSequence()),
-            new Doc({
-              $id: fileId,
-              $permissions: permissions,
-              bucketId: bucket.getId(),
-              bucketInternalId: bucket.getSequence(),
-              name: fileName,
-              path: _path,
-              signature: fileHash,
-              mimeType,
-              sizeOriginal: finalFileSize,
-              sizeActual,
-              chunksTotal: chunks,
-              chunksUploaded,
-              search: [fileId, fileName].join(' '),
-              metadata,
-            }),
-          )
-        } else {
-          fileDocument = fileDocument
-            .set('$permissions', permissions)
-            .set('signature', fileHash)
-            .set('mimeType', mimeType)
-            .set('sizeActual', sizeActual)
-            .set('metadata', metadata)
-            .set('chunksUploaded', chunksUploaded)
-
-          const updateValidator = new Authorization(PermissionType.Update)
-          if (!updateValidator.$valid(bucket.getUpdate())) {
-            throw new Exception(Exception.USER_UNAUTHORIZED)
-          }
-
-          fileDocument = await db.updateDocument(
-            this.getCollectionName(bucket.getSequence()),
-            fileId,
-            fileDocument,
-          )
-        }
-      } else if (fileDocument.empty()) {
+      // Create or update file document
+      if (fileDocument.empty()) {
         fileDocument = await db.createDocument<Files>(
           this.getCollectionName(bucket.getSequence()),
           new Doc({
@@ -344,10 +302,10 @@ export class FilesService {
             bucketInternalId: bucket.getSequence(),
             name: fileName,
             path: _path,
-            signature: '',
-            mimeType: '',
+            signature: fileHash,
+            mimeType,
             sizeOriginal: finalFileSize,
-            sizeActual: 0,
+            sizeActual,
             chunksTotal: chunks,
             chunksUploaded,
             search: [fileId, fileName].join(' '),
@@ -355,19 +313,56 @@ export class FilesService {
           }),
         )
       } else {
+        fileDocument = fileDocument
+          .set('$permissions', permissions)
+          .set('signature', fileHash)
+          .set('mimeType', mimeType)
+          .set('sizeActual', sizeActual)
+          .set('metadata', metadata)
+          .set('chunksUploaded', chunksUploaded)
+
+        const updateValidator = new Authorization(PermissionType.Update)
+        if (!updateValidator.$valid(bucket.getUpdate())) {
+          throw new Exception(Exception.USER_UNAUTHORIZED)
+        }
+
         fileDocument = await db.updateDocument(
           this.getCollectionName(bucket.getSequence()),
           fileId,
-          fileDocument
-            .set('chunksUploaded', chunksUploaded)
-            .set('metadata', metadata),
+          fileDocument,
         )
       }
-
-      return fileDocument
-    } catch (error) {
-      throw error
+    } else if (fileDocument.empty()) {
+      fileDocument = await db.createDocument<Files>(
+        this.getCollectionName(bucket.getSequence()),
+        new Doc({
+          $id: fileId,
+          $permissions: permissions,
+          bucketId: bucket.getId(),
+          bucketInternalId: bucket.getSequence(),
+          name: fileName,
+          path: _path,
+          signature: '',
+          mimeType: '',
+          sizeOriginal: finalFileSize,
+          sizeActual: 0,
+          chunksTotal: chunks,
+          chunksUploaded,
+          search: [fileId, fileName].join(' '),
+          metadata,
+        }),
+      )
+    } else {
+      fileDocument = await db.updateDocument(
+        this.getCollectionName(bucket.getSequence()),
+        fileId,
+        fileDocument
+          .set('chunksUploaded', chunksUploaded)
+          .set('metadata', metadata),
+      )
     }
+
+    return fileDocument
   }
 
   /**
@@ -477,7 +472,7 @@ export class FilesService {
     } catch {
       throw new Exception(
         Exception.STORAGE_FILE_NOT_FOUND,
-        'File not found in ' + path,
+        `File not found in ${path}`,
       )
     }
 
@@ -615,7 +610,7 @@ export class FilesService {
     } catch {
       throw new Exception(
         Exception.STORAGE_FILE_NOT_FOUND,
-        'File not found in ' + path,
+        `File not found in ${path}`,
       )
     }
 
@@ -623,7 +618,7 @@ export class FilesService {
     const fileName = file.get('name', '')
     const size = file.get('sizeOriginal', 0)
 
-    const rangeHeader = request.headers['range']
+    const rangeHeader = request.headers.range
     let start = 0
     let end = size - 1
 
@@ -751,7 +746,7 @@ export class FilesService {
     } catch {
       throw new Exception(
         Exception.STORAGE_FILE_NOT_FOUND,
-        'File not found in ' + path,
+        `File not found in ${path}`,
       )
     }
 
@@ -759,7 +754,7 @@ export class FilesService {
     const fileName = file.get('name', '')
     const size = file.get('sizeOriginal', 0)
 
-    const rangeHeader = request.headers['range']
+    const rangeHeader = request.headers.range
     let start = 0
     let end = size - 1
 
@@ -856,7 +851,7 @@ export class FilesService {
     let decoded: any
     try {
       decoded = this.jwtService.verify(jwt)
-    } catch (error) {
+    } catch (_error) {
       throw new Exception(Exception.USER_UNAUTHORIZED)
     }
 
@@ -887,7 +882,7 @@ export class FilesService {
     } catch {
       throw new Exception(
         Exception.STORAGE_FILE_NOT_FOUND,
-        'File not found in ' + path,
+        `File not found in ${path}`,
       )
     }
 
@@ -903,7 +898,7 @@ export class FilesService {
     )
     response.header('X-Peak', process.memoryUsage().heapUsed.toString())
 
-    const rangeHeader = request.headers['range']
+    const rangeHeader = request.headers.range
     if (rangeHeader) {
       const [unit, range] = rangeHeader.split('=') as [string, string]
       if (unit !== 'bytes') {
@@ -1060,7 +1055,7 @@ export class FilesService {
     if (file.get('chunksTotal') !== file.get('chunksUploaded')) {
       deviceDeleted = await deviceForFiles.abort(
         filePath,
-        file.get('metadata', {})['uploadId'] ?? '',
+        file.get('metadata', {}).uploadId ?? '',
       )
     } else {
       deviceDeleted = await deviceForFiles.delete(filePath)

@@ -266,16 +266,17 @@ export class PgMetaController {
     @Query('included_schemas', ParseComaStringPipe) includedSchemas?: string[],
     @Query('excluded_schemas', ParseComaStringPipe) excludedSchemas?: string[],
   ) {
-    let tableId: number, ordinalPosition!: string
+    let tableId: number
+    let ordinalPosition!: string
     if (id.includes('.')) {
       const [tableIdString, ordinalPositionString] = id.split('.') as [
         string,
         string,
       ]
-      tableId = Number.parseInt(tableIdString)
+      tableId = Number.parseInt(tableIdString, 10)
       ordinalPosition = ordinalPositionString
     } else {
-      tableId = Number.parseInt(id)
+      tableId = Number.parseInt(id, 10)
     }
 
     if (ordinalPosition) {
@@ -288,7 +289,9 @@ export class PgMetaController {
         includedSchemas,
         excludedSchemas,
       })
-      if (data?.[0]) return data[0]
+      if (data?.[0]) {
+        return data[0]
+      }
       throw new Exception(Exception.GENERAL_NOT_FOUND)
     }
     if (/^\.\d+$/.test(ordinalPosition)) {

@@ -18,7 +18,7 @@ describe('Key', () => {
     const projectId = 'test'
     const usage = false
     const scopes = ['databases.read', 'collections.read', 'documents.read']
-    const roleScopes = roles['apps']?.scopes || []
+    const roleScopes = roles.apps?.scopes || []
 
     const key = await generateKey(projectId, usage, scopes)
     const project = new Doc<Projects>({ $id: projectId })

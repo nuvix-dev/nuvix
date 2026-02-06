@@ -420,19 +420,45 @@ export class MessagingService {
 
     const pushData: Record<string, any> = {}
 
-    if (title) pushData['title'] = title
-    if (body) pushData['body'] = body
-    if (data) pushData['data'] = data
-    if (action) pushData['action'] = action
-    if (processedImage) pushData['image'] = processedImage
-    if (icon) pushData['icon'] = icon
-    if (sound) pushData['sound'] = sound
-    if (color) pushData['color'] = color
-    if (tag) pushData['tag'] = tag
-    if (badge >= 0) pushData['badge'] = badge
-    if (contentAvailable) pushData['contentAvailable'] = true
-    if (critical) pushData['critical'] = true
-    if (priority) pushData['priority'] = priority
+    if (title) {
+      pushData.title = title
+    }
+    if (body) {
+      pushData.body = body
+    }
+    if (data) {
+      pushData.data = data
+    }
+    if (action) {
+      pushData.action = action
+    }
+    if (processedImage) {
+      pushData.image = processedImage
+    }
+    if (icon) {
+      pushData.icon = icon
+    }
+    if (sound) {
+      pushData.sound = sound
+    }
+    if (color) {
+      pushData.color = color
+    }
+    if (tag) {
+      pushData.tag = tag
+    }
+    if (badge >= 0) {
+      pushData.badge = badge
+    }
+    if (contentAvailable) {
+      pushData.contentAvailable = true
+    }
+    if (critical) {
+      pushData.critical = true
+    }
+    if (priority) {
+      pushData.priority = priority
+    }
 
     const message = new Doc<Messages>({
       $id: messageId,
@@ -675,11 +701,11 @@ export class MessagingService {
     const data = message.get('data')
 
     if (input.subject !== undefined) {
-      data['subject'] = input.subject
+      data.subject = input.subject
     }
 
     if (input.content !== undefined) {
-      data['content'] = input.content
+      data.content = input.content
     }
 
     if (input.attachments !== undefined) {
@@ -705,19 +731,19 @@ export class MessagingService {
           fileId,
         })
       }
-      data['attachments'] = processedAttachments
+      data.attachments = processedAttachments
     }
 
     if (input.html !== undefined) {
-      data['html'] = input.html
+      data.html = input.html
     }
 
     if (input.cc !== undefined) {
-      data['cc'] = input.cc
+      data.cc = input.cc
     }
 
     if (input.bcc !== undefined) {
-      data['bcc'] = input.bcc
+      data.bcc = input.bcc
     }
 
     message.set('data', data)
@@ -863,7 +889,7 @@ export class MessagingService {
     const data = message.get('data')
 
     if (input.content !== undefined) {
-      data['content'] = input.content
+      data.content = input.content
     }
 
     message.set('data', data)
@@ -1015,51 +1041,51 @@ export class MessagingService {
 
     const pushData = message.get('data')
     if (input.title !== undefined) {
-      pushData['title'] = input.title
+      pushData.title = input.title
     }
 
     if (input.body !== undefined) {
-      pushData['body'] = input.body
+      pushData.body = input.body
     }
 
     if (input.data !== undefined) {
-      pushData['data'] = input.data
+      pushData.data = input.data
     }
 
     if (input.action !== undefined) {
-      pushData['action'] = input.action
+      pushData.action = input.action
     }
 
     if (input.icon !== undefined) {
-      pushData['icon'] = input.icon
+      pushData.icon = input.icon
     }
 
     if (input.sound !== undefined) {
-      pushData['sound'] = input.sound
+      pushData.sound = input.sound
     }
 
     if (input.color !== undefined) {
-      pushData['color'] = input.color
+      pushData.color = input.color
     }
 
     if (input.tag !== undefined) {
-      pushData['tag'] = input.tag
+      pushData.tag = input.tag
     }
 
     if (input.badge !== undefined) {
-      pushData['badge'] = input.badge
+      pushData.badge = input.badge
     }
 
     if (input.contentAvailable !== undefined) {
-      pushData['contentAvailable'] = input.contentAvailable
+      pushData.contentAvailable = input.contentAvailable
     }
 
     if (input.critical !== undefined) {
-      pushData['critical'] = input.critical
+      pushData.critical = input.critical
     }
 
     if (input.priority !== undefined) {
-      pushData['priority'] = input.priority
+      pushData.priority = input.priority
     }
 
     if (input.image !== undefined) {
@@ -1110,7 +1136,7 @@ export class MessagingService {
         },
       )
 
-      pushData['image'] = {
+      pushData.image = {
         bucketId: bucket.getId(),
         fileId: file.getId(),
         url: `${protocol}://${host}/v1/storage/buckets/${bucket.getId()}/files/${file.getId()}/push?project=${project.getId()}&jwt=${jwt}`,

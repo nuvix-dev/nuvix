@@ -1,3 +1,5 @@
+import * as fs from 'node:fs/promises'
+import path from 'node:path'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
 import { AppConfigService } from '@nuvix/core'
@@ -21,9 +23,7 @@ import type {
   UsersDoc,
 } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
-import * as fs from 'fs/promises'
 import * as Template from 'handlebars'
-import path from 'path'
 import { CreateMfaChallengeDTO, VerifyMfaChallengeDTO } from './DTO/mfa.dto'
 
 @Injectable()
@@ -53,7 +53,7 @@ export class MfaService {
       let factors = session.get('factors', [])
 
       const totp = TOTP.getAuthenticatorFromUser(user)
-      if (totp && totp.get('verified', false)) {
+      if (totp?.get('verified', false)) {
         factors.push('totp')
       }
 
@@ -92,7 +92,7 @@ export class MfaService {
     const totp = TOTP.getAuthenticatorFromUser(user)
 
     const factors = new Doc({
-      totp: totp !== null && totp.get('verified', false),
+      totp: totp?.get('verified', false) ?? false,
       email: user.get('email', false)
         ? user.get('emailVerification', false)
         : false,
@@ -355,8 +355,8 @@ export class MfaService {
           {}
 
         let smsMessage = locale.getText('sms.verification.body')
-        if (customSmsTemplate && customSmsTemplate['message']) {
-          smsMessage = customSmsTemplate['message']
+        if (customSmsTemplate?.message) {
+          smsMessage = customSmsTemplate.message
         }
 
         const smsContent = smsMessage
@@ -412,43 +412,52 @@ export class MfaService {
         let body = template(emailData)
 
         const smtp = project.get('smtp', {}) as SmtpConfig
-        const smtpEnabled = smtp['enabled'] ?? false
+        const smtpEnabled = smtp.enabled ?? false
         const systemConfig = this.appConfig.get('system')
 
         let senderEmail =
           systemConfig.emailAddress || this.appConfig.get('app').emailTeam
         let senderName =
-          systemConfig.emailName || this.appConfig.get('app').name + ' Server'
+          systemConfig.emailName || `${this.appConfig.get('app').name} Server`
         let replyTo = ''
 
         const smtpServer: SmtpConfig = {} as SmtpConfig
 
         if (smtpEnabled) {
-          if (smtp['senderEmail']) senderEmail = smtp['senderEmail']
-          if (smtp['senderName']) senderName = smtp['senderName']
-          if (smtp['replyTo']) replyTo = smtp['replyTo']
-
-          smtpServer['host'] = smtp['host']
-          smtpServer['port'] = smtp['port']
-          smtpServer['username'] = smtp['username']
-          smtpServer['password'] = smtp['password']
-          smtpServer['secure'] = smtp['secure'] ?? false
-
-          if (customEmailTemplate) {
-            if (customEmailTemplate['senderEmail'])
-              senderEmail = customEmailTemplate['senderEmail']
-            if (customEmailTemplate['senderName'])
-              senderName = customEmailTemplate['senderName']
-            if (customEmailTemplate['replyTo'])
-              replyTo = customEmailTemplate['replyTo']
-
-            body = customEmailTemplate['message'] || body
-            subject = customEmailTemplate['subject'] || subject
+          if (smtp.senderEmail) {
+            senderEmail = smtp.senderEmail
+          }
+          if (smtp.senderName) {
+            senderName = smtp.senderName
+          }
+          if (smtp.replyTo) {
+            replyTo = smtp.replyTo
           }
 
-          smtpServer['replyTo'] = replyTo
-          smtpServer['senderEmail'] = senderEmail
-          smtpServer['senderName'] = senderName
+          smtpServer.host = smtp.host
+          smtpServer.port = smtp.port
+          smtpServer.username = smtp.username
+          smtpServer.password = smtp.password
+          smtpServer.secure = smtp.secure ?? false
+
+          if (customEmailTemplate) {
+            if (customEmailTemplate.senderEmail) {
+              senderEmail = customEmailTemplate.senderEmail
+            }
+            if (customEmailTemplate.senderName) {
+              senderName = customEmailTemplate.senderName
+            }
+            if (customEmailTemplate.replyTo) {
+              replyTo = customEmailTemplate.replyTo
+            }
+
+            body = customEmailTemplate.message || body
+            subject = customEmailTemplate.subject || subject
+          }
+
+          smtpServer.replyTo = replyTo
+          smtpServer.senderEmail = senderEmail
+          smtpServer.senderName = senderName
         }
 
         const emailVariables = {
@@ -456,9 +465,9 @@ export class MfaService {
           user: user.get('name'),
           project: project.get('name'),
           otp: code,
-          agentDevice: agentDevice['deviceBrand'] || 'UNKNOWN',
-          agentClient: agentClient['clientName'] || 'UNKNOWN',
-          agentOs: agentOs['osName'] || 'UNKNOWN',
+          agentDevice: agentDevice.deviceBrand || 'UNKNOWN',
+          agentClient: agentClient.clientName || 'UNKNOWN',
+          agentOs: agentOs.osName || 'UNKNOWN',
         }
 
         await this.mailsQueue.add(MailJob.SEND_EMAIL, {

@@ -151,7 +151,7 @@ CREATE POLICY ${ident(name)} ON ${ident(schema)}.${ident(table)}
       return { data: null, error }
     }
 
-    const alter = `ALTER POLICY ${ident(old!.name)} ON ${ident(old!.schema)}.${ident(old!.table)}`
+    const alter = `ALTER POLICY ${ident(old?.name)} ON ${ident(old?.schema)}.${ident(old?.table)}`
     const nameSql =
       name === undefined ? '' : `${alter} RENAME TO ${ident(name)};`
     const definitionSql =
@@ -177,8 +177,8 @@ CREATE POLICY ${ident(name)} ON ${ident(schema)}.${ident(table)}
     if (error) {
       return { data: null, error }
     }
-    const sql = `DROP POLICY ${ident(policy!.name)} ON ${ident(policy!.schema)}.${ident(
-      policy!.table,
+    const sql = `DROP POLICY ${ident(policy?.name)} ON ${ident(policy?.schema)}.${ident(
+      policy?.table,
     )};`
     {
       const { error } = await this.query(sql)

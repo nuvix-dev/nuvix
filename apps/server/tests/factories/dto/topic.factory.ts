@@ -6,7 +6,7 @@ export function buildCreateTopicDTO(
 ): CreateTopicDTO {
   return {
     topicId: faker.string.alphanumeric(12),
-    name: faker.word.noun() + '-topic',
+    name: `${faker.word.noun()}-topic`,
     subscribe: [],
     ...overrides,
   }
@@ -16,7 +16,7 @@ export function buildUpdateTopicDTO(
   overrides: Partial<Omit<CreateTopicDTO, 'topicId'>> = {},
 ): Omit<CreateTopicDTO, 'topicId'> {
   return {
-    name: faker.word.noun() + '-updated-topic',
+    name: `${faker.word.noun()}-updated-topic`,
     subscribe: [],
     ...overrides,
   }

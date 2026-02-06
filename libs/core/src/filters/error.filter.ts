@@ -32,10 +32,10 @@ export class ErrorFilter implements ExceptionFilter {
     const response = ctx.getResponse<NuvixRes>()
     const request = ctx.getRequest<NuvixRequest>()
 
-    let status: number,
-      message: string,
-      type: string,
-      extra: Record<string, unknown> = {}
+    let status: number
+    let message: string
+    let type: string
+    let extra: Record<string, unknown> = {}
 
     switch (true) {
       case exception instanceof Exception:
@@ -48,7 +48,7 @@ export class ErrorFilter implements ExceptionFilter {
         status = exception.getStatus()
         message =
           (typeof exception.getResponse() === 'object'
-            ? (exception.getResponse() as Record<string, any>)['message']
+            ? (exception.getResponse() as Record<string, any>).message
             : exception.getResponse()) ||
           errorCodes[Exception.GENERAL_BAD_REQUEST]?.description
         type = Exception.GENERAL_BAD_REQUEST
@@ -71,7 +71,7 @@ export class ErrorFilter implements ExceptionFilter {
         status = HttpStatus.BAD_REQUEST
         message =
           exception.message ||
-          errorCodes[Exception.GENERAL_BAD_REQUEST]!.description
+          (errorCodes[Exception.GENERAL_BAD_REQUEST]?.description as string)
         type = Exception.GENERAL_BAD_REQUEST
         break
 
@@ -87,7 +87,7 @@ export class ErrorFilter implements ExceptionFilter {
         status = HttpStatus.NOT_FOUND
         message =
           exception.message ||
-          errorCodes[Exception.GENERAL_NOT_FOUND]!.description
+          (errorCodes[Exception.GENERAL_NOT_FOUND]?.description as string)
         type = Exception.GENERAL_NOT_FOUND
         break
 
@@ -124,10 +124,10 @@ export class ErrorFilter implements ExceptionFilter {
       this.logger.debug(exception)
     }
 
-    request['error'] = { message, type, ...extra }
+    request.error = { message, type, ...extra }
 
     if (!this.appConfig.get('app').isProduction && debugErrors) {
-      extra['exception'] = (exception as any)?.stack
+      extra.exception = (exception as any)?.stack
     }
 
     response.status(status).send({

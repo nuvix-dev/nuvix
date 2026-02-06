@@ -5,7 +5,7 @@ import { AppService } from './app.service'
 @Controller()
 @UseInterceptors(ResponseInterceptor)
 export class AppController {
-  constructor(private readonly appService: AppService) {}
+  constructor(readonly _appService: AppService) {}
 
   @Get()
   @Public()

@@ -52,7 +52,9 @@ export async function dbSetup(
         .then(is => (is ? undefined : db.create()))
       logger.log('✓ Platform database initialized successfully')
     } catch (e) {
-      if (!(e instanceof DuplicateException)) throw e
+      if (!(e instanceof DuplicateException)) {
+        throw e
+      }
       logger.log('✓ Platform database already exists')
     }
 
@@ -114,7 +116,7 @@ export async function dbSetup(
         const bucket = await db.getDocument('buckets', 'default')
         logger.log('  ➜ Creating files collection for default bucket')
 
-        const files = collections.bucket['files']
+        const files = collections.bucket.files
         if (!files) {
           throw new Error('Files collection is not configured.')
         }
@@ -140,8 +142,8 @@ export async function dbSetup(
       if (!hasSuperUser.empty()) {
         logger.log('✓ Admin user already exists, skipping creation')
       } else {
-        const adminEmail = process.env['NUVIX_ADMIN_EMAIL']
-        const adminPassword = process.env['NUVIX_ADMIN_PASSWORD']
+        const adminEmail = process.env.NUVIX_ADMIN_EMAIL
+        const adminPassword = process.env.NUVIX_ADMIN_PASSWORD
 
         if (!adminEmail || !adminPassword) {
           throw new Error(
@@ -250,7 +252,7 @@ export async function dbSetup(
             expire: null,
             sdks: [],
             accessedAt: null,
-            secret: ApiKey.STANDARD + '_' + apiKey,
+            secret: `${ApiKey.STANDARD}_${apiKey}`,
           })
 
           await db.createDocument('keys', key)

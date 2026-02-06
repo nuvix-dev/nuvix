@@ -22,8 +22,6 @@ abstract class Mfa {
   public static readonly PHONE = 'phone'
   public static readonly RECOVERY_CODE = 'recoveryCode'
 
-  constructor() {}
-
   public setLabel(label: string): this {
     this.options.label = label
     return this
@@ -39,7 +37,7 @@ abstract class Mfa {
   }
 
   public getIssuer(): string | null {
-    return this.options['issuer'] || null
+    return this.options.issuer || null
   }
 
   public getSecret(): string {
@@ -75,10 +73,6 @@ abstract class Mfa {
 }
 
 class TOTP extends Mfa {
-  constructor() {
-    super()
-  }
-
   public static getAuthenticatorFromUser(
     user: UsersDoc,
   ): AuthenticatorsDoc | null {

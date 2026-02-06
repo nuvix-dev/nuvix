@@ -91,7 +91,7 @@ export const init: (config: PoolConfig | any) => {
   const pool: pg.Pool | null = config //new pg.Pool(config);
 
   return {
-    async query(sql, trackQueryInSentry = true) {
+    async query(sql, _trackQueryInSentry = true) {
       // return Sentry.startSpan(
       //   // For metrics purposes, log the query that will be run if it's not an user provided query (with possibly sentitives infos)
       //   {
@@ -143,13 +143,13 @@ export const init: (config: PoolConfig | any) => {
             const lines = sql.split('\n')
             let currentOffset = 0
             for (let i = 0; i < lines.length; i++) {
-              if (currentOffset + lines[i]!.length > position) {
+              if (currentOffset + (lines[i]?.length ?? 0) > position) {
                 line = lines[i]!
                 lineNumber = i + 1 // 1-based
                 lineOffset = position - currentOffset
                 break
               }
-              currentOffset += lines[i]!.length + 1 // 1 extra offset for newline
+              currentOffset += (lines[i]?.length ?? 0) + 1 // 1 extra offset for newline
             }
             formattedError += `LINE ${lineNumber}: ${line}\n${' '.repeat(5 + lineNumber.toString().length + 2 + lineOffset)}^\n`
           }

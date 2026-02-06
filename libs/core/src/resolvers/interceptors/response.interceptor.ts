@@ -66,7 +66,7 @@ export class ResponseInterceptor implements NestInterceptor {
     return next
       .handle()
       .pipe(
-        map((res: PlainLiteralObject | Array<PlainLiteralObject>) =>
+        map((res: PlainLiteralObject | PlainLiteralObject[]) =>
           this.serialize(res, options),
         ),
       )
@@ -76,9 +76,9 @@ export class ResponseInterceptor implements NestInterceptor {
    * Serializes responses that are non-null objects nor streamable files.
    */
   serialize(
-    response: PlainLiteralObject | Array<PlainLiteralObject>,
+    response: PlainLiteralObject | PlainLiteralObject[],
     options: ResolverTypeContextOptions,
-  ): PlainLiteralObject | Array<PlainLiteralObject> {
+  ): PlainLiteralObject | PlainLiteralObject[] {
     if (!isObject(response) || response instanceof StreamableFile) {
       return response
     }
@@ -103,10 +103,10 @@ export class ResponseInterceptor implements NestInterceptor {
   }
 
   serializeList(
-    response: PlainLiteralObject | Array<PlainLiteralObject>,
+    response: PlainLiteralObject | PlainLiteralObject[],
     options: ResolverTypeContextOptions,
     keys?: string[],
-  ): PlainLiteralObject | Array<PlainLiteralObject> {
+  ): PlainLiteralObject | PlainLiteralObject[] {
     if (!isObject(response) || response instanceof StreamableFile) {
       return response
     }

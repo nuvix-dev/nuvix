@@ -24,7 +24,7 @@ export class ConsoleInterceptor implements NestInterceptor {
   ): Observable<any> | Promise<Observable<any>> {
     Authorization.setDefaultStatus(true)
     const request = context.switchToHttp().getRequest<NuvixRequest>()
-    const project = request[Context.Project] as ProjectsDoc
+    const _project = request[Context.Project] as ProjectsDoc
     const user = request[Context.User] as UsersDoc
     const scopes: Scopes[] = request[Context.Scopes] || []
 
@@ -40,7 +40,7 @@ export class ConsoleInterceptor implements NestInterceptor {
       if (missingScopes.length > 0) {
         throw new Exception(
           Exception.GENERAL_UNAUTHORIZED_SCOPE,
-          `${user.get('email', 'User')} (role: ${request['role'] ?? '#'}) missing scopes (${missingScopes.join(', ')})`,
+          `${user.get('email', 'User')} (role: ${request.role ?? '#'}) missing scopes (${missingScopes.join(', ')})`,
         )
       }
     }

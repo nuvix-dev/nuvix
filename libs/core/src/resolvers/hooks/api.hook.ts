@@ -31,7 +31,7 @@ export class ApiHook implements Hook {
     this.db = this.coreService.getPlatformDb()
   }
 
-  async onRequest(req: NuvixRequest, reply: NuvixRes): Promise<void> {
+  async onRequest(req: NuvixRequest, _reply: NuvixRes): Promise<void> {
     const params = new ParamsHelper(req)
     const project: ProjectsDoc = req[Context.Project]
     let user: UsersDoc = req[Context.User]
@@ -39,7 +39,9 @@ export class ApiHook implements Hook {
     const mode: AppMode = req[Context.Mode]
     const apiKey: Key | null = req[Context.ApiKey]
 
-    if (project.empty()) throw new Exception(Exception.PROJECT_NOT_FOUND)
+    if (project.empty()) {
+      throw new Exception(Exception.PROJECT_NOT_FOUND)
+    }
 
     if (mode === AppMode.ADMIN && project.getId() === 'console') {
       throw new Exception(
@@ -76,7 +78,7 @@ export class ApiHook implements Hook {
           $sequence: -1,
           status: true,
           type: AuthActivity.APP,
-          email: 'app.' + project.getId() + '@service.' + req.host,
+          email: `app.${project.getId()}@service.${req.host}`,
           password: '',
           name: apiKey.getName(),
         }) as unknown as UsersDoc

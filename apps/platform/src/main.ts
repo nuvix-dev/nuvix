@@ -120,12 +120,14 @@ export async function bootstrap() {
      */
     const origin = req.headers.origin
     res.header('Access-Control-Allow-Origin', origin || '*')
-    if (origin) res.header('Access-Control-Allow-Credentials', 'true')
+    if (origin) {
+      res.header('Access-Control-Allow-Credentials', 'true')
+    }
     done()
   })
 
   app.useStaticAssets({
-    root: PROJECT_ROOT + '/public',
+    root: `${PROJECT_ROOT}/public`,
     prefix: '/public/',
   })
 
