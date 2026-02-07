@@ -31,15 +31,16 @@ export class DatabaseService {
       throw new Exception(Exception.SCHEMA_ALREADY_EXISTS)
     }
 
-    const schema = await db
+    await db.execute('select system.create_schema(?, ?, ?)', [
+      data.name,
+      data.type,
+      data.description ?? null,
+    ])
+    const schema = db
       .table<Schema>('schemas')
       .withSchema(Schemas.System)
-      .insert({
-        name: data.name,
-        type: SchemaType.Document,
-        description: data.description,
-      })
-      .returning('*')
+      .select('*')
+      .where('name', data.name)
       .then(rows => rows[0])
 
     await this.databasesQueue.add(SchemaJob.INIT_DOC, {
@@ -104,15 +105,16 @@ export class DatabaseService {
       )
     }
 
-    const schema = await pg
+    await pg.execute('select system.create_schema(?, ?, ?)', [
+      data.name,
+      data.type,
+      data.description ?? null,
+    ])
+    const schema = pg
       .table<Schema>('schemas')
       .withSchema(Schemas.System)
-      .insert({
-        name: data.name,
-        type: data.type,
-        description: data.description,
-      })
-      .returning('*')
+      .select('*')
+      .where('name', data.name)
       .then(rows => rows[0])
 
     return schema
