@@ -11,7 +11,7 @@ import {
   ArrayToLastElement,
   TransformStringToBoolean,
   TryTransformTo,
-} from 'libs/core/src/validators'
+} from '@nuvix/core/validators'
 
 export class CreditCardParamDTO {
   /**
