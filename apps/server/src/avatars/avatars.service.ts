@@ -1,10 +1,9 @@
 import crypto from 'node:crypto'
-import { default as fsSync } from 'node:fs'
 import fs from 'node:fs/promises'
 import { default as path } from 'node:path'
 import { Injectable, Logger, StreamableFile } from '@nestjs/common'
 import { PROJECT_ROOT } from '@nuvix/utils'
-import { createCanvas, registerFont } from 'canvas'
+import { Resvg } from '@resvg/resvg-js'
 import { browserCodes, creditCards, flags } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
 import sharp from 'sharp'
@@ -14,25 +13,7 @@ import { CodesQuerDTO, InitialsQueryDTO } from './DTO/misc.dto'
 export class AvatarsService {
   private readonly logger = new Logger(AvatarsService.name)
 
-  constructor() {
-    try {
-      const fontPath = path.join(
-        PROJECT_ROOT,
-        'assets/fonts',
-        'Varela-Regular.ttf',
-      )
-
-      // Check if font file exists before registering
-      if (fsSync.existsSync(fontPath)) {
-        registerFont(fontPath, { family: 'Varela' })
-        this.logger.log(`Font registered from: ${fontPath}`)
-      } else {
-        this.logger.warn(`Font file not found at: ${fontPath}`)
-      }
-    } catch (error: any) {
-      this.logger.error(`Error registering font: ${error.message}`)
-    }
-  }
+  constructor() {}
 
   /**
    * Generates an avatar image based on the provided parameters.
@@ -44,7 +25,6 @@ export class AvatarsService {
     background,
     circle,
     quality,
-    opacity,
     res,
   }: {
     res: NuvixRes
@@ -52,13 +32,16 @@ export class AvatarsService {
     try {
       const MAX_DIM = 2000
       const MIN_DIM = 0
+
       const toNum = (v: number | string, fallback: number) => {
         const n = Number(v)
         return Number.isFinite(n) ? n : fallback
       }
+
       width = Math.min(MAX_DIM, Math.max(MIN_DIM, toNum(width, 100)))
       height = Math.min(MAX_DIM, Math.max(MIN_DIM, toNum(height, 100)))
-      // Sanitize hex; fallback to deterministic HSL if invalid length
+
+      // Normalize background color
       if (background) {
         const hex = background.replace(/[^0-9a-fA-F]/g, '')
         background =
@@ -69,51 +52,49 @@ export class AvatarsService {
         background = this.getHSLColorFromName(name)
       }
 
+      const initials = this.getInitials(name)
+
       const cacheKey = this.generateCacheKey(
-        name,
+        initials,
         width,
         height,
         background,
         circle,
+        quality,
       )
+
       const cachedImage = this.getCachedImage(cacheKey)
       if (cachedImage) {
         res.header('Content-Type', 'image/png')
-        return res.send(cachedImage)
+        return new StreamableFile(cachedImage)
       }
 
-      const canvas = createCanvas(width, height)
-      const ctx = canvas.getContext('2d')
+      // Generate SVG
+      const svg = this.generateAvatarSVG({
+        initials,
+        width,
+        height,
+        background,
+        circle,
+      })
 
-      // Draw Background (circle or rectangle)
-      if (circle) {
-        ctx.beginPath()
-        ctx.arc(
-          width / 2,
-          height / 2,
-          Math.min(width, height) / 2,
-          0,
-          Math.PI * 2,
-        )
-        ctx.fillStyle = background
-        ctx.fill()
-      } else {
-        ctx.fillStyle = background
-        ctx.fillRect(0, 0, width, height)
-      }
+      const fontPath = path.join(
+        PROJECT_ROOT,
+        'assets/fonts',
+        'Varela-Regular.ttf',
+      )
+      const fontFiles = [fontPath]
 
-      // Draw Text
-      ctx.fillStyle = '#ffffff'
-      ctx.font = `${Math.min(width, height) / 2}px Varela`
-      ctx.textAlign = 'center'
-      ctx.textBaseline = 'middle'
-      ctx.fillText(this.getInitials(name), width / 2, height / 2)
+      const resvg = new Resvg(svg, {
+        font: {
+          loadSystemFonts: false,
+          defaultFontFamily: 'Varela, Arial, sans-serif',
+          fontFiles,
+        },
+      })
 
-      // Convert Canvas to PNG Buffer
-      const buffer = canvas.toBuffer('image/png')
-
-      // Process Image with Sharp (for better output)
-      const processedImage = await sharp(buffer)
+      const pngBuffer = resvg.render().asPng()
+      const processedImage = await sharp(pngBuffer)
         .resize(width, height)
         .png({
           quality,
@@ -123,18 +104,77 @@ export class AvatarsService {
         })
         .toBuffer()
 
-      // Cache the generated image
+      // Cache result
       this.cacheImage(cacheKey, processedImage)
 
-      // Send Image Response
       res.header('Content-Type', 'image/png')
       return new StreamableFile(processedImage)
-    } catch (_error) {
+    } catch (error) {
+      this.logger?.error?.('Avatar generation failed', error)
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
         'Avatar generation failed',
       )
     }
+  }
+
+  private generateAvatarSVG({
+    initials,
+    width,
+    height,
+    background,
+    circle,
+  }: {
+    initials: string
+    width: number
+    height: number
+    background: string
+    circle: boolean
+  }) {
+    const safeInitials = this.escapeXML(initials)
+
+    const size = Math.min(width, height)
+
+    // Adaptive font size
+    const fontSize =
+      safeInitials.length === 1
+        ? size * 0.55
+        : safeInitials.length === 2
+          ? size * 0.45
+          : size * 0.35
+
+    // Slight inset radius to avoid edge artifacts
+    const radius = size / 2 - 1
+
+    const shape = circle
+      ? `<circle cx="${width / 2}" cy="${height / 2}" r="${radius}" fill="${background}" />`
+      : `<rect width="100%" height="100%" fill="${background}" />`
+
+    return `
+<svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" xmlns="http://www.w3.org/2000/svg">
+  ${shape}
+  <text
+    x="50%"
+    y="50%"
+    dominant-baseline="central"
+    text-anchor="middle"
+    fill="#ffffff"
+    font-family="Varela, Arial, sans-serif"
+    font-size="${fontSize}"
+    font-weight="600"
+  >
+    ${safeInitials}
+  </text>
+</svg>`
+  }
+
+  private escapeXML(text: string) {
+    return text
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;')
   }
 
   async getCreditCard({
@@ -195,10 +235,11 @@ export class AvatarsService {
     height: number,
     background: string,
     circle: boolean,
+    quality: number,
   ): string {
     return crypto
       .createHash('md5')
-      .update(`${name}-${width}-${height}-${background}-${circle}`)
+      .update(`${name}-${width}-${height}-${background}-${circle}-${quality}`)
       .digest('hex')
   }
 

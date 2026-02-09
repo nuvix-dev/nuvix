@@ -48,8 +48,8 @@
     "@nuvix/pg": "^1.0.6",
     "@nuvix/storage": "^1.0.1",
     "@nuvix/telemetry": "^1.0.2",
+    "@resvg/resvg-js": "^2.6.2",
     "argon2": "^0.44.0",
-    "canvas": "3.1.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.3",
     "dotenv": "^16.6.1",
@@ -116,7 +116,6 @@
     "@nestjs/core",
     "@scarf/scarf",
     "esbuild",
-    "msgpackr-extract",
-    "canvas"
+    "msgpackr-extract"
   ]
 }
