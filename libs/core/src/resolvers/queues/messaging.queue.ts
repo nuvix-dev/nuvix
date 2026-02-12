@@ -46,26 +46,69 @@ import { Queue } from './queue'
 @Processor(QueueFor.MESSAGING, { concurrency: 10000 })
 export class MessagingQueue extends Queue {
   private readonly logger = new Logger(MessagingQueue.name)
+  private readonly dbForPlatform: Database
 
   constructor(private readonly coreService: CoreService) {
     super()
+    this.dbForPlatform = this.coreService.getPlatformDb()
   }
 
   async process(job: Job<MessagingJobData, any, MessagingJob>): Promise<any> {
     switch (job.name) {
       case MessagingJob.EXTERNAL: {
         const data = job.data
+
         const project = new Doc(data.project as unknown as Projects)
-        const message = new Doc(data.message as unknown as Messages)
-        const { client, dbForProject } =
-          await this.coreService.createProjectDatabase(project, {
-            schema: Schemas.Core,
-          })
-        const deviceForFiles = this.coreService.getProjectDevice(
-          project.getId(),
-        )
+
+        let client: any | null = null
 
         try {
+          const result = await this.coreService.createProjectDatabase(project, {
+            schema: Schemas.Core,
+          })
+
+          client = result.client
+          const dbForProject = result.dbForProject
+
+          let message: MessagesDoc
+
+          // Load message safely
+          if (typeof data.message === 'string') {
+            const messageDoc = await dbForProject.getDocument(
+              'messages',
+              data.message,
+            )
+
+            if (messageDoc.empty()) {
+              // Message deleted or missing → nothing to do
+              this.logger.warn(
+                `Message ${data.message} not found, skipping job ${job.id}`,
+              )
+              return { skipped: true }
+            }
+
+            message = messageDoc as MessagesDoc
+          } else {
+            message = new Doc(
+              data.message as unknown as Messages,
+            ) as MessagesDoc
+          }
+
+          // Idempotency guard
+          const status = message.get('status')
+
+          if (status === MessageStatus.SENT) {
+            this.logger.debug(
+              `Message ${message.getId()} already processed, skipping`,
+            )
+            return { skipped: true }
+          }
+
+          const deviceForFiles = this.coreService.getProjectDevice(
+            project.getId(),
+          )
+
+          // Send message
           await this.sendExternalMessage(
             dbForProject,
             message,
@@ -73,17 +116,40 @@ export class MessagingQueue extends Queue {
             project,
             undefined as any,
           )
+
+          // Delete schedule if present
+          if (data.scheduleId) {
+            try {
+              await this.dbForPlatform.deleteDocument(
+                'schedules',
+                data.scheduleId,
+              )
+            } catch (err) {
+              // Non-critical failure
+              this.logger.warn(`Failed to delete schedule ${data.scheduleId}`)
+            }
+          }
+
+          return {
+            status: 'processed',
+            messageId: message.getId(),
+            projectId: project.getId(),
+          }
+        } catch (err) {
+          this.logger.error(
+            `Messaging job failed: ${job.id}`,
+            err instanceof Error ? err.stack : undefined,
+          )
+
+          // Let BullMQ retry
+          throw err
         } finally {
           await this.coreService.releaseDatabaseClient(client)
         }
-        return {
-          status: 'processed',
-          messageId: message.getId(),
-          projectId: project.getId(),
-        }
       }
+
       default:
-        throw Error('Invalid Job!')
+        throw new Error(`Invalid Job: ${job.name}`)
     }
   }
 
@@ -616,6 +682,7 @@ export enum MessagingJob {
 }
 
 export interface MessagingJobData {
-  message: MessagesDoc
+  scheduleId?: string
+  message: MessagesDoc | string
   project: ProjectsDoc
 }

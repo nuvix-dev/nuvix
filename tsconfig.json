@@ -32,7 +32,9 @@
     "paths": {
       "@nuvix/utils": ["./libs/utils/src"],
       "@nuvix/utils/*": ["./libs/utils/src/*"],
-      "@nuvix/utils/types": ["./libs/utils/types"]
+      "@nuvix/utils/types": ["./libs/utils/types"],
+      "@nuvix/core/*": ["./libs/core/src/*"],
+      "@nuvix/core": ["./libs/core/src"]
     }
   }
 }
