@@ -104,8 +104,8 @@ async function bootstrap() {
     }
   })
 
-  const port = Number.parseInt(config.root.get('APP_SERVER_PORT', '4000'), 10)
-  const host = '0.0.0.0'
+  const port = Number.parseInt(config.root.get('NUVIX_API_PORT', '4000'), 10)
+  const host = 'localhost'
 
   logger.setLogLevels(
     logLevels

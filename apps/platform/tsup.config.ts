@@ -30,11 +30,13 @@ export default defineConfig(options => {
             ? `import { config as __nxconfig } from 'dotenv';
 import {default as __nxpath}  from 'path';
 __nxconfig({
-  path: [${envPaths.map(p => `__nxpath.resolve(process.cwd(), '${p}')`).join(',\n\t')}]
+  path: [${envPaths.map(p => `__nxpath.resolve(process.cwd(), '${p}')`).join(',\n\t')}],
+  override: true,
 });`
             : `const __nxpath = require('path');
 require('dotenv').config({
-    path: [${envPaths.map(p => `__nxpath.resolve(process.cwd(), '${p}')`).join(',\n\t')}]
+    path: [${envPaths.map(p => `__nxpath.resolve(process.cwd(), '${p}')`).join(',\n\t')}],
+    override: true,
 });`,
       }
     },

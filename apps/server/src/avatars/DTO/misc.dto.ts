@@ -51,7 +51,7 @@ export class InitialsQueryDTO {
   name?: string
 
   /**
-   * Width of the generated avatar image (default: 100)
+   * Width of the generated avatar image (default: 500)
    */
   @IsOptional()
   @ArrayToLastElement()
@@ -62,7 +62,7 @@ export class InitialsQueryDTO {
   width = 500
 
   /**
-   * Height of the generated avatar image (default: 100)
+   * Height of the generated avatar image (default: 500)
    */
   @IsOptional()
   @ArrayToLastElement()

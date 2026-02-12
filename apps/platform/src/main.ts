@@ -163,8 +163,8 @@ export async function bootstrap() {
   })
   openApiSetup(app)
 
-  const port = parseNumber(config.root.get('APP_PLATFORM_PORT'), 4100)
-  const host = '0.0.0.0'
+  const port = parseNumber(config.root.get('NUVIX_PLATFORM_PORT'), 4100)
+  const host = 'localhost'
 
   logger.setLogLevels(
     logLevels

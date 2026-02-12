@@ -36,7 +36,7 @@ import { RatelimitService } from './rate-limit.service.js'
             attempts: 2,
             backoff: { type: 'exponential', delay: 5000 },
             removeOnComplete: true,
-            removeOnFail: true,
+            removeOnFail: 100,
           },
           prefix: 'nuvix', // TODO: we have to include a instance key that should be unique per app instance
         }
