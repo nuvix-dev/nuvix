@@ -19,7 +19,7 @@ export class AvatarsService {
    * Generates an avatar image based on the provided parameters.
    */
   async generateAvatar({
-    name,
+    name = 'NA',
     width,
     height,
     background,
@@ -177,6 +177,9 @@ export class AvatarsService {
       .replace(/'/g, '&apos;')
   }
 
+  /**
+   * Retrieves the image for a credit card based on the provided code and query parameters.
+   */
   async getCreditCard({
     code,
     res,
@@ -190,6 +193,9 @@ export class AvatarsService {
     })
   }
 
+  /**
+   * Retrieves the image for a browser based on the provided code and query parameters.
+   */
   async getBrowser({
     code,
     res,
@@ -203,6 +209,9 @@ export class AvatarsService {
     })
   }
 
+  /**
+   * Retrieves the image for a country flag based on the provided code and query parameters.
+   */
   async getFlag({
     code,
     res,
@@ -214,6 +223,30 @@ export class AvatarsService {
       ...query,
       res,
     })
+  }
+
+  /**
+   * Retrieves the favicon image for a given URL.
+   */
+  async getFavicon({ url, res }: { url: string; res: NuvixRes }) {
+    try {
+      const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(url)}`
+      const response = await fetch(faviconUrl)
+      if (!response.ok) {
+        throw new Exception(
+          Exception.AVATAR_REMOTE_URL_FAILED,
+          'Favicon not found',
+        )
+      }
+      const buffer = await response.arrayBuffer()
+      res.header('Content-Type', 'image/png')
+      return new StreamableFile(Buffer.from(buffer))
+    } catch (error) {
+      throw new Exception(
+        Exception.AVATAR_REMOTE_URL_FAILED,
+        'Failed to fetch favicon',
+      )
+    }
   }
 
   private getInitials(name: string): string {

@@ -1,4 +1,11 @@
-import { Controller, Param, Query, Res, UseInterceptors } from '@nestjs/common'
+import {
+  Controller,
+  Param,
+  Query,
+  Res,
+  StreamableFile,
+  UseInterceptors,
+} from '@nestjs/common'
 import { Get } from '@nuvix/core'
 import { Namespace, Scope } from '@nuvix/core/decorators'
 import { ParseDuplicatePipe } from '@nuvix/core/pipes'
@@ -7,7 +14,9 @@ import { AvatarsService } from './avatars.service'
 import {
   CodesQuerDTO,
   CreditCardParamDTO,
+  FaviconQueryDTO,
   InitialsQueryDTO,
+  QrQueryDTO,
 } from './DTO/misc.dto'
 
 @Controller({ version: ['1'], path: 'avatars' })
@@ -26,7 +35,7 @@ export class AvatarsController {
     @Param() { code }: CreditCardParamDTO,
     @Query() query: CodesQuerDTO,
     @Res({ passthrough: true }) res: NuvixRes,
-  ) {
+  ): Promise<StreamableFile> {
     return this.avatarsService.getCreditCard({ code, res, ...query })
   }
 
@@ -38,7 +47,7 @@ export class AvatarsController {
     @Param('code', ParseDuplicatePipe) code: string,
     @Query() query: CodesQuerDTO,
     @Res({ passthrough: true }) res: NuvixRes,
-  ) {
+  ): Promise<StreamableFile> {
     return this.avatarsService.getBrowser({ code, res, ...query })
   }
 
@@ -51,7 +60,7 @@ export class AvatarsController {
     @Param('code', ParseDuplicatePipe) code: string,
     @Query() query: CodesQuerDTO,
     @Res({ passthrough: true }) res: NuvixRes,
-  ) {
+  ): Promise<StreamableFile> {
     return this.avatarsService.getFlag({ code, res, ...query })
   }
 
@@ -63,10 +72,21 @@ export class AvatarsController {
   async generateAvatar(
     @Query() query: InitialsQueryDTO,
     @Res({ passthrough: true }) res: NuvixRes,
-  ) {
+  ): Promise<StreamableFile> {
     return this.avatarsService.generateAvatar({
       ...query,
       res,
     })
+  }
+
+  @Get('favicon', {
+    summary: 'Get favicon image',
+    description: 'Returns the favicon image for a given URL',
+  })
+  async getFavicon(
+    @Query() { url }: FaviconQueryDTO,
+    @Res({ passthrough: true }) res: NuvixRes,
+  ): Promise<StreamableFile> {
+    return this.avatarsService.getFavicon({ url, res })
   }
 }
