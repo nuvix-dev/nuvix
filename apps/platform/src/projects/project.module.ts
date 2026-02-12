@@ -1,8 +1,7 @@
 import { BullModule } from '@nestjs/bullmq'
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'
-import { JwtModule } from '@nestjs/jwt'
 import { ApiHook, AuditHook, AuthHook } from '@nuvix/core/resolvers'
-import { configuration, QueueFor } from '@nuvix/utils'
+import { QueueFor } from '@nuvix/utils'
 import { AuthSettingsController } from './auth-settings/auth-settings.controller'
 import { AuthSettingsService } from './auth-settings/auth-settings.service'
 import { KeysController } from './keys/keys.controller'
@@ -21,27 +20,18 @@ import { WebhooksService } from './webhooks/webhooks.service'
 
 @Module({
   imports: [
-    JwtModule.register({
-      secret: configuration.security.jwtSecret,
-      signOptions: { expiresIn: '15m' },
-    }),
-    BullModule.registerQueue(
-      {
-        name: QueueFor.PROJECTS,
-        defaultJobOptions: {
-          removeOnComplete: true,
-          removeOnFail: true,
-          attempts: 1,
-          backoff: {
-            type: 'exponential',
-            delay: 1000,
-          },
+    BullModule.registerQueue({
+      name: QueueFor.PROJECTS,
+      defaultJobOptions: {
+        removeOnComplete: true,
+        removeOnFail: true,
+        attempts: 1,
+        backoff: {
+          type: 'exponential',
+          delay: 1000,
         },
       },
-      { name: QueueFor.MAILS },
-      { name: QueueFor.STATS },
-      { name: QueueFor.AUDITS },
-    ),
+    }),
   ],
   providers: [
     ProjectService,

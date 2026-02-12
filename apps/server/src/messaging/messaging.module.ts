@@ -23,14 +23,9 @@ import { TopicsService } from './topics/topics.service'
 
 @Module({
   imports: [
-    BullModule.registerQueue(
-      {
-        name: QueueFor.MESSAGING,
-      },
-      { name: QueueFor.STATS },
-      { name: QueueFor.AUDITS },
-      { name: QueueFor.DELETES },
-    ),
+    BullModule.registerQueue({
+      name: QueueFor.MESSAGING,
+    }),
   ],
   controllers: [
     MessagingController,

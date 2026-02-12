@@ -20,7 +20,6 @@ import {
 import { FileExt, FileSize } from '@nuvix/storage'
 import { configuration } from '@nuvix/utils'
 import type { Files, FilesDoc } from '@nuvix/utils/types'
-import sharp from 'sharp'
 import {
   CreateFileDTO,
   PreviewFileQueryDTO,
@@ -29,10 +28,26 @@ import {
 
 @Injectable()
 export class FilesService {
+  private sharpModule?: typeof import('sharp')
+
   constructor(
     private readonly coreService: CoreService,
     private readonly jwtService: JwtService,
   ) {}
+
+  private async getSharp() {
+    if (!this.sharpModule) {
+      this.sharpModule = await import('sharp')
+        .then(({ default: _default }) => _default)
+        .catch(() => {
+          throw new Exception(
+            Exception.GENERAL_SERVER_ERROR,
+            'Image processing library not available',
+          )
+        })
+    }
+    return this.sharpModule
+  }
 
   private getCollectionName(s: number) {
     return `bucket_${s}`
@@ -431,7 +446,6 @@ export class FilesService {
       background,
       output,
     } = params
-
     const bucket = await Authorization.skip(
       async () => await db.getDocument('buckets', bucketId),
     )
@@ -492,6 +506,7 @@ export class FilesService {
     }
 
     const fileBuffer = await deviceForFiles.read(path)
+    const sharp = await this.getSharp()
     let image = sharp(fileBuffer)
 
     if (width || height) {

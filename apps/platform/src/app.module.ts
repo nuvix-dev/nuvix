@@ -1,4 +1,3 @@
-import { BullModule } from '@nestjs/bullmq'
 import {
   MiddlewareConsumer,
   Module,
@@ -18,7 +17,7 @@ import {
   MailsQueue,
 } from '@nuvix/core/resolvers'
 import { PgMetaModule } from '@nuvix/pg-meta'
-import { configuration, QueueFor } from '@nuvix/utils'
+import { configuration } from '@nuvix/utils'
 import { AccountController } from './account/account.controller'
 import { AccountModule } from './account/account.module'
 import { AppController } from './app.controller'
@@ -30,11 +29,6 @@ import { AuditsQueue } from './resolvers/queues/audits.queue'
 @Module({
   imports: [
     CoreModule,
-    BullModule.registerQueue(
-      { name: QueueFor.MAILS },
-      { name: QueueFor.STATS },
-      { name: QueueFor.AUDITS },
-    ),
     ScheduleModule.forRoot(),
     JwtModule.register({
       secret: configuration.security.jwtSecret,

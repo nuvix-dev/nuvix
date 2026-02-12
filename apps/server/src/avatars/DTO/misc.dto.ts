@@ -3,6 +3,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  IsUrl,
   Length,
   Max,
   Min,
@@ -47,10 +48,10 @@ export class InitialsQueryDTO {
   @IsOptional()
   @ArrayToLastElement()
   @IsString()
-  declare name: string
+  name?: string
 
   /**
-   * Width of the generated avatar image (default: 100)
+   * Width of the generated avatar image (default: 500)
    */
   @IsOptional()
   @ArrayToLastElement()
@@ -58,10 +59,10 @@ export class InitialsQueryDTO {
   @IsNumber()
   @Min(1)
   @Max(2000)
-  width = 100
+  width = 500
 
   /**
-   * Height of the generated avatar image (default: 100)
+   * Height of the generated avatar image (default: 500)
    */
   @IsOptional()
   @ArrayToLastElement()
@@ -69,7 +70,7 @@ export class InitialsQueryDTO {
   @IsNumber()
   @Min(1)
   @Max(2000)
-  height = 100
+  height = 500
 
   /**
    * Background color for the avatar (e.g., '#ff0000')
@@ -78,7 +79,7 @@ export class InitialsQueryDTO {
   @ArrayToLastElement()
   @IsString()
   @Length(0, 7)
-  declare background: string
+  background?: string
 
   /**
    * Whether to generate a circular avatar (default: false)
@@ -87,28 +88,6 @@ export class InitialsQueryDTO {
   @ArrayToLastElement()
   @TransformStringToBoolean()
   circle = false
-
-  /**
-   * Opacity of the generated avatar image (default: 100, range: 0-100)
-   */
-  @IsOptional()
-  @ArrayToLastElement()
-  @TryTransformTo('int')
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  opacity = 100
-
-  /**
-   * Quality of the generated avatar image (default: -1, range: 0-100)
-   */
-  @IsOptional()
-  @ArrayToLastElement()
-  @TryTransformTo('int')
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  quality = 100
 }
 
 export class CodesQuerDTO {
@@ -144,4 +123,56 @@ export class CodesQuerDTO {
   @Min(0)
   @Max(100)
   quality = 90
+}
+
+export class FaviconQueryDTO {
+  /**
+   * URL of the image to process
+   */
+  @ArrayToLastElement()
+  @IsUrl()
+  @IsString()
+  @IsNotEmpty()
+  declare url: string
+}
+
+export class QrQueryDTO {
+  /**
+   * Data to encode in the QR code
+   */
+  @ArrayToLastElement()
+  @IsString()
+  @IsNotEmpty()
+  @Length(1, 512)
+  declare text: string
+
+  /**
+   * Size of the QR code (default: 400)
+   */
+  @IsOptional()
+  @ArrayToLastElement()
+  @TryTransformTo('int')
+  @IsNumber()
+  @Min(1)
+  @Max(1000)
+  size = 400
+
+  /**
+   * Margin from edge (default: 1)
+   */
+  @IsOptional()
+  @ArrayToLastElement()
+  @TryTransformTo('int')
+  @IsNumber()
+  @Min(0)
+  @Max(10)
+  margin = 1
+
+  /**
+   * Whether to download the image (default: false)
+   */
+  @IsOptional()
+  @ArrayToLastElement()
+  @TransformStringToBoolean()
+  download = false
 }

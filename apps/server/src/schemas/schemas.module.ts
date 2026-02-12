@@ -1,4 +1,3 @@
-import { BullModule } from '@nestjs/bullmq'
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'
 import {
   ApiHook,
@@ -7,19 +6,12 @@ import {
   SchemaHook,
   StatsHook,
 } from '@nuvix/core/resolvers'
-import { QueueFor } from '@nuvix/utils'
 import { CollectionsModule } from './collections/collections.module'
 import { SchemasController } from './schemas.controller'
 import { SchemasService } from './schemas.service'
 
 @Module({
-  imports: [
-    CollectionsModule,
-    BullModule.registerQueue(
-      { name: QueueFor.STATS },
-      { name: QueueFor.AUDITS },
-    ),
-  ],
+  imports: [CollectionsModule],
   controllers: [SchemasController],
   providers: [SchemasService],
 })

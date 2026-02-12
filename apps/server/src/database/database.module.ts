@@ -15,17 +15,13 @@ import { DatabaseService } from './database.service'
   controllers: [DatabaseController],
   providers: [DatabaseService, DatabaseQueue],
   imports: [
-    BullModule.registerQueue(
-      {
-        name: QueueFor.DATABASE,
-        defaultJobOptions: {
-          removeOnComplete: true,
-          attempts: 2,
-        },
+    BullModule.registerQueue({
+      name: QueueFor.DATABASE,
+      defaultJobOptions: {
+        removeOnComplete: true,
+        attempts: 2,
       },
-      { name: QueueFor.STATS },
-      { name: QueueFor.AUDITS },
-    ),
+    }),
   ],
 })
 export class DatabaseModule implements NestModule {

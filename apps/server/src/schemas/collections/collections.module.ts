@@ -24,13 +24,9 @@ import { IndexesService } from './indexes/indexes.service'
 
 @Module({
   imports: [
-    BullModule.registerQueue(
-      {
-        name: QueueFor.COLLECTIONS,
-      },
-      { name: QueueFor.STATS },
-      { name: QueueFor.AUDITS },
-    ),
+    BullModule.registerQueue({
+      name: QueueFor.COLLECTIONS,
+    }),
   ],
   controllers: [
     CollectionsController,

@@ -1,153 +1,156 @@
-# Nuvix
-
 <div align="center">
 
-**Modern backend infrastructure for ambitious developers.**
+<img src="https://github.com/Nuvix-Tech/console/raw/main/apps/www/public/images/dashboard/hero_dark.png" width="100%" alt="Nuvix" />
 
-[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&logoColor=white)](https://discord.gg/2fWv2T6RzK)
-[![X (Twitter)](https://img.shields.io/badge/Follow%20on%20X-000000?logo=x)](https://x.com/nuvixtech)
+# Nuvix
+
+### The open-source backend for secure, AI-ready applications.
+
+Auth. Database. Storage. Messaging. One platform. Self-host anywhere.
+
 [![License](https://img.shields.io/badge/License-FSL%201.1%20Apache%202.0-blue.svg)](LICENSE)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?logo=discord&logoColor=white)](https://discord.gg/2fWv2T6RzK)
+[![X](https://img.shields.io/badge/Follow-@__nuvix-000?logo=x)](https://x.com/_nuvix)
+[![Docs](https://img.shields.io/badge/Docs-docs.nuvix.in-8b5cf6)](https://docs.nuvix.in)
+
+[Documentation](https://docs.nuvix.in) · [Discord](https://discord.gg/2fWv2T6RzK) · [Report Bug](https://github.com/Nuvix-Tech/nuvix/issues) · [Request Feature](https://github.com/Nuvix-Tech/nuvix/issues)
 
 </div>
-
-<p align="center">
-  <img src="https://github.com/Nuvix-Tech/console/raw/main/apps/www/public/images/dashboard/hero_dark.png" width="100%" alt="Nuvix Dashboard" />
-</p>
-
----
-
-## What is Nuvix?
-
-Nuvix is a backend platform that helps you build secure and scalable applications. It combines authentication, a multi-schema database, file storage, and messaging into a single system you can self-host anywhere.
-
-Whether you're building for web, mobile, or server environments, Nuvix provides a solid backend foundation without unnecessary complexity.
-
----
-
-## Key Features
-
-### Authentication
-
-Built-in user accounts, sessions, and team management. Designed for secure, multi-tenant applications.
-
-### Database
-
-A flexible, permission-driven data layer powered by PostgreSQL, featuring the Nuvix three-schema system:
-
-#### Document Schemas
-
-A NoSQL-style model for fast iteration. Define attributes and indexes without writing SQL.
-
-#### Managed Schemas
-
-Structured PostgreSQL tables enhanced with Nuvix automation:
-
-* Auto-generated CRUD policies
-* Automatic Row-Level Security
-* Built-in permission tables
-* Secure by default
-
-#### Unmanaged Schemas
-
-Full SQL freedom. Bring your own tables, views, and logic with no restrictions.
-
-All schema types share a consistent API and follow the same permission rules.
-
-### Storage
-
-A simple, permission-aware file system with support for S3-compatible drivers or local storage.
-
-### Messaging
-
-A unified interface for outbound communication:
-
-* Email
-* SMS
-* Push notifications
-
-Templates and integrations included.
 
 ---
 
 ## Why Nuvix?
 
-### Developer-first
+Building a modern app means stitching together auth providers, databases, file storage, and messaging services. That's 4+ vendors, 4+ dashboards, and 4+ billing pages before you write a single line of product code.
 
-TypeScript everywhere. Clean APIs. Predictable behavior. Minimal setup.
+**Nuvix replaces all of that.** One backend. One API. One permission model. Fully self-hostable.
 
-### Secure by Default
-
-Permission checks apply across database, storage, messaging, and project boundaries.
-
-Managed schemas include automatic RLS and policy generation—no SQL required.
-
-### Self-Host Anywhere
-
-Deploy using simple containers on any cloud, server, or local environment.
-
-### Flexible by Design
-
-Mix and match schema types depending on your project needs:
-
-* Prototype quickly with Document Schemas
-* Scale confidently with Managed Schemas
-* Take full control with Unmanaged Schemas
+Whether you're building an **AI-powered SaaS**, a **mobile app**, or an **internal tool**, Nuvix gives you the secure infrastructure to ship fast and scale without limits.
 
 ---
 
-## Quick Start
+## ✨ Features
 
-Get Nuvix running locally with Docker and manage everything through the admin console.
+### 🔐 Authentication & Security
+Multi-tenant auth with user accounts, sessions, teams, and role-based access. Security is not an afterthought; it's built into every layer. Managed schemas auto-generate Row-Level Security policies so your data is locked down from day one.
 
-### Prerequisites
-- Docker & Docker Compose
-- Bun (for development)
+### 🗄️ Three-Schema Database
+PostgreSQL-powered. Pick the right model for each use case:
 
-### Installation
+| Schema | Best For | What You Get |
+|---|---|---|
+| **Document** | Rapid prototyping, MVPs | NoSQL-style flexibility, zero SQL needed |
+| **Managed** | Production apps at scale | Auto-generated CRUD policies, RLS, permission tables |
+| **Unmanaged** | Full control, custom logic | Raw SQL, your tables, your views, no restrictions |
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/Nuvix-Tech/nuvix.git
-   cd nuvix
-   ```
+Mix and match across a single project. All schemas share one unified API.
 
-2. **Start with Docker Compose:**
-   ```bash
-   cp .env.example .env
-   # Edit .env to configure your setup (e.g., admin credentials, database settings)
-   docker compose up -d
-   ```
+### 🤖 AI-Ready Infrastructure
+Build AI applications with confidence. Nuvix provides the secure data layer, auth, and storage that AI-powered products need. Store embeddings, manage user sessions, handle file uploads for ML pipelines, and enforce granular permissions on every request.
 
-3. **Access the Console:**
-   - Open [http://localhost:3000](http://localhost:3000) in your browser
-   - Set up your first project and start building!
+### 📦 Storage
+Permission-aware file system with S3-compatible drivers or local storage. Upload, serve, and manage files with the same permission rules as your database.
 
-For detailed setup instructions, see our [documentation](https://docs.nuvix.in).
+### 📬 Messaging
+Email, SMS, and push notifications through a single API. Built-in templates and provider integrations so you're not wiring up Sendgrid, Twilio, and Firebase separately.
 
 ---
 
-## Resources
+## 🚀 Quick Start
 
-- **[Repository](https://github.com/Nuvix-Tech/nuvix)** - Source code and issues
-- **[Console](https://github.com/Nuvix-Tech/console)** - Admin dashboard and management interface
-- **[Documentation](https://docs.nuvix.in)** - Comprehensive guides and API reference *(coming soon)*
-- **[Discord Community](https://discord.gg/2fWv2T6RzK)** - Get help and share ideas
-- **[X (Twitter)](https://x.com/nuvixtech)** - Follow for updates
+Get running in under 2 minutes:
+
+```bash
+git clone https://github.com/Nuvix-Tech/docker.git nuvix
+cd nuvix
+cp .env.example .env    # Configure your secrets
+docker compose up -d
+```
+
+Open **[http://localhost:3000](http://localhost:3000)** and create your first project.
+
+That's it. No complex setup. No 47-step guide.
+
+### Development
+
+```bash
+bun install        # Install dependencies
+bun run dev        # Start dev server
+bun run test       # Run tests
+bun run lint       # Lint with Biome
+```
+
+**Requirements:** [Docker](https://docs.docker.com/get-docker/) + [Bun](https://bun.sh) ≥ 1.3.7
+
+For detailed self-hosting instructions, see the **[Self-Hosting Guide](https://docs.nuvix.in/self-hosting)**.
 
 ---
 
-## Contributing
+## 🏗️ Architecture
 
-We welcome contributions of all kinds: features, bug fixes, docs, and feedback.
+```
+nuvix/
+├── apps/
+│   ├── server          # Core API server
+│   └── platform        # Platform services
+├── libs/
+│   ├── core            # Shared core logic
+│   ├── pg-meta         # PostgreSQL metadata layer
+│   └── utils           # Common utilities
+├── configs/            # Default configurations
+├── docs/               # Documentation source
+└── scripts/            # Build & deployment scripts
+```
 
-- Check out our [Contributing Guide](CONTRIBUTING.md)
-- Join the [Discord](https://discord.gg/2fWv2T6RzK) for discussions
-- Report issues on [GitHub](https://github.com/Nuvix-Tech/nuvix/issues)
-- By submitting pull requests, you confirm that Nuvix can use, modify, copy, and redistribute the contribution, under the terms of its choice.
+---
+
+## 🛡️ Security First
+
+Nuvix is designed with a **zero-trust permission model**:
+
+- **Every request** passes through permission checks across database, storage, and messaging
+- **Managed schemas** auto-generate Row-Level Security policies, so you don't need to write them by hand
+- **Project isolation** keeps tenant data separated at the database level
+- **Self-hosted** means your data never leaves your infrastructure
+
+You don't "enable" security in Nuvix. It's the default.
+
+---
+
+## 🔗 Resources
+
+| | |
+|---|---|
+| 📖 **[Documentation](https://docs.nuvix.in)** | Guides, API reference, and tutorials |
+| 🖥️ **[Console](https://github.com/Nuvix-Tech/console)** | Admin dashboard (separate repo) |
+| 💬 **[Discord](https://discord.gg/2fWv2T6RzK)** | Community, help, and discussion |
+| 📢 **[X / Twitter](https://x.com/nuvixtech)** | Updates and announcements |
+| 🐛 **[Issues](https://github.com/Nuvix-Tech/nuvix/issues)** | Bug reports and feature requests |
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions of all kinds: code, docs, bug reports, and ideas.
+
+1. Read the [Contributing Guide](CONTRIBUTING.md)
+2. Browse [open issues](https://github.com/Nuvix-Tech/nuvix/issues)
+3. Join the [Discord](https://discord.gg/2fWv2T6RzK)
+
+> By submitting a pull request, you agree that Nuvix may use, modify, copy, and redistribute the contribution under terms of its choosing.
+
+## License
+
+[FSL-1.1-Apache-2.0](LICENSE)
+
 ---
 
 <div align="center">
 
-**Built with ❤️ by the Nuvix team**
+## ⭐ Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=Nuvix-Tech/nuvix&type=Date)](https://star-history.com/#Nuvix-Tech/nuvix&Date)
+
+**If Nuvix saves you time, drop a star. It helps more than you think.** ⭐
 
 </div>
