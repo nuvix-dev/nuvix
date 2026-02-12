@@ -197,19 +197,31 @@ export class AvatarsService {
    */
   async getFavicon({ url }: { url: string }) {
     try {
-      const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(url)}`
-      const response = await fetch(faviconUrl)
+      const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(url.trim())}`
+      const response = await fetch(faviconUrl, {
+        signal: AbortSignal.timeout(5000),
+      })
+
       if (!response.ok) {
         throw new Exception(
           Exception.AVATAR_REMOTE_URL_FAILED,
           'Favicon not found',
         )
       }
+
       const buffer = await response.arrayBuffer()
       return new StreamableFile(Buffer.from(buffer), {
         type: 'image/png',
       })
-    } catch (error) {
+    } catch (error: any) {
+      if (error.name === 'AbortError') {
+        throw new Exception(
+          Exception.AVATAR_REMOTE_URL_FAILED,
+          'Favicon fetch timeout',
+        )
+      } else if (error instanceof Exception) {
+        throw error
+      }
       throw new Exception(
         Exception.AVATAR_REMOTE_URL_FAILED,
         'Failed to fetch favicon',
