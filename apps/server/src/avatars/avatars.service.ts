@@ -214,7 +214,7 @@ export class AvatarsService {
         type: 'image/png',
       })
     } catch (error: any) {
-      if (error.name === 'AbortError') {
+      if (error.name === 'TimeoutError') {
         throw new Exception(
           Exception.AVATAR_REMOTE_URL_FAILED,
           'Favicon fetch timeout',
