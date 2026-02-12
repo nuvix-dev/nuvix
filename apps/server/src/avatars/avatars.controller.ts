@@ -2,7 +2,6 @@ import {
   Controller,
   Param,
   Query,
-  Res,
   StreamableFile,
   UseInterceptors,
 } from '@nestjs/common'
@@ -34,9 +33,8 @@ export class AvatarsController {
   async getCreditCard(
     @Param() { code }: CreditCardParamDTO,
     @Query() query: CodesQuerDTO,
-    @Res({ passthrough: true }) res: NuvixRes,
   ): Promise<StreamableFile> {
-    return this.avatarsService.getCreditCard({ code, res, ...query })
+    return this.avatarsService.getCreditCard({ code, ...query })
   }
 
   @Get('browsers/:code', {
@@ -46,9 +44,8 @@ export class AvatarsController {
   async getBrowser(
     @Param('code', ParseDuplicatePipe) code: string,
     @Query() query: CodesQuerDTO,
-    @Res({ passthrough: true }) res: NuvixRes,
   ): Promise<StreamableFile> {
-    return this.avatarsService.getBrowser({ code, res, ...query })
+    return this.avatarsService.getBrowser({ code, ...query })
   }
 
   @Get('flags/:code', {
@@ -59,9 +56,8 @@ export class AvatarsController {
   async getFlag(
     @Param('code', ParseDuplicatePipe) code: string,
     @Query() query: CodesQuerDTO,
-    @Res({ passthrough: true }) res: NuvixRes,
   ): Promise<StreamableFile> {
-    return this.avatarsService.getFlag({ code, res, ...query })
+    return this.avatarsService.getFlag({ code, ...query })
   }
 
   @Get('initials', {
@@ -71,11 +67,9 @@ export class AvatarsController {
   })
   async generateAvatar(
     @Query() query: InitialsQueryDTO,
-    @Res({ passthrough: true }) res: NuvixRes,
   ): Promise<StreamableFile> {
     return this.avatarsService.generateAvatar({
       ...query,
-      res,
     })
   }
 
@@ -83,10 +77,16 @@ export class AvatarsController {
     summary: 'Get favicon image',
     description: 'Returns the favicon image for a given URL',
   })
-  async getFavicon(
-    @Query() { url }: FaviconQueryDTO,
-    @Res({ passthrough: true }) res: NuvixRes,
-  ): Promise<StreamableFile> {
-    return this.avatarsService.getFavicon({ url, res })
+  async getFavicon(@Query() { url }: FaviconQueryDTO): Promise<StreamableFile> {
+    return this.avatarsService.getFavicon({ url })
+  }
+
+  @Get('qr', {
+    summary: 'Generate QR code image',
+    description:
+      'Generates a QR code image based on the provided data and customization options',
+  })
+  async generateQr(@Query() query: QrQueryDTO): Promise<StreamableFile> {
+    return this.avatarsService.generateQr({ ...query })
   }
 }

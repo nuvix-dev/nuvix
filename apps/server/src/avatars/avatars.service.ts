@@ -7,7 +7,8 @@ import { Resvg } from '@resvg/resvg-js'
 import { browserCodes, creditCards, flags } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
 import sharp from 'sharp'
-import { CodesQuerDTO, InitialsQueryDTO } from './DTO/misc.dto'
+import { CodesQuerDTO, InitialsQueryDTO, QrQueryDTO } from './DTO/misc.dto'
+import QRCode from 'qrcode'
 
 @Injectable()
 export class AvatarsService {
@@ -25,10 +26,7 @@ export class AvatarsService {
     background,
     circle,
     quality,
-    res,
-  }: {
-    res: NuvixRes
-  } & InitialsQueryDTO) {
+  }: InitialsQueryDTO) {
     try {
       const MAX_DIM = 2000
       const MIN_DIM = 0
@@ -65,8 +63,9 @@ export class AvatarsService {
 
       const cachedImage = this.getCachedImage(cacheKey)
       if (cachedImage) {
-        res.header('Content-Type', 'image/png')
-        return new StreamableFile(cachedImage)
+        return new StreamableFile(cachedImage, {
+          type: 'image/png',
+        })
       }
 
       // Generate SVG
@@ -107,8 +106,9 @@ export class AvatarsService {
       // Cache result
       this.cacheImage(cacheKey, processedImage)
 
-      res.header('Content-Type', 'image/png')
-      return new StreamableFile(processedImage)
+      return new StreamableFile(processedImage, {
+        type: 'image/png',
+      })
     } catch (error) {
       this.logger?.error?.('Avatar generation failed', error)
       throw new Exception(
@@ -180,55 +180,40 @@ export class AvatarsService {
   /**
    * Retrieves the image for a credit card based on the provided code and query parameters.
    */
-  async getCreditCard({
-    code,
-    res,
-    ...query
-  }: { code: string; res: NuvixRes } & CodesQuerDTO) {
+  async getCreditCard({ code, ...query }: { code: string } & CodesQuerDTO) {
     return this.avatarCallback({
       type: 'credit-cards',
       code,
       ...query,
-      res,
     })
   }
 
   /**
    * Retrieves the image for a browser based on the provided code and query parameters.
    */
-  async getBrowser({
-    code,
-    res,
-    ...query
-  }: { code: string; res: NuvixRes } & CodesQuerDTO) {
+  async getBrowser({ code, ...query }: { code: string } & CodesQuerDTO) {
     return this.avatarCallback({
       type: 'browsers',
       code,
       ...query,
-      res,
     })
   }
 
   /**
    * Retrieves the image for a country flag based on the provided code and query parameters.
    */
-  async getFlag({
-    code,
-    res,
-    ...query
-  }: { code: string; res: NuvixRes } & CodesQuerDTO) {
+  async getFlag({ code, ...query }: { code: string } & CodesQuerDTO) {
     return this.avatarCallback({
       type: 'flags',
       code,
       ...query,
-      res,
     })
   }
 
   /**
    * Retrieves the favicon image for a given URL.
    */
-  async getFavicon({ url, res }: { url: string; res: NuvixRes }) {
+  async getFavicon({ url }: { url: string }) {
     try {
       const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain_url=${encodeURIComponent(url)}`
       const response = await fetch(faviconUrl)
@@ -239,14 +224,33 @@ export class AvatarsService {
         )
       }
       const buffer = await response.arrayBuffer()
-      res.header('Content-Type', 'image/png')
-      return new StreamableFile(Buffer.from(buffer))
+      return new StreamableFile(Buffer.from(buffer), {
+        type: 'image/png',
+      })
     } catch (error) {
       throw new Exception(
         Exception.AVATAR_REMOTE_URL_FAILED,
         'Failed to fetch favicon',
       )
     }
+  }
+
+  async generateQr(params: QrQueryDTO): Promise<StreamableFile> {
+    const { text, size, margin, download } = params
+
+    const buffer = await QRCode.toBuffer(text, {
+      width: size,
+      margin,
+      type: 'png',
+    })
+
+    return new StreamableFile(buffer, {
+      type: 'image/png',
+      disposition: download
+        ? 'attachment; filename="qr.png"'
+        : 'inline; filename="qr.png"',
+      length: buffer.length,
+    })
   }
 
   private getInitials(name: string): string {
@@ -310,14 +314,12 @@ export class AvatarsService {
     width,
     height,
     quality,
-    res,
   }: {
     type: 'flags' | 'browsers' | 'credit-cards'
     code: string
     width: number
     height: number
     quality: number
-    res: NuvixRes
   }) {
     code = code.toLowerCase()
     let set: Record<string, { name: string; path: string }> = {}
@@ -349,8 +351,8 @@ export class AvatarsService {
       .png({ quality })
       .toBuffer()
 
-    res.header('Cache-Control', 'private, max-age=2592000') // 30 days
-    res.header('Content-Type', 'image/png')
-    return new StreamableFile(processedImage)
+    return new StreamableFile(processedImage, {
+      type: 'image/png',
+    })
   }
 }
