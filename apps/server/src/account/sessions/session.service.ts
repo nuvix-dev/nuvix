@@ -14,6 +14,8 @@ import {
   DeletesJobData,
   MailJob,
   MailQueueOptions,
+  MessagingJob,
+  MessagingJobInternalData,
 } from '@nuvix/core/resolvers'
 import { URLValidator } from '@nuvix/core/validators'
 import {
@@ -75,6 +77,12 @@ export class SessionService {
     private readonly mailsQueue: Queue<MailQueueOptions>,
     @InjectQueue(QueueFor.DELETES)
     private readonly deletesQueue: Queue<DeletesJobData, unknown, DeleteType>,
+    @InjectQueue(QueueFor.MESSAGING)
+    private readonly messagingQueue: Queue<
+      MessagingJobInternalData,
+      unknown,
+      MessagingJob
+    >,
   ) {
     this.geodb = this.coreService.getGeoDb()
   }
@@ -1835,8 +1843,14 @@ export class SessionService {
         .replace('{{project}}', project.get('name'))
         .replace('{{secret}}', secret)
 
-      // TODO: Implement SMS queue functionality
-      console.log(`SMS to ${phone}: ${messageContent}`)
+      await this.messagingQueue.add(MessagingJob.INTERNAL, {
+        message: {
+          to: [phone],
+          data: {
+            content: messageContent,
+          },
+        },
+      })
     }
 
     createdToken.set('secret', Auth.encodeSession(user.getId(), secret))

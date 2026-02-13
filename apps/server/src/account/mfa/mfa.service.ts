@@ -6,7 +6,12 @@ import { AppConfigService } from '@nuvix/core'
 import type { SmtpConfig } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Auth, Detector, LocaleTranslator } from '@nuvix/core/helpers'
-import { MailJob, MailQueueOptions } from '@nuvix/core/resolvers'
+import {
+  MailJob,
+  MailQueueOptions,
+  MessagingJob,
+  MessagingJobInternalData,
+} from '@nuvix/core/resolvers'
 import { MfaType, TOTP } from '@nuvix/core/validators'
 import { Database, Doc, ID, Permission, Role } from '@nuvix/db'
 import { QueueFor } from '@nuvix/utils'
@@ -32,6 +37,12 @@ export class MfaService {
     private readonly appConfig: AppConfigService,
     @InjectQueue(QueueFor.MAILS)
     private readonly mailsQueue: Queue<MailQueueOptions>,
+    @InjectQueue(QueueFor.MESSAGING)
+    private readonly messagingQueue: Queue<
+      MessagingJobInternalData,
+      unknown,
+      MessagingJob
+    >,
   ) {}
 
   /**
@@ -365,9 +376,14 @@ export class MfaService {
 
         const phone = user.get('phone')
 
-        // TODO: Implement SMS queue functionality
-        console.log(`SMS MFA Challenge to ${phone}: ${smsContent}`)
-
+        await this.messagingQueue.add(MessagingJob.INTERNAL, {
+          message: {
+            to: [phone],
+            data: {
+              content: smsContent,
+            },
+          },
+        })
         // TODO: Implement usage metrics and abuse tracking
         break
       }
