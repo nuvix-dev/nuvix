@@ -117,7 +117,6 @@
   "trustedDependencies": [
     "@nestjs/core",
     "@scarf/scarf",
-    "esbuild",
-    "msgpackr-extract"
+    "esbuild"
   ]
 }
