@@ -1,0 +1,82 @@
+name: Build and Publish Docker Images
+
+on:
+  push:
+    tags:
+      - "v*.*.*" # Triggers on semantic version tags (e.g., v1.0.0)
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write # Required for signing/attestations in 2026
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app_name: server
+            image_name: nuvix/server
+          - app_name: platform
+            image_name: nuvix/platform
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Setup QEMU for multi-platform (arm64) support
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      # Setup Buildx for advanced caching and multi-platform builds
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Extract metadata (Tags, Labels) automatically
+      - name: Extract Metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ${{ matrix.image_name }}
+            ghcr.io/${{ github.repository_owner }}/${{ matrix.app_name }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest,enable=${{ !contains(github.ref, '-') }}
+
+      - name: Build and Push
+        uses: docker/build-push-action@v6 # Updated to v6 for 2026 features
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          build-args: |
+            APP_NAME=${{ matrix.app_name }}
+            VERSION=${{ steps.meta.outputs.version }}
+            VCS_REF=${{ github.sha }}
+            BUILD_DATE=${{ steps.meta.outputs.created }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Advanced Caching
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # Security Attestations (Best Practice 2026)
+          sbom: true
+          provenance: mode=max
