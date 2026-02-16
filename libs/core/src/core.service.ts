@@ -22,6 +22,7 @@ export class CoreService implements OnModuleDestroy {
   private geoDb: Reader<CountryResponse> | null = null
   private redisInstance: IORedis | null = null
   private readonly projectPool: Pool | null = null
+  private postgresPool: Pool | null = null
 
   constructor(private readonly appConfig: AppConfigService) {
     this.geoDb = this.createGeoDb()
@@ -114,6 +115,41 @@ export class CoreService implements OnModuleDestroy {
       this.logger.error('Main pool error:', err)
     })
 
+    return pool
+  }
+
+  public getPoolForPostgres(): Pool {
+    if (this.postgresPool) {
+      return this.postgresPool
+    }
+    const options = this.appConfig.getDatabaseConfig()
+
+    const pool = new Pool({
+      database: DEFAULT_DATABASE,
+      user: DatabaseRole.POSTGRES,
+      password: options.postgres.password || options.postgres.adminPassword,
+      host: options.useExternalPool
+        ? options.postgres.pool.host!
+        : options.postgres.host,
+      port: options.useExternalPool
+        ? options.postgres.pool.port
+        : options.postgres.port,
+      ssl: this.appConfig.getDatabaseConfig().postgres.ssl
+        ? { rejectUnauthorized: false }
+        : undefined,
+      statement_timeout: 30000,
+      query_timeout: 30000,
+      application_name: 'nuvix-main',
+      keepAliveInitialDelayMillis: 10000,
+      max: options.postgres.maxConnections,
+      idleTimeoutMillis: 5000,
+    })
+
+    pool.on('error', err => {
+      this.logger.error('Postgres pool error:', err)
+    })
+
+    this.postgresPool = pool
     return pool
   }
 
