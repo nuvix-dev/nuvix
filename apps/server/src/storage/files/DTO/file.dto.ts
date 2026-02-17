@@ -1,7 +1,11 @@
 import { OmitType } from '@nestjs/swagger'
-import { IsCustomID, IsUID } from '@nuvix/core/validators'
+import {
+  ArrayToLastElement,
+  IsCustomID,
+  IsUID,
+  TryTransformTo,
+} from '@nuvix/core/validators'
 import { configuration } from '@nuvix/utils'
-import { Type } from 'class-transformer'
 import {
   ArrayMaxSize,
   IsArray,
@@ -58,7 +62,8 @@ export class PreviewFileQueryDTO {
    * Resize preview image width, integer between 0 and 4000.
    */
   @IsOptional()
-  @Type(() => Number)
+  @ArrayToLastElement()
+  @TryTransformTo('number')
   @IsNumber()
   @Min(0)
   @Max(4000)
@@ -68,7 +73,8 @@ export class PreviewFileQueryDTO {
    * Resize preview image height, integer between 0 and 4000.
    */
   @IsOptional()
-  @Type(() => Number)
+  @ArrayToLastElement()
+  @TryTransformTo('number')
   @IsNumber()
   @Min(0)
   @Max(4000)
@@ -78,6 +84,7 @@ export class PreviewFileQueryDTO {
    * Image crop gravity.
    */
   @IsOptional()
+  @ArrayToLastElement()
   @IsString()
   @IsIn([
     'center',
@@ -96,7 +103,8 @@ export class PreviewFileQueryDTO {
    * Preview image quality, integer between 0 and 100.
    */
   @IsOptional()
-  @Type(() => Number)
+  @ArrayToLastElement()
+  @TryTransformTo('int')
   @IsNumber()
   @Min(0)
   @Max(100)
@@ -106,7 +114,8 @@ export class PreviewFileQueryDTO {
    * Preview image border in pixels, integer between 0 and 100.
    */
   @IsOptional()
-  @Type(() => Number)
+  @ArrayToLastElement()
+  @TryTransformTo('int')
   @IsNumber()
   @Min(0)
   @Max(100)
@@ -116,6 +125,7 @@ export class PreviewFileQueryDTO {
    * Preview image border color, valid HEX without # prefix.
    */
   @IsOptional()
+  @ArrayToLastElement()
   @IsString()
   borderColor?: string
 
@@ -123,7 +133,8 @@ export class PreviewFileQueryDTO {
    * Preview image border radius in pixels, integer between 0 and 4000.
    */
   @IsOptional()
-  @Type(() => Number)
+  @ArrayToLastElement()
+  @TryTransformTo('int')
   @IsNumber()
   @Min(0)
   @Max(4000)
@@ -133,7 +144,8 @@ export class PreviewFileQueryDTO {
    * Preview image opacity, number between 0 and 1.
    */
   @IsOptional()
-  @Type(() => Number)
+  @ArrayToLastElement()
+  @TryTransformTo('number')
   @IsNumber()
   @Min(0)
   @Max(1)
@@ -143,7 +155,8 @@ export class PreviewFileQueryDTO {
    * Preview image rotation in degrees, integer between -360 and 360.
    */
   @IsOptional()
-  @Type(() => Number)
+  @ArrayToLastElement()
+  @TryTransformTo('int')
   @IsNumber()
   @Min(-360)
   @Max(360)
@@ -153,6 +166,7 @@ export class PreviewFileQueryDTO {
    * Preview image background color, valid HEX without # prefix.
    */
   @IsOptional()
+  @ArrayToLastElement()
   @IsString()
   background?: string
 
@@ -160,6 +174,7 @@ export class PreviewFileQueryDTO {
    * Output format type (jpeg, jpg, png, gif, webp).
    */
   @IsOptional()
+  @ArrayToLastElement()
   @IsString()
   @IsIn(['jpeg', 'jpg', 'png', 'gif', 'webp'])
   output?: string

@@ -37,7 +37,7 @@ import { TeamsService } from './teams.service'
 
 @Namespace('teams')
 @UseGuards(ProjectGuard)
-@Auth([AuthType.KEY, AuthType.SESSION, AuthType.JWT])
+@Auth([AuthType.KEY, AuthType.SESSION, AuthType.JWT, AuthType.ADMIN])
 @Controller({ version: ['1'], path: 'teams' })
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class TeamsController {
