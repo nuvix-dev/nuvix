@@ -61,9 +61,7 @@ LABEL org.opencontainers.image.title="Nuvix ${APP_NAME}" \
 
 WORKDIR /app
 
-USER bun
-
-COPY --from=build --chown=bun:bun /app/dist/${APP_NAME} ./
-COPY --from=prod-deps --chown=bun:bun /prod/${APP_NAME}/node_modules ./node_modules
+COPY --from=build /app/dist/${APP_NAME} ./
+COPY --from=prod-deps /prod/${APP_NAME}/node_modules ./node_modules
 
 CMD ["bun", "run", "start"]
