@@ -1,6 +1,6 @@
 import { Processor } from '@nestjs/bullmq'
 import { Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
-import { type Database, Doc } from '@nuvix/db'
+import { Authorization, type Database, Doc } from '@nuvix/db'
 import {
   configuration,
   fnv1a128,
@@ -112,10 +112,12 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
             this.logger.log(
               `Flushing ${stats.length} stats logs for project ${projectId}`,
             )
-            await dbForProject.createOrUpdateDocumentsWithIncrease(
-              'stats',
-              'value',
-              stats,
+            await Authorization.skip(() =>
+              dbForProject.createOrUpdateDocumentsWithIncrease(
+                'stats',
+                'value',
+                stats,
+              ),
             )
           } catch (error) {
             this.logger.error(
