@@ -2174,7 +2174,7 @@ export class SessionService {
     const _provider = providers.find(p => p.key === provider)
 
     if (!_provider) {
-      throw new Exception(Exception.PROVIDER_NOT_FOUND) // TODO: improve & clear error
+      throw new Exception(Exception.PROJECT_PROVIDER_UNSUPPORTED) // TODO: improve & clear error
     }
 
     return _provider

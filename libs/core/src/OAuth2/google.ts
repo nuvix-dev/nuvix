@@ -28,13 +28,6 @@ export class GoogleOAuth2 extends OAuth2 {
   }
 
   protected async getTokens(code: string): Promise<Record<string, any>> {
-    console.log({
-      code: code,
-      client_id: this.appID,
-      client_secret: this.appSecret,
-      redirect_uri: this.callback,
-      grant_type: 'authorization_code',
-    })
     if (Object.keys(this.tokens).length === 0) {
       const params = new URLSearchParams({
         code: code,
