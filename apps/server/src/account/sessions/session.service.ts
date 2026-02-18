@@ -321,7 +321,7 @@ export class SessionService {
     if (provider) {
       const providerInfo = this.getProviderConfig(project, provider)
       const appId = providerInfo.appId
-      const appSecret = providerInfo.secret
+      const appSecret = Auth.decryptIfDefined(providerInfo.secret)
 
       const oauth2: OAuth2 = new OAuth2Class(appId, appSecret, '', [], [])
       await oauth2.refreshTokens(refreshToken)
@@ -643,12 +643,8 @@ export class SessionService {
       )
     }
 
-    const appId = providerInfo.appId ?? ''
-    const appSecret = providerInfo.secret ?? ''
-
-    // if (appSecret && typeof appSecret === 'object' && appSecret.version) {
-    //   // TODO: Handle encrypted app secret
-    // }
+    const appId = providerInfo.appId
+    const appSecret = Auth.decryptIfDefined(providerInfo.secret)
 
     if (!appId || !appSecret) {
       throw new Exception(
@@ -713,7 +709,7 @@ export class SessionService {
     const validateURL = new URLValidator()
     const providerInfo = this.getProviderConfig(project, provider)
     const appId = providerInfo.appId ?? ''
-    const appSecret = providerInfo.secret ?? ''
+    const appSecret = Auth.decryptIfDefined(providerInfo.secret) ?? ''
     const providerEnabled = providerInfo.enabled ?? false
     const AuthClass = await getOAuth2Class(provider)
     const oauth2 = new AuthClass(appId, appSecret, callback)
@@ -778,10 +774,6 @@ export class SessionService {
         'Missing OAuth2 code. Please contact the team for additional support.',
       )
     }
-
-    // if (appSecret && typeof appSecret === 'object' && appSecret.version) {
-    //   // TODO: Handle encrypted app secret decryption
-    // }
 
     let accessToken = ''
     let refreshToken = ''
@@ -1199,12 +1191,8 @@ export class SessionService {
       )
     }
 
-    const appId = providerInfo.appId ?? ''
-    const appSecret = providerInfo.secret ?? ''
-
-    // if (appSecret && typeof appSecret === 'object' && appSecret.version) {
-    //   // TODO: Handle encrypted app secret decryption
-    // }
+    const appId = providerInfo.appId
+    const appSecret = Auth.decryptIfDefined(providerInfo.secret)
 
     if (!appId || !appSecret) {
       throw new Exception(

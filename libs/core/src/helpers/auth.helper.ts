@@ -423,4 +423,11 @@ export class Auth {
       decipher.update(ciphertext, undefined, 'utf8') + decipher.final('utf8')
     )
   }
+
+  static decryptIfDefined(text?: string | null): string | null {
+    if (text === null || text === undefined) {
+      return null
+    }
+    return Auth.decrypt(text)
+  }
 }
