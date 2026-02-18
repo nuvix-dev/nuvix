@@ -1,5 +1,6 @@
-import { Exclude, Expose } from 'class-transformer'
+import { Exclude, Expose, Transform } from 'class-transformer'
 import { BaseModel } from './base.model'
+import { Auth } from '../helpers'
 
 @Exclude()
 export class AuthProviderModel extends BaseModel {
@@ -21,7 +22,9 @@ export class AuthProviderModel extends BaseModel {
   /**
    * OAuth 2.0 application secret. Might be JSON string if provider requires extra configuration.
    */
-  @Expose() secret = ''
+  @Transform(({ value }) => Auth.decryptIfDefined(value)) // Decrypt the secret when transforming to class instance
+  @Expose()
+  declare secret: string
 
   /**
    * Auth Provider is active and can be used to create session.

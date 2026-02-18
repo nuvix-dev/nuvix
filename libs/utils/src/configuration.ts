@@ -55,15 +55,14 @@ const nxconfig = () =>
 
     security: {
       jwtSecret: process.env.NUVIX_JWT_SECRET,
-      encryptionKey: process.env.NUVIX_ENCRYPTION_KEY,
-      get dbEncryptionKey() {
-        const key = process.env.NUVIX_DATABASE_ENCRYPTION_KEY
+      get encryptionKey() {
+        const key = process.env.NUVIX_ENCRYPTION_KEY
         if (!key) {
           Logger.warn(
-            'The environment variable NUVIX_DATABASE_ENCRYPTION_KEY is not set. Using the default encryption key, which is insecure. Please set a custom key in production environments.',
+            'The environment variable NUVIX_ENCRYPTION_KEY is not set. Using the default encryption key, which is insecure. Please set a custom key in production environments.',
           )
         }
-        return key || 'acd3462d9128abcd' // 16-byte key for AES-128-GCM
+        return key || 'acd3462d9128abcd'
       },
     },
 
@@ -265,27 +264,9 @@ export function validateRequiredConfig() {
 
   const missing: string[] = requiredVars.filter(envVar => !process.env[envVar])
 
-  const isProduction = process.env.NODE_ENV === 'production'
-  if (isProduction && !process.env.NUVIX_DATABASE_ENCRYPTION_KEY) {
-    missing.push('NUVIX_DATABASE_ENCRYPTION_KEY')
-  }
-
   if (missing.length > 0) {
     throw new Error(
       `Missing required environment variables: ${missing.join(', ')}`,
-    )
-  }
-
-  const dbKey =
-    process.env.NUVIX_DATABASE_ENCRYPTION_KEY ??
-    configuration.security.dbEncryptionKey
-
-  const keyBytes = Buffer.byteLength(dbKey, 'utf8')
-  const validKeySizes = [16, 24, 32] as const
-
-  if (!validKeySizes.includes(keyBytes as 16 | 24 | 32)) {
-    throw new Error(
-      `DB Encryption key must be 16, 24, or 32 bytes (AES-128/192/256). Current size: ${keyBytes} bytes`,
     )
   }
 }

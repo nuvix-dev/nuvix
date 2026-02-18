@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import { type OAuthProviders, oAuthProvidersList } from '@nuvix/core/config'
-import { IsUID } from '@nuvix/core/validators'
+import { ArrayToLastElement, IsUID } from '@nuvix/core/validators'
 import { configuration } from '@nuvix/utils'
 import { Expose } from 'class-transformer'
 import {
@@ -51,6 +51,7 @@ export class CreateOAuth2SessionDTO {
    * URL to redirect back to your app after a successful login attempt.  Only URLs from hostnames in your project\'s platform list are allowed. This requirement helps to prevent an [open redirect](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html) attack against your project API.
    */
   @IsOptional()
+  @ArrayToLastElement()
   @IsUrl()
   success?: string
 
@@ -58,6 +59,7 @@ export class CreateOAuth2SessionDTO {
    * URL to redirect back to your app after a failed login attempt.  Only URLs from hostnames in your project\'s platform list are allowed. This requirement helps to prevent an [open redirect](https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html) attack against your project API.
    */
   @IsOptional()
+  @ArrayToLastElement()
   @IsUrl()
   failure?: string
 
@@ -80,6 +82,7 @@ export class OAuth2CallbackDTO {
    *  OAuth2 code. This is a temporary code that the will be later exchanged for an access token.
    */
   @IsOptional()
+  @ArrayToLastElement()
   @IsString()
   @MaxLength(2048)
   code?: string
@@ -88,6 +91,7 @@ export class OAuth2CallbackDTO {
    * Login state params.
    */
   @IsOptional()
+  @ArrayToLastElement()
   @IsString()
   @MaxLength(2048)
   state?: string
@@ -96,6 +100,7 @@ export class OAuth2CallbackDTO {
    * Error code returned from the OAuth2 provider.
    */
   @IsOptional()
+  @ArrayToLastElement()
   @IsString()
   @MaxLength(2048)
   error?: string
@@ -104,6 +109,7 @@ export class OAuth2CallbackDTO {
    * Human-readable text providing additional information about the error returned from the OAuth2 provider.
    */
   @IsOptional()
+  @ArrayToLastElement()
   @IsString()
   @MaxLength(2048)
   error_description?: string

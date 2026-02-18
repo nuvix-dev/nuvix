@@ -114,7 +114,14 @@ export class ProjectModel extends BaseModel {
   /**
    * List of Auth Providers.
    */
-  @Expose() declare oAuthProviders: AuthProviderModel[]
+  @Transform(({ value }) => {
+    if (!value || !Array.isArray(value)) {
+      return []
+    }
+    return value.map((provider: any) => new AuthProviderModel(provider))
+  })
+  @Expose()
+  declare oAuthProviders: AuthProviderModel[]
   /**
    * List of Platforms.
    */

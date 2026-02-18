@@ -1,4 +1,3 @@
-import crypto from 'node:crypto'
 import {
   AttributeType,
   Authorization,
@@ -9,14 +8,7 @@ import {
 } from '@nuvix/db'
 import { configuration } from '../configuration'
 import { SchemaMeta } from '../constants'
-
-const ALGO = 'aes-256-gcm'
-const IV_LENGTH = 12
-const VERSION = 'v1'
-const DERIVED_KEY = crypto
-  .createHash('sha256')
-  .update(configuration.security.dbEncryptionKey)
-  .digest()
+import { Auth } from '@nuvix/core/helpers'
 
 export const filters: Record<
   string,
@@ -231,43 +223,17 @@ export const filters: Record<
 
   encrypt: {
     encode: value => {
-      const iv = crypto.randomBytes(IV_LENGTH)
-      const cipher = crypto.createCipheriv(ALGO, DERIVED_KEY, iv)
-
-      const ciphertext = Buffer.concat([
-        cipher.update(value as string, 'utf8'),
-        cipher.final(),
-      ])
-
-      const tag = cipher.getAuthTag()
-
-      return `${VERSION}:${Buffer.concat([iv, tag, ciphertext]).toString('base64')}`
+      if (typeof value !== 'string') {
+        return
+      }
+      return Auth.encrypt(value)
     },
     decode: (value: any) => {
-      if (!value) {
+      if (!value || typeof value !== 'string') {
         return value
       }
 
-      const [version, payload] = value.split(':')
-      if (version !== VERSION) {
-        throw new Error('Unsupported encryption version')
-      }
-
-      const raw = Buffer.from(payload, 'base64')
-      if (raw.length < IV_LENGTH + 16) {
-        throw new Error('Invalid encrypted payload')
-      }
-
-      const iv = raw.subarray(0, IV_LENGTH)
-      const tag = raw.subarray(IV_LENGTH, IV_LENGTH + 16)
-      const ciphertext = raw.subarray(IV_LENGTH + 16)
-
-      const decipher = crypto.createDecipheriv(ALGO, DERIVED_KEY, iv)
-      decipher.setAuthTag(tag)
-
-      return (
-        decipher.update(ciphertext, undefined, 'utf8') + decipher.final('utf8')
-      )
+      return Auth.decrypt(value)
     },
   },
 

@@ -356,7 +356,12 @@ export class SessionsController {
     const domain = request.host
     const protocol = request.protocol
 
-    const params: Record<string, any> = { ...input }
+    const params: Record<string, any> = {}
+    for (const [key, value] of Object.entries(input)) {
+      if (value !== undefined && value !== null) {
+        params[key] = value
+      }
+    }
     params.provider = provider
     params.project = projectId
 
@@ -384,7 +389,12 @@ export class SessionsController {
     const domain = request.host
     const protocol = request.protocol
 
-    const params: Record<string, any> = { ...input }
+    const params: Record<string, any> = {}
+    for (const [key, value] of Object.entries(input)) {
+      if (value !== undefined && value !== null) {
+        params[key] = value
+      }
+    }
     params.provider = provider
     params.project = projectId
 

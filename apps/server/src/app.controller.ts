@@ -1,4 +1,4 @@
-import { Controller, Get, Redirect } from '@nestjs/common'
+import { Controller, Get, Query, Redirect, Render } from '@nestjs/common'
 import { configuration } from '@nuvix/utils'
 import { AppService } from './app.service'
 
@@ -19,6 +19,36 @@ export class AppController {
   health() {
     return {
       status: 'ok',
+    }
+  }
+
+  @Get('auth/oauth2/success')
+  @Render('oauth/success.hbs')
+  renderOAuth2Success(@Query('error') error?: string) {
+    return {
+      status: 'ok',
+      error,
+    }
+  }
+
+  @Get('auth/oauth2/failure')
+  @Render('oauth/failure.hbs')
+  renderOAuth2Failure(@Query('error') error?: string) {
+    let errorObj = {
+      message: 'An unknown error occurred.',
+    }
+
+    if (error) {
+      try {
+        errorObj = JSON.parse(error)
+      } catch (e) {
+        errorObj = { message: error }
+      }
+    }
+
+    return {
+      status: 'error',
+      error: errorObj,
     }
   }
 }

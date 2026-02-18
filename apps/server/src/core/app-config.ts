@@ -8,6 +8,7 @@ import { ErrorFilter } from '@nuvix/core/filters'
 import { Auth } from '@nuvix/core/helpers'
 import { Authorization, Doc, Role, storage } from '@nuvix/db'
 import { Context } from '@nuvix/utils'
+import handlebars from 'handlebars'
 
 /**
  * Applies common app configuration to the given NestFastifyApplication instance.
@@ -26,6 +27,14 @@ export const applyAppConfig = (
       fileSize: 50 * 1024 * 1024, // 50MB
     },
     attachFieldsToBody: true,
+  })
+
+  app.setViewEngine({
+    engine: {
+      handlebars,
+    },
+    templates: config.assetConfig.get('views'),
+    layout: 'layout.hbs',
   })
 
   app.useGlobalPipes(

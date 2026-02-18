@@ -144,10 +144,8 @@ export const internalCollections: Record<string, Collection> = {
       {
         $id: ID.custom('oAuthProviders'),
         key: 'oAuthProviders',
-        type: AttributeType.String,
-        size: 16384,
+        type: AttributeType.Json,
         default: [],
-        filters: ['json', 'encrypt'],
       },
       {
         $id: ID.custom('platforms'),

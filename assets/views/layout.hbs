@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{title}}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --blue: #1a73e8;
+            --red: #ea4335;
+            --yellow: #fbbc04;
+            --green: #34a853;
+            --text-primary: #202124;
+            --text-secondary: #5f6368;
+            --surface: #ffffff;
+            --outline: #dadce0;
+            --bg: #f8f9fa;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: var(--bg);
+            min-height: 100vh;
+            display: grid;
+            place-items: center;
+            padding: 24px;
+        }
+
+        /* ── Wordmark ── */
+        .wordmark {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            margin-bottom: 32px;
+        }
+
+        .wordmark span {
+            font-family: 'Google Sans', sans-serif;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            line-height: 1;
+        }
+
+        .g-b {
+            color: var(--blue);
+        }
+
+        .g-r {
+            color: var(--red);
+        }
+
+        .g-y {
+            color: var(--yellow);
+        }
+
+        .g-g {
+            color: var(--green);
+        }
+
+        /* ── Card ── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--outline);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            min-width: 100%;
+            padding: 48px 40px 36px;
+            text-align: center;
+            animation: rise 0.3s cubic-bezier(0.2, 0, 0, 1);
+        }
+
+        @keyframes rise {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── Icon circle ── */
+        .icon-ring {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 24px;
+        }
+
+        .icon-ring.success {
+            background: #e6f4ea;
+        }
+
+        .icon-ring.error {
+            background: #fce8e6;
+        }
+
+        .icon-ring svg {
+            width: 32px;
+            height: 32px;
+        }
+
+        /* ── Typography ── */
+        .heading {
+            font-family: 'Google Sans', sans-serif;
+            font-size: 22px;
+            font-weight: 400;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            letter-spacing: 0;
+        }
+
+        .subtext {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        .small {
+            font-size: 12px;
+        }
+
+        /* ── Divider ── */
+        .divider {
+            height: 1px;
+            background: var(--outline);
+            margin: 0 -40px 24px;
+        }
+
+        /* ── Buttons ── */
+        .actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            font-family: 'Google Sans', sans-serif;
+            font-size: 14px;
+            font-weight: 500;
+            padding: 0 24px;
+            height: 36px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: background 0.15s, box-shadow 0.15s;
+            letter-spacing: 0.01em;
+        }
+
+        .btn-ghost {
+            background: transparent;
+            color: var(--blue);
+        }
+
+        .btn-ghost:hover {
+            background: rgba(26, 115, 232, 0.06);
+        }
+
+        .btn-primary {
+            background: var(--blue);
+            color: #fff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, .2);
+        }
+
+        .btn-primary:hover {
+            background: #1765cc;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, .2);
+        }
+
+        /* ── Four-dot loading ── */
+        .dots {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .dots span {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            animation: bounce 1.2s infinite ease-in-out;
+        }
+
+        .dots span:nth-child(1) {
+            background: var(--blue);
+            animation-delay: 0s;
+        }
+
+        .dots span:nth-child(2) {
+            background: var(--red);
+            animation-delay: 0.15s;
+        }
+
+        .dots span:nth-child(3) {
+            background: var(--yellow);
+            animation-delay: 0.3s;
+        }
+
+        .dots span:nth-child(4) {
+            background: var(--green);
+            animation-delay: 0.45s;
+        }
+
+        @keyframes bounce {
+
+            0%,
+            80%,
+            100% {
+                transform: scale(0.6);
+                opacity: .5;
+            }
+
+            40% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* ── Progress bar (success auto-close) ── */
+        .progress-track {
+            height: 2px;
+            background: var(--outline);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--green);
+            width: 0%;
+            animation: fill 0.75s 0.1s ease-out forwards;
+        }
+
+        @keyframes fill {
+            to {
+                width: 100%;
+            }
+        }
+
+        @media (max-width: 440px) {
+            .card {
+                padding: 36px 24px 28px;
+            }
+
+            .divider {
+                margin: 0 -24px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div>
+        <div class="wordmark">
+            <img src="https://raw.githubusercontent.com/nuvix-dev/nuvix/main/assets/trademark/logo-light.png"
+                alt="Nuvix logo" height="28">
+        </div>
+
+        <div class="card">
+            {{{body}}}
+        </div>
+    </div>
+</body>
+
+</html>

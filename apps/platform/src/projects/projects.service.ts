@@ -34,6 +34,7 @@ import {
   UpdateProjectDTO,
   UpdateProjectTeamDTO,
 } from './DTO/update-project.dto'
+import { Auth } from '@nuvix/core/helpers'
 
 @Injectable()
 export class ProjectService {
@@ -421,9 +422,8 @@ export class ProjectService {
       providers[providerIndex]!.appId = appId
     }
 
-    // TODO: Encrypt the secret
     if (secret !== undefined) {
-      providers[providerIndex]!.secret = secret
+      providers[providerIndex]!.secret = Auth.encrypt(secret)
     }
 
     if (enabled !== undefined) {

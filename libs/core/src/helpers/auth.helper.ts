@@ -17,10 +17,13 @@ import {
 import { hash, verify } from 'argon2'
 import { Exception } from '../extend/exception'
 
-const algorithm = 'aes-256-cbc'
-const key = configuration.security.encryptionKey
-  ? Buffer.from(configuration.security.encryptionKey, 'hex')
-  : undefined
+const ALGO = 'aes-256-gcm'
+const IV_LENGTH = 12
+const VERSION = 'v1'
+const DERIVED_KEY = crypto
+  .createHash('sha256')
+  .update(configuration.security.encryptionKey)
+  .digest()
 
 export enum UserRole {
   ADMIN = 'admin',
@@ -381,30 +384,50 @@ export class Auth {
   }
 
   static encrypt(text: string): string {
-    if (!key) {
-      throw Error(
-        'NUVIX_ENCRYPTION_KEY is required, make sure you have added in current environment.',
-      )
-    }
-    const iv = crypto.randomBytes(16)
-    const cipher = crypto.createCipheriv(algorithm, key, iv)
-    let encrypted = cipher.update(text)
-    encrypted = Buffer.concat([encrypted, cipher.final()])
-    return `${iv.toString('hex')}:${encrypted.toString('hex')}`
+    const iv = crypto.randomBytes(IV_LENGTH)
+    const cipher = crypto.createCipheriv(ALGO, DERIVED_KEY, iv)
+
+    const ciphertext = Buffer.concat([
+      cipher.update(text, 'utf8'),
+      cipher.final(),
+    ])
+
+    const tag = cipher.getAuthTag()
+
+    return `${VERSION}:${Buffer.concat([iv, tag, ciphertext]).toString('base64')}`
   }
 
   static decrypt(text: string): string {
-    if (!key) {
-      throw Error(
-        'NUVIX_ENCRYPTION_KEY is required, make sure you have added in current environment.',
-      )
+    const [version, payload] = text.split(':')
+    if (version !== VERSION) {
+      throw new Exception('Unsupported encryption version')
     }
-    const textParts = text.split(':')
-    const iv = Buffer.from(textParts.shift() as string, 'hex')
-    const encryptedText = Buffer.from(textParts.join(':'), 'hex')
-    const decipher = crypto.createDecipheriv(algorithm, key, iv)
-    let decrypted = decipher.update(encryptedText)
-    decrypted = Buffer.concat([decrypted, decipher.final()])
-    return decrypted.toString()
+
+    if (!payload) {
+      throw new Exception('Invalid encrypted payload')
+    }
+
+    const raw = Buffer.from(payload, 'base64')
+    if (raw.length < IV_LENGTH + 16) {
+      throw new Exception('Invalid encrypted payload')
+    }
+
+    const iv = raw.subarray(0, IV_LENGTH)
+    const tag = raw.subarray(IV_LENGTH, IV_LENGTH + 16)
+    const ciphertext = raw.subarray(IV_LENGTH + 16)
+
+    const decipher = crypto.createDecipheriv(ALGO, DERIVED_KEY, iv)
+    decipher.setAuthTag(tag)
+
+    return (
+      decipher.update(ciphertext, undefined, 'utf8') + decipher.final('utf8')
+    )
+  }
+
+  static decryptIfDefined(text?: string | null): string | null {
+    if (text === null || text === undefined) {
+      return null
+    }
+    return Auth.decrypt(text)
   }
 }
