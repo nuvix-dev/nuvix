@@ -264,11 +264,6 @@ export function validateRequiredConfig() {
 
   const missing: string[] = requiredVars.filter(envVar => !process.env[envVar])
 
-  const isProduction = process.env.NODE_ENV === 'production'
-  if (isProduction && !process.env.NUVIX_DATABASE_ENCRYPTION_KEY) {
-    missing.push('NUVIX_DATABASE_ENCRYPTION_KEY')
-  }
-
   if (missing.length > 0) {
     throw new Error(
       `Missing required environment variables: ${missing.join(', ')}`,
