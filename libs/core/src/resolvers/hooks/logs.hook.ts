@@ -6,7 +6,7 @@ import type { ProjectsDoc } from '@nuvix/utils/types'
 import type { Queue } from 'bullmq'
 import { AppConfigService } from '../../config.service'
 import { AuthType } from '../../decorators'
-import { Auth, type Key } from '../../helpers'
+import { Auth } from '../../helpers'
 import { Hook } from '../../server'
 import type { ApiLogsQueueJobData } from '../queues/logs.queue'
 
@@ -63,9 +63,7 @@ export class LogsHook implements Hook {
             name: req[Context.Team]?.get('name'),
           },
       auth_type: req[Context.AuthType] || AuthType.SESSION,
-      api_key: req[Context.ApiKey]
-        ? (req[Context.ApiKey] as Key)?.getKey()
-        : null,
+      api_key: !!req[Context.ApiKey],
     }
 
     if (!user.empty()) {

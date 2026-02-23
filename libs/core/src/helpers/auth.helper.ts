@@ -16,6 +16,7 @@ import {
 } from '@nuvix/utils/types'
 import { hash, verify } from 'argon2'
 import { Exception } from '../extend/exception'
+import { storage } from '@nuvix/db'
 
 const ALGO = 'aes-256-gcm'
 const IV_LENGTH = 12
@@ -36,8 +37,20 @@ export enum UserRole {
 }
 
 export class Auth {
-  private static _isTrustedActor = false
-  private static _isPlatformActor = false
+  private static get _isTrustedActor(): boolean {
+    return (storage.getStore()?.get('isTrustedActor') as boolean) || false
+  }
+  private static get _isPlatformActor(): boolean {
+    return (storage.getStore()?.get('isPlatformActor') as boolean) || false
+  }
+
+  private static set _isTrustedActor(value: boolean) {
+    storage.getStore()?.set('isTrustedActor', value)
+  }
+  private static set _isPlatformActor(value: boolean) {
+    storage.getStore()?.set('isPlatformActor', value)
+  }
+
   public static readonly SUPPORTED_ALGOS = Object.values(HashAlgorithm)
 
   public static readonly DEFAULT_ALGO = HashAlgorithm.ARGON2
@@ -67,12 +80,49 @@ export class Auth {
   // MFA
   public static readonly MFA_RECENT_DURATION = 1800 // 30 mins
 
-  public static cookieName = 'session'
-  public static cookieDomain = configuration.server.cookieDomain || ''
-  public static cookieSamesite: boolean | 'none' | 'lax' | 'strict' =
-    configuration.server.cookieSameSite
-  public static unique = ''
-  public static secret = ''
+  // Store all in storage & create getter & setter
+  public static get cookieName(): string {
+    return (
+      (storage.getStore()?.get('cookieName') as unknown as string) ?? 'session'
+    )
+  }
+  public static set cookieName(value: string) {
+    storage.getStore()?.set('cookieName', value as any)
+  }
+
+  public static get cookieDomain(): string {
+    return (
+      (storage.getStore()?.get('cookieDomain') as unknown as string) ??
+      (configuration.server.cookieDomain || '')
+    )
+  }
+  public static set cookieDomain(value: string) {
+    storage.getStore()?.set('cookieDomain', value as any)
+  }
+
+  public static get cookieSamesite(): boolean | 'none' | 'lax' | 'strict' {
+    return (
+      (storage.getStore()?.get('cookieSamesite') as any) ??
+      configuration.server.cookieSameSite
+    )
+  }
+  public static set cookieSamesite(value: boolean | 'none' | 'lax' | 'strict') {
+    storage.getStore()?.set('cookieSamesite', value as any)
+  }
+
+  public static get unique(): string {
+    return (storage.getStore()?.get('unique') as unknown as string) ?? ''
+  }
+  public static set unique(value: string) {
+    storage.getStore()?.set('unique', value as any)
+  }
+
+  public static get secret(): string {
+    return (storage.getStore()?.get('secret') as any) ?? ''
+  }
+  public static set secret(value: string) {
+    storage.getStore()?.set('secret', value as any)
+  }
 
   public static setCookieName(name: string): string {
     return (Auth.cookieName = name)
