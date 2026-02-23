@@ -134,7 +134,7 @@ export class CorsHook implements Hook {
     const originHeader =
       opts.credentials && opts.origin && opts.origin !== '*'
         ? req.headers.origin
-        : opts.origin || '*'
+        : opts.origin
 
     reply.raw.setHeader('Access-Control-Allow-Origin', originHeader || 'null')
 
