@@ -17,6 +17,7 @@ import {
 import { hash, verify } from 'argon2'
 import { Exception } from '../extend/exception'
 import { storage } from '@nuvix/db'
+import type { AsyncLocalStorage } from 'node:async_hooks'
 
 const ALGO = 'aes-256-gcm'
 const IV_LENGTH = 12
@@ -36,19 +37,43 @@ export enum UserRole {
   GUESTS = 'guests',
 }
 
+type AuthStore = {
+  cookieName?: string
+  cookieDomain?: string
+  cookieSamesite?: boolean | 'none' | 'lax' | 'strict'
+  unique?: string
+  secret?: string
+  isTrustedActor?: boolean
+  isPlatformActor?: boolean
+}
+
 export class Auth {
+  private static getFromStore<K extends keyof AuthStore>(key: K): AuthStore[K] {
+    return (storage as AsyncLocalStorage<AuthStore>).getStore()?.[key]
+  }
+
+  private static setToStore<K extends keyof AuthStore>(
+    key: K,
+    value: AuthStore[K],
+  ): void {
+    const store = (storage as AsyncLocalStorage<AuthStore>).getStore()
+    if (store) {
+      store[key] = value
+    }
+  }
+
   private static get _isTrustedActor(): boolean {
-    return (storage.getStore()?.get('isTrustedActor') as boolean) || false
+    return this.getFromStore('isTrustedActor') || false
   }
   private static get _isPlatformActor(): boolean {
-    return (storage.getStore()?.get('isPlatformActor') as boolean) || false
+    return this.getFromStore('isPlatformActor') || false
   }
 
   private static set _isTrustedActor(value: boolean) {
-    storage.getStore()?.set('isTrustedActor', value)
+    this.setToStore('isTrustedActor', value)
   }
   private static set _isPlatformActor(value: boolean) {
-    storage.getStore()?.set('isPlatformActor', value)
+    this.setToStore('isPlatformActor', value)
   }
 
   public static readonly SUPPORTED_ALGOS = Object.values(HashAlgorithm)
@@ -82,46 +107,46 @@ export class Auth {
 
   // Store all in storage & create getter & setter
   public static get cookieName(): string {
-    return (
-      (storage.getStore()?.get('cookieName') as unknown as string) ?? 'session'
-    )
+    return this.getFromStore('cookieName') ?? 'session'
   }
   public static set cookieName(value: string) {
-    storage.getStore()?.set('cookieName', value as any)
+    this.setToStore('cookieName', value)
   }
 
   public static get cookieDomain(): string {
     return (
-      (storage.getStore()?.get('cookieDomain') as unknown as string) ??
-      (configuration.server.cookieDomain || '')
+      this.getFromStore('cookieDomain') ??
+      configuration.server.cookieDomain ??
+      ''
     )
   }
   public static set cookieDomain(value: string) {
-    storage.getStore()?.set('cookieDomain', value as any)
+    this.setToStore('cookieDomain', value)
   }
 
   public static get cookieSamesite(): boolean | 'none' | 'lax' | 'strict' {
     return (
-      (storage.getStore()?.get('cookieSamesite') as any) ??
-      configuration.server.cookieSameSite
+      this.getFromStore('cookieSamesite') ??
+      configuration.server.cookieSameSite ??
+      'lax'
     )
   }
   public static set cookieSamesite(value: boolean | 'none' | 'lax' | 'strict') {
-    storage.getStore()?.set('cookieSamesite', value as any)
+    this.setToStore('cookieSamesite', value)
   }
 
   public static get unique(): string {
-    return (storage.getStore()?.get('unique') as unknown as string) ?? ''
+    return this.getFromStore('unique') || ''
   }
   public static set unique(value: string) {
-    storage.getStore()?.set('unique', value as any)
+    this.setToStore('unique', value)
   }
 
   public static get secret(): string {
-    return (storage.getStore()?.get('secret') as any) ?? ''
+    return this.getFromStore('secret') || ''
   }
   public static set secret(value: string) {
-    storage.getStore()?.set('secret', value as any)
+    this.setToStore('secret', value)
   }
 
   public static setCookieName(name: string): string {
