@@ -53,6 +53,13 @@ export class CoreService implements OnModuleDestroy {
         this.logger.error('Failed to disconnect redis instance', error)
       }
     }
+    if (this.postgresPool) {
+      try {
+        await this.postgresPool.end()
+      } catch (error) {
+        this.logger.error('Failed to disconnect postgres database pool', error)
+      }
+    }
   }
 
   public getCache(): Cache {
@@ -119,12 +126,11 @@ export class CoreService implements OnModuleDestroy {
   }
 
   public getPoolForPostgres(): Pool {
-    if (this.postgresPool) {
-      return this.postgresPool
-    }
+    if (this.postgresPool) return this.postgresPool
+
     const options = this.appConfig.getDatabaseConfig()
 
-    const pool = new Pool({
+    this.postgresPool = new Pool({
       database: DEFAULT_DATABASE,
       user: DatabaseRole.POSTGRES,
       password: options.postgres.password || options.postgres.adminPassword,
@@ -134,23 +140,23 @@ export class CoreService implements OnModuleDestroy {
       port: options.useExternalPool
         ? options.postgres.pool.port
         : options.postgres.port,
-      ssl: this.appConfig.getDatabaseConfig().postgres.ssl
-        ? { rejectUnauthorized: false }
-        : undefined,
+      ssl: options.postgres.ssl ? { rejectUnauthorized: false } : undefined,
       statement_timeout: 30000,
       query_timeout: 30000,
       application_name: 'nuvix-main',
       keepAliveInitialDelayMillis: 10000,
-      max: options.postgres.maxConnections,
+      max:
+        options.postgres.maxConnections > 20
+          ? 20
+          : options.postgres.maxConnections, // limit to 10 for external pool to avoid exhausting connections
       idleTimeoutMillis: 5000,
     })
 
-    pool.on('error', err => {
+    this.postgresPool.on('error', err => {
       this.logger.error('Postgres pool error:', err)
     })
 
-    this.postgresPool = pool
-    return pool
+    return this.postgresPool
   }
 
   /**

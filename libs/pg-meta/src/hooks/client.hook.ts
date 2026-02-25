@@ -9,7 +9,10 @@ import { CoreService } from '@nuvix/core/core.service'
 
 @Injectable()
 export class ResolveClient implements Hook {
-  constructor(private readonly coreService: CoreService) {}
+  private readonly pgMeta: PostgresMeta
+  constructor(private readonly coreService: CoreService) {
+    this.pgMeta = new PostgresMeta(this.coreService.getPoolForPostgres())
+  }
 
   async preHandler(req: NuvixRequest) {
     const project = req[Context.Project] as Doc
@@ -18,9 +21,7 @@ export class ResolveClient implements Hook {
       throw new Exception(Exception.PROJECT_NOT_FOUND)
     }
 
-    const pool = this.coreService.getPoolForPostgres()
-
-    req[CLIENT] = new PostgresMeta(pool)
+    req[CLIENT] = this.pgMeta
     return
   }
 }
