@@ -42,7 +42,7 @@ export class MfaController {
     },
   })
   async updateMfa(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
     @Body() { mfa }: UpdateMfaStatusDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -59,7 +59,7 @@ export class MfaController {
     },
   })
   async getMfaFactors(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
   ): Promise<unknown> {
     return this.mfaService.getMfaFactors(db, userId)
@@ -75,7 +75,7 @@ export class MfaController {
     },
   })
   async getMfaRecoveryCodes(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
   ): Promise<
     Doc<{
@@ -100,7 +100,7 @@ export class MfaController {
     },
   })
   async generateMfaRecoveryCodes(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
   ): Promise<
     Doc<{
@@ -125,7 +125,7 @@ export class MfaController {
     },
   })
   async regenerateMfaRecoveryCodes(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
   ): Promise<
     Doc<{
@@ -150,7 +150,7 @@ export class MfaController {
     },
   })
   async deleteMfaAuthenticator(
-    @AuthDatabase() db: Database,
+
     @Param() { userId, type }: MfaTypeParamDTO,
   ): Promise<void> {
     return this.mfaService.deleteMfaAuthenticator(db, userId, type)

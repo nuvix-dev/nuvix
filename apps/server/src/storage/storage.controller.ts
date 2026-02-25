@@ -132,7 +132,7 @@ export class StorageController {
   async deleteBucket(
     @ProjectDatabase() db: Database,
     @Param() { bucketId }: BucketParamsDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<void> {
     return this.storageService.deleteBucket(db, bucketId, project)
   }

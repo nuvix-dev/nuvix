@@ -100,7 +100,7 @@ export class AttributesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateStringAttributeDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createStringAttribute(
       db,
@@ -128,7 +128,7 @@ export class AttributesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateEmailAttributeDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createEmailAttribute(
       db,
@@ -156,7 +156,7 @@ export class AttributesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateEnumAttributeDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createEnumAttribute(
       db,
@@ -184,7 +184,7 @@ export class AttributesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateIpAttributeDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createIPAttribute(
       db,
@@ -212,7 +212,7 @@ export class AttributesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateURLAttributeDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createURLAttribute(
       db,
@@ -241,7 +241,7 @@ export class AttributesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateIntegerAttributeDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createIntegerAttribute(
       db,
@@ -269,7 +269,7 @@ export class AttributesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateFloatAttributeDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createFloatAttribute(
       db,
@@ -298,7 +298,7 @@ export class AttributesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateBooleanAttributeDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createBooleanAttribute(
       db,
@@ -327,7 +327,7 @@ export class AttributesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateDatetimeAttributeDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createDateAttribute(
       db,
@@ -356,7 +356,7 @@ export class AttributesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateRelationAttributeDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createRelationshipAttribute(
       db,
@@ -663,7 +663,7 @@ export class AttributesController {
   async removeAttribute(
     @CurrentDatabase() db: Database,
     @Param() { collectionId, key }: AttributeParamsDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<AttributesDoc> {
     return this.attributesService.deleteAttribute(
       db,

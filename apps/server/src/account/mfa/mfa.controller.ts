@@ -68,7 +68,7 @@ export class MfaController {
     @Body() { mfa }: UpdateAccountMfaDTO,
     @User() user: UsersDoc,
     @Session() session: SessionsDoc,
-    @AuthDatabase() db: Database,
+
   ): Promise<IResponse<UsersDoc>> {
     return this.mfaService.updateMfa({
       mfa,
@@ -107,9 +107,9 @@ export class MfaController {
   })
   async createMfaAuthenticator(
     @Param() { type }: MfaAuthenticatorTypeParamDTO,
-    @Project() project: ProjectsDoc,
+
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
+
   ): Promise<
     IResponse<
       Doc<{
@@ -144,7 +144,7 @@ export class MfaController {
     @Body() { otp }: VerifyMfaAuthenticatorDTO,
     @User() user: UsersDoc,
     @Session() session: SessionsDoc,
-    @AuthDatabase() db: Database,
+
   ): Promise<IResponse<UsersDoc>> {
     return this.mfaService.verifyMfaAuthenticator({
       type,
@@ -170,7 +170,7 @@ export class MfaController {
   })
   async createMfaRecoveryCodes(
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
+
   ): Promise<
     IResponse<
       Doc<{
@@ -195,7 +195,7 @@ export class MfaController {
     },
   })
   async updateMfaRecoveryCodes(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
   ): Promise<
     IResponse<
@@ -247,7 +247,7 @@ export class MfaController {
   async deleteMfaAuthenticator(
     @Param() { type }: MfaAuthenticatorTypeParamDTO,
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
+
   ): Promise<void> {
     return this.mfaService.deleteMfaAuthenticator({
       type,
@@ -277,8 +277,8 @@ export class MfaController {
     @Body() { factor }: CreateMfaChallengeDTO,
     @Req() request: NuvixRequest,
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
-    @Project() project: ProjectsDoc,
+
+
     @Locale() locale: LocaleTranslator,
   ): Promise<IResponse<ChallengesDoc>> {
     return this.mfaService.createMfaChallenge({
@@ -307,7 +307,7 @@ export class MfaController {
   async updateMfaChallenge(
     @Body() input: VerifyMfaChallengeDTO,
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
+
     @Session() session: SessionsDoc,
   ): Promise<IResponse<SessionsDoc>> {
     return this.mfaService.updateMfaChallenge({

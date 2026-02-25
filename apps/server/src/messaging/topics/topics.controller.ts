@@ -140,7 +140,7 @@ export class TopicsController {
   async deleteTopic(
     @Param() { topicId }: TopicParamsDTO,
     @ProjectDatabase() db: Database,
-    @Project() project: ProjectsDoc,
+
   ): Promise<void> {
     return this.topicsService.deleteTopic(db, topicId, project)
   }

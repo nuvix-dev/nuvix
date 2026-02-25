@@ -53,7 +53,7 @@ export class SchemasController {
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
     @Req() request: NuvixRequest,
     @CurrentSchema() pg: DataSource,
-    @Project() project: ProjectsDoc,
+
     @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
     limit: number,
     @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
@@ -81,7 +81,7 @@ export class SchemasController {
     @Req() request: NuvixRequest,
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
     @Body() input: Record<string, any> | Record<string, any>[],
-    @Project() project: ProjectsDoc,
+
     @Query(
       'columns',
       ParseDuplicatePipe,
@@ -112,7 +112,7 @@ export class SchemasController {
     @CurrentSchema() pg: DataSource,
     @Req() request: NuvixRequest,
     @Body() input: Record<string, any>,
-    @Project() project: ProjectsDoc,
+
     @Query(
       'columns',
       ParseDuplicatePipe,
@@ -173,7 +173,7 @@ export class SchemasController {
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
     @CurrentSchema() pg: DataSource,
     @Req() request: NuvixRequest,
-    @Project() project: ProjectsDoc,
+
     @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
     limit?: number,
     @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
@@ -209,7 +209,7 @@ export class SchemasController {
       schemaId: schema = 'public',
       functionId: functionName,
     }: FunctionParamsDTO,
-    @Project() project: ProjectsDoc,
+
     @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
     limit?: number,
     @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
@@ -246,7 +246,7 @@ export class SchemasController {
     @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId }: TableParamsDTO,
     @Body() body: PermissionsDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<string[]> {
     return this.schemasService.updatePermissions({
       pg,
@@ -267,7 +267,7 @@ export class SchemasController {
     @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId, rowId }: RowParamsDTO,
     @Body() body: PermissionsDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<string[]> {
     return this.schemasService.updatePermissions({
       pg,
@@ -288,7 +288,7 @@ export class SchemasController {
   getTablePermissions(
     @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId }: TableParamsDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<string[]> {
     return this.schemasService.getPermissions({
       pg,
@@ -307,7 +307,7 @@ export class SchemasController {
   getRowPermissions(
     @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId, rowId }: RowParamsDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<string[]> {
     return this.schemasService.getPermissions({
       pg,

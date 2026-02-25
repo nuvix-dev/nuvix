@@ -63,10 +63,10 @@ export class MembershipsController {
   })
   @AllowSessionType(SessionType.INVITES)
   async addMember(
-    @AuthDatabase() db: Database,
+
     @Param() { teamId }: TeamsParamDTO,
     @Body() input: CreateMembershipDTO,
-    @Project() project: ProjectsDoc,
+
     @Locale() locale: LocaleTranslator,
     @User() user: UsersDoc,
   ): Promise<IResponse<MembershipsDoc>> {
@@ -90,7 +90,7 @@ export class MembershipsController {
     },
   })
   async getMembers(
-    @AuthDatabase() db: Database,
+
     @Param() { teamId }: TeamsParamDTO,
     @QueryFilter(MembershipsQueryPipe) queries: Queries[],
     @QuerySearch() search?: string,
@@ -108,7 +108,7 @@ export class MembershipsController {
     },
   })
   async getMember(
-    @AuthDatabase() db: Database,
+
     @Param() { teamId, membershipId }: MembershipParamDTO,
   ): Promise<IResponse<MembershipsDoc>> {
     return this.membershipsService.getMember(db, teamId, membershipId)
@@ -128,7 +128,7 @@ export class MembershipsController {
     },
   })
   async updateMember(
-    @AuthDatabase() db: Database,
+
     @Param() { teamId, membershipId }: MembershipParamDTO,
     @Body() input: UpdateMembershipDTO,
   ): Promise<IResponse<MembershipsDoc>> {
@@ -150,13 +150,13 @@ export class MembershipsController {
     },
   })
   async updateMemberStatus(
-    @AuthDatabase() db: Database,
+
     @Param() { teamId, membershipId }: MembershipParamDTO,
     @Body() input: UpdateMembershipStatusDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) res: NuvixRes,
     @User() user: UsersDoc,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<MembershipsDoc>> {
     return this.membershipsService.updateMemberStatus(
       db,
@@ -184,7 +184,7 @@ export class MembershipsController {
     },
   })
   async removeMember(
-    @AuthDatabase() db: Database,
+
     @Param() { teamId, membershipId }: MembershipParamDTO,
   ): Promise<void> {
     return this.membershipsService.deleteMember(db, teamId, membershipId)

@@ -44,7 +44,7 @@ export class IdentityController {
   })
   async getIdentities(
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
+
     @QueryFilter(IdentitiesQueryPipe) queries?: Queries[],
   ): Promise<IListResponse<IdentitiesDoc>> {
     return this.identityService.getIdentities({ user, db, queries })
@@ -65,7 +65,7 @@ export class IdentityController {
   })
   async deleteIdentity(
     @Param() { identityId }: IdentityIdParamDTO,
-    @AuthDatabase() db: Database,
+
   ): Promise<void> {
     return this.identityService.deleteIdentity({
       identityId,

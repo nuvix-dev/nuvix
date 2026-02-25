@@ -49,11 +49,11 @@ export class RecoveryController {
     },
   })
   async createRecovery(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Body() input: CreateRecoveryDTO,
     @Locale() locale: LocaleTranslator,
-    @Project() project: ProjectsDoc,
+
     @Req() request: NuvixRequest,
   ): Promise<IResponse<TokensDoc>> {
     return this.recoveryService.createRecovery({
@@ -85,10 +85,10 @@ export class RecoveryController {
     },
   })
   async updateRecovery(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Body() input: UpdateRecoveryDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<TokensDoc>> {
     return this.recoveryService.updateRecovery({
       db,

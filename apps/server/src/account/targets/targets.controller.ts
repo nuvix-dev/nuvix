@@ -56,7 +56,7 @@ export class TargetsController {
   async createPushTarget(
     @Body() input: CreatePushTargetDTO,
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
+
     @Req() request: NuvixRequest,
   ): Promise<IResponse<TargetsDoc>> {
     return this.targetService.createPushTarget({
@@ -85,7 +85,7 @@ export class TargetsController {
     @Param() { targetId }: TargetIdParamDTO,
     @Body() input: UpdatePushTargetDTO,
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
+
     @Req() request: NuvixRequest,
   ): Promise<IResponse<TargetsDoc>> {
     return this.targetService.updatePushTarget({
@@ -114,8 +114,8 @@ export class TargetsController {
   async deletePushTarget(
     @Param() { targetId }: TargetIdParamDTO,
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
-    @Project() project: ProjectsDoc,
+
+
   ): Promise<void> {
     return this.targetService.deletePushTarget({
       targetId,

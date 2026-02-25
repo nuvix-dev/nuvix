@@ -16,8 +16,6 @@ import {
 } from '@nuvix/utils/types'
 import { hash, verify } from 'argon2'
 import { Exception } from '../extend/exception'
-import { storage } from '@nuvix/db'
-import type { AsyncLocalStorage } from 'node:async_hooks'
 
 const ALGO = 'aes-256-gcm'
 const IV_LENGTH = 12
@@ -37,45 +35,7 @@ export enum UserRole {
   GUESTS = 'guests',
 }
 
-type AuthStore = {
-  cookieName?: string
-  cookieDomain?: string
-  cookieSamesite?: boolean | 'none' | 'lax' | 'strict'
-  unique?: string
-  secret?: string
-  isTrustedActor?: boolean
-  isPlatformActor?: boolean
-}
-
 export class Auth {
-  private static getFromStore<K extends keyof AuthStore>(key: K): AuthStore[K] {
-    return (storage as AsyncLocalStorage<AuthStore>).getStore()?.[key]
-  }
-
-  private static setToStore<K extends keyof AuthStore>(
-    key: K,
-    value: AuthStore[K],
-  ): void {
-    const store = (storage as AsyncLocalStorage<AuthStore>).getStore()
-    if (store) {
-      store[key] = value
-    }
-  }
-
-  private static get _isTrustedActor(): boolean {
-    return this.getFromStore('isTrustedActor') || false
-  }
-  private static get _isPlatformActor(): boolean {
-    return this.getFromStore('isPlatformActor') || false
-  }
-
-  private static set _isTrustedActor(value: boolean) {
-    this.setToStore('isTrustedActor', value)
-  }
-  private static set _isPlatformActor(value: boolean) {
-    this.setToStore('isPlatformActor', value)
-  }
-
   public static readonly SUPPORTED_ALGOS = Object.values(HashAlgorithm)
 
   public static readonly DEFAULT_ALGO = HashAlgorithm.ARGON2
@@ -104,54 +64,6 @@ export class Auth {
 
   // MFA
   public static readonly MFA_RECENT_DURATION = 1800 // 30 mins
-
-  // Store all in storage & create getter & setter
-  public static get cookieName(): string {
-    return this.getFromStore('cookieName') ?? 'session'
-  }
-  public static set cookieName(value: string) {
-    this.setToStore('cookieName', value)
-  }
-
-  public static get cookieDomain(): string {
-    return (
-      this.getFromStore('cookieDomain') ??
-      configuration.server.cookieDomain ??
-      ''
-    )
-  }
-  public static set cookieDomain(value: string) {
-    this.setToStore('cookieDomain', value)
-  }
-
-  public static get cookieSamesite(): boolean | 'none' | 'lax' | 'strict' {
-    return (
-      this.getFromStore('cookieSamesite') ??
-      configuration.server.cookieSameSite ??
-      'lax'
-    )
-  }
-  public static set cookieSamesite(value: boolean | 'none' | 'lax' | 'strict') {
-    this.setToStore('cookieSamesite', value)
-  }
-
-  public static get unique(): string {
-    return this.getFromStore('unique') || ''
-  }
-  public static set unique(value: string) {
-    this.setToStore('unique', value)
-  }
-
-  public static get secret(): string {
-    return this.getFromStore('secret') || ''
-  }
-  public static set secret(value: string) {
-    this.setToStore('secret', value)
-  }
-
-  public static setCookieName(name: string): string {
-    return (Auth.cookieName = name)
-  }
 
   public static encodeSession(id: string, secret: string): string {
     return Buffer.from(JSON.stringify({ id, secret })).toString('base64')
@@ -372,24 +284,6 @@ export class Auth {
     }
 
     return false
-  }
-
-  // Trusted Actor (e.g. internal services) can bypass certain checks
-  public static get isTrustedActor(): boolean {
-    return Auth._isTrustedActor
-  }
-
-  // Platform Actor (e.g. platform level services) can bypass certain checks
-  public static get isPlatformActor(): boolean {
-    return Auth._isPlatformActor
-  }
-
-  public static setTrustedActor(value: boolean) {
-    Auth._isTrustedActor = value
-  }
-
-  public static setPlatformActor(value: boolean) {
-    Auth._isPlatformActor = value
   }
 
   public static getRoles(user: UsersDoc): string[] {

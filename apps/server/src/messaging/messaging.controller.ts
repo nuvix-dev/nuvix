@@ -60,7 +60,7 @@ export class MessagingController {
   async createEmail(
     @ProjectDatabase() db: Database,
     @Body() input: CreateEmailMessageDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.createEmailMessage({
       db,
@@ -85,7 +85,7 @@ export class MessagingController {
   async createSms(
     @ProjectDatabase() db: Database,
     @Body() input: CreateSmsMessageDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.createSmsMessage({
       db,
@@ -110,7 +110,7 @@ export class MessagingController {
   async createPush(
     @ProjectDatabase() db: Database,
     @Body() input: CreatePushMessageDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.createPushMessage({
       db,
@@ -194,7 +194,7 @@ export class MessagingController {
     @Param() { messageId }: MessageParamsDTO,
     @ProjectDatabase() db: Database,
     @Body() input: UpdateEmailMessageDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.updateEmailMessage({
       db,
@@ -221,7 +221,7 @@ export class MessagingController {
     @Param() { messageId }: MessageParamsDTO,
     @ProjectDatabase() db: Database,
     @Body() input: UpdateSmsMessageDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.updateSmsMessage({
       db,
@@ -248,7 +248,7 @@ export class MessagingController {
     @Param() { messageId }: MessageParamsDTO,
     @ProjectDatabase() db: Database,
     @Body() input: UpdatePushMessageDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.updatePushMessage({
       db,

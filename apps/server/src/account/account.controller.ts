@@ -70,10 +70,10 @@ export class AccountController {
   })
   @AllowSessionType(SessionType.EMAIL_PASSWORD)
   async createAccount(
-    @AuthDatabase() db: Database,
+
     @Body() input: CreateAccountDTO,
     @User() user: UsersDoc,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<UsersDoc>> {
     return this.accountService.createAccount(
       db,
@@ -118,9 +118,9 @@ export class AccountController {
     },
   })
   async deleteAccount(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
-    @Project() project: ProjectsDoc,
+
   ): Promise<void> {
     return this.accountService.deleteAccount(db, user, project)
   }
@@ -154,7 +154,7 @@ export class AccountController {
     },
   })
   async updatePrefs(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Body() input: UpdatePrefsDTO,
   ): Promise<IResponse<Record<string, unknown>>> {
@@ -176,7 +176,7 @@ export class AccountController {
     },
   })
   async updateName(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Body() { name }: UpdateNameDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -199,10 +199,10 @@ export class AccountController {
     },
   })
   async updatePassword(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Body() { password, oldPassword }: UpdatePasswordDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<UsersDoc>> {
     return this.accountService.updatePassword({
       db: db,
@@ -228,7 +228,7 @@ export class AccountController {
     },
   })
   async updateEmail(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Body() updateEmailDTO: UpdateEmailDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -250,10 +250,10 @@ export class AccountController {
     },
   })
   async updatePhone(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Body() { password, phone }: UpdatePhoneDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<UsersDoc>> {
     return this.accountService.updatePhone({
       db: db,
@@ -279,7 +279,7 @@ export class AccountController {
     },
   })
   async updateStatus(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
@@ -315,9 +315,9 @@ export class AccountController {
     @Body() { url }: CreateEmailVerificationDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
-    @Project() project: ProjectsDoc,
+
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
+
     @Locale() locale: LocaleTranslator,
   ): Promise<IResponse<TokensDoc>> {
     return this.accountService.createEmailVerification({
@@ -354,7 +354,7 @@ export class AccountController {
     @Body() { userId, secret }: UpdateEmailVerificationDTO,
     @Res({ passthrough: true }) response: NuvixRes,
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
+
   ): Promise<IResponse<TokensDoc>> {
     return this.accountService.updateEmailVerification({
       userId,
@@ -388,8 +388,8 @@ export class AccountController {
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
-    @Project() project: ProjectsDoc,
+
+
     @Locale() locale: LocaleTranslator,
   ): Promise<IResponse<TokensDoc>> {
     return this.accountService.createPhoneVerification({
@@ -424,7 +424,7 @@ export class AccountController {
   async updatePhoneVerification(
     @Body() { userId, secret }: UpdatePhoneVerificationDTO,
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
+
   ) {
     return this.accountService.updatePhoneVerification({
       userId,

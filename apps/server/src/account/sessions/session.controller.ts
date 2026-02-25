@@ -86,12 +86,12 @@ export class SessionsController {
     },
   })
   async deleteSessions(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
-    @Project() project: ProjectsDoc,
+
   ): Promise<void> {
     return this.sessionService.deleteSessions(
       db,
@@ -135,13 +135,13 @@ export class SessionsController {
     },
   })
   async deleteSession(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Param() params: SessionsParamDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
-    @Project() project: ProjectsDoc,
+
     @Session() session: SessionsDoc,
   ): Promise<void> {
     let sessionId = params.sessionId
@@ -174,10 +174,10 @@ export class SessionsController {
     },
   })
   async updateSession(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Param() params: SessionsParamDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<SessionsDoc>> {
     return this.sessionService.updateSession(
       db,
@@ -209,13 +209,13 @@ export class SessionsController {
   })
   @AllowSessionType(SessionType.EMAIL_PASSWORD)
   async createEmailSession(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Body() input: CreateEmailSessionDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<SessionsDoc>> {
     return this.sessionService.createEmailSession(
       db,
@@ -250,12 +250,12 @@ export class SessionsController {
   })
   @AllowSessionType(SessionType.ANONYMOUS)
   async createAnonymousSession(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<SessionsDoc>> {
     return this.sessionService.createAnonymousSession({
       user,
@@ -288,13 +288,13 @@ export class SessionsController {
     },
   })
   async createSession(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Body() input: CreateSessionDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<SessionsDoc>> {
     return this.sessionService.createSession({
       user,
@@ -327,7 +327,7 @@ export class SessionsController {
     @Req() request: NuvixRequest,
     @Res() response: NuvixRes,
     @Param() { provider }: ProviderParamDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<void> {
     const url = await this.sessionService.createOAuth2Session({
       input,
@@ -426,12 +426,12 @@ export class SessionsController {
     docs: false,
   })
   async OAuth2Redirect(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Query() input: OAuth2CallbackDTO,
     @Req() request: NuvixRequest,
     @Res() response: NuvixRes,
-    @Project() project: ProjectsDoc,
+
     @Param() { provider }: ProviderParamDTO,
   ): Promise<void> {
     return this.sessionService.oAuth2Redirect({
@@ -464,7 +464,7 @@ export class SessionsController {
     @Req() request: NuvixRequest,
     @Res() response: NuvixRes,
     @Param() { provider }: ProviderParamDTO,
-    @Project() project: ProjectsDoc,
+
   ) {
     return this.sessionService.createOAuth2Token({
       input,
@@ -496,13 +496,13 @@ export class SessionsController {
   })
   @AllowSessionType(SessionType.MAGIC_URL)
   async createMagicURLToken(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Body() input: CreateMagicURLTokenDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
-    @Project() project: ProjectsDoc,
+
   ) {
     return this.sessionService.createMagicURLToken({
       db: db,
@@ -539,9 +539,9 @@ export class SessionsController {
     @Body() input: CreateEmailTokenDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
-    @Project() project: ProjectsDoc,
+
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
+
     @Locale() locale: LocaleTranslator,
   ) {
     return this.sessionService.createEmailToken({
@@ -575,13 +575,13 @@ export class SessionsController {
     },
   })
   async updateMagicURLSession(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Body() input: CreateSessionDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
-    @Project() project: ProjectsDoc,
+
   ) {
     return this.sessionService.createSession({
       user,
@@ -614,13 +614,13 @@ export class SessionsController {
     },
   })
   async updatePhoneSession(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Body() input: CreateSessionDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
-    @Project() project: ProjectsDoc,
+
   ) {
     return this.sessionService.createSession({
       user,
@@ -654,13 +654,13 @@ export class SessionsController {
   })
   @AllowSessionType(SessionType.PHONE)
   async createPhoneToken(
-    @AuthDatabase() db: Database,
+
     @User() user: UsersDoc,
     @Body() input: CreatePhoneTokenDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
-    @Project() project: ProjectsDoc,
+
   ) {
     return this.sessionService.createPhoneToken({
       db: db,

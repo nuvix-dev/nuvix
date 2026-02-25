@@ -71,7 +71,7 @@ export class DatabaseController {
   async createSchema(
     @ProjectPg() pg: DataSource,
     @Body() body: CreateSchemaDTO,
-    @Project() project: ProjectsDoc,
+
     @Res({ passthrough: true }) res: NuvixRes,
   ) {
     const result = await (body.type !== SchemaType.Document

@@ -85,9 +85,9 @@ export class UsersController {
     },
   })
   async create(
-    @AuthDatabase() db: Database,
+
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.create(db, createUserDTO, project)
   }
@@ -106,9 +106,9 @@ export class UsersController {
     },
   })
   async createWithArgon2(
-    @AuthDatabase() db: Database,
+
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.createWithArgon2(db, createUserDTO, project)
   }
@@ -127,9 +127,9 @@ export class UsersController {
     },
   })
   async createWithBcrypt(
-    @AuthDatabase() db: Database,
+
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.createWithBcrypt(db, createUserDTO, project)
   }
@@ -148,9 +148,9 @@ export class UsersController {
     },
   })
   async createWithMd5(
-    @AuthDatabase() db: Database,
+
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.createWithMd5(db, createUserDTO, project)
   }
@@ -169,9 +169,9 @@ export class UsersController {
     },
   })
   async createWithSha(
-    @AuthDatabase() db: Database,
+
     @Body() createUserDTO: CreateUserWithShaDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.createWithSha(db, createUserDTO, project)
   }
@@ -191,9 +191,9 @@ export class UsersController {
     },
   })
   async createWithPhpass(
-    @AuthDatabase() db: Database,
+
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.createWithPhpass(db, createUserDTO, project)
   }
@@ -212,9 +212,9 @@ export class UsersController {
     },
   })
   async createWithScrypt(
-    @AuthDatabase() db: Database,
+
     @Body() createUserDTO: CreateUserWithScryptDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.createWithScrypt(db, createUserDTO, project)
   }
@@ -233,9 +233,9 @@ export class UsersController {
     },
   })
   async createWithScryptModified(
-    @AuthDatabase() db: Database,
+
     @Body() createUserDTO: CreateUserWithScryptModifedDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.createWithScryptMod(db, createUserDTO, project)
   }
@@ -253,7 +253,7 @@ export class UsersController {
     },
   })
   async findAll(
-    @AuthDatabase() db: Database,
+
     @QueryFilter(UsersQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<UsersDoc>> {
@@ -271,7 +271,7 @@ export class UsersController {
     },
   })
   async getUsage(
-    @AuthDatabase() db: Database,
+
     @Query() { range }: RangeQueryDTO,
   ): Promise<IResponse<unknown>> {
     return this.usersService.getUsage(db, range)
@@ -287,7 +287,7 @@ export class UsersController {
     },
   })
   async getIdentities(
-    @AuthDatabase() db: Database,
+
     @QueryFilter(IdentitiesQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<IdentitiesDoc>> {
@@ -308,7 +308,7 @@ export class UsersController {
     },
   })
   async deleteIdentity(
-    @AuthDatabase() db: Database,
+
     @Param() { identityId }: IdentityParamDTO,
   ): Promise<void> {
     return this.usersService.deleteIdentity(db, identityId)
@@ -324,7 +324,7 @@ export class UsersController {
     },
   })
   async findOne(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.findOne(db, userId)
@@ -340,7 +340,7 @@ export class UsersController {
     },
   })
   async getPrefs(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
   ): Promise<IResponse<Record<string, unknown>>> {
     return this.usersService.getPrefs(db, userId)
@@ -356,7 +356,7 @@ export class UsersController {
     },
   })
   async updatePrefs(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
     @Body() { prefs }: UpdateUserPrefsDTO,
   ): Promise<IResponse<Record<string, unknown>>> {
@@ -378,7 +378,7 @@ export class UsersController {
     },
   })
   async updateStatus(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
     @Body() status: UpdateUserStatusDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -400,7 +400,7 @@ export class UsersController {
     },
   })
   async updateLabels(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserLabelDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -422,7 +422,7 @@ export class UsersController {
     },
   })
   async updateName(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserNameDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -444,10 +444,10 @@ export class UsersController {
     },
   })
   async updatePassword(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserPasswordDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.updatePassword(db, userId, input, project)
   }
@@ -467,7 +467,7 @@ export class UsersController {
     },
   })
   async updateEmail(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserEmailDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -489,7 +489,7 @@ export class UsersController {
     },
   })
   async updatePhone(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserPhoneDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -506,7 +506,7 @@ export class UsersController {
     },
   })
   async createJwt(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
     @Body() input: CreateJwtDTO,
   ): Promise<IResponse<{ jwt: string }>> {
@@ -526,7 +526,7 @@ export class UsersController {
     },
   })
   async getMemberships(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
     @QueryFilter(MembershipsQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
@@ -548,7 +548,7 @@ export class UsersController {
     },
   })
   async createToken(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
     @Body() input: CreateTokenDTO,
     @Req() req: NuvixRequest,
@@ -575,7 +575,7 @@ export class UsersController {
     },
   })
   async getLogs(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
     @Locale() locale: LocaleTranslator,
     @QueryFilter(LogsQueryPipe) queries?: Queries[],
@@ -597,7 +597,7 @@ export class UsersController {
     },
   })
   async verify(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserEmailVerificationDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -618,7 +618,7 @@ export class UsersController {
     },
   })
   async verifyPhone(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserPoneVerificationDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -638,9 +638,9 @@ export class UsersController {
     },
   })
   async remove(
-    @AuthDatabase() db: Database,
+
     @Param() { userId }: UserParamDTO,
-    @Project() project: ProjectsDoc,
+
   ): Promise<void> {
     return this.usersService.remove(db, userId, project)
   }
