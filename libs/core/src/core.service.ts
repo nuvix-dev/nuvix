@@ -3,19 +3,40 @@ import path from 'node:path'
 import { Injectable, Logger, type OnModuleDestroy } from '@nestjs/common'
 import { Audit } from '@nuvix/audit'
 import { Cache, Redis } from '@nuvix/cache'
-import { Adapter, Database, Logger as DbLogger, Doc } from '@nuvix/db'
+import { Adapter, Database, Logger as DbLogger } from '@nuvix/db'
 import { Context, DataSource } from '@nuvix/pg'
 import { Local } from '@nuvix/storage'
-import { DatabaseRole, DEFAULT_DATABASE, Schemas } from '@nuvix/utils'
-import type { ProjectsDoc } from '@nuvix/utils/types'
+import {
+  configuration,
+  DatabaseRole,
+  DEFAULT_DATABASE,
+  Schemas,
+} from '@nuvix/utils'
 import IORedis from 'ioredis'
 import { CountryResponse, Reader } from 'maxmind'
-import { Client, Pool, PoolClient } from 'pg'
-import type { OAuthProviderType } from './config/authProviders.js'
+import { Client, Pool } from 'pg'
 import { Exception } from './extend/exception.js'
 
 @Injectable()
 export class CoreService implements OnModuleDestroy {
+  /**
+   * This is used to determine if it's console application or not,
+   * since some services are shared between console and server
+   */
+  private static _isConsole = false
+
+  public static setIsConsole(isConsole: boolean) {
+    this._isConsole = isConsole
+  }
+
+  public static isConsole() {
+    return this._isConsole
+  }
+
+  public isConsole() {
+    return CoreService.isConsole()
+  }
+
   private readonly logger = new Logger(CoreService.name)
   private cache: Cache | null = null
   private geoDb: Reader<CountryResponse> | null = null
@@ -30,10 +51,10 @@ export class CoreService implements OnModuleDestroy {
     this.projectPool = this.createMainPool()
   }
 
-  dbLogger(): DbLogger {
+  private dbLogger(): DbLogger {
     return new DbLogger({
       level: 'error',
-      enabled: this.appConfig.get('logLevels').length > 0,
+      enabled: configuration.logLevels.includes('error'),
     })
   }
 
@@ -61,6 +82,12 @@ export class CoreService implements OnModuleDestroy {
     }
   }
 
+  /**
+   * Returns the initialized Cache instance. If the cache is not initialized, an exception is thrown.
+   * @returns {Cache} The initialized Cache instance.
+   * @throws {Exception} If the cache is not initialized, an exception is thrown with a message indicating that the cache is not initialized.
+   * @public
+   */
   public getCache(): Cache {
     if (!this.cache) {
       throw new Exception('Cache not initialized')
@@ -68,9 +95,15 @@ export class CoreService implements OnModuleDestroy {
     return this.cache
   }
 
+  /**
+   * Returns the initialized Database instance for the platform. If the project database pool is not initialized, an exception is thrown.
+   * @returns {Database} The initialized Database instance for the platform.
+   * @throws {Exception} If the project database pool is not initialized, an exception is thrown with a message indicating that the project database is not initialized.
+   * @public
+   */
   public getPlatformDb(): Database {
     if (!this.projectPool) {
-      throw new Exception('Project DB not initialized')
+      throw new Exception('Project database pool not initialized')
     }
     const adapter = new Adapter(this.projectPool)
       .setMeta({
@@ -83,6 +116,12 @@ export class CoreService implements OnModuleDestroy {
     return new Database(adapter, this.getCache())
   }
 
+  /**
+   * Returns the initialized Reader instance for the GeoIP database. If the GeoIP database is not initialized, an exception is thrown.
+   * @returns {Reader<CountryResponse>} The initialized Reader instance for the GeoIP database.
+   * @throws {Exception} If the GeoIP database is not initialized, an exception is thrown with a message indicating that the GeoIP database is not initialized.
+   * @public
+   */
   public getGeoDb(): Reader<CountryResponse> {
     if (!this.geoDb) {
       throw new Exception('Geo DB not initialized')
@@ -158,61 +197,29 @@ export class CoreService implements OnModuleDestroy {
     return this.postgresPool
   }
 
-  /**
-   * Useful where we need a custom client for direct sql execution
-   */
-  createProjectDbClient(name: string, options?: PoolOptions) {
-    let databaseOptions: Partial<PoolOptions> & Record<string, any> = {}
-    databaseOptions = {
-      ...this.appConfig.getDatabaseConfig().postgres,
-      user: DatabaseRole.ADMIN,
-      password: this.appConfig.getDatabaseConfig().postgres.adminPassword,
-    }
-    if (options) {
-      databaseOptions = {
-        host: options.host,
-        port: options.port,
-        database: options.database,
-        user: options.user,
-        password: options.password,
-        ssl: this.appConfig.getDatabaseConfig().postgres.ssl
-          ? { rejectUnauthorized: false }
-          : undefined,
-      }
-    }
-
-    const pool = new Pool({
-      ...databaseOptions,
-      statement_timeout: 30000,
-      query_timeout: 30000,
-      application_name: `nuvix-${name}`,
-      keepAliveInitialDelayMillis: 10000,
-      max: this.appConfig.getDatabaseConfig().postgres.maxConnections,
-      idleTimeoutMillis: 5000,
-    })
-
-    pool.on('error', err => {
-      this.logger.error(`Pool error for ${name}:`, err)
-    })
-
-    return pool
-  }
-
-  createRedisInstance() {
+  private createRedisInstance() {
     if (this.redisInstance) {
       return this.redisInstance
     }
-    const redisConfig = this.appConfig.getRedisConfig()
+
+    const { secure, ...redisConfig } = configuration.redis
     const connection = new IORedis({
       connectionName: 'nuvix-core',
       ...redisConfig,
       username: redisConfig.user,
-      tls: redisConfig.secure ? { rejectUnauthorized: false } : undefined,
+      tls: secure ? { rejectUnauthorized: false } : undefined,
       maxRetriesPerRequest: 10,
     })
+
     return connection
   }
 
+  /**
+   * Returns the initialized IORedis instance. If the Redis instance is not initialized, an exception is thrown.
+   * @returns {IORedis} The initialized IORedis instance.
+   * @throws {Exception} If the Redis instance is not initialized, an exception is thrown with a message indicating that the Redis instance is not initialized.
+   * @public
+   */
   public getRedisInstance(): IORedis {
     if (!this.redisInstance) {
       throw new Exception('Redis instance not initialized')
@@ -220,7 +227,7 @@ export class CoreService implements OnModuleDestroy {
     return this.redisInstance
   }
 
-  createCache() {
+  private createCache() {
     if (this.cache) {
       return this.cache
     }
@@ -231,23 +238,14 @@ export class CoreService implements OnModuleDestroy {
     return cache
   }
 
+  /**
+   * Returns the initialized Audit instance for the platform. If the project database pool is not initialized, an exception is thrown.
+   * @returns {Audit} The initialized Audit instance for the platform.
+   * @throws {Exception} If the project database pool is not initialized, an exception is thrown with a message indicating that the project database is not initialized.
+   * @public
+   */
   public getPlatformAudit() {
     return new Audit(this.getPlatformDb())
-  }
-
-  public getPlatform(): Doc<Platform> {
-    const data: Platform = {
-      auths: {
-        limit: 1,
-        personalDataCheck: false,
-        passwordHistory: 0,
-        duration: undefined,
-        sessionAlerts: false,
-      },
-      oAuthProviders: [],
-    }
-
-    return new Doc(data)
   }
 
   getProjectDb(
@@ -285,84 +283,21 @@ export class CoreService implements OnModuleDestroy {
     return connection
   }
 
-  createGeoDb(): Reader<CountryResponse> {
+  /**
+   * Loads the GeoIP database from the specified path and creates a Reader instance.
+   * If the database fails to load, an exception is thrown with details about the error.
+   * @returns {Reader<CountryResponse>} A Reader instance for the GeoIP database.
+   * @throws {Exception} If the GeoIP database fails to load, an exception is thrown with details about the error.
+   * @private
+   */
+  private createGeoDb(): Reader<CountryResponse> {
     try {
       const buffer = readFileSync(
-        path.resolve(
-          this.appConfig.assetConfig.root,
-          'dbip/dbip-country-lite-2024-09.mmdb',
-        ),
+        configuration.assets.resolve('dbip', 'dbip-country-lite-2024-09.mmdb'),
       )
       return new Reader<CountryResponse>(buffer)
-    } catch (_error) {
-      this.logger.warn(
-        'GeoIP database not found, country detection will be disabled',
-      )
-      return {} as any // TODO: return a mock or empty reader
+    } catch (error) {
+      throw new Exception('Failed to load GeoIP database').addDetails({ error })
     }
   }
-
-  async createProjectDatabase(
-    project: ProjectsDoc,
-    options?: CreateProjectDatabaseOptions,
-  ) {
-    if (!this.projectPool) {
-      throw new Error('Project pool is not initialized')
-    }
-    const dbForProject = this.getProjectDb(this.projectPool, {
-      projectId: project.getId(),
-      schema: options?.schema,
-    })
-    return { client: this.projectPool, dbForProject }
-  }
-
-  async createProjectPgClient(_project: ProjectsDoc) {
-    if (!this.projectPool) {
-      throw new Error('Project pool is not initialized')
-    }
-    return this.projectPool
-  }
-
-  /**
-   * @deprecated Use connection pools instead
-   */
-  async releaseDatabaseClient(_client?: Pool | PoolClient) {
-    // try {
-    //   if (client && 'release' in client) {
-    //     client.release()
-    //   }
-    // } catch (error) {
-    //   this.logger.error('Failed to release database client', error)
-    // }
-  }
-}
-
-interface PoolOptions {
-  database: string
-  user: string
-  password?: string
-  host: string
-  port?: number
-}
-
-interface GetProjectDBOptions {
-  projectId: string
-  schema?: string
-}
-
-interface CreateProjectDatabaseOptions {
-  schema?: string
-}
-
-export interface Platform {
-  authWhitelistEmails?: string[]
-  authWhitelistIPs?: string[]
-  auths: {
-    limit?: number
-    personalDataCheck?: boolean
-    passwordHistory?: number
-    duration?: number
-    sessionAlerts?: boolean
-  }
-  oAuthProviders: OAuthProviderType[]
 }
