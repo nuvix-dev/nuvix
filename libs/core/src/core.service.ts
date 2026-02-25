@@ -1,18 +1,17 @@
 import { readFileSync } from 'node:fs'
-import path from 'node:path'
 import { Injectable, Logger, type OnModuleDestroy } from '@nestjs/common'
 import { Audit } from '@nuvix/audit'
 import { Cache, Redis } from '@nuvix/cache'
 import { Adapter, Database, Logger as DbLogger } from '@nuvix/db'
 import { Context, DataSource } from '@nuvix/pg'
-import { Local } from '@nuvix/storage'
+import { Device, Local } from '@nuvix/storage'
 import {
   configuration,
   DatabaseRole,
   DEFAULT_DATABASE,
   Schemas,
 } from '@nuvix/utils'
-import IORedis from 'ioredis'
+import { Redis as IORedis } from 'ioredis'
 import { CountryResponse, Reader } from 'maxmind'
 import { Client, Pool } from 'pg'
 import { Exception } from './extend/exception.js'
@@ -38,16 +37,18 @@ export class CoreService implements OnModuleDestroy {
   }
 
   private readonly logger = new Logger(CoreService.name)
-  private cache: Cache | null = null
-  private geoDb: Reader<CountryResponse> | null = null
-  private redisInstance: IORedis | null = null
+  private readonly cache: Cache | null = null
+  private readonly geoDb: Reader<CountryResponse> | null = null
+  private readonly redisInstance: IORedis | null = null
   private readonly projectPool: Pool | null = null
   private postgresPool: Pool | null = null
+  private readonly storageDevice: Device | null = null
 
   constructor() {
     this.geoDb = this.createGeoDb()
     this.redisInstance = this.createRedisInstance()
     this.cache = this.createCache()
+    this.storageDevice = this.createStorageDevice()
     this.projectPool = this.createMainPool()
   }
 
@@ -244,7 +245,7 @@ export class CoreService implements OnModuleDestroy {
    * @throws {Exception} If the project database pool is not initialized, an exception is thrown with a message indicating that the project database is not initialized.
    * @public
    */
-  public getPlatformAudit() {
+  public getPlatformAudit(): Audit {
     return new Audit(this.getPlatformDb())
   }
 
@@ -270,17 +271,25 @@ export class CoreService implements OnModuleDestroy {
     return connection
   }
 
-  getProjectDevice(projectId: string) {
-    const store = new Local(
-      path.join(this.appConfig.get('storage').uploads, projectId),
-    )
-    return store
+  /**
+   * Returns the initialized Local storage instance for handling file uploads. This method can be extended in the future to support other storage providers like S3, GCS, etc. If the storage device fails to initialize, an exception is thrown with details about the error.
+   * @returns {Device} The initialized Local storage instance for handling file uploads.
+   * @throws {Exception} If the storage device fails to initialize, an exception is thrown with details about the error.
+   * @public
+   */
+  public getStorageDevice(): Device {
+    if (!this.storageDevice) {
+      throw new Exception('Storage device not initialized')
+    }
+    return this.storageDevice
   }
 
-  getProjectPg(client: Pool | Client, ctx?: Context) {
-    ctx = ctx ?? new Context()
-    const connection = new DataSource(client, {}, { context: ctx })
-    return connection
+  private createStorageDevice(): Device {
+    // For now, we are using Local storage for handling file uploads.
+    // In the future, this can be extended to support other storage providers like S3, GCS, etc.
+    const storagePath = configuration.storage.uploads
+    const device = new Local(storagePath)
+    return device
   }
 
   /**

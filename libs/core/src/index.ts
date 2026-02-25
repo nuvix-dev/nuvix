@@ -1,4 +1,3 @@
-export * from './config.service.js'
 export * from './core.module'
 export * from './core.service.js'
 
