@@ -42,7 +42,6 @@ export class MfaController {
     },
   })
   async updateMfa(
-
     @Param() { userId }: UserParamDTO,
     @Body() { mfa }: UpdateMfaStatusDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -58,10 +57,7 @@ export class MfaController {
       descMd: '/docs/references/users/list-mfa-factors.md',
     },
   })
-  async getMfaFactors(
-
-    @Param() { userId }: UserParamDTO,
-  ): Promise<unknown> {
+  async getMfaFactors(@Param() { userId }: UserParamDTO): Promise<unknown> {
     return this.mfaService.getMfaFactors(db, userId)
   }
 
@@ -74,10 +70,7 @@ export class MfaController {
       descMd: '/docs/references/users/get-mfa-recovery-codes.md',
     },
   })
-  async getMfaRecoveryCodes(
-
-    @Param() { userId }: UserParamDTO,
-  ): Promise<
+  async getMfaRecoveryCodes(@Param() { userId }: UserParamDTO): Promise<
     Doc<{
       recoveryCodes: string[]
     }>
@@ -99,10 +92,7 @@ export class MfaController {
       descMd: '/docs/references/users/create-mfa-recovery-codes.md',
     },
   })
-  async generateMfaRecoveryCodes(
-
-    @Param() { userId }: UserParamDTO,
-  ): Promise<
+  async generateMfaRecoveryCodes(@Param() { userId }: UserParamDTO): Promise<
     Doc<{
       recoveryCodes: string[]
     }>
@@ -124,10 +114,7 @@ export class MfaController {
       descMd: '/docs/references/users/update-mfa-recovery-codes.md',
     },
   })
-  async regenerateMfaRecoveryCodes(
-
-    @Param() { userId }: UserParamDTO,
-  ): Promise<
+  async regenerateMfaRecoveryCodes(@Param() { userId }: UserParamDTO): Promise<
     Doc<{
       recoveryCodes: string[]
     }>
@@ -150,7 +137,6 @@ export class MfaController {
     },
   })
   async deleteMfaAuthenticator(
-
     @Param() { userId, type }: MfaTypeParamDTO,
   ): Promise<void> {
     return this.mfaService.deleteMfaAuthenticator(db, userId, type)

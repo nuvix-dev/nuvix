@@ -70,10 +70,8 @@ export class AccountController {
   })
   @AllowSessionType(SessionType.EMAIL_PASSWORD)
   async createAccount(
-
     @Body() input: CreateAccountDTO,
     @User() user: UsersDoc,
-
   ): Promise<IResponse<UsersDoc>> {
     return this.accountService.createAccount(
       db,
@@ -117,11 +115,7 @@ export class AccountController {
       descMd: '/docs/references/account/delete.md',
     },
   })
-  async deleteAccount(
-
-    @User() user: UsersDoc,
-
-  ): Promise<void> {
+  async deleteAccount(@User() user: UsersDoc): Promise<void> {
     return this.accountService.deleteAccount(db, user, project)
   }
 
@@ -154,7 +148,6 @@ export class AccountController {
     },
   })
   async updatePrefs(
-
     @User() user: UsersDoc,
     @Body() input: UpdatePrefsDTO,
   ): Promise<IResponse<Record<string, unknown>>> {
@@ -176,7 +169,6 @@ export class AccountController {
     },
   })
   async updateName(
-
     @User() user: UsersDoc,
     @Body() { name }: UpdateNameDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -199,10 +191,8 @@ export class AccountController {
     },
   })
   async updatePassword(
-
     @User() user: UsersDoc,
     @Body() { password, oldPassword }: UpdatePasswordDTO,
-
   ): Promise<IResponse<UsersDoc>> {
     return this.accountService.updatePassword({
       db: db,
@@ -228,7 +218,6 @@ export class AccountController {
     },
   })
   async updateEmail(
-
     @User() user: UsersDoc,
     @Body() updateEmailDTO: UpdateEmailDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -250,10 +239,8 @@ export class AccountController {
     },
   })
   async updatePhone(
-
     @User() user: UsersDoc,
     @Body() { password, phone }: UpdatePhoneDTO,
-
   ): Promise<IResponse<UsersDoc>> {
     return this.accountService.updatePhone({
       db: db,
@@ -279,7 +266,6 @@ export class AccountController {
     },
   })
   async updateStatus(
-
     @User() user: UsersDoc,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
@@ -354,7 +340,6 @@ export class AccountController {
     @Body() { userId, secret }: UpdateEmailVerificationDTO,
     @Res({ passthrough: true }) response: NuvixRes,
     @User() user: UsersDoc,
-
   ): Promise<IResponse<TokensDoc>> {
     return this.accountService.updateEmailVerification({
       userId,
@@ -388,7 +373,6 @@ export class AccountController {
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @User() user: UsersDoc,
-
 
     @Locale() locale: LocaleTranslator,
   ): Promise<IResponse<TokensDoc>> {
@@ -424,7 +408,6 @@ export class AccountController {
   async updatePhoneVerification(
     @Body() { userId, secret }: UpdatePhoneVerificationDTO,
     @User() user: UsersDoc,
-
   ) {
     return this.accountService.updatePhoneVerification({
       userId,

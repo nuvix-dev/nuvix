@@ -85,9 +85,7 @@ export class UsersController {
     },
   })
   async create(
-
     @Body() createUserDTO: CreateUserDTO,
-
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.create(db, createUserDTO, project)
   }
@@ -106,9 +104,7 @@ export class UsersController {
     },
   })
   async createWithArgon2(
-
     @Body() createUserDTO: CreateUserDTO,
-
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.createWithArgon2(db, createUserDTO, project)
   }
@@ -127,9 +123,7 @@ export class UsersController {
     },
   })
   async createWithBcrypt(
-
     @Body() createUserDTO: CreateUserDTO,
-
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.createWithBcrypt(db, createUserDTO, project)
   }
@@ -148,9 +142,7 @@ export class UsersController {
     },
   })
   async createWithMd5(
-
     @Body() createUserDTO: CreateUserDTO,
-
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.createWithMd5(db, createUserDTO, project)
   }
@@ -169,9 +161,7 @@ export class UsersController {
     },
   })
   async createWithSha(
-
     @Body() createUserDTO: CreateUserWithShaDTO,
-
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.createWithSha(db, createUserDTO, project)
   }
@@ -191,9 +181,7 @@ export class UsersController {
     },
   })
   async createWithPhpass(
-
     @Body() createUserDTO: CreateUserDTO,
-
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.createWithPhpass(db, createUserDTO, project)
   }
@@ -212,9 +200,7 @@ export class UsersController {
     },
   })
   async createWithScrypt(
-
     @Body() createUserDTO: CreateUserWithScryptDTO,
-
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.createWithScrypt(db, createUserDTO, project)
   }
@@ -233,9 +219,7 @@ export class UsersController {
     },
   })
   async createWithScryptModified(
-
     @Body() createUserDTO: CreateUserWithScryptModifedDTO,
-
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.createWithScryptMod(db, createUserDTO, project)
   }
@@ -253,7 +237,6 @@ export class UsersController {
     },
   })
   async findAll(
-
     @QueryFilter(UsersQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<UsersDoc>> {
@@ -271,7 +254,6 @@ export class UsersController {
     },
   })
   async getUsage(
-
     @Query() { range }: RangeQueryDTO,
   ): Promise<IResponse<unknown>> {
     return this.usersService.getUsage(db, range)
@@ -287,7 +269,6 @@ export class UsersController {
     },
   })
   async getIdentities(
-
     @QueryFilter(IdentitiesQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<IdentitiesDoc>> {
@@ -308,7 +289,6 @@ export class UsersController {
     },
   })
   async deleteIdentity(
-
     @Param() { identityId }: IdentityParamDTO,
   ): Promise<void> {
     return this.usersService.deleteIdentity(db, identityId)
@@ -324,7 +304,6 @@ export class UsersController {
     },
   })
   async findOne(
-
     @Param() { userId }: UserParamDTO,
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.findOne(db, userId)
@@ -340,7 +319,6 @@ export class UsersController {
     },
   })
   async getPrefs(
-
     @Param() { userId }: UserParamDTO,
   ): Promise<IResponse<Record<string, unknown>>> {
     return this.usersService.getPrefs(db, userId)
@@ -356,7 +334,6 @@ export class UsersController {
     },
   })
   async updatePrefs(
-
     @Param() { userId }: UserParamDTO,
     @Body() { prefs }: UpdateUserPrefsDTO,
   ): Promise<IResponse<Record<string, unknown>>> {
@@ -378,7 +355,6 @@ export class UsersController {
     },
   })
   async updateStatus(
-
     @Param() { userId }: UserParamDTO,
     @Body() status: UpdateUserStatusDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -400,7 +376,6 @@ export class UsersController {
     },
   })
   async updateLabels(
-
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserLabelDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -422,7 +397,6 @@ export class UsersController {
     },
   })
   async updateName(
-
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserNameDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -444,10 +418,8 @@ export class UsersController {
     },
   })
   async updatePassword(
-
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserPasswordDTO,
-
   ): Promise<IResponse<UsersDoc>> {
     return this.usersService.updatePassword(db, userId, input, project)
   }
@@ -467,7 +439,6 @@ export class UsersController {
     },
   })
   async updateEmail(
-
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserEmailDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -489,7 +460,6 @@ export class UsersController {
     },
   })
   async updatePhone(
-
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserPhoneDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -506,7 +476,6 @@ export class UsersController {
     },
   })
   async createJwt(
-
     @Param() { userId }: UserParamDTO,
     @Body() input: CreateJwtDTO,
   ): Promise<IResponse<{ jwt: string }>> {
@@ -526,7 +495,6 @@ export class UsersController {
     },
   })
   async getMemberships(
-
     @Param() { userId }: UserParamDTO,
     @QueryFilter(MembershipsQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
@@ -548,7 +516,6 @@ export class UsersController {
     },
   })
   async createToken(
-
     @Param() { userId }: UserParamDTO,
     @Body() input: CreateTokenDTO,
     @Req() req: NuvixRequest,
@@ -575,7 +542,6 @@ export class UsersController {
     },
   })
   async getLogs(
-
     @Param() { userId }: UserParamDTO,
     @Locale() locale: LocaleTranslator,
     @QueryFilter(LogsQueryPipe) queries?: Queries[],
@@ -597,7 +563,6 @@ export class UsersController {
     },
   })
   async verify(
-
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserEmailVerificationDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -618,7 +583,6 @@ export class UsersController {
     },
   })
   async verifyPhone(
-
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserPoneVerificationDTO,
   ): Promise<IResponse<UsersDoc>> {
@@ -637,11 +601,7 @@ export class UsersController {
       descMd: '/docs/references/users/delete.md',
     },
   })
-  async remove(
-
-    @Param() { userId }: UserParamDTO,
-
-  ): Promise<void> {
+  async remove(@Param() { userId }: UserParamDTO): Promise<void> {
     return this.usersService.remove(db, userId, project)
   }
 }

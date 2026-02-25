@@ -6,6 +6,7 @@ import {
   IndexType,
   Order,
 } from '@nuvix/db'
+import { SchemaMeta } from '../constants'
 
 export const bucketCollections: Record<string, Collection> = {
   files: {
@@ -176,7 +177,7 @@ export const bucketCollections: Record<string, Collection> = {
 export const dbCollections: Record<string, Collection> = {
   collections: {
     $collection: ID.custom(Database.METADATA),
-    $id: ID.custom('_collections'),
+    $id: ID.custom(SchemaMeta.collections),
     name: 'Collections',
     attributes: [
       {
@@ -259,7 +260,7 @@ export const dbCollections: Record<string, Collection> = {
 
   attributes: {
     $collection: ID.custom(Database.METADATA),
-    $id: ID.custom('_attributes'),
+    $id: ID.custom(SchemaMeta.attributes),
     name: 'Attributes',
     attributes: [
       {
@@ -376,7 +377,7 @@ export const dbCollections: Record<string, Collection> = {
 
   indexes: {
     $collection: ID.custom(Database.METADATA),
-    $id: ID.custom('_indexes'),
+    $id: ID.custom(SchemaMeta.indexes),
     name: 'Indexes',
     attributes: [
       {

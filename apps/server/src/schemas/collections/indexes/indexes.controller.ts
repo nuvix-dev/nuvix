@@ -60,7 +60,6 @@ export class IndexesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() input: CreateIndexDTO,
-
   ): Promise<IResponse<IndexesDoc>> {
     return this.indexesService.createIndex(db, collectionId, input, project)
   }
@@ -115,7 +114,6 @@ export class IndexesController {
   async removeIndex(
     @CurrentDatabase() db: Database,
     @Param() { collectionId, key }: IndexParamsDTO,
-
   ): Promise<IndexesDoc> {
     return this.indexesService.deleteIndex(db, collectionId, key, project)
   }

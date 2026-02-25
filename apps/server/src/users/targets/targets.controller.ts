@@ -53,7 +53,6 @@ export class TargetsController {
     },
   })
   async addTarget(
-
     @Param() { userId }: UserParamDTO,
     @Body() createTargetDTO: CreateTargetDTO,
   ): Promise<IResponse<TargetsDoc>> {
@@ -73,7 +72,6 @@ export class TargetsController {
     },
   })
   async getTargets(
-
     @Param() { userId }: UserParamDTO,
     @QueryFilter(TargetsQueryPipe) queries?: Query[],
   ): Promise<IListResponse<TargetsDoc>> {
@@ -90,7 +88,6 @@ export class TargetsController {
     },
   })
   async getTarget(
-
     @Param() { userId, targetId }: TargetParamDTO,
   ): Promise<IResponse<TargetsDoc>> {
     return this.targetsService.getTarget(db, userId, targetId)
@@ -110,7 +107,6 @@ export class TargetsController {
     },
   })
   async updateTarget(
-
     @Param() { userId, targetId }: TargetParamDTO,
     @Body() input: UpdateTargetDTO,
   ): Promise<IResponse<TargetsDoc>> {
@@ -131,7 +127,6 @@ export class TargetsController {
     },
   })
   async deleteTarget(
-
     @Param() { userId, targetId }: TargetParamDTO,
   ): Promise<void> {
     return this.targetsService.deleteTarget(db, userId, targetId)

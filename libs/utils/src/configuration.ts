@@ -39,13 +39,10 @@ const DEFAULT_HEADERS = [
   'x-fallback-cookies',
 ] as const
 
-
 const env = {
-  get: (key: string, fallback = ''): string =>
-    process.env[key] ?? fallback,
+  get: (key: string, fallback = ''): string => process.env[key] ?? fallback,
 
-  getRequired: (key: string): string | undefined =>
-    process.env[key],
+  getRequired: (key: string): string | undefined => process.env[key],
 
   bool: (key: string, fallback = false): boolean => {
     const val = process.env[key]?.toLowerCase()
@@ -63,21 +60,21 @@ const env = {
   list: (key: string, fallback: string[] = []): string[] => {
     const val = process.env[key]
     if (!val) return fallback
-    return val.split(',').map(s => s.trim()).filter(Boolean)
+    return val
+      .split(',')
+      .map(s => s.trim())
+      .filter(Boolean)
   },
 
-  is: (key: string, value: string): boolean =>
-    process.env[key] === value,
+  is: (key: string, value: string): boolean => process.env[key] === value,
 
-  isNot: (key: string, value: string): boolean =>
-    process.env[key] !== value,
+  isNot: (key: string, value: string): boolean => process.env[key] !== value,
 }
 
 const paths = {
   root: PROJECT_ROOT,
 
-  fromRoot: (...segments: string[]) =>
-    path.join(PROJECT_ROOT, ...segments),
+  fromRoot: (...segments: string[]) => path.join(PROJECT_ROOT, ...segments),
 
   storage: (...segments: string[]) =>
     path.join(PROJECT_ROOT, 'storage', ...segments),
@@ -138,7 +135,7 @@ const createConfig = () => {
         if (!key) {
           Logger.warn(
             'NUVIX_ENCRYPTION_KEY not set. Using insecure default. ' +
-            'Set a custom key in production.'
+              'Set a custom key in production.',
           )
           return 'acd3462d9128abcd'
         }
@@ -151,13 +148,13 @@ const createConfig = () => {
       methods: ['GET', 'PUT', 'PATCH', 'POST', 'DELETE'] as const,
       credentials: true,
       allowedOrigins: env.list('NUVIX_CORS_ORIGIN'),
-      allowedHeaders: [
-        ...DEFAULT_HEADERS,
-        ...env.list('NUVIX_CORS_HEADERS'),
-      ],
+      allowedHeaders: [...DEFAULT_HEADERS, ...env.list('NUVIX_CORS_HEADERS')],
       exposedHeaders: ['X-Nuvix-Session', 'X-Fallback-Cookies'],
       cookieDomain: env.get('NUVIX_COOKIE_DOMAIN'),
-      cookieSameSite: (env.get('NUVIX_COOKIE_SAMESITE', 'none') as CookieSameSite),
+      cookieSameSite: env.get(
+        'NUVIX_COOKIE_SAMESITE',
+        'none',
+      ) as CookieSameSite,
     },
 
     redis: {
@@ -308,7 +305,8 @@ const VALIDATION_RULES: ValidationRule[] = [
   },
   {
     key: 'NUVIX_DATABASE_PORT',
-    validator: (v) => !v || (Number.parseInt(v) > 0 && Number.parseInt(v) < 65536),
+    validator: v =>
+      !v || (Number.parseInt(v) > 0 && Number.parseInt(v) < 65536),
     validatorHint: 'must be a valid port (1-65535)',
   },
 
@@ -319,7 +317,8 @@ const VALIDATION_RULES: ValidationRule[] = [
   },
   {
     key: 'NUVIX_REDIS_PORT',
-    validator: (v) => !v || (Number.parseInt(v) > 0 && Number.parseInt(v) < 65536),
+    validator: v =>
+      !v || (Number.parseInt(v) > 0 && Number.parseInt(v) < 65536),
     validatorHint: 'must be a valid port (1-65535)',
   },
 
@@ -349,12 +348,12 @@ const VALIDATION_RULES: ValidationRule[] = [
   // Storage limits
   {
     key: 'NUVIX_STORAGE_MAX_SIZE',
-    validator: (v) => !v || Number.parseInt(v) > 0,
+    validator: v => !v || Number.parseInt(v) > 0,
     validatorHint: 'must be a positive number',
   },
   {
     key: 'NUVIX_STORAGE_LIMIT',
-    validator: (v) => !v || Number.parseInt(v) > 0,
+    validator: v => !v || Number.parseInt(v) > 0,
     validatorHint: 'must be a positive number',
   },
 ]
@@ -371,7 +370,9 @@ type ValidationResult = {
   warnings: ValidationError[]
 }
 
-const validateEnv = (rules: ValidationRule[] = VALIDATION_RULES): ValidationResult => {
+const validateEnv = (
+  rules: ValidationRule[] = VALIDATION_RULES,
+): ValidationResult => {
   const isProduction = process.env.NODE_ENV === 'production'
   const errors: ValidationError[] = []
   const warnings: ValidationError[] = []
@@ -438,7 +439,9 @@ const validateEnv = (rules: ValidationRule[] = VALIDATION_RULES): ValidationResu
   }
 }
 
-const validateConfig = (options: { exitOnError?: boolean; silent?: boolean } = {}) => {
+const validateConfig = (
+  options: { exitOnError?: boolean; silent?: boolean } = {},
+) => {
   const { exitOnError = true, silent = false } = options
   const result = validateEnv()
 
@@ -457,11 +460,11 @@ const validateConfig = (options: { exitOnError?: boolean; silent?: boolean } = {
     if (!result.valid) {
       Logger.error(
         `\n Configuration validation failed with ${result.errors.length} error(s).\n` +
-        `   Fix the above issues and restart.\n`
+          `   Fix the above issues and restart.\n`,
       )
     } else if (result.warnings.length > 0) {
       Logger.warn(
-        `\n Configuration loaded with ${result.warnings.length} warning(s).\n`
+        `\n Configuration loaded with ${result.warnings.length} warning(s).\n`,
       )
     } else {
       Logger.log('Configuration validated successfully')
@@ -474,7 +477,6 @@ const validateConfig = (options: { exitOnError?: boolean; silent?: boolean } = {
 
   return result
 }
-
 
 export type NuvixConfig = ReturnType<typeof createConfig>
 export const configuration = createConfig()

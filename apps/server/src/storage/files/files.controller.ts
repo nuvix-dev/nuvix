@@ -58,7 +58,6 @@ export class FilesController {
     },
   })
   async getFiles(
-
     @Param() { bucketId }: BucketParamsDTO,
     @QueryFilter(FilesQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
@@ -115,7 +114,6 @@ export class FilesController {
     },
   })
   async createFile(
-
     @Param() { bucketId }: BucketParamsDTO,
     @MultipartParam('fileId') fileId: string,
     @MultipartParam('permissions') permissions: string[],
@@ -148,7 +146,6 @@ export class FilesController {
     },
   })
   async getFile(
-
     @Param() { fileId, bucketId }: FileParamsDTO,
   ): Promise<IResponse<FilesDoc>> {
     return this.filesService.getFile(db, bucketId, fileId)
@@ -170,7 +167,6 @@ export class FilesController {
     },
   })
   async previewFile(
-
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Project() project: Doc,
     @Query() queryParams: PreviewFileQueryDTO,
@@ -205,7 +201,6 @@ export class FilesController {
     },
   })
   async downloadFile(
-
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Req() req: NuvixRequest,
     @Res({ passthrough: true }) res: NuvixRes,
@@ -242,7 +237,6 @@ export class FilesController {
     },
   })
   async viewFile(
-
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Req() req: NuvixRequest,
     @Res({ passthrough: true }) res: NuvixRes,
@@ -257,7 +251,6 @@ export class FilesController {
     // No need to document this endpoint in the SDK as it's used internally for push notifications
   })
   async getFileForPushNotification(
-
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Query('jwt') jwt: string,
     @Req() req: NuvixRequest,
@@ -295,7 +288,6 @@ export class FilesController {
     },
   })
   async updateFile(
-
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Body() updateFileDTO: UpdateFileDTO,
   ): Promise<IResponse<FilesDoc>> {
@@ -322,7 +314,6 @@ export class FilesController {
     },
   })
   async deleteFile(
-
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Project() project: Doc,
   ): Promise<void> {

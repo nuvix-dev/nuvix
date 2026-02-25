@@ -46,7 +46,6 @@ export class SessionsController {
     },
   })
   async getSessions(
-
     @Param() { userId }: UserParamDTO,
     @Locale() localeTranslater: LocaleTranslator,
   ): Promise<IListResponse<SessionsDoc>> {
@@ -67,7 +66,6 @@ export class SessionsController {
     },
   })
   async createSession(
-
     @Param() { userId }: UserParamDTO,
     @Req() req: NuvixRequest,
 
@@ -96,10 +94,7 @@ export class SessionsController {
       descMd: '/docs/references/users/delete-user-sessions.md',
     },
   })
-  async deleteSessions(
-
-    @Param() { userId }: UserParamDTO,
-  ): Promise<void> {
+  async deleteSessions(@Param() { userId }: UserParamDTO): Promise<void> {
     return this.sessionsService.deleteSessions(db, userId)
   }
 
@@ -117,7 +112,6 @@ export class SessionsController {
     },
   })
   async deleteSession(
-
     @Param() { userId }: UserParamDTO,
     @Param() { sessionId }: SessionParamDTO,
   ): Promise<void> {

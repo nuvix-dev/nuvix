@@ -246,7 +246,6 @@ export class SchemasController {
     @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId }: TableParamsDTO,
     @Body() body: PermissionsDTO,
-
   ): Promise<string[]> {
     return this.schemasService.updatePermissions({
       pg,
@@ -267,7 +266,6 @@ export class SchemasController {
     @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId, rowId }: RowParamsDTO,
     @Body() body: PermissionsDTO,
-
   ): Promise<string[]> {
     return this.schemasService.updatePermissions({
       pg,
@@ -288,7 +286,6 @@ export class SchemasController {
   getTablePermissions(
     @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId }: TableParamsDTO,
-
   ): Promise<string[]> {
     return this.schemasService.getPermissions({
       pg,
@@ -307,7 +304,6 @@ export class SchemasController {
   getRowPermissions(
     @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId, rowId }: RowParamsDTO,
-
   ): Promise<string[]> {
     return this.schemasService.getPermissions({
       pg,

@@ -1,12 +1,5 @@
 import { Auth } from '@nuvix/core/helpers'
-import {
-  AttributeType,
-  Collection,
-  Database,
-  ID,
-  IndexType,
-  Order,
-} from '@nuvix/db'
+import { AttributeType, Database, ID, IndexType, Order } from '@nuvix/db'
 
 export const authCollections = {
   users: {
@@ -1061,65 +1054,7 @@ export const authCollections = {
   },
 }
 
-export const commonCollections = (
-  _for: 'platform' | 'project',
-): Record<string, Collection> => ({
-  cache: {
-    $collection: Database.METADATA,
-    $id: 'cache',
-    name: 'Cache',
-    attributes: [
-      {
-        $id: 'resource',
-        key: 'resource',
-        type: AttributeType.String,
-        size: 255,
-        default: null,
-      },
-      {
-        $id: 'resourceType',
-        key: 'resourceType',
-        type: AttributeType.String,
-        size: 255,
-        default: null,
-      },
-      {
-        $id: ID.custom('mimeType'),
-        key: ID.custom('mimeType'),
-        type: AttributeType.String,
-        size: 255, // https://tools.ietf.org/html/rfc4288#section-4.2
-        default: null,
-      },
-      {
-        $id: 'accessedAt',
-        key: 'accessedAt',
-        type: AttributeType.Timestamptz,
-        default: null,
-      },
-      {
-        $id: 'signature',
-        key: 'signature',
-        type: AttributeType.String,
-        size: 255,
-        default: null,
-      },
-    ],
-    indexes: [
-      {
-        $id: '_key_accessedAt',
-        type: IndexType.Key,
-        attributes: ['accessedAt'],
-        orders: [],
-      },
-      {
-        $id: '_key_resource',
-        type: IndexType.Key,
-        attributes: ['resource'],
-        orders: [],
-      },
-    ],
-  },
-
+export const commonCollections = {
   buckets: {
     $collection: ID.custom(Database.METADATA),
     $id: ID.custom('buckets'),
@@ -1550,11 +1485,7 @@ export const commonCollections = (
         key: ID.custom('targets'),
         type: AttributeType.Virtual,
         default: null,
-        filters: [
-          _for === 'platform'
-            ? 'subQueryTopicTargets'
-            : 'subQueryProjectTopicTargets',
-        ],
+        filters: ['subQueryTopicTargets'],
       },
       {
         $id: ID.custom('search'),
@@ -1701,4 +1632,4 @@ export const commonCollections = (
       },
     ],
   },
-})
+}

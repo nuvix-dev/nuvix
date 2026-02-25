@@ -95,7 +95,6 @@ export class SubscribersController {
   })
   async getSubscriber(
     @Param() { topicId, subscriberId }: SubscriberParamsDTO,
-
   ): Promise<IResponse<SubscribersDoc>> {
     return this.subscribersService.getSubscriber(db, topicId, subscriberId)
   }
@@ -114,7 +113,6 @@ export class SubscribersController {
   })
   async deleteSubscriber(
     @Param() { topicId, subscriberId }: SubscriberParamsDTO,
-
   ): Promise<void> {
     return this.subscribersService.deleteSubscriber(db, topicId, subscriberId)
   }

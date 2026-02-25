@@ -77,7 +77,6 @@ export class ProvidersController {
     },
   })
   async createMailgunProvider(
-
     @Body() input: CreateMailgunProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createMailgunProvider({
@@ -100,7 +99,6 @@ export class ProvidersController {
     },
   })
   async createSendgridProvider(
-
     @Body() input: CreateSendgridProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createSendGridProvider({
@@ -123,7 +121,6 @@ export class ProvidersController {
     },
   })
   async createSMTPProvider(
-
     @Body() input: CreateSMTPProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createSmtpProvider({
@@ -146,7 +143,6 @@ export class ProvidersController {
     },
   })
   async createMsg91Provider(
-
     @Body() input: CreateMsg91ProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createMsg91Provider({
@@ -169,7 +165,6 @@ export class ProvidersController {
     },
   })
   async createTelesignProvider(
-
     @Body() input: CreateTelesignProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createTelesignProvider({
@@ -192,7 +187,6 @@ export class ProvidersController {
     },
   })
   async createTextmagicProvider(
-
     @Body() input: CreateTextmagicProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createTextMagicProvider({
@@ -215,7 +209,6 @@ export class ProvidersController {
     },
   })
   async createTwilioProvider(
-
     @Body() input: CreateTwilioProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createTwilioProvider({
@@ -238,7 +231,6 @@ export class ProvidersController {
     },
   })
   async createVonageProvider(
-
     @Body() input: CreateVonageProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createVonageProvider({
@@ -261,7 +253,6 @@ export class ProvidersController {
     },
   })
   async createFcmProvider(
-
     @Body() input: CreateFcmProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createFcmProvider({
@@ -284,7 +275,6 @@ export class ProvidersController {
     },
   })
   async createApnsProvider(
-
     @Body() input: CreateApnsProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createApnsProvider({
@@ -303,7 +293,6 @@ export class ProvidersController {
     },
   })
   async listProviders(
-
     @QueryFilter(ProvidersQueryPipe) queries: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<ProvidersDoc>> {
@@ -325,7 +314,6 @@ export class ProvidersController {
   })
   async getProvider(
     @Param() { providerId }: ProviderParamsDTO,
-
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.getProvider(db, providerId)
   }
@@ -594,7 +582,6 @@ export class ProvidersController {
   })
   async deleteProvider(
     @Param() { providerId }: ProviderParamsDTO,
-
   ): Promise<void> {
     return this.providersService.deleteProvider(db, providerId)
   }

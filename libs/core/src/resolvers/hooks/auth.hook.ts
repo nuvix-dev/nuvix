@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { Authorization, Database, Doc, Query } from '@nuvix/db'
-import { AppMode, AUTH_SCHEMA_DB, Context } from '@nuvix/utils'
+import { AppMode, Context } from '@nuvix/utils'
 import { ProjectsDoc, SessionsDoc, UsersDoc } from '@nuvix/utils/types'
 import { CoreService } from '../../core.service.js'
 import { AuthType } from '../../decorators'

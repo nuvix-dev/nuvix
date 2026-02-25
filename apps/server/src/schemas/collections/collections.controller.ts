@@ -139,7 +139,6 @@ export class CollectionsController {
   async removeCollection(
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
-
   ): Promise<void> {
     return this.collectionsService.removeCollection(db, collectionId, project)
   }

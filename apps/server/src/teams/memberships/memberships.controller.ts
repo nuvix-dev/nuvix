@@ -63,7 +63,6 @@ export class MembershipsController {
   })
   @AllowSessionType(SessionType.INVITES)
   async addMember(
-
     @Param() { teamId }: TeamsParamDTO,
     @Body() input: CreateMembershipDTO,
 
@@ -90,7 +89,6 @@ export class MembershipsController {
     },
   })
   async getMembers(
-
     @Param() { teamId }: TeamsParamDTO,
     @QueryFilter(MembershipsQueryPipe) queries: Queries[],
     @QuerySearch() search?: string,
@@ -108,7 +106,6 @@ export class MembershipsController {
     },
   })
   async getMember(
-
     @Param() { teamId, membershipId }: MembershipParamDTO,
   ): Promise<IResponse<MembershipsDoc>> {
     return this.membershipsService.getMember(db, teamId, membershipId)
@@ -128,7 +125,6 @@ export class MembershipsController {
     },
   })
   async updateMember(
-
     @Param() { teamId, membershipId }: MembershipParamDTO,
     @Body() input: UpdateMembershipDTO,
   ): Promise<IResponse<MembershipsDoc>> {
@@ -150,13 +146,11 @@ export class MembershipsController {
     },
   })
   async updateMemberStatus(
-
     @Param() { teamId, membershipId }: MembershipParamDTO,
     @Body() input: UpdateMembershipStatusDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) res: NuvixRes,
     @User() user: UsersDoc,
-
   ): Promise<IResponse<MembershipsDoc>> {
     return this.membershipsService.updateMemberStatus(
       db,
@@ -184,7 +178,6 @@ export class MembershipsController {
     },
   })
   async removeMember(
-
     @Param() { teamId, membershipId }: MembershipParamDTO,
   ): Promise<void> {
     return this.membershipsService.deleteMember(db, teamId, membershipId)

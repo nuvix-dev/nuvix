@@ -929,7 +929,6 @@ export class PgMetaController {
   async generateTypescript(
     @Query() query: GeneratorQueryDTO,
     @Client() client: PostgresMeta,
-
   ) {
     return this.pgMetaService.generateTypescript(client, query, project)
   }

@@ -114,8 +114,6 @@ export class TargetsController {
   async deletePushTarget(
     @Param() { targetId }: TargetIdParamDTO,
     @User() user: UsersDoc,
-
-
   ): Promise<void> {
     return this.targetService.deletePushTarget({
       targetId,

@@ -58,9 +58,7 @@ export class MessagingController {
     },
   })
   async createEmail(
-
     @Body() input: CreateEmailMessageDTO,
-
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.createEmailMessage({
       db,
@@ -83,9 +81,7 @@ export class MessagingController {
     },
   })
   async createSms(
-
     @Body() input: CreateSmsMessageDTO,
-
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.createSmsMessage({
       db,
@@ -108,9 +104,7 @@ export class MessagingController {
     },
   })
   async createPush(
-
     @Body() input: CreatePushMessageDTO,
-
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.createPushMessage({
       db,
@@ -129,7 +123,6 @@ export class MessagingController {
     },
   })
   async listMessages(
-
     @QueryFilter(MessagesQueryPipe) queries: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<MessagesDoc>> {
@@ -151,7 +144,6 @@ export class MessagingController {
   })
   async getMessage(
     @Param() { messageId }: MessageParamsDTO,
-
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.getMessage(db, messageId)
   }
@@ -194,7 +186,6 @@ export class MessagingController {
     @Param() { messageId }: MessageParamsDTO,
 
     @Body() input: UpdateEmailMessageDTO,
-
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.updateEmailMessage({
       db,
@@ -221,7 +212,6 @@ export class MessagingController {
     @Param() { messageId }: MessageParamsDTO,
 
     @Body() input: UpdateSmsMessageDTO,
-
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.updateSmsMessage({
       db,
@@ -248,7 +238,6 @@ export class MessagingController {
     @Param() { messageId }: MessageParamsDTO,
 
     @Body() input: UpdatePushMessageDTO,
-
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.updatePushMessage({
       db,
@@ -270,10 +259,7 @@ export class MessagingController {
       descMd: '/docs/references/messaging/delete-message.md',
     },
   })
-  async deleteMessage(
-    @Param() { messageId }: MessageParamsDTO,
-
-  ): Promise<void> {
+  async deleteMessage(@Param() { messageId }: MessageParamsDTO): Promise<void> {
     return this.messagingService.deleteMessage(db, messageId)
   }
 }

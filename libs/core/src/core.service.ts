@@ -12,7 +12,6 @@ import IORedis from 'ioredis'
 import { CountryResponse, Reader } from 'maxmind'
 import { Client, Pool, PoolClient } from 'pg'
 import type { OAuthProviderType } from './config/authProviders.js'
-import { AppConfigService } from './config.service.js'
 import { Exception } from './extend/exception.js'
 
 @Injectable()
@@ -24,7 +23,7 @@ export class CoreService implements OnModuleDestroy {
   private readonly projectPool: Pool | null = null
   private postgresPool: Pool | null = null
 
-  constructor(private readonly appConfig: AppConfigService) {
+  constructor() {
     this.geoDb = this.createGeoDb()
     this.redisInstance = this.createRedisInstance()
     this.cache = this.createCache()

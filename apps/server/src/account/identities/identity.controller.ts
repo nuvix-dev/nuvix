@@ -65,7 +65,6 @@ export class IdentityController {
   })
   async deleteIdentity(
     @Param() { identityId }: IdentityIdParamDTO,
-
   ): Promise<void> {
     return this.identityService.deleteIdentity({
       identityId,

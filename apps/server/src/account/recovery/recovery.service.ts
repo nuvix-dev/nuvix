@@ -204,7 +204,10 @@ export class RecoveryService {
       variables: emailVariables,
     })
 
-    createdRecovery.set('secret', Auth.isPlatformActor || Auth.isTrustedActor ? secret : undefined)
+    createdRecovery.set(
+      'secret',
+      Auth.isPlatformActor || Auth.isTrustedActor ? secret : undefined,
+    )
 
     return createdRecovery
   }

@@ -57,7 +57,6 @@ export class TeamsController {
     },
   })
   async create(
-
     @User() user: any,
     @Body() input: CreateTeamDTO,
   ): Promise<IResponse<TeamsDoc>> {
@@ -74,7 +73,6 @@ export class TeamsController {
     },
   })
   async findAll(
-
     @QueryFilter(TeamsQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<TeamsDoc>> {
@@ -91,7 +89,6 @@ export class TeamsController {
     },
   })
   async findOne(
-
     @Param() { teamId }: TeamsParamDTO,
   ): Promise<IResponse<TeamsDoc>> {
     return this.teamsService.findOne(db, teamId)
@@ -111,7 +108,6 @@ export class TeamsController {
     },
   })
   async update(
-
     @Param() { teamId }: TeamsParamDTO,
     @Body() input: UpdateTeamDTO,
   ): Promise<IResponse<TeamsDoc>> {
@@ -132,10 +128,7 @@ export class TeamsController {
       descMd: '/docs/references/teams/delete-team.md',
     },
   })
-  async remove(
-
-    @Param() { teamId }: TeamsParamDTO,
-  ): Promise<void> {
+  async remove(@Param() { teamId }: TeamsParamDTO): Promise<void> {
     return this.teamsService.remove(db, teamId)
   }
 
@@ -149,7 +142,6 @@ export class TeamsController {
     },
   })
   async getPrefs(
-
     @Param() { teamId }: TeamsParamDTO,
   ): Promise<IResponse<Record<string, unknown>>> {
     return this.teamsService.getPrefs(db, teamId)
@@ -171,7 +163,6 @@ export class TeamsController {
     },
   })
   async setPrefs(
-
     @Param() { teamId }: TeamsParamDTO,
     @Body() input: UpdateTeamPrefsDTO,
   ): Promise<IResponse<Record<string, unknown>>> {

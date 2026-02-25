@@ -49,7 +49,6 @@ export class RecoveryController {
     },
   })
   async createRecovery(
-
     @User() user: UsersDoc,
     @Body() input: CreateRecoveryDTO,
     @Locale() locale: LocaleTranslator,
@@ -85,10 +84,8 @@ export class RecoveryController {
     },
   })
   async updateRecovery(
-
     @User() user: UsersDoc,
     @Body() input: UpdateRecoveryDTO,
-
   ): Promise<IResponse<TokensDoc>> {
     return this.recoveryService.updateRecovery({
       db,

@@ -86,12 +86,10 @@ export class SessionsController {
     },
   })
   async deleteSessions(
-
     @User() user: UsersDoc,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
-
   ): Promise<void> {
     return this.sessionService.deleteSessions(
       db,
@@ -135,7 +133,6 @@ export class SessionsController {
     },
   })
   async deleteSession(
-
     @User() user: UsersDoc,
     @Param() params: SessionsParamDTO,
     @Req() request: NuvixRequest,
@@ -174,10 +171,8 @@ export class SessionsController {
     },
   })
   async updateSession(
-
     @User() user: UsersDoc,
     @Param() params: SessionsParamDTO,
-
   ): Promise<IResponse<SessionsDoc>> {
     return this.sessionService.updateSession(
       db,
@@ -209,13 +204,11 @@ export class SessionsController {
   })
   @AllowSessionType(SessionType.EMAIL_PASSWORD)
   async createEmailSession(
-
     @User() user: UsersDoc,
     @Body() input: CreateEmailSessionDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
-
   ): Promise<IResponse<SessionsDoc>> {
     return this.sessionService.createEmailSession(
       db,
@@ -250,12 +243,10 @@ export class SessionsController {
   })
   @AllowSessionType(SessionType.ANONYMOUS)
   async createAnonymousSession(
-
     @User() user: UsersDoc,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
-
   ): Promise<IResponse<SessionsDoc>> {
     return this.sessionService.createAnonymousSession({
       user,
@@ -288,13 +279,11 @@ export class SessionsController {
     },
   })
   async createSession(
-
     @User() user: UsersDoc,
     @Body() input: CreateSessionDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
-
   ): Promise<IResponse<SessionsDoc>> {
     return this.sessionService.createSession({
       user,
@@ -327,7 +316,6 @@ export class SessionsController {
     @Req() request: NuvixRequest,
     @Res() response: NuvixRes,
     @Param() { provider }: ProviderParamDTO,
-
   ): Promise<void> {
     const url = await this.sessionService.createOAuth2Session({
       input,
@@ -426,7 +414,6 @@ export class SessionsController {
     docs: false,
   })
   async OAuth2Redirect(
-
     @User() user: UsersDoc,
     @Query() input: OAuth2CallbackDTO,
     @Req() request: NuvixRequest,
@@ -464,7 +451,6 @@ export class SessionsController {
     @Req() request: NuvixRequest,
     @Res() response: NuvixRes,
     @Param() { provider }: ProviderParamDTO,
-
   ) {
     return this.sessionService.createOAuth2Token({
       input,
@@ -496,13 +482,11 @@ export class SessionsController {
   })
   @AllowSessionType(SessionType.MAGIC_URL)
   async createMagicURLToken(
-
     @User() user: UsersDoc,
     @Body() input: CreateMagicURLTokenDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
-
   ) {
     return this.sessionService.createMagicURLToken({
       db: db,
@@ -575,13 +559,11 @@ export class SessionsController {
     },
   })
   async updateMagicURLSession(
-
     @User() user: UsersDoc,
     @Body() input: CreateSessionDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
-
   ) {
     return this.sessionService.createSession({
       user,
@@ -614,13 +596,11 @@ export class SessionsController {
     },
   })
   async updatePhoneSession(
-
     @User() user: UsersDoc,
     @Body() input: CreateSessionDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
-
   ) {
     return this.sessionService.createSession({
       user,
@@ -654,13 +634,11 @@ export class SessionsController {
   })
   @AllowSessionType(SessionType.PHONE)
   async createPhoneToken(
-
     @User() user: UsersDoc,
     @Body() input: CreatePhoneTokenDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @Locale() locale: LocaleTranslator,
-
   ) {
     return this.sessionService.createPhoneToken({
       db: db,

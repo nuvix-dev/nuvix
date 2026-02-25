@@ -68,7 +68,6 @@ export class MfaController {
     @Body() { mfa }: UpdateAccountMfaDTO,
     @User() user: UsersDoc,
     @Session() session: SessionsDoc,
-
   ): Promise<IResponse<UsersDoc>> {
     return this.mfaService.updateMfa({
       mfa,
@@ -109,7 +108,6 @@ export class MfaController {
     @Param() { type }: MfaAuthenticatorTypeParamDTO,
 
     @User() user: UsersDoc,
-
   ): Promise<
     IResponse<
       Doc<{
@@ -144,7 +142,6 @@ export class MfaController {
     @Body() { otp }: VerifyMfaAuthenticatorDTO,
     @User() user: UsersDoc,
     @Session() session: SessionsDoc,
-
   ): Promise<IResponse<UsersDoc>> {
     return this.mfaService.verifyMfaAuthenticator({
       type,
@@ -168,10 +165,7 @@ export class MfaController {
       descMd: '/docs/references/account/create-mfa-recovery-codes.md',
     },
   })
-  async createMfaRecoveryCodes(
-    @User() user: UsersDoc,
-
-  ): Promise<
+  async createMfaRecoveryCodes(@User() user: UsersDoc): Promise<
     IResponse<
       Doc<{
         recoveryCodes: string[]
@@ -194,10 +188,7 @@ export class MfaController {
       descMd: '/docs/references/account/update-mfa-recovery-codes.md',
     },
   })
-  async updateMfaRecoveryCodes(
-
-    @User() user: UsersDoc,
-  ): Promise<
+  async updateMfaRecoveryCodes(@User() user: UsersDoc): Promise<
     IResponse<
       Doc<{
         recoveryCodes: string[]
@@ -247,7 +238,6 @@ export class MfaController {
   async deleteMfaAuthenticator(
     @Param() { type }: MfaAuthenticatorTypeParamDTO,
     @User() user: UsersDoc,
-
   ): Promise<void> {
     return this.mfaService.deleteMfaAuthenticator({
       type,
@@ -277,7 +267,6 @@ export class MfaController {
     @Body() { factor }: CreateMfaChallengeDTO,
     @Req() request: NuvixRequest,
     @User() user: UsersDoc,
-
 
     @Locale() locale: LocaleTranslator,
   ): Promise<IResponse<ChallengesDoc>> {
