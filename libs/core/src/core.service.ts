@@ -147,7 +147,7 @@ export class CoreService implements OnModuleDestroy {
       keepAliveInitialDelayMillis: 10000,
       max:
         options.postgres.maxConnections > 20
-          ? 20
+          ? options.postgres.maxConnections / 2
           : options.postgres.maxConnections, // limit to 10 for external pool to avoid exhausting connections
       idleTimeoutMillis: 5000,
     })

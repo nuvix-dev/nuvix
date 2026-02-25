@@ -1,4 +1,4 @@
-import type { Client } from 'pg'
+import type { Pool } from 'pg'
 import { init } from './db'
 import * as Parser from './Parser'
 import PostgresMetaColumnPrivileges from './PostgresMetaColumnPrivileges'
@@ -20,7 +20,7 @@ import PostgresMetaTriggers from './PostgresMetaTriggers'
 import PostgresMetaTypes from './PostgresMetaTypes'
 import PostgresMetaVersion from './PostgresMetaVersion'
 import PostgresMetaViews from './PostgresMetaViews'
-import { PoolConfig, PostgresMetaResult } from './types'
+import { PostgresMetaResult } from './types'
 
 export default class PostgresMeta {
   query: (
@@ -28,7 +28,7 @@ export default class PostgresMeta {
     trackQueryInSentry?: boolean,
   ) => Promise<PostgresMetaResult<any>>
   end: () => Promise<void>
-  client: Client
+  client: Pool
   columnPrivileges: PostgresMetaColumnPrivileges
   columns: PostgresMetaColumns
   config: PostgresMetaConfig
@@ -53,11 +53,11 @@ export default class PostgresMeta {
   deparse = Parser.Deparse
   format = Parser.Format
 
-  constructor(config: PoolConfig) {
-    const { query, end } = init(config)
+  constructor(pool: Pool) {
+    const { query, end } = init(pool)
     this.query = query
     this.end = end
-    this.client = config as Client
+    this.client = pool
     this.columnPrivileges = new PostgresMetaColumnPrivileges(this.query)
     this.columns = new PostgresMetaColumns(this.query)
     this.config = new PostgresMetaConfig(this.query)
