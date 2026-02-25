@@ -58,7 +58,7 @@ export class MessagingController {
     },
   })
   async createEmail(
-    @ProjectDatabase() db: Database,
+
     @Body() input: CreateEmailMessageDTO,
 
   ): Promise<IResponse<MessagesDoc>> {
@@ -83,7 +83,7 @@ export class MessagingController {
     },
   })
   async createSms(
-    @ProjectDatabase() db: Database,
+
     @Body() input: CreateSmsMessageDTO,
 
   ): Promise<IResponse<MessagesDoc>> {
@@ -108,7 +108,7 @@ export class MessagingController {
     },
   })
   async createPush(
-    @ProjectDatabase() db: Database,
+
     @Body() input: CreatePushMessageDTO,
 
   ): Promise<IResponse<MessagesDoc>> {
@@ -129,7 +129,7 @@ export class MessagingController {
     },
   })
   async listMessages(
-    @ProjectDatabase() db: Database,
+
     @QueryFilter(MessagesQueryPipe) queries: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<MessagesDoc>> {
@@ -151,7 +151,7 @@ export class MessagingController {
   })
   async getMessage(
     @Param() { messageId }: MessageParamsDTO,
-    @ProjectDatabase() db: Database,
+
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.getMessage(db, messageId)
   }
@@ -167,7 +167,7 @@ export class MessagingController {
   })
   async listTargets(
     @Param() { messageId }: MessageParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @QueryFilter(TargetsQueryPipe) queries: Queries[],
   ): Promise<IListResponse<TargetsDoc>> {
     return this.messagingService.listTargets({
@@ -192,7 +192,7 @@ export class MessagingController {
   })
   async updateEmail(
     @Param() { messageId }: MessageParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateEmailMessageDTO,
 
   ): Promise<IResponse<MessagesDoc>> {
@@ -219,7 +219,7 @@ export class MessagingController {
   })
   async updateSms(
     @Param() { messageId }: MessageParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateSmsMessageDTO,
 
   ): Promise<IResponse<MessagesDoc>> {
@@ -246,7 +246,7 @@ export class MessagingController {
   })
   async updatePush(
     @Param() { messageId }: MessageParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdatePushMessageDTO,
 
   ): Promise<IResponse<MessagesDoc>> {
@@ -272,7 +272,7 @@ export class MessagingController {
   })
   async deleteMessage(
     @Param() { messageId }: MessageParamsDTO,
-    @ProjectDatabase() db: Database,
+
   ): Promise<void> {
     return this.messagingService.deleteMessage(db, messageId)
   }

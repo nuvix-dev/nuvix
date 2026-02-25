@@ -52,7 +52,7 @@ export class StorageController {
     },
   })
   async getBuckets(
-    @ProjectDatabase() db: Database,
+
     @QueryFilter(BucketsQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<BucketsDoc>> {
@@ -73,7 +73,7 @@ export class StorageController {
     },
   })
   async createBucket(
-    @ProjectDatabase() db: Database,
+
     @Body() createBucketDTO: CreateBucketDTO,
   ): Promise<IResponse<BucketsDoc>> {
     return this.storageService.createBucket(db, createBucketDTO)
@@ -89,7 +89,7 @@ export class StorageController {
     },
   })
   async getBucket(
-    @ProjectDatabase() db: Database,
+
     @Param() { bucketId }: BucketParamsDTO,
   ): Promise<IResponse<BucketsDoc>> {
     return this.storageService.getBucket(db, bucketId)
@@ -109,7 +109,7 @@ export class StorageController {
     },
   })
   async updateBucket(
-    @ProjectDatabase() db: Database,
+
     @Param() { bucketId }: BucketParamsDTO,
     @Body() createBucketDTO: UpdateBucketDTO,
   ): Promise<IResponse<BucketsDoc>> {
@@ -130,7 +130,7 @@ export class StorageController {
     },
   })
   async deleteBucket(
-    @ProjectDatabase() db: Database,
+
     @Param() { bucketId }: BucketParamsDTO,
 
   ): Promise<void> {
@@ -147,7 +147,7 @@ export class StorageController {
     },
   })
   async getUsage(
-    @ProjectDatabase() db: Database,
+
     @Query() { range }: UsageQueryDTO,
   ): Promise<IResponse<Record<string, any>>> {
     return this.storageService.getStorageUsage(db, range)
@@ -163,7 +163,7 @@ export class StorageController {
     },
   })
   async getBucketUsage(
-    @ProjectDatabase() db: Database,
+
     @Param() { bucketId }: BucketParamsDTO,
     @Query() { range }: UsageQueryDTO,
   ): Promise<IResponse<Record<string, any>>> {

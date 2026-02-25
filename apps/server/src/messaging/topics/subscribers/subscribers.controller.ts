@@ -51,7 +51,7 @@ export class SubscribersController {
   })
   async createSubscriber(
     @Param() { topicId }: TopicParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: CreateSubscriberDTO,
   ): Promise<IResponse<SubscribersDoc>> {
     return this.subscribersService.createSubscriber({
@@ -72,7 +72,7 @@ export class SubscribersController {
   })
   async listSubscribers(
     @Param() { topicId }: TopicParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @QueryFilter(SubscribersQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<SubscribersDoc>> {
@@ -95,7 +95,7 @@ export class SubscribersController {
   })
   async getSubscriber(
     @Param() { topicId, subscriberId }: SubscriberParamsDTO,
-    @ProjectDatabase() db: Database,
+
   ): Promise<IResponse<SubscribersDoc>> {
     return this.subscribersService.getSubscriber(db, topicId, subscriberId)
   }
@@ -114,7 +114,7 @@ export class SubscribersController {
   })
   async deleteSubscriber(
     @Param() { topicId, subscriberId }: SubscriberParamsDTO,
-    @ProjectDatabase() db: Database,
+
   ): Promise<void> {
     return this.subscribersService.deleteSubscriber(db, topicId, subscriberId)
   }

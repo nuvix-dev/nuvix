@@ -58,7 +58,7 @@ export class FilesController {
     },
   })
   async getFiles(
-    @ProjectDatabase() db: Database,
+
     @Param() { bucketId }: BucketParamsDTO,
     @QueryFilter(FilesQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
@@ -115,7 +115,7 @@ export class FilesController {
     },
   })
   async createFile(
-    @ProjectDatabase() db: Database,
+
     @Param() { bucketId }: BucketParamsDTO,
     @MultipartParam('fileId') fileId: string,
     @MultipartParam('permissions') permissions: string[],
@@ -148,7 +148,7 @@ export class FilesController {
     },
   })
   async getFile(
-    @ProjectDatabase() db: Database,
+
     @Param() { fileId, bucketId }: FileParamsDTO,
   ): Promise<IResponse<FilesDoc>> {
     return this.filesService.getFile(db, bucketId, fileId)
@@ -170,7 +170,7 @@ export class FilesController {
     },
   })
   async previewFile(
-    @ProjectDatabase() db: Database,
+
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Project() project: Doc,
     @Query() queryParams: PreviewFileQueryDTO,
@@ -205,7 +205,7 @@ export class FilesController {
     },
   })
   async downloadFile(
-    @ProjectDatabase() db: Database,
+
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Req() req: NuvixRequest,
     @Res({ passthrough: true }) res: NuvixRes,
@@ -242,7 +242,7 @@ export class FilesController {
     },
   })
   async viewFile(
-    @ProjectDatabase() db: Database,
+
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Req() req: NuvixRequest,
     @Res({ passthrough: true }) res: NuvixRes,
@@ -257,7 +257,7 @@ export class FilesController {
     // No need to document this endpoint in the SDK as it's used internally for push notifications
   })
   async getFileForPushNotification(
-    @ProjectDatabase() db: Database,
+
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Query('jwt') jwt: string,
     @Req() req: NuvixRequest,
@@ -295,7 +295,7 @@ export class FilesController {
     },
   })
   async updateFile(
-    @ProjectDatabase() db: Database,
+
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Body() updateFileDTO: UpdateFileDTO,
   ): Promise<IResponse<FilesDoc>> {
@@ -322,7 +322,7 @@ export class FilesController {
     },
   })
   async deleteFile(
-    @ProjectDatabase() db: Database,
+
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Project() project: Doc,
   ): Promise<void> {

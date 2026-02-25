@@ -77,7 +77,7 @@ export class ProvidersController {
     },
   })
   async createMailgunProvider(
-    @ProjectDatabase() db: Database,
+
     @Body() input: CreateMailgunProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createMailgunProvider({
@@ -100,7 +100,7 @@ export class ProvidersController {
     },
   })
   async createSendgridProvider(
-    @ProjectDatabase() db: Database,
+
     @Body() input: CreateSendgridProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createSendGridProvider({
@@ -123,7 +123,7 @@ export class ProvidersController {
     },
   })
   async createSMTPProvider(
-    @ProjectDatabase() db: Database,
+
     @Body() input: CreateSMTPProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createSmtpProvider({
@@ -146,7 +146,7 @@ export class ProvidersController {
     },
   })
   async createMsg91Provider(
-    @ProjectDatabase() db: Database,
+
     @Body() input: CreateMsg91ProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createMsg91Provider({
@@ -169,7 +169,7 @@ export class ProvidersController {
     },
   })
   async createTelesignProvider(
-    @ProjectDatabase() db: Database,
+
     @Body() input: CreateTelesignProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createTelesignProvider({
@@ -192,7 +192,7 @@ export class ProvidersController {
     },
   })
   async createTextmagicProvider(
-    @ProjectDatabase() db: Database,
+
     @Body() input: CreateTextmagicProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createTextMagicProvider({
@@ -215,7 +215,7 @@ export class ProvidersController {
     },
   })
   async createTwilioProvider(
-    @ProjectDatabase() db: Database,
+
     @Body() input: CreateTwilioProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createTwilioProvider({
@@ -238,7 +238,7 @@ export class ProvidersController {
     },
   })
   async createVonageProvider(
-    @ProjectDatabase() db: Database,
+
     @Body() input: CreateVonageProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createVonageProvider({
@@ -261,7 +261,7 @@ export class ProvidersController {
     },
   })
   async createFcmProvider(
-    @ProjectDatabase() db: Database,
+
     @Body() input: CreateFcmProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createFcmProvider({
@@ -284,7 +284,7 @@ export class ProvidersController {
     },
   })
   async createApnsProvider(
-    @ProjectDatabase() db: Database,
+
     @Body() input: CreateApnsProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createApnsProvider({
@@ -303,7 +303,7 @@ export class ProvidersController {
     },
   })
   async listProviders(
-    @ProjectDatabase() db: Database,
+
     @QueryFilter(ProvidersQueryPipe) queries: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<ProvidersDoc>> {
@@ -325,7 +325,7 @@ export class ProvidersController {
   })
   async getProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.getProvider(db, providerId)
   }
@@ -345,7 +345,7 @@ export class ProvidersController {
   })
   async updateMailgunProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateMailgunProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateMailgunProvider({
@@ -370,7 +370,7 @@ export class ProvidersController {
   })
   async updateSendgridProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateSendgridProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateSendGridProvider({
@@ -395,7 +395,7 @@ export class ProvidersController {
   })
   async updateSmtpProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateSMTPProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateSmtpProvider({
@@ -420,7 +420,7 @@ export class ProvidersController {
   })
   async updateMsg91Provider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateMsg91ProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateMsg91Provider({
@@ -445,7 +445,7 @@ export class ProvidersController {
   })
   async updateTelesignProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateTelesignProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateTelesignProvider({
@@ -470,7 +470,7 @@ export class ProvidersController {
   })
   async updateTextmagicProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateTextmagicProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateTextMagicProvider({
@@ -495,7 +495,7 @@ export class ProvidersController {
   })
   async updateTwilioProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateTwilioProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateTwilioProvider({
@@ -520,7 +520,7 @@ export class ProvidersController {
   })
   async updateVonageProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateVonageProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateVonageProvider({
@@ -545,7 +545,7 @@ export class ProvidersController {
   })
   async updateFcmProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateFcmProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateFcmProvider({
@@ -570,7 +570,7 @@ export class ProvidersController {
   })
   async updateApnsProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateApnsProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateApnsProvider({
@@ -594,7 +594,7 @@ export class ProvidersController {
   })
   async deleteProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
   ): Promise<void> {
     return this.providersService.deleteProvider(db, providerId)
   }

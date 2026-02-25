@@ -108,9 +108,9 @@ export interface RouteOptions {
   throttle?: number | ThrottleOptions
   /** Response model configuration for serialization */
   model?:
-    | Type<any>
-    | ResolverTypeContextOptions
-    | { type: Type<unknown>; options: ResolverTypeContextOptions }
+  | Type<any>
+  | ResolverTypeContextOptions
+  | { type: Type<unknown>; options: ResolverTypeContextOptions }
   /** SDK generation options */
   sdk?: SdkOptions
   /** Unique operation identifier for OpenAPI */
@@ -208,7 +208,7 @@ const validateRouteOptions = (options: RouteOptions): void => {
  *   },
  * })
  * async createFile(
- *   @ProjectDatabase() db: Database,
+ *   
  *   @User() user: Doc,
  *   @Body() createFileDto: CreateFileDto
  * ): Promise<FilesDoc> {
@@ -330,9 +330,9 @@ export const Route = ({ docs = true, ...options }: RouteOptions) => {
   if (options.model) {
     responseModel =
       typeof options.model === 'object' &&
-      'type' in options.model &&
-      !isList &&
-      responseModel !== Models.NONE
+        'type' in options.model &&
+        !isList &&
+        responseModel !== Models.NONE
         ? options.model.type
         : (options.model as Type<any>)
     decorators.push(ResModel(options.model as any))
@@ -376,8 +376,8 @@ export const Route = ({ docs = true, ...options }: RouteOptions) => {
     (methods.includes('POST')
       ? HttpStatus.CREATED
       : methods.includes('HEAD') ||
-          methods.includes('OPTIONS') ||
-          methods.includes('DELETE')
+        methods.includes('OPTIONS') ||
+        methods.includes('DELETE')
         ? HttpStatus.NO_CONTENT
         : HttpStatus.OK)
   decorators.push(HttpCode(defaultCode))

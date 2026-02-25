@@ -54,7 +54,7 @@ export class TopicsController {
     },
   })
   async createTopic(
-    @ProjectDatabase() db: Database,
+
     @Body() input: CreateTopicDTO,
   ): Promise<IResponse<TopicsDoc>> {
     return this.topicsService.createTopic({
@@ -73,7 +73,7 @@ export class TopicsController {
     },
   })
   async listTopics(
-    @ProjectDatabase() db: Database,
+
     @QueryFilter(TopicsQueryPipe) queries: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<TopicsDoc>> {
@@ -95,7 +95,7 @@ export class TopicsController {
   })
   async getTopic(
     @Param() { topicId }: TopicParamsDTO,
-    @ProjectDatabase() db: Database,
+
   ): Promise<IResponse<TopicsDoc>> {
     return this.topicsService.getTopic(db, topicId)
   }
@@ -115,7 +115,7 @@ export class TopicsController {
   })
   async updateTopic(
     @Param() { topicId }: TopicParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateTopicDTO,
   ): Promise<IResponse<TopicsDoc>> {
     return this.topicsService.updateTopic({
@@ -139,7 +139,7 @@ export class TopicsController {
   })
   async deleteTopic(
     @Param() { topicId }: TopicParamsDTO,
-    @ProjectDatabase() db: Database,
+
 
   ): Promise<void> {
     return this.topicsService.deleteTopic(db, topicId, project)
