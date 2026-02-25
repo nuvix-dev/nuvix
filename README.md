@@ -1,3 +1,10 @@
+> ⚠️ **Important Security Notice**
+> 
+> This project currently contains critical security vulnerabilities.  
+> **Do not deploy or use in production or any sensitive environment** until these issues have been resolved and an official update is released.
+> 
+> We are actively addressing these issues and will publish updates as soon as they become available.
+
 <div align="center">
 
 <img src="https://github.com/nuvix-dev/console/raw/main/apps/www/public/images/dashboard/hero_dark.png" width="100%" alt="Nuvix" />
