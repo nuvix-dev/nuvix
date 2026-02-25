@@ -202,7 +202,12 @@ const createConfig = () => {
         ssl: env.bool('NUVIX_DATABASE_SSL', false),
         maxConnections: env.int('NUVIX_DATABASE_MAX_CONNECTIONS', 20),
       },
-      timeout: 15_000,
+      timeouts: {
+        query: env.int('NUVIX_DATABASE_QUERY_TIMEOUT', 30_000),
+        idle: env.int('NUVIX_DATABASE_IDLE_TIMEOUT', 30_000),
+        connection: env.int('NUVIX_DATABASE_CONNECTION_TIMEOUT', 10_000),
+        statement: env.int('NUVIX_DATABASE_STATEMENT_TIMEOUT', 30_000),
+      },
       reconnect: { sleep: 2, maxAttempts: 10 },
     },
 

@@ -40,16 +40,21 @@ export class CoreService implements OnModuleDestroy {
   private readonly cache: Cache | null = null
   private readonly geoDb: Reader<CountryResponse> | null = null
   private readonly redisInstance: IORedis | null = null
-  private readonly projectPool: Pool | null = null
-  private postgresPool: Pool | null = null
+  private readonly pool: Pool | null = null
+  private readonly postgresPool: Pool | null = null
   private readonly storageDevice: Device | null = null
+  private readonly internalDb: Database | null = null
+  private readonly database: Database | null = null
+  private readonly dataSource: DataSource | null = null
 
   constructor() {
     this.geoDb = this.createGeoDb()
     this.redisInstance = this.createRedisInstance()
     this.cache = this.createCache()
     this.storageDevice = this.createStorageDevice()
-    this.projectPool = this.createMainPool()
+    this.pool = this.createMainPool()
+
+    this.internalDb = this.createInternalDb()
   }
 
   private dbLogger(): DbLogger {
@@ -60,11 +65,11 @@ export class CoreService implements OnModuleDestroy {
   }
 
   async onModuleDestroy() {
-    if (this.projectPool) {
+    if (this.pool) {
       try {
-        await this.projectPool.end()
+        await this.pool.end()
       } catch (error) {
-        this.logger.error('Failed to disconnect project database pool', error)
+        this.logger.error('Failed to disconnect main database pool', error)
       }
     }
     if (this.redisInstance) {
@@ -96,25 +101,31 @@ export class CoreService implements OnModuleDestroy {
     return this.cache
   }
 
-  /**
-   * Returns the initialized Database instance for the platform. If the project database pool is not initialized, an exception is thrown.
-   * @returns {Database} The initialized Database instance for the platform.
-   * @throws {Exception} If the project database pool is not initialized, an exception is thrown with a message indicating that the project database is not initialized.
-   * @public
-   */
-  public getPlatformDb(): Database {
-    if (!this.projectPool) {
-      throw new Exception('Project database pool not initialized')
+  private createInternalDb() {
+    if (!this.pool) {
+      throw new Exception('Main database pool not initialized')
     }
-    const adapter = new Adapter(this.projectPool)
+    const adapter = new Adapter(this.pool)
       .setMeta({
         schema: Schemas.Internal,
         sharedTables: false,
-        namespace: 'platform',
+        namespace: 'internal',
       })
       .setLogger(this.dbLogger())
-
     return new Database(adapter, this.getCache())
+  }
+
+  /**
+   * Returns the initialized Database instance for internal use. If the internal database is not initialized, an exception is thrown.
+   * @returns {Database} The initialized Database instance for internal use.
+   * @throws {Exception} If the internal database is not initialized, an exception is thrown with a message indicating that the internal database is not initialized.
+   * @public
+   */
+  public getInternalDatabase(): Database {
+    if (!this.internalDb) {
+      throw new Exception('Internal database not initialized')
+    }
+    return this.internalDb
   }
 
   /**
@@ -130,35 +141,35 @@ export class CoreService implements OnModuleDestroy {
     return this.geoDb
   }
 
-  public createMainPool(): Pool {
-    if (this.projectPool) {
-      return this.projectPool
+  private createMainPool(): Pool {
+    if (this.pool) {
+      return this.pool
     }
-    const options = this.appConfig.getDatabaseConfig()
 
+    const { postgres, timeouts } = configuration.database
     const pool = new Pool({
       database: DEFAULT_DATABASE,
       user: DatabaseRole.ADMIN,
-      password: options.postgres.adminPassword,
-      host: options.useExternalPool
-        ? options.postgres.pool.host!
-        : options.postgres.host,
-      port: options.useExternalPool
-        ? options.postgres.pool.port
-        : options.postgres.port,
-      ssl: this.appConfig.getDatabaseConfig().postgres.ssl
-        ? { rejectUnauthorized: false }
+      password: postgres.adminPassword,
+      host: postgres.host,
+      port: postgres.port,
+      ssl: postgres.ssl
+        ? { rejectUnauthorized: false } // For simplicity, we are not verifying the SSL certificate. In production, it's recommended to use a valid certificate and set rejectUnauthorized to true.
         : undefined,
-      statement_timeout: 30000,
-      query_timeout: 30000,
-      application_name: 'nuvix-main',
-      keepAliveInitialDelayMillis: 10000,
-      max: options.postgres.maxConnections,
-      idleTimeoutMillis: 5000,
+      statement_timeout: timeouts.statement,
+      query_timeout: timeouts.query,
+      idleTimeoutMillis: timeouts.idle,
+      connectionTimeoutMillis: timeouts.connection,
+      max: postgres.maxConnections,
+      min: 2,
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 10_000,
+      application_name: 'nuvix-core',
+      allowExitOnIdle: true,
     })
 
     pool.on('error', err => {
-      this.logger.error('Main pool error:', err)
+      this.logger.error('Main database pool error:', err)
     })
 
     return pool
@@ -240,13 +251,13 @@ export class CoreService implements OnModuleDestroy {
   }
 
   /**
-   * Returns the initialized Audit instance for the platform. If the project database pool is not initialized, an exception is thrown.
+   * Returns the initialized Audit instance for the platform. If the internal database is not initialized, an exception is thrown.
    * @returns {Audit} The initialized Audit instance for the platform.
-   * @throws {Exception} If the project database pool is not initialized, an exception is thrown with a message indicating that the project database is not initialized.
+   * @throws {Exception} If the internal database is not initialized, an exception is thrown with a message indicating that the internal database is not initialized.
    * @public
    */
   public getPlatformAudit(): Audit {
-    return new Audit(this.getPlatformDb())
+    return new Audit(this.getInternalDatabase())
   }
 
   getProjectDb(
