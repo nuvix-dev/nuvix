@@ -20,6 +20,7 @@ import {
   TruncateException,
 } from '@nuvix/db'
 import { Exception, errorCodes } from '../extend/exception'
+import { configuration } from '@nuvix/utils'
 
 @Catch()
 export class ErrorFilter implements ExceptionFilter {
@@ -116,7 +117,7 @@ export class ErrorFilter implements ExceptionFilter {
 
     message ??= (exception as any)?.message
 
-    const debugErrors = this.appConfig.get('app').debug.errors
+    const debugErrors = configuration.app.debug.errors
     if (status >= 500) {
       this.logger.error(exception)
     } else if (debugErrors) {
@@ -125,7 +126,7 @@ export class ErrorFilter implements ExceptionFilter {
 
     request.error = { message, type, ...extra }
 
-    if (!this.appConfig.get('app').isProduction && debugErrors) {
+    if (!configuration.app.isProduction && debugErrors) {
       extra.exception = (exception as any)?.stack
     }
 
