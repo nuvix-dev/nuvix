@@ -69,6 +69,10 @@ export class Auth {
     return Buffer.from(JSON.stringify({ id, secret })).toString('base64')
   }
 
+  public static get cookieName(): string {
+    return `nx_${configuration.server.cookieName}`
+  }
+
   public static getSessionProviderByTokenType(
     type: TokenType,
   ): SessionProvider {
@@ -89,12 +93,12 @@ export class Auth {
   }
 
   public static decodeSession(session: string): {
-    id: string | null
-    secret: string
+    id?: string
+    secret?: string
   } {
     const bufferStr = Buffer.from(session, 'base64').toString()
     const decoded = JSON.parse(bufferStr)
-    const defaultSession = { id: null, secret: '' }
+    const defaultSession = { id: undefined, secret: undefined }
 
     if (typeof decoded !== 'object' || decoded === null) {
       return defaultSession
@@ -269,8 +273,12 @@ export class Auth {
 
   public static sessionVerify(
     sessions: SessionsDoc[],
-    secret: string,
+    secret?: string,
   ): string | false {
+    if (!secret) {
+      return false
+    }
+
     for (const session of sessions) {
       if (
         session.get('secret') !== null &&

@@ -65,7 +65,7 @@ export class Key {
    * Decode the given secret key into a Key object, containing the project ID, type, role, scopes, and name.
    * Can be a stored API key or a dynamic key (JWT).
    */
-  public static async decode(project: ProjectsDoc, key: string): Promise<Key> {
+  public static async decode(key: string): Promise<Key> {
     let type: string
     let secret: string
 

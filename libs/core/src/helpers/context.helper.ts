@@ -1,12 +1,13 @@
 import { AppMode } from '@nuvix/utils'
-import { SessionsDoc, TeamsDoc, UsersDoc } from '@nuvix/utils/types'
+import type { SessionsDoc, TeamsDoc, UsersDoc } from '@nuvix/utils/types'
+import { Key } from './key.helper'
 
 export class RequestContext {
   user?: UsersDoc
   team?: TeamsDoc
   session?: SessionsDoc
   locale: string = 'en'
-  apiKey?: string
+  apiKey?: Key
   scopes?: string[]
   role?: string
   mode: AppMode = AppMode.DEFAULT

@@ -155,6 +155,7 @@ const createConfig = () => {
         'NUVIX_COOKIE_SAMESITE',
         'none',
       ) as CookieSameSite,
+      cookieName: env.get('NUVIX_COOKIE_NAME', 'session'),
     },
 
     redis: {

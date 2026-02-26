@@ -79,6 +79,7 @@ export class Exception extends HttpException {
   static readonly USER_TARGET_NOT_FOUND = 'user_target_not_found'
   static readonly USER_TARGET_ALREADY_EXISTS = 'user_target_already_exists'
   static readonly USER_API_KEY_AND_SESSION_SET = 'user_key_and_session_set'
+  static readonly USER_JWT_AND_SESSION_SET = 'user_jwt_and_session_set'
 
   static readonly API_KEY_EXPIRED = 'api_key_expired'
 
@@ -766,6 +767,12 @@ export const errorCodes: Record<string, ErrorCode> = {
     name: Exception.USER_API_KEY_AND_SESSION_SET,
     description:
       'API key and session used in the same request. Use either `setSession` or `setKey`. Learn about which authentication method to use in the SSR docs: https://nuvix.in/docs/products/auth/server-side-rendering',
+    code: 403,
+  },
+  [Exception.USER_JWT_AND_SESSION_SET]: {
+    name: Exception.USER_JWT_AND_SESSION_SET,
+    description:
+      'JWT and session used in the same request. Use either `setSession` or `setJwt`.',
     code: 403,
   },
   [Exception.API_KEY_EXPIRED]: {
