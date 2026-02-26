@@ -17,7 +17,7 @@ export class ApiInterceptor implements NestInterceptor {
   async intercept(
     context: ExecutionContext,
     next: CallHandler,
-  ): Promise<Observable<any>> {
+  ): Promise<Observable<unknown>> {
     const request = context.switchToHttp().getRequest<NuvixRequest>()
     const { user, scopes = [], project } = request.context
 

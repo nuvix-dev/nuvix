@@ -1,127 +1,43 @@
 import { Processor } from '@nestjs/bullmq'
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common'
-import { Doc } from '@nuvix/db'
+import { Injectable, Logger } from '@nestjs/common'
 import { configuration, QueueFor, Schemas } from '@nuvix/utils'
 import type { ProjectsDoc } from '@nuvix/utils/types'
 import { Job } from 'bullmq'
 import { CoreService } from '../../core.service.js'
-import { Queue } from './queue'
-
-interface ApiLogsBuffer {
-  project: ProjectsDoc
-  logs: ApiLog[]
-}
+import { AbstractBatchQueue } from './batch.queue.js'
+import { DataSource } from '@nuvix/pg'
 
 @Injectable()
 @Processor(QueueFor.LOGS, { concurrency: 5000 })
-export class ApiLogsQueue
-  extends Queue
-  implements OnModuleInit, OnModuleDestroy
-{
-  private static readonly BATCH_SIZE = configuration.limits.batchSize || 5000
-  private static readonly BATCH_INTERVAL_MS =
+export class ApiLogsQueue extends AbstractBatchQueue<
+  ApiLog,
+  ApiLogsQueueJobData
+> {
+  protected readonly logger = new Logger(ApiLogsQueue.name)
+
+  protected readonly batchSize = configuration.limits.batchSize || 5000
+
+  protected readonly batchIntervalMs =
     configuration.limits.batchIntervalMs || 3000
-  private readonly logger = new Logger(ApiLogsQueue.name)
-  private buffer = new Map<number, ApiLogsBuffer>()
-  private interval!: NodeJS.Timeout
+
+  private readonly dataSource: DataSource
 
   constructor(private readonly coreService: CoreService) {
     super()
+    this.dataSource = this.coreService.getDataSource()
   }
 
-  onModuleInit() {
-    this.startTimer()
+  protected buildItem(job: Job<ApiLogsQueueJobData>): ApiLog {
+    return job.data.log
   }
 
-  async onModuleDestroy() {
-    this.logger.log('Module destroying. Flushing remaining api logs...')
-    clearInterval(this.interval)
-    await this.flushBuffer()
-  }
+  protected async persist(batch: ApiLog[]): Promise<void> {
+    await this.dataSource
+      .table('api_logs')
+      .withSchema(Schemas.System)
+      .insert(batch)
 
-  private startTimer(): void {
-    if (this.interval) {
-      clearInterval(this.interval)
-    }
-    this.interval = setInterval(
-      () => this.flushBuffer(),
-      ApiLogsQueue.BATCH_INTERVAL_MS,
-    )
-  }
-
-  private async flushBuffer(): Promise<void> {
-    if (this.buffer.size === 0) {
-      return
-    }
-
-    const bufferCopy = new Map(this.buffer)
-    this.buffer.clear()
-
-    for (const [projectId, data] of bufferCopy.entries()) {
-      if (data.logs.length === 0) {
-        continue
-      }
-      const { project, logs } = data
-
-      const client = await this.coreService.createProjectPgClient(project)
-      const dataSource = this.coreService.getProjectPg(client)
-
-      try {
-        await dataSource
-          .table('api_logs')
-          .withSchema(Schemas.System)
-          .insert(logs)
-      } catch (error: any) {
-        this.logger.error(
-          `Error flushing api logs for project ${projectId}: ${error?.message || error}`,
-          error?.stack,
-        )
-        // Re-add failed logs to buffer for retry
-        const currentBuffer = this.buffer.get(projectId) || {
-          project: data.project,
-          logs: [],
-        }
-        currentBuffer.logs.push(...data.logs)
-        this.buffer.set(projectId, currentBuffer)
-      } finally {
-        await this.coreService.releaseDatabaseClient(client)
-      }
-    }
-  }
-
-  async process(job: Job<ApiLogsQueueJobData>): Promise<void> {
-    this.logger.debug(`Processing job ${job.id} for project log`)
-    const project = new Doc(job.data.project as object)
-    const projectId = project.getSequence()
-    const log = job.data.log
-
-    if (!this.buffer.has(projectId)) {
-      this.buffer.set(projectId, {
-        project: new Doc({
-          $id: project.getId(),
-          $sequence: projectId,
-          database: project.get('database'),
-        }) as unknown as ProjectsDoc,
-        logs: [],
-      })
-    }
-
-    this.buffer.get(projectId)?.logs.push(log)
-
-    if (
-      (this.buffer.get(projectId)?.logs.length ?? 0) >= ApiLogsQueue.BATCH_SIZE
-    ) {
-      // Temporarily stop the timer to avoid a race condition where the timer
-      // and a full buffer try to flush at the same exact time.
-      clearInterval(this.interval)
-      await this.flushBuffer()
-      this.startTimer() // Restart the timer
-    }
+    this.logger.log(`Flushed ${batch.length} api logs`)
   }
 }
 

@@ -7,7 +7,7 @@ import { roles } from '../../config/roles'
 import { CoreService } from '../../core.service.js'
 import { AuthType } from '../../decorators'
 import { Exception } from '../../extend/exception'
-import { Auth } from '../../helpers/auth.helper'
+import { Auth, UserRole } from '../../helpers/auth.helper'
 import ParamsHelper from '../../helpers/params.helper'
 import { Hook } from '../../server/hooks/interface'
 
@@ -109,7 +109,7 @@ export class ApiHook implements Hook {
       !user.empty() &&
       (this.coreService.isConsole() || mode === AppMode.ADMIN)
     ) {
-      const adminRoles: string[] = ['owner'] // will support dynamic admin roles in the future, for now only owner role is considered as admin
+      const adminRoles: string[] = [UserRole.OWNER] // will support dynamic admin roles in the future, for now only owner role is considered as admin
       scopes = []
       for (const adminRole of adminRoles) {
         scopes = scopes.concat(roles[adminRole as keyof typeof roles].scopes)

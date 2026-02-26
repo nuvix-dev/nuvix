@@ -23,39 +23,37 @@ import {
 } from '@nuvix/messaging'
 import { Device } from '@nuvix/storage'
 import {
+  configuration,
   MessageProvider,
   MessageStatus,
   MessageType,
   QueueFor,
-  Schemas,
 } from '@nuvix/utils'
 import type {
   Files,
   Messages,
   MessagesDoc,
-  Projects,
-  ProjectsDoc,
   ProvidersDoc,
   TargetsDoc,
 } from '@nuvix/utils/types'
 import { Job } from 'bullmq'
 import { CoreService } from '../../core.service.js'
 import { Queue } from './queue'
-import { AppConfigService } from '@nuvix/core/config.service.js'
 
 @Injectable()
 @Processor(QueueFor.MESSAGING, { concurrency: 10000 })
 export class MessagingQueue extends Queue {
   private readonly logger = new Logger(MessagingQueue.name)
-  private readonly dbForPlatform: Database
+  private readonly internalDb: Database
+  private readonly db: Database
+  private readonly deviceForFiles: Device
   private smsAdapter?: SMSAdapter
 
-  constructor(
-    private readonly coreService: CoreService,
-    private readonly appConfig: AppConfigService,
-  ) {
+  constructor(private readonly coreService: CoreService) {
     super()
-    this.dbForPlatform = this.coreService.getPlatformDb()
+    this.internalDb = this.coreService.getInternalDatabase()
+    this.db = this.coreService.getDatabase()
+    this.deviceForFiles = this.coreService.getStorageDevice()
   }
 
   async process(job: Job<MessagingJobData, any, MessagingJob>): Promise<any> {
@@ -63,23 +61,12 @@ export class MessagingQueue extends Queue {
       case MessagingJob.EXTERNAL: {
         const data = job.data
 
-        const project = new Doc(data.project as unknown as Projects)
-
-        let client: any | null = null
-
         try {
-          const result = await this.coreService.createProjectDatabase(project, {
-            schema: Schemas.Core,
-          })
-
-          client = result.client
-          const dbForProject = result.dbForProject
-
           let message: MessagesDoc
 
           // Load message safely
           if (typeof data.message === 'string') {
-            const messageDoc = await dbForProject.getDocument(
+            const messageDoc = await this.db.getDocument(
               'messages',
               data.message,
             )
@@ -109,25 +96,13 @@ export class MessagingQueue extends Queue {
             return { skipped: true }
           }
 
-          const deviceForFiles = this.coreService.getProjectDevice(
-            project.getId(),
-          )
-
           // Send message
-          await this.sendExternalMessage(
-            dbForProject,
-            message,
-            deviceForFiles,
-            project,
-          )
+          await this.sendExternalMessage(message)
 
           // Delete schedule if present
           if (data.scheduleId) {
             try {
-              await this.dbForPlatform.deleteDocument(
-                'schedules',
-                data.scheduleId,
-              )
+              await this.internalDb.deleteDocument('schedules', data.scheduleId)
             } catch (err) {
               // Non-critical failure
               this.logger.warn(`Failed to delete schedule ${data.scheduleId}`)
@@ -137,7 +112,6 @@ export class MessagingQueue extends Queue {
           return {
             status: 'processed',
             messageId: message.getId(),
-            projectId: project.getId(),
           }
         } catch (err) {
           this.logger.error(
@@ -147,8 +121,6 @@ export class MessagingQueue extends Queue {
 
           // Let BullMQ retry
           throw err
-        } finally {
-          await this.coreService.releaseDatabaseClient(client)
         }
       }
       case MessagingJob.INTERNAL:
@@ -264,12 +236,8 @@ export class MessagingQueue extends Queue {
   }
 
   private async buildEmailMessage(
-    dbForProject: Database,
     message: MessagesDoc,
     provider: ProvidersDoc,
-    deviceForFiles: Device,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _project: ProjectsDoc,
   ): Promise<Email> {
     const fromName = provider.get('options')?.fromName || null
     const fromEmail = provider.get('options')?.fromEmail || null
@@ -283,24 +251,20 @@ export class MessagingQueue extends Queue {
     const attachments = data.attachments || []
 
     if (ccTargets.length > 0) {
-      const ccTargetDocs = await dbForProject.withSchema(Schemas.Auth, () =>
-        dbForProject.find('targets', [
-          Query.equal('$id', ccTargets),
-          Query.limit(ccTargets.length),
-        ]),
-      )
+      const ccTargetDocs = await this.db.find('targets', [
+        Query.equal('$id', ccTargets),
+        Query.limit(ccTargets.length),
+      ])
       for (const ccTarget of ccTargetDocs) {
         cc.push({ email: ccTarget.get('identifier') })
       }
     }
 
     if (bccTargets.length > 0) {
-      const bccTargetDocs = await dbForProject.withSchema(Schemas.Auth, () =>
-        dbForProject.find('targets', [
-          Query.equal('$id', bccTargets),
-          Query.limit(bccTargets.length),
-        ]),
-      )
+      const bccTargetDocs = await this.db.find('targets', [
+        Query.equal('$id', bccTargets),
+        Query.limit(bccTargets.length),
+      ])
       for (const bccTarget of bccTargetDocs) {
         bcc.push({ email: bccTarget.get('identifier') })
       }
@@ -312,14 +276,14 @@ export class MessagingQueue extends Queue {
         const bucketId = attachment.bucketId
         const fileId = attachment.fileId
 
-        const bucket = await dbForProject.getDocument('buckets', bucketId)
+        const bucket = await this.db.getDocument('buckets', bucketId)
         if (bucket.empty()) {
           throw new Error(
             'Storage bucket with the requested ID could not be found',
           )
         }
 
-        const file = await dbForProject.getDocument<Files>(
+        const file = await this.db.getDocument<Files>(
           `bucket_${bucket.getSequence()}`,
           fileId,
         )
@@ -331,7 +295,7 @@ export class MessagingQueue extends Queue {
 
         const path = file.get('path', '')
 
-        if (!(await deviceForFiles.exists(path))) {
+        if (!(await this.deviceForFiles.exists(path))) {
           throw new Error(`File not found in ${path}`)
         }
 
@@ -345,7 +309,7 @@ export class MessagingQueue extends Queue {
         //     await deviceForFiles.transfer(path, path, this.getLocalDevice(project));
         // }
 
-        const fileData = await deviceForFiles.read(path)
+        const fileData = await this.deviceForFiles.read(path)
 
         attachments[i] = new Attachment(
           file.get('name'),
@@ -429,12 +393,7 @@ export class MessagingQueue extends Queue {
     })
   }
 
-  private async sendExternalMessage(
-    dbForProject: Database,
-    message: MessagesDoc,
-    deviceForFiles: Device,
-    project: ProjectsDoc,
-  ): Promise<void> {
+  private async sendExternalMessage(message: MessagesDoc): Promise<void> {
     const topicIds = message.get('topics', [])
     const targetIds = message.get('targets', [])
     const userIds = message.get('users', [])
@@ -443,7 +402,7 @@ export class MessagingQueue extends Queue {
     const allTargets: TargetsDoc[] = []
 
     if (topicIds.length > 0) {
-      const topics = await dbForProject.find('topics', [
+      const topics = await this.db.find('topics', [
         Query.equal('$id', topicIds),
         Query.limit(topicIds.length),
       ])
@@ -456,12 +415,10 @@ export class MessagingQueue extends Queue {
     }
 
     if (userIds.length > 0) {
-      const users = await dbForProject.withSchema(Schemas.Auth, () =>
-        dbForProject.find('users', [
-          Query.equal('$id', userIds),
-          Query.limit(userIds.length),
-        ]),
-      )
+      const users = await this.db.find('users', [
+        Query.equal('$id', userIds),
+        Query.limit(userIds.length),
+      ])
       for (const user of users) {
         const targets = (user.get('targets') as TargetsDoc[]).filter(
           target => target.get('providerType') === providerType,
@@ -471,18 +428,17 @@ export class MessagingQueue extends Queue {
     }
 
     if (targetIds.length > 0) {
-      const targets = await dbForProject.withSchema(Schemas.Auth, () =>
-        dbForProject.find('targets', [
-          Query.equal('$id', targetIds),
-          Query.equal('providerType', [providerType]),
-          Query.limit(targetIds.length),
-        ]),
-      )
+      const targets = await this.db.find('targets', [
+        Query.equal('$id', targetIds),
+        Query.equal('providerType', [providerType]),
+        Query.limit(targetIds.length),
+      ])
+
       allTargets.push(...targets)
     }
 
     if (allTargets.length === 0) {
-      await dbForProject.updateDocument(
+      await this.db.updateDocument(
         'messages',
         message.getId(),
         message
@@ -493,13 +449,13 @@ export class MessagingQueue extends Queue {
       return
     }
 
-    const defaultProvider = await dbForProject.findOne('providers', [
+    const defaultProvider = await this.db.findOne('providers', [
       Query.equal('enabled', [true]),
       Query.equal('type', [providerType]),
     ])
 
     if (defaultProvider.empty()) {
-      await dbForProject.updateDocument(
+      await this.db.updateDocument(
         'messages',
         message.getId(),
         message
@@ -534,7 +490,7 @@ export class MessagingQueue extends Queue {
       if (providers[providerId]) {
         provider = providers[providerId]
       } else {
-        provider = await dbForProject.getDocument('providers', providerId)
+        provider = await this.db.getDocument('providers', providerId)
         if (provider.empty() || !provider.get('enabled')) {
           provider = defaultProvider
         } else {
@@ -579,13 +535,7 @@ export class MessagingQueue extends Queue {
         let data: SMS | Push | Email
         switch (provider.get('type') as MessageType) {
           case MessageType.EMAIL:
-            data = await this.buildEmailMessage(
-              dbForProject,
-              messageData,
-              provider,
-              deviceForFiles,
-              project,
-            )
+            data = await this.buildEmailMessage(messageData, provider)
             break
           case MessageType.PUSH:
             data = this.buildPushMessage(messageData)
@@ -612,12 +562,12 @@ export class MessagingQueue extends Queue {
 
             // Deleting push targets when token has expired
             if (result.error === 'Expired device token') {
-              const target = await dbForProject.findOne('targets', [
+              const target = await this.db.findOne('targets', [
                 Query.equal('identifier', [result.recipient]),
               ])
 
               if (!target.empty()) {
-                await dbForProject.updateDocument(
+                await this.db.updateDocument(
                   'targets',
                   target.getId(),
                   target.set('expired', true),
@@ -677,11 +627,11 @@ export class MessagingQueue extends Queue {
     message.set('deliveredTotal', deliveredTotal)
     message.set('deliveredAt', new Date().toISOString())
 
-    await dbForProject.updateDocument('messages', message.getId(), message)
+    await this.db.updateDocument('messages', message.getId(), message)
   }
 
   private async sendInternalMessage(message: MessagesDoc) {
-    const smsConfig = this.appConfig.get('sms')
+    const smsConfig = configuration.sms
     if (!smsConfig.enabled) {
       this.logger.warn('SMS sending is disabled in configuration')
       return
@@ -730,7 +680,6 @@ export enum MessagingJob {
 export interface MessagingJobData {
   scheduleId?: string
   message: MessagesDoc | string
-  project: ProjectsDoc
 }
 
 export interface MessagingJobInternalData {

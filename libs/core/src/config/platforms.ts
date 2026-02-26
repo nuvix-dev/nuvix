@@ -14,7 +14,7 @@ export const platforms = {
       {
         key: 'web',
         name: 'Web',
-        version: '16.0.0',
+        version: '1.0.0',
         url: 'https://github.com/nuvix-tech/sdk-for-web',
         package: 'https://www.npmjs.com/package/nuvix',
         enabled: true,
