@@ -1,84 +1,84 @@
 /**
- * Helper class to get params from headers or query
+ * Helper class to get parameters from headers or query string.
  */
 class ParamsHelper {
-  private req: NuvixRequest
+  private readonly req: NuvixRequest
 
   constructor(req: NuvixRequest) {
     this.req = req
   }
 
   /**
-   * Get a request parameter from headers or query
-   * the parameter name is prefixed with `x-nuvix-` in headers
-   * and can be accessed directly in query.
-   * If the parameter is not found, it returns the default value.
+   * Retrieves a parameter from headers (with `x-nuvix-` prefix) or query string.
+   * @param param Parameter name (case-insensitive for headers)
+   * @param defaultValue Value to return if parameter is not found
+   * @returns The parameter value, or defaultValue if not found
    */
-  get<T = null>(
-    param: string,
-    defaultValue = null,
-  ): T | string | string[] | undefined {
-    let value: string | string[] | undefined
+  get<T = string | undefined>(param: string, defaultValue?: T): string | T {
     const headerParam = `x-nuvix-${param.toLowerCase()}`
-    // Check in headers
-    value = this.req.headers[headerParam]
-    if (value) {
-      return this.processValue(value)
+    const headerValue = this.req.headers[headerParam]
+    if (headerValue !== undefined) {
+      return this.processValue(headerValue) as string
     }
 
-    // Check in query
-    value = this.getQueryParams()[param]
-    if (value) {
-      return this.processValue(value)
+    const queryValue = this.getQueryParams()[param]
+    if (queryValue !== undefined) {
+      return this.processValue(queryValue) as string
     }
 
     return defaultValue as T
   }
 
-  getFromHeaders(
+  /**
+   * Retrieves a parameter only from headers (case-insensitive).
+   * @param param Header parameter name
+   * @param defaultValue Value to return if parameter is not found
+   */
+  getFromHeaders<T = string | undefined>(
     param: string,
-    defaultValue: any | null = null,
-  ): string | undefined {
+    defaultValue?: T,
+  ): string | T {
     const value = this.req.headers[param.toLowerCase()]
-    return value ? this.processValue(value) : defaultValue
+    return value !== undefined
+      ? (this.processValue(value) as string)
+      : (defaultValue as T)
   }
 
-  getFromQuery(
+  /**
+   * Retrieves a parameter only from query string.
+   * @param param Query parameter name
+   * @param defaultValue Value to return if parameter is not found
+   */
+  getFromQuery<T = string | undefined>(
     param: string,
-    defaultValue: any | null = null,
-  ): string | undefined {
+    defaultValue?: T,
+  ): string | T {
     const value = this.getQueryParams()[param]
-    return value ? this.processValue(value) : defaultValue
+    return value !== undefined
+      ? (this.processValue(value) as string)
+      : (defaultValue as T)
   }
 
+  /**
+   * Processes a value from headers or query, returning the last value if array or comma-separated.
+   * @param value The value to process
+   */
   private processValue(value: string | string[]): string {
     if (Array.isArray(value)) {
-      return value[value.length - 1]!
+      return value[value.length - 1] ?? ''
     }
     if (typeof value === 'string' && value.includes(',')) {
       const parts = value.split(',')
-      return parts[parts.length - 1]!
+      return parts[parts.length - 1]!.trim()
     }
     return value
   }
 
-  private getQueryParams(): Record<string, string | string[]> {
-    // const url = new URL(this.req.url || '', `http://${this.req.headers.host || 'localhost'}${this.req.url}`);
-    // const params: Record<string, string | string[]> = {};
-
-    // url.searchParams.forEach((value, key) => {
-    //   if (params[key]) {
-    //     if (Array.isArray(params[key])) {
-    //       (params[key] as string[]).push(value);
-    //     } else {
-    //       params[key] = [params[key] as string, value];
-    //     }
-    //   } else {
-    //     params[key] = value;
-    //   }
-    // });
-
-    return this.req.query as any
+  /**
+   * Returns the parsed query parameters.
+   */
+  private getQueryParams() {
+    return this.req.query as Record<string, string | string[]>
   }
 }
 

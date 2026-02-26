@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { Authorization, Database, Doc, Query } from '@nuvix/db'
 import { AppMode, Context } from '@nuvix/utils'
-import { ProjectsDoc, SessionsDoc, UsersDoc } from '@nuvix/utils/types'
+import { SessionsDoc, UsersDoc } from '@nuvix/utils/types'
 import { CoreService } from '../../core.service.js'
 import { AuthType } from '../../decorators'
 import { Exception } from '../../extend/exception'
@@ -14,19 +14,20 @@ import { Hook } from '../../server/hooks/interface'
 @Injectable()
 export class AuthHook implements Hook {
   private readonly logger = new Logger(AuthHook.name)
-  private readonly dbForPlatform: Database
+  private readonly internalDb: Database
+  private readonly db: Database
+
   constructor(
     readonly coreService: CoreService,
     private readonly jwtService: JwtService,
   ) {
-    this.dbForPlatform = coreService.getPlatformDb()
+    this.internalDb = coreService.getInternalDatabase()
+    this.db = coreService.getDatabase()
   }
 
   async onRequest(req: NuvixRequest, reply: NuvixRes): Promise<void> {
     const params = new ParamsHelper(req)
-    const project = req[Context.Project] as ProjectsDoc
-    const dbForProject = req[AUTH_SCHEMA_DB] as Database
-    const mode = req[Context.Mode] as AppMode
+    const mode = req.context.mode || AppMode.DEFAULT
 
     Authorization.setDefaultStatus(true)
 

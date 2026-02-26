@@ -12,6 +12,7 @@ import type { Entities as NuvixEntities } from './libs/utils/types';
 import type { RouteContext, ThrottleOptions } from './libs/utils/src';
 import type { AuditEventType } from './libs/core/src/decorators';
 import { SchemaType } from '@nuvix/pg';
+import type { RequestContext } from '@nuvix/core/helpers/context.helper';
 
 declare module 'fastify' {
   interface FastifyContextConfig {
@@ -34,6 +35,7 @@ declare module 'fastify' {
       },
       SchemaCompiler
     >;
+    context: RequestContext;
     domainVerification: boolean;
     // Allow storing hooks arguments and other arbitrary properties
     hooks_args: Record<string, any>;

@@ -2,7 +2,6 @@ import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
 import { Doc } from '@nuvix/db'
 import { Context, KeyArgs, RouteContext } from '@nuvix/utils'
 import { ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
-import { AppConfigService } from '../../config.service'
 import { Exception } from '../../extend/exception'
 import { RatelimitService } from '../../rate-limit.service'
 

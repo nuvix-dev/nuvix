@@ -1,6 +1,5 @@
 import { BullModule } from '@nestjs/bullmq'
 import { Global, Module, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
-import { ConfigModule } from '@nestjs/config'
 import { EventEmitterModule } from '@nestjs/event-emitter'
 import { Database, StructureValidator } from '@nuvix/db'
 import { configuration } from '@nuvix/utils'
@@ -15,10 +14,6 @@ import handlebars from 'handlebars'
 @Global()
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [() => configuration],
-    }),
     BullModule.forRootAsync({
       useFactory() {
         const { secure, ...redisConfig } = configuration.redis

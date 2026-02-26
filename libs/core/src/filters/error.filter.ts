@@ -19,13 +19,12 @@ import {
   TimeoutException,
   TruncateException,
 } from '@nuvix/db'
-import { AppConfigService } from '../config.service'
 import { Exception, errorCodes } from '../extend/exception'
 
 @Catch()
 export class ErrorFilter implements ExceptionFilter {
   private readonly logger = new Logger(ErrorFilter.name)
-  constructor(private readonly appConfig: AppConfigService) {}
+  constructor() {}
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp()

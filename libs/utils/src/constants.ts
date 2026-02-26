@@ -167,21 +167,6 @@ export enum AttributeFormat {
   FLOAT = 'float',
 }
 
-export enum Context {
-  User = 'user',
-  Team = 'team',
-  Session = 'session',
-  Locale = 'locale',
-  ApiKey = 'apiKey',
-  Scopes = 'scopes',
-  Role = 'role',
-  Mode = 'mode',
-  AuthType = 'authType',
-  Namespace = 'namespace',
-  CurrentSchema = 'currentSchema',
-  AuthMeta = 'authMeta',
-}
-
 export enum HashAlgorithm {
   ARGON2 = 'argon2',
   BCRYPT = 'bcrypt',
