@@ -3,7 +3,7 @@ import { Injectable, Logger, type OnModuleDestroy } from '@nestjs/common'
 import { Audit } from '@nuvix/audit'
 import { Cache, Redis } from '@nuvix/cache'
 import { Adapter, Database, Logger as DbLogger } from '@nuvix/db'
-import { Context, DataSource } from '@nuvix/pg'
+import { DataSource } from '@nuvix/pg'
 import { Device, Local } from '@nuvix/storage'
 import {
   configuration,
@@ -13,7 +13,7 @@ import {
 } from '@nuvix/utils'
 import { Redis as IORedis } from 'ioredis'
 import { CountryResponse, Reader } from 'maxmind'
-import { Client, Pool } from 'pg'
+import { Pool } from 'pg'
 import { Exception } from './extend/exception.js'
 
 @Injectable()
@@ -51,10 +51,17 @@ export class CoreService implements OnModuleDestroy {
     this.geoDb = this.createGeoDb()
     this.redisInstance = this.createRedisInstance()
     this.cache = this.createCache()
-    this.storageDevice = this.createStorageDevice()
     this.pool = this.createMainPool()
 
     this.internalDb = this.createInternalDb()
+    this.database = this.createDatabase()
+    this.dataSource = this.createDataSource()
+
+    if (this.isConsole()) {
+      this.postgresPool = this.createPostgresPool()
+    } else {
+      this.storageDevice = this.createStorageDevice()
+    }
   }
 
   private dbLogger(): DbLogger {
@@ -102,10 +109,7 @@ export class CoreService implements OnModuleDestroy {
   }
 
   private createInternalDb() {
-    if (!this.pool) {
-      throw new Exception('Main database pool not initialized')
-    }
-    const adapter = new Adapter(this.pool)
+    const adapter = new Adapter(this.getPool())
       .setMeta({
         schema: Schemas.Internal,
         sharedTables: false,
@@ -113,6 +117,22 @@ export class CoreService implements OnModuleDestroy {
       })
       .setLogger(this.dbLogger())
     return new Database(adapter, this.getCache())
+  }
+
+  private createDatabase() {
+    const adapter = new Adapter(this.getPool())
+      .setMeta({
+        schema: Schemas.Core,
+        sharedTables: false,
+        namespace: 'nx',
+      })
+      .setLogger(this.dbLogger())
+
+    return new Database(adapter, this.getCache())
+  }
+
+  private createDataSource() {
+    return new DataSource(this.getPool())
   }
 
   /**
@@ -175,37 +195,51 @@ export class CoreService implements OnModuleDestroy {
     return pool
   }
 
-  public getPoolForPostgres(): Pool {
-    if (this.postgresPool) return this.postgresPool
-
-    const options = this.appConfig.getDatabaseConfig()
-
-    this.postgresPool = new Pool({
+  private createPostgresPool(): Pool {
+    if (this.postgresPool) {
+      return this.postgresPool
+    }
+    const { postgres, timeouts } = configuration.database
+    const pool = new Pool({
       database: DEFAULT_DATABASE,
       user: DatabaseRole.POSTGRES,
-      password: options.postgres.password || options.postgres.adminPassword,
-      host: options.useExternalPool
-        ? options.postgres.pool.host!
-        : options.postgres.host,
-      port: options.useExternalPool
-        ? options.postgres.pool.port
-        : options.postgres.port,
-      ssl: options.postgres.ssl ? { rejectUnauthorized: false } : undefined,
-      statement_timeout: 30000,
-      query_timeout: 30000,
-      application_name: 'nuvix-main',
-      keepAliveInitialDelayMillis: 10000,
+      password: postgres.password || postgres.adminPassword,
+      host: postgres.host,
+      port: postgres.port,
+      ssl: postgres.ssl ? { rejectUnauthorized: false } : undefined,
+      statement_timeout: timeouts.statement,
+      query_timeout: timeouts.query,
+      idleTimeoutMillis: timeouts.idle,
+      connectionTimeoutMillis: timeouts.connection,
       max:
-        options.postgres.maxConnections > 20
-          ? options.postgres.maxConnections / 2
-          : options.postgres.maxConnections, // limit to 10 for external pool to avoid exhausting connections
-      idleTimeoutMillis: 5000,
+        postgres.maxConnections > 20
+          ? Math.floor(postgres.maxConnections / 2)
+          : postgres.maxConnections, // limit to 10 for external pool to avoid exhausting connections
+      min: 2,
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 10_000,
+      application_name: 'nuvix-core-pg',
+      allowExitOnIdle: true,
     })
 
-    this.postgresPool.on('error', err => {
-      this.logger.error('Postgres pool error:', err)
+    pool.on('error', err => {
+      this.logger.error('Postgres database pool error:', err)
     })
 
+    return pool
+  }
+
+  public getPool(): Pool {
+    if (!this.pool) {
+      throw new Exception('Main database pool not initialized')
+    }
+    return this.pool
+  }
+
+  public getPoolForPostgres(): Pool {
+    if (!this.postgresPool) {
+      throw new Exception('Postgres database pool not initialized')
+    }
     return this.postgresPool
   }
 
@@ -260,26 +294,49 @@ export class CoreService implements OnModuleDestroy {
     return new Audit(this.getInternalDatabase())
   }
 
-  getProjectDb(
-    client: Client | Pool,
-    { projectId, ...options }: GetProjectDBOptions,
-  ) {
-    const adapter = new Adapter(client)
-    adapter
+  /**
+   * Returns the initialized Database instance for the main database. If the main database is not initialized, an exception is thrown.
+   * @returns {Database} The initialized Database instance for the main database.
+   * @throws {Exception} If the main database is not initialized, an exception is thrown with a message indicating that the main database is not initialized.
+   * @public
+   */
+  public getDatabase(): Database {
+    if (!this.database) {
+      throw new Exception('Main database not initialized')
+    }
+    return this.database
+  }
+
+  /**
+   * Returns the initialized DataSource instance for the main database. If the main database is not initialized, an exception is thrown.
+   * @returns {DataSource} The initialized DataSource instance for the main database.
+   * @throws {Exception} If the main database is not initialized, an exception is thrown with a message indicating that the main database is not initialized.
+   * @public
+   */
+  public getDataSource(): DataSource {
+    if (!this.dataSource) {
+      throw new Exception('Main data source not initialized')
+    }
+    return this.dataSource
+  }
+
+  /**
+   * Returns a Database instance for the specified schema. If the main database pool is not initialized, an exception is thrown.
+   * @param {string} schema - The name of the schema for which to get the Database instance.
+   * @returns {Database} A Database instance for the specified schema.
+   * @throws {Exception} If the main database pool is not initialized, an exception is thrown with a message indicating that the main database pool is not initialized.
+   * @public
+   */
+  public getDatabaseForSchema(schema: string): Database {
+    const adapter = new Adapter(this.getPool())
       .setMeta({
-        metadata: {
-          projectId: projectId,
-        },
+        schema,
+        sharedTables: false,
+        namespace: 'nx',
       })
       .setLogger(this.dbLogger())
-    const connection = new Database(adapter, this.getCache())
-    connection.setMeta({
-      schema: options.schema ?? Schemas.Core,
-      namespace: 'nx',
-      metadata: { project: projectId },
-    })
-    connection.setAttachSchemaInDocument(true)
-    return connection
+
+    return new Database(adapter, this.getCache())
   }
 
   /**

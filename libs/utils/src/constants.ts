@@ -30,7 +30,6 @@ export enum ApiKey {
 }
 
 export enum Schemas {
-  Auth = 'auth',
   Core = 'core',
   System = 'system',
   Internal = 'internal', // used for platform internal stuff
