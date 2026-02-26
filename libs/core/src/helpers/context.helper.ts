@@ -1,8 +1,15 @@
 import { AppMode } from '@nuvix/utils'
-import type { SessionsDoc, TeamsDoc, UsersDoc } from '@nuvix/utils/types'
+import type {
+  ProjectsDoc,
+  SessionsDoc,
+  TeamsDoc,
+  UsersDoc,
+} from '@nuvix/utils/types'
 import { Key } from './key.helper'
+import { Doc } from '@nuvix/db'
 
 export class RequestContext {
+  project: ProjectsDoc = new Doc()
   user?: UsersDoc
   team?: TeamsDoc
   session?: SessionsDoc

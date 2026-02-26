@@ -1,186 +1,236 @@
-import { Injectable, Logger } from '@nestjs/common'
-import { Context } from '@nuvix/utils'
-import { ProjectsDoc } from '@nuvix/utils/types'
-import { AppConfigService } from '../../config.service'
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common'
 import {
   addAccessControlRequestHeadersToVaryHeader,
   addOriginToVaryHeader,
 } from '../../helpers/vary.helper'
 import { Hook } from '../../server/hooks/interface'
 import { Origin } from '../../validators/network/origin'
+import { AppMode, configuration } from '@nuvix/utils'
+import { CoreService } from '@nuvix/core/core.service'
 
-interface CorsOptions {
-  origin?: string | false
-  methods: string[]
-  allowedHeaders: string[]
-  exposedHeaders: string[]
-  credentials: boolean
-  maxAge: number
-  preflight: boolean
-  strictPreflight: boolean
-  project?: ProjectsDoc
-}
+type OriginMatcher = (origin: string, hostname: string) => boolean
 
 @Injectable()
-export class CorsHook implements Hook {
+export class CorsHook implements Hook, OnModuleInit {
   private readonly logger = new Logger(CorsHook.name)
 
-  constructor(private readonly appConfig: AppConfigService) {}
+  private originMatchers: OriginMatcher[] = []
+  private allowedOriginsSet = new Set<string>()
+  private allowWildcard = false
 
-  private getDefaultOptions(project?: ProjectsDoc): CorsOptions {
-    const cfg = this.appConfig.get('server')
-    return {
-      methods: [...cfg.methods],
-      allowedHeaders: [...cfg.allowedHeaders],
-      exposedHeaders: [...cfg.exposedHeaders],
-      credentials: cfg.credentials,
-      maxAge: 3600,
-      preflight: true,
-      strictPreflight: true,
-      project,
+  private allowedHeadersSet = new Set<string>()
+  private allowedMethodsSet = new Set<string>()
+
+  private allowedHeadersHeader = ''
+  private allowedMethodsHeader = ''
+  private exposedHeadersHeader = ''
+
+  private credentials = false
+  private maxAge = 3600
+
+  constructor(private readonly coreService: CoreService) {}
+
+  onModuleInit(): void {
+    const cfg = configuration.server
+
+    this.credentials = cfg.credentials
+    this.maxAge = 3600
+
+    for (const m of cfg.methods) {
+      this.allowedMethodsSet.add(m.toUpperCase())
+    }
+
+    for (const h of cfg.allowedHeaders) {
+      this.allowedHeadersSet.add(h.toLowerCase())
+    }
+
+    this.allowedMethodsHeader = cfg.methods.join(', ')
+    this.allowedHeadersHeader = cfg.allowedHeaders.join(', ')
+    this.exposedHeadersHeader = cfg.exposedHeaders.join(', ')
+
+    this.initializeOriginMatchers(cfg.allowedOrigins ?? [])
+
+    if (this.credentials && this.allowWildcard) {
+      this.logger.error(
+        'Invalid CORS configuration: wildcard origin cannot be used with credentials',
+      )
     }
   }
 
+  private initializeOriginMatchers(patterns: string[]): void {
+    for (const pattern of patterns) {
+      if (pattern === '*') {
+        this.allowWildcard = true
+        continue
+      }
+
+      if (!pattern.includes('*')) {
+        this.allowedOriginsSet.add(pattern)
+        continue
+      }
+
+      this.originMatchers.push(this.compilePattern(pattern))
+    }
+  }
+
+  private compilePattern(pattern: string): OriginMatcher {
+    if (pattern.startsWith('*.')) {
+      const domain = pattern.slice(2) // example.com
+
+      return (_, hostname) =>
+        hostname === domain || hostname.endsWith(`.${domain}`)
+    }
+
+    const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+    const regex = new RegExp(`^${escaped.replace(/\*/g, '.*')}$`, 'i')
+
+    return origin => regex.test(origin)
+  }
+
   async onRequest(req: NuvixRequest, reply: NuvixRes): Promise<void> {
+    const origin = req.headers.origin
+    if (!origin) return
+
     try {
-      const project: ProjectsDoc = req[Context.Project]
-      const origin = req.headers.origin
-      const host = req.host
-      if (!origin) {
+      const validOrigin = this.determineOrigin(origin, req)
+
+      if (!validOrigin) {
+        if (req.method === 'OPTIONS') {
+          this.removeCorsHeaders(reply)
+          reply.status(403).send('Origin not allowed')
+        }
         return
       }
 
-      const validOrigin = this.determineOrigin(origin, project, host)
-      const options: CorsOptions = {
-        ...this.getDefaultOptions(project),
-        origin: validOrigin,
-      }
+      this.setCorsHeaders(reply, validOrigin)
 
-      this.setCorsHeaders(reply, req, options)
-
-      if (req.method.toUpperCase() === 'OPTIONS' && options.preflight) {
-        this.handlePreflight(req, reply, options)
+      if (req.method === 'OPTIONS') {
+        this.handlePreflight(req, reply, validOrigin)
       }
-    } catch (err: any) {
-      this.logger.error(`CORS setup failed: ${err.message}`)
+    } catch (err) {
+      this.logger.error(`CORS failure for origin "${origin}": ${err}`)
       reply.status(500).send('Internal Server Error')
     }
   }
 
-  private determineOrigin(
-    origin: string,
-    project: ProjectsDoc | null,
-    host: string,
-  ): string | false {
-    const cfg = this.appConfig.get('server')
-    const isConsoleRequest =
-      !project ||
-      project.empty() ||
-      project.getId() === 'console' ||
-      host === cfg.host
+  private determineOrigin(origin: string, req: NuvixRequest): string | false {
+    let parsed: URL
 
-    if (isConsoleRequest) {
-      return this.matchOrigin(origin, [...cfg.allowedOrigins], host)
-        ? origin
-        : false
+    try {
+      parsed = new URL(origin)
+
+      if (!['http:', 'https:'].includes(parsed.protocol)) {
+        return false
+      }
+    } catch {
+      return false
     }
 
-    const validator = new Origin(project?.get('platforms', []))
+    const isConsole =
+      this.coreService.isConsole() || req.context.mode === AppMode.ADMIN
+
+    if (isConsole) {
+      return this.matchConsoleOrigin(origin, parsed.hostname) ? origin : false
+    }
+
+    const validator = new Origin(req.context.project.get('platforms', []))
     return validator.$valid(origin) ? origin : false
   }
 
-  private matchOrigin(
-    origin: string,
-    allowedOrigins: string[],
-    requestHost: string,
-  ): boolean {
-    if (!allowedOrigins?.length) {
-      return false
-    }
-    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
-      return true
+  private matchConsoleOrigin(origin: string, hostname: string): boolean {
+    if (this.allowWildcard) return true
+    if (this.allowedOriginsSet.has(origin)) return true
+
+    for (const matcher of this.originMatchers) {
+      if (matcher(origin, hostname)) return true
     }
 
-    try {
-      const { hostname } = new URL(origin)
-      if (hostname === requestHost) {
-        return true
-      }
-
-      return allowedOrigins.some(a => {
-        if (a.startsWith('*.') && hostname.endsWith(a.slice(1))) {
-          return true
-        }
-        if (a.includes('*')) {
-          const regex = new RegExp(
-            `^${a.replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\\\*/g, '.*')}$`,
-            'i',
-          )
-          return regex.test(origin)
-        }
-        return false
-      })
-    } catch {
-      this.logger.warn(`Invalid origin: ${origin}`)
-      return false
-    }
+    return false
   }
 
-  private setCorsHeaders(
-    reply: NuvixRes,
-    req: NuvixRequest,
-    opts: CorsOptions,
-  ) {
-    const originHeader =
-      opts.credentials && opts.origin && opts.origin !== '*'
-        ? req.headers.origin
-        : opts.origin
+  private setCorsHeaders(reply: NuvixRes, origin: string): void {
+    const headers = reply.raw
 
-    reply.raw.setHeader('Access-Control-Allow-Origin', originHeader || 'null')
+    const allowOrigin = this.credentials ? origin : origin || null
 
-    if (opts.credentials) {
-      reply.raw.setHeader('Access-Control-Allow-Credentials', 'true')
+    if (allowOrigin) {
+      headers.setHeader('Access-Control-Allow-Origin', allowOrigin)
     }
-    if (opts.exposedHeaders?.length) {
-      reply.raw.setHeader(
+
+    if (this.credentials) {
+      headers.setHeader('Access-Control-Allow-Credentials', 'true')
+    }
+
+    if (this.exposedHeadersHeader) {
+      headers.setHeader(
         'Access-Control-Expose-Headers',
-        opts.exposedHeaders.join(', '),
+        this.exposedHeadersHeader,
       )
     }
 
-    // Vary headers
-    if (opts.origin && opts.origin !== '*') {
-      addOriginToVaryHeader(reply)
-    }
+    addOriginToVaryHeader(reply)
     addAccessControlRequestHeadersToVaryHeader(reply)
   }
 
   private handlePreflight(
     req: NuvixRequest,
     reply: NuvixRes,
-    opts: CorsOptions,
-  ): unknown | undefined {
-    if (!opts.origin) {
-      return reply.status(403).send('Origin not allowed')
-    }
-    if (opts.strictPreflight && !req.headers['access-control-request-method']) {
-      return reply.status(400).send('Invalid Preflight Request')
+    origin: string,
+  ): void {
+    const requestedMethod =
+      req.headers['access-control-request-method']?.toUpperCase()
+
+    if (!requestedMethod) {
+      reply.status(400).send('Invalid Preflight Request')
+      return
     }
 
-    reply.raw.setHeader('Access-Control-Allow-Methods', opts.methods.join(', '))
-
-    const reqHeaders = req.headers['access-control-request-headers']
-      ?.split(',')
-      .map(h => h.trim())
-    reply.raw.setHeader(
-      'Access-Control-Allow-Headers',
-      (reqHeaders?.length ? reqHeaders : opts.allowedHeaders).join(', '),
-    )
-
-    if (opts.maxAge) {
-      reply.raw.setHeader('Access-Control-Max-Age', String(opts.maxAge))
+    if (!this.allowedMethodsSet.has(requestedMethod)) {
+      reply.status(405).send('Method not allowed')
+      return
     }
+
+    const requestedHeaders = req.headers['access-control-request-headers']
+
+    let allowHeaders = this.allowedHeadersHeader
+
+    if (requestedHeaders) {
+      const requested = requestedHeaders
+        .split(',')
+        .map(h => h.trim().toLowerCase())
+
+      const filtered = requested.filter(h => this.allowedHeadersSet.has(h))
+
+      if (filtered.length !== requested.length) {
+        reply.status(400).send('Headers not allowed')
+        return
+      }
+
+      allowHeaders = filtered.join(', ')
+    }
+
+    const headers = reply.raw
+
+    headers.setHeader('Access-Control-Allow-Origin', origin)
+    headers.setHeader('Access-Control-Allow-Methods', this.allowedMethodsHeader)
+    headers.setHeader('Access-Control-Allow-Headers', allowHeaders)
+    headers.setHeader('Access-Control-Max-Age', String(this.maxAge))
+
+    if (this.credentials) {
+      headers.setHeader('Access-Control-Allow-Credentials', 'true')
+    }
+
     reply.status(204).header('Content-Length', '0').send()
-    return
+  }
+
+  private removeCorsHeaders(reply: NuvixRes): void {
+    const headers = reply.raw
+
+    headers.removeHeader('Access-Control-Allow-Origin')
+    headers.removeHeader('Access-Control-Allow-Credentials')
+    headers.removeHeader('Access-Control-Expose-Headers')
+    headers.removeHeader('Access-Control-Allow-Headers')
+    headers.removeHeader('Access-Control-Allow-Methods')
+    headers.removeHeader('Access-Control-Max-Age')
   }
 }

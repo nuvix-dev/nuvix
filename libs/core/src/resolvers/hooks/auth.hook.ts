@@ -145,7 +145,9 @@ export class AuthHook implements Hook {
     if (!isConsole) {
       const apiKey =
         params.getFromHeaders('x-nuvix-key') || params.getFromQuery('apikey')
-      req.context.apiKey = apiKey ? await Key.decode(apiKey) : undefined
+      req.context.apiKey = apiKey
+        ? await Key.decode(req.context.project, apiKey)
+        : undefined
     }
 
     req.context.user = user
