@@ -1,52 +1,33 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { Authorization, Database, Doc, Role } from '@nuvix/db'
-import { ApiKey, AppMode, AuthActivity, Context } from '@nuvix/utils'
-import {
-  KeysDoc,
-  MembershipsDoc,
-  ProjectsDoc,
-  SessionsDoc,
-  TeamsDoc,
-  UsersDoc,
-} from '@nuvix/utils/types'
+import { ApiKey, AppMode, AuthActivity, configuration } from '@nuvix/utils'
+import type { KeysDoc, UsersDoc } from '@nuvix/utils/types'
 import { APP_PLATFORM_SERVER, platforms } from '../../config/platforms'
 import { roles } from '../../config/roles'
-import { AppConfigService } from '../../config.service.js'
 import { CoreService } from '../../core.service.js'
 import { AuthType } from '../../decorators'
 import { Exception } from '../../extend/exception'
 import { Auth } from '../../helpers/auth.helper'
-import { Key } from '../../helpers/key.helper'
 import ParamsHelper from '../../helpers/params.helper'
 import { Hook } from '../../server/hooks/interface'
 
 @Injectable()
 export class ApiHook implements Hook {
   private readonly logger = new Logger(ApiHook.name)
-  private readonly db: Database
-  constructor(
-    private readonly coreService: CoreService,
-    private readonly appConfig: AppConfigService,
-  ) {
-    this.db = this.coreService.getPlatformDb()
+  private readonly internalDb: Database
+  constructor(private readonly coreService: CoreService) {
+    this.internalDb = this.coreService.getInternalDatabase()
   }
 
-  async onRequest(req: NuvixRequest, _reply: NuvixRes): Promise<void> {
+  async onRequest(req: NuvixRequest): Promise<void> {
     const params = new ParamsHelper(req)
-    const project: ProjectsDoc = req[Context.Project]
-    let user: UsersDoc = req[Context.User]
-    const team: TeamsDoc = req[Context.Team]
-    const mode: AppMode = req[Context.Mode]
-    const apiKey: Key | null = req[Context.ApiKey]
+    const { project, apiKey, mode } = req.context
+    let user = req.context.user
 
-    if (project.empty()) {
-      throw new Exception(Exception.PROJECT_NOT_FOUND)
-    }
-
-    if (mode === AppMode.ADMIN && project.getId() === 'console') {
+    if (mode === AppMode.ADMIN && this.coreService.isConsole()) {
       throw new Exception(
         Exception.GENERAL_ACCESS_FORBIDDEN,
-        'Nuvix Console cannot be accessed in admin mode.',
+        'Admin mode is not allowed in console requests',
       )
     }
 
@@ -67,10 +48,9 @@ export class ApiHook implements Hook {
 
       // Disable authorization checks for API keys
       Authorization.setDefaultStatus(false)
-      Auth.setTrustedActor(true)
 
-      // Set auth type to key
-      req[Context.AuthType] = AuthType.KEY
+      req.context._isAppUser = true
+      req.context.authType = AuthType.KEY
 
       if (apiKey.getRole() === 'apps') {
         user = new Doc({
@@ -79,7 +59,6 @@ export class ApiHook implements Hook {
           status: true,
           type: AuthActivity.APP,
           email: `app.${project.getId()}@service.${req.host}`,
-          password: '',
           name: apiKey.getName(),
         }) as unknown as UsersDoc
       }
@@ -96,12 +75,12 @@ export class ApiHook implements Hook {
         const accessedAt = dbKey.get('accessedAt', 0)
 
         if (
-          new Date(Date.now() - this.appConfig.get('access').key * 1000) >
+          new Date(Date.now() - configuration.access.key * 1000) >
           new Date(accessedAt as string)
         ) {
           dbKey.set('accessedAt', new Date())
-          await this.db.updateDocument('keys', dbKey.getId(), dbKey)
-          await this.db.purgeCachedDocument('projects', project.getId())
+          await this.internalDb.updateDocument('keys', dbKey.getId(), dbKey)
+          await this.internalDb.purgeCachedDocument('projects', project.getId())
         }
 
         const sdksList = platforms[APP_PLATFORM_SERVER].sdks.map(
@@ -118,44 +97,31 @@ export class ApiHook implements Hook {
 
             // Update access time as well
             dbKey.set('accessedAt', new Date())
-            await this.db.updateDocument('keys', dbKey.getId(), dbKey)
-            await this.db.purgeCachedDocument('projects', project.getId())
+            await this.internalDb.updateDocument('keys', dbKey.getId(), dbKey)
+            await this.internalDb.purgeCachedDocument(
+              'projects',
+              project.getId(),
+            )
           }
         }
       }
     } else if (
-      (project.getId() === 'console' && !team.empty() && !user.empty()) ||
-      (project.getId() !== 'console' && !user.empty() && mode === AppMode.ADMIN)
+      !user.empty() &&
+      (this.coreService.isConsole() || mode === AppMode.ADMIN)
     ) {
-      const teamId = team.getId()
-      let adminRoles: string[] = []
-      const memberships = user.get('memberships', []) as MembershipsDoc[]
-      for (const membership of memberships) {
-        if (
-          membership.get('confirm', false) === true &&
-          membership.get('teamId') === teamId
-        ) {
-          adminRoles = membership.get('roles', [])
-          break
-        }
-      }
-
-      if (adminRoles.length === 0) {
-        throw new Exception(Exception.USER_UNAUTHORIZED)
-      }
-
-      scopes = [] // Reset scope if admin
+      const adminRoles: string[] = ['owner'] // will support dynamic admin roles in the future, for now only owner role is considered as admin
+      scopes = []
       for (const adminRole of adminRoles) {
         scopes = scopes.concat(roles[adminRole as keyof typeof roles].scopes)
       }
 
       Authorization.setDefaultStatus(false) // Cancel security segmentation for admin users.
-      Auth.setPlatformActor(true) // current user is platform user
-      if (project.empty() || project.getId() !== 'console') {
-        Auth.setTrustedActor(true)
+      req.context._isAdminUser = true
 
+      if (mode === AppMode.ADMIN) {
+        // req.context._isAppUser = true; // Admin mode is a special mode for app users with elevated privileges, so we set _isAppUser to true as well
         // Set auth type to admin
-        req[Context.AuthType] = AuthType.ADMIN
+        req.context.authType = AuthType.ADMIN
       }
     }
 
@@ -166,57 +132,12 @@ export class ApiHook implements Hook {
 
     scopes = Array.from(new Set(scopes))
 
-    // Update project last activity
-    if (!project.empty() && project.getId() !== 'console') {
-      const accessedAt = project.get('accessedAt', 0)
-      if (
-        new Date(Date.now() - this.appConfig.get('access').key * 1000) >
-        new Date(accessedAt as string)
-      ) {
-        project.set('accessedAt', new Date())
-        await Authorization.skip(async () => {
-          await this.db.updateDocument('projects', project.getId(), project)
-        })
-      }
-    }
-
-    const session: SessionsDoc = req[Context.Session]
-
-    req[Context.AuthMeta] = {
-      user:
-        user && !user.empty()
-          ? {
-              id: user.getId(),
-              name: user.get('name'),
-              email: user.get('email'),
-            }
-          : undefined,
-      team:
-        team && !team.empty()
-          ? {
-              id: team.getId(),
-              name: team.get('name'),
-            }
-          : undefined,
-      session: session
-        ? JSON.stringify({
-            id: session.getId(),
-            userId: session.get('userId'),
-            provider: session.get('provider'),
-            ip: session.get('ip'),
-            userAgent: session.get('userAgent'),
-          })
-        : undefined,
-      roles: JSON.stringify(Authorization.getRoles()),
-    }
-    req[Context.Scopes] = scopes
-    req[Context.Role] = role
-    req[Context.User] = user
+    req.context.scopes = scopes
+    req.context.role = role
+    req.context.user = user
 
     this.logger.debug(
       `[${mode ?? AppMode.DEFAULT}] ${role} ${user.empty() ? 'API' : user.getId()}`,
     )
-
-    return
   }
 }

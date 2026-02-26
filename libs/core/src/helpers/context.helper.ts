@@ -5,12 +5,13 @@ import type {
   TeamsDoc,
   UsersDoc,
 } from '@nuvix/utils/types'
-import { Key } from './key.helper'
+import type { Key } from './key.helper'
 import { Doc } from '@nuvix/db'
+import type { AuthType } from '../decorators'
 
 export class RequestContext {
   project: ProjectsDoc = new Doc()
-  user?: UsersDoc
+  user: UsersDoc = new Doc()
   team?: TeamsDoc
   session?: SessionsDoc
   locale: string = 'en'
@@ -18,11 +19,22 @@ export class RequestContext {
   scopes?: string[]
   role?: string
   mode: AppMode = AppMode.DEFAULT
-  authType?: string
+  authType?: AuthType
   namespace?: string
   currentSchema?: string
   authMeta: AuthMeta = {}
   sessionMeta: Record<string, unknown> = {}
+
+  _isAppUser: boolean = false
+  _isAdminUser: boolean = false
+
+  get isAppUser() {
+    return this._isAppUser
+  }
+
+  get isAdminUser() {
+    return this._isAdminUser
+  }
 
   constructor(init?: Partial<RequestContext>) {
     Object.assign(this, init)

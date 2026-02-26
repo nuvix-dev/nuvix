@@ -10,6 +10,7 @@ import { CoreService } from './core.service.js'
 import { RatelimitService } from './rate-limit.service.js'
 import { QueueModule } from './queue.module.js'
 import handlebars from 'handlebars'
+import { StatsHelper } from './helpers/stats.helper.js'
 
 @Global()
 @Module({
@@ -42,8 +43,9 @@ import handlebars from 'handlebars'
     EventEmitterModule.forRoot({
       global: true,
     }),
+    StatsHelper,
   ],
-  providers: [CoreService, RatelimitService],
+  providers: [CoreService, RatelimitService, StatsHelper],
   exports: [CoreService, RatelimitService, QueueModule],
 })
 export class CoreModule implements OnModuleDestroy, OnModuleInit {

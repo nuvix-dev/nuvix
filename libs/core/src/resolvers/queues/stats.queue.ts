@@ -459,7 +459,6 @@ export class StatsQueue extends Queue implements OnModuleInit, OnModuleDestroy {
 }
 
 export interface StatsQueueOptions {
-  project: object
   metrics: Array<{ key: MetricFor; value: number }>
   reduce?: Doc<any>[]
 }

@@ -15,6 +15,7 @@ import { Redis as IORedis } from 'ioredis'
 import { CountryResponse, Reader } from 'maxmind'
 import { Pool } from 'pg'
 import { Exception } from './extend/exception.js'
+import { StatsHelper } from './helpers/stats.helper.js'
 
 @Injectable()
 export class CoreService implements OnModuleDestroy {
@@ -47,7 +48,7 @@ export class CoreService implements OnModuleDestroy {
   private readonly database: Database | null = null
   private readonly dataSource: DataSource | null = null
 
-  constructor() {
+  constructor(private readonly statsHelper: StatsHelper) {
     this.geoDb = this.createGeoDb()
     this.redisInstance = this.createRedisInstance()
     this.cache = this.createCache()
@@ -128,7 +129,11 @@ export class CoreService implements OnModuleDestroy {
       })
       .setLogger(this.dbLogger())
 
-    return new Database(adapter, this.getCache())
+    const db = new Database(adapter, this.getCache())
+    if (!this.isConsole()) {
+      this.statsHelper.connect(db)
+    }
+    return db
   }
 
   private createDataSource() {
