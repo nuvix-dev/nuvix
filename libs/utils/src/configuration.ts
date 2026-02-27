@@ -89,6 +89,7 @@ const createConfig = () => {
       version: '1.0.0',
       color: '#ff751f',
       userAgent: 'Nuvix-Server v%s. Please report abuse at %s',
+      projectId: env.get('NUVIX_PROJECT_ID', 'default'),
 
       // URLs & Hosts
       host: env.get('NUVIX_HOST', 'localhost'),
@@ -124,6 +125,7 @@ const createConfig = () => {
       images: path.join(assetsRoot, 'images'),
       fonts: path.join(assetsRoot, 'fonts'),
       templates: path.join(assetsRoot, 'locale', 'templates'),
+      views: path.join(assetsRoot, 'views'),
       public: paths.fromRoot(env.get('NUVIX_ASSETS_PUBLIC', 'public')),
       resolve: (...segments: string[]) => path.join(assetsRoot, ...segments),
     },
@@ -156,6 +158,7 @@ const createConfig = () => {
         'none',
       ) as CookieSameSite,
       cookieName: env.get('NUVIX_COOKIE_NAME', 'session'),
+      fallbackCookies: env.bool('NUVIX_DEBUG_FALLBACK_COOKIES', false),
     },
 
     redis: {

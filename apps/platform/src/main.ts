@@ -1,6 +1,5 @@
 /**
- * The main entry point for the Nuvix Platform application.
- * @author Nuvix
+ * Main entry point for the Nuvix Console API application.
  */
 
 import cookieParser from '@fastify/cookie'
@@ -16,20 +15,21 @@ import {
 import { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { SwaggerModule } from '@nestjs/swagger'
 import {
-  AppConfigService,
   configureDbFiltersAndFormats,
   configureHandlebarsHelpers,
   configurePgTypeParsers,
+  CoreService,
 } from '@nuvix/core'
 import { ErrorFilter } from '@nuvix/core/filters'
-import { Auth } from '@nuvix/core/helpers'
+import { Auth, RequestContext } from '@nuvix/core/helpers'
 import { NuvixAdapter, NuvixFactory } from '@nuvix/core/server'
 import { Authorization, Role, storage } from '@nuvix/db'
 import {
   configuration,
   PROJECT_ROOT,
   parseNumber,
-  validateRequiredConfig,
+  validateConfig,
+  AppMode,
 } from '@nuvix/utils'
 import QueryString from 'qs'
 import { AppModule } from './app.module'
@@ -38,9 +38,10 @@ import { openApiSetup } from './utils/open-api'
 
 configurePgTypeParsers()
 configureDbFiltersAndFormats()
-validateRequiredConfig()
+validateConfig()
 configureHandlebarsHelpers()
 Authorization.enableAsyncLocalStorage()
+CoreService.setIsConsole(true)
 
 export async function bootstrap() {
   const logLevels = configuration.app.isProduction
@@ -49,7 +50,7 @@ export async function bootstrap() {
   const logger = new ConsoleLogger({
     json: configuration.app.debug.json,
     colors: configuration.app.debug.colors,
-    prefix: 'Nuvix-Platform',
+    prefix: 'Nuvix-Console',
     logLevels,
   })
 
@@ -63,9 +64,9 @@ export async function bootstrap() {
       },
     },
     logger: {
-      enabled: true,
+      enabled: false,
       edgeLimit: 100,
-      msgPrefix: '[Nuvix-Platform] ',
+      msgPrefix: '[Nuvix-Console] ',
       safe: true,
       level: 'error',
     },
@@ -108,50 +109,27 @@ export async function bootstrap() {
   )
 
   const fastify = adapter.getInstance()
-  const config = app.get(AppConfigService)
-
-  fastify.addHook('onRequest', (req, res, done) => {
-    res.header('X-Powered-By', 'Nuvix-Server')
-    res.header('Server', 'Nuvix')
-    /**
-     * CORS headers are set here because
-     * CorsHook works after project & host hooks - if an error is thrown before CorsHook
-     * executes, we need these headers to prevent invalid CORS errors; CorsHook will
-     * properly validate and block requests that aren't allowed
-     */
-    const origin = req.headers.origin
-    res.header('Access-Control-Allow-Origin', origin || '*')
-    if (origin) {
-      res.header('Access-Control-Allow-Credentials', 'true')
-    }
-    done()
-  })
-
   app.useStaticAssets({
     root: `${PROJECT_ROOT}/public`,
     prefix: '/public/',
   })
 
-  fastify.addHook('onRequest', (_, __, done) => {
+  fastify.addHook('onRequest', (req, __, done) => {
     storage.run(new Map(), () => {
+      const request = req as unknown as NuvixRequest
+      request.context = new RequestContext({
+        mode: AppMode.DEFAULT,
+      })
       Authorization.setDefaultStatus(true) // Set per-request default status
       Authorization.cleanRoles() // Reset roles per request
       Authorization.setRole(Role.any().toString())
-      Auth.setPlatformActor(false)
-      Auth.setTrustedActor(false)
       done()
     })
   })
 
-  process.on('SIGINT', () => {
-    logger.warn('SIGINT received, shutting down gracefully...')
-  })
-  process.on('SIGTERM', () => {
-    logger.warn('SIGTERM received, shutting down gracefully...')
-  })
+  app.useGlobalFilters(new ErrorFilter())
+  await initSetup(app)
 
-  app.useGlobalFilters(new ErrorFilter(config))
-  await initSetup(app, config as AppConfigService)
   await SwaggerModule.loadPluginMetadata(async () => {
     try {
       // @ts-nocheck
@@ -164,7 +142,7 @@ export async function bootstrap() {
   })
   openApiSetup(app)
 
-  const port = parseNumber(config.root.get('NUVIX_PLATFORM_PORT'), 4100)
+  const port = parseNumber(process.env.NUVIX_CONSOLE_API_PORT, 4100)
   const host = '0.0.0.0'
 
   logger.setLogLevels(

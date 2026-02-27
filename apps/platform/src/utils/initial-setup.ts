@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common'
 import { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { Audit } from '@nuvix/audit'
-import { AppConfigService, CoreService } from '@nuvix/core'
+import { CoreService } from '@nuvix/core'
 import {
   Authorization,
   Database,
@@ -16,10 +16,7 @@ import collections from '@nuvix/utils/collections'
 import { AccountService } from '../account/account.service'
 import { ProjectService } from '../projects/projects.service'
 
-export async function initSetup(
-  app: NestFastifyApplication,
-  config: AppConfigService,
-) {
+export async function initSetup(app: NestFastifyApplication) {
   const logger = new Logger('Setup')
   const coreService = app.get(CoreService)
   try {

@@ -51,7 +51,7 @@ export class CorsHook implements Hook, OnModuleInit {
     this.initializeOriginMatchers(cfg.allowedOrigins ?? [])
 
     if (this.credentials && this.allowWildcard) {
-      this.logger.error(
+      throw new Error(
         'Invalid CORS configuration: wildcard origin cannot be used with credentials',
       )
     }

@@ -3,20 +3,18 @@ import cookieParser from '@fastify/cookie'
 import fastifyMultipart from '@fastify/multipart'
 import { ValidationPipe } from '@nestjs/common'
 import { NestFastifyApplication } from '@nestjs/platform-fastify'
-import { AppConfigService } from '@nuvix/core'
 import { ErrorFilter } from '@nuvix/core/filters'
-import { Auth } from '@nuvix/core/helpers'
-import { Authorization, Doc, Role, storage } from '@nuvix/db'
-import { Context } from '@nuvix/utils'
+import { Authorization, Role, storage } from '@nuvix/db'
 import handlebars from 'handlebars'
+import { AppMode, configuration } from '@nuvix/utils'
+import { CoreService } from '@nuvix/core/core.service'
+import { RequestContext } from '@nuvix/core/helpers'
+import { Exception } from '@nuvix/core/extend/exception'
 
 /**
  * Applies common app configuration to the given NestFastifyApplication instance.
  */
-export const applyAppConfig = (
-  app: NestFastifyApplication,
-  config: AppConfigService,
-): void => {
+export const applyAppConfig = (app: NestFastifyApplication): void => {
   app.enableShutdownHooks()
   app.enableVersioning()
   // @ts-expect-error
@@ -33,7 +31,7 @@ export const applyAppConfig = (
     engine: {
       handlebars,
     },
-    templates: config.assetConfig.get('views'),
+    templates: configuration.assets.views,
     layout: 'layout.hbs',
   })
 
@@ -50,53 +48,46 @@ export const applyAppConfig = (
   )
 
   const fastify = app.getHttpAdapter().getInstance()
-  fastify.setGenReqId((_req: any) => {
+  fastify.setGenReqId(() => {
     return crypto.randomUUID() as string
   })
 
-  fastify.addHook('onRequest', (req, res, done) => {
-    res.header('X-Powered-By', 'Nuvix-Server')
-    res.header('Server', 'Nuvix')
-    /**
-     * CORS headers are set here because
-     * CorsHook works after project & host hooks - if an error is thrown before CorsHook
-     * executes, we need these headers to prevent invalid CORS errors; CorsHook will
-     * properly validate and block requests that aren't allowed
-     */
-    const origin = req.headers.origin
-    res.header('Access-Control-Allow-Origin', origin || '*')
-    if (origin) {
-      res.header('Access-Control-Allow-Credentials', 'true')
-    }
-    done()
-  })
+  const coreService = app.get(CoreService)
+  const internaldb = coreService.getInternalDatabase()
 
-  fastify.decorateRequest('hooks_args', null as any)
-  fastify.addHook('onRequest', (req: any, _, done) => {
-    let size = 0
-
-    // Patch the raw stream push method
-    const origPush = req.raw.push
-    req.raw.push = function (chunk: any, encoding?: BufferEncoding) {
-      if (chunk) {
-        size += Buffer.isBuffer(chunk)
-          ? chunk.length
-          : Buffer.byteLength(chunk, encoding)
-      }
-      return origPush.call(this, chunk, encoding)
-    }
-
-    req.hooks_args = { onRequest: { sizeRef: () => size } }
+  fastify.decorateRequest('hooks_args')
+  fastify.addHook('onRequest', (_req, _, done) => {
     storage.run(new Map(), () => {
-      req[Context.Project] = new Doc()
       Authorization.setDefaultStatus(true) // Set per-request default status
       Authorization.cleanRoles() // Reset roles per request
       Authorization.setRole(Role.any().toString())
-      Auth.setPlatformActor(false)
-      Auth.setTrustedActor(false)
       done()
     })
   })
 
-  app.useGlobalFilters(new ErrorFilter(config))
+  fastify.addHook('onRequest', async req => {
+    const request = req as unknown as NuvixRequest
+    const project = await internaldb.getDocument(
+      'projects',
+      configuration.app.projectId,
+    )
+
+    if (project.empty()) {
+      request.context = new RequestContext()
+      throw new Exception(Exception.PROJECT_NOT_FOUND, 'Project not found', 404)
+    }
+
+    const mode = (request.query as { mode?: string }).mode as string | undefined
+
+    if (mode && ![AppMode.ADMIN, AppMode.DEFAULT].includes(mode as AppMode)) {
+      throw new Exception(Exception.INVALID_PARAMS, 'Invalid mode', 400)
+    }
+
+    request.context = new RequestContext({
+      project,
+      mode: mode === AppMode.ADMIN ? AppMode.ADMIN : AppMode.DEFAULT,
+    })
+  })
+
+  app.useGlobalFilters(new ErrorFilter())
 }

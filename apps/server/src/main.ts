@@ -1,33 +1,29 @@
 /**
- * Nuvix is a Open Source Backend that allows you to create a backend for your application in minutes.
- * This file is the entry point of the application, where the application is created and started.
- * @author Nuvix
- */
-
+ * Nuvix Server
+ * Copyright (c) 2024 Nuvix Team
+ *
+ * This software is released under the MIT License.
+ * See the LICENSE file in the project root for more details.
+ **/
 import fs from 'node:fs/promises'
 import { ConsoleLogger, LOG_LEVELS, LogLevel } from '@nestjs/common'
 import { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { SwaggerModule } from '@nestjs/swagger'
 import {
-  AppConfigService,
   configureDbFiltersAndFormats,
   configureHandlebarsHelpers,
   configurePgTypeParsers,
 } from '@nuvix/core'
 import { NuvixAdapter, NuvixFactory } from '@nuvix/core/server'
 import { Authorization } from '@nuvix/db'
-import {
-  configuration,
-  PROJECT_ROOT,
-  validateRequiredConfig,
-} from '@nuvix/utils'
+import { configuration, PROJECT_ROOT, validateConfig } from '@nuvix/utils'
 import QueryString from 'qs'
 import { AppModule } from './app.module'
 import { applyAppConfig, openApiSetup } from './core'
 
 configurePgTypeParsers()
 configureDbFiltersAndFormats()
-validateRequiredConfig()
+validateConfig()
 configureHandlebarsHelpers()
 Authorization.enableAsyncLocalStorage()
 
@@ -71,15 +67,8 @@ async function bootstrap() {
     prefix: '/public/',
   })
 
-  const config = app.get(AppConfigService)
-  applyAppConfig(app, config)
-
-  process.on('SIGINT', async () => {
-    logger.warn('SIGINT received, shutting down gracefully...')
-  })
-  process.on('SIGTERM', async () => {
-    logger.warn('SIGTERM received, shutting down gracefully...')
-  })
+  // Apply additional app configuration
+  applyAppConfig(app)
 
   await SwaggerModule.loadPluginMetadata(async () => {
     try {
@@ -104,7 +93,7 @@ async function bootstrap() {
     }
   })
 
-  const port = Number.parseInt(config.root.get('NUVIX_API_PORT', '4000'), 10)
+  const port = Number.parseInt(process.env.NUVIX_API_PORT || '4000', 10)
   const host = '0.0.0.0'
 
   logger.setLogLevels(

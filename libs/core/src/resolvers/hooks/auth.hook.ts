@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
 import { Authorization, Database, Doc } from '@nuvix/db'
-import { AppMode } from '@nuvix/utils'
+import { AppMode, configuration } from '@nuvix/utils'
 import { SessionsDoc, UsersDoc } from '@nuvix/utils/types'
 import { CoreService } from '../../core.service.js'
 import { AuthType } from '../../decorators'
@@ -54,7 +54,11 @@ export class AuthHook implements Hook {
       }
     }
 
-    if (!session.id && !session.secret) {
+    if (
+      !session.id &&
+      !session.secret &&
+      configuration.server.fallbackCookies
+    ) {
       reply.header('X-Debug-Fallback', 'true')
       try {
         const fallbackHeader = params.getFromHeaders('x-fallback-cookies', '')
