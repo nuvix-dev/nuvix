@@ -516,10 +516,9 @@ export class AccountService {
   async createEmailVerification({
     user,
     request,
-    response,
     locale,
     url,
-  }: WithReqRes<WithUser<WithLocale<{ url?: string }>>>) {
+  }: WithUser<WithLocale<{ url?: string; request: NuvixRequest }>>) {
     if (!configuration.smtp.enabled()) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED)
     }
@@ -560,13 +559,14 @@ export class AccountService {
     url ??= `${request.protocol}://${request.host}`
 
     // Parse and merge URL query parameters
+    // TODO: verify url...
     const urlObj = new URL(url)
     urlObj.searchParams.set('userId', user.getId())
     urlObj.searchParams.set('secret', verificationSecret)
     urlObj.searchParams.set('expire', expire.toISOString())
     const finalUrl = urlObj.toString()
 
-    const { project, isAPIUser } = request.context
+    const { project } = request.context
     const payload = await this.emailHelper
       .builder(project)
       .to(user.get('email'))
@@ -598,9 +598,8 @@ export class AccountService {
 
     await this.mailsQueue.add(MailJob.SEND_EMAIL, payload)
 
-    createdVerification.set('secret', isAPIUser ? verificationSecret : '')
+    createdVerification.set('secret', verificationSecret)
 
-    response.status(201)
     return createdVerification
   }
 
@@ -609,10 +608,9 @@ export class AccountService {
    */
   async updateEmailVerification({
     user,
-    response,
     userId,
     secret,
-  }: WithDB<WithUser<{ response: NuvixRes; userId: string; secret: string }>>) {
+  }: WithUser<{ userId: string; secret: string }>) {
     const profile = await Authorization.skip(() =>
       this.db.getDocument('users', userId),
     )
@@ -663,16 +661,11 @@ export class AccountService {
   async createPhoneVerification({
     user,
     request,
-    response,
     locale,
-    project,
-  }: WithDB<WithReqRes<WithUser<WithCtx<WithLocale<{}>>>>>) {
+  }: WithUser<WithLocale<{ request: NuvixRequest }>>) {
     // Check if SMS provider is configured
-    if (!this.appConfig.get('sms').enabled) {
-      throw new Exception(
-        Exception.GENERAL_PHONE_DISABLED,
-        'Phone provider not configured',
-      )
+    if (!configuration.sms.enabled) {
+      throw new Exception(Exception.GENERAL_PHONE_DISABLED)
     }
 
     const phone = user.get('phone')
@@ -686,7 +679,8 @@ export class AccountService {
 
     let secret: string | null = null
     let sendSMS = true
-    const mockNumbers = project.get('auths', {}).mockNumbers ?? []
+    const mockNumbers =
+      request.context.project.get('auths', {}).mockNumbers ?? []
 
     for (const mockNumber of mockNumbers) {
       if (mockNumber.phone === phone) {
@@ -697,14 +691,14 @@ export class AccountService {
     }
 
     secret = secret ?? Auth.codeGenerator(6)
-    const expire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_CONFIRM * 1000)
+    const expire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_OTP * 1000)
 
     const verification = new Doc<Tokens>({
       $id: ID.unique(),
       userId: user.getId(),
       userInternalId: user.getSequence(),
       type: TokenType.PHONE,
-      secret: Auth.hash(secret),
+      secret: Auth.hash(secret), // One way hash encryption to protect DB leak
       expire: expire,
       userAgent: request.headers['user-agent'] || 'UNKNOWN',
       ip: request.ip,
@@ -725,23 +719,15 @@ export class AccountService {
     await this.db.purgeCachedDocument('users', user.getId())
 
     if (sendSMS) {
-      const customTemplate =
-        project.get('templates', {})[`sms.verification-${locale.default}`] ?? {}
-
-      let message = locale.getText('sms.verification.body', '{{secret}}')
-      if (customTemplate?.message) {
-        message = customTemplate.message
-      }
-
-      const messageContent = message
-        .replace('{{project}}', project.get('name'))
-        .replace('{{secret}}', secret)
+      let message = locale.get('sms.verification.body', {
+        secret: secret,
+      })
 
       await this.messagingQueue.add(MessagingJob.INTERNAL, {
         message: {
           to: [phone],
           data: {
-            content: messageContent,
+            content: message,
           },
         },
       })
@@ -749,7 +735,6 @@ export class AccountService {
 
     createdVerification.set('secret', secret)
 
-    response.status(201)
     return createdVerification
   }
 
@@ -760,7 +745,7 @@ export class AccountService {
     user,
     userId,
     secret,
-  }: WithDB<WithUser<{ userId: string; secret: string }>>) {
+  }: WithUser<{ userId: string; secret: string }>) {
     const profile = await Authorization.skip(() =>
       this.db.getDocument('users', userId),
     )
@@ -801,10 +786,5 @@ export class AccountService {
   }
 }
 
-type WithReqRes<T = unknown> = {
-  request: NuvixRequest
-  response: NuvixRes
-} & T
 type WithUser<T = unknown> = { user: UsersDoc } & T
-type WithCtx<T = unknown> = { ctx: RequestContext } & T
 type WithLocale<T = unknown> = { locale: LocaleTranslator } & T

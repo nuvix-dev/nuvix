@@ -85,7 +85,7 @@ export interface SdkOptions {
 /**
  * Configuration options for API route definition
  */
-export interface RouteOptions {
+export interface RouteOptions<T = unknown> {
   /** URL path or array of paths for the route */
   path?: string | string[]
   /** Description of the route functionality */
@@ -108,9 +108,16 @@ export interface RouteOptions {
   throttle?: number | ThrottleOptions
   /** Response model configuration for serialization */
   model?:
-    | Type<any>
+    | Type<T>
     | ResolverTypeContextOptions
-    | { type: Type<unknown>; options: ResolverTypeContextOptions }
+    | {
+        type: Type<T>
+        options: ResolverTypeContextOptions
+      }
+  /**
+   * Fields that contain sensitive information and should be redacted in logs and responses.
+   */
+  sensitiveFields?: keyof T extends string ? (keyof T)[] : never
   /** SDK generation options */
   sdk?: SdkOptions
   /** Unique operation identifier for OpenAPI */
@@ -146,7 +153,7 @@ const readMarkdownFile = (filePath: string): string | null => {
   }
 }
 
-const validateRouteOptions = (options: RouteOptions): void => {
+const validateRouteOptions = <T = unknown>(options: RouteOptions<T>): void => {
   if (options.method) {
     const methods = Array.isArray(options.method)
       ? options.method
@@ -255,7 +262,10 @@ const validateRouteOptions = (options: RouteOptions): void => {
  * })
  * ```
  */
-export const Route = ({ docs = true, ...options }: RouteOptions) => {
+export const Route = <T = unknown>({
+  docs = true,
+  ...options
+}: RouteOptions<T>) => {
   validateRouteOptions(options)
 
   const decorators = []
@@ -468,27 +478,27 @@ export const Route = ({ docs = true, ...options }: RouteOptions) => {
   return applyDecorators(...decorators)
 }
 
-export const GetRoute = (
+export const GetRoute = <T = unknown>(
   path: string | string[],
-  options: Omit<RouteOptions, 'method' | 'path'>,
+  options: Omit<RouteOptions<T>, 'method' | 'path'>,
 ) => Route({ ...options, method: 'GET', path })
 
-export const PostRoute = (
+export const PostRoute = <T = unknown>(
   path: string | string[],
-  options: Omit<RouteOptions, 'method' | 'path'>,
+  options: Omit<RouteOptions<T>, 'method' | 'path'>,
 ) => Route({ ...options, method: 'POST', path })
 
-export const PutRoute = (
+export const PutRoute = <T = unknown>(
   path: string | string[],
-  options: Omit<RouteOptions, 'method' | 'path'>,
+  options: Omit<RouteOptions<T>, 'method' | 'path'>,
 ) => Route({ ...options, method: 'PUT', path })
 
-export const PatchRoute = (
+export const PatchRoute = <T = unknown>(
   path: string | string[],
-  options: Omit<RouteOptions, 'method' | 'path'>,
+  options: Omit<RouteOptions<T>, 'method' | 'path'>,
 ) => Route({ ...options, method: 'PATCH', path })
 
-export const DeleteRoute = (
+export const DeleteRoute = <T = unknown>(
   path: string | string[],
-  options: Omit<RouteOptions, 'method' | 'path'>,
+  options: Omit<RouteOptions<T>, 'method' | 'path'>,
 ) => Route({ ...options, method: 'DELETE', path })

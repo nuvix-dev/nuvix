@@ -240,13 +240,12 @@ export class Auth {
   }
 
   public static codeGenerator(length = 6): string {
-    // TODO: we have to use another better & secure approch e.g. crypto
+    // if more security is needed, we can switch to alphanumeric codes using crypto.randomBytes and base64 encoding,
+    // but for now numeric codes are sufficient and more user-friendly for OTPs
     let value = ''
-
     for (let i = 0; i < length; i++) {
-      value += Math.floor(Math.random() * 10).toString()
+      value += crypto.randomInt(0, 10).toString()
     }
-
     return value
   }
 

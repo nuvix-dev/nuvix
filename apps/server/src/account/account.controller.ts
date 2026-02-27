@@ -185,11 +185,13 @@ export class AccountController {
   async updatePassword(
     @User() user: UsersDoc,
     @Body() { password, oldPassword }: UpdatePasswordDTO,
+    @Ctx() ctx: RequestContext,
   ): Promise<IResponse<UsersDoc>> {
     return this.accountService.updatePassword({
       password,
       oldPassword,
       user,
+      ctx,
     })
   }
 
@@ -269,10 +271,11 @@ export class AccountController {
     summary: 'Create email verification',
     scopes: 'account',
     model: Models.TOKEN,
+    sensitiveFields: ['secret'],
     auth: [AuthType.SESSION, AuthType.JWT],
     throttle: {
       limit: 10,
-      key: 'ip:{ip},userId:{param-userId}',
+      key: 'url:{url},userId:{userId}',
     },
     audit: {
       key: 'verification.create',
@@ -287,14 +290,12 @@ export class AccountController {
   async createEmailVerification(
     @Body() { url }: CreateEmailVerificationDTO,
     @Req() request: NuvixRequest,
-    @Res({ passthrough: true }) response: NuvixRes,
     @User() user: UsersDoc,
     @Locale() locale: LocaleTranslator,
   ): Promise<IResponse<TokensDoc>> {
     return this.accountService.createEmailVerification({
       url,
       request,
-      response,
       user,
       locale,
     })
@@ -304,10 +305,11 @@ export class AccountController {
     summary: 'Update email verification (confirmation)',
     scopes: 'public',
     model: Models.TOKEN,
+    sensitiveFields: ['secret'],
     auth: [AuthType.SESSION, AuthType.JWT],
     throttle: {
       limit: 10,
-      key: 'ip:{ip},userId:{param-userId}',
+      key: 'url:{url},userId:{body-userId}',
     },
     audit: {
       key: 'verification.update',
@@ -321,13 +323,11 @@ export class AccountController {
   })
   async updateEmailVerification(
     @Body() { userId, secret }: UpdateEmailVerificationDTO,
-    @Res({ passthrough: true }) response: NuvixRes,
     @User() user: UsersDoc,
   ): Promise<IResponse<TokensDoc>> {
     return this.accountService.updateEmailVerification({
       userId,
       secret,
-      response,
       user,
     })
   }
@@ -336,10 +336,11 @@ export class AccountController {
     summary: 'Create phone verification',
     scopes: 'account',
     model: Models.TOKEN,
+    sensitiveFields: ['secret'],
     auth: [AuthType.SESSION, AuthType.JWT],
     throttle: {
       limit: 10,
-      key: 'ip:{ip},userId:{param-userId}',
+      key: ['url:{url},userId:{userId}', 'url:{url},ip:{ip}'],
     },
     audit: {
       key: 'verification.create',
@@ -353,13 +354,11 @@ export class AccountController {
   })
   async createPhoneVerification(
     @Req() request: NuvixRequest,
-    @Res({ passthrough: true }) response: NuvixRes,
     @User() user: UsersDoc,
     @Locale() locale: LocaleTranslator,
   ): Promise<IResponse<TokensDoc>> {
     return this.accountService.createPhoneVerification({
       request,
-      response,
       user,
       locale,
     })
@@ -369,10 +368,11 @@ export class AccountController {
     summary: 'Update phone verification (confirmation)',
     scopes: 'public',
     model: Models.TOKEN,
+    sensitiveFields: ['secret'],
     auth: [AuthType.SESSION, AuthType.JWT],
     throttle: {
       limit: 10,
-      key: 'ip:{ip},userId:{param-userId}',
+      key: 'userId:{body-userId}',
     },
     audit: {
       key: 'verification.update',
