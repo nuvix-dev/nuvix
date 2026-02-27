@@ -11,17 +11,13 @@ import {
 } from '@nuvix/core/config'
 import { Locale, Namespace } from '@nuvix/core/decorators'
 import { LocaleTranslator, Models } from '@nuvix/core/helpers'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import type { IListResponse, IResponse } from '@nuvix/utils'
 import { LocaleService } from './locale.service'
 import type { ILocaleResponse } from './locale.types'
 
 @Controller({ version: ['1'], path: 'locale' })
-@UseGuards(ProjectGuard)
+
 @Namespace('locale')
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class LocaleController {

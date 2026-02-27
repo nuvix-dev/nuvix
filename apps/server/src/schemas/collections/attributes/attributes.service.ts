@@ -80,11 +80,7 @@ export class AttributesService {
   /**
    * Get attributes for a collection.
    */
-  async getAttributes(
-    db: Database,
-    collectionId: string,
-    queries: Query[] = [],
-  ) {
+  async getAttributes(collectionId: string, queries: Query[] = []) {
     const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
@@ -115,10 +111,8 @@ export class AttributesService {
    * Create string attribute.
    */
   async createStringAttribute(
-    db: Database,
     collectionId: string,
     input: CreateStringAttributeDTO,
-    project: ProjectsDoc,
   ) {
     const { key, size, required, default: defaultValue, array, encrypt } = input
 
@@ -145,17 +139,15 @@ export class AttributesService {
       filters,
     })
 
-    return this.createAttribute(db, collectionId, attribute, project)
+    return this.createAttribute(collectionId, attribute, project)
   }
 
   /**
    * Create email attribute.
    */
   async createEmailAttribute(
-    db: Database,
     collectionId: string,
     input: CreateEmailAttributeDTO,
-    project: ProjectsDoc,
   ) {
     const { key, required, default: defaultValue, array } = input
 
@@ -169,17 +161,15 @@ export class AttributesService {
       format: AttributeFormat.EMAIL,
     })
 
-    return this.createAttribute(db, collectionId, attribute, project)
+    return this.createAttribute(collectionId, attribute, project)
   }
 
   /**
    * Create enum attribute.
    */
   async createEnumAttribute(
-    db: Database,
     collectionId: string,
     input: CreateEnumAttributeDTO,
-    project: ProjectsDoc,
   ) {
     const { key, required, default: defaultValue, array, elements } = input
 
@@ -201,18 +191,13 @@ export class AttributesService {
       formatOptions: { elements },
     })
 
-    return this.createAttribute(db, collectionId, attribute, project)
+    return this.createAttribute(collectionId, attribute, project)
   }
 
   /**
    * Create IP attribute.
    */
-  async createIPAttribute(
-    db: Database,
-    collectionId: string,
-    input: CreateIpAttributeDTO,
-    project: ProjectsDoc,
-  ) {
+  async createIPAttribute(collectionId: string, input: CreateIpAttributeDTO) {
     const { key, required, default: defaultValue, array } = input
 
     const attribute = new Doc<Attributes>({
@@ -225,18 +210,13 @@ export class AttributesService {
       format: AttributeFormat.IP,
     })
 
-    return this.createAttribute(db, collectionId, attribute, project)
+    return this.createAttribute(collectionId, attribute, project)
   }
 
   /**
    * Create URL attribute.
    */
-  async createURLAttribute(
-    db: Database,
-    collectionId: string,
-    input: CreateURLAttributeDTO,
-    project: ProjectsDoc,
-  ) {
+  async createURLAttribute(collectionId: string, input: CreateURLAttributeDTO) {
     const { key, required, default: defaultValue, array } = input
 
     const attribute = new Doc<Attributes>({
@@ -249,17 +229,15 @@ export class AttributesService {
       format: AttributeFormat.URL,
     })
 
-    return this.createAttribute(db, collectionId, attribute, project)
+    return this.createAttribute(collectionId, attribute, project)
   }
 
   /**
    * Create integer attribute.
    */
   async createIntegerAttribute(
-    db: Database,
     collectionId: string,
     input: CreateIntegerAttributeDTO,
-    project: ProjectsDoc,
   ) {
     const { key, required, default: defaultValue, array, min, max } = input
 
@@ -302,7 +280,7 @@ export class AttributesService {
       },
     })
 
-    attribute = await this.createAttribute(db, collectionId, attribute, project)
+    attribute = await this.createAttribute(collectionId, attribute, project)
 
     const formatOptions = attribute.get('formatOptions', {})
 
@@ -318,10 +296,8 @@ export class AttributesService {
    * Create a float attribute.
    */
   async createFloatAttribute(
-    db: Database,
     collectionId: string,
     input: CreateFloatAttributeDTO,
-    project: ProjectsDoc,
   ) {
     const { key, required, default: defaultValue, array, min, max } = input
 
@@ -359,7 +335,6 @@ export class AttributesService {
     })
 
     const createdAttribute = await this.createAttribute(
-      db,
       collectionId,
       attribute,
       project,
@@ -379,10 +354,8 @@ export class AttributesService {
    * Create a boolean attribute.
    */
   async createBooleanAttribute(
-    db: Database,
     collectionId: string,
     input: CreateBooleanAttributeDTO,
-    project: ProjectsDoc,
   ) {
     const { key, required, default: defaultValue, array } = input
 
@@ -395,17 +368,15 @@ export class AttributesService {
       array,
     })
 
-    return this.createAttribute(db, collectionId, attribute, project)
+    return this.createAttribute(collectionId, attribute, project)
   }
 
   /**
    * Create a date attribute.
    */
   async createDateAttribute(
-    db: Database,
     collectionId: string,
     input: CreateDatetimeAttributeDTO,
-    project: ProjectsDoc,
   ) {
     const { key, required, default: defaultValue, array } = input
 
@@ -418,17 +389,15 @@ export class AttributesService {
       array,
     })
 
-    return this.createAttribute(db, collectionId, attribute, project)
+    return this.createAttribute(collectionId, attribute, project)
   }
 
   /**
    * Create a relationship attribute.
    */
   async createRelationshipAttribute(
-    db: Database,
     collectionId: string,
     input: CreateRelationAttributeDTO,
-    project: ProjectsDoc,
   ) {
     const { key, type, twoWay, twoWayKey, onDelete, relatedCollectionId } =
       input
@@ -513,13 +482,13 @@ export class AttributesService {
       },
     })
 
-    return this.createAttribute(db, collectionId, attribute, project)
+    return this.createAttribute(collectionId, attribute, project)
   }
 
   /**
    * Get an attribute.
    */
-  async getAttribute(db: Database, collectionId: string, key: string) {
+  async getAttribute(collectionId: string, key: string) {
     const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
@@ -550,7 +519,6 @@ export class AttributesService {
    * Update an string attribute.
    */
   async updateStringAttribute(
-    db: Database,
     collectionId: string,
     key: string,
     input: UpdateStringAttributeDTO,
@@ -558,7 +526,6 @@ export class AttributesService {
     const { size, required, default: defaultValue, newKey } = input
 
     return this.updateAttribute({
-      db,
       collectionId,
       key,
       type: AttributeType.String,
@@ -574,7 +541,6 @@ export class AttributesService {
    * Update email attribute.
    */
   async updateEmailAttribute(
-    db: Database,
     collectionId: string,
     key: string,
     input: UpdateEmailAttributeDTO,
@@ -582,7 +548,6 @@ export class AttributesService {
     const { required, default: defaultValue, newKey } = input
 
     return this.updateAttribute({
-      db,
       collectionId,
       key,
       type: AttributeType.String,
@@ -598,7 +563,6 @@ export class AttributesService {
    * Update enum attribute.
    */
   async updateEnumAttribute(
-    db: Database,
     collectionId: string,
     key: string,
     input: UpdateEnumAttributeDTO,
@@ -613,7 +577,6 @@ export class AttributesService {
     }
 
     return this.updateAttribute({
-      db,
       collectionId,
       key,
       type: AttributeType.String,
@@ -629,7 +592,6 @@ export class AttributesService {
    * Update IP attribute.
    */
   async updateIPAttribute(
-    db: Database,
     collectionId: string,
     key: string,
     input: UpdateIpAttributeDTO,
@@ -637,7 +599,6 @@ export class AttributesService {
     const { required, default: defaultValue, newKey } = input
 
     return this.updateAttribute({
-      db,
       collectionId,
       key,
       type: AttributeType.String,
@@ -653,7 +614,6 @@ export class AttributesService {
    * Update URL attribute.
    */
   async updateURLAttribute(
-    db: Database,
     collectionId: string,
     key: string,
     input: UpdateURLAttributeDTO,
@@ -661,7 +621,6 @@ export class AttributesService {
     const { required, default: defaultValue, newKey } = input
 
     return this.updateAttribute({
-      db,
       collectionId,
       key,
       type: AttributeType.String,
@@ -677,7 +636,6 @@ export class AttributesService {
    * Update integer attribute.
    */
   async updateIntegerAttribute(
-    db: Database,
     collectionId: string,
     key: string,
     input: UpdateIntegerAttributeDTO,
@@ -685,7 +643,6 @@ export class AttributesService {
     const { required, default: defaultValue, newKey, min, max } = input
 
     const attribute = await this.updateAttribute({
-      db,
       collectionId,
       key,
       type: AttributeType.Integer,
@@ -709,7 +666,6 @@ export class AttributesService {
    * Update float attribute.
    */
   async updateFloatAttribute(
-    db: Database,
     collectionId: string,
     key: string,
     input: UpdateFloatAttributeDTO,
@@ -717,7 +673,6 @@ export class AttributesService {
     const { required, default: defaultValue, newKey, min, max } = input
 
     const attribute = await this.updateAttribute({
-      db,
       collectionId,
       key,
       type: AttributeType.Float,
@@ -741,7 +696,6 @@ export class AttributesService {
    * Update boolean attribute.
    */
   async updateBooleanAttribute(
-    db: Database,
     collectionId: string,
     key: string,
     input: UpdateBooleanAttributeDTO,
@@ -749,7 +703,6 @@ export class AttributesService {
     const { required, default: defaultValue, newKey } = input
 
     return this.updateAttribute({
-      db,
       collectionId,
       key,
       type: AttributeType.Boolean,
@@ -764,7 +717,6 @@ export class AttributesService {
    * Update date attribute.
    */
   async updateDateAttribute(
-    db: Database,
     collectionId: string,
     key: string,
     input: UpdateDatetimeAttributeDTO,
@@ -772,7 +724,6 @@ export class AttributesService {
     const { required, default: defaultValue, newKey } = input
 
     return this.updateAttribute({
-      db,
       collectionId,
       key,
       type: AttributeType.Timestamptz,
@@ -787,7 +738,6 @@ export class AttributesService {
    * Update relationship attribute.
    */
   async updateRelationshipAttribute(
-    db: Database,
     collectionId: string,
     key: string,
     input: UpdateRelationAttributeDTO,
@@ -795,7 +745,6 @@ export class AttributesService {
     const { onDelete, newKey } = input
 
     const attribute = await this.updateAttribute({
-      db,
       collectionId,
       key,
       type: AttributeType.Relationship,
@@ -816,12 +765,7 @@ export class AttributesService {
   /**
    * Create a new attribute.
    */
-  async createAttribute(
-    db: Database,
-    collectionId: string,
-    attribute: AttributesDoc,
-    project: ProjectsDoc,
-  ) {
+  async createAttribute(collectionId: string, attribute: AttributesDoc) {
     const key = attribute.get('key')
     const type = attribute.get('type') as AttributeType
     const size = attribute.get('size', 0)
@@ -974,7 +918,6 @@ export class AttributesService {
    * Update an attribute.
    */
   async updateAttribute({
-    db,
     collectionId,
     key,
     type,
@@ -1225,12 +1168,7 @@ export class AttributesService {
   /**
    * Delete an attribute.
    */
-  async deleteAttribute(
-    db: Database,
-    collectionId: string,
-    key: string,
-    project: ProjectsDoc,
-  ) {
+  async deleteAttribute(collectionId: string, key: string) {
     const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,

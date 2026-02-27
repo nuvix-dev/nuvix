@@ -9,7 +9,7 @@ export class MfaService {
   /**
    * Update Mfa Status
    */
-  async updateMfaStatus(db: Database, id: string, mfa: boolean) {
+  async updateMfaStatus(id: string, mfa: boolean) {
     const user = await db.getDocument('users', id)
 
     if (user.empty()) {
@@ -28,7 +28,7 @@ export class MfaService {
   /**
    * Get Mfa factors
    */
-  async getMfaFactors(db: Database, userId: string) {
+  async getMfaFactors(userId: string) {
     const user = await db.getDocument('users', userId)
 
     if (user.empty()) {
@@ -49,7 +49,7 @@ export class MfaService {
   /**
    * Get Mfa Recovery Codes
    */
-  async getMfaRecoveryCodes(db: Database, userId: string) {
+  async getMfaRecoveryCodes(userId: string) {
     const user = await db.getDocument('users', userId)
 
     if (user.empty()) {
@@ -70,7 +70,7 @@ export class MfaService {
   /**
    * Generate Mfa Recovery Codes
    */
-  async generateMfaRecoveryCodes(db: Database, userId: string) {
+  async generateMfaRecoveryCodes(userId: string) {
     const user = await db.getDocument('users', userId)
 
     if (user.empty()) {
@@ -97,7 +97,7 @@ export class MfaService {
   /**
    * Regenerate Mfa Recovery Codes
    */
-  async regenerateMfaRecoveryCodes(db: Database, userId: string) {
+  async regenerateMfaRecoveryCodes(userId: string) {
     const user = await db.getDocument('users', userId)
 
     if (user.empty()) {
@@ -123,7 +123,7 @@ export class MfaService {
   /**
    * Delete Mfa Authenticator
    */
-  async deleteMfaAuthenticator(db: Database, userId: string, _type: string) {
+  async deleteMfaAuthenticator(userId: string, _type: string) {
     const user = await db.getDocument('users', userId)
 
     if (user.empty()) {

@@ -19,7 +19,7 @@ export class SubscribersService {
   /**
    * Create Subscriber
    */
-  async createSubscriber({ input, db, topicId }: CreateSubscriber) {
+  async createSubscriber({ input, topicId }: CreateSubscriber) {
     const { subscriberId: inputSubscriberId, targetId } = input
     const subscriberId =
       inputSubscriberId === 'unique()' ? ID.unique() : inputSubscriberId
@@ -109,12 +109,7 @@ export class SubscribersService {
   /**
    * Lists all subscribers for a topic.
    */
-  async listSubscribers({
-    db,
-    topicId,
-    queries = [],
-    search,
-  }: ListSubscribers) {
+  async listSubscribers({ topicId, queries = [], search }: ListSubscribers) {
     if (search) {
       queries.push(Query.search('search', search))
     }
@@ -162,7 +157,7 @@ export class SubscribersService {
   /**
    * Get Subscriber
    */
-  async getSubscriber(db: Database, topicId: string, subscriberId: string) {
+  async getSubscriber(topicId: string, subscriberId: string) {
     const topic = await Authorization.skip(() =>
       db.getDocument('topics', topicId),
     )
@@ -196,7 +191,7 @@ export class SubscribersService {
   /**
    * Deletes a subscriber.
    */
-  async deleteSubscriber(db: Database, topicId: string, subscriberId: string) {
+  async deleteSubscriber(topicId: string, subscriberId: string) {
     const topic = await Authorization.skip(() =>
       db.getDocument('topics', topicId),
     )

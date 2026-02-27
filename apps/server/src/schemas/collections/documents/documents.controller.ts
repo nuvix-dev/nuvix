@@ -20,7 +20,6 @@ import { ParseQueryPipe } from '@nuvix/core/pipes'
 import { LogsQueryPipe } from '@nuvix/core/pipes/queries'
 import {
   ApiInterceptor,
-  ProjectGuard,
   ResponseInterceptor,
   SchemaGuard,
 } from '@nuvix/core/resolvers'
@@ -46,7 +45,7 @@ import { DocumentsService } from './documents.service'
   path: 'schemas/:schemaId/collections/:collectionId/documents',
 })
 @Namespace('schemas')
-@UseGuards(ProjectGuard, SchemaGuard)
+@UseGuards(SchemaGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @CurrentSchemaType(SchemaType.Document)
 export class DocumentsController {
@@ -67,7 +66,7 @@ export class DocumentsController {
     @QueryFilter(new ParseQueryPipe({ validate: false }))
     queries: Queries[],
   ): Promise<IListResponse<Doc>> {
-    return this.documentsService.getDocuments(db, collectionId, queries)
+    return this.documentsService.getDocuments(collectionId, queries)
   }
 
   @Post('', {
@@ -94,12 +93,7 @@ export class DocumentsController {
     @Body() document: CreateDocumentDTO,
     @User() user: UsersDoc,
   ): Promise<IResponse<Doc>> {
-    return this.documentsService.createDocument(
-      db,
-      collectionId,
-      document,
-      user,
-    )
+    return this.documentsService.createDocument(collectionId, document, user)
   }
 
   @Get(':documentId', {
@@ -117,12 +111,7 @@ export class DocumentsController {
     @QueryFilter(new ParseQueryPipe({ validate: false }))
     queries?: Queries[],
   ): Promise<IResponse<Doc>> {
-    return this.documentsService.getDocument(
-      db,
-      collectionId,
-      documentId,
-      queries,
-    )
+    return this.documentsService.getDocument(collectionId, documentId, queries)
   }
 
   @Patch(':documentId', {
@@ -149,7 +138,6 @@ export class DocumentsController {
     @Body() document: UpdateDocumentDTO,
   ): Promise<IResponse<Doc>> {
     return this.documentsService.updateDocument(
-      db,
       collectionId,
       documentId,
       document,
@@ -177,7 +165,7 @@ export class DocumentsController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId, documentId }: DocumentParamsDTO,
   ): Promise<void> {
-    return this.documentsService.deleteDocument(db, collectionId, documentId)
+    return this.documentsService.deleteDocument(collectionId, documentId)
   }
 
   @Get(':documentId/logs', {
@@ -198,7 +186,6 @@ export class DocumentsController {
   ): Promise<IListResponse<unknown>> {
     throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
     return this.documentsService.getDocumentLogs(
-      db,
       collectionId,
       documentId,
       queries,

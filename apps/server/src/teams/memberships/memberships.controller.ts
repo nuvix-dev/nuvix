@@ -11,7 +11,6 @@ import { Delete, Get, Patch, Post } from '@nuvix/core'
 import {
   AllowSessionType,
   Auth,
-  AuthDatabase,
   AuthType,
   Locale,
   Namespace,
@@ -22,11 +21,7 @@ import {
 } from '@nuvix/core/decorators'
 import { LocaleTranslator, Models } from '@nuvix/core/helpers'
 import { MembershipsQueryPipe } from '@nuvix/core/pipes/queries'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { Database, Query as Queries } from '@nuvix/db'
 import { IListResponse, IResponse, SessionType } from '@nuvix/utils'
 import type { MembershipsDoc, ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
@@ -40,7 +35,7 @@ import {
 import { MembershipsService } from './memberships.service'
 
 @Namespace('teams')
-@UseGuards(ProjectGuard)
+
 @Auth([AuthType.ADMIN, AuthType.KEY, AuthType.SESSION, AuthType.JWT])
 @Controller({ version: ['1'], path: 'teams/:teamId/memberships' })
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
@@ -70,7 +65,6 @@ export class MembershipsController {
     @User() user: UsersDoc,
   ): Promise<IResponse<MembershipsDoc>> {
     return this.membershipsService.addMember(
-      db,
       teamId,
       input,
       project,
@@ -93,7 +87,7 @@ export class MembershipsController {
     @QueryFilter(MembershipsQueryPipe) queries: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<MembershipsDoc>> {
-    return this.membershipsService.getMembers(db, teamId, queries, search)
+    return this.membershipsService.getMembers(teamId, queries, search)
   }
 
   @Get(':membershipId', {
@@ -108,7 +102,7 @@ export class MembershipsController {
   async getMember(
     @Param() { teamId, membershipId }: MembershipParamDTO,
   ): Promise<IResponse<MembershipsDoc>> {
-    return this.membershipsService.getMember(db, teamId, membershipId)
+    return this.membershipsService.getMember(teamId, membershipId)
   }
 
   @Patch(':membershipId', {
@@ -128,7 +122,7 @@ export class MembershipsController {
     @Param() { teamId, membershipId }: MembershipParamDTO,
     @Body() input: UpdateMembershipDTO,
   ): Promise<IResponse<MembershipsDoc>> {
-    return this.membershipsService.updateMember(db, teamId, membershipId, input)
+    return this.membershipsService.updateMember(teamId, membershipId, input)
   }
 
   @Patch(':membershipId/status', {
@@ -153,7 +147,6 @@ export class MembershipsController {
     @User() user: UsersDoc,
   ): Promise<IResponse<MembershipsDoc>> {
     return this.membershipsService.updateMemberStatus(
-      db,
       teamId,
       membershipId,
       input,
@@ -180,6 +173,6 @@ export class MembershipsController {
   async removeMember(
     @Param() { teamId, membershipId }: MembershipParamDTO,
   ): Promise<void> {
-    return this.membershipsService.deleteMember(db, teamId, membershipId)
+    return this.membershipsService.deleteMember(teamId, membershipId)
   }
 }

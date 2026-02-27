@@ -56,12 +56,7 @@ export class FilesService {
   /**
    * Get files.
    */
-  async getFiles(
-    db: Database,
-    bucketId: string,
-    queries: Query[] = [],
-    search?: string,
-  ) {
+  async getFiles(bucketId: string, queries: Query[] = [], search?: string) {
     const bucket = await Authorization.skip(() =>
       db.getDocument('buckets', bucketId),
     )
@@ -103,7 +98,6 @@ export class FilesService {
    * Create|Upload file.
    */
   async createFile(
-    db: Database,
     bucketId: string,
     input: CreateFileDTO,
     file: SavedMultipartFile,
@@ -383,7 +377,7 @@ export class FilesService {
   /**
    * Get a File.
    */
-  async getFile(db: Database, bucketId: string, fileId: string) {
+  async getFile(bucketId: string, fileId: string) {
     const bucket = await Authorization.skip(() =>
       db.getDocument('buckets', bucketId),
     )
@@ -426,7 +420,6 @@ export class FilesService {
    * @todo optimize image processing for large images
    */
   async previewFile(
-    db: Database,
     bucketId: string,
     fileId: string,
     params: PreviewFileQueryDTO,
@@ -578,7 +571,6 @@ export class FilesService {
    * Download a file.
    */
   async downloadFile(
-    db: Database,
     bucketId: string,
     fileId: string,
     response: NuvixRes,
@@ -714,7 +706,6 @@ export class FilesService {
    * View a file.
    */
   async viewFile(
-    db: Database,
     bucketId: string,
     fileId: string,
     response: NuvixRes,
@@ -850,7 +841,6 @@ export class FilesService {
    * Get file for push notification
    */
   async getFileForPushNotification(
-    db: Database,
     bucketId: string,
     fileId: string,
     jwt: string,
@@ -953,12 +943,7 @@ export class FilesService {
   /**
    * Update a file.
    */
-  async updateFile(
-    db: Database,
-    bucketId: string,
-    fileId: string,
-    input: UpdateFileDTO,
-  ) {
+  async updateFile(bucketId: string, fileId: string, input: UpdateFileDTO) {
     const bucket = await Authorization.skip(() =>
       db.getDocument('buckets', bucketId),
     )
@@ -1030,12 +1015,7 @@ export class FilesService {
   /**
    * Delete a file.
    */
-  async deleteFile(
-    db: Database,
-    bucketId: string,
-    fileId: string,
-    project: Doc,
-  ) {
+  async deleteFile(bucketId: string, fileId: string, project: Doc) {
     const deviceForFiles = this.coreService.getProjectDevice(project.getId())
     const bucket = await Authorization.skip(() =>
       db.getDocument('buckets', bucketId),

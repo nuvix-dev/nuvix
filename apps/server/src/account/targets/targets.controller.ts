@@ -9,18 +9,13 @@ import {
 import { Delete, Post, Put } from '@nuvix/core'
 import {
   Auth,
-  AuthDatabase,
   AuthType,
   Namespace,
   Project,
   User,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { Database } from '@nuvix/db'
 import type { IResponse } from '@nuvix/utils'
 import type { ProjectsDoc, TargetsDoc, UsersDoc } from '@nuvix/utils/types'
@@ -33,7 +28,7 @@ import { TargetsService } from './targets.service'
 
 @Controller({ version: ['1'], path: 'account/targets' })
 @Namespace('account')
-@UseGuards(ProjectGuard)
+
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth(AuthType.SESSION)
 export class TargetsController {
@@ -62,7 +57,7 @@ export class TargetsController {
     return this.targetService.createPushTarget({
       ...input,
       user,
-      db,
+
       userAgent: request.headers['user-agent'] || 'UNKNOWN',
     })
   }
@@ -92,7 +87,7 @@ export class TargetsController {
       targetId,
       ...input,
       user,
-      db,
+
       request,
     })
   }
@@ -118,7 +113,7 @@ export class TargetsController {
     return this.targetService.deletePushTarget({
       targetId,
       user,
-      db,
+
       project,
     })
   }

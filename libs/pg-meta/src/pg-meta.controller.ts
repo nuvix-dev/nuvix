@@ -15,11 +15,7 @@ import {
 import { Auth, AuthType, Project } from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
 import { ParseComaStringPipe } from '@nuvix/core/pipes'
-import {
-  AuthGuard,
-  ConsoleInterceptor,
-  ProjectGuard,
-} from '@nuvix/core/resolvers'
+import { AuthGuard, ConsoleInterceptor } from '@nuvix/core/resolvers'
 import type { ProjectsDoc } from '@nuvix/utils/types'
 import { ColumnCreateDTO } from './DTO/column-create.dto'
 import { ColumnPrivilegeQueryDTO } from './DTO/column-privilege.dto'
@@ -82,7 +78,7 @@ import { apply as applyGoTemplate } from './templates/go'
 import { apply as applySwiftTemplate } from './templates/swift'
 
 @Controller({ path: 'database', version: ['1', VERSION_NEUTRAL] })
-@UseGuards(ProjectGuard, AuthGuard)
+@UseGuards(AuthGuard)
 @UseInterceptors(ConsoleInterceptor)
 @Auth(AuthType.ADMIN)
 @UseFilters(PgMetaExceptionFilter)

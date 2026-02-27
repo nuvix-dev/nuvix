@@ -39,7 +39,7 @@ export class StorageService {
   /**
    * Get buckets.
    */
-  async getBuckets(db: Database, queries: Query[] = [], search?: string) {
+  async getBuckets(queries: Query[] = [], search?: string) {
     if (search) {
       queries.push(Query.search('search', search))
     }
@@ -58,10 +58,11 @@ export class StorageService {
   /**
    * Create bucket.
    */
-  async createBucket(
-    db: Database,
-    { bucketId, permissions: _perms, ...data }: CreateBucketDTO,
-  ) {
+  async createBucket({
+    bucketId,
+    permissions: _perms,
+    ...data
+  }: CreateBucketDTO) {
     bucketId = bucketId === 'unique()' ? ID.unique() : bucketId
     const permissions = Permission.aggregate(_perms ?? [])
 
@@ -118,7 +119,7 @@ export class StorageService {
   /**
    * Get a bucket.
    */
-  async getBucket(db: Database, id: string) {
+  async getBucket(id: string) {
     const bucket = await db.getDocument('buckets', id)
 
     if (bucket.empty()) {
@@ -131,7 +132,7 @@ export class StorageService {
   /**
    * Update a bucket.
    */
-  async updateBucket(db: Database, id: string, input: UpdateBucketDTO) {
+  async updateBucket(id: string, input: UpdateBucketDTO) {
     const bucket = await db.getDocument('buckets', id)
 
     if (bucket.empty()) {
@@ -180,7 +181,7 @@ export class StorageService {
   /**
    * Delete a bucket.
    */
-  async deleteBucket(db: Database, id: string, project: ProjectsDoc) {
+  async deleteBucket(id: string, project: ProjectsDoc) {
     const bucket = await db.getDocument('buckets', id)
 
     if (bucket.empty()) {
@@ -205,7 +206,7 @@ export class StorageService {
   /**
    * Get Storage Usage.
    */
-  async getStorageUsage(db: Database, range = '7d') {
+  async getStorageUsage(range = '7d') {
     const periods = usageConfig
 
     const stats: Record<string, any> = {}
@@ -276,7 +277,7 @@ export class StorageService {
   /**
    * Get Storage Usage of bucket.
    */
-  async getBucketStorageUsage(db: Database, bucketId: string, range = '7d') {
+  async getBucketStorageUsage(bucketId: string, range = '7d') {
     const bucket = await db.getDocument('buckets', bucketId)
 
     if (bucket.empty()) {

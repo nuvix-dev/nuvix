@@ -16,11 +16,7 @@ import {
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { SubscribersQueryPipe } from '@nuvix/core/pipes/queries'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { Database, Query as Queries } from '@nuvix/db'
 import { IListResponse, IResponse } from '@nuvix/utils'
 import { SubscribersDoc } from '@nuvix/utils/types'
@@ -29,7 +25,7 @@ import { CreateSubscriberDTO, SubscriberParamsDTO } from './DTO/subscriber.dto'
 import { SubscribersService } from './subscribers.service'
 
 @Namespace('messaging')
-@UseGuards(ProjectGuard)
+
 @Auth([AuthType.ADMIN, AuthType.KEY])
 @Controller({ path: 'messaging/topics/:topicId/subscribers', version: ['1'] })
 @UseInterceptors(ApiInterceptor, ResponseInterceptor)
@@ -55,7 +51,6 @@ export class SubscribersController {
     @Body() input: CreateSubscriberDTO,
   ): Promise<IResponse<SubscribersDoc>> {
     return this.subscribersService.createSubscriber({
-      db,
       topicId,
       input,
     })
@@ -77,7 +72,6 @@ export class SubscribersController {
     @QuerySearch() search?: string,
   ): Promise<IListResponse<SubscribersDoc>> {
     return this.subscribersService.listSubscribers({
-      db,
       topicId,
       queries,
       search,
@@ -96,7 +90,7 @@ export class SubscribersController {
   async getSubscriber(
     @Param() { topicId, subscriberId }: SubscriberParamsDTO,
   ): Promise<IResponse<SubscribersDoc>> {
-    return this.subscribersService.getSubscriber(db, topicId, subscriberId)
+    return this.subscribersService.getSubscriber(topicId, subscriberId)
   }
 
   @Delete(':subscriberId', {
@@ -114,6 +108,6 @@ export class SubscribersController {
   async deleteSubscriber(
     @Param() { topicId, subscriberId }: SubscriberParamsDTO,
   ): Promise<void> {
-    return this.subscribersService.deleteSubscriber(db, topicId, subscriberId)
+    return this.subscribersService.deleteSubscriber(topicId, subscriberId)
   }
 }

@@ -120,9 +120,8 @@ export class SessionService {
    * Delete User's Session
    */
   async deleteSessions(
-    db: Database,
     user: UsersDoc,
-    project: ProjectsDoc,
+
     locale: LocaleTranslator,
     request: NuvixRequest,
     response: NuvixRes,
@@ -217,9 +216,8 @@ export class SessionService {
    * Delete a Session
    */
   async deleteSession(
-    db: Database,
     user: UsersDoc,
-    project: ProjectsDoc,
+
     sessionId: string,
     request: NuvixRequest,
     response: NuvixRes,
@@ -284,12 +282,7 @@ export class SessionService {
   /**
    * Update a Session
    */
-  async updateSession(
-    db: Database,
-    user: UsersDoc,
-    sessionId: string,
-    project: ProjectsDoc,
-  ) {
+  async updateSession(user: UsersDoc, sessionId: string) {
     sessionId =
       sessionId === 'current'
         ? (Auth.sessionVerify(user.get('sessions'), Auth.secret) as string)
@@ -355,13 +348,11 @@ export class SessionService {
    * Create a new session for the user using Email & Password
    */
   async createEmailSession(
-    db: Database,
     user: UsersDoc,
     input: CreateEmailSessionDTO,
     request: NuvixRequest,
     response: NuvixRes,
     locale: LocaleTranslator,
-    project: ProjectsDoc,
   ) {
     const email = input.email.toLowerCase()
     const protocol = request.protocol
@@ -495,7 +486,6 @@ export class SessionService {
     locale,
     user,
     project,
-    db,
   }: {
     request: NuvixRequest
     response: NuvixRes
@@ -684,7 +674,6 @@ export class SessionService {
    * Handle OAuth2 Redirect.
    */
   async oAuth2Redirect({
-    db,
     user,
     input,
     provider,
@@ -1240,7 +1229,6 @@ export class SessionService {
    * Create Magic-URL Token.
    */
   async createMagicURLToken({
-    db,
     user,
     input,
     request,
@@ -1472,7 +1460,6 @@ export class SessionService {
    * Create Email Token.
    */
   async createEmailToken({
-    db,
     user,
     input,
     request,
@@ -1684,7 +1671,6 @@ export class SessionService {
    * Create Phone Token.
    */
   async createPhoneToken({
-    db,
     user,
     input,
     request,
@@ -1882,7 +1868,7 @@ export class SessionService {
   async sendSessionAlert(
     locale: LocaleTranslator,
     user: UsersDoc,
-    project: ProjectsDoc,
+
     session: SessionsDoc,
   ) {
     let subject: string = locale.getText('emails.sessionAlert.subject')
@@ -1996,7 +1982,6 @@ export class SessionService {
     response,
     locale,
     project,
-    db,
   }: {
     user: UsersDoc
     input: CreateSessionDTO
@@ -2169,7 +2154,7 @@ export class SessionService {
     return createdSession
   }
 
-  private getProviderConfig(project: ProjectsDoc, provider: string) {
+  private getProviderConfig(provider: string) {
     const providers = project.get('oAuthProviders', []) as OAuthProviderType[]
     const _provider = providers.find(p => p.key === provider)
 

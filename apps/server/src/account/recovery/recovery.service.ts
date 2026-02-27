@@ -2,7 +2,7 @@ import * as fs from 'node:fs/promises'
 import path from 'node:path'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
-import { AppConfigService } from '@nuvix/core'
+
 import type { SmtpConfig } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Hooks } from '@nuvix/core/extend/hooks'
@@ -41,7 +41,6 @@ export class RecoveryService {
    * Create Recovery
    */
   async createRecovery({
-    db,
     user,
     project,
     locale,
@@ -216,7 +215,6 @@ export class RecoveryService {
    * Update password recovery (confirmation)
    */
   async updateRecovery({
-    db,
     project,
     user,
     input,
@@ -266,7 +264,6 @@ export class RecoveryService {
     }
 
     await Hooks.trigger('passwordValidator', [
-      db,
       project,
       input.password,
       user,
@@ -302,7 +299,7 @@ export class RecoveryService {
   }
 }
 
-type WithDB<T = unknown> = { db: Database } & T
+type WithDB<T = unknown> = T
 type WithUser<T = unknown> = { user: UsersDoc } & T
 type WithProject<T = unknown> = { project: ProjectsDoc } & T
 type WithLocale<T = unknown> = { locale: LocaleTranslator } & T

@@ -25,7 +25,7 @@ export class TeamsService {
   /**
    * Find all teams
    */
-  async findAll(db: Database, queries: Query[] = [], search?: string) {
+  async findAll(queries: Query[] = [], search?: string) {
     if (search) {
       queries.push(Query.search('search', search))
     }
@@ -43,7 +43,7 @@ export class TeamsService {
   /**
    * Create a new team
    */
-  async create(db: Database, user: UsersDoc | null, input: CreateTeamDTO) {
+  async create(user: UsersDoc | null, input: CreateTeamDTO) {
     const teamId = input.teamId === 'unique()' ? ID.unique() : input.teamId
 
     const team = await db
@@ -110,7 +110,7 @@ export class TeamsService {
   /**
    * Update team
    */
-  async update(db: Database, id: string, input: UpdateTeamDTO) {
+  async update(id: string, input: UpdateTeamDTO) {
     const team = await db.getDocument('teams', id)
 
     if (team.empty()) {
@@ -128,7 +128,7 @@ export class TeamsService {
   /**
    * Remove team
    */
-  async remove(db: Database, id: string) {
+  async remove(id: string) {
     const team = await db.getDocument('teams', id)
 
     if (team.empty()) {
@@ -144,7 +144,7 @@ export class TeamsService {
     }
 
     const deletes = new DeletesQueue(this.coreService)
-    await deletes.deleteMemberships(db, team)
+    await deletes.deleteMemberships(team)
 
     return
   }
@@ -152,7 +152,7 @@ export class TeamsService {
   /**
    * Find a team by id
    */
-  async findOne(db: Database, id: string) {
+  async findOne(id: string) {
     const team = await db.getDocument('teams', id)
 
     if (team.empty()) {
@@ -165,7 +165,7 @@ export class TeamsService {
   /**
    * Get team preferences
    */
-  async getPrefs(db: Database, id: string) {
+  async getPrefs(id: string) {
     const team = await db.getDocument('teams', id)
 
     if (!team) {
@@ -178,7 +178,7 @@ export class TeamsService {
   /**
    * Set team preferences
    */
-  async setPrefs(db: Database, id: string, { prefs }: UpdateTeamPrefsDTO) {
+  async setPrefs(id: string, { prefs }: UpdateTeamPrefsDTO) {
     const team = await db.getDocument('teams', id)
 
     if (team.empty()) {

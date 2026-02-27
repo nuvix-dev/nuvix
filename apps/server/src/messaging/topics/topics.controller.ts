@@ -17,11 +17,7 @@ import {
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { TopicsQueryPipe } from '@nuvix/core/pipes/queries'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { Database, Query as Queries } from '@nuvix/db'
 import type { IListResponse, IResponse } from '@nuvix/utils'
 import type { ProjectsDoc, TopicsDoc } from '@nuvix/utils/types'
@@ -33,7 +29,7 @@ import {
 import { TopicsService } from './topics.service'
 
 @Namespace('messaging')
-@UseGuards(ProjectGuard)
+
 @Auth([AuthType.ADMIN, AuthType.KEY])
 @Controller({ path: 'messaging/topics', version: ['1'] })
 @UseInterceptors(ApiInterceptor, ResponseInterceptor)
@@ -57,7 +53,6 @@ export class TopicsController {
     @Body() input: CreateTopicDTO,
   ): Promise<IResponse<TopicsDoc>> {
     return this.topicsService.createTopic({
-      db,
       input,
     })
   }
@@ -76,7 +71,6 @@ export class TopicsController {
     @QuerySearch() search?: string,
   ): Promise<IListResponse<TopicsDoc>> {
     return this.topicsService.listTopics({
-      db,
       queries,
       search,
     })
@@ -94,7 +88,7 @@ export class TopicsController {
   async getTopic(
     @Param() { topicId }: TopicParamsDTO,
   ): Promise<IResponse<TopicsDoc>> {
-    return this.topicsService.getTopic(db, topicId)
+    return this.topicsService.getTopic(topicId)
   }
 
   @Patch(':topicId', {
@@ -116,7 +110,6 @@ export class TopicsController {
     @Body() input: UpdateTopicDTO,
   ): Promise<IResponse<TopicsDoc>> {
     return this.topicsService.updateTopic({
-      db,
       topicId,
       input,
     })
@@ -135,6 +128,6 @@ export class TopicsController {
     },
   })
   async deleteTopic(@Param() { topicId }: TopicParamsDTO): Promise<void> {
-    return this.topicsService.deleteTopic(db, topicId, project)
+    return this.topicsService.deleteTopic(topicId, project)
   }
 }

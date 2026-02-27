@@ -6,13 +6,9 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 import { Delete, Get, Patch, Put } from '@nuvix/core'
-import { Auth, AuthDatabase, AuthType, Namespace } from '@nuvix/core/decorators'
+import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import type { Database, Doc } from '@nuvix/db'
 import { IResponse } from '@nuvix/utils'
 import { UsersDoc } from '@nuvix/utils/types'
@@ -22,7 +18,7 @@ import { MfaService } from './mfa.service'
 
 @Namespace('users')
 @Controller({ version: ['1'], path: 'users/:userId/mfa' })
-@UseGuards(ProjectGuard)
+
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.KEY])
 export class MfaController {
@@ -45,7 +41,7 @@ export class MfaController {
     @Param() { userId }: UserParamDTO,
     @Body() { mfa }: UpdateMfaStatusDTO,
   ): Promise<IResponse<UsersDoc>> {
-    return this.mfaService.updateMfaStatus(db, userId, mfa)
+    return this.mfaService.updateMfaStatus(userId, mfa)
   }
 
   @Get('factors', {
@@ -58,7 +54,7 @@ export class MfaController {
     },
   })
   async getMfaFactors(@Param() { userId }: UserParamDTO): Promise<unknown> {
-    return this.mfaService.getMfaFactors(db, userId)
+    return this.mfaService.getMfaFactors(userId)
   }
 
   @Get('recovery-codes', {
@@ -75,7 +71,7 @@ export class MfaController {
       recoveryCodes: string[]
     }>
   > {
-    return this.mfaService.getMfaRecoveryCodes(db, userId)
+    return this.mfaService.getMfaRecoveryCodes(userId)
   }
 
   @Patch('recovery-codes', {
@@ -97,7 +93,7 @@ export class MfaController {
       recoveryCodes: string[]
     }>
   > {
-    return this.mfaService.generateMfaRecoveryCodes(db, userId)
+    return this.mfaService.generateMfaRecoveryCodes(userId)
   }
 
   @Put('recovery-codes', {
@@ -119,7 +115,7 @@ export class MfaController {
       recoveryCodes: string[]
     }>
   > {
-    return this.mfaService.regenerateMfaRecoveryCodes(db, userId)
+    return this.mfaService.regenerateMfaRecoveryCodes(userId)
   }
 
   @Delete('authenticators/:type', {
@@ -139,6 +135,6 @@ export class MfaController {
   async deleteMfaAuthenticator(
     @Param() { userId, type }: MfaTypeParamDTO,
   ): Promise<void> {
-    return this.mfaService.deleteMfaAuthenticator(db, userId, type)
+    return this.mfaService.deleteMfaAuthenticator(userId, type)
   }
 }

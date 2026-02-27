@@ -16,11 +16,7 @@ import {
   ProjectPg,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { DataSource } from '@nuvix/pg'
 import { IListResponse, SchemaType } from '@nuvix/utils'
 import type { ProjectsDoc } from '@nuvix/utils/types'
@@ -33,7 +29,7 @@ import {
 import { DatabaseService } from './database.service'
 
 @Controller({ version: ['1'], path: ['database'] })
-@UseGuards(ProjectGuard)
+
 @Namespace('database')
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.ADMIN, AuthType.KEY])

@@ -6,19 +6,9 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 import { Post, Put } from '@nuvix/core'
-import {
-  AuthDatabase,
-  Locale,
-  Namespace,
-  Project,
-  User,
-} from '@nuvix/core/decorators'
+import { Locale, Namespace, Project, User } from '@nuvix/core/decorators'
 import { LocaleTranslator, Models } from '@nuvix/core/helpers'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { Database } from '@nuvix/db'
 import type { IResponse } from '@nuvix/utils'
 import type { ProjectsDoc, TokensDoc, UsersDoc } from '@nuvix/utils/types'
@@ -27,7 +17,7 @@ import { RecoveryService } from './recovery.service'
 
 @Controller({ version: ['1'], path: 'account/recovery' })
 @Namespace('account')
-@UseGuards(ProjectGuard)
+
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class RecoveryController {
   constructor(private readonly recoveryService: RecoveryService) {}
@@ -56,7 +46,6 @@ export class RecoveryController {
     @Req() request: NuvixRequest,
   ): Promise<IResponse<TokensDoc>> {
     return this.recoveryService.createRecovery({
-      db,
       user,
       input,
       locale,
@@ -88,7 +77,6 @@ export class RecoveryController {
     @Body() input: UpdateRecoveryDTO,
   ): Promise<IResponse<TokensDoc>> {
     return this.recoveryService.updateRecovery({
-      db,
       user,
       input,
       project,

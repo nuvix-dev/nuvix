@@ -42,7 +42,7 @@ export class MessagingService {
   /**
    * Create Email Message
    */
-  async createEmailMessage({ input, db, project }: CreateEmailMessage) {
+  async createEmailMessage({ input, project }: CreateEmailMessage) {
     const {
       messageId: inputMessageId,
       subject,
@@ -187,7 +187,7 @@ export class MessagingService {
   /**
    * Create SMS Message
    */
-  async createSmsMessage({ input, db, project }: CreateSmsMessage) {
+  async createSmsMessage({ input, project }: CreateSmsMessage) {
     const {
       messageId: inputMessageId,
       content,
@@ -295,7 +295,7 @@ export class MessagingService {
   /**
    * Create Push Message
    */
-  async createPushMessage({ input, db, project }: CreatePushMessage) {
+  async createPushMessage({ input, project }: CreatePushMessage) {
     const {
       messageId: inputMessageId,
       title = '',
@@ -512,7 +512,7 @@ export class MessagingService {
   /**
    * Lists all messages.
    */
-  async listMessages({ db, queries = [], search }: ListMessages) {
+  async listMessages({ queries = [], search }: ListMessages) {
     if (search) {
       queries.push(Query.search('search', search))
     }
@@ -531,7 +531,7 @@ export class MessagingService {
   /**
    * Get Message
    */
-  async getMessage(db: Database, id: string) {
+  async getMessage(id: string) {
     const message = await db.getDocument('messages', id)
 
     if (message.empty()) {
@@ -544,7 +544,7 @@ export class MessagingService {
   /**
    *  List targets for a message.
    */
-  async listTargets({ db, messageId, queries = [] }: ListTargets) {
+  async listTargets({ messageId, queries = [] }: ListTargets) {
     const message = await db.getDocument('messages', messageId)
 
     if (message.empty()) {
@@ -580,7 +580,7 @@ export class MessagingService {
   async updateEmailMessage({
     messageId,
     input,
-    db,
+
     project,
   }: UpdateEmailMessage) {
     const message = await db.getDocument('messages', messageId)
@@ -770,7 +770,7 @@ export class MessagingService {
   /**
    * Update SMS Message
    */
-  async updateSmsMessage({ messageId, input, db, project }: UpdateSmsMessage) {
+  async updateSmsMessage({ messageId, input, project }: UpdateSmsMessage) {
     const message = await db.getDocument('messages', messageId)
 
     if (message.empty()) {
@@ -920,7 +920,7 @@ export class MessagingService {
   async updatePushMessage({
     messageId,
     input,
-    db,
+
     project,
   }: UpdatePushMessage) {
     const message = await db.getDocument('messages', messageId)
@@ -1168,7 +1168,7 @@ export class MessagingService {
   /**
    * Deletes a message.
    */
-  async deleteMessage(db: Database, messageId: string) {
+  async deleteMessage(messageId: string) {
     const message = await db.getDocument('messages', messageId)
 
     if (message.empty()) {

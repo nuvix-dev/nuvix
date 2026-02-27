@@ -63,7 +63,7 @@ export class SchemasService {
 
   private async withMetaTransaction(
     pg: DataSource,
-    project: ProjectsDoc,
+
     context: Record<string, any>,
     callback: () => Promise<any>,
   ) {

@@ -23,7 +23,7 @@ export class SessionsService {
   /**
    * Get all sessions
    */
-  async getSessions(db: Database, userId: string, locale: LocaleTranslator) {
+  async getSessions(userId: string, locale: LocaleTranslator) {
     const user = await db.getDocument('users', userId)
 
     if (user.empty()) {
@@ -52,11 +52,10 @@ export class SessionsService {
    * Create User Session
    */
   async createSession(
-    db: Database,
     userId: string,
     userAgent: string,
     ip: string,
-    project: ProjectsDoc,
+
     locale: LocaleTranslator,
   ) {
     const user = await db.getDocument('users', userId)
@@ -109,7 +108,7 @@ export class SessionsService {
   /**
    * Delete User Session
    */
-  async deleteSession(db: Database, userId: string, sessionId: string) {
+  async deleteSession(userId: string, sessionId: string) {
     const user = await db.getDocument('users', userId)
 
     if (user.empty()) {
@@ -131,7 +130,7 @@ export class SessionsService {
   /**
    * Delete User Sessions
    */
-  async deleteSessions(db: Database, userId: string) {
+  async deleteSessions(userId: string) {
     const user = await db.getDocument('users', userId)
 
     if (user.empty()) {

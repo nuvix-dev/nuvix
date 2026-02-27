@@ -46,12 +46,7 @@ export class IndexesService {
   /**
    * Create a Index.
    */
-  async createIndex(
-    db: Database,
-    collectionId: string,
-    input: CreateIndexDTO,
-    project: ProjectsDoc,
-  ) {
+  async createIndex(collectionId: string, input: CreateIndexDTO) {
     const { key, type, attributes, orders } = input
 
     const collection = await db.getDocument(
@@ -179,7 +174,7 @@ export class IndexesService {
   /**
    * Get all indexes.
    */
-  async getIndexes(db: Database, collectionId: string, queries: Query[] = []) {
+  async getIndexes(collectionId: string, queries: Query[] = []) {
     const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
@@ -209,7 +204,7 @@ export class IndexesService {
   /**
    * Get an index.
    */
-  async getIndex(db: Database, collectionId: string, key: string) {
+  async getIndex(collectionId: string, key: string) {
     const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
@@ -233,12 +228,7 @@ export class IndexesService {
   /**
    * Delete an index.
    */
-  async deleteIndex(
-    db: Database,
-    collectionId: string,
-    key: string,
-    project: ProjectsDoc,
-  ) {
+  async deleteIndex(collectionId: string, key: string) {
     const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,

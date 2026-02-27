@@ -19,7 +19,6 @@ import { Models } from '@nuvix/core/helpers'
 import { AttributesQueryPipe } from '@nuvix/core/pipes/queries'
 import {
   ApiInterceptor,
-  ProjectGuard,
   ResponseInterceptor,
   SchemaGuard,
 } from '@nuvix/core/resolvers'
@@ -58,7 +57,7 @@ import {
   path: 'schemas/:schemaId/collections/:collectionId/attributes',
 })
 @Namespace('schemas')
-@UseGuards(ProjectGuard, SchemaGuard)
+@UseGuards(SchemaGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.ADMIN, AuthType.KEY])
 @CurrentSchemaType(SchemaType.Document)
@@ -79,7 +78,7 @@ export class AttributesController {
     @Param() { collectionId }: CollectionParamsDTO,
     @QueryFilter(AttributesQueryPipe) queries?: Queries[],
   ): Promise<IListResponse<AttributesDoc>> {
-    return this.attributesService.getAttributes(db, collectionId, queries)
+    return this.attributesService.getAttributes(collectionId, queries)
   }
 
   @Post('string', {
@@ -102,7 +101,6 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateStringAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createStringAttribute(
-      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -129,7 +127,6 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateEmailAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createEmailAttribute(
-      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -156,7 +153,6 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateEnumAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createEnumAttribute(
-      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -183,7 +179,6 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateIpAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createIPAttribute(
-      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -210,7 +205,6 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateURLAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createURLAttribute(
-      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -238,7 +232,6 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateIntegerAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createIntegerAttribute(
-      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -265,7 +258,6 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateFloatAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createFloatAttribute(
-      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -293,7 +285,6 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateBooleanAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createBooleanAttribute(
-      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -321,7 +312,6 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateDatetimeAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createDateAttribute(
-      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -349,7 +339,6 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateRelationAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createRelationshipAttribute(
-      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -369,7 +358,7 @@ export class AttributesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId, key }: AttributeParamsDTO,
   ): Promise<IResponse<AttributesDoc>> {
-    return this.attributesService.getAttribute(db, collectionId, key)
+    return this.attributesService.getAttribute(collectionId, key)
   }
 
   @Patch('string/:key', {
@@ -391,7 +380,6 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateStringAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateStringAttribute(
-      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -417,7 +405,6 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateEmailAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateEmailAttribute(
-      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -443,7 +430,6 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateEnumAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateEnumAttribute(
-      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -469,7 +455,6 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateIpAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateIPAttribute(
-      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -495,7 +480,6 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateURLAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateURLAttribute(
-      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -522,7 +506,6 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateIntegerAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateIntegerAttribute(
-      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -548,7 +531,6 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateFloatAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateFloatAttribute(
-      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -575,7 +557,6 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateBooleanAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateBooleanAttribute(
-      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -602,7 +583,6 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateDatetimeAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateDateAttribute(
-      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -629,7 +609,6 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateRelationAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateRelationshipAttribute(
-      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -654,11 +633,6 @@ export class AttributesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId, key }: AttributeParamsDTO,
   ): Promise<AttributesDoc> {
-    return this.attributesService.deleteAttribute(
-      db,
-      collectionId,
-      key,
-      project,
-    )
+    return this.attributesService.deleteAttribute(collectionId, key, project)
   }
 }

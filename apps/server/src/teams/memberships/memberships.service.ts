@@ -41,10 +41,9 @@ export class MembershipsService {
    * Add a member to the team
    */
   async addMember(
-    db: Database,
     id: string,
     input: CreateMembershipDTO,
-    project: ProjectsDoc,
+
     user: UsersDoc,
     locale: LocaleTranslator,
   ) {
@@ -349,12 +348,7 @@ export class MembershipsService {
   /**
    * Get all members of the team
    */
-  async getMembers(
-    db: Database,
-    id: string,
-    queries: Query[],
-    search?: string,
-  ) {
+  async getMembers(id: string, queries: Query[], search?: string) {
     const team = await db.getDocument('teams', id)
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
@@ -406,7 +400,7 @@ export class MembershipsService {
   /**
    * Get A member of the team
    */
-  async getMember(db: Database, teamId: string, memberId: string) {
+  async getMember(teamId: string, memberId: string) {
     const team = await db.getDocument('teams', teamId)
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
@@ -444,7 +438,6 @@ export class MembershipsService {
    * Update member of the team
    */
   async updateMember(
-    db: Database,
     teamId: string,
     memberId: string,
     input: UpdateMembershipDTO,
@@ -493,14 +486,12 @@ export class MembershipsService {
    * Update Membership Status
    */
   async updateMemberStatus(
-    db: Database,
     teamId: string,
     memberId: string,
     { userId, secret }: UpdateMembershipStatusDTO,
     request: NuvixRequest,
     response: NuvixRes,
     user: UsersDoc,
-    project: ProjectsDoc,
   ): Promise<Doc<Memberships>> {
     const protocol = request.protocol
     const membership = await db.getDocument('memberships', memberId)
@@ -641,7 +632,7 @@ export class MembershipsService {
   /**
    * Delete member of the team
    */
-  async deleteMember(db: Database, teamId: string, memberId: string) {
+  async deleteMember(teamId: string, memberId: string) {
     const team = await db.getDocument('teams', teamId)
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)

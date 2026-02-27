@@ -5,7 +5,6 @@ import { Job } from 'bullmq'
 import Template from 'handlebars'
 import { createTransport, Transporter } from 'nodemailer'
 import type { SmtpConfig } from '../../config/smtp'
-import { AppConfigService } from '../../config.service'
 import { Queue } from './queue'
 import { Logger } from '@nestjs/common'
 

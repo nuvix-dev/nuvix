@@ -75,7 +75,7 @@ export class UsersService {
   /**
    * Find all users
    */
-  async findAll(db: Database, queries: Query[] = [], search?: string) {
+  async findAll(queries: Query[] = [], search?: string) {
     if (search) {
       queries.push(Query.search('search', search))
     }
@@ -94,7 +94,7 @@ export class UsersService {
   /**
    * Find a user by id
    */
-  async findOne(db: Database, id: string) {
+  async findOne(id: string) {
     const user = await db.getDocument('users', id)
 
     if (user.empty()) {
@@ -107,7 +107,7 @@ export class UsersService {
   /**
    * Get user preferences
    */
-  async getPrefs(db: Database, id: string) {
+  async getPrefs(id: string) {
     const user = await db.getDocument('users', id)
 
     if (user.empty()) {
@@ -120,7 +120,7 @@ export class UsersService {
   /**
    * Update user preferences
    */
-  async updatePrefs(db: Database, id: string, prefs?: Record<string, any>) {
+  async updatePrefs(id: string, prefs?: Record<string, any>) {
     const user = await db.getDocument('users', id)
 
     if (user.empty()) {
@@ -139,11 +139,7 @@ export class UsersService {
   /**
    * Update user status
    */
-  async updateStatus(
-    db: Database,
-    id: string,
-    { status }: UpdateUserStatusDTO,
-  ) {
+  async updateStatus(id: string, { status }: UpdateUserStatusDTO) {
     const user = await db.getDocument('users', id)
 
     if (user.empty()) {
@@ -156,7 +152,7 @@ export class UsersService {
   /**
    * Update user labels
    */
-  async updateLabels(db: Database, id: string, { labels }: UpdateUserLabelDTO) {
+  async updateLabels(id: string, { labels }: UpdateUserLabelDTO) {
     const user = await db.getDocument('users', id)
 
     if (user.empty()) {
@@ -171,7 +167,7 @@ export class UsersService {
   /**
    * Update user name
    */
-  async updateName(db: Database, id: string, { name }: UpdateUserNameDTO) {
+  async updateName(id: string, { name }: UpdateUserNameDTO) {
     const user = await db.getDocument('users', id)
 
     if (user.empty()) {
@@ -185,12 +181,7 @@ export class UsersService {
   /**
    * Update user password
    */
-  async updatePassword(
-    db: Database,
-    id: string,
-    { password }: UpdateUserPasswordDTO,
-    project: ProjectsDoc,
-  ) {
+  async updatePassword(id: string, { password }: UpdateUserPasswordDTO) {
     const user = await db.getDocument('users', id)
 
     if (user.empty()) {
@@ -219,13 +210,7 @@ export class UsersService {
       return updatedUser
     }
 
-    await Hooks.trigger('passwordValidator', [
-      db,
-      project,
-      password,
-      user,
-      true,
-    ])
+    await Hooks.trigger('passwordValidator', [project, password, user, true])
 
     const newPassword = await Auth.passwordHash(
       password,
@@ -266,7 +251,7 @@ export class UsersService {
   /**
    * Update user email
    */
-  async updateEmail(db: Database, id: string, email: string) {
+  async updateEmail(id: string, email: string) {
     const user = await db.getDocument('users', id)
 
     if (user.empty()) {
@@ -345,7 +330,7 @@ export class UsersService {
   /**
    * Update user phone
    */
-  async updatePhone(db: Database, id: string, phone: string) {
+  async updatePhone(id: string, phone: string) {
     const user = await db.getDocument('users', id)
 
     if (user.empty()) {
@@ -413,7 +398,6 @@ export class UsersService {
    * Update user emailVerification
    */
   async updateEmailVerification(
-    db: Database,
     id: string,
     input: UpdateUserEmailVerificationDTO,
   ) {
@@ -436,7 +420,6 @@ export class UsersService {
    * Update user's phoneVerification
    */
   async updatePhoneVerification(
-    db: Database,
     id: string,
     input: UpdateUserPoneVerificationDTO,
   ) {
@@ -458,9 +441,8 @@ export class UsersService {
   /**
    * Create a new user
    */
-  create(db: Database, createUserDTO: CreateUserDTO, project: ProjectsDoc) {
+  create(createUserDTO: CreateUserDTO, project: ProjectsDoc) {
     return this.createUser(
-      db,
       project,
       HashAlgorithm.PLAINTEXT,
       {},
@@ -475,13 +457,8 @@ export class UsersService {
   /**
    * Create a new user with argon2
    */
-  createWithArgon2(
-    db: Database,
-    createUserDTO: CreateUserDTO,
-    project: ProjectsDoc,
-  ) {
+  createWithArgon2(createUserDTO: CreateUserDTO) {
     return this.createUser(
-      db,
       project,
       HashAlgorithm.ARGON2,
       {},
@@ -496,13 +473,8 @@ export class UsersService {
   /**
    * Create a new user with bcrypt
    */
-  createWithBcrypt(
-    db: Database,
-    createUserDTO: CreateUserDTO,
-    project: ProjectsDoc,
-  ) {
+  createWithBcrypt(createUserDTO: CreateUserDTO) {
     return this.createUser(
-      db,
       project,
       HashAlgorithm.BCRYPT,
       {},
@@ -517,13 +489,8 @@ export class UsersService {
   /**
    * Create a new user with md5
    */
-  createWithMd5(
-    db: Database,
-    createUserDTO: CreateUserDTO,
-    project: ProjectsDoc,
-  ) {
+  createWithMd5(createUserDTO: CreateUserDTO) {
     return this.createUser(
-      db,
       project,
       HashAlgorithm.MD5,
       {},
@@ -538,17 +505,12 @@ export class UsersService {
   /**
    * Create a new user with sha
    */
-  createWithSha(
-    db: Database,
-    createUserDTO: CreateUserWithShaDTO,
-    project: ProjectsDoc,
-  ) {
+  createWithSha(createUserDTO: CreateUserWithShaDTO) {
     let hashOptions = {}
     if (createUserDTO.passwordVersion) {
       hashOptions = { version: createUserDTO.passwordVersion }
     }
     return this.createUser(
-      db,
       project,
       HashAlgorithm.SHA,
       hashOptions,
@@ -563,13 +525,8 @@ export class UsersService {
   /**
    * Create a new user with phpass
    */
-  createWithPhpass(
-    db: Database,
-    createUserDTO: CreateUserDTO,
-    project: ProjectsDoc,
-  ) {
+  createWithPhpass(createUserDTO: CreateUserDTO) {
     return this.createUser(
-      db,
       project,
       HashAlgorithm.PHPASS,
       {},
@@ -584,11 +541,7 @@ export class UsersService {
   /**
    * Create a new user with scrypt
    */
-  createWithScrypt(
-    db: Database,
-    createUserDTO: CreateUserWithScryptDTO,
-    project: ProjectsDoc,
-  ) {
+  createWithScrypt(createUserDTO: CreateUserWithScryptDTO) {
     const hashOptions = {
       salt: createUserDTO.passwordSalt,
       costCpu: createUserDTO.passwordCpu,
@@ -597,7 +550,6 @@ export class UsersService {
       length: createUserDTO.passwordLength,
     }
     return this.createUser(
-      db,
       project,
       HashAlgorithm.SCRYPT,
       hashOptions,
@@ -612,18 +564,13 @@ export class UsersService {
   /**
    * Create a new user with scryptMod
    */
-  createWithScryptMod(
-    db: Database,
-    createUserDTO: CreateUserWithScryptModifedDTO,
-    project: ProjectsDoc,
-  ) {
+  createWithScryptMod(createUserDTO: CreateUserWithScryptModifedDTO) {
     const hashOptions = {
       salt: createUserDTO.passwordSalt,
       saltSeparator: createUserDTO.passwordSaltSeparator,
       signerKey: createUserDTO.passwordSignerKey,
     }
     return this.createUser(
-      db,
       project,
       HashAlgorithm.SCRYPT_MOD,
       hashOptions,
@@ -638,12 +585,7 @@ export class UsersService {
   /**
    * Get all memberships
    */
-  async getMemberships(
-    db: Database,
-    userId: string,
-    queries: Query[] = [],
-    search?: string,
-  ) {
+  async getMemberships(userId: string, queries: Query[] = [], search?: string) {
     const user = await db.getDocument('users', userId)
 
     if (user.empty()) {
@@ -678,7 +620,6 @@ export class UsersService {
    * Get all logs
    */
   async getLogs(
-    db: Database,
     userId: string,
     locale: LocaleTranslator,
     queries: Query[] = [],
@@ -748,7 +689,7 @@ export class UsersService {
   /**
    * Get all identities
    */
-  async getIdentities(db: Database, queries: Query[] = [], search?: string) {
+  async getIdentities(queries: Query[] = [], search?: string) {
     if (search) {
       queries.push(Query.search('search', search))
     }
@@ -767,7 +708,7 @@ export class UsersService {
   /**
    * Delete an identity
    */
-  async deleteIdentity(db: Database, identityId: string) {
+  async deleteIdentity(identityId: string) {
     const identity = await db.getDocument('identities', identityId)
 
     if (identity.empty()) {
@@ -781,7 +722,6 @@ export class UsersService {
    * Create a new Token
    */
   async createToken(
-    db: Database,
     userId: string,
     input: CreateTokenDTO,
     userAgent: string,
@@ -823,7 +763,7 @@ export class UsersService {
   /**
    * Create Jwt
    */
-  async createJwt(db: Database, userId: string, input: CreateJwtDTO) {
+  async createJwt(userId: string, input: CreateJwtDTO) {
     const user = await db.getDocument('users', userId)
 
     if (user.empty()) {
@@ -859,7 +799,7 @@ export class UsersService {
   /**
    * Delete User
    */
-  async remove(db: Database, userId: string, project: ProjectsDoc) {
+  async remove(userId: string, project: ProjectsDoc) {
     const user = await db.getDocument('users', userId)
 
     if (user.empty()) {
@@ -887,8 +827,6 @@ export class UsersService {
    * @param name
    */
   async createUser(
-    db: Database,
-    project: ProjectsDoc,
     hash: HashAlgorithm,
     hashOptions: any,
     userId?: string,
@@ -1052,7 +990,7 @@ export class UsersService {
   /**
    * Get usage statistics
    */
-  async getUsage(db: Database, range = '1d') {
+  async getUsage(range = '1d') {
     const periods = usageConfig
     const stats: Record<string, any> = {}
     const usage: Record<string, any> = {}

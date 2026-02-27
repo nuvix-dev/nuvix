@@ -2,7 +2,7 @@ import * as fs from 'node:fs/promises'
 import path from 'node:path'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
-import { AppConfigService } from '@nuvix/core'
+
 import type { SmtpConfig } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Auth, Detector, LocaleTranslator } from '@nuvix/core/helpers'
@@ -49,7 +49,6 @@ export class MfaService {
    * Update MFA
    */
   async updateMfa({
-    db,
     user,
     mfa,
     session,
@@ -120,7 +119,6 @@ export class MfaService {
    * Create authenticator
    */
   async createMfaAuthenticator({
-    db,
     user,
     type,
     project,
@@ -184,7 +182,6 @@ export class MfaService {
     otp,
     user,
     session,
-    db,
   }: WithDB<
     WithUser<{ session: SessionsDoc; otp: string; type: string }>
   >): Promise<UsersDoc> {
@@ -243,7 +240,6 @@ export class MfaService {
    */
   async createMfaRecoveryCodes({
     user,
-    db,
   }: WithDB<WithUser>): Promise<Doc<{ recoveryCodes: string[] }>> {
     const mfaRecoveryCodes = user.get('mfaRecoveryCodes', [])
 
@@ -267,7 +263,6 @@ export class MfaService {
    */
   async updateMfaRecoveryCodes({
     user,
-    db,
   }: WithDB<WithUser>): Promise<Doc<{ recoveryCodes: string[] }>> {
     const mfaRecoveryCodes = user.get('mfaRecoveryCodes', [])
 
@@ -291,7 +286,7 @@ export class MfaService {
    */
   async deleteMfaAuthenticator({
     user,
-    db,
+
     type,
   }: WithDB<WithUser<{ type: string }>>): Promise<void> {
     const authenticator = (() => {
@@ -315,7 +310,6 @@ export class MfaService {
    * Create MFA Challenge
    */
   async createMfaChallenge({
-    db,
     user,
     userAgent,
     locale,
@@ -510,7 +504,6 @@ export class MfaService {
    * Update MFA Challenge
    */
   async updateMfaChallenge({
-    db,
     user,
     session,
     otp,
@@ -596,7 +589,7 @@ export class MfaService {
   }
 }
 
-type WithDB<T = unknown> = { db: Database } & T
+type WithDB<T = unknown> = T
 type WithUser<T = unknown> = { user: UsersDoc } & T
 type WithProject<T = unknown> = { project: ProjectsDoc } & T
 type WithLocale<T = unknown> = { locale: LocaleTranslator } & T

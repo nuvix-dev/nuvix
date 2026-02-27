@@ -9,7 +9,6 @@ import { AuditDoc } from '@nuvix/audit'
 import { Delete, Get, Post, Put } from '@nuvix/core'
 import {
   Auth,
-  AuthDatabase,
   AuthType,
   Namespace,
   QueryFilter,
@@ -19,11 +18,7 @@ import {
 import { Exception } from '@nuvix/core/extend/exception'
 import { Models } from '@nuvix/core/helpers'
 import { TeamsQueryPipe } from '@nuvix/core/pipes/queries'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { Database, Query as Queries } from '@nuvix/db'
 import { IListResponse, IResponse } from '@nuvix/utils'
 import { TeamsDoc } from '@nuvix/utils/types'
@@ -36,7 +31,7 @@ import {
 import { TeamsService } from './teams.service'
 
 @Namespace('teams')
-@UseGuards(ProjectGuard)
+
 @Auth([AuthType.KEY, AuthType.SESSION, AuthType.JWT, AuthType.ADMIN])
 @Controller({ version: ['1'], path: 'teams' })
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
@@ -60,7 +55,7 @@ export class TeamsController {
     @User() user: any,
     @Body() input: CreateTeamDTO,
   ): Promise<IResponse<TeamsDoc>> {
-    return this.teamsService.create(db, user, input)
+    return this.teamsService.create(user, input)
   }
 
   @Get('', {
@@ -76,7 +71,7 @@ export class TeamsController {
     @QueryFilter(TeamsQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<TeamsDoc>> {
-    return this.teamsService.findAll(db, queries, search)
+    return this.teamsService.findAll(queries, search)
   }
 
   @Get(':teamId', {
@@ -91,7 +86,7 @@ export class TeamsController {
   async findOne(
     @Param() { teamId }: TeamsParamDTO,
   ): Promise<IResponse<TeamsDoc>> {
-    return this.teamsService.findOne(db, teamId)
+    return this.teamsService.findOne(teamId)
   }
 
   @Put(':teamId', {
@@ -111,7 +106,7 @@ export class TeamsController {
     @Param() { teamId }: TeamsParamDTO,
     @Body() input: UpdateTeamDTO,
   ): Promise<IResponse<TeamsDoc>> {
-    return this.teamsService.update(db, teamId, input)
+    return this.teamsService.update(teamId, input)
   }
 
   @Delete(':teamId', {
@@ -129,7 +124,7 @@ export class TeamsController {
     },
   })
   async remove(@Param() { teamId }: TeamsParamDTO): Promise<void> {
-    return this.teamsService.remove(db, teamId)
+    return this.teamsService.remove(teamId)
   }
 
   @Get(':teamId/prefs', {
@@ -144,7 +139,7 @@ export class TeamsController {
   async getPrefs(
     @Param() { teamId }: TeamsParamDTO,
   ): Promise<IResponse<Record<string, unknown>>> {
-    return this.teamsService.getPrefs(db, teamId)
+    return this.teamsService.getPrefs(teamId)
   }
 
   @Put(':teamId/prefs', {
@@ -166,7 +161,7 @@ export class TeamsController {
     @Param() { teamId }: TeamsParamDTO,
     @Body() input: UpdateTeamPrefsDTO,
   ): Promise<IResponse<Record<string, unknown>>> {
-    return this.teamsService.setPrefs(db, teamId, input)
+    return this.teamsService.setPrefs(teamId, input)
   }
 
   @Get(':teamId/logs', {

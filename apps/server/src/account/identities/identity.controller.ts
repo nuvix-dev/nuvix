@@ -2,7 +2,6 @@ import { Controller, Param, UseGuards, UseInterceptors } from '@nestjs/common'
 import { Delete, Get } from '@nuvix/core'
 import {
   Auth,
-  AuthDatabase,
   AuthType,
   Namespace,
   QueryFilter,
@@ -11,11 +10,7 @@ import {
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { IdentitiesQueryPipe } from '@nuvix/core/pipes/queries'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { Database, Query as Queries } from '@nuvix/db'
 import type { IListResponse } from '@nuvix/utils'
 import type { IdentitiesDoc, UsersDoc } from '@nuvix/utils/types'
@@ -26,7 +21,7 @@ import { IdentityService } from './identity.service'
 @Namespace('account')
 @Scope('account')
 @Auth([AuthType.SESSION, AuthType.JWT])
-@UseGuards(ProjectGuard)
+
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class IdentityController {
   constructor(private readonly identityService: IdentityService) {}
@@ -47,7 +42,7 @@ export class IdentityController {
 
     @QueryFilter(IdentitiesQueryPipe) queries?: Queries[],
   ): Promise<IListResponse<IdentitiesDoc>> {
-    return this.identityService.getIdentities({ user, db, queries })
+    return this.identityService.getIdentities({ user, queries })
   }
 
   @Delete(':identityId', {
@@ -68,7 +63,6 @@ export class IdentityController {
   ): Promise<void> {
     return this.identityService.deleteIdentity({
       identityId,
-      db,
     })
   }
 }

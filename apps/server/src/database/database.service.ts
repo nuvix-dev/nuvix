@@ -18,7 +18,7 @@ export class DatabaseService {
 
   public async createDocumentSchema(
     db: DataSource,
-    project: ProjectsDoc,
+
     data: CreateSchemaDTO,
   ) {
     const isExists = await db

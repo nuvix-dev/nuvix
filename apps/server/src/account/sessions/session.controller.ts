@@ -14,7 +14,6 @@ import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
 import {
   AllowSessionType,
   Auth,
-  AuthDatabase,
   AuthType,
   Locale,
   Namespace,
@@ -22,11 +21,7 @@ import {
   User,
 } from '@nuvix/core/decorators'
 import { LocaleTranslator, Models } from '@nuvix/core/helpers'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { Database, type Doc } from '@nuvix/db'
 import { SessionType, type IListResponse, type IResponse } from '@nuvix/utils'
 import type { ProjectsDoc, SessionsDoc, UsersDoc } from '@nuvix/utils/types'
@@ -48,7 +43,7 @@ import {
 import { SessionService } from './session.service'
 
 @Namespace('account')
-@UseGuards(ProjectGuard)
+
 @Controller({ version: ['1'], path: 'account' })
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.SESSION, AuthType.JWT])
@@ -92,7 +87,6 @@ export class SessionsController {
     @Locale() locale: LocaleTranslator,
   ): Promise<void> {
     return this.sessionService.deleteSessions(
-      db,
       user,
       project,
       locale,
@@ -146,7 +140,6 @@ export class SessionsController {
       sessionId = session.getId()
     }
     return this.sessionService.deleteSession(
-      db,
       user,
       project,
       sessionId,
@@ -174,12 +167,7 @@ export class SessionsController {
     @User() user: UsersDoc,
     @Param() params: SessionsParamDTO,
   ): Promise<IResponse<SessionsDoc>> {
-    return this.sessionService.updateSession(
-      db,
-      user,
-      params.sessionId,
-      project,
-    )
+    return this.sessionService.updateSession(user, params.sessionId, project)
   }
 
   @Post(['sessions/email', 'sessions'], {
@@ -211,7 +199,6 @@ export class SessionsController {
     @Locale() locale: LocaleTranslator,
   ): Promise<IResponse<SessionsDoc>> {
     return this.sessionService.createEmailSession(
-      db,
       user,
       input,
       request,
@@ -254,7 +241,6 @@ export class SessionsController {
       response,
       locale,
       project,
-      db: db,
     })
   }
 
@@ -292,7 +278,6 @@ export class SessionsController {
       response,
       locale,
       project,
-      db,
     })
   }
 
@@ -422,7 +407,6 @@ export class SessionsController {
     @Param() { provider }: ProviderParamDTO,
   ): Promise<void> {
     return this.sessionService.oAuth2Redirect({
-      db: db,
       user,
       input,
       provider,
@@ -489,7 +473,6 @@ export class SessionsController {
     @Locale() locale: LocaleTranslator,
   ) {
     return this.sessionService.createMagicURLToken({
-      db: db,
       user,
       input,
       request,
@@ -534,7 +517,7 @@ export class SessionsController {
       response,
       project,
       user,
-      db: db,
+
       locale,
     })
   }
@@ -572,7 +555,6 @@ export class SessionsController {
       response,
       locale,
       project,
-      db,
     })
   }
 
@@ -609,7 +591,6 @@ export class SessionsController {
       response,
       locale,
       project,
-      db,
     })
   }
 
@@ -641,7 +622,6 @@ export class SessionsController {
     @Locale() locale: LocaleTranslator,
   ) {
     return this.sessionService.createPhoneToken({
-      db: db,
       user,
       input,
       request,

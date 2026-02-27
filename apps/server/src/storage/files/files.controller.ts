@@ -25,11 +25,7 @@ import {
 import { Exception } from '@nuvix/core/extend/exception'
 import { Models } from '@nuvix/core/helpers'
 import { FilesQueryPipe } from '@nuvix/core/pipes/queries'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { Database, Doc, Query as Queries } from '@nuvix/db'
 import { configuration, IListResponse, IResponse } from '@nuvix/utils'
 import { FilesDoc } from '@nuvix/utils/types'
@@ -42,7 +38,7 @@ import {
 import { FilesService } from './files.service'
 
 @Namespace('storage')
-@UseGuards(ProjectGuard)
+
 @Controller({ version: ['1'], path: 'storage/buckets/:bucketId/files' })
 @UseInterceptors(ApiInterceptor, ResponseInterceptor)
 export class FilesController {
@@ -62,7 +58,7 @@ export class FilesController {
     @QueryFilter(FilesQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<FilesDoc>> {
-    return this.filesService.getFiles(db, bucketId, queries, search)
+    return this.filesService.getFiles(bucketId, queries, search)
   }
 
   @Post('', {
@@ -126,7 +122,6 @@ export class FilesController {
       throw new Exception(Exception.INVALID_PARAMS, 'fileId is required', 400)
     }
     return this.filesService.createFile(
-      db,
       bucketId,
       { fileId, permissions },
       file,
@@ -148,7 +143,7 @@ export class FilesController {
   async getFile(
     @Param() { fileId, bucketId }: FileParamsDTO,
   ): Promise<IResponse<FilesDoc>> {
-    return this.filesService.getFile(db, bucketId, fileId)
+    return this.filesService.getFile(bucketId, fileId)
   }
 
   @Get(':fileId/preview', {
@@ -171,13 +166,7 @@ export class FilesController {
     @Project() project: Doc,
     @Query() queryParams: PreviewFileQueryDTO,
   ): Promise<StreamableFile> {
-    return this.filesService.previewFile(
-      db,
-      bucketId,
-      fileId,
-      queryParams,
-      project,
-    )
+    return this.filesService.previewFile(bucketId, fileId, queryParams, project)
   }
 
   @Get(':fileId/download', {
@@ -206,14 +195,7 @@ export class FilesController {
     @Res({ passthrough: true }) res: NuvixRes,
     @Project() project: Doc,
   ): Promise<StreamableFile> {
-    return this.filesService.downloadFile(
-      db,
-      bucketId,
-      fileId,
-      res,
-      req,
-      project,
-    )
+    return this.filesService.downloadFile(bucketId, fileId, res, req, project)
   }
 
   @Get(':fileId/view', {
@@ -242,7 +224,7 @@ export class FilesController {
     @Res({ passthrough: true }) res: NuvixRes,
     @Project() project: Doc,
   ): Promise<StreamableFile> {
-    return this.filesService.viewFile(db, bucketId, fileId, res, req, project)
+    return this.filesService.viewFile(bucketId, fileId, res, req, project)
   }
 
   @Get(':fileId/push', {
@@ -258,7 +240,6 @@ export class FilesController {
     @Project() project: Doc,
   ): Promise<StreamableFile> {
     return this.filesService.getFileForPushNotification(
-      db,
       bucketId,
       fileId,
       jwt,
@@ -291,7 +272,7 @@ export class FilesController {
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Body() updateFileDTO: UpdateFileDTO,
   ): Promise<IResponse<FilesDoc>> {
-    return this.filesService.updateFile(db, bucketId, fileId, updateFileDTO)
+    return this.filesService.updateFile(bucketId, fileId, updateFileDTO)
   }
 
   @Delete(':fileId', {
@@ -317,6 +298,6 @@ export class FilesController {
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Project() project: Doc,
   ): Promise<void> {
-    return this.filesService.deleteFile(db, bucketId, fileId, project)
+    return this.filesService.deleteFile(bucketId, fileId, project)
   }
 }

@@ -36,11 +36,7 @@ export class DocumentsService {
   /**
    * Get Documents.
    */
-  async getDocuments(
-    db: Database,
-    collectionId: string,
-    queries: Query[] = [],
-  ) {
+  async getDocuments(collectionId: string, queries: Query[] = []) {
     const collection = await Authorization.skip(() =>
       db.getDocument(SchemaMeta.collections, collectionId),
     )
@@ -69,7 +65,6 @@ export class DocumentsService {
    * Create a Doc.
    */
   async createDocument(
-    db: Database,
     collectionId: string,
     { documentId, permissions, data }: CreateDocumentDTO,
     user: UsersDoc,
@@ -221,7 +216,6 @@ export class DocumentsService {
    * Get a document.
    */
   async getDocument(
-    db: Database,
     collectionId: string,
     documentId: string,
     queries: Query[] = [],
@@ -263,7 +257,6 @@ export class DocumentsService {
    * TODO: Implement audit logs and return real data.
    */
   async getDocumentLogs(
-    _db: Database,
     _collectionId: string,
     _documentId: string,
     _queries: Query[] = [],
@@ -279,7 +272,6 @@ export class DocumentsService {
    * Update a document.
    */
   async updateDocument(
-    db: Database,
     collectionId: string,
     documentId: string,
     { data, permissions }: UpdateDocumentDTO,
@@ -344,7 +336,6 @@ export class DocumentsService {
    * Delete a document.
    */
   async deleteDocument(
-    db: Database,
     collectionId: string,
     documentId: string,
     timestamp?: Date,

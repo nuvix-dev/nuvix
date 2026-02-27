@@ -17,11 +17,7 @@ import {
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { MessagesQueryPipe, TargetsQueryPipe } from '@nuvix/core/pipes/queries'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { Database, Query as Queries } from '@nuvix/db'
 import { IListResponse, IResponse } from '@nuvix/utils'
 import type { MessagesDoc, ProjectsDoc, TargetsDoc } from '@nuvix/utils/types'
@@ -37,7 +33,7 @@ import {
 import { MessagingService } from './messaging.service'
 
 @Namespace('messaging')
-@UseGuards(ProjectGuard)
+
 @Auth([AuthType.ADMIN, AuthType.KEY])
 @Controller({ path: 'messaging/messages', version: ['1'] })
 @UseInterceptors(ApiInterceptor, ResponseInterceptor)
@@ -61,7 +57,6 @@ export class MessagingController {
     @Body() input: CreateEmailMessageDTO,
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.createEmailMessage({
-      db,
       input,
       project,
     })
@@ -84,7 +79,6 @@ export class MessagingController {
     @Body() input: CreateSmsMessageDTO,
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.createSmsMessage({
-      db,
       input,
       project,
     })
@@ -107,7 +101,6 @@ export class MessagingController {
     @Body() input: CreatePushMessageDTO,
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.createPushMessage({
-      db,
       input,
       project,
     })
@@ -127,7 +120,6 @@ export class MessagingController {
     @QuerySearch() search?: string,
   ): Promise<IListResponse<MessagesDoc>> {
     return this.messagingService.listMessages({
-      db,
       queries,
       search,
     })
@@ -145,7 +137,7 @@ export class MessagingController {
   async getMessage(
     @Param() { messageId }: MessageParamsDTO,
   ): Promise<IResponse<MessagesDoc>> {
-    return this.messagingService.getMessage(db, messageId)
+    return this.messagingService.getMessage(messageId)
   }
 
   @Get(':messageId/targets', {
@@ -163,7 +155,6 @@ export class MessagingController {
     @QueryFilter(TargetsQueryPipe) queries: Queries[],
   ): Promise<IListResponse<TargetsDoc>> {
     return this.messagingService.listTargets({
-      db,
       messageId,
       queries,
     })
@@ -188,7 +179,6 @@ export class MessagingController {
     @Body() input: UpdateEmailMessageDTO,
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.updateEmailMessage({
-      db,
       messageId,
       input,
       project,
@@ -214,7 +204,6 @@ export class MessagingController {
     @Body() input: UpdateSmsMessageDTO,
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.updateSmsMessage({
-      db,
       messageId,
       input,
       project,
@@ -240,7 +229,6 @@ export class MessagingController {
     @Body() input: UpdatePushMessageDTO,
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.updatePushMessage({
-      db,
       messageId,
       input,
       project,
@@ -260,6 +248,6 @@ export class MessagingController {
     },
   })
   async deleteMessage(@Param() { messageId }: MessageParamsDTO): Promise<void> {
-    return this.messagingService.deleteMessage(db, messageId)
+    return this.messagingService.deleteMessage(messageId)
   }
 }

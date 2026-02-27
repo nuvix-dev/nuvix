@@ -18,7 +18,6 @@ import { Exception } from '@nuvix/core/extend/exception'
 import { Models } from '@nuvix/core/helpers'
 import {
   ConsoleInterceptor,
-  ProjectGuard,
   ResponseInterceptor,
   StatsQueue,
 } from '@nuvix/core/resolvers'
@@ -38,7 +37,7 @@ import {
 
 @Controller({ version: ['1', VERSION_NEUTRAL], path: 'project' })
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
-@UseGuards(ProjectGuard)
+
 @Auth([AuthType.ADMIN])
 export class ProjectController {
   @Get('usage', {

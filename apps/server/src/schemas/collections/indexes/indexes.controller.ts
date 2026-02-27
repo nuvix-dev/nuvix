@@ -19,7 +19,6 @@ import { Models } from '@nuvix/core/helpers'
 import { IndexesQueryPipe } from '@nuvix/core/pipes/queries'
 import {
   ApiInterceptor,
-  ProjectGuard,
   ResponseInterceptor,
   SchemaGuard,
 } from '@nuvix/core/resolvers'
@@ -35,7 +34,7 @@ import { IndexesService } from './indexes.service'
   path: 'schemas/:schemaId/collections/:collectionId/indexes',
 })
 @Namespace('schemas')
-@UseGuards(ProjectGuard, SchemaGuard)
+@UseGuards(SchemaGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.ADMIN, AuthType.KEY])
 @CurrentSchemaType(SchemaType.Document)
@@ -61,7 +60,7 @@ export class IndexesController {
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() input: CreateIndexDTO,
   ): Promise<IResponse<IndexesDoc>> {
-    return this.indexesService.createIndex(db, collectionId, input, project)
+    return this.indexesService.createIndex(collectionId, input, project)
   }
 
   @Get('', {
@@ -78,7 +77,7 @@ export class IndexesController {
     @Param() { collectionId }: CollectionParamsDTO,
     @QueryFilter(IndexesQueryPipe) queries?: Queries[],
   ): Promise<IListResponse<IndexesDoc>> {
-    return this.indexesService.getIndexes(db, collectionId, queries)
+    return this.indexesService.getIndexes(collectionId, queries)
   }
 
   @Get(':key', {
@@ -94,7 +93,7 @@ export class IndexesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId, key }: IndexParamsDTO,
   ): Promise<IResponse<IndexesDoc>> {
-    return this.indexesService.getIndex(db, collectionId, key)
+    return this.indexesService.getIndex(collectionId, key)
   }
 
   @Delete(':key', {
@@ -115,6 +114,6 @@ export class IndexesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId, key }: IndexParamsDTO,
   ): Promise<IndexesDoc> {
-    return this.indexesService.deleteIndex(db, collectionId, key, project)
+    return this.indexesService.deleteIndex(collectionId, key, project)
   }
 }

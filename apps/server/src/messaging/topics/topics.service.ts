@@ -42,7 +42,7 @@ export class TopicsService {
   /**
    * Lists all topics.
    */
-  async listTopics({ db, queries = [], search }: ListTopics) {
+  async listTopics({ queries = [], search }: ListTopics) {
     if (search) {
       queries.push(Query.search('search', search))
     }
@@ -50,7 +50,7 @@ export class TopicsService {
     const { filters } = Query.groupByType(queries)
 
     const topics = await db.find('topics', queries)
-    const data = await this.populateTargets(db, topics)
+    const data = await this.populateTargets(topics)
     const total = await db.count('topics', filters)
 
     return {
@@ -59,7 +59,7 @@ export class TopicsService {
     }
   }
 
-  private populateTargets(db: Database, topics: Doc<Topics>[]) {
+  private populateTargets(topics: Doc<Topics>[]) {
     return db.withSchema(Schemas.Auth, () =>
       db.skipValidation(() =>
         Promise.all(
@@ -81,14 +81,14 @@ export class TopicsService {
   /**
    * Get Topic
    */
-  async getTopic(db: Database, id: string) {
+  async getTopic(id: string) {
     const topic = await db.getDocument('topics', id)
 
     if (topic.empty()) {
       throw new Exception(Exception.TOPIC_NOT_FOUND)
     }
 
-    const populatedTopic = await this.populateTargets(db, [topic]).then(
+    const populatedTopic = await this.populateTargets([topic]).then(
       ([populated]) => populated!,
     )
     return populatedTopic
@@ -97,7 +97,7 @@ export class TopicsService {
   /**
    * Updates a topic.
    */
-  async updateTopic({ topicId, db, input }: UpdateTopic) {
+  async updateTopic({ topicId, input }: UpdateTopic) {
     const topic = await db.getDocument('topics', topicId)
 
     if (topic.empty()) {
@@ -114,7 +114,7 @@ export class TopicsService {
 
     const updatedTopic = await db.updateDocument('topics', topicId, topic)
 
-    const populatedTopic = await this.populateTargets(db, [updatedTopic]).then(
+    const populatedTopic = await this.populateTargets([updatedTopic]).then(
       ([populated]) => populated!,
     )
     return populatedTopic
@@ -123,7 +123,7 @@ export class TopicsService {
   /**
    * Deletes a topic.
    */
-  async deleteTopic(db: Database, topicId: string, project: ProjectsDoc) {
+  async deleteTopic(topicId: string, project: ProjectsDoc) {
     const topic = await db.getDocument('topics', topicId)
 
     if (topic.empty()) {

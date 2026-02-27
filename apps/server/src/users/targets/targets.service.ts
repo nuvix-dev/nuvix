@@ -23,7 +23,6 @@ export class TargetsService {
    * Create a new target
    */
   async createTarget(
-    db: Database,
     userId: string,
     { targetId, providerId, ...input }: CreateTargetDTO,
   ) {
@@ -103,7 +102,7 @@ export class TargetsService {
   /**
    * Get all targets for a user
    */
-  async getTargets(db: Database, userId: string, queries: Query[] = []) {
+  async getTargets(userId: string, queries: Query[] = []) {
     const user = await db.getDocument('users', userId)
 
     if (user.empty()) {
@@ -124,12 +123,7 @@ export class TargetsService {
   /**
    * Update a target
    */
-  async updateTarget(
-    db: Database,
-    userId: string,
-    targetId: string,
-    input: UpdateTargetDTO,
-  ) {
+  async updateTarget(userId: string, targetId: string, input: UpdateTargetDTO) {
     const user = await db.getDocument('users', userId)
 
     if (user.empty()) {
@@ -201,7 +195,7 @@ export class TargetsService {
   /**
    * Get A target
    */
-  async getTarget(db: Database, userId: string, targetId: string) {
+  async getTarget(userId: string, targetId: string) {
     const user = await db.getDocument('users', userId)
 
     if (user.empty()) {
@@ -220,7 +214,7 @@ export class TargetsService {
   /**
    * Delete a target
    */
-  async deleteTarget(db: Database, userId: string, targetId: string) {
+  async deleteTarget(userId: string, targetId: string) {
     const user = await db.getDocument('users', userId)
 
     if (user.empty()) {

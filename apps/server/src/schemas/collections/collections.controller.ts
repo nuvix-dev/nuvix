@@ -22,7 +22,6 @@ import { Models } from '@nuvix/core/helpers'
 import { CollectionsQueryPipe, LogsQueryPipe } from '@nuvix/core/pipes/queries'
 import {
   ApiInterceptor,
-  ProjectGuard,
   ResponseInterceptor,
   SchemaGuard,
 } from '@nuvix/core/resolvers'
@@ -39,7 +38,7 @@ import {
 
 @Namespace('schemas')
 @Auth([AuthType.ADMIN, AuthType.KEY])
-@UseGuards(ProjectGuard, SchemaGuard)
+@UseGuards(SchemaGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Controller({ version: ['1'], path: 'schemas/:schemaId/collections' })
 @CurrentSchemaType(SchemaType.Document)
@@ -60,7 +59,7 @@ export class CollectionsController {
     @QueryFilter(CollectionsQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<CollectionsDoc>> {
-    return this.collectionsService.getCollections(db, queries, search)
+    return this.collectionsService.getCollections(queries, search)
   }
 
   @Post('', {
@@ -80,7 +79,7 @@ export class CollectionsController {
     @CurrentDatabase() db: Database,
     @Body() createCollectionDTO: CreateCollectionDTO,
   ): Promise<IResponse<CollectionsDoc>> {
-    return this.collectionsService.createCollection(db, createCollectionDTO)
+    return this.collectionsService.createCollection(createCollectionDTO)
   }
 
   @Get(':collectionId', {
@@ -96,7 +95,7 @@ export class CollectionsController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
   ): Promise<IResponse<CollectionsDoc>> {
-    return this.collectionsService.getCollection(db, collectionId)
+    return this.collectionsService.getCollection(collectionId)
   }
 
   @Put(':collectionId', {
@@ -118,7 +117,6 @@ export class CollectionsController {
     @Body() updateCollectionDTO: UpdateCollectionDTO,
   ): Promise<IResponse<CollectionsDoc>> {
     return this.collectionsService.updateCollection(
-      db,
       collectionId,
       updateCollectionDTO,
     )
@@ -140,7 +138,7 @@ export class CollectionsController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
   ): Promise<void> {
-    return this.collectionsService.removeCollection(db, collectionId, project)
+    return this.collectionsService.removeCollection(collectionId, project)
   }
 
   @Get(':collectionId/usage', {
@@ -157,7 +155,7 @@ export class CollectionsController {
     @Param() { collectionId }: CollectionParamsDTO,
     @Query('range') range?: string,
   ): Promise<IResponse<unknown>> {
-    return this.collectionsService.getCollectionUsage(db, collectionId, range)
+    return this.collectionsService.getCollectionUsage(collectionId, range)
   }
 
   @Get(':collectionId/logs', {
@@ -176,6 +174,6 @@ export class CollectionsController {
     @QueryFilter(LogsQueryPipe) queries?: Queries[],
   ): Promise<IListResponse<unknown>> {
     throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
-    return this.collectionsService.getCollectionLogs(db, collectionId, queries)
+    return this.collectionsService.getCollectionLogs(collectionId, queries)
   }
 }

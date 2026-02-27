@@ -10,7 +10,6 @@ export class IdentityService {
    * Get Identities
    */
   async getIdentities({
-    db,
     user,
     queries = [],
   }: WithDB<WithUser<{ queries?: Query[] }>>): Promise<{
@@ -47,7 +46,6 @@ export class IdentityService {
    * Delete Identity
    */
   async deleteIdentity({
-    db,
     identityId,
   }: WithDB<{ identityId: string }>): Promise<void> {
     const identity = await db.getDocument('identities', identityId)
@@ -60,5 +58,5 @@ export class IdentityService {
   }
 }
 
-type WithDB<T = unknown> = { db: Database } & T
+type WithDB<T = unknown> = T
 type WithUser<T = unknown> = { user: UsersDoc } & T

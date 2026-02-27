@@ -33,7 +33,6 @@ export class TargetsService {
    * Create Push Target
    */
   async createPushTarget({
-    db,
     user,
     targetId,
     userAgent,
@@ -102,7 +101,6 @@ export class TargetsService {
    * Update Push Target
    */
   async updatePushTarget({
-    db,
     user,
     request,
     targetId,
@@ -146,7 +144,6 @@ export class TargetsService {
    * Delete Push Target
    */
   async deletePushTarget({
-    db,
     user,
     targetId,
     project,
@@ -174,5 +171,5 @@ export class TargetsService {
   }
 }
 
-type WithDB<T = unknown> = { db: Database } & T
+type WithDB<T = unknown> = T
 type WithUser<T = unknown> = { user: UsersDoc } & T

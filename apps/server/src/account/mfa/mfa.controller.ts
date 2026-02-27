@@ -10,7 +10,6 @@ import {
 import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
 import {
   Auth,
-  AuthDatabase,
   AuthType,
   Locale,
   Namespace,
@@ -20,11 +19,7 @@ import {
 } from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
 import { LocaleTranslator, Models } from '@nuvix/core/helpers'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { Database, type Doc } from '@nuvix/db'
 import type { IResponse } from '@nuvix/utils'
 import type {
@@ -44,7 +39,7 @@ import { MfaService } from './mfa.service'
 
 @Controller({ version: ['1'], path: 'account/mfa' })
 @Namespace('account')
-@UseGuards(ProjectGuard)
+
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.SESSION, AuthType.JWT])
 @Scope('account')
@@ -73,7 +68,6 @@ export class MfaController {
       mfa,
       session,
       user,
-      db,
     })
   }
 
@@ -120,7 +114,6 @@ export class MfaController {
       type,
       project,
       user,
-      db,
     })
   }
 
@@ -148,7 +141,6 @@ export class MfaController {
       otp,
       user,
       session,
-      db,
     })
   }
 
@@ -195,7 +187,7 @@ export class MfaController {
       }>
     >
   > {
-    return this.mfaService.updateMfaRecoveryCodes({ db, user })
+    return this.mfaService.updateMfaRecoveryCodes({ user })
   }
 
   @Get('recovery-codes', {
@@ -242,7 +234,6 @@ export class MfaController {
     return this.mfaService.deleteMfaAuthenticator({
       type,
       user,
-      db,
     })
   }
 
@@ -274,7 +265,7 @@ export class MfaController {
       factor,
       userAgent: request.headers['user-agent'] || 'UNKNOWN',
       user,
-      db,
+
       project,
       locale,
     })
@@ -302,7 +293,7 @@ export class MfaController {
     return this.mfaService.updateMfaChallenge({
       ...input,
       user,
-      db,
+
       session,
     })
   }

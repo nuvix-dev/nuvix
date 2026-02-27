@@ -19,11 +19,7 @@ import {
   Project,
 } from '@nuvix/core/decorators'
 import { ParseDuplicatePipe } from '@nuvix/core/pipes'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  SchemaGuard,
-} from '@nuvix/core/resolvers'
+import { ApiInterceptor, SchemaGuard } from '@nuvix/core/resolvers'
 import { DataSource } from '@nuvix/pg'
 import { Context, SchemaType } from '@nuvix/utils'
 import type { ProjectsDoc } from '@nuvix/utils/types'
@@ -37,7 +33,7 @@ import { SchemasService } from './schemas.service'
 
 // Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
 @Controller({ version: ['1'], path: ['schemas/:schemaId', 'public'] })
-@UseGuards(ProjectGuard, SchemaGuard)
+@UseGuards(SchemaGuard)
 @Namespace('schemas')
 @UseInterceptors(ApiInterceptor)
 @CurrentSchemaType([SchemaType.Managed, SchemaType.Unmanaged])

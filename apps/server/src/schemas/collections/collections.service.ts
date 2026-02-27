@@ -47,7 +47,7 @@ export class CollectionsService {
   /**
    * Create a new collection.
    */
-  async createCollection(db: Database, input: CreateCollectionDTO) {
+  async createCollection(input: CreateCollectionDTO) {
     const { name, enabled, documentSecurity } = input
     let { collectionId, permissions = [] } = input
 
@@ -98,7 +98,7 @@ export class CollectionsService {
   /**
    * Get collections for a schema.
    */
-  async getCollections(db: Database, queries: Query[] = [], search?: string) {
+  async getCollections(queries: Query[] = [], search?: string) {
     if (search) {
       queries.push(Query.search('search', search))
     }
@@ -120,7 +120,7 @@ export class CollectionsService {
   /**
    * Find one collection.
    */
-  async getCollection(db: Database, collectionId: string) {
+  async getCollection(collectionId: string) {
     const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
@@ -138,7 +138,7 @@ export class CollectionsService {
    */
   async getCollectionLogs(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _db: Database,
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _collectionId: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -154,11 +154,7 @@ export class CollectionsService {
   /**
    * Update a collection.
    */
-  async updateCollection(
-    db: Database,
-    collectionId: string,
-    input: UpdateCollectionDTO,
-  ) {
+  async updateCollection(collectionId: string, input: UpdateCollectionDTO) {
     const { name, documentSecurity } = input
     let { permissions, enabled } = input
 
@@ -204,11 +200,7 @@ export class CollectionsService {
   /**
    * Remove a collection.
    */
-  async removeCollection(
-    db: Database,
-    collectionId: string,
-    project: ProjectsDoc,
-  ) {
+  async removeCollection(collectionId: string) {
     const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
@@ -238,7 +230,7 @@ export class CollectionsService {
    * @todo we have to put it in schemas controller
    * Get Usage.
    */
-  async getUsage(db: Database, range = '7d') {
+  async getUsage(range = '7d') {
     const periods = usageConfig
     const stats: Record<string, any> = {}
     const usage: Record<string, any> = {}
@@ -300,7 +292,7 @@ export class CollectionsService {
   /**
    * Get collection Usage.
    */
-  async getCollectionUsage(db: Database, collectionId: string, range = '7d') {
+  async getCollectionUsage(collectionId: string, range = '7d') {
     const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,

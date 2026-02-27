@@ -10,7 +10,6 @@ import {
 import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
 import {
   AllowSessionType,
-  AuthDatabase,
   AuthType,
   Locale,
   Namespace,
@@ -19,11 +18,7 @@ import {
 } from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
 import { LocaleTranslator, Models } from '@nuvix/core/helpers'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { Database } from '@nuvix/db'
 import { SessionType, type IResponse } from '@nuvix/utils'
 import type { ProjectsDoc, TokensDoc, UsersDoc } from '@nuvix/utils/types'
@@ -44,7 +39,7 @@ import {
 
 @Controller({ version: ['1'], path: 'account' })
 @Namespace('account')
-@UseGuards(ProjectGuard)
+
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class AccountController {
   constructor(private readonly accountService: AccountService) {}
@@ -74,7 +69,6 @@ export class AccountController {
     @User() user: UsersDoc,
   ): Promise<IResponse<UsersDoc>> {
     return this.accountService.createAccount(
-      db,
       input.userId,
       input.email,
       input.password,
@@ -116,7 +110,7 @@ export class AccountController {
     },
   })
   async deleteAccount(@User() user: UsersDoc): Promise<void> {
-    return this.accountService.deleteAccount(db, user, project)
+    return this.accountService.deleteAccount(user, project)
   }
 
   @Get('prefs', {
@@ -151,7 +145,7 @@ export class AccountController {
     @User() user: UsersDoc,
     @Body() input: UpdatePrefsDTO,
   ): Promise<IResponse<Record<string, unknown>>> {
-    return this.accountService.updatePrefs(db, user, input.prefs)
+    return this.accountService.updatePrefs(user, input.prefs)
   }
 
   @Patch('name', {
@@ -172,7 +166,7 @@ export class AccountController {
     @User() user: UsersDoc,
     @Body() { name }: UpdateNameDTO,
   ): Promise<IResponse<UsersDoc>> {
-    return this.accountService.updateName(db, name, user)
+    return this.accountService.updateName(name, user)
   }
 
   @Patch('password', {
@@ -195,7 +189,6 @@ export class AccountController {
     @Body() { password, oldPassword }: UpdatePasswordDTO,
   ): Promise<IResponse<UsersDoc>> {
     return this.accountService.updatePassword({
-      db: db,
       password,
       oldPassword,
       user,
@@ -221,7 +214,7 @@ export class AccountController {
     @User() user: UsersDoc,
     @Body() updateEmailDTO: UpdateEmailDTO,
   ): Promise<IResponse<UsersDoc>> {
-    return this.accountService.updateEmail(db, user, updateEmailDTO)
+    return this.accountService.updateEmail(user, updateEmailDTO)
   }
 
   @Patch('phone', {
@@ -243,7 +236,6 @@ export class AccountController {
     @Body() { password, phone }: UpdatePhoneDTO,
   ): Promise<IResponse<UsersDoc>> {
     return this.accountService.updatePhone({
-      db: db,
       password,
       phone,
       user,
@@ -271,7 +263,6 @@ export class AccountController {
     @Res({ passthrough: true }) response: NuvixRes,
   ): Promise<IResponse<UsersDoc>> {
     return this.accountService.updateStatus({
-      db: db,
       user,
       request,
       response,
@@ -312,7 +303,7 @@ export class AccountController {
       response,
       project,
       user,
-      db,
+
       locale,
     })
   }
@@ -346,7 +337,6 @@ export class AccountController {
       secret,
       response,
       user,
-      db,
     })
   }
 
@@ -380,7 +370,7 @@ export class AccountController {
       request,
       response,
       user,
-      db,
+
       project,
       locale,
     })
@@ -413,7 +403,6 @@ export class AccountController {
       userId,
       secret,
       user,
-      db,
     })
   }
 }

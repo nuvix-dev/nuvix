@@ -3,7 +3,7 @@ import path from 'node:path'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
-import { AppConfigService } from '@nuvix/core'
+
 import type { SmtpConfig } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Hooks } from '@nuvix/core/extend/hooks'
@@ -67,13 +67,11 @@ export class AccountService {
    * Create a new account
    */
   async createAccount(
-    db: Database,
     userId: string,
     email: string,
     password: string,
     name: string | undefined,
     user: UsersDoc,
-    project: ProjectsDoc,
   ): Promise<UsersDoc> {
     email = email.toLowerCase()
 
@@ -109,13 +107,7 @@ export class AccountService {
       }
     }
 
-    await Hooks.trigger('passwordValidator', [
-      db,
-      project,
-      password,
-      user,
-      true,
-    ])
+    await Hooks.trigger('passwordValidator', [project, password, user, true])
 
     const passwordHistory = auths.passwordHistory ?? 0
     const hashedPassword = await Auth.passwordHash(
@@ -201,7 +193,6 @@ export class AccountService {
   }
 
   async updatePrefs(
-    db: Database,
     user: UsersDoc,
     prefs: Record<string, string | number | boolean>,
   ) {
@@ -212,7 +203,7 @@ export class AccountService {
     return user.get('prefs', {})
   }
 
-  async deleteAccount(db: Database, user: UsersDoc, project: ProjectsDoc) {
+  async deleteAccount(user: UsersDoc, project: ProjectsDoc) {
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
@@ -234,7 +225,7 @@ export class AccountService {
   /**
    * Update User's Email
    */
-  async updateEmail(db: Database, user: UsersDoc, input: UpdateEmailDTO) {
+  async updateEmail(user: UsersDoc, input: UpdateEmailDTO) {
     const passwordUpdate = user.get('passwordUpdate')
 
     if (
@@ -315,7 +306,7 @@ export class AccountService {
   /**
    * Update User Name.
    */
-  async updateName(db: Database, name: string, user: UsersDoc) {
+  async updateName(name: string, user: UsersDoc) {
     user.set('name', name)
 
     user = await db.updateDocument('users', user.getId(), user)
@@ -331,7 +322,6 @@ export class AccountService {
     oldPassword,
     user,
     project,
-    db,
   }: {
     password: string
     oldPassword: string
@@ -386,13 +376,7 @@ export class AccountService {
       }
     }
 
-    await Hooks.trigger('passwordValidator', [
-      db,
-      project,
-      password,
-      user,
-      true,
-    ])
+    await Hooks.trigger('passwordValidator', [project, password, user, true])
 
     user
       .set('password', newPassword)
@@ -414,7 +398,6 @@ export class AccountService {
     phone,
     user,
     project,
-    db,
   }: {
     password: string
     phone: string
@@ -438,13 +421,7 @@ export class AccountService {
       throw new Exception(Exception.USER_INVALID_CREDENTIALS)
     }
 
-    await Hooks.trigger('passwordValidator', [
-      db,
-      project,
-      password,
-      user,
-      false,
-    ])
+    await Hooks.trigger('passwordValidator', [project, password, user, false])
 
     const target = await Authorization.skip(
       async () =>
@@ -503,7 +480,6 @@ export class AccountService {
    * Update Status
    */
   async updateStatus({
-    db,
     user,
     request,
     response,
@@ -538,7 +514,6 @@ export class AccountService {
    * Create email verification token
    */
   async createEmailVerification({
-    db,
     user,
     request,
     response,
@@ -688,7 +663,6 @@ export class AccountService {
    * Verify email
    */
   async updateEmailVerification({
-    db,
     user,
     response,
     userId,
@@ -739,7 +713,6 @@ export class AccountService {
    * Create phone verification token
    */
   async createPhoneVerification({
-    db,
     user,
     request,
     response,
@@ -833,7 +806,6 @@ export class AccountService {
    * Verify phone number
    */
   async updatePhoneVerification({
-    db,
     user,
     userId,
     secret,
@@ -878,7 +850,7 @@ export class AccountService {
   }
 }
 
-type WithDB<T = unknown> = { db: Database } & T
+type WithDB<T = unknown> = T
 type WithReqRes<T = unknown> = {
   request: NuvixRequest
   response: NuvixRes

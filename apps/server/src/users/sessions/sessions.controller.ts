@@ -8,7 +8,6 @@ import {
 import { Delete, Get, Post } from '@nuvix/core'
 import {
   Auth,
-  AuthDatabase,
   AuthType,
   Locale,
   Namespace,
@@ -16,11 +15,7 @@ import {
 } from '@nuvix/core/decorators'
 import type { LocaleTranslator } from '@nuvix/core/helpers'
 import { Models } from '@nuvix/core/helpers'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import type { Database } from '@nuvix/db'
 import { IListResponse, IResponse } from '@nuvix/utils'
 import type { ProjectsDoc, SessionsDoc } from '@nuvix/utils/types'
@@ -30,7 +25,7 @@ import { SessionsService } from './sessions.service'
 
 @Namespace('users')
 @Controller({ version: ['1'], path: 'users/:userId/sessions' })
-@UseGuards(ProjectGuard)
+
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.ADMIN, AuthType.KEY])
 export class SessionsController {
@@ -49,7 +44,7 @@ export class SessionsController {
     @Param() { userId }: UserParamDTO,
     @Locale() localeTranslater: LocaleTranslator,
   ): Promise<IListResponse<SessionsDoc>> {
-    return this.sessionsService.getSessions(db, userId, localeTranslater)
+    return this.sessionsService.getSessions(userId, localeTranslater)
   }
 
   @Post('', {
@@ -72,7 +67,6 @@ export class SessionsController {
     @Locale() localeTranslater: LocaleTranslator,
   ): Promise<IResponse<SessionsDoc>> {
     return this.sessionsService.createSession(
-      db,
       userId,
       req.headers['user-agent'] || 'UNKNOWN',
       req.ip,
@@ -95,7 +89,7 @@ export class SessionsController {
     },
   })
   async deleteSessions(@Param() { userId }: UserParamDTO): Promise<void> {
-    return this.sessionsService.deleteSessions(db, userId)
+    return this.sessionsService.deleteSessions(userId)
   }
 
   @Delete(':sessionId', {
@@ -115,6 +109,6 @@ export class SessionsController {
     @Param() { userId }: UserParamDTO,
     @Param() { sessionId }: SessionParamDTO,
   ): Promise<void> {
-    return this.sessionsService.deleteSession(db, userId, sessionId)
+    return this.sessionsService.deleteSession(userId, sessionId)
   }
 }
