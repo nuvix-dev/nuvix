@@ -9,6 +9,7 @@ import type { Key } from './key.helper'
 import { Doc } from '@nuvix/db'
 import type { AuthType } from '../decorators'
 import { localeTranslatorInstance } from './locale.helper'
+import { Detector } from './detector.helper'
 
 export class RequestContext {
   project: ProjectsDoc = new Doc()
@@ -42,6 +43,10 @@ export class RequestContext {
 
   translator() {
     return localeTranslatorInstance
+  }
+
+  detector(userAgent: string = 'UNKNOWN') {
+    return new Detector(userAgent)
   }
 
   constructor(init?: Partial<RequestContext>) {

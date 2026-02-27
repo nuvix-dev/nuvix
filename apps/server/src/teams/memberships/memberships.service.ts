@@ -63,7 +63,7 @@ export class MembershipsService {
       )
     }
 
-    if (!Auth.isTrustedActor && !this.appConfig.getSmtpConfig().host) {
+    if (!Auth.isTrustedActor && !configuration.smtp.enabled()) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED)
     }
 

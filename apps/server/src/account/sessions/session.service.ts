@@ -11,6 +11,7 @@ import { Exception } from '@nuvix/core/extend/exception'
 import {
   Auth,
   Detector,
+  EmailHelper,
   LocaleTranslator,
   Models,
   RequestContext,
@@ -74,6 +75,7 @@ import {
 export class SessionService {
   private readonly geodb: Reader<CountryResponse>
   private readonly db: Database
+  private readonly emailHelper = new EmailHelper()
 
   constructor(
     private readonly coreService: CoreService,
@@ -96,6 +98,7 @@ export class SessionService {
 
   private static readonly oauthDefaultSuccess = '/auth/oauth2/success'
   private static readonly oauthDefaultFailure = '/auth/oauth2/failure'
+  private static readonly magicAuthDefaultPath = '/auth/magic-url'
 
   /**
    * Get User's Sessions
@@ -357,17 +360,17 @@ export class SessionService {
     input: CreateEmailSessionDTO,
     request: NuvixRequest,
     response: NuvixRes,
-    locale: LocaleTranslator,
   ) {
     const email = input.email.toLowerCase()
     const protocol = request.protocol
+    const ctx = request.context
 
     const profile = await this.db.findOne('users', [
       Query.equal('email', [email]),
     ])
 
     if (
-      !profile ||
+      profile.empty() ||
       !profile.get('passwordUpdate') ||
       !(await Auth.passwordVerify(
         input.password,
@@ -385,10 +388,10 @@ export class SessionService {
 
     user.setAll(profile.toObject())
 
-    const auths = project.get('auths', {})
+    const auths = ctx.project.get('auths', {})
     const duration = auths.duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
-    const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
-    const record = this.geothis.db.get(request.ip)
+    const detector = ctx.detector(request.headers['user-agent'])
+    const record = this.geodb.get(request.ip)
     const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
 
     const session = new Doc<Sessions>({
@@ -434,7 +437,7 @@ export class SessionService {
     ])
     const createdSession = await this.db.createDocument('sessions', session)
 
-    if (!request.domainVerification) {
+    if (configuration.server.fallbackCookies) {
       response.header(
         'X-Fallback-Cookies',
         JSON.stringify({
@@ -449,21 +452,22 @@ export class SessionService {
         expires: expire,
         path: '/',
         secure: protocol === 'https',
-        domain: Auth.cookieDomain,
-        sameSite: Auth.cookieSamesite,
+        domain: ctx.cookieDomain,
+        sameSite: ctx.cookieSameSite,
         httpOnly: true,
       })
       .status(201)
 
-    const countryName = locale.getText(
-      `countries${createdSession.get('countryCode', '')?.toLowerCase()}`,
-      locale.getText('locale.country.unknown'),
-    )
+    const locale = ctx.translator()
+    const key = countryKey(createdSession.get('countryCode'))
+    const countryName = locale.has(key)
+      ? locale.getRaw(key)
+      : locale.get('locale.country.unknown')
 
     createdSession
       .set('current', true)
       .set('countryName', countryName)
-      .set('secret', Auth.encodeSession(user.getId(), secret))
+      .set('secret', secret)
 
     this.eventEmitter.emit(AppEvents.SESSION_CREATE, {
       userId: user.getId(),
@@ -474,13 +478,13 @@ export class SessionService {
       },
     })
 
-    if (project.get('auths', {}).sessionAlerts ?? false) {
-      const sessionCount = await this.db.count('sessions', [
-        Query.equal('userId', [user.getId()]),
-      ])
+    if (ctx.project.get('auths', {}).sessionAlerts ?? false) {
+      const sessionCount = await this.db.count('sessions', qb =>
+        qb.equal('userId', user.getId()),
+      )
 
       if (sessionCount !== 1) {
-        await this.sendSessionAlert(locale, user, project, createdSession)
+        await this.sendSessionAlert(user, createdSession, ctx)
       }
     }
 
@@ -490,20 +494,16 @@ export class SessionService {
   async createAnonymousSession({
     request,
     response,
-    locale,
     user,
-    project,
   }: {
     request: NuvixRequest
     response: NuvixRes
-    locale: LocaleTranslator
     user: UsersDoc
-    project: ProjectsDoc
-    db: Database
   }) {
+    const ctx = request.context
     const protocol = request.protocol
-    const limit = project.get('auths', {}).limit ?? 0
-    const maxUsers = this.appConfig.appLimits.users
+    const limit = ctx.project.get('auths', {}).limit ?? 0
+    const maxUsers = configuration.limits.users
 
     if (limit !== 0) {
       const total = await this.db.count('users', [], maxUsers)
@@ -537,9 +537,9 @@ export class SessionService {
 
     // Create session token
     const duration =
-      project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
-    const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
-    const record = this.geothis.db.get(request.ip)
+      ctx.project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
+    const detector = ctx.detector(request.headers['user-agent'])
+    const record = this.geodb.get(request.ip)
     const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
 
     const session = new Doc({
@@ -574,7 +574,7 @@ export class SessionService {
       sessionId: createdSession.getId(),
     })
 
-    if (!request.domainVerification) {
+    if (configuration.server.fallbackCookies) {
       response.header(
         'X-Fallback-Cookies',
         JSON.stringify({
@@ -589,22 +589,23 @@ export class SessionService {
       .cookie(Auth.cookieName, Auth.encodeSession(user.getId(), secret), {
         expires: expire,
         path: '/',
-        domain: Auth.cookieDomain,
+        domain: ctx.cookieDomain,
         secure: protocol === 'https',
         httpOnly: true,
-        sameSite: Auth.cookieSamesite,
+        sameSite: ctx.cookieSameSite,
       })
       .status(201)
 
-    const countryName = locale.getText(
-      `countries.${createdSession.get('countryCode', '')?.toLowerCase()}`,
-      locale.getText('locale.country.unknown'),
-    )
+    const locale = ctx.translator()
+    const key = countryKey(createdSession.get('countryCode'))
+    const countryName = locale.has(key)
+      ? locale.getRaw(key)
+      : locale.get('locale.country.unknown')
 
     createdSession
       .set('current', true)
       .set('countryName', countryName)
-      .set('secret', Auth.encodeSession(user.getId(), secret))
+      .set('secret', secret)
 
     return createdSession
   }
@@ -615,29 +616,24 @@ export class SessionService {
   async createOAuth2Session({
     input,
     request,
-    response,
     provider,
-    project,
   }: {
     input: CreateOAuth2SessionDTO
     request: NuvixRequest
-    response: NuvixRes
-    project: ProjectsDoc
     provider: OAuthProviders
   }) {
+    const ctx = request.context
     const protocol = request.protocol
+    // TODO: validate url
     const success = input.success || ''
     const failure = input.failure || ''
     const scopes = input.scopes || []
 
-    const callback = `${protocol}://${request.host}/v1/account/sessions/oauth2/callback/${provider}/${project.getId()}`
-    const providerInfo = this.getProviderConfig(project, provider)
+    const callback = `${protocol}://${request.host}/v1/account/sessions/oauth2/callback/${provider}`
+    const providerInfo = this.getProviderConfig(ctx.project, provider)
 
     if (!providerInfo.enabled) {
-      throw new Exception(
-        Exception.PROJECT_PROVIDER_DISABLED,
-        `This provider is disabled. Please enable the provider from your ${configuration.app.name} console to continue.`,
-      )
+      throw new Exception(Exception.PROJECT_PROVIDER_DISABLED)
     }
 
     const appId = providerInfo.appId
@@ -651,16 +647,12 @@ export class SessionService {
     }
 
     const AuthClass = await getOAuth2Class(provider)
-    const consoleDomain =
-      request.host.split('.').length === 3
-        ? `console.${request.host.split('.', 2)[1]}`
-        : request.host
     const finalSuccess =
       success ||
-      `${protocol}://${consoleDomain}${SessionService.oauthDefaultSuccess}`
+      `${protocol}://${request.host}${SessionService.oauthDefaultSuccess}`
     const finalFailure =
       failure ||
-      `${protocol}://${consoleDomain}${SessionService.oauthDefaultFailure}`
+      `${protocol}://${request.host}${SessionService.oauthDefaultFailure}`
 
     const oauth2 = new AuthClass(
       appId,
@@ -686,37 +678,39 @@ export class SessionService {
     provider,
     request,
     response,
-    project,
   }: {
-    db: Database
     user: UsersDoc
     input: OAuth2CallbackDTO
     provider: string
     request: NuvixRequest
     response: NuvixRes
-    project: ProjectsDoc
   }) {
+    const ctx = request.context
     const protocol = request.protocol
-    const callback = `${protocol}://${request.host}/v1/account/sessions/oauth2/callback/${provider}/${project.getId()}`
+    const callback = `${protocol}://${request.host}/v1/account/sessions/oauth2/callback/${provider}`
     const defaultState = {
-      success: project.get('url', ''),
+      success: '',
       failure: '',
     }
     const validateURL = new URLValidator()
-    const providerInfo = this.getProviderConfig(project, provider)
+    const providerInfo = this.getProviderConfig(ctx.project, provider)
+    const providerEnabled = providerInfo.enabled
     const appId = providerInfo.appId ?? ''
     const appSecret = Auth.decryptIfDefined(providerInfo.secret) ?? ''
-    const providerEnabled = providerInfo.enabled ?? false
     const AuthClass = await getOAuth2Class(provider)
     const oauth2 = new AuthClass(appId, appSecret, callback)
 
-    let state = defaultState
+    let state: {
+      success: string
+      failure: string
+      token?: string
+    } = defaultState
     if (input.state) {
       try {
         state = { ...defaultState, ...oauth2.parseState(input.state) }
       } catch (_error) {
         throw new Exception(
-          Exception.GENERAL_SERVER_ERROR,
+          Exception.GENERAL_BAD_REQUEST,
           'Failed to parse login state params as passed from OAuth2 provider',
         )
       }
@@ -836,9 +830,7 @@ export class SessionService {
       sessionUpgrade = true
     }
 
-    const sessions = user.get('sessions', []) as SessionsDoc[]
-    const current = Auth.sessionVerify(sessions, Auth.secret)
-
+    const current = ctx.session?.getId()
     if (current) {
       const currentDocument = await this.db.getDocument('sessions', current)
       if (!currentDocument.empty()) {
@@ -892,8 +884,8 @@ export class SessionService {
       }
 
       if (user.empty()) {
-        const limit = project.get('auths', {}).limit ?? 0
-        const maxUsers = this.appConfig.appLimits.users
+        const limit = ctx.project.get('auths', {}).limit ?? 0
+        const maxUsers = configuration.limits.users
 
         if (limit !== 0) {
           const total = await this.db.count('users', [], maxUsers)
@@ -906,6 +898,9 @@ export class SessionService {
           Query.equal('providerEmail', [email]),
         ])
         if (!identityWithMatchingEmail.empty()) {
+          // This means an account with the same email already exists but with a different provider,
+          // we don't want to link them together automatically for security reasons,
+          // so we return an error instead of linking the new provider to the existing account
           return failureRedirect(Exception.GENERAL_BAD_REQUEST)
         }
 
@@ -979,10 +974,13 @@ export class SessionService {
         Query.notEqual('userInternalId', user.getSequence()),
       ])
       if (identitiesWithMatchingEmail.length > 0) {
+        // This means an identity with the same email already exists but with a different provider,
+        // we don't want to link them together automatically for security reasons,
+        // so we return an error instead of linking the new provider to the existing account
         return failureRedirect(Exception.GENERAL_BAD_REQUEST)
       }
 
-      identity = (await this.db.createDocument(
+      identity = await this.db.createDocument(
         'identities',
         new Doc({
           $id: ID.unique(),
@@ -1002,7 +1000,7 @@ export class SessionService {
             Date.now() + accessTokenExpiry * 1000,
           ),
         }),
-      )) as any
+      )
     } else {
       identity
         .set('providerAccessToken', accessToken)
@@ -1026,14 +1024,14 @@ export class SessionService {
     await this.db.updateDocument('users', user.getId(), user)
 
     const duration =
-      project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
+      ctx.project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
     const expire = new Date(Date.now() + duration * 1000)
 
     const parsedState = new URL(state.success)
     const query = new URLSearchParams(parsedState.search)
 
     // If token param is set, return token in query string
-    if ((state as any).token) {
+    if (state.token) {
       const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_OAUTH2)
       const token = new Doc<Tokens>({
         $id: ID.unique(),
@@ -1059,8 +1057,8 @@ export class SessionService {
       query.set('userId', user.getId())
     } else {
       // Create session
-      const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
-      const record = this.geothis.db.get(request.ip)
+      const detector = ctx.detector(request.headers['user-agent'])
+      const record = this.geodb.get(request.ip)
       const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
 
       const session = new Doc<Sessions>({
@@ -1094,7 +1092,7 @@ export class SessionService {
         ]),
       )
 
-      if (!request.domainVerification) {
+      if (configuration.server.fallbackCookies) {
         response.header(
           'X-Fallback-Cookies',
           JSON.stringify({
@@ -1103,9 +1101,9 @@ export class SessionService {
         )
       }
 
+      // todo: rethink...
       if (parsedState.pathname === SessionService.oauthDefaultSuccess) {
-        query.set('project', project.getId())
-        query.set('domain', Auth.cookieDomain)
+        query.set('domain', ctx.cookieDomain)
         query.set('key', Auth.cookieName)
         query.set('secret', Auth.encodeSession(user.getId(), secret))
       }
@@ -1116,10 +1114,10 @@ export class SessionService {
         {
           expires: expire,
           path: '/',
-          domain: Auth.cookieDomain,
+          domain: ctx.cookieDomain,
           secure: protocol === 'https',
           httpOnly: true,
-          sameSite: Auth.cookieSamesite,
+          sameSite: ctx.cookieSameSite,
         },
       )
 
@@ -1166,28 +1164,25 @@ export class SessionService {
     request,
     response,
     provider,
-    project,
   }: {
     input: CreateOAuth2TokenDTO
     request: NuvixRequest
     response: NuvixRes
     provider: OAuthProviders
-    project: ProjectsDoc
   }) {
+    const ctx = request.context
     const protocol = request.protocol
+    // todo: validate url...
     const success = input.success || ''
     const failure = input.failure || ''
     const scopes = input.scopes || []
 
-    const callback = `${protocol}://${request.host}/v1/account/sessions/oauth2/callback/${provider}/${project.getId()}`
-    const providerInfo = this.getProviderConfig(project, provider)
+    const callback = `${protocol}://${request.host}/v1/account/sessions/oauth2/callback/${provider}`
+    const providerInfo = this.getProviderConfig(ctx.project, provider)
     const providerEnabled = providerInfo.enabled ?? false
 
     if (!providerEnabled) {
-      throw new Exception(
-        Exception.PROJECT_PROVIDER_DISABLED,
-        `This provider is disabled. Please enable the provider from your ${configuration.app.name} console to continue.`,
-      )
+      throw new Exception(Exception.PROJECT_PROVIDER_DISABLED)
     }
 
     const appId = providerInfo.appId
@@ -1205,16 +1200,12 @@ export class SessionService {
       throw new Exception(Exception.PROJECT_PROVIDER_UNSUPPORTED)
     }
 
-    const consoleDomain =
-      request.host.split('.').length === 3
-        ? `console.${request.host.split('.', 2)[1]}`
-        : request.host
     const finalSuccess =
       success ||
-      `${protocol}://${consoleDomain}${SessionService.oauthDefaultSuccess}`
+      `${protocol}://${request.host}${SessionService.oauthDefaultSuccess}`
     const finalFailure =
       failure ||
-      `${protocol}://${consoleDomain}${SessionService.oauthDefaultFailure}`
+      `${protocol}://${request.host}${SessionService.oauthDefaultFailure}`
 
     const oauth2 = new AuthClass(
       appId,
@@ -1242,30 +1233,25 @@ export class SessionService {
     user,
     input,
     request,
-    response,
-    locale,
-    project,
   }: {
-    db: Database
     user: UsersDoc
     input: CreateMagicURLTokenDTO
     request: NuvixRequest
-    response: NuvixRes
-    locale: LocaleTranslator
-    project: ProjectsDoc
   }) {
-    if (!this.appConfig.getSmtpConfig().host) {
-      throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP disabled')
+    if (!configuration.smtp.enabled()) {
+      throw new Exception(Exception.GENERAL_SMTP_DISABLED)
     }
 
+    const ctx = request.context
     const {
       userId,
       email,
       url: inputUrl = '',
       phrase: inputPhrase = false,
     } = input
+    // todo: validate url
     let url = inputUrl
-    let phrase: string
+    let phrase: string | undefined
 
     if (inputPhrase === true) {
       phrase = PhraseGenerator.generate()
@@ -1277,8 +1263,8 @@ export class SessionService {
     if (!result.empty()) {
       user.setAll(result.toObject())
     } else {
-      const limit = project.get('auths', {}).limit ?? 0
-      const maxUsers = this.appConfig.appLimits.users
+      const limit = ctx.project.get('auths', {}).limit ?? 0
+      const maxUsers = configuration.limits.users
 
       if (limit !== 0) {
         const total = await this.db.count('users', [], maxUsers)
@@ -1350,7 +1336,7 @@ export class SessionService {
     await this.db.purgeCachedDocument('users', user.getId())
 
     if (!url) {
-      url = `${request.protocol}://${request.host}/console/auth/magic-url`
+      url = `${request.protocol}://${request.host}${SessionService.magicAuthDefaultPath}`
     }
 
     // Parse and merge URL query parameters
@@ -1358,113 +1344,66 @@ export class SessionService {
     urlObj.searchParams.set('userId', user.getId())
     urlObj.searchParams.set('secret', tokenSecret)
     urlObj.searchParams.set('expire', expire.toISOString())
-    urlObj.searchParams.set('project', project.getId())
     url = urlObj.toString()
 
-    let subject = locale.getText('emails.magicSession.subject')
-    const customTemplate =
-      project.get('templates', {})[`email.magicSession-${locale.default}`] ?? {}
-
-    const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
+    const project = ctx.project
+    const locale = ctx.translator()
+    const detector = ctx.detector(request.headers['user-agent'])
     const agentOs = detector.getOS()
     const agentClient = detector.getClient()
     const agentDevice = detector.getDevice()
 
-    const templatePath = path.join(
-      this.appConfig.assetConfig.templates,
-      'email-magic-url.tpl',
-    )
-    const templateSource = await fs.readFile(templatePath, 'utf8')
-    const template = Template.compile(templateSource)
+    const projectName = project.get('name')
+    const payload = await this.emailHelper
+      .builder(project)
+      .to(email)
+      .withSubject(
+        locale.t('emails.magicSession.subject', { project: projectName }),
+      )
+      .usingTemplate(
+        'email-magic-url.tpl',
+        `magicSession-${locale.fallbackLocale}`,
+      )
+      .withData({
+        hello: locale.get('emails.magicSession.hello', {
+          user: user.get('name', 'User'),
+        }),
+        optionButton: locale.get('emails.magicSession.optionButton', {
+          project: projectName,
+        }),
+        buttonText: locale.get('emails.magicSession.buttonText', {
+          project: projectName,
+        }),
+        optionUrl: locale.get('emails.magicSession.optionUrl'),
+        clientInfo: locale.get('emails.magicSession.clientInfo', {
+          agentClient: agentClient.clientName || 'UNKNOWN',
+          agentDevice: agentDevice.deviceBrand || 'UNKNOWN',
+          agentOs: agentOs.osName || 'UNKNOWN',
+        }),
+        thanks: locale.get('emails.magicSession.thanks'),
+        signature: locale.get('emails.magicSession.signature', {
+          project: projectName,
+        }),
+        securityPhrase: phrase
+          ? locale.get('emails.magicSession.securityPhrase', { phrase })
+          : '',
+      })
+      .withVariables({
+        direction: locale.get('settings.direction'),
+        user: user.get('name', 'User'),
+        project: projectName,
+        redirect: url,
+      })
+      .build()
 
-    const emailData = {
-      hello: locale.getText('emails.magicSession.hello'),
-      optionButton: locale.getText('emails.magicSession.optionButton'),
-      buttonText: locale.getText('emails.magicSession.buttonText'),
-      optionUrl: locale.getText('emails.magicSession.optionUrl'),
-      clientInfo: locale.getText('emails.magicSession.clientInfo'),
-      thanks: locale.getText('emails.magicSession.thanks'),
-      signature: locale.getText('emails.magicSession.signature'),
-      securityPhrase: phrase!
-        ? locale.getText('emails.magicSession.securityPhrase')
-        : '',
-    }
-
-    let body = template(emailData)
-
-    const smtp = project.get('smtp', {}) as SmtpConfig
-    const smtpEnabled = smtp.enabled ?? false
-    const systemConfig = this.appConfig.get('system')
-
-    let senderEmail = systemConfig.emailAddress || configuration.app.emailTeam
-    let senderName =
-      systemConfig.emailName || `${configuration.app.name} Server`
-    let replyTo = ''
-
-    const smtpServer: SmtpConfig = {} as SmtpConfig
-    if (smtpEnabled) {
-      if (smtp.senderEmail) {
-        senderEmail = smtp.senderEmail
-      }
-      if (smtp.senderName) {
-        senderName = smtp.senderName
-      }
-      if (smtp.replyTo) {
-        replyTo = smtp.replyTo
-      }
-
-      smtpServer.host = smtp.host || ''
-      smtpServer.port = smtp.port
-      smtpServer.username = smtp.username || ''
-      smtpServer.password = smtp.password || ''
-      smtpServer.secure = smtp.secure ?? false
-
-      if (customTemplate) {
-        if (customTemplate.senderEmail) {
-          senderEmail = customTemplate.senderEmail
-        }
-        if (customTemplate.senderName) {
-          senderName = customTemplate.senderName
-        }
-        if (customTemplate.replyTo) {
-          replyTo = customTemplate.replyTo
-        }
-
-        body = customTemplate.message || body
-        subject = customTemplate.subject || subject
-      }
-
-      smtpServer.replyTo = replyTo
-      smtpServer.senderEmail = senderEmail
-      smtpServer.senderName = senderName
-    }
-
-    const emailVariables = {
-      direction: locale.getText('settings.direction'),
-      user: user.get('name'),
-      project: project.get('name'),
-      redirect: url,
-      agentDevice: agentDevice.deviceBrand || 'UNKNOWN',
-      agentClient: agentClient.clientName || 'UNKNOWN',
-      agentOs: agentOs.osName || 'UNKNOWN',
-      phrase: phrase! || '',
-    }
-
-    await this.mailsQueue.add(MailJob.SEND_EMAIL, {
-      email,
-      subject,
-      body,
-      server: smtpServer,
-      variables: emailVariables,
-    })
+    await this.mailsQueue.add(MailJob.SEND_EMAIL, payload)
 
     createdToken.set('secret', tokenSecret)
 
-    if (phrase!) {
+    if (phrase) {
       createdToken.set('phrase', phrase)
     }
 
-    response.status(201)
     return createdToken
   }
 
@@ -1475,24 +1414,18 @@ export class SessionService {
     user,
     input,
     request,
-    response,
-    locale,
-    project,
   }: {
-    db: Database
     user: UsersDoc
     input: CreateEmailTokenDTO
     request: NuvixRequest
-    response: NuvixRes
-    locale: LocaleTranslator
-    project: ProjectsDoc
   }) {
-    if (!this.appConfig.getSmtpConfig().host) {
-      throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP disabled')
+    if (!configuration.smtp.enabled()) {
+      throw new Exception(Exception.GENERAL_SMTP_DISABLED)
     }
 
+    const ctx = request.context
     const { userId, email, phrase: inputPhrase = false } = input
-    let phrase: string
+    let phrase: string | undefined
 
     if (inputPhrase === true) {
       phrase = PhraseGenerator.generate()
@@ -1504,8 +1437,8 @@ export class SessionService {
     if (!result.empty()) {
       user.setAll(result.toObject())
     } else {
-      const limit = project.get('auths', {}).limit ?? 0
-      const maxUsers = this.appConfig.appLimits.users
+      const limit = ctx.project.get('auths', {}).limit ?? 0
+      const maxUsers = configuration.limits.users
 
       if (limit !== 0) {
         const total = await this.db.count('users', [], maxUsers)
@@ -1575,11 +1508,14 @@ export class SessionService {
 
     await this.db.purgeCachedDocument('users', user.getId())
 
+    const locale = ctx.translator()
+    const project = ctx.project
+    const detector = ctx.detector(request.headers['user-agent'])
+
     let subject = locale.getText('emails.otpSession.subject')
     const customTemplate =
       project.get('templates', {})[`email.otpSession-${locale.default}`] ?? {}
 
-    const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
     const agentOs = detector.getOS()
     const agentClient = detector.getClient()
     const agentDevice = detector.getDevice()
@@ -1882,10 +1818,9 @@ export class SessionService {
    * Send Session Alert.
    */
   async sendSessionAlert(
-    locale: LocaleTranslator,
     user: UsersDoc,
-
     session: SessionsDoc,
+    ctx: RequestContext,
   ) {
     let subject: string = locale.getText('emails.sessionAlert.subject')
     const customTemplate =
@@ -2030,7 +1965,7 @@ export class SessionService {
     const duration =
       project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
-    const record = this.geothis.db.get(request.ip)
+    const record = this.geodb.get(request.ip)
     const sessionSecret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
 
     const tokenType = verifiedToken.get('type')

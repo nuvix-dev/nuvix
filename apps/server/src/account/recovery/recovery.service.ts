@@ -57,7 +57,7 @@ export class RecoveryService {
       >
     >
   >): Promise<TokensDoc> {
-    if (!this.appConfig.getSmtpConfig().host) {
+    if (!configuration.smtp.enabled()) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP disabled')
     }
 
