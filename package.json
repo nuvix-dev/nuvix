@@ -23,7 +23,8 @@
     "format": "biome format --write .",
     "test:unit": "turbo test:unit",
     "test:e2e": "turbo test:e2e",
-    "test:reset": "docker compose -f docker-compose.test.yml down -v && docker compose -f docker-compose.test.yml up -d"
+    "test:reset": "docker compose -f docker-compose.test.yml down -v && docker compose -f docker-compose.test.yml up -d",
+    "i18n:types": "bun scripts/generate-i18n-types.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.0.2",

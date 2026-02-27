@@ -25,11 +25,11 @@ export class RequestContext {
   authMeta: AuthMeta = {}
   sessionMeta: Record<string, unknown> = {}
 
-  _isAppUser: boolean = false
-  _isAdminUser: boolean = false
+  _isAPIUser: boolean = false // This is set to true if the user is authenticated via API key
+  _isAdminUser: boolean = false // This is set to true if the user has admin privileges (mostly for console users)
 
-  get isAppUser() {
-    return this._isAppUser
+  get isAPIUser() {
+    return this._isAPIUser
   }
 
   get isAdminUser() {

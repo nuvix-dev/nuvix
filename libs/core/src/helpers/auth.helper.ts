@@ -294,10 +294,14 @@ export class Auth {
     return false
   }
 
-  public static getRoles(user: UsersDoc): string[] {
+  public static getRoles(
+    user: UsersDoc,
+    isAdmin?: boolean,
+    isAPIUser?: boolean,
+  ): string[] {
     const roles: string[] = []
 
-    if (!Auth.isPlatformActor && !Auth.isTrustedActor) {
+    if (!isAdmin && !isAPIUser) {
       if (user.getId()) {
         roles.push(Role.user(user.getId()).toString())
         roles.push(Role.users().toString())

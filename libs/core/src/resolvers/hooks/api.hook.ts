@@ -49,7 +49,7 @@ export class ApiHook implements Hook {
       // Disable authorization checks for API keys
       Authorization.setDefaultStatus(false)
 
-      req.context._isAppUser = true
+      req.context._isAPIUser = true
       req.context.authType = AuthType.KEY
 
       if (apiKey.getRole() === 'apps') {
@@ -119,14 +119,18 @@ export class ApiHook implements Hook {
       req.context._isAdminUser = true
 
       if (mode === AppMode.ADMIN) {
-        // req.context._isAppUser = true; // Admin mode is a special mode for app users with elevated privileges, so we set _isAppUser to true as well
+        // req.context._isAPIUser = true; // Admin mode is a special mode for API users with elevated privileges, so we set _isAPIUser to true as well
         // Set auth type to admin
         req.context.authType = AuthType.ADMIN
       }
     }
 
     Authorization.setRole(role)
-    for (const authRole of Auth.getRoles(user)) {
+    for (const authRole of Auth.getRoles(
+      user,
+      req.context.isAdminUser,
+      req.context.isAPIUser,
+    )) {
       Authorization.setRole(authRole)
     }
 

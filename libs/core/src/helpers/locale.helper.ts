@@ -1,311 +1,252 @@
 import * as fs from 'node:fs'
 import { configuration } from '@nuvix/utils'
+import type {
+  TranslationKey,
+  ParamsFor,
+  RequiresParams,
+} from '../i18n/translation-keys.generated'
 
-// We could later improve this to use cache for translations to avoid reading files multiple times
+type TranslationFile = Record<string, string | { _: string; params?: any }>
 
-/**
- * Class to handle translations for different locales.
- */
+// Cache for loaded translations
+const translationCache = new Map<string, TranslationFile>()
+
+// Block tag handlers for {{#tag}}...{{/tag}}
+type BlockHandler = (content: string) => string
+
+const defaultBlockHandlers: Record<string, BlockHandler> = {
+  b: content => `<strong>${content}</strong>`,
+  i: content => `<em>${content}</em>`,
+  code: content => `<code>${content}</code>`,
+  u: content => `<u>${content}</u>`,
+}
+
+export interface TranslatorConfig {
+  locale?: string
+  fallbackLocale?: string
+  timezone?: string
+  throwOnMissing?: boolean
+  blockHandlers?: Record<string, BlockHandler>
+}
+
 export class LocaleTranslator {
-  private translations: { [key: string]: string }
+  private readonly translations: TranslationFile
+  private readonly fallbackTranslations: TranslationFile | null
+  private readonly blockHandlers: Record<string, BlockHandler>
+  private readonly config: Required<TranslatorConfig>
 
-  default = 'en'
+  readonly locale: string
+  readonly fallbackLocale: string
 
-  constructor(private locale = 'en') {
+  constructor(config: TranslatorConfig = {}) {
+    this.locale = config.locale ?? 'en'
+    this.fallbackLocale = config.fallbackLocale ?? 'en'
+
+    this.config = {
+      locale: this.locale,
+      fallbackLocale: this.fallbackLocale,
+      timezone: config.timezone ?? 'UTC',
+      throwOnMissing: config.throwOnMissing ?? false,
+      blockHandlers: config.blockHandlers ?? {},
+    }
+
+    this.blockHandlers = {
+      ...defaultBlockHandlers,
+      ...this.config.blockHandlers,
+    }
+
     this.translations = this.loadTranslations(this.locale)
+    this.fallbackTranslations =
+      this.locale !== this.fallbackLocale
+        ? this.loadTranslations(this.fallbackLocale)
+        : null
   }
 
-  private loadTranslations(locale: string): { [key: string]: string } {
-    const filePath = configuration.assets.get(
+  /**
+   * Get translation without params (for keys that don't need any)
+   */
+  get<K extends TranslationKey>(
+    key: K & (RequiresParams<K> extends false ? K : never),
+  ): string
+
+  /**
+   * Get translation with required params (autocomplete & type-checked)
+   */
+  get<K extends TranslationKey>(
+    key: K & (RequiresParams<K> extends true ? K : never),
+    params: ParamsFor<K>,
+  ): string
+
+  /**
+   * Implementation
+   */
+  get<K extends TranslationKey>(key: K, params?: ParamsFor<K>): string {
+    const template = this.resolveTemplate(key)
+
+    if (template === undefined) {
+      if (this.config.throwOnMissing) {
+        throw new Error(
+          `Missing translation: "${key}" (locale: ${this.locale})`,
+        )
+      }
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(`[i18n] Missing key: "${key}"`)
+      }
+      return key
+    }
+
+    if (!params || Object.keys(params).length === 0) {
+      return this.processBlocks(template, {})
+    }
+
+    return this.interpolate(template, params as Record<string, unknown>)
+  }
+
+  /**
+   * Shorter alias for get
+   */
+  t = this.get.bind(this) as typeof this.get
+
+  /**
+   * Check if a translation key exists
+   */
+  has(key: string): key is TranslationKey {
+    return (
+      key in this.translations ||
+      (this.fallbackTranslations !== null && key in this.fallbackTranslations)
+    )
+  }
+
+  /**
+   * Get raw template without interpolation
+   */
+  getRaw<K extends TranslationKey>(key: K): string | undefined {
+    return this.resolveTemplate(key)
+  }
+
+  /**
+   * Get all keys matching a prefix
+   */
+  keysWithPrefix(prefix: string): TranslationKey[] {
+    const keys = new Set<string>()
+
+    for (const key of Object.keys(this.translations)) {
+      if (key.startsWith(prefix)) keys.add(key)
+    }
+
+    if (this.fallbackTranslations) {
+      for (const key of Object.keys(this.fallbackTranslations)) {
+        if (key.startsWith(prefix)) keys.add(key)
+      }
+    }
+
+    return Array.from(keys) as TranslationKey[]
+  }
+
+  // ─────────────────────────────────────────────────────────────
+  // Internal implementation
+  // ─────────────────────────────────────────────────────────────
+
+  private resolveTemplate(key: string): string | undefined {
+    const primary = this.translations[key]
+    const fallback = this.fallbackTranslations?.[key]
+
+    const value = primary ?? fallback
+
+    if (value === undefined) return undefined
+
+    return typeof value === 'string' ? value : value._
+  }
+
+  private interpolate(
+    template: string,
+    params: Record<string, unknown>,
+  ): string {
+    // 1. Process block tags first
+    let result = this.processBlocks(template, params)
+
+    // 2. Replace mustache variables: {{variable}}
+    result = result.replace(/\{\{(?![#/])(\w+)\}\}/g, (match, key) => {
+      if (key in params) {
+        return this.formatValue(params[key])
+      }
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(`[i18n] Missing param: "${key}" in template`)
+      }
+      return match
+    })
+
+    // 3. Replace sprintf positional: %s
+    let positionalIndex = 0
+    result = result.replace(/%s/g, () => {
+      const value = params[String(positionalIndex)]
+      positionalIndex++
+      return value !== undefined ? this.formatValue(value) : '%s'
+    })
+
+    return result
+  }
+
+  private processBlocks(
+    template: string,
+    params: Record<string, unknown>,
+  ): string {
+    // Match {{#tag}}content{{/tag}} with support for nesting
+    const blockRegex = /\{\{#(\w+)\}\}([\s\S]*?)\{\{\/\1\}\}/g
+
+    return template.replace(blockRegex, (_, tag, content) => {
+      // Recursively interpolate content inside blocks
+      const interpolatedContent = this.interpolate(content, params)
+
+      // Apply block handler if available
+      const handler = this.blockHandlers[tag]
+      return handler ? handler(interpolatedContent) : interpolatedContent
+    })
+  }
+
+  private formatValue(value: unknown): string {
+    if (value === null || value === undefined) return ''
+    if (typeof value === 'string') return value
+    if (typeof value === 'number') return String(value)
+    if (typeof value === 'boolean') return String(value)
+    if (value instanceof Date) {
+      return new Intl.DateTimeFormat(this.locale, {
+        timeZone: this.config.timezone,
+      }).format(value)
+    }
+    return String(value)
+  }
+
+  private loadTranslations(locale: string): TranslationFile {
+    const cached = translationCache.get(locale)
+    if (cached) return cached
+
+    const filePath = configuration.assets.resolve(
       'locale',
       'translations',
       `${locale}.json`,
     )
-    if (fs.existsSync(filePath)) {
-      const fileContent = fs.readFileSync(filePath, 'utf-8')
-      return JSON.parse(fileContent)
+
+    try {
+      const content = fs.readFileSync(filePath, 'utf-8')
+      const translations = JSON.parse(content) as TranslationFile
+      translationCache.set(locale, translations)
+      return translations
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code === 'ENOENT') {
+        throw new Error(`Translation file not found: ${locale}.json`)
+      }
+      throw new Error(`Failed to load translations for "${locale}": ${err}`)
     }
-    throw new Error(`Translation file for locale ${locale} not found.`)
   }
 
-  public setLocale(locale: string): void {
-    this.locale = locale
-    this.translations = this.loadTranslations(locale)
+  static preload(locales: string[]): void {
+    for (const locale of locales) {
+      new LocaleTranslator({ locale })
+    }
   }
 
-  getText<T = any>(key: LocaleKeys, defaultValue?: string | any): T
-  getText<T = any>(key: string, defaultValue?: string | any): T
-  public getText<T = any>(
-    key: LocaleKeys,
-    defaultValue: string | any = null,
-  ): T {
-    return this.translations[key] ?? defaultValue
+  static clearCache(): void {
+    translationCache.clear()
   }
 }
-
-type LocaleKeys =
-  | 'settings.inspire'
-  | 'settings.locale'
-  | 'settings.direction'
-  | 'emails.sender'
-  | 'emails.verification.subject'
-  | 'emails.verification.hello'
-  | 'emails.verification.body'
-  | 'emails.verification.footer'
-  | 'emails.verification.thanks'
-  | 'emails.verification.signature'
-  | 'emails.magicSession.subject'
-  | 'emails.magicSession.hello'
-  | 'emails.magicSession.optionButton'
-  | 'emails.magicSession.buttonText'
-  | 'emails.magicSession.optionUrl'
-  | 'emails.magicSession.clientInfo'
-  | 'emails.magicSession.securityPhrase'
-  | 'emails.magicSession.thanks'
-  | 'emails.magicSession.signature'
-  | 'emails.sessionAlert.subject'
-  | 'emails.sessionAlert.hello'
-  | 'emails.sessionAlert.body'
-  | 'emails.sessionAlert.listDevice'
-  | 'emails.sessionAlert.listIpAddress'
-  | 'emails.sessionAlert.listCountry'
-  | 'emails.sessionAlert.footer'
-  | 'emails.sessionAlert.thanks'
-  | 'emails.sessionAlert.signature'
-  | 'emails.otpSession.subject'
-  | 'emails.otpSession.hello'
-  | 'emails.otpSession.description'
-  | 'emails.otpSession.clientInfo'
-  | 'emails.otpSession.securityPhrase'
-  | 'emails.otpSession.thanks'
-  | 'emails.otpSession.signature'
-  | 'emails.mfaChallenge.subject'
-  | 'emails.mfaChallenge.hello'
-  | 'emails.mfaChallenge.description'
-  | 'emails.mfaChallenge.clientInfo'
-  | 'emails.mfaChallenge.thanks'
-  | 'emails.mfaChallenge.signature'
-  | 'emails.recovery.subject'
-  | 'emails.recovery.hello'
-  | 'emails.recovery.body'
-  | 'emails.recovery.footer'
-  | 'emails.recovery.thanks'
-  | 'emails.recovery.signature'
-  | 'emails.invitation.subject'
-  | 'emails.invitation.hello'
-  | 'emails.invitation.body'
-  | 'emails.invitation.footer'
-  | 'emails.invitation.thanks'
-  | 'emails.invitation.signature'
-  | 'emails.certificate.subject'
-  | 'emails.certificate.hello'
-  | 'emails.certificate.body'
-  | 'emails.certificate.footer'
-  | 'emails.certificate.thanks'
-  | 'emails.certificate.signature'
-  | 'sms.verification.body'
-  | 'locale.country.unknown'
-  | 'countries.af'
-  | 'countries.ao'
-  | 'countries.al'
-  | 'countries.ad'
-  | 'countries.ae'
-  | 'countries.ar'
-  | 'countries.am'
-  | 'countries.ag'
-  | 'countries.au'
-  | 'countries.at'
-  | 'countries.az'
-  | 'countries.bi'
-  | 'countries.be'
-  | 'countries.bj'
-  | 'countries.bf'
-  | 'countries.bd'
-  | 'countries.bg'
-  | 'countries.bh'
-  | 'countries.bs'
-  | 'countries.ba'
-  | 'countries.by'
-  | 'countries.bz'
-  | 'countries.bo'
-  | 'countries.br'
-  | 'countries.bb'
-  | 'countries.bn'
-  | 'countries.bt'
-  | 'countries.bw'
-  | 'countries.cf'
-  | 'countries.ca'
-  | 'countries.ch'
-  | 'countries.cl'
-  | 'countries.cn'
-  | 'countries.ci'
-  | 'countries.cm'
-  | 'countries.cd'
-  | 'countries.cg'
-  | 'countries.co'
-  | 'countries.km'
-  | 'countries.cv'
-  | 'countries.cr'
-  | 'countries.cu'
-  | 'countries.cy'
-  | 'countries.cz'
-  | 'countries.de'
-  | 'countries.dj'
-  | 'countries.dm'
-  | 'countries.dk'
-  | 'countries.do'
-  | 'countries.dz'
-  | 'countries.ec'
-  | 'countries.eg'
-  | 'countries.er'
-  | 'countries.es'
-  | 'countries.ee'
-  | 'countries.et'
-  | 'countries.fi'
-  | 'countries.fj'
-  | 'countries.fr'
-  | 'countries.fm'
-  | 'countries.ga'
-  | 'countries.gb'
-  | 'countries.ge'
-  | 'countries.gh'
-  | 'countries.gn'
-  | 'countries.gm'
-  | 'countries.gw'
-  | 'countries.gq'
-  | 'countries.gr'
-  | 'countries.gd'
-  | 'countries.gt'
-  | 'countries.gy'
-  | 'countries.hk'
-  | 'countries.hn'
-  | 'countries.hr'
-  | 'countries.ht'
-  | 'countries.hu'
-  | 'countries.id'
-  | 'countries.in'
-  | 'countries.ie'
-  | 'countries.ir'
-  | 'countries.iq'
-  | 'countries.is'
-  | 'countries.il'
-  | 'countries.it'
-  | 'countries.jm'
-  | 'countries.jo'
-  | 'countries.jp'
-  | 'countries.kz'
-  | 'countries.ke'
-  | 'countries.kg'
-  | 'countries.kh'
-  | 'countries.ki'
-  | 'countries.kn'
-  | 'countries.kr'
-  | 'countries.kw'
-  | 'countries.la'
-  | 'countries.lb'
-  | 'countries.lr'
-  | 'countries.ly'
-  | 'countries.lc'
-  | 'countries.li'
-  | 'countries.lk'
-  | 'countries.ls'
-  | 'countries.lt'
-  | 'countries.lu'
-  | 'countries.lv'
-  | 'countries.ma'
-  | 'countries.mc'
-  | 'countries.md'
-  | 'countries.mg'
-  | 'countries.mv'
-  | 'countries.mx'
-  | 'countries.mh'
-  | 'countries.mk'
-  | 'countries.ml'
-  | 'countries.mt'
-  | 'countries.mm'
-  | 'countries.me'
-  | 'countries.mn'
-  | 'countries.mz'
-  | 'countries.mr'
-  | 'countries.mu'
-  | 'countries.mw'
-  | 'countries.my'
-  | 'countries.na'
-  | 'countries.ne'
-  | 'countries.ng'
-  | 'countries.ni'
-  | 'countries.nl'
-  | 'countries.no'
-  | 'countries.np'
-  | 'countries.nr'
-  | 'countries.nz'
-  | 'countries.om'
-  | 'countries.pk'
-  | 'countries.ps'
-  | 'countries.pa'
-  | 'countries.pe'
-  | 'countries.ph'
-  | 'countries.pw'
-  | 'countries.pg'
-  | 'countries.pl'
-  | 'countries.kp'
-  | 'countries.pt'
-  | 'countries.py'
-  | 'countries.qa'
-  | 'countries.ro'
-  | 'countries.ru'
-  | 'countries.rw'
-  | 'countries.sa'
-  | 'countries.sd'
-  | 'countries.sn'
-  | 'countries.sg'
-  | 'countries.sb'
-  | 'countries.sl'
-  | 'countries.sv'
-  | 'countries.sm'
-  | 'countries.so'
-  | 'countries.rs'
-  | 'countries.ss'
-  | 'countries.st'
-  | 'countries.sr'
-  | 'countries.sk'
-  | 'countries.si'
-  | 'countries.se'
-  | 'countries.sz'
-  | 'countries.sc'
-  | 'countries.sy'
-  | 'countries.td'
-  | 'countries.tg'
-  | 'countries.th'
-  | 'countries.tj'
-  | 'countries.tm'
-  | 'countries.tl'
-  | 'countries.to'
-  | 'countries.tt'
-  | 'countries.tn'
-  | 'countries.tr'
-  | 'countries.tv'
-  | 'countries.tw'
-  | 'countries.tz'
-  | 'countries.ug'
-  | 'countries.ua'
-  | 'countries.uy'
-  | 'countries.us'
-  | 'countries.uz'
-  | 'countries.va'
-  | 'countries.vc'
-  | 'countries.ve'
-  | 'countries.vn'
-  | 'countries.vu'
-  | 'countries.ws'
-  | 'countries.ye'
-  | 'countries.za'
-  | 'countries.zm'
-  | 'countries.zw'
-  | 'continents.af'
-  | 'continents.an'
-  | 'continents.as'
-  | 'continents.eu'
-  | 'continents.na'
-  | 'continents.oc'
-  | 'continents.sa'
