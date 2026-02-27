@@ -1,13 +1,15 @@
-import * as fs from 'node:fs/promises'
-import path from 'node:path'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 
-import type { SmtpConfig } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Hooks } from '@nuvix/core/extend/hooks'
-import { Auth, LocaleTranslator, RequestContext } from '@nuvix/core/helpers'
+import {
+  Auth,
+  EmailHelper,
+  LocaleTranslator,
+  RequestContext,
+} from '@nuvix/core/helpers'
 import {
   DeletesJobData,
   MessagingJob,
@@ -42,13 +44,13 @@ import type {
   UsersDoc,
 } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
-import Template from 'handlebars'
 import { UpdateEmailDTO } from './DTO/account.dto'
 import { CoreService } from '@nuvix/core/core.service'
 
 @Injectable()
 export class AccountService {
   private readonly db: Database
+  private readonly emailHelper = new EmailHelper()
   constructor(
     _eventEmitter: EventEmitter2,
     @InjectQueue(QueueFor.MAILS)
@@ -564,96 +566,39 @@ export class AccountService {
     urlObj.searchParams.set('expire', expire.toISOString())
     const finalUrl = urlObj.toString()
 
-    const projectName = project.empty()
-      ? 'Console'
-      : project.get('name', '[APP-NAME]')
-    let body = locale.getText('emails.verification.body')
-    let subject = locale.getText('emails.verification.subject')
-    const customTemplate =
-      project.get('templates', {})[`email.verification-${locale.default}`] ?? {}
+    const { project, isAPIUser } = request.context
+    const payload = await this.emailHelper
+      .builder(project)
+      .to(user.get('email'))
+      .usingTemplate(
+        'email-verification.tpl',
+        `verification-${locale.fallbackLocale}`,
+      )
+      .withSubject(locale.get('emails.verification.subject'))
+      .withData({
+        body: locale.get('emails.verification.body', {
+          project: project.get('name'),
+        }),
+        hello: locale.get('emails.verification.hello', {
+          user: user.get('name', 'User'),
+        }),
+        footer: locale.get('emails.verification.footer'),
+        thanks: locale.get('emails.verification.thanks'),
+        signature: locale.get('emails.verification.signature', {
+          project: project.get('name'),
+        }),
+      })
+      .withVariables({
+        direction: locale.get('settings.direction'),
+        redirect: finalUrl,
+        project: project.get('name'),
+        team: '',
+      })
+      .build()
 
-    const templatePath = path.join(
-      this.appConfig.assetConfig.templates,
-      'email-inner-base.tpl',
-    )
-    const templateSource = await fs.readFile(templatePath, 'utf8')
-    const template = Template.compile(templateSource)
+    await this.mailsQueue.add(MailJob.SEND_EMAIL, payload)
 
-    const emailData = {
-      body: body,
-      hello: locale.get('emails.verification.hello'),
-      footer: locale.getText('emails.verification.footer'),
-      thanks: locale.getText('emails.verification.thanks'),
-      signature: locale.getText('emails.verification.signature'),
-    }
-
-    body = template(emailData)
-
-    const smtp = project.get('smtp', {}) as SmtpConfig
-    const smtpEnabled = smtp.enabled ?? false
-    const systemConfig = this.appConfig.get('system')
-
-    let senderEmail = systemConfig.emailAddress || configuration.app.emailTeam
-    let senderName =
-      systemConfig.emailName || `${configuration.app.name} Server`
-    let replyTo = ''
-
-    const smtpServer: SmtpConfig = {} as SmtpConfig
-
-    if (smtpEnabled) {
-      if (smtp.senderEmail) {
-        senderEmail = smtp.senderEmail
-      }
-      if (smtp.senderName) {
-        senderName = smtp.senderName
-      }
-      if (smtp.replyTo) {
-        replyTo = smtp.replyTo
-      }
-
-      smtpServer.host = smtp.host
-      smtpServer.port = smtp.port
-      smtpServer.username = smtp.username
-      smtpServer.password = smtp.password
-      smtpServer.secure = smtp.secure ?? false
-
-      if (customTemplate) {
-        if (customTemplate.senderEmail) {
-          senderEmail = customTemplate.senderEmail
-        }
-        if (customTemplate.senderName) {
-          senderName = customTemplate.senderName
-        }
-        if (customTemplate.replyTo) {
-          replyTo = customTemplate.replyTo
-        }
-
-        body = customTemplate.message || body
-        subject = customTemplate.subject || subject
-      }
-
-      smtpServer.replyTo = replyTo
-      smtpServer.senderEmail = senderEmail
-      smtpServer.senderName = senderName
-    }
-
-    const emailVariables = {
-      direction: locale.getText('settings.direction'),
-      user: user.get('name'),
-      redirect: finalUrl,
-      project: projectName,
-      team: '',
-    }
-
-    await this.mailsQueue.add(MailJob.SEND_EMAIL, {
-      email: user.get('email'),
-      subject,
-      body,
-      server: smtpServer,
-      variables: emailVariables,
-    })
-
-    createdVerification.set('secret', verificationSecret)
+    createdVerification.set('secret', isAPIUser ? verificationSecret : '')
 
     response.status(201)
     return createdVerification
