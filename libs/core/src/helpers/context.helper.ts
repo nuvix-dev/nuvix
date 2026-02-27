@@ -1,4 +1,4 @@
-import { AppMode } from '@nuvix/utils'
+import { AppMode, Schema } from '@nuvix/utils'
 import type {
   ProjectsDoc,
   SessionsDoc,
@@ -21,7 +21,7 @@ export class RequestContext {
   mode: AppMode = AppMode.DEFAULT
   authType?: AuthType
   namespace?: string
-  currentSchema?: string
+  currentSchema?: Schema
   authMeta: AuthMeta = {}
   sessionMeta: Record<string, unknown> = {}
 

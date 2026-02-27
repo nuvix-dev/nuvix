@@ -7,7 +7,6 @@ export const HOOKS = 'hooks'
 export const DEFAULT_DATABASE = 'postgres'
 
 export const CURRENT_SCHEMA_DB: unique symbol = Symbol('currentSchemaDb')
-export const CURRENT_SCHEMA_PG: unique symbol = Symbol('currentSchemaPg')
 
 export const APP_DATABASE_ATTRIBUTE_STRING_MAX_LENGTH = 1_073_741_824 // 2^32 bits / 4 bits per char
 export const APP_DATABASE_TIMEOUT_MILLISECONDS = 15_000

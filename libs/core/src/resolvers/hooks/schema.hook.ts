@@ -1,60 +1,41 @@
 import { Injectable } from '@nestjs/common'
-import { DataSource, Context as DataSourceContext } from '@nuvix/pg'
-import {
-  AppMode,
-  Context,
-  CURRENT_SCHEMA_DB,
-  CURRENT_SCHEMA_PG,
-  DatabaseRole,
-  PROJECT_DB_CLIENT,
-  PROJECT_PG,
-  type Schema,
-  Schemas,
-  SchemaType,
-} from '@nuvix/utils'
-import type { ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
-import type { Client } from 'pg'
+import { DataSource } from '@nuvix/pg'
+import { type Schema, Schemas, SchemaType } from '@nuvix/utils'
 import { CoreService } from '../../core.service.js'
 import { Exception } from '../../extend/exception'
-import { Auth } from '../../helpers'
 import { Hook } from '../../server'
 
 @Injectable()
 export class SchemaHook implements Hook {
-  constructor(private readonly coreService: CoreService) {}
+  private readonly dataSource: DataSource
+  constructor(private readonly coreService: CoreService) {
+    if (this.coreService.isConsole()) {
+      throw new Exception(
+        'SchemaHook should not be initialized in console application',
+      )
+    }
+    this.dataSource = this.coreService.getDataSource()
+  }
 
   async preHandler(request: NuvixRequest) {
-    const project = request[Context.Project] as ProjectsDoc
-    if (project.empty() || project.getId() === 'console') {
-      throw new Exception(Exception.PROJECT_NOT_FOUND)
-    }
-    const user: UsersDoc = request[Context.User]
-    const mode: AppMode = request[Context.Mode]
-    let role = DatabaseRole.POSTGRES
-    const client = request[PROJECT_DB_CLIENT] as Client
-    const pg = request[PROJECT_PG] as DataSource
-
-    if (user.empty()) {
-      role = DatabaseRole.ANON
-    } else {
-      role = DatabaseRole.AUTHENTICATED
-    }
-
-    const schemaId =
-      (request.params as { schemaId: string | undefined }).schemaId || 'public'
+    const schemaId = (request.params as { schemaId: string | undefined })
+      .schemaId
 
     if (schemaId === undefined) {
-      return
+      throw new Exception(Exception.SCHEMA_NOT_FOUND)
     }
-    const schema = await pg
+
+    const { project } = request.context
+
+    const schema = await this.dataSource
       .table<Schema>('schemas')
       .withSchema(Schemas.System)
       .where('name', schemaId)
       .first()
 
     if (schema) {
-      request[Context.CurrentSchema] = schema
-      if (!Auth.isTrustedActor) {
+      request.context.currentSchema = schema
+      if (!request.context.isAPIUser) {
         if (!schema.enabled) {
           throw new Exception(Exception.SCHEMA_NOT_FOUND)
         }
@@ -66,35 +47,12 @@ export class SchemaHook implements Hook {
         ) {
           throw new Exception(
             Exception.GENERAL_ACCESS_FORBIDDEN,
-            `Access denied: Schema '${schema.name}' is not exposed to the API for this project`,
+            `Access denied: Schema '${schema.name}' is not exposed to the client API.`,
           )
-        }
-      }
-
-      const pg = this.coreService.getProjectPg(
-        client,
-        new DataSourceContext({
-          schema: schema.name,
-        }),
-      )
-      request[CURRENT_SCHEMA_PG] = pg
-
-      if (schema.type === SchemaType.Document) {
-        const db = this.coreService.getProjectDb(client, {
-          projectId: project.getId(),
-          schema: schema.name,
-        })
-        request[CURRENT_SCHEMA_DB] = db
-      } else if (mode !== AppMode.ADMIN || !Auth.isPlatformActor) {
-        request[Context.AuthMeta] = {
-          ...(request[Context.AuthMeta] || {}),
-          role,
         }
       }
     } else {
       throw new Exception(Exception.SCHEMA_NOT_FOUND)
     }
-
-    return null
   }
 }

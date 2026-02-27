@@ -39,7 +39,7 @@ export class ApiInterceptor implements NestInterceptor {
       if (
         namespace in project.get('services', {}) &&
         !project.get('services', {})[namespace] &&
-        !(request.context.isAppUser || request.context.isAdminUser)
+        !(request.context.isAPIUser || request.context.isAdminUser)
       ) {
         throw new Exception(Exception.GENERAL_SERVICE_DISABLED)
       }
