@@ -6,8 +6,6 @@ import {
   Query,
   Req,
   Res,
-  Session,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
 import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
@@ -15,16 +13,15 @@ import {
   AllowSessionType,
   Auth,
   AuthType,
-  Locale,
+  Ctx,
   Namespace,
-  Project,
   User,
 } from '@nuvix/core/decorators'
-import { LocaleTranslator, Models } from '@nuvix/core/helpers'
+import { Models, RequestContext } from '@nuvix/core/helpers'
 import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
-import { Database, type Doc } from '@nuvix/db'
+import { type Doc } from '@nuvix/db'
 import { SessionType, type IListResponse, type IResponse } from '@nuvix/utils'
-import type { ProjectsDoc, SessionsDoc, UsersDoc } from '@nuvix/utils/types'
+import type { SessionsDoc, TokensDoc, UsersDoc } from '@nuvix/utils/types'
 import {
   CreateEmailSessionDTO,
   CreateOAuth2SessionDTO,
@@ -43,7 +40,6 @@ import {
 import { SessionService } from './session.service'
 
 @Namespace('account')
-
 @Controller({ version: ['1'], path: 'account' })
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.SESSION, AuthType.JWT])
@@ -61,9 +57,9 @@ export class SessionsController {
   })
   async getSessions(
     @User() user: UsersDoc,
-    @Locale() locale: LocaleTranslator,
+    @Ctx() ctx: RequestContext,
   ): Promise<IListResponse<SessionsDoc>> {
-    return this.sessionService.getSessions(user, locale)
+    return this.sessionService.getSessions(user, ctx)
   }
 
   @Delete('sessions', {
@@ -84,21 +80,15 @@ export class SessionsController {
     @User() user: UsersDoc,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
-    @Locale() locale: LocaleTranslator,
   ): Promise<void> {
-    return this.sessionService.deleteSessions(
-      user,
-      project,
-      locale,
-      request,
-      response,
-    )
+    return this.sessionService.deleteSessions(user, request, response)
   }
 
   @Get('sessions/:sessionId', {
     summary: 'Get session',
     scopes: 'account',
     model: Models.SESSION,
+    sensitiveFields: ['secret'],
     sdk: {
       name: 'getSession',
       descMd: '/docs/references/account/get-session.md',
@@ -106,10 +96,10 @@ export class SessionsController {
   })
   async getSession(
     @User() user: UsersDoc,
-    @Param() params: SessionsParamDTO,
-    @Locale() locale: LocaleTranslator,
+    @Param() { sessionId }: SessionsParamDTO,
+    @Ctx() ctx: RequestContext,
   ): Promise<IResponse<SessionsDoc>> {
-    return this.sessionService.getSession(user, params.sessionId, locale)
+    return this.sessionService.getSession(user, sessionId, ctx)
   }
 
   @Delete('sessions/:sessionId', {
@@ -128,26 +118,18 @@ export class SessionsController {
   })
   async deleteSession(
     @User() user: UsersDoc,
-    @Param() params: SessionsParamDTO,
+    @Param() { sessionId }: SessionsParamDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
-    @Locale() locale: LocaleTranslator,
-
-    @Session() session: SessionsDoc,
   ): Promise<void> {
-    return this.sessionService.deleteSession(
-      user,
-      sessionId,
-      request,
-      response,
-      locale,
-    )
+    return this.sessionService.deleteSession(user, sessionId, request, response)
   }
 
   @Patch('sessions/:sessionId', {
     summary: 'Update session',
     scopes: 'account',
     model: Models.SESSION,
+    sensitiveFields: ['secret'],
     throttle: 10,
     audit: {
       key: 'session.update',
@@ -160,19 +142,21 @@ export class SessionsController {
   })
   async updateSession(
     @User() user: UsersDoc,
-    @Param() params: SessionsParamDTO,
+    @Param() { sessionId }: SessionsParamDTO,
+    @Ctx() ctx: RequestContext,
   ): Promise<IResponse<SessionsDoc>> {
-    return this.sessionService.updateSession(user, params.sessionId, project)
+    return this.sessionService.updateSession(user, sessionId, ctx)
   }
 
   @Post(['sessions/email', 'sessions'], {
     summary: 'Create email password session',
     scopes: 'sessions.create',
     model: Models.SESSION,
+    sensitiveFields: ['secret'],
     auth: [],
     throttle: {
       limit: 10,
-      key: 'email:{param-email}',
+      key: 'email:{body-email}',
       configKey: 'create_email_session',
     },
     audit: {
@@ -191,15 +175,12 @@ export class SessionsController {
     @Body() input: CreateEmailSessionDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
-    @Locale() locale: LocaleTranslator,
   ): Promise<IResponse<SessionsDoc>> {
     return this.sessionService.createEmailSession(
       user,
       input,
       request,
       response,
-      locale,
-      project,
     )
   }
 
@@ -207,6 +188,7 @@ export class SessionsController {
     summary: 'Create anonymous session',
     scopes: 'sessions.create',
     model: Models.SESSION,
+    sensitiveFields: ['secret'],
     auth: [],
     throttle: {
       limit: 50,
@@ -228,14 +210,11 @@ export class SessionsController {
     @User() user: UsersDoc,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
-    @Locale() locale: LocaleTranslator,
   ): Promise<IResponse<SessionsDoc>> {
     return this.sessionService.createAnonymousSession({
       user,
       request,
       response,
-      locale,
-      project,
     })
   }
 
@@ -243,6 +222,7 @@ export class SessionsController {
     summary: 'Create session',
     scopes: 'sessions.create',
     model: Models.SESSION,
+    sensitiveFields: ['secret'],
     auth: [],
     throttle: {
       limit: 10,
@@ -264,15 +244,12 @@ export class SessionsController {
     @Body() input: CreateSessionDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
-    @Locale() locale: LocaleTranslator,
   ): Promise<IResponse<SessionsDoc>> {
     return this.sessionService.createSession({
       user,
       input,
       request,
       response,
-      locale,
-      project,
     })
   }
 
@@ -300,9 +277,7 @@ export class SessionsController {
     const url = await this.sessionService.createOAuth2Session({
       input,
       request,
-      response,
       provider,
-      project,
     })
 
     response
@@ -312,7 +287,7 @@ export class SessionsController {
       .redirect(url)
   }
 
-  @Get('sessions/oauth2/callback/:provider/:projectId', {
+  @Get('sessions/oauth2/callback/:provider', {
     summary: 'Get OAuth2 callback',
     scopes: 'public',
     auth: [],
@@ -322,7 +297,7 @@ export class SessionsController {
     @Query() input: OAuth2CallbackDTO,
     @Req() request: NuvixRequest,
     @Res() response: NuvixRes,
-    @Param() { projectId, provider }: OAuth2CallbackParamDTO,
+    @Param() { provider }: OAuth2CallbackParamDTO,
   ): Promise<void> {
     const domain = request.host
     const protocol = request.protocol
@@ -334,7 +309,6 @@ export class SessionsController {
       }
     }
     params.provider = provider
-    params.project = projectId
 
     response
       .status(302)
@@ -345,7 +319,7 @@ export class SessionsController {
       )
   }
 
-  @Post('sessions/oauth2/callback/:provider/:projectId', {
+  @Post('sessions/oauth2/callback/:provider', {
     summary: 'Get OAuth2 callback',
     scopes: 'public',
     auth: [],
@@ -355,7 +329,7 @@ export class SessionsController {
     @Body() input: OAuth2CallbackDTO,
     @Req() request: NuvixRequest,
     @Res() response: NuvixRes,
-    @Param() { projectId, provider }: OAuth2CallbackParamDTO,
+    @Param() { provider }: OAuth2CallbackParamDTO,
   ): Promise<void> {
     const domain = request.host
     const protocol = request.protocol
@@ -367,7 +341,6 @@ export class SessionsController {
       }
     }
     params.provider = provider
-    params.project = projectId
 
     response
       .status(302)
@@ -398,7 +371,6 @@ export class SessionsController {
     @Query() input: OAuth2CallbackDTO,
     @Req() request: NuvixRequest,
     @Res() response: NuvixRes,
-
     @Param() { provider }: ProviderParamDTO,
   ): Promise<void> {
     return this.sessionService.oAuth2Redirect({
@@ -407,7 +379,6 @@ export class SessionsController {
       provider,
       request,
       response,
-      project,
     })
   }
 
@@ -430,13 +401,12 @@ export class SessionsController {
     @Req() request: NuvixRequest,
     @Res() response: NuvixRes,
     @Param() { provider }: ProviderParamDTO,
-  ) {
+  ): Promise<void> {
     return this.sessionService.createOAuth2Token({
       input,
       request,
       response,
       provider,
-      project,
     })
   }
 
@@ -445,6 +415,7 @@ export class SessionsController {
     scopes: 'sessions.create',
     auth: [],
     model: Models.TOKEN,
+    sensitiveFields: ['secret'],
     throttle: {
       limit: 60,
       key: ({ body, ip }) => [`email:${body.email}`, `ip:${ip}`],
@@ -464,16 +435,11 @@ export class SessionsController {
     @User() user: UsersDoc,
     @Body() input: CreateMagicURLTokenDTO,
     @Req() request: NuvixRequest,
-    @Res({ passthrough: true }) response: NuvixRes,
-    @Locale() locale: LocaleTranslator,
-  ) {
+  ): Promise<IResponse<TokensDoc>> {
     return this.sessionService.createMagicURLToken({
       user,
       input,
       request,
-      response,
-      locale,
-      project,
     })
   }
 
@@ -482,6 +448,7 @@ export class SessionsController {
     scopes: 'sessions.create',
     auth: [],
     model: Models.TOKEN,
+    sensitiveFields: ['secret'],
     throttle: {
       limit: 10,
       key: ({ body, ip }) => [`email:${body.email}`, `ip:${ip}`],
@@ -500,20 +467,12 @@ export class SessionsController {
   async createEmailToken(
     @Body() input: CreateEmailTokenDTO,
     @Req() request: NuvixRequest,
-    @Res({ passthrough: true }) response: NuvixRes,
-
     @User() user: UsersDoc,
-
-    @Locale() locale: LocaleTranslator,
-  ) {
+  ): Promise<IResponse<TokensDoc>> {
     return this.sessionService.createEmailToken({
       input,
       request,
-      response,
-      project,
       user,
-
-      locale,
     })
   }
 
@@ -522,6 +481,7 @@ export class SessionsController {
     scopes: 'sessions.update',
     auth: [],
     model: Models.SESSION,
+    sensitiveFields: ['secret'],
     throttle: {
       limit: 10,
       key: 'ip:{ip},userId:{param-userId}',
@@ -541,15 +501,12 @@ export class SessionsController {
     @Body() input: CreateSessionDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
-    @Locale() locale: LocaleTranslator,
-  ) {
+  ): Promise<IResponse<SessionsDoc>> {
     return this.sessionService.createSession({
       user,
       input,
       request,
       response,
-      locale,
-      project,
     })
   }
 
@@ -558,6 +515,7 @@ export class SessionsController {
     scopes: 'sessions.update',
     auth: [],
     model: Models.SESSION,
+    sensitiveFields: ['secret'],
     throttle: {
       limit: 10,
       key: 'ip:{ip},userId:{param-userId}',
@@ -577,15 +535,12 @@ export class SessionsController {
     @Body() input: CreateSessionDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
-    @Locale() locale: LocaleTranslator,
-  ) {
+  ): Promise<IResponse<SessionsDoc>> {
     return this.sessionService.createSession({
       user,
       input,
       request,
       response,
-      locale,
-      project,
     })
   }
 
@@ -593,7 +548,8 @@ export class SessionsController {
     summary: 'Create phone token',
     scopes: 'sessions.create',
     auth: [],
-    model: Models.SESSION,
+    model: Models.TOKEN,
+    sensitiveFields: ['secret'],
     throttle: {
       limit: 10,
       key: ({ body, ip }) => [`phone:${body.phone}`, `ip:${ip}`],
@@ -613,23 +569,18 @@ export class SessionsController {
     @User() user: UsersDoc,
     @Body() input: CreatePhoneTokenDTO,
     @Req() request: NuvixRequest,
-    @Res({ passthrough: true }) response: NuvixRes,
-    @Locale() locale: LocaleTranslator,
-  ) {
+  ): Promise<IResponse<TokensDoc>> {
     return this.sessionService.createPhoneToken({
       user,
       input,
       request,
-      response,
-      locale,
-      project,
     })
   }
 
   @Post(['jwts', 'jwt'], {
     summary: 'Create JWT',
     scopes: 'account',
-    auth: AuthType.JWT,
+    auth: AuthType.JWT, // Only allow users with JWT auth to create another JWT
     model: Models.JWT,
     throttle: {
       limit: 100,
@@ -643,8 +594,8 @@ export class SessionsController {
   @AllowSessionType(SessionType.JWT)
   async createJWT(
     @User() user: UsersDoc,
-    @Res({ passthrough: true }) response: NuvixRes,
+    @Ctx() ctx: RequestContext,
   ): Promise<Doc<{ jwt: string }>> {
-    return this.sessionService.createJWT(user, response)
+    return this.sessionService.createJWT(user, ctx)
   }
 }

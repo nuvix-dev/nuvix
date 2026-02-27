@@ -62,7 +62,6 @@ export class MfaController {
   async updateMfa(
     @Body() { mfa }: UpdateAccountMfaDTO,
     @User() user: UsersDoc,
-    @Session() session: SessionsDoc,
   ): Promise<IResponse<UsersDoc>> {
     return this.mfaService.updateMfa({
       mfa,
@@ -134,7 +133,6 @@ export class MfaController {
     @Param() { type }: MfaAuthenticatorTypeParamDTO,
     @Body() { otp }: VerifyMfaAuthenticatorDTO,
     @User() user: UsersDoc,
-    @Session() session: SessionsDoc,
   ): Promise<IResponse<UsersDoc>> {
     return this.mfaService.verifyMfaAuthenticator({
       type,
@@ -287,8 +285,6 @@ export class MfaController {
   async updateMfaChallenge(
     @Body() input: VerifyMfaChallengeDTO,
     @User() user: UsersDoc,
-
-    @Session() session: SessionsDoc,
   ): Promise<IResponse<SessionsDoc>> {
     return this.mfaService.updateMfaChallenge({
       ...input,

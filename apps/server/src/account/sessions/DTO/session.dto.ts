@@ -118,7 +118,7 @@ export class OAuth2CallbackDTO {
 // Params
 export class ProviderParamDTO {
   @ApiProperty({
-    description: `OAuth2 Provider.Currently, supported providers are: ${oAuthProvidersList.join(', ')}`,
+    description: `OAuth2 Provider. Currently supported providers are: ${oAuthProvidersList.join(', ')}`,
   })
   @IsString()
   @IsIn(oAuthProvidersList)
@@ -135,14 +135,8 @@ export class SessionsParamDTO {
 }
 
 export class OAuth2CallbackParamDTO {
-  /**
-   * Project ID.
-   */
-  @IsUID()
-  declare projectId: string
-
   @ApiProperty({
-    description: `OAuth2 Provider.Currently, supported providers are: ${oAuthProvidersList.join(', ')}`,
+    description: `OAuth2 Provider. Currently supported providers are: ${oAuthProvidersList.join(', ')}`,
   })
   @IsString()
   @IsIn(oAuthProvidersList)

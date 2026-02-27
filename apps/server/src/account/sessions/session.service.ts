@@ -1300,7 +1300,7 @@ export class SessionService {
     const tokenSecret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_MAGIC_URL)
     const expire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_CONFIRM * 1000)
 
-    const token = new Doc({
+    const token = new Doc<Tokens>({
       $id: ID.unique(),
       userId: user.getId(),
       userInternalId: user.getSequence(),
@@ -1313,14 +1313,12 @@ export class SessionService {
 
     Authorization.setRole(Role.user(user.getId()).toString())
 
-    const createdToken = await this.db.createDocument(
-      'tokens',
-      token.set('$permissions', [
-        Permission.read(Role.user(user.getId())),
-        Permission.update(Role.user(user.getId())),
-        Permission.delete(Role.user(user.getId())),
-      ]),
-    )
+    token.set('$permissions', [
+      Permission.read(Role.user(user.getId())),
+      Permission.update(Role.user(user.getId())),
+      Permission.delete(Role.user(user.getId())),
+    ])
+    const createdToken = await this.db.createDocument('tokens', token)
 
     await this.db.purgeCachedDocument('users', user.getId())
 
@@ -1473,7 +1471,7 @@ export class SessionService {
     const tokenSecret = Auth.codeGenerator(6)
     const expire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_OTP * 1000)
 
-    const token = new Doc({
+    const token = new Doc<Tokens>({
       $id: ID.unique(),
       userId: user.getId(),
       userInternalId: user.getSequence(),
