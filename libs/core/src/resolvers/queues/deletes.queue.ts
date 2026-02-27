@@ -561,5 +561,4 @@ export type DeletesJobData = {
   hourlyUsageRetentionDatetime?: string
   resource?: string
   resourceType?: string
-  project: ProjectsDoc
 }

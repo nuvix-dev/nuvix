@@ -1,4 +1,4 @@
-import { AppMode, Schema } from '@nuvix/utils'
+import { AppMode, configuration, Schema } from '@nuvix/utils'
 import type {
   ProjectsDoc,
   SessionsDoc,
@@ -24,6 +24,9 @@ export class RequestContext {
   currentSchema?: Schema
   authMeta: AuthMeta = {}
   sessionMeta: Record<string, unknown> = {}
+
+  cookieDomain = configuration.server.cookieDomain
+  cookieSameSite = configuration.server.cookieSameSite
 
   _isAPIUser: boolean = false // This is set to true if the user is authenticated via API key
   _isAdminUser: boolean = false // This is set to true if the user has admin privileges (mostly for console users)

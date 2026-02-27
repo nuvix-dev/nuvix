@@ -3,7 +3,7 @@ export interface SmtpConfig {
   port: number
   username: string
   password: string
-  from: string
+  from?: string
   enabled?: boolean
   senderName: string
   senderEmail: string

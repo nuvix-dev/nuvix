@@ -36,7 +36,6 @@ import {
   TokenType,
 } from '@nuvix/utils'
 import type {
-  ProjectsDoc,
   TargetsDoc,
   Tokens,
   TokensDoc,
@@ -223,10 +222,7 @@ export class AccountService {
 
     await this.deletesQueue.add(DeleteType.DOCUMENT, {
       document: user.clone(),
-      project,
     })
-
-    return
   }
 
   /**
@@ -328,12 +324,14 @@ export class AccountService {
     password,
     oldPassword,
     user,
+    ctx,
   }: {
     password: string
     oldPassword: string
     user: UsersDoc
+    ctx: RequestContext
   }) {
-    // Check old password only if its an existing user.
+    // passwordUpdate will be empty if the user has never set a password
     if (
       user.get('passwordUpdate') &&
       !(await Auth.passwordVerify(
@@ -351,7 +349,7 @@ export class AccountService {
       Auth.DEFAULT_ALGO,
       Auth.DEFAULT_ALGO_OPTIONS,
     )
-    const historyLimit = project.get('auths', {}).passwordHistory ?? 0
+    const historyLimit = ctx.project.get('auths', {}).passwordHistory ?? 0
     const history = user.get('passwordHistory', [])
 
     if (newPassword && historyLimit > 0) {
@@ -368,7 +366,7 @@ export class AccountService {
       history.splice(0, Math.max(0, history.length - historyLimit))
     }
 
-    if (project.get('auths', {}).personalDataCheck ?? false) {
+    if (ctx.project.get('auths', {}).personalDataCheck ?? false) {
       const personalDataValidator = new PersonalDataValidator(
         user.getId(),
         user.get('email'),
@@ -380,7 +378,7 @@ export class AccountService {
       }
     }
 
-    await Hooks.trigger('passwordValidator', [project, password, user, true])
+    await Hooks.trigger('passwordValidator', [password, user, true])
 
     user
       .set('password', newPassword)
@@ -401,7 +399,6 @@ export class AccountService {
     password,
     phone,
     user,
-    project,
   }: {
     password: string
     phone: string
@@ -423,7 +420,7 @@ export class AccountService {
       throw new Exception(Exception.USER_INVALID_CREDENTIALS)
     }
 
-    await Hooks.trigger('passwordValidator', [project, password, user, false])
+    await Hooks.trigger('passwordValidator', [password, user, false])
 
     const target = await Authorization.skip(
       async () =>
@@ -494,18 +491,18 @@ export class AccountService {
 
     user = await this.db.updateDocument('users', user.getId(), user)
 
-    if (!request.domainVerification) {
-      response.header('X-Fallback-Cookies', JSON.stringify([]))
+    if (configuration.server.fallbackCookies) {
+      response.header('X-Fallback-Cookies', JSON.stringify({}))
     }
 
     const protocol = request.protocol
     response.cookie(Auth.cookieName, '', {
       expires: new Date(Date.now() - 3600000),
       path: '/',
-      domain: Auth.cookieDomain,
+      domain: request.context.cookieDomain,
       secure: protocol === 'https',
       httpOnly: true,
-      sameSite: Auth.cookieSamesite,
+      sameSite: request.context.cookieSameSite,
     })
 
     return user
@@ -519,11 +516,10 @@ export class AccountService {
     request,
     response,
     locale,
-    project,
     url,
-  }: WithDB<WithReqRes<WithUser<WithProject<WithLocale<{ url?: string }>>>>>) {
-    if (!this.appConfig.getSmtpConfig().host) {
-      throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP Disabled')
+  }: WithReqRes<WithUser<WithLocale<{ url?: string }>>>) {
+    if (!configuration.smtp.enabled()) {
+      throw new Exception(Exception.GENERAL_SMTP_DISABLED)
     }
 
     if (user.get('emailVerification')) {
@@ -585,7 +581,7 @@ export class AccountService {
 
     const emailData = {
       body: body,
-      hello: locale.getText('emails.verification.hello'),
+      hello: locale.get('emails.verification.hello'),
       footer: locale.getText('emails.verification.footer'),
       thanks: locale.getText('emails.verification.thanks'),
       signature: locale.getText('emails.verification.signature'),
@@ -725,7 +721,7 @@ export class AccountService {
     response,
     locale,
     project,
-  }: WithDB<WithReqRes<WithUser<WithProject<WithLocale<{}>>>>>) {
+  }: WithDB<WithReqRes<WithUser<WithCtx<WithLocale<{}>>>>>) {
     // Check if SMS provider is configured
     if (!this.appConfig.get('sms').enabled) {
       throw new Exception(
@@ -860,11 +856,10 @@ export class AccountService {
   }
 }
 
-type WithDB<T = unknown> = T
 type WithReqRes<T = unknown> = {
   request: NuvixRequest
   response: NuvixRes
 } & T
 type WithUser<T = unknown> = { user: UsersDoc } & T
-type WithProject<T = unknown> = {} & T
+type WithCtx<T = unknown> = { ctx: RequestContext } & T
 type WithLocale<T = unknown> = { locale: LocaleTranslator } & T

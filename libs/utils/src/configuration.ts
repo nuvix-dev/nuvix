@@ -184,6 +184,10 @@ const createConfig = () => {
         key: env.getRequired('NUVIX_SMTP_DKIM_KEY'),
         privateKey: env.getRequired('NUVIX_SMTP_DKIM_PRIVATE_KEY'),
       },
+      enabled: () => {
+        const requiredFields = ['NUVIX_SMTP_HOST']
+        return requiredFields.every(field => !!env.get(field))
+      },
     },
 
     sms: {
