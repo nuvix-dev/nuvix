@@ -36,7 +36,6 @@ declare module 'fastify' {
       SchemaCompiler
     >;
     context: RequestContext;
-    domainVerification: boolean;
     // Allow storing hooks arguments and other arbitrary properties
     hooks_args: Record<string, any>;
     rate_limit?: {
@@ -45,7 +44,7 @@ declare module 'fastify' {
       reset: number; // timestamp
     }
     // Index signature to allow bracket notation access with string keys
-    [key: string | symbol]: any;
+    // [key: string | symbol]: any;
   }
 }
 

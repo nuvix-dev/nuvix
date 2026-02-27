@@ -197,7 +197,15 @@ export class OAuth2Error extends Exception {
 
 export const getOAuth2Class = async <T extends OAuth2>(
   provider: string,
-): Promise<new (...args: any[]) => T> => {
+): Promise<
+  new (
+    appId: string,
+    appSecret: string,
+    callback: string,
+    state?: Record<string, unknown>,
+    scopes?: string[],
+  ) => T
+> => {
   try {
     // Dynamic import of OAuth2 provider class
     const authModule = await import(

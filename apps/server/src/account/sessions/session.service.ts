@@ -4,11 +4,17 @@ import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { JwtService } from '@nestjs/jwt'
-import { AppConfigService, CoreService } from '@nuvix/core'
+import { CoreService } from '@nuvix/core'
 import type { SmtpConfig } from '@nuvix/core/config'
 import { type OAuthProviders, type OAuthProviderType } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Auth, Detector, LocaleTranslator, Models } from '@nuvix/core/helpers'
+import {
+  Auth,
+  Detector,
+  LocaleTranslator,
+  Models,
+  RequestContext,
+} from '@nuvix/core/helpers'
 import { getOAuth2Class, OAuth2 } from '@nuvix/core/OAuth2'
 import {
   DeletesJobData,
@@ -67,10 +73,10 @@ import {
 @Injectable()
 export class SessionService {
   private readonly geodb: Reader<CountryResponse>
+  private readonly db: Database
 
   constructor(
     private readonly coreService: CoreService,
-
     private eventEmitter: EventEmitter2,
     private readonly jwtService: JwtService,
     @InjectQueue(QueueFor.MAILS)
@@ -85,6 +91,7 @@ export class SessionService {
     >,
   ) {
     this.geodb = this.coreService.getGeoDb()
+    this.db = this.coreService.getDatabase()
   }
 
   private static readonly oauthDefaultSuccess = '/auth/oauth2/success'
@@ -93,18 +100,19 @@ export class SessionService {
   /**
    * Get User's Sessions
    */
-  async getSessions(user: UsersDoc, locale: LocaleTranslator) {
+  async getSessions(user: UsersDoc, ctx: RequestContext) {
     const sessions = user.get('sessions', []) as SessionsDoc[]
-    const current = Auth.sessionVerify(sessions, Auth.secret)
+    const current = ctx.session
 
+    const locale = ctx.translator()
     const updatedSessions = sessions.map(session => {
-      const countryName = locale.getText(
-        `countries${session.get('countryCode', '')?.toLowerCase()}`,
-        locale.getText('locale.country.unknown'),
-      )
+      const key = countryKey(session.get('countryCode'))
+      const countryName = locale.has(key)
+        ? locale.getRaw(key)
+        : locale.t('locale.country.unknown')
 
       session.set('countryName', countryName)
-      session.set('current', current === session.getId())
+      session.set('current', current && current.getId() === session.getId())
       session.set('secret', session.get('secret', ''))
 
       return session
@@ -121,41 +129,42 @@ export class SessionService {
    */
   async deleteSessions(
     user: UsersDoc,
-
-    locale: LocaleTranslator,
     request: NuvixRequest,
     response: NuvixRes,
   ) {
+    const ctx = request.context
     const protocol = request.protocol
     const sessions = user.get('sessions', []) as SessionsDoc[]
 
     for (const session of sessions) {
       await this.db.deleteDocument('sessions', session.getId())
 
-      if (!request.domainVerification) {
-        response.header('X-Fallback-Cookies', JSON.stringify([]))
+      if (configuration.server.fallbackCookies) {
+        response.header('X-Fallback-Cookies', '{}')
       }
+
+      const locale = ctx.translator()
+      const key = countryKey(session.get('countryCode'))
 
       session.set('current', false)
       session.set(
         'countryName',
-        locale.getText(
-          `countries${session.get('countryCode', '')?.toLowerCase()}`,
-          locale.getText('locale.country.unknown'),
-        ),
+        locale.has(key)
+          ? locale.getRaw(key)
+          : locale.t('locale.country.unknown'),
       )
 
-      if (session.get('secret') === Auth.hash(Auth.secret)) {
+      if (ctx.session && ctx.session.getId() === session.getId()) {
         session.set('current', true)
 
         // If current session, delete the cookies too
         response.cookie(Auth.cookieName, '', {
           expires: new Date(0),
           path: '/',
-          domain: Auth.cookieDomain,
+          domain: ctx.cookieDomain,
           secure: protocol === 'https',
           httpOnly: true,
-          sameSite: Auth.cookieSamesite,
+          sameSite: ctx.cookieSameSite,
         })
       }
     }
@@ -164,7 +173,6 @@ export class SessionService {
       [...sessions].map(s => ({
         name: DeleteType.SESSION_TARGETS,
         data: {
-          project,
           document: s,
         },
       })),
@@ -182,26 +190,25 @@ export class SessionService {
   /**
    * Get a Session
    */
-  async getSession(
-    user: UsersDoc,
-    sessionId: string,
-    locale: LocaleTranslator,
-  ) {
+  async getSession(user: UsersDoc, sessionId: string, ctx: RequestContext) {
     const sessions = user.get('sessions', []) as SessionsDoc[]
-    sessionId =
-      sessionId === 'current'
-        ? (Auth.sessionVerify(user.get('sessions'), Auth.secret) as string)
-        : sessionId
+    if (sessionId === 'current') {
+      sessionId = ctx.session ? ctx.session.getId() : ''
+    }
 
     for (const session of sessions) {
       if (sessionId === session.getId()) {
-        const countryName = locale.getText(
-          `countries${session.get('countryCode', '')?.toLowerCase()}`,
-          locale.getText('locale.country.unknown'),
-        )
+        const locale = ctx.translator()
+        const key = countryKey(session.get('countryCode'))
+        const countryName = locale.has(key)
+          ? locale.getRaw(key)
+          : locale.t('locale.country.unknown')
 
         session
-          .set('current', session.get('secret') === Auth.hash(Auth.secret))
+          .set(
+            'current',
+            ctx.session && ctx.session.getId() === session.getId(),
+          )
           .set('countryName', countryName)
           .set('secret', session.get('secret', ''))
 
@@ -217,14 +224,16 @@ export class SessionService {
    */
   async deleteSession(
     user: UsersDoc,
-
     sessionId: string,
     request: NuvixRequest,
     response: NuvixRes,
-    locale: LocaleTranslator,
   ) {
     const protocol = request.protocol
+    const ctx = request.context
     const sessions = user.get('sessions', []) as SessionsDoc[]
+    if (sessionId === 'current') {
+      sessionId = ctx.session ? ctx.session.getId() : ''
+    }
 
     for (const session of sessions) {
       if (sessionId !== session.getId()) {
@@ -232,32 +241,24 @@ export class SessionService {
       }
 
       await this.db.deleteDocument('sessions', session.getId())
-
       session.set('current', false)
 
-      if (session.get('secret') === Auth.hash(Auth.secret)) {
+      if (ctx.session && session.getId() === ctx.session.getId()) {
         session.set('current', true)
-        session.set(
-          'countryName',
-          locale.getText(
-            `countries${session.get('countryCode', '')?.toLowerCase()}`,
-            locale.getText('locale.country.unknown'),
-          ),
-        )
 
         response.cookie(Auth.cookieName, '', {
           expires: new Date(0),
           path: '/',
-          domain: Auth.cookieDomain,
+          domain: ctx.cookieDomain,
           secure: protocol === 'https',
           httpOnly: true,
-          sameSite: Auth.cookieSamesite,
+          sameSite: ctx.cookieSameSite,
         })
 
-        response.header('X-Fallback-Cookies', JSON.stringify({}))
+        if (configuration.server.fallbackCookies) {
+          response.header('X-Fallback-Cookies', '{}')
+        }
       }
-
-      await this.db.purgeCachedDocument('users', user.getId())
 
       this.eventEmitter.emit(AppEvents.SESSIONS_DELETE, {
         userId: user.getId(),
@@ -269,7 +270,6 @@ export class SessionService {
       })
 
       await this.deletesQueue.add(DeleteType.SESSION_TARGETS, {
-        project,
         document: session,
       })
 
@@ -282,14 +282,13 @@ export class SessionService {
   /**
    * Update a Session
    */
-  async updateSession(user: UsersDoc, sessionId: string) {
-    sessionId =
-      sessionId === 'current'
-        ? (Auth.sessionVerify(user.get('sessions'), Auth.secret) as string)
-        : sessionId
+  async updateSession(user: UsersDoc, sessionId: string, ctx: RequestContext) {
+    if (sessionId === 'current') {
+      sessionId = ctx.session ? ctx.session.getId() : ''
+    }
 
     const sessions = user.get('sessions', []) as SessionsDoc[]
-    let session: SessionsDoc | null = null
+    let session: SessionsDoc | undefined
 
     for (const value of sessions) {
       if (sessionId === value.getId()) {
@@ -298,11 +297,11 @@ export class SessionService {
       }
     }
 
-    if (session === null) {
+    if (!session) {
       throw new Exception(Exception.USER_SESSION_NOT_FOUND)
     }
 
-    const auths = project.get('auths', {})
+    const auths = ctx.project.get('auths', {})
 
     const authDuration = auths.duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
     session.set('expire', new Date(Date.now() + authDuration * 1000))
@@ -310,13 +309,20 @@ export class SessionService {
     const provider: string = session.get('provider', '')
     const refreshToken = session.get('providerRefreshToken', '')
 
-    const OAuth2Class = await getOAuth2Class(provider)
     if (provider) {
-      const providerInfo = this.getProviderConfig(project, provider)
+      const providerInfo = this.getProviderConfig(ctx.project, provider)
       const appId = providerInfo.appId
       const appSecret = Auth.decryptIfDefined(providerInfo.secret)
 
-      const oauth2: OAuth2 = new OAuth2Class(appId, appSecret, '', [], [])
+      if (!appId || !appSecret) {
+        throw new Exception(
+          Exception.PROJECT_PROVIDER_DISABLED,
+          `This provider is disabled. Please configure the provider app ID and app secret key from your ${configuration.app.name} console to continue.`,
+        )
+      }
+
+      const OAuth2Class = await getOAuth2Class(provider)
+      const oauth2: OAuth2 = new OAuth2Class(appId, appSecret, '')
       await oauth2.refreshTokens(refreshToken)
       const accessToken = await oauth2.getAccessToken('')
 
@@ -330,7 +336,6 @@ export class SessionService {
     }
 
     await this.db.updateDocument('sessions', sessionId, session)
-    await this.db.purgeCachedDocument('users', user.getId())
 
     this.eventEmitter.emit(AppEvents.SESSION_UPDATE, {
       userId: user.getId(),
@@ -2165,7 +2170,7 @@ export class SessionService {
     return createdSession
   }
 
-  private getProviderConfig(provider: string) {
+  private getProviderConfig(project: ProjectsDoc, provider: string) {
     const providers = project.get('oAuthProviders', []) as OAuthProviderType[]
     const _provider = providers.find(p => p.key === provider)
 
@@ -2176,3 +2181,6 @@ export class SessionService {
     return _provider
   }
 }
+
+const countryKey = (code?: string | null) =>
+  `countries.${(code || '').toLowerCase()}`

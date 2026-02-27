@@ -8,6 +8,7 @@ import type {
 import type { Key } from './key.helper'
 import { Doc } from '@nuvix/db'
 import type { AuthType } from '../decorators'
+import { localeTranslatorInstance } from './locale.helper'
 
 export class RequestContext {
   project: ProjectsDoc = new Doc()
@@ -37,6 +38,10 @@ export class RequestContext {
 
   get isAdminUser() {
     return this._isAdminUser
+  }
+
+  translator() {
+    return localeTranslatorInstance
   }
 
   constructor(init?: Partial<RequestContext>) {

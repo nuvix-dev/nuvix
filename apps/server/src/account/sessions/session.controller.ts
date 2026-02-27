@@ -135,13 +135,8 @@ export class SessionsController {
 
     @Session() session: SessionsDoc,
   ): Promise<void> {
-    let sessionId = params.sessionId
-    if (params.sessionId === 'current') {
-      sessionId = session.getId()
-    }
     return this.sessionService.deleteSession(
       user,
-      project,
       sessionId,
       request,
       response,

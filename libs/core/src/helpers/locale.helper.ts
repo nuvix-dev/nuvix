@@ -29,6 +29,14 @@ export interface TranslatorConfig {
   blockHandlers?: Record<string, BlockHandler>
 }
 
+type KeysWithoutParams = {
+  [K in TranslationKey]: RequiresParams<K> extends false ? K : never
+}[TranslationKey]
+
+type KeysWithParams = {
+  [K in TranslationKey]: RequiresParams<K> extends true ? K : never
+}[TranslationKey]
+
 export class LocaleTranslator {
   private readonly translations: TranslationFile
   private readonly fallbackTranslations: TranslationFile | null
@@ -65,17 +73,12 @@ export class LocaleTranslator {
   /**
    * Get translation without params (for keys that don't need any)
    */
-  get<K extends TranslationKey>(
-    key: K & (RequiresParams<K> extends false ? K : never),
-  ): string
+  get<K extends KeysWithoutParams>(key: K): string
 
   /**
    * Get translation with required params (autocomplete & type-checked)
    */
-  get<K extends TranslationKey>(
-    key: K & (RequiresParams<K> extends true ? K : never),
-    params: ParamsFor<K>,
-  ): string
+  get<K extends KeysWithParams>(key: K, params: ParamsFor<K>): string
 
   /**
    * Implementation
@@ -250,3 +253,5 @@ export class LocaleTranslator {
     translationCache.clear()
   }
 }
+
+export const localeTranslatorInstance = new LocaleTranslator()
