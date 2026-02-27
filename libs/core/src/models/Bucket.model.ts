@@ -47,22 +47,4 @@ export class BucketModel extends BaseModel {
     super()
     Object.assign(this, partial)
   }
-
-  /**
-   * Get Name
-   *
-   * @return string
-   */
-  getName(): string {
-    return 'Bucket'
-  }
-
-  /**
-   * Get Type
-   *
-   * @return string
-   */
-  getType(): string {
-    return 'MODEL_BUCKET'
-  }
 }

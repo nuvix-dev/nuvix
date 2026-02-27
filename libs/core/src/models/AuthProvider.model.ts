@@ -35,22 +35,4 @@ export class AuthProviderModel extends BaseModel {
     super()
     Object.assign(this, partial)
   }
-
-  /**
-   * Get Name
-   *
-   * @return string
-   */
-  getName(): string {
-    return 'AuthProvider'
-  }
-
-  /**
-   * Get Type
-   *
-   * @return string
-   */
-  getType(): string {
-    return 'MODEL_AUTH_PROVIDER'
-  }
 }

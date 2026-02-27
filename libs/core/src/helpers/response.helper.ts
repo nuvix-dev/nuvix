@@ -1,3 +1,4 @@
+import { PlatformModel } from '../models'
 import { AccountModel } from '../models/Account.model'
 import { AlgoArgon2Model } from '../models/AlgoArgon2.model'
 import { AlgoBcryptModel } from '../models/AlgoBcrypt.model'
@@ -16,34 +17,20 @@ import {
   AttributeURLModel,
 } from '../models/Attributes.model'
 import { AuthProviderModel } from '../models/AuthProvider.model'
-import { BillingAddressModel } from '../models/BillingAddress.model'
 import { BucketModel } from '../models/Bucket.model'
-import { BuildModel } from '../models/Build.model'
 import { CollectionModel } from '../models/Collection.model'
 import { ContinentModel } from '../models/Continent.model'
 import { CountryModel } from '../models/Country.model'
 import { CurrencyModel } from '../models/Currency.model'
-import { DatabaseModel } from '../models/Database.model'
-import { DeploymentModel } from '../models/Deployment.model'
-import { DetectionModel } from '../models/Detection.model'
 import { DocumentModel } from '../models/Document.model'
-import { EnvToken } from '../models/EnvToken.model'
-import { ExecutionModel } from '../models/Execution.model'
 import { FileModel } from '../models/File.model'
-import { FunctionModel } from '../models/Func.model'
-import { HeadersModel } from '../models/Headers.model'
 import {
-  HealthAntivirusModel,
-  HealthCertificateModel,
-  HealthQueueModel,
   HealthStatusModel,
   HealthTimeModel,
   HealthVersionModel,
 } from '../models/Health.model'
 import { IdentityModel } from '../models/Identity.model'
 import { IndexModel } from '../models/Index.model'
-import { InstallationModel } from '../models/Installation.model'
-import { InvoiceModel } from '../models/Invoice.model'
 import { JWTModel } from '../models/JWT.model'
 import { KeyModel } from '../models/Key.model'
 import { LanguageModel } from '../models/Language.model'
@@ -58,52 +45,33 @@ import { MFAChallengeModel } from '../models/MFAChallenge.model'
 import { MFAFactorsModel } from '../models/MFAFactors.model'
 import { MFARecoveryCodesModel } from '../models/MFARecoveryCodes.model'
 import { MFATypeModel } from '../models/MFAType.model'
-import { MigrationModel } from '../models/Migration.model'
-import { MigrationFirebaseProjectModel } from '../models/MigrationFirebaseProject.model'
-import { MigrationReportModel } from '../models/MigrationReport.model'
 import { MockNumberModel } from '../models/MockNumber.model'
-import { ObjectModel } from '../models/Object.model'
-import { OrganizationModel } from '../models/Organization.model'
 import {
   AlgoPhpassModel,
   AlgoScryptModel,
   AlgoScryptModifiedModel,
   AlgoShaModel,
 } from '../models/OtherAlgos.model'
-import { PaymentMethodModel } from '../models/PaymentMethod.model'
 import { PhoneModel } from '../models/Phone.model'
-import { BillingPlanModel } from '../models/Plan.model'
-import { PlatformModel } from '../models/Platform.model'
 import { ProjectModel } from '../models/Project.model'
 import { ProviderModel } from '../models/Provider.model'
-import { RuleModel } from '../models/Rule.model'
-import { RuntimeModel } from '../models/Runtime.model'
 import { SchemaModel } from '../models/Schema.model'
 import { SessionModel } from '../models/Session.model'
-import { SpecificationModel } from '../models/Specification.model'
 import { SubscriberModel } from '../models/Subscriber.model'
 import { TargetModel } from '../models/Target.model'
 import { TeamModel } from '../models/Team.model'
 import { TemplateEmailModel } from '../models/TemplateEmail.model'
-import { TemplateFunctionModel } from '../models/TemplateFunction.model'
-import { TemplateRuntimeModel } from '../models/TemplateRuntime.model'
 import { TemplateSMSModel } from '../models/TemplateSMS.model'
 import { TokenModel } from '../models/Token.model'
 import { TopicModel } from '../models/Topic.model'
 import {
   UsageBucketsModel,
   UsageCollectionModel,
-  UsageDatabaseModel,
-  UsageDatabasesModel,
-  UsageFunctionModel,
-  UsageFunctionsModel,
   UsageProjectModel,
   UsageStorageModel,
   UsageUsersModel,
 } from '../models/Usage.model'
 import { UserModel } from '../models/User.model'
-import { VariableModel } from '../models/Variable.model'
-import { VcsContentModel } from '../models/VcsContent.model'
 import { WebhookModel } from '../models/Webhook.model'
 
 /**
@@ -117,18 +85,13 @@ export class Models {
   public static LOG = LogModel
   public static METRIC = MetricModel
   public static METRIC_BREAKDOWN = MetricBreakdownModel
-  public static USAGE_DATABASES = UsageDatabasesModel
-  public static USAGE_DATABASE = UsageDatabaseModel
   public static USAGE_COLLECTION = UsageCollectionModel
   public static USAGE_USERS = UsageUsersModel
   public static USAGE_BUCKETS = UsageBucketsModel
   public static USAGE_STORAGE = UsageStorageModel
-  public static USAGE_FUNCTIONS = UsageFunctionsModel
-  public static USAGE_FUNCTION = UsageFunctionModel
   public static USAGE_PROJECT = UsageProjectModel
 
   // Database
-  public static DATABASE = DatabaseModel
   public static COLLECTION = CollectionModel
   public static INDEX = IndexModel
   public static DOCUMENT = DocumentModel
@@ -177,7 +140,6 @@ export class Models {
   // Storage
   public static FILE = FileModel
   public static BUCKET = BucketModel
-  public static OBJECT = ObjectModel
 
   // Locale
   public static LOCALE = LocaleModel
@@ -199,62 +161,21 @@ export class Models {
   public static TEAM = TeamModel
   public static MEMBERSHIP = MembershipModel
 
-  // VCS
-  public static INSTALLATION = InstallationModel
-  public static PROVIDER_REPOSITORY = ProviderModel
-  public static BRANCH = 'branch'
-  public static DETECTION = DetectionModel
-  public static VCS_CONTENT = VcsContentModel
-
-  // Functions
-  public static FUNCTION = FunctionModel
-  public static RUNTIME = RuntimeModel
-  public static DEPLOYMENT = DeploymentModel
-  public static EXECUTION = ExecutionModel
-  public static BUILD = BuildModel // Not used anywhere yet
-  public static FUNC_PERMISSIONS = 'funcPermissions'
-  public static HEADERS = HeadersModel
-  public static SPECIFICATION = SpecificationModel
-  public static TEMPLATE_FUNCTION = TemplateFunctionModel
-  public static TEMPLATE_RUNTIME = TemplateRuntimeModel
-  public static TEMPLATE_VARIABLE = TemplateRuntimeModel
-
-  // Proxy
-  public static PROXY_RULE = RuleModel
-
-  // Migrations
-  public static MIGRATION = MigrationModel
-  public static MIGRATION_REPORT = MigrationReportModel
-  public static MIGRATION_FIREBASE_PROJECT = MigrationFirebaseProjectModel
-
   // Project
-  public static PROJECT = ProjectModel //'project'
+  public static PROJECT = ProjectModel
   public static WEBHOOK = WebhookModel
   public static KEY = KeyModel
+
   public static MOCK_NUMBER = MockNumberModel
-  public static AUTH_PROVIDER = AuthProviderModel
   public static PLATFORM = PlatformModel
-  public static VARIABLE = VariableModel
-  public static VCS = 'vcs'
+  public static AUTH_PROVIDER = AuthProviderModel
   public static SMS_TEMPLATE = TemplateSMSModel
   public static EMAIL_TEMPLATE = TemplateEmailModel
-  public static ENV_TOKEN = EnvToken
 
   // Health
   public static HEALTH_STATUS = HealthStatusModel
   public static HEALTH_VERSION = HealthVersionModel
-  public static HEALTH_QUEUE = HealthQueueModel
   public static HEALTH_TIME = HealthTimeModel
-  public static HEALTH_ANTIVIRUS = HealthAntivirusModel
-  public static HEALTH_CERTIFICATE = HealthCertificateModel
-
-  // Organization
-  public static ORGANIZATION = OrganizationModel
-
-  public static BILLING_ADDRESS = BillingAddressModel
-  public static INVOICE = InvoiceModel
-  public static PAYMENT_METHOD = PaymentMethodModel
-  public static BILLING_PLAN = BillingPlanModel
 
   // Schema
   public static SCHEMA = SchemaModel

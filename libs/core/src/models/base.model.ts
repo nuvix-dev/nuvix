@@ -23,8 +23,3 @@ export abstract class BaseModel {
     Object.assign(this, doc)
   }
 }
-
-@Exclude()
-export abstract class BaseListModel {
-  @Expose() declare total: number
-}

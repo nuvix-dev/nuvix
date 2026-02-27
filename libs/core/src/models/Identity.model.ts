@@ -42,13 +42,4 @@ export class IdentityModel extends BaseModel {
     super()
     Object.assign(this, partial)
   }
-
-  /**
-   * Get Name
-   *
-   * @return string
-   */
-  getName(): string {
-    return 'Identity'
-  }
 }
