@@ -1,21 +1,11 @@
-import * as fs from 'node:fs/promises'
-import path from 'node:path'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { JwtService } from '@nestjs/jwt'
 import { CoreService } from '@nuvix/core'
-import type { SmtpConfig } from '@nuvix/core/config'
 import { type OAuthProviders, type OAuthProviderType } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
-import {
-  Auth,
-  Detector,
-  EmailHelper,
-  LocaleTranslator,
-  Models,
-  RequestContext,
-} from '@nuvix/core/helpers'
+import { Auth, EmailHelper, Models, RequestContext } from '@nuvix/core/helpers'
 import { getOAuth2Class, OAuth2 } from '@nuvix/core/OAuth2'
 import {
   DeletesJobData,
@@ -56,7 +46,6 @@ import type {
   UsersDoc,
 } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
-import Template from 'handlebars'
 import { CountryResponse, Reader } from 'maxmind'
 import {
   CreateEmailSessionDTO,
@@ -1511,109 +1500,54 @@ export class SessionService {
     const locale = ctx.translator()
     const project = ctx.project
     const detector = ctx.detector(request.headers['user-agent'])
-
-    let subject = locale.getText('emails.otpSession.subject')
-    const customTemplate =
-      project.get('templates', {})[`email.otpSession-${locale.default}`] ?? {}
-
     const agentOs = detector.getOS()
     const agentClient = detector.getClient()
     const agentDevice = detector.getDevice()
 
-    const templatePath = path.join(
-      this.appConfig.assetConfig.templates,
-      'email-otp.tpl',
-    )
-    const templateSource = await fs.readFile(templatePath, 'utf8')
-    const template = Template.compile(templateSource)
+    const projectName = project.get('name')
+    const payload = await this.emailHelper
+      .builder(project)
+      .to(email)
+      .usingTemplate('email-otp.tpl', `otpSession-${locale.fallbackLocale}`)
+      .withSubject(
+        locale.t('emails.otpSession.subject', { project: projectName }),
+      )
+      .withData({
+        hello: locale.t('emails.otpSession.hello', {
+          user: user.get('name', 'User'),
+        }),
+        description: locale.t('emails.otpSession.description', {
+          project: projectName,
+        }),
+        clientInfo: locale.t('emails.otpSession.clientInfo', {
+          agentClient: agentClient.clientName || 'UNKNOWN',
+          agentDevice: agentDevice.deviceBrand || 'UNKNOWN',
+          agentOs: agentOs.osName || 'UNKNOWN',
+        }),
+        thanks: locale.t('emails.otpSession.thanks'),
+        signature: locale.t('emails.otpSession.signature', {
+          project: projectName,
+        }),
+        securityPhrase: phrase
+          ? locale.t('emails.otpSession.securityPhrase', { phrase })
+          : '',
+      })
+      .withVariables({
+        direction: locale.t('settings.direction'),
+        user: user.get('name'),
+        project: project.get('name'),
+        otp: tokenSecret,
+      })
+      .build()
 
-    const emailData = {
-      hello: locale.getText('emails.otpSession.hello'),
-      description: locale.getText('emails.otpSession.description'),
-      clientInfo: locale.getText('emails.otpSession.clientInfo'),
-      thanks: locale.getText('emails.otpSession.thanks'),
-      signature: locale.getText('emails.otpSession.signature'),
-      securityPhrase: phrase!
-        ? locale.getText('emails.otpSession.securityPhrase')
-        : '',
-    }
-
-    let body = template(emailData)
-
-    const smtp = project.get('smtp', {}) as SmtpConfig
-    const smtpEnabled = smtp.enabled ?? false
-    const systemConfig = this.appConfig.get('system')
-
-    let senderEmail = systemConfig.emailAddress || configuration.app.emailTeam
-    let senderName =
-      systemConfig.emailName || `${configuration.app.name} Server`
-    let replyTo = ''
-
-    const smtpServer: any = {}
-
-    if (smtpEnabled) {
-      if (smtp.senderEmail) {
-        senderEmail = smtp.senderEmail
-      }
-      if (smtp.senderName) {
-        senderName = smtp.senderName
-      }
-      if (smtp.replyTo) {
-        replyTo = smtp.replyTo
-      }
-
-      smtpServer.host = smtp.host || ''
-      smtpServer.port = smtp.port || ''
-      smtpServer.username = smtp.username || ''
-      smtpServer.password = smtp.password || ''
-      smtpServer.secure = smtp.secure ?? false
-
-      if (customTemplate) {
-        if (customTemplate.senderEmail) {
-          senderEmail = customTemplate.senderEmail
-        }
-        if (customTemplate.senderName) {
-          senderName = customTemplate.senderName
-        }
-        if (customTemplate.replyTo) {
-          replyTo = customTemplate.replyTo
-        }
-
-        body = customTemplate.message || body
-        subject = customTemplate.subject || subject
-      }
-
-      smtpServer.replyTo = replyTo
-      smtpServer.senderEmail = senderEmail
-      smtpServer.senderName = senderName
-    }
-
-    const emailVariables = {
-      direction: locale.getText('settings.direction'),
-      user: user.get('name'),
-      project: project.get('name'),
-      otp: tokenSecret,
-      agentDevice: agentDevice.deviceBrand || 'UNKNOWN',
-      agentClient: agentClient.clientName || 'UNKNOWN',
-      agentOs: agentOs.osName || 'UNKNOWN',
-      phrase: phrase! || '',
-    }
-
-    await this.mailsQueue.add(MailJob.SEND_EMAIL, {
-      email,
-      subject,
-      body,
-      server: smtpServer,
-      variables: emailVariables,
-    })
+    await this.mailsQueue.add(MailJob.SEND_EMAIL, payload)
 
     createdToken.set('secret', tokenSecret)
 
-    if (phrase!) {
+    if (phrase) {
       createdToken.set('phrase', phrase)
     }
 
-    response.status(201)
     return createdToken
   }
 
@@ -1624,26 +1558,17 @@ export class SessionService {
     user,
     input,
     request,
-    response,
-    locale,
-    project,
   }: {
-    db: Database
     user: UsersDoc
     input: CreatePhoneTokenDTO
     request: NuvixRequest
-    response: NuvixRes
-    locale: LocaleTranslator
-    project: ProjectsDoc
   }) {
     // Check if SMS provider is configured
-    if (!this.appConfig.get('sms').enabled) {
-      throw new Exception(
-        Exception.GENERAL_PHONE_DISABLED,
-        'Phone provider not configured',
-      )
+    if (!configuration.sms.enabled) {
+      throw new Exception(Exception.GENERAL_PHONE_DISABLED)
     }
 
+    const ctx = request.context
     const { userId, phone } = input
     const result = await this.db.findOne('users', [
       Query.equal('phone', [phone]),
@@ -1652,8 +1577,8 @@ export class SessionService {
     if (!result.empty()) {
       user.setAll(result.toObject())
     } else {
-      const limit = project.get('auths', {}).limit ?? 0
-      const maxUsers = this.appConfig.appLimits.users
+      const limit = ctx.project.get('auths', {}).limit ?? 0
+      const maxUsers = configuration.limits.users
 
       if (limit !== 0) {
         const total = await this.db.count('users', [], maxUsers)
@@ -1718,7 +1643,7 @@ export class SessionService {
 
     let secret: string | null = null
     let sendSMS = true
-    const mockNumbers = project.get('auths', {}).mockNumbers ?? []
+    const mockNumbers = ctx.project.get('auths', {}).mockNumbers ?? []
 
     for (const mockNumber of mockNumbers) {
       if (mockNumber.phone === phone) {
@@ -1755,16 +1680,19 @@ export class SessionService {
     await this.db.purgeCachedDocument('users', user.getId())
 
     if (sendSMS) {
+      const locale = ctx.translator()
       const customTemplate =
-        project.get('templates', {})[`sms.login-${locale.default}`] ?? {}
+        ctx.project.get('templates', {})[
+          `sms.login-${locale.fallbackLocale}`
+        ] ?? {}
 
-      let message = locale.getText('sms.verification.body')
+      let message = locale.get('sms.verification.body', { secret })
       if (customTemplate?.message) {
         message = customTemplate.message
       }
 
       const messageContent = message
-        .replace('{{project}}', project.get('name'))
+        .replace('{{project}}', ctx.project.get('name'))
         .replace('{{secret}}', secret)
 
       await this.messagingQueue.add(MessagingJob.INTERNAL, {
@@ -1777,25 +1705,16 @@ export class SessionService {
       })
     }
 
-    createdToken.set('secret', Auth.encodeSession(user.getId(), secret))
+    createdToken.set('secret', secret)
 
-    response.status(201)
     return createdToken
   }
 
   /**
    * Create JWT
    */
-  async createJWT(user: UsersDoc, response: NuvixRes) {
-    const sessions = user.get('sessions', []) as SessionsDoc[]
-    let current = new Doc<Sessions>()
-
-    for (const session of sessions) {
-      if (session.get('secret') === Auth.hash(Auth.secret)) {
-        current = session
-        break
-      }
-    }
+  async createJWT(user: UsersDoc, ctx: RequestContext) {
+    const current = ctx.session ?? new Doc()
 
     if (current.empty()) {
       throw new Exception(Exception.USER_SESSION_NOT_FOUND)
@@ -1810,7 +1729,6 @@ export class SessionService {
       expiresIn: '15m', // 900 seconds
     })
 
-    response.status(201)
     return new Doc({ jwt })
   }
 
@@ -1822,105 +1740,61 @@ export class SessionService {
     session: SessionsDoc,
     ctx: RequestContext,
   ) {
-    let subject: string = locale.getText('emails.sessionAlert.subject')
-    const customTemplate =
-      project.get('templates', {})?.[`email.sessionAlert-${locale.default}`] ??
-      {}
-    const templatePath = path.join(
-      this.appConfig.assetConfig.templates,
-      'email-session-alert.tpl',
-    )
-    const templateSource = await fs.readFile(templatePath, 'utf8')
-    const template = Template.compile(templateSource)
+    const project = ctx.project
+    const locale = ctx.translator()
+    const projectName = project.get('name')
+    const key = countryKey(session.get('countryCode'))
+    const country = (
+      locale.has(key) ? locale.getRaw(key) : locale.t('locale.country.unknown')
+    ) as string
 
-    const emailData = {
-      hello: locale.getText('emails.sessionAlert.hello'),
-      body: locale.getText('emails.sessionAlert.body'),
-      listDevice: locale.getText('emails.sessionAlert.listDevice'),
-      listIpAddress: locale.getText('emails.sessionAlert.listIpAddress'),
-      listCountry: locale.getText('emails.sessionAlert.listCountry'),
-      footer: locale.getText('emails.sessionAlert.footer'),
-      thanks: locale.getText('emails.sessionAlert.thanks'),
-      signature: locale.getText('emails.sessionAlert.signature'),
-    }
+    const payload = await this.emailHelper
+      .builder(project)
+      .to(user.get('email'))
+      .usingTemplate(
+        'email-session-alert.tpl',
+        `sessionAlert-${locale.fallbackLocale}`,
+      )
+      .withSubject(
+        locale.t('emails.sessionAlert.subject', { project: projectName }),
+      )
+      .withData({
+        hello: locale.t('emails.sessionAlert.hello', {
+          user: user.get('name', 'User'),
+        }),
+        body: locale.t('emails.sessionAlert.body', {
+          project: projectName,
+          date: new Date().toLocaleDateString(locale.fallbackLocale, {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+          }),
+          time: new Date().toLocaleTimeString(locale.fallbackLocale),
+          year: new Date().getFullYear().toString(),
+        }),
+        listDevice: locale.t('emails.sessionAlert.listDevice', {
+          device: session.get('clientName'),
+        }),
+        listIpAddress: locale.t('emails.sessionAlert.listIpAddress', {
+          ipAddress: session.get('ip'),
+        }),
+        listCountry: locale.t('emails.sessionAlert.listCountry', {
+          country,
+        }),
+        footer: locale.t('emails.sessionAlert.footer'),
+        thanks: locale.t('emails.sessionAlert.thanks'),
+        signature: locale.t('emails.sessionAlert.signature', {
+          project: projectName,
+        }),
+      })
+      .withVariables({
+        direction: locale.t('settings.direction'),
+        user: user.get('name', 'User'),
+        project: projectName,
+      })
+      .build()
 
-    const emailVariables = {
-      direction: locale.getText('settings.direction'),
-      date: new Date().toLocaleDateString(locale.default, {
-        month: 'long',
-        day: 'numeric',
-      }),
-      year: new Date().getFullYear(),
-      time: new Date().toLocaleTimeString(locale.default),
-      user: user.get('name'),
-      project: project.get('name'),
-      device: session.get('clientName'),
-      ipAddress: session.get('ip'),
-      country: locale.getText(
-        `countries.${session.get('countryCode')}`,
-        locale.getText('locale.country.unknown'),
-      ),
-    }
-
-    const smtpServer: SmtpConfig = {} as SmtpConfig
-
-    let body = template(emailData)
-
-    const smtp = project.get('smtp', {}) as SmtpConfig
-    const smtpEnabled = smtp.enabled ?? false
-    const systemConfig = this.appConfig.get('system')
-
-    let senderEmail = systemConfig.emailAddress || configuration.app.emailTeam
-    let senderName =
-      systemConfig.emailName || `${configuration.app.name} Server`
-    let replyTo = ''
-
-    if (smtpEnabled) {
-      if (smtp.senderEmail) {
-        senderEmail = smtp.senderEmail
-      }
-      if (smtp.senderName) {
-        senderName = smtp.senderName
-      }
-      if (smtp.replyTo) {
-        replyTo = smtp.replyTo
-      }
-
-      smtpServer.host = smtp.host
-      smtpServer.port = smtp.port
-      smtpServer.username = smtp.username
-      smtpServer.password = smtp.password
-      smtpServer.secure = smtp.secure ?? false
-
-      if (customTemplate) {
-        if (customTemplate.senderEmail) {
-          senderEmail = customTemplate.senderEmail
-        }
-        if (customTemplate.senderName) {
-          senderName = customTemplate.senderName
-        }
-        if (customTemplate.replyTo) {
-          replyTo = customTemplate.replyTo
-        }
-
-        body = customTemplate.message || body
-        subject = customTemplate.subject || subject
-      }
-
-      smtpServer.replyTo = replyTo
-      smtpServer.senderEmail = senderEmail
-      smtpServer.senderName = senderName
-    }
-
-    const email = user.get('email')
-
-    await this.mailsQueue.add(MailJob.SEND_EMAIL, {
-      email,
-      subject,
-      body,
-      server: smtpServer,
-      variables: emailVariables,
-    })
+    await this.mailsQueue.add(MailJob.SEND_EMAIL, payload)
   }
 
   /**
@@ -1931,16 +1805,11 @@ export class SessionService {
     input,
     request,
     response,
-    locale,
-    project,
   }: {
     user: UsersDoc
     input: CreateSessionDTO
     request: NuvixRequest
     response: NuvixRes
-    locale: LocaleTranslator
-    project: ProjectsDoc
-    db: Database
   }) {
     const userFromRequest = await Authorization.skip(() =>
       this.db.getDocument('users', input.userId),
@@ -1962,9 +1831,11 @@ export class SessionService {
 
     user.setAll(userFromRequest.toObject())
 
+    const ctx = request.context
+
     const duration =
-      project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
-    const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
+      ctx.project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
+    const detector = ctx.detector(request.headers['user-agent'])
     const record = this.geodb.get(request.ip)
     const sessionSecret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
 
@@ -2039,7 +1910,7 @@ export class SessionService {
       tokenType !== TokenType.MAGIC_URL && tokenType !== TokenType.EMAIL
     const hasUserEmail = user.get('email', false) !== false
     const isSessionAlertsEnabled =
-      project.get('auths', {}).sessionAlerts ?? false
+      ctx.project.get('auths', {}).sessionAlerts ?? false
 
     const sessionCount = await this.db.count('sessions', [
       Query.equal('userId', [user.getId()]),
@@ -2052,19 +1923,19 @@ export class SessionService {
       isSessionAlertsEnabled &&
       isNotFirstSession
     ) {
-      await this.sendSessionAlert(locale, user, project, createdSession)
+      await this.sendSessionAlert(user, createdSession, ctx)
     }
 
-    await this.eventEmitter.emit(AppEvents.SESSION_CREATE, {
-      userId: user.getId(),
-      sessionId: createdSession.getId(),
-      payload: {
-        data: createdSession,
-        type: Models.SESSION,
-      },
-    })
+    // await this.eventEmitter.emitAsync(AppEvents.SESSION_CREATE, {
+    //   userId: user.getId(),
+    //   sessionId: createdSession.getId(),
+    //   payload: {
+    //     data: createdSession,
+    //     type: Models.SESSION,
+    //   },
+    // })
 
-    if (!request.domainVerification) {
+    if (configuration.server.fallbackCookies) {
       response.header(
         'X-Fallback-Cookies',
         JSON.stringify({
@@ -2083,24 +1954,25 @@ export class SessionService {
         {
           expires: expire,
           path: '/',
-          domain: Auth.cookieDomain,
+          domain: ctx.cookieDomain,
           secure: protocol === 'https',
           httpOnly: true,
-          sameSite: Auth.cookieSamesite,
+          sameSite: ctx.cookieSameSite,
         },
       )
       .status(201)
 
-    const countryName = locale.getText(
-      `countries.${createdSession.get('countryCode', '')?.toLowerCase()}`,
-      locale.getText('locale.country.unknown'),
-    )
+    const locale = ctx.translator()
+    const key = countryKey(createdSession.get('countryCode'))
+    const countryName = locale.has(key)
+      ? locale.getRaw(key)
+      : locale.t('locale.country.unknown')
 
     createdSession
       .set('current', true)
       .set('countryName', countryName)
       .set('expire', expire.toISOString())
-      .set('secret', Auth.encodeSession(user.getId(), sessionSecret))
+      .set('secret', sessionSecret)
 
     return createdSession
   }
