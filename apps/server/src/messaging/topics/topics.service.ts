@@ -28,7 +28,7 @@ export class TopicsService {
     })
 
     try {
-      const createdTopic = await db.createDocument('topics', topic)
+      const createdTopic = await this.db.createDocument('topics', topic)
 
       return createdTopic
     } catch (error) {
@@ -49,9 +49,9 @@ export class TopicsService {
 
     const { filters } = Query.groupByType(queries)
 
-    const topics = await db.find('topics', queries)
+    const topics = await this.db.find('topics', queries)
     const data = await this.populateTargets(topics)
-    const total = await db.count('topics', filters)
+    const total = await this.db.count('topics', filters)
 
     return {
       data,
@@ -60,13 +60,13 @@ export class TopicsService {
   }
 
   private populateTargets(topics: Doc<Topics>[]) {
-    return db.withSchema(Schemas.Auth, () =>
-      db.skipValidation(() =>
+    return this.db.withSchema(Schemas.Auth, () =>
+      this.db.skipValidation(() =>
         Promise.all(
           topics.map(async topic => {
             const targetIds = topic.get('targets', [])
             if (targetIds.length > 0) {
-              const targets = await db.find('targets', [
+              const targets = await this.db.find('targets', [
                 Query.equal('$sequence', [...targetIds]),
               ])
               topic.set('targets', targets)
@@ -82,7 +82,7 @@ export class TopicsService {
    * Get Topic
    */
   async getTopic(id: string) {
-    const topic = await db.getDocument('topics', id)
+    const topic = await this.db.getDocument('topics', id)
 
     if (topic.empty()) {
       throw new Exception(Exception.TOPIC_NOT_FOUND)
@@ -98,7 +98,7 @@ export class TopicsService {
    * Updates a topic.
    */
   async updateTopic({ topicId, input }: UpdateTopic) {
-    const topic = await db.getDocument('topics', topicId)
+    const topic = await this.db.getDocument('topics', topicId)
 
     if (topic.empty()) {
       throw new Exception(Exception.TOPIC_NOT_FOUND)
@@ -112,7 +112,7 @@ export class TopicsService {
       topic.set('subscribe', input.subscribe)
     }
 
-    const updatedTopic = await db.updateDocument('topics', topicId, topic)
+    const updatedTopic = await this.db.updateDocument('topics', topicId, topic)
 
     const populatedTopic = await this.populateTargets([updatedTopic]).then(
       ([populated]) => populated!,
@@ -124,13 +124,13 @@ export class TopicsService {
    * Deletes a topic.
    */
   async deleteTopic(topicId: string, project: ProjectsDoc) {
-    const topic = await db.getDocument('topics', topicId)
+    const topic = await this.db.getDocument('topics', topicId)
 
     if (topic.empty()) {
       throw new Exception(Exception.TOPIC_NOT_FOUND)
     }
 
-    await db.deleteDocument('topics', topicId)
+    await this.db.deleteDocument('topics', topicId)
 
     await this.deletesQueue.add(DeleteType.TOPIC, {
       project,

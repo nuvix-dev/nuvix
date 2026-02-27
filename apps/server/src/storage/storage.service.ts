@@ -46,8 +46,8 @@ export class StorageService {
     const filterQueries = Query.groupByType(queries).filters
 
     return {
-      data: await db.find('buckets', queries),
-      total: await db.count(
+      data: await this.db.find('buckets', queries),
+      total: await this.db.count(
         'buckets',
         filterQueries,
         configuration.limits.limitCount,
@@ -80,7 +80,7 @@ export class StorageService {
       )
       const indexes = filesCollection.indexes?.map(index => new Doc(index))
 
-      await db.createDocument(
+      await this.db.createDocument(
         'buckets',
         new Doc({
           $id: bucketId,
@@ -98,8 +98,8 @@ export class StorageService {
         }),
       )
 
-      const bucket = await db.getDocument('buckets', bucketId)
-      await db.createCollection({
+      const bucket = await this.db.getDocument('buckets', bucketId)
+      await this.db.createCollection({
         id: this.getCollectionName(bucket.getSequence()),
         attributes,
         indexes,
@@ -120,7 +120,7 @@ export class StorageService {
    * Get a bucket.
    */
   async getBucket(id: string) {
-    const bucket = await db.getDocument('buckets', id)
+    const bucket = await this.db.getDocument('buckets', id)
 
     if (bucket.empty()) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
@@ -133,7 +133,7 @@ export class StorageService {
    * Update a bucket.
    */
   async updateBucket(id: string, input: UpdateBucketDTO) {
-    const bucket = await db.getDocument('buckets', id)
+    const bucket = await this.db.getDocument('buckets', id)
 
     if (bucket.empty()) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
@@ -151,7 +151,7 @@ export class StorageService {
     const encryption = input.encryption ?? bucket.get('encryption', true)
     const antivirus = input.antivirus ?? bucket.get('antivirus', true)
 
-    const updatedBucket = await db.updateDocument(
+    const updatedBucket = await this.db.updateDocument(
       'buckets',
       id,
       bucket
@@ -169,7 +169,7 @@ export class StorageService {
         .set('antivirus', antivirus),
     )
 
-    await db.updateCollection({
+    await this.db.updateCollection({
       id: this.getCollectionName(bucket.getSequence()),
       permissions,
       documentSecurity: input.fileSecurity ?? bucket.get('fileSecurity', false),
@@ -182,13 +182,13 @@ export class StorageService {
    * Delete a bucket.
    */
   async deleteBucket(id: string, project: ProjectsDoc) {
-    const bucket = await db.getDocument('buckets', id)
+    const bucket = await this.db.getDocument('buckets', id)
 
     if (bucket.empty()) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
     }
 
-    if (!(await db.deleteDocument('buckets', id))) {
+    if (!(await this.db.deleteDocument('buckets', id))) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
         'Failed to remove bucket from DB',
@@ -220,12 +220,12 @@ export class StorageService {
 
     await Authorization.skip(async () => {
       for (const metric of metrics) {
-        const result = await db.findOne('stats', qb =>
+        const result = await this.db.findOne('stats', qb =>
           qb.equal('metric', metric).equal('period', MetricPeriod.INF),
         )
 
         stats[metric] = { total: result.get('value') ?? 0, data: {} }
-        const results = await db.find('stats', qb =>
+        const results = await this.db.find('stats', qb =>
           qb
             .equal('metric', metric)
             .equal('period', days.period)
@@ -278,7 +278,7 @@ export class StorageService {
    * Get Storage Usage of bucket.
    */
   async getBucketStorageUsage(bucketId: string, range = '7d') {
-    const bucket = await db.getDocument('buckets', bucketId)
+    const bucket = await this.db.getDocument('buckets', bucketId)
 
     if (bucket.empty()) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
@@ -302,12 +302,12 @@ export class StorageService {
 
     await Authorization.skip(async () => {
       for (const metric of metrics) {
-        const result = await db.findOne('stats', qb =>
+        const result = await this.db.findOne('stats', qb =>
           qb.equal('metric', metric).equal('period', MetricPeriod.INF),
         )
 
         stats[metric] = { total: result.get('value') ?? 0, data: {} }
-        const results = await db.find('stats', qb =>
+        const results = await this.db.find('stats', qb =>
           qb
             .equal('metric', metric)
             .equal('period', days.period)

@@ -20,8 +20,8 @@ export class IdentityService {
 
     const filterQueries = Query.groupByType(queries).filters
     try {
-      const results = await db.find('identities', queries)
-      const total = await db.count(
+      const results = await this.db.find('identities', queries)
+      const total = await this.db.count(
         'identities',
         filterQueries,
         configuration.limits.limitCount,
@@ -48,13 +48,13 @@ export class IdentityService {
   async deleteIdentity({
     identityId,
   }: WithDB<{ identityId: string }>): Promise<void> {
-    const identity = await db.getDocument('identities', identityId)
+    const identity = await this.db.getDocument('identities', identityId)
 
     if (identity.empty()) {
       throw new Exception(Exception.USER_IDENTITY_NOT_FOUND)
     }
 
-    await db.deleteDocument('identities', identityId)
+    await this.db.deleteDocument('identities', identityId)
   }
 }
 

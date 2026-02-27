@@ -31,7 +31,6 @@ import {
 @Injectable()
 export class MembershipsService {
   constructor(
-    private readonly appConfig: AppConfigService,
     private readonly coreService: CoreService,
     @InjectQueue(QueueFor.MAILS)
     private readonly mailsQueue: Queue<MailQueueOptions, any, MailJob>,
@@ -68,7 +67,7 @@ export class MembershipsService {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED)
     }
 
-    const team = await db.getDocument('teams', id)
+    const team = await this.db.getDocument('teams', id)
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
     }
@@ -78,7 +77,7 @@ export class MembershipsService {
     let invitee: UsersDoc | null = null
 
     if (input.userId) {
-      invitee = await db.getDocument('users', input.userId)
+      invitee = await this.db.getDocument('users', input.userId)
       if (invitee.empty()) {
         throw new Exception(Exception.USER_NOT_FOUND)
       }
@@ -100,7 +99,7 @@ export class MembershipsService {
       input.phone = invitee.get('phone', '')
       name = !name ? invitee.get('name', '') : name
     } else if (input.email) {
-      invitee = await db.findOne('users', [Query.equal('email', [email])])
+      invitee = await this.db.findOne('users', [Query.equal('email', [email])])
       if (
         !invitee.empty() &&
         input.phone &&
@@ -113,7 +112,9 @@ export class MembershipsService {
         )
       }
     } else if (input.phone) {
-      invitee = await db.findOne('users', [Query.equal('phone', [input.phone])])
+      invitee = await this.db.findOne('users', [
+        Query.equal('phone', [input.phone]),
+      ])
       if (!invitee.empty() && email && invitee.get('email') !== email) {
         throw new Exception(
           Exception.USER_ALREADY_EXISTS,
@@ -129,7 +130,7 @@ export class MembershipsService {
       // Check user limit if not privileged or app user
       const limit = project.get('auths', {}).limit ?? 0
       if (!Auth.isTrustedActor && limit !== 0) {
-        const total = await db.count('users', [])
+        const total = await this.db.count('users', [])
         if (total >= limit) {
           throw new Exception(
             Exception.USER_COUNT_EXCEEDED,
@@ -139,7 +140,7 @@ export class MembershipsService {
       }
 
       // Ensure email is not already used in another identity
-      const identityWithMatchingEmail = await db.findOne('identities', [
+      const identityWithMatchingEmail = await this.db.findOne('identities', [
         Query.equal('providerEmail', [email]),
       ])
       if (identityWithMatchingEmail && !identityWithMatchingEmail.empty()) {
@@ -147,7 +148,7 @@ export class MembershipsService {
       }
 
       try {
-        invitee = await db.createDocument(
+        invitee = await this.db.createDocument(
           'users',
           new Doc({
             $id: userId,
@@ -214,7 +215,7 @@ export class MembershipsService {
     if (Auth.isTrustedActor) {
       try {
         membership = await Authorization.skip(() =>
-          db.createDocument('memberships', membership),
+          this.db.createDocument('memberships', membership),
         )
       } catch (error) {
         if (error instanceof DuplicateException) {
@@ -224,12 +225,12 @@ export class MembershipsService {
       }
 
       await Authorization.skip(() =>
-        db.increaseDocumentAttribute('teams', team.getId(), 'total', 1),
+        this.db.increaseDocumentAttribute('teams', team.getId(), 'total', 1),
       )
-      await db.purgeCachedDocument('users', invitee.getId())
+      await this.db.purgeCachedDocument('users', invitee.getId())
     } else {
       try {
-        membership = await db.createDocument('memberships', membership)
+        membership = await this.db.createDocument('memberships', membership)
       } catch (error) {
         if (error instanceof DuplicateException) {
           throw new Exception(Exception.TEAM_INVITE_ALREADY_EXISTS)
@@ -349,7 +350,7 @@ export class MembershipsService {
    * Get all members of the team
    */
   async getMembers(id: string, queries: Query[], search?: string) {
-    const team = await db.getDocument('teams', id)
+    const team = await this.db.getDocument('teams', id)
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
     }
@@ -360,13 +361,16 @@ export class MembershipsService {
     queries.push(Query.equal('teamInternalId', [team.getSequence()]))
 
     const filterQueries = Query.groupByType(queries).filters
-    const memberships = await db.find('memberships', queries)
-    const total = await db.count('memberships', filterQueries)
+    const memberships = await this.db.find('memberships', queries)
+    const total = await this.db.count('memberships', filterQueries)
 
     const validMemberships = memberships
       .filter(membership => membership.get('userId'))
       .map(async membership => {
-        const user = await db.getDocument('users', membership.get('userId'))
+        const user = await this.db.getDocument(
+          'users',
+          membership.get('userId'),
+        )
 
         let mfa = user.get('mfa', false)
         if (mfa) {
@@ -401,17 +405,17 @@ export class MembershipsService {
    * Get A member of the team
    */
   async getMember(teamId: string, memberId: string) {
-    const team = await db.getDocument('teams', teamId)
+    const team = await this.db.getDocument('teams', teamId)
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
     }
 
-    const membership = await db.getDocument('memberships', memberId)
+    const membership = await this.db.getDocument('memberships', memberId)
     if (membership.empty() || !membership.get('userId')) {
       throw new Exception(Exception.MEMBERSHIP_NOT_FOUND)
     }
 
-    const user = await db.getDocument('users', membership.get('userId'))
+    const user = await this.db.getDocument('users', membership.get('userId'))
 
     let mfa = user.get('mfa', false)
     if (mfa) {
@@ -442,17 +446,17 @@ export class MembershipsService {
     memberId: string,
     input: UpdateMembershipDTO,
   ) {
-    const team = await db.getDocument('teams', teamId)
+    const team = await this.db.getDocument('teams', teamId)
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
     }
 
-    const membership = await db.getDocument('memberships', memberId)
+    const membership = await this.db.getDocument('memberships', memberId)
     if (membership.empty()) {
       throw new Exception(Exception.MEMBERSHIP_NOT_FOUND)
     }
 
-    const user = await db.getDocument('users', membership.get('userId'))
+    const user = await this.db.getDocument('users', membership.get('userId'))
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
@@ -466,13 +470,13 @@ export class MembershipsService {
     }
 
     membership.set('roles', input.roles)
-    const updatedMembership = await db.updateDocument(
+    const updatedMembership = await this.db.updateDocument(
       'memberships',
       membership.getId(),
       membership,
     )
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     updatedMembership
       .set('teamName', team.get('name'))
@@ -494,13 +498,15 @@ export class MembershipsService {
     user: UsersDoc,
   ): Promise<Doc<Memberships>> {
     const protocol = request.protocol
-    const membership = await db.getDocument('memberships', memberId)
+    const membership = await this.db.getDocument('memberships', memberId)
 
     if (membership.empty()) {
       throw new Exception(Exception.MEMBERSHIP_NOT_FOUND)
     }
 
-    const team = await Authorization.skip(() => db.getDocument('teams', teamId))
+    const team = await Authorization.skip(() =>
+      this.db.getDocument('teams', teamId),
+    )
 
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
@@ -523,7 +529,7 @@ export class MembershipsService {
 
     const hasSession = !user.empty()
     if (!hasSession) {
-      const userData = await db.getDocument('users', userId)
+      const userData = await this.db.getDocument('users', userId)
       user.setAll(userData.toObject())
     }
 
@@ -541,7 +547,7 @@ export class MembershipsService {
     membership.set('joined', new Date()).set('confirm', true)
 
     await Authorization.skip(() =>
-      db.updateDocument(
+      this.db.updateDocument(
         'users',
         user.getId(),
         user.set('emailVerification', true),
@@ -581,7 +587,7 @@ export class MembershipsService {
         ...detector.getDevice(),
       })
 
-      await db.createDocument('sessions', sessionDoc)
+      await this.db.createDocument('sessions', sessionDoc)
       Authorization.setRole(Role.user(userId).toString())
 
       const domainVerification = request.domainVerification
@@ -611,16 +617,16 @@ export class MembershipsService {
       )
     }
 
-    const updatedMembership = await db.updateDocument(
+    const updatedMembership = await this.db.updateDocument(
       'memberships',
       membership.getId(),
       membership,
     )
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     await Authorization.skip(() =>
-      db.increaseDocumentAttribute('teams', team.getId(), 'total', 1),
+      this.db.increaseDocumentAttribute('teams', team.getId(), 'total', 1),
     )
 
     return updatedMembership
@@ -633,17 +639,17 @@ export class MembershipsService {
    * Delete member of the team
    */
   async deleteMember(teamId: string, memberId: string) {
-    const team = await db.getDocument('teams', teamId)
+    const team = await this.db.getDocument('teams', teamId)
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
     }
 
-    const membership = await db.getDocument('memberships', memberId)
+    const membership = await this.db.getDocument('memberships', memberId)
     if (membership.empty()) {
       throw new Exception(Exception.MEMBERSHIP_NOT_FOUND)
     }
 
-    const user = await db.getDocument('users', membership.get('userId'))
+    const user = await this.db.getDocument('users', membership.get('userId'))
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
@@ -653,7 +659,7 @@ export class MembershipsService {
     }
 
     try {
-      await db.deleteDocument('memberships', membership.getId())
+      await this.db.deleteDocument('memberships', membership.getId())
     } catch (error) {
       if (error instanceof AuthorizationException) {
         throw new Exception(Exception.USER_UNAUTHORIZED)
@@ -664,10 +670,16 @@ export class MembershipsService {
       )
     }
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     if (membership.get('confirm')) {
-      await db.decreaseDocumentAttribute('teams', team.getId(), 'total', 1, 0)
+      await this.db.decreaseDocumentAttribute(
+        'teams',
+        team.getId(),
+        'total',
+        1,
+        0,
+      )
     }
   }
 }

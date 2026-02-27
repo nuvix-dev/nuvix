@@ -55,7 +55,7 @@ export class CollectionsService {
     collectionId = collectionId === 'unique()' ? ID.unique() : collectionId
 
     try {
-      await db.createDocument(
+      await this.db.createDocument(
         SchemaMeta.collections,
         new Doc({
           $id: collectionId,
@@ -67,12 +67,12 @@ export class CollectionsService {
         }),
       )
 
-      const collection = await db.getDocument(
+      const collection = await this.db.getDocument(
         SchemaMeta.collections,
         collectionId,
       )
 
-      await db.createCollection({
+      await this.db.createCollection({
         id: collection.getId(),
         permissions,
         documentSecurity,
@@ -80,7 +80,7 @@ export class CollectionsService {
       })
 
       this.event.emit(
-        `schema.${db.schema}.collection.${collectionId}.created`,
+        `schema.${this.db.schema}.collection.${collectionId}.created`,
         collection,
       )
       return collection
@@ -104,8 +104,8 @@ export class CollectionsService {
     }
 
     const filterQueries = Query.groupByType(queries).filters
-    const collections = await db.find(SchemaMeta.collections, queries)
-    const total = await db.count(
+    const collections = await this.db.find(SchemaMeta.collections, queries)
+    const total = await this.db.count(
       SchemaMeta.collections,
       filterQueries,
       configuration.limits.limitCount,
@@ -121,7 +121,7 @@ export class CollectionsService {
    * Find one collection.
    */
   async getCollection(collectionId: string) {
-    const collection = await db.getDocument(
+    const collection = await this.db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -158,7 +158,7 @@ export class CollectionsService {
     const { name, documentSecurity } = input
     let { permissions, enabled } = input
 
-    const collection = await db.getDocument(
+    const collection = await this.db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -171,7 +171,7 @@ export class CollectionsService {
     }
     enabled = enabled ?? collection.get('enabled')
 
-    const updatedCollection = await db.updateDocument(
+    const updatedCollection = await this.db.updateDocument(
       SchemaMeta.collections,
       collectionId,
       collection
@@ -182,7 +182,7 @@ export class CollectionsService {
         .set('search', `${collectionId} ${name}`),
     )
 
-    await db.updateCollection({
+    await this.db.updateCollection({
       id: collection.getId(),
       permissions: permissions ?? updatedCollection.get('$permissions'),
       documentSecurity:
@@ -191,7 +191,7 @@ export class CollectionsService {
     })
 
     this.event.emit(
-      `schema.${db.schema}.collection.${collectionId}.updated`,
+      `schema.${this.db.schema}.collection.${collectionId}.updated`,
       updatedCollection,
     )
     return updatedCollection
@@ -201,7 +201,7 @@ export class CollectionsService {
    * Remove a collection.
    */
   async removeCollection(collectionId: string) {
-    const collection = await db.getDocument(
+    const collection = await this.db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -210,7 +210,7 @@ export class CollectionsService {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
 
-    if (!(await db.deleteDocument(SchemaMeta.collections, collectionId))) {
+    if (!(await this.db.deleteDocument(SchemaMeta.collections, collectionId))) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
         'Failed to remove collection from DB',
@@ -218,12 +218,12 @@ export class CollectionsService {
     }
 
     await this.collectionsQueue.add(CollectionsJob.DELETE_COLLECTION, {
-      database: db.schema,
+      database: this.db.schema,
       collection,
       project,
     })
 
-    await db.purgeCachedCollection(collection.getId())
+    await this.db.purgeCachedCollection(collection.getId())
   }
 
   /**
@@ -239,14 +239,14 @@ export class CollectionsService {
 
     await Authorization.skip(async () => {
       for (const metric of metrics) {
-        const result = await db.findOne('stats', qb =>
+        const result = await this.db.findOne('stats', qb =>
           qb.equal('metric', metric).equal('period', MetricPeriod.INF),
         )
 
         stats[metric] = { total: result.get('value') }
         const limit = days.limit
         const period = days.period
-        const results = await db.find('stats', qb =>
+        const results = await this.db.find('stats', qb =>
           qb
             .equal('metric', metric)
             .equal('period', period)
@@ -293,7 +293,7 @@ export class CollectionsService {
    * Get collection Usage.
    */
   async getCollectionUsage(collectionId: string, range = '7d') {
-    const collection = await db.getDocument(
+    const collection = await this.db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -307,19 +307,19 @@ export class CollectionsService {
     const usage: Record<string, any> = {}
     const days = periods[range as keyof typeof periods]
     const metrics = [
-      MetricFor.SCHEMA_ID_DOCUMENTS.replace('{schemaId}', db.schema),
+      MetricFor.SCHEMA_ID_DOCUMENTS.replace('{schemaId}', this.db.schema),
     ]
 
     await Authorization.skip(async () => {
       for (const metric of metrics) {
-        const result: any = await db.findOne('stats', qb =>
+        const result: any = await this.db.findOne('stats', qb =>
           qb.equal('metric', metric).equal('period', MetricPeriod.INF),
         )
 
         stats[metric] = { total: result?.value ?? 0 }
         const limit = days.limit
         const period = days.period
-        const results = await db.find('stats', qb =>
+        const results = await this.db.find('stats', qb =>
           qb
             .equal('metric', metric)
             .equal('period', period)

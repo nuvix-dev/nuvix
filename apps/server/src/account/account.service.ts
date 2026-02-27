@@ -7,7 +7,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter'
 import type { SmtpConfig } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Hooks } from '@nuvix/core/extend/hooks'
-import { Auth, LocaleTranslator } from '@nuvix/core/helpers'
+import { Auth, LocaleTranslator, RequestContext } from '@nuvix/core/helpers'
 import {
   DeletesJobData,
   MessagingJob,
@@ -45,11 +45,12 @@ import type {
 import { Queue } from 'bullmq'
 import Template from 'handlebars'
 import { UpdateEmailDTO } from './DTO/account.dto'
+import { CoreService } from '@nuvix/core/core.service'
 
 @Injectable()
 export class AccountService {
+  private readonly db: Database
   constructor(
-    private readonly appConfig: AppConfigService,
     _eventEmitter: EventEmitter2,
     @InjectQueue(QueueFor.MAILS)
     private readonly mailsQueue: Queue<MailQueueOptions>,
@@ -61,7 +62,10 @@ export class AccountService {
       unknown,
       MessagingJob
     >,
-  ) {}
+    private readonly coreService: CoreService,
+  ) {
+    this.db = this.coreService.getDatabase()
+  }
 
   /**
    * Create a new account
@@ -72,22 +76,23 @@ export class AccountService {
     password: string,
     name: string | undefined,
     user: UsersDoc,
+    ctx: RequestContext,
   ): Promise<UsersDoc> {
     email = email.toLowerCase()
 
-    const auths = project.get('auths', {})
+    const auths = ctx.project.get('auths', {})
     const limit = auths.limit ?? 0
-    const maxUser = this.appConfig.appLimits.users
+    const maxUser = configuration.limits.users
 
     if (limit !== 0) {
-      const total = await db.count('users', [], maxUser)
+      const total = await this.db.count('users', [], maxUser)
       if (total >= limit) {
         throw new Exception(Exception.USER_COUNT_EXCEEDED)
       }
     }
 
     // Makes sure this email is not already used in another identity
-    const identityWithMatchingEmail = await db.findOne('identities', qb =>
+    const identityWithMatchingEmail = await this.db.findOne('identities', qb =>
       qb.equal('providerEmail', email),
     )
 
@@ -107,7 +112,7 @@ export class AccountService {
       }
     }
 
-    await Hooks.trigger('passwordValidator', [project, password, user, true])
+    await Hooks.trigger('passwordValidator', [password, user, true])
 
     const passwordHistory = auths.passwordHistory ?? 0
     const hashedPassword = await Auth.passwordHash(
@@ -144,11 +149,13 @@ export class AccountService {
         accessedAt: new Date(),
       })
       user.delete('$sequence')
-      user = await Authorization.skip(() => db.createDocument('users', user))
+      user = await Authorization.skip(() =>
+        this.db.createDocument('users', user),
+      )
 
       try {
         const target = await Authorization.skip(() =>
-          db.createDocument(
+          this.db.createDocument(
             'targets',
             new Doc({
               $permissions: [
@@ -166,7 +173,7 @@ export class AccountService {
         user.set('targets', [...user.get('targets', []), target])
       } catch (error) {
         if (error instanceof DuplicateException) {
-          const existingTarget = await db.findOne('targets', [
+          const existingTarget = await this.db.findOne('targets', [
             Query.equal('identifier', [email]),
           ])
           if (existingTarget) {
@@ -177,7 +184,7 @@ export class AccountService {
         }
       }
 
-      await db.purgeCachedDocument('users', user.getId())
+      await this.db.purgeCachedDocument('users', user.getId())
     } catch (error) {
       if (error instanceof DuplicateException) {
         throw new Exception(Exception.USER_ALREADY_EXISTS)
@@ -189,7 +196,7 @@ export class AccountService {
     Authorization.setRole(Role.user(user.getId()).toString())
     Authorization.setRole(Role.users().toString())
 
-    return db.getDocument('users', user.getId())
+    return this.db.getDocument('users', user.getId())
   }
 
   async updatePrefs(
@@ -198,12 +205,12 @@ export class AccountService {
   ) {
     user.set('prefs', prefs)
 
-    user = await db.updateDocument('users', user.getId(), user)
+    user = await this.db.updateDocument('users', user.getId(), user)
 
     return user.get('prefs', {})
   }
 
-  async deleteAccount(user: UsersDoc, project: ProjectsDoc) {
+  async deleteAccount(user: UsersDoc) {
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
@@ -212,7 +219,7 @@ export class AccountService {
       throw new Exception(Exception.USER_BLOCKED)
     }
 
-    await db.deleteDocument('users', user.getId())
+    await this.db.deleteDocument('users', user.getId())
 
     await this.deletesQueue.add(DeleteType.DOCUMENT, {
       document: user.clone(),
@@ -243,7 +250,7 @@ export class AccountService {
     const oldEmail = user.get('email')
     const email = input.email.toLowerCase()
 
-    const identityWithMatchingEmail = await db.findOne('identities', [
+    const identityWithMatchingEmail = await this.db.findOne('identities', [
       Query.equal('providerEmail', [email]),
       Query.notEqual('userInternalId', user.getSequence()),
     ])
@@ -268,7 +275,7 @@ export class AccountService {
     }
 
     const target = await Authorization.skip(() =>
-      db.findOne('targets', [Query.equal('identifier', [email])]),
+      this.db.findOne('targets', [Query.equal('identifier', [email])]),
     )
 
     if (target && !target.empty()) {
@@ -276,7 +283,7 @@ export class AccountService {
     }
 
     try {
-      user = await db.updateDocument('users', user.getId(), user)
+      user = await this.db.updateDocument('users', user.getId(), user)
       const oldTarget = user.findWhere(
         'targets',
         (t: TargetsDoc) => t.get('identifier') === oldEmail,
@@ -285,14 +292,14 @@ export class AccountService {
       if (oldTarget && !oldTarget.empty()) {
         await Authorization.skip(
           async () =>
-            await db.updateDocument(
+            await this.db.updateDocument(
               'targets',
               oldTarget.getId(),
               oldTarget.set('identifier', email),
             ),
         )
       }
-      await db.purgeCachedDocument('users', user.getId())
+      await this.db.purgeCachedDocument('users', user.getId())
 
       return user
     } catch (error) {
@@ -309,7 +316,7 @@ export class AccountService {
   async updateName(name: string, user: UsersDoc) {
     user.set('name', name)
 
-    user = await db.updateDocument('users', user.getId(), user)
+    user = await this.db.updateDocument('users', user.getId(), user)
 
     return user
   }
@@ -321,13 +328,10 @@ export class AccountService {
     password,
     oldPassword,
     user,
-    project,
   }: {
     password: string
     oldPassword: string
     user: UsersDoc
-    project: ProjectsDoc
-    db: Database
   }) {
     // Check old password only if its an existing user.
     if (
@@ -385,7 +389,7 @@ export class AccountService {
       .set('hash', Auth.DEFAULT_ALGO)
       .set('hashOptions', Auth.DEFAULT_ALGO_OPTIONS)
 
-    user = await db.updateDocument('users', user.getId(), user)
+    user = await this.db.updateDocument('users', user.getId(), user)
 
     return user
   }
@@ -402,8 +406,6 @@ export class AccountService {
     password: string
     phone: string
     user: UsersDoc
-    project: ProjectsDoc
-    db: Database
   }) {
     // passwordUpdate will be empty if the user has never set a password
     const passwordUpdate = user.get('passwordUpdate')
@@ -425,7 +427,7 @@ export class AccountService {
 
     const target = await Authorization.skip(
       async () =>
-        await db.findOne('targets', [Query.equal('identifier', [phone])]),
+        await this.db.findOne('targets', [Query.equal('identifier', [phone])]),
     )
 
     if (!target.empty()) {
@@ -450,7 +452,7 @@ export class AccountService {
     }
 
     try {
-      user = await db.updateDocument('users', user.getId(), user)
+      user = await this.db.updateDocument('users', user.getId(), user)
       const oldTarget = user.findWhere(
         'targets',
         (t: TargetsDoc) => t.get('identifier') === oldPhone,
@@ -458,14 +460,14 @@ export class AccountService {
 
       if (oldTarget && !oldTarget.empty()) {
         await Authorization.skip(() =>
-          db.updateDocument(
+          this.db.updateDocument(
             'targets',
             oldTarget.getId(),
             oldTarget.set('identifier', phone),
           ),
         )
       }
-      await db.purgeCachedDocument('users', user.getId())
+      await this.db.purgeCachedDocument('users', user.getId())
     } catch (error) {
       if (error instanceof DuplicateException) {
         throw new Exception(Exception.USER_PHONE_ALREADY_EXISTS)
@@ -484,14 +486,13 @@ export class AccountService {
     request,
     response,
   }: {
-    db: Database
     user: UsersDoc
     request: NuvixRequest
     response: NuvixRes
   }) {
     user.set('status', false)
 
-    user = await db.updateDocument('users', user.getId(), user)
+    user = await this.db.updateDocument('users', user.getId(), user)
 
     if (!request.domainVerification) {
       response.header('X-Fallback-Cookies', JSON.stringify([]))
@@ -552,9 +553,12 @@ export class AccountService {
       Permission.update(Role.user(user.getId())),
       Permission.delete(Role.user(user.getId())),
     ])
-    const createdVerification = await db.createDocument('tokens', verification)
+    const createdVerification = await this.db.createDocument(
+      'tokens',
+      verification,
+    )
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
     url ??= `${request.protocol}://${request.host}`
 
     // Parse and merge URL query parameters
@@ -669,7 +673,7 @@ export class AccountService {
     secret,
   }: WithDB<WithUser<{ response: NuvixRes; userId: string; secret: string }>>) {
     const profile = await Authorization.skip(() =>
-      db.getDocument('users', userId),
+      this.db.getDocument('users', userId),
     )
 
     if (profile.empty()) {
@@ -689,7 +693,7 @@ export class AccountService {
 
     Authorization.setRole(Role.user(profile.getId()).toString())
 
-    const updatedProfile = await db.updateDocument(
+    const updatedProfile = await this.db.updateDocument(
       'users',
       profile.getId(),
       profile.set('emailVerification', true),
@@ -697,14 +701,17 @@ export class AccountService {
 
     user.setAll(updatedProfile.toObject())
 
-    const verification = await db.getDocument('tokens', verifiedToken.getId())
+    const verification = await this.db.getDocument(
+      'tokens',
+      verifiedToken.getId(),
+    )
 
     /**
      * We act like we're updating and validating
      * the verification token but actually we don't need it anymore.
      */
-    await db.deleteDocument('tokens', verifiedToken.getId())
-    await db.purgeCachedDocument('users', profile.getId())
+    await this.db.deleteDocument('tokens', verifiedToken.getId())
+    await this.db.purgeCachedDocument('users', profile.getId())
 
     return verification
   }
@@ -769,9 +776,12 @@ export class AccountService {
       Permission.update(Role.user(user.getId())),
       Permission.delete(Role.user(user.getId())),
     ])
-    const createdVerification = await db.createDocument('tokens', verification)
+    const createdVerification = await this.db.createDocument(
+      'tokens',
+      verification,
+    )
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     if (sendSMS) {
       const customTemplate =
@@ -811,7 +821,7 @@ export class AccountService {
     secret,
   }: WithDB<WithUser<{ userId: string; secret: string }>>) {
     const profile = await Authorization.skip(() =>
-      db.getDocument('users', userId),
+      this.db.getDocument('users', userId),
     )
 
     if (profile.empty()) {
@@ -827,7 +837,7 @@ export class AccountService {
 
     Authorization.setRole(Role.user(profile.getId()).toString())
 
-    const updatedProfile = await db.updateDocument(
+    const updatedProfile = await this.db.updateDocument(
       'users',
       profile.getId(),
       profile.set('phoneVerification', true),
@@ -835,7 +845,7 @@ export class AccountService {
 
     user.setAll(updatedProfile.toObject())
 
-    const verificationDocument = await db.getDocument(
+    const verificationDocument = await this.db.getDocument(
       'tokens',
       verifiedToken.getId(),
     )
@@ -843,8 +853,8 @@ export class AccountService {
     /**
      * We act like we're updating and validating the verification token but actually we don't need it anymore.
      */
-    await db.deleteDocument('tokens', verifiedToken.getId())
-    await db.purgeCachedDocument('users', profile.getId())
+    await this.db.deleteDocument('tokens', verifiedToken.getId())
+    await this.db.purgeCachedDocument('users', profile.getId())
 
     return verificationDocument
   }
@@ -856,5 +866,5 @@ type WithReqRes<T = unknown> = {
   response: NuvixRes
 } & T
 type WithUser<T = unknown> = { user: UsersDoc } & T
-type WithProject<T = unknown> = { project: ProjectsDoc } & T
+type WithProject<T = unknown> = {} & T
 type WithLocale<T = unknown> = { locale: LocaleTranslator } & T

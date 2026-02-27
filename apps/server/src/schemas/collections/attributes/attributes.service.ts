@@ -81,7 +81,7 @@ export class AttributesService {
    * Get attributes for a collection.
    */
   async getAttributes(collectionId: string, queries: Query[] = []) {
-    const collection = await db.getDocument(
+    const collection = await this.db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -94,8 +94,8 @@ export class AttributesService {
     )
 
     const filterQueries = Query.groupByType(queries).filters
-    const attributes = await db.find(SchemaMeta.attributes, queries)
-    const total = await db.count(
+    const attributes = await this.db.find(SchemaMeta.attributes, queries)
+    const total = await this.db.count(
       SchemaMeta.attributes,
       filterQueries,
       configuration.limits.limitCount,
@@ -402,7 +402,7 @@ export class AttributesService {
     const { key, type, twoWay, twoWayKey, onDelete, relatedCollectionId } =
       input
 
-    const collection = await db.getDocument(
+    const collection = await this.db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -410,7 +410,7 @@ export class AttributesService {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
 
-    const relatedCollectionDocument = await db.getDocument(
+    const relatedCollectionDocument = await this.db.getDocument(
       SchemaMeta.collections,
       relatedCollectionId,
     )
@@ -419,7 +419,7 @@ export class AttributesService {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
 
-    const relatedCollection = await db.getCollection(
+    const relatedCollection = await this.db.getCollection(
       relatedCollectionDocument.getId(),
     )
 
@@ -489,7 +489,7 @@ export class AttributesService {
    * Get an attribute.
    */
   async getAttribute(collectionId: string, key: string) {
-    const collection = await db.getDocument(
+    const collection = await this.db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -498,7 +498,7 @@ export class AttributesService {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
 
-    const attribute = await db.getDocument(
+    const attribute = await this.db.getDocument(
       SchemaMeta.attributes,
       this.getAttrId(collection.getSequence(), key),
     )
@@ -777,7 +777,7 @@ export class AttributesService {
     const defaultValue = attribute.get('default', null)
     const options = attribute.get('options', {})
 
-    const collection = await db.getDocument(
+    const collection = await this.db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -810,7 +810,7 @@ export class AttributesService {
     let relatedCollection!: CollectionsDoc
     if (type === AttributeType.Relationship) {
       options.side = RelationSide.Parent
-      relatedCollection = await db.getDocument(
+      relatedCollection = await this.db.getDocument(
         SchemaMeta.collections,
         options.relatedCollection ?? '',
       )
@@ -840,8 +840,11 @@ export class AttributesService {
         options,
       })
 
-      db.checkAttribute(collection as any, newAttribute as any)
-      attribute = await db.createDocument(SchemaMeta.attributes, newAttribute)
+      this.db.checkAttribute(collection as any, newAttribute as any)
+      attribute = await this.db.createDocument(
+        SchemaMeta.attributes,
+        newAttribute,
+      )
     } catch (error) {
       if (error instanceof DuplicateException) {
         throw new Exception(Exception.ATTRIBUTE_ALREADY_EXISTS)
@@ -855,8 +858,8 @@ export class AttributesService {
       throw error
     }
 
-    db.purgeCachedDocument(SchemaMeta.collections, collectionId)
-    db.purgeCachedCollection(collection.getId())
+    this.db.purgeCachedDocument(SchemaMeta.collections, collectionId)
+    this.db.purgeCachedCollection(collection.getId())
 
     if (type === AttributeType.Relationship && options.twoWay) {
       const twoWayKey = options.twoWayKey
@@ -884,10 +887,10 @@ export class AttributesService {
           options,
         })
 
-        db.checkAttribute(relatedCollection as any, twoWayAttribute as any)
-        await db.createDocument(SchemaMeta.attributes, twoWayAttribute)
+        this.db.checkAttribute(relatedCollection as any, twoWayAttribute as any)
+        await this.db.createDocument(SchemaMeta.attributes, twoWayAttribute)
       } catch (error) {
-        await db.deleteDocument(SchemaMeta.attributes, attribute.getId())
+        await this.db.deleteDocument(SchemaMeta.attributes, attribute.getId())
         if (error instanceof DuplicateException) {
           throw new Exception(Exception.ATTRIBUTE_ALREADY_EXISTS)
         }
@@ -900,12 +903,15 @@ export class AttributesService {
         throw error
       }
 
-      db.purgeCachedDocument(SchemaMeta.collections, relatedCollection.getId())
-      db.purgeCachedCollection(relatedCollection.getId())
+      this.db.purgeCachedDocument(
+        SchemaMeta.collections,
+        relatedCollection.getId(),
+      )
+      this.db.purgeCachedCollection(relatedCollection.getId())
     }
 
     await this.collectionsQueue.add(CollectionsJob.CREATE_ATTRIBUTE, {
-      database: db.schema,
+      database: this.db.schema,
       collection,
       attribute,
       project,
@@ -945,7 +951,7 @@ export class AttributesService {
     options: Record<string, any>
     newKey?: string
   }) {
-    const collection = await db.getDocument(
+    const collection = await this.db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -954,7 +960,7 @@ export class AttributesService {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
 
-    let attribute = await db.getDocument(
+    let attribute = await this.db.getDocument(
       SchemaMeta.attributes,
       this.getAttrId(collection.getSequence(), key),
     )
@@ -1074,7 +1080,7 @@ export class AttributesService {
       }
       attribute.set('options', primaryDocumentOptions)
 
-      await db.updateRelationship({
+      await this.db.updateRelationship({
         collectionId: collection.getId(),
         id: key,
         newKey,
@@ -1082,12 +1088,12 @@ export class AttributesService {
       })
 
       if (primaryDocumentOptions.twoWay) {
-        const relatedCollection = await db.getDocument(
+        const relatedCollection = await this.db.getDocument(
           SchemaMeta.collections,
           primaryDocumentOptions.relatedCollection,
         )
 
-        const relatedAttribute = await db.getDocument(
+        const relatedAttribute = await this.db.getDocument(
           SchemaMeta.attributes,
           this.getRelatedAttrId(
             relatedCollection.getSequence(),
@@ -1104,20 +1110,20 @@ export class AttributesService {
           ...options,
         }
         relatedAttribute.set('options', relatedOptions)
-        await db.updateDocument(
+        await this.db.updateDocument(
           SchemaMeta.attributes,
           relatedAttribute.getId(),
           relatedAttribute,
         )
 
-        db.purgeCachedDocument(
+        this.db.purgeCachedDocument(
           SchemaMeta.collections,
           relatedCollection.getId(),
         )
       }
     } else {
       try {
-        await db.updateAttribute(collection.getId(), key, {
+        await this.db.updateAttribute(collection.getId(), key, {
           size,
           type: type as AttributeType,
           required,
@@ -1136,29 +1142,35 @@ export class AttributesService {
     if (newKey && key !== newKey) {
       const original = attribute.clone()
 
-      await db.deleteDocument(SchemaMeta.attributes, attribute.getId())
+      await this.db.deleteDocument(SchemaMeta.attributes, attribute.getId())
 
       attribute
         .set('$id', this.getAttrId(collection.getSequence(), newKey))
         .set('key', newKey)
 
       try {
-        attribute = await db.createDocument(SchemaMeta.attributes, attribute)
+        attribute = await this.db.createDocument(
+          SchemaMeta.attributes,
+          attribute,
+        )
       } catch {
-        attribute = await db.createDocument(SchemaMeta.attributes, original)
+        attribute = await this.db.createDocument(
+          SchemaMeta.attributes,
+          original,
+        )
       }
     } else {
-      attribute = await db.updateDocument(
+      attribute = await this.db.updateDocument(
         SchemaMeta.attributes,
         this.getAttrId(collection.getSequence(), key),
         attribute,
       )
     }
 
-    db.purgeCachedDocument(SchemaMeta.collections, collection.getId())
+    this.db.purgeCachedDocument(SchemaMeta.collections, collection.getId())
 
     this.event.emit(
-      `schema.${db.schema}.collection.${collectionId}.attribute.${key}.updated`,
+      `schema.${this.db.schema}.collection.${collectionId}.attribute.${key}.updated`,
       attribute.toObject(),
     )
 
@@ -1169,7 +1181,7 @@ export class AttributesService {
    * Delete an attribute.
    */
   async deleteAttribute(collectionId: string, key: string) {
-    const collection = await db.getDocument(
+    const collection = await this.db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -1178,7 +1190,7 @@ export class AttributesService {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
 
-    const attribute = await db.getDocument(
+    const attribute = await this.db.getDocument(
       SchemaMeta.attributes,
       this.getAttrId(collection.getSequence(), key),
     )
@@ -1189,20 +1201,20 @@ export class AttributesService {
 
     // Only update status if removing available attribute
     if (attribute.get('status') === Status.AVAILABLE) {
-      await db.updateDocument(
+      await this.db.updateDocument(
         SchemaMeta.attributes,
         attribute.getId(),
         attribute.set('status', Status.DELETING),
       )
     }
 
-    db.purgeCachedDocument(SchemaMeta.collections, collectionId)
-    db.purgeCachedCollection(collection.getId())
+    this.db.purgeCachedDocument(SchemaMeta.collections, collectionId)
+    this.db.purgeCachedCollection(collection.getId())
 
     if (attribute.get('type') === AttributeType.Relationship) {
       const options = attribute.get('options')
       if (options.twoWay) {
-        const relatedCollection = await db.getDocument(
+        const relatedCollection = await this.db.getDocument(
           SchemaMeta.collections,
           options.relatedCollection,
         )
@@ -1211,7 +1223,7 @@ export class AttributesService {
           throw new Exception(Exception.COLLECTION_NOT_FOUND)
         }
 
-        const relatedAttribute = await db.getDocument(
+        const relatedAttribute = await this.db.getDocument(
           SchemaMeta.attributes,
           this.getRelatedAttrId(
             relatedCollection.getSequence(),
@@ -1223,23 +1235,23 @@ export class AttributesService {
         }
 
         if (relatedAttribute.get('status') === Status.AVAILABLE) {
-          await db.updateDocument(
+          await this.db.updateDocument(
             SchemaMeta.attributes,
             relatedAttribute.getId(),
             relatedAttribute.set('status', Status.DELETING),
           )
         }
 
-        db.purgeCachedDocument(
+        this.db.purgeCachedDocument(
           SchemaMeta.collections,
           options.relatedCollection,
         )
-        db.purgeCachedCollection(relatedCollection.getId())
+        this.db.purgeCachedCollection(relatedCollection.getId())
       }
     }
 
     await this.collectionsQueue.add(CollectionsJob.DELETE_ATTRIBUTE, {
-      database: db.schema,
+      database: this.db.schema,
       collection,
       attribute,
       project,

@@ -31,7 +31,7 @@ export class DatabaseService {
       throw new Exception(Exception.SCHEMA_ALREADY_EXISTS)
     }
 
-    await db.execute('select system.create_schema(?, ?, ?)', [
+    await this.db.execute('select system.create_schema(?, ?, ?)', [
       data.name,
       data.type,
       data.description ?? null,

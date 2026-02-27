@@ -4,7 +4,6 @@ import {
   HttpStatus,
   Req,
   Res,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
 import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
@@ -13,15 +12,13 @@ import {
   AuthType,
   Locale,
   Namespace,
-  Project,
   User,
 } from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
-import { LocaleTranslator, Models } from '@nuvix/core/helpers'
+import { LocaleTranslator, Models, RequestContext } from '@nuvix/core/helpers'
 import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
-import { Database } from '@nuvix/db'
 import { SessionType, type IResponse } from '@nuvix/utils'
-import type { ProjectsDoc, TokensDoc, UsersDoc } from '@nuvix/utils/types'
+import type { TokensDoc, UsersDoc } from '@nuvix/utils/types'
 import { AccountService } from './account.service'
 import {
   CreateAccountDTO,
@@ -36,10 +33,10 @@ import {
   UpdateEmailVerificationDTO,
   UpdatePhoneVerificationDTO,
 } from './DTO/verification.dto'
+import { Ctx } from '@nuvix/core/decorators'
 
 @Controller({ version: ['1'], path: 'account' })
 @Namespace('account')
-
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class AccountController {
   constructor(private readonly accountService: AccountService) {}
@@ -65,16 +62,17 @@ export class AccountController {
   })
   @AllowSessionType(SessionType.EMAIL_PASSWORD)
   async createAccount(
-    @Body() input: CreateAccountDTO,
+    @Body() { userId, email, password, name }: CreateAccountDTO,
     @User() user: UsersDoc,
+    @Ctx() ctx: RequestContext,
   ): Promise<IResponse<UsersDoc>> {
     return this.accountService.createAccount(
-      input.userId,
-      input.email,
-      input.password,
-      input.name,
+      userId,
+      email,
+      password,
+      name,
       user,
-      project,
+      ctx,
     )
   }
 
@@ -110,7 +108,7 @@ export class AccountController {
     },
   })
   async deleteAccount(@User() user: UsersDoc): Promise<void> {
-    return this.accountService.deleteAccount(user, project)
+    return this.accountService.deleteAccount(user)
   }
 
   @Get('prefs', {
@@ -192,7 +190,6 @@ export class AccountController {
       password,
       oldPassword,
       user,
-      project,
     })
   }
 
@@ -239,7 +236,6 @@ export class AccountController {
       password,
       phone,
       user,
-      project,
     })
   }
 
@@ -292,18 +288,14 @@ export class AccountController {
     @Body() { url }: CreateEmailVerificationDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
-
     @User() user: UsersDoc,
-
     @Locale() locale: LocaleTranslator,
   ): Promise<IResponse<TokensDoc>> {
     return this.accountService.createEmailVerification({
       url,
       request,
       response,
-      project,
       user,
-
       locale,
     })
   }
@@ -363,15 +355,12 @@ export class AccountController {
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
     @User() user: UsersDoc,
-
     @Locale() locale: LocaleTranslator,
   ): Promise<IResponse<TokensDoc>> {
     return this.accountService.createPhoneVerification({
       request,
       response,
       user,
-
-      project,
       locale,
     })
   }

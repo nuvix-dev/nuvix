@@ -31,7 +31,7 @@ export class MessagingService {
 
   constructor(
     private readonly coreService: CoreService,
-    private readonly appConfig: AppConfigService,
+
     private readonly jwtService: JwtService,
     @InjectQueue(QueueFor.MESSAGING)
     private readonly queue: Queue<MessagingJobData, any, MessagingJob>,
@@ -83,8 +83,8 @@ export class MessagingService {
     const mergedTargets = [...targets, ...cc, ...bcc]
 
     if (mergedTargets.length > 0) {
-      const foundTargets = await db.withSchema(Schemas.Auth, () =>
-        db.find('targets', qb =>
+      const foundTargets = await this.db.withSchema(Schemas.Auth, () =>
+        this.db.find('targets', qb =>
           qb
             .equal('$id', ...mergedTargets)
             .equal('providerType', MessageType.EMAIL)
@@ -108,12 +108,12 @@ export class MessagingService {
       for (const attachment of attachments) {
         const [bucketId, fileId] = attachment.split(':') as [string, string]
 
-        const bucket = await db.getDocument('buckets', bucketId)
+        const bucket = await this.db.getDocument('buckets', bucketId)
         if (bucket.empty()) {
           throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
         }
 
-        const file = await db.getDocument(
+        const file = await this.db.getDocument(
           `bucket_${bucket.getSequence()}`,
           fileId,
         )
@@ -146,7 +146,7 @@ export class MessagingService {
       status,
     })
 
-    const createdMessage = await db.createDocument('messages', message)
+    const createdMessage = await this.db.createDocument('messages', message)
 
     switch (status) {
       case MessageStatus.PROCESSING:
@@ -172,7 +172,7 @@ export class MessagingService {
           schedule,
         )
         createdMessage.set('scheduleId', createdSchedule.getId())
-        await db.updateDocument(
+        await this.db.updateDocument(
           'messages',
           createdMessage.getId(),
           createdMessage,
@@ -221,8 +221,8 @@ export class MessagingService {
     }
 
     if (targets.length > 0) {
-      const foundTargets = await db.withSchema(Schemas.Auth, () =>
-        db.find('targets', qb =>
+      const foundTargets = await this.db.withSchema(Schemas.Auth, () =>
+        this.db.find('targets', qb =>
           qb
             .equal('$id', ...targets)
             .equal('providerType', MessageType.SMS)
@@ -254,7 +254,7 @@ export class MessagingService {
       status,
     })
 
-    const createdMessage = await db.createDocument('messages', message)
+    const createdMessage = await this.db.createDocument('messages', message)
 
     switch (status) {
       case MessageStatus.PROCESSING:
@@ -280,7 +280,7 @@ export class MessagingService {
           schedule,
         )
         createdMessage.set('scheduleId', createdSchedule.getId())
-        await db.updateDocument(
+        await this.db.updateDocument(
           'messages',
           createdMessage.getId(),
           createdMessage,
@@ -341,8 +341,8 @@ export class MessagingService {
     }
 
     if (targets.length > 0) {
-      const foundTargets = await db.withSchema(Schemas.Auth, () =>
-        db.find('targets', qb =>
+      const foundTargets = await this.db.withSchema(Schemas.Auth, () =>
+        this.db.find('targets', qb =>
           qb
             .equal('$id', ...targets)
             .equal('providerType', MessageType.PUSH)
@@ -365,12 +365,12 @@ export class MessagingService {
     if (image) {
       const [bucketId, fileId] = image.split(':') as [string, string]
 
-      const bucket = await db.getDocument('buckets', bucketId)
+      const bucket = await this.db.getDocument('buckets', bucketId)
       if (bucket.empty()) {
         throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
       }
 
-      const file = await db.getDocument(
+      const file = await this.db.getDocument(
         `bucket_${bucket.getSequence()}`,
         fileId,
       )
@@ -471,7 +471,7 @@ export class MessagingService {
       status,
     })
 
-    const createdMessage = await db.createDocument('messages', message)
+    const createdMessage = await this.db.createDocument('messages', message)
 
     switch (status) {
       case MessageStatus.PROCESSING:
@@ -497,7 +497,7 @@ export class MessagingService {
           schedule,
         )
         createdMessage.set('scheduleId', createdSchedule.getId())
-        await db.updateDocument(
+        await this.db.updateDocument(
           'messages',
           createdMessage.getId(),
           createdMessage,
@@ -519,8 +519,8 @@ export class MessagingService {
 
     const { filters } = Query.groupByType(queries)
 
-    const messages = await db.find('messages', queries)
-    const total = await db.count('messages', filters)
+    const messages = await this.db.find('messages', queries)
+    const total = await this.db.count('messages', filters)
 
     return {
       data: messages,
@@ -532,7 +532,7 @@ export class MessagingService {
    * Get Message
    */
   async getMessage(id: string) {
-    const message = await db.getDocument('messages', id)
+    const message = await this.db.getDocument('messages', id)
 
     if (message.empty()) {
       throw new Exception(Exception.MESSAGE_NOT_FOUND)
@@ -545,7 +545,7 @@ export class MessagingService {
    *  List targets for a message.
    */
   async listTargets({ messageId, queries = [] }: ListTargets) {
-    const message = await db.getDocument('messages', messageId)
+    const message = await this.db.getDocument('messages', messageId)
 
     if (message.empty()) {
       throw new Exception(Exception.MESSAGE_NOT_FOUND)
@@ -562,11 +562,14 @@ export class MessagingService {
     const { filters } = Query.groupByType(queries)
 
     queries.push(Query.equal('$id', targetIDs))
-    const { targets, total } = await db.withSchema(Schemas.Auth, async () => {
-      const targets = await db.find('targets', queries)
-      const total = await db.count('targets', filters)
-      return { targets, total }
-    })
+    const { targets, total } = await this.db.withSchema(
+      Schemas.Auth,
+      async () => {
+        const targets = await this.db.find('targets', queries)
+        const total = await this.db.count('targets', filters)
+        return { targets, total }
+      },
+    )
 
     return {
       data: targets,
@@ -583,7 +586,7 @@ export class MessagingService {
 
     project,
   }: UpdateEmailMessage) {
-    const message = await db.getDocument('messages', messageId)
+    const message = await this.db.getDocument('messages', messageId)
 
     if (message.empty()) {
       throw new Exception(Exception.MESSAGE_NOT_FOUND)
@@ -713,12 +716,12 @@ export class MessagingService {
       for (const attachment of input.attachments) {
         const [bucketId, fileId] = attachment.split(':') as [string, string]
 
-        const bucket = await db.getDocument('buckets', bucketId)
+        const bucket = await this.db.getDocument('buckets', bucketId)
         if (bucket.empty()) {
           throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
         }
 
-        const file = await db.getDocument(
+        const file = await this.db.getDocument(
           `bucket_${bucket.getSequence()}`,
           fileId,
         )
@@ -751,7 +754,7 @@ export class MessagingService {
       message.set('status', status)
     }
 
-    const updatedMessage = await db.updateDocument(
+    const updatedMessage = await this.db.updateDocument(
       'messages',
       message.getId(),
       message,
@@ -771,7 +774,7 @@ export class MessagingService {
    * Update SMS Message
    */
   async updateSmsMessage({ messageId, input, project }: UpdateSmsMessage) {
-    const message = await db.getDocument('messages', messageId)
+    const message = await this.db.getDocument('messages', messageId)
 
     if (message.empty()) {
       throw new Exception(Exception.MESSAGE_NOT_FOUND)
@@ -898,7 +901,7 @@ export class MessagingService {
       message.set('status', status)
     }
 
-    const updatedMessage = await db.updateDocument(
+    const updatedMessage = await this.db.updateDocument(
       'messages',
       message.getId(),
       message,
@@ -923,7 +926,7 @@ export class MessagingService {
 
     project,
   }: UpdatePushMessage) {
-    const message = await db.getDocument('messages', messageId)
+    const message = await this.db.getDocument('messages', messageId)
 
     if (message.empty()) {
       throw new Exception(Exception.MESSAGE_NOT_FOUND)
@@ -1091,12 +1094,12 @@ export class MessagingService {
     if (input.image !== undefined) {
       const [bucketId, fileId] = input.image.split(':') as [string, string]
 
-      const bucket = await db.getDocument('buckets', bucketId)
+      const bucket = await this.db.getDocument('buckets', bucketId)
       if (bucket.empty()) {
         throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
       }
 
-      const file = await db.getDocument(
+      const file = await this.db.getDocument(
         `bucket_${bucket.getSequence()}`,
         fileId,
       )
@@ -1149,7 +1152,7 @@ export class MessagingService {
       message.set('status', status)
     }
 
-    const updatedMessage = await db.updateDocument(
+    const updatedMessage = await this.db.updateDocument(
       'messages',
       message.getId(),
       message,
@@ -1169,7 +1172,7 @@ export class MessagingService {
    * Deletes a message.
    */
   async deleteMessage(messageId: string) {
-    const message = await db.getDocument('messages', messageId)
+    const message = await this.db.getDocument('messages', messageId)
 
     if (message.empty()) {
       throw new Exception(Exception.MESSAGE_NOT_FOUND)
@@ -1200,6 +1203,6 @@ export class MessagingService {
         break
     }
 
-    await db.deleteDocument('messages', message.getId())
+    await this.db.deleteDocument('messages', message.getId())
   }
 }

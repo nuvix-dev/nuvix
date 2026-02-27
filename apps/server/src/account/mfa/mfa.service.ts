@@ -34,7 +34,6 @@ import { CreateMfaChallengeDTO, VerifyMfaChallengeDTO } from './DTO/mfa.dto'
 @Injectable()
 export class MfaService {
   constructor(
-    private readonly appConfig: AppConfigService,
     @InjectQueue(QueueFor.MAILS)
     private readonly mailsQueue: Queue<MailQueueOptions>,
     @InjectQueue(QueueFor.MESSAGING)
@@ -57,7 +56,7 @@ export class MfaService {
   >): Promise<UsersDoc> {
     user.set('mfa', mfa)
 
-    user = await db.updateDocument('users', user.getId(), user)
+    user = await this.db.updateDocument('users', user.getId(), user)
 
     if (mfa && session) {
       let factors = session.get('factors', [])
@@ -78,7 +77,7 @@ export class MfaService {
       factors = [...new Set(factors)] // Ensure unique factors
 
       session.set('factors', factors)
-      await db.updateDocument('sessions', session.getId(), session)
+      await this.db.updateDocument('sessions', session.getId(), session)
     }
 
     return user
@@ -144,7 +143,7 @@ export class MfaService {
       if (authenticator.get('verified')) {
         throw new Exception(Exception.USER_AUTHENTICATOR_ALREADY_VERIFIED)
       }
-      await db.deleteDocument('authenticators', authenticator.getId())
+      await this.db.deleteDocument('authenticators', authenticator.getId())
     }
 
     const newAuthenticator = new Doc({
@@ -168,8 +167,8 @@ export class MfaService {
       uri: otp.getProvisioningUri(),
     })
 
-    await db.createDocument('authenticators', newAuthenticator)
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.createDocument('authenticators', newAuthenticator)
+    await this.db.purgeCachedDocument('users', user.getId())
 
     return model
   }
@@ -218,19 +217,19 @@ export class MfaService {
 
     authenticator.set('verified', true)
 
-    await db.updateDocument(
+    await this.db.updateDocument(
       'authenticators',
       authenticator.getId(),
       authenticator,
     )
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     const factors = session.get('factors', [])
     factors.push(type)
     const uniqueFactors = [...new Set(factors)]
 
     session.set('factors', uniqueFactors)
-    await db.updateDocument('sessions', session.getId(), session)
+    await this.db.updateDocument('sessions', session.getId(), session)
 
     return user
   }
@@ -249,7 +248,7 @@ export class MfaService {
 
     const newRecoveryCodes = TOTP.generateBackupCodes()
     user.set('mfaRecoveryCodes', newRecoveryCodes)
-    await db.updateDocument('users', user.getId(), user)
+    await this.db.updateDocument('users', user.getId(), user)
 
     const document = new Doc({
       recoveryCodes: newRecoveryCodes,
@@ -272,7 +271,7 @@ export class MfaService {
 
     const newMfaRecoveryCodes = TOTP.generateBackupCodes()
     user.set('mfaRecoveryCodes', newMfaRecoveryCodes)
-    await db.updateDocument('users', user.getId(), user)
+    await this.db.updateDocument('users', user.getId(), user)
 
     const document = new Doc({
       recoveryCodes: newMfaRecoveryCodes,
@@ -302,8 +301,8 @@ export class MfaService {
       throw new Exception(Exception.USER_AUTHENTICATOR_NOT_FOUND)
     }
 
-    await db.deleteDocument('authenticators', authenticator.getId())
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.deleteDocument('authenticators', authenticator.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
   }
 
   /**
@@ -338,7 +337,10 @@ export class MfaService {
       ],
     })
 
-    const createdChallenge = await db.createDocument('challenges', challenge)
+    const createdChallenge = await this.db.createDocument(
+      'challenges',
+      challenge,
+    )
 
     switch (factor) {
       case TOTP.PHONE: {
@@ -511,7 +513,7 @@ export class MfaService {
   }: WithDB<
     WithUser<VerifyMfaChallengeDTO & { session: SessionsDoc }>
   >): Promise<SessionsDoc> {
-    const challenge = await db.getDocument('challenges', challengeId)
+    const challenge = await this.db.getDocument('challenges', challengeId)
 
     if (challenge.empty()) {
       throw new Exception(Exception.USER_INVALID_TOKEN)
@@ -532,7 +534,7 @@ export class MfaService {
         if (mfaRecoveryCodes.includes(otp)) {
           mfaRecoveryCodes = mfaRecoveryCodes.filter(code => code !== otp)
           user.set('mfaRecoveryCodes', mfaRecoveryCodes)
-          await db.updateDocument('users', user.getId(), user)
+          await this.db.updateDocument('users', user.getId(), user)
           return true
         }
         return false
@@ -568,8 +570,8 @@ export class MfaService {
       throw new Exception(Exception.USER_INVALID_TOKEN)
     }
 
-    await db.deleteDocument('challenges', challengeId)
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.deleteDocument('challenges', challengeId)
+    await this.db.purgeCachedDocument('users', user.getId())
 
     let factors = session.get('factors', [])
     factors.push(type)
@@ -577,7 +579,7 @@ export class MfaService {
 
     session.set('factors', factors).set('mfaUpdatedAt', new Date())
 
-    await db.updateDocument('sessions', session.getId(), session)
+    await this.db.updateDocument('sessions', session.getId(), session)
 
     // TODO: Handle Events
     // await this.eventEmitter.emit(EVENT_MFA_CHALLENGE_VERIFY, {

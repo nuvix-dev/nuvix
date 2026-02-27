@@ -30,8 +30,8 @@ export class TargetsService {
 
     let provider!: ProvidersDoc
     if (providerId) {
-      provider = await db.withSchema(Schemas.Core, () =>
-        db.getDocument('providers', providerId),
+      provider = await this.db.withSchema(Schemas.Core, () =>
+        this.db.getDocument('providers', providerId),
       )
     }
 
@@ -52,20 +52,20 @@ export class TargetsService {
         throw new Exception(Exception.PROVIDER_INCORRECT_TYPE)
     }
 
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
-    const existingTarget = await db.getDocument('targets', targetId)
+    const existingTarget = await this.db.getDocument('targets', targetId)
 
     if (!existingTarget.empty()) {
       throw new Exception(Exception.USER_TARGET_ALREADY_EXISTS)
     }
 
     try {
-      const target = await db.createDocument(
+      const target = await this.db.createDocument(
         'targets',
         new Doc({
           $id: targetId,
@@ -84,7 +84,7 @@ export class TargetsService {
         }),
       )
 
-      await db.purgeCachedDocument('users', user.getId())
+      await this.db.purgeCachedDocument('users', user.getId())
       this.event.emit(
         `user.${user.getId()}.target.${target.getId()}.create`,
         target,
@@ -103,7 +103,7 @@ export class TargetsService {
    * Get all targets for a user
    */
   async getTargets(userId: string, queries: Query[] = []) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -111,8 +111,8 @@ export class TargetsService {
     queries.push(Query.equal('userId', [userId]))
 
     return {
-      data: await db.find('targets', queries),
-      total: await db.count(
+      data: await this.db.find('targets', queries),
+      total: await this.db.count(
         'targets',
         queries,
         configuration.limits.limitCount,
@@ -124,13 +124,13 @@ export class TargetsService {
    * Update a target
    */
   async updateTarget(userId: string, targetId: string, input: UpdateTargetDTO) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
-    const target = await db.getDocument('targets', targetId)
+    const target = await this.db.getDocument('targets', targetId)
 
     if (target.empty()) {
       throw new Exception(Exception.USER_TARGET_NOT_FOUND)
@@ -164,7 +164,7 @@ export class TargetsService {
     }
 
     if (input.providerId) {
-      const provider = await db.getDocument('providers', input.providerId)
+      const provider = await this.db.getDocument('providers', input.providerId)
 
       if (provider.empty()) {
         throw new Exception(Exception.PROVIDER_NOT_FOUND)
@@ -182,12 +182,12 @@ export class TargetsService {
       target.set('name', input.name)
     }
 
-    const updatedTarget = await db.updateDocument(
+    const updatedTarget = await this.db.updateDocument(
       'targets',
       target.getId(),
       target,
     )
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     return updatedTarget
   }
@@ -196,13 +196,13 @@ export class TargetsService {
    * Get A target
    */
   async getTarget(userId: string, targetId: string) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
-    const target = await db.getDocument('targets', targetId)
+    const target = await this.db.getDocument('targets', targetId)
 
     if (target.empty() || target.get('userId') !== userId) {
       throw new Exception(Exception.USER_TARGET_NOT_FOUND)
@@ -215,13 +215,13 @@ export class TargetsService {
    * Delete a target
    */
   async deleteTarget(userId: string, targetId: string) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
-    const target = await db.getDocument('targets', targetId)
+    const target = await this.db.getDocument('targets', targetId)
 
     if (target.empty()) {
       throw new Exception(Exception.USER_TARGET_NOT_FOUND)
@@ -231,8 +231,8 @@ export class TargetsService {
       throw new Exception(Exception.USER_TARGET_NOT_FOUND)
     }
 
-    await db.deleteDocument('targets', target.getId())
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.deleteDocument('targets', target.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     // TODO: Implement queue for deletes
   }

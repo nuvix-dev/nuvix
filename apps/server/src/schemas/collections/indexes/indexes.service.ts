@@ -49,7 +49,7 @@ export class IndexesService {
   async createIndex(collectionId: string, input: CreateIndexDTO) {
     const { key, type, attributes, orders } = input
 
-    const collection = await db.getDocument(
+    const collection = await this.db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -58,13 +58,13 @@ export class IndexesService {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
 
-    const count = await db.count(
+    const count = await this.db.count(
       SchemaMeta.indexes,
       [Query.equal('collectionInternalId', [collection.getSequence()])],
       61,
     )
 
-    const limit = db.getAdapter().$limitForIndexes
+    const limit = this.db.getAdapter().$limitForIndexes
     if (count >= limit) {
       throw new Exception(
         Exception.INDEX_LIMIT_EXCEEDED,
@@ -143,7 +143,7 @@ export class IndexesService {
 
     const validator = new IndexValidator(
       collection.get('attributes'),
-      db.getAdapter().$maxIndexLength,
+      this.db.getAdapter().$maxIndexLength,
     )
 
     if (!validator.$valid(index as any)) {
@@ -151,7 +151,7 @@ export class IndexesService {
     }
 
     try {
-      index = await db.createDocument(SchemaMeta.indexes, index)
+      index = await this.db.createDocument(SchemaMeta.indexes, index)
     } catch (error) {
       if (error instanceof DuplicateException) {
         throw new Exception(Exception.INDEX_ALREADY_EXISTS)
@@ -159,10 +159,10 @@ export class IndexesService {
       throw error
     }
 
-    await db.purgeCachedDocument(SchemaMeta.collections, collectionId)
+    await this.db.purgeCachedDocument(SchemaMeta.collections, collectionId)
 
     await this.collectionsQueue.add(CollectionsJob.CREATE_INDEX, {
-      database: db.schema,
+      database: this.db.schema,
       collection,
       index,
       project,
@@ -175,7 +175,7 @@ export class IndexesService {
    * Get all indexes.
    */
   async getIndexes(collectionId: string, queries: Query[] = []) {
-    const collection = await db.getDocument(
+    const collection = await this.db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -188,8 +188,8 @@ export class IndexesService {
     )
 
     const filterQueries = Query.groupByType(queries).filters
-    const indexes = await db.find(SchemaMeta.indexes, queries)
-    const total = await db.count(
+    const indexes = await this.db.find(SchemaMeta.indexes, queries)
+    const total = await this.db.count(
       SchemaMeta.indexes,
       filterQueries,
       configuration.limits.limitCount,
@@ -205,7 +205,7 @@ export class IndexesService {
    * Get an index.
    */
   async getIndex(collectionId: string, key: string) {
-    const collection = await db.getDocument(
+    const collection = await this.db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -229,7 +229,7 @@ export class IndexesService {
    * Delete an index.
    */
   async deleteIndex(collectionId: string, key: string) {
-    const collection = await db.getDocument(
+    const collection = await this.db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -238,7 +238,7 @@ export class IndexesService {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
 
-    const index = await db.getDocument(
+    const index = await this.db.getDocument(
       SchemaMeta.indexes,
       this.getAttrId(collection.getSequence(), key),
     )
@@ -249,17 +249,17 @@ export class IndexesService {
 
     // Only update status if removing available index
     if (index.get('status') === Status.AVAILABLE) {
-      await db.updateDocument(
+      await this.db.updateDocument(
         SchemaMeta.indexes,
         index.getId(),
         index.set('status', Status.DELETING),
       )
     }
 
-    await db.purgeCachedDocument(SchemaMeta.collections, collectionId)
+    await this.db.purgeCachedDocument(SchemaMeta.collections, collectionId)
 
     await this.collectionsQueue.add(CollectionsJob.DELETE_INDEX, {
-      database: db.schema,
+      database: this.db.schema,
       collection,
       index,
       project,

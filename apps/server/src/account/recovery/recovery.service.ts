@@ -32,7 +32,6 @@ import { CreateRecoveryDTO, UpdateRecoveryDTO } from './DTO/recovery.dto'
 @Injectable()
 export class RecoveryService {
   constructor(
-    private readonly appConfig: AppConfigService,
     @InjectQueue(QueueFor.MAILS)
     private readonly mailsQueue: Queue<MailQueueOptions>,
   ) {}
@@ -69,7 +68,9 @@ export class RecoveryService {
       throw new Exception(Exception.GENERAL_BAD_REQUEST, 'url is required')
     }
 
-    const profile = await db.findOne('users', [Query.equal('email', [email])])
+    const profile = await this.db.findOne('users', [
+      Query.equal('email', [email]),
+    ])
 
     if (profile.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -102,9 +103,9 @@ export class RecoveryService {
       Permission.update(Role.user(profile.getId())),
       Permission.delete(Role.user(profile.getId())),
     ])
-    const createdRecovery = await db.createDocument('tokens', recovery)
+    const createdRecovery = await this.db.createDocument('tokens', recovery)
 
-    await db.purgeCachedDocument('users', profile.getId())
+    await this.db.purgeCachedDocument('users', profile.getId())
 
     // Parse and merge URL query parameters
     const urlObj = new URL(url)
@@ -221,7 +222,7 @@ export class RecoveryService {
   }: WithDB<
     WithProject<WithUser<{ input: UpdateRecoveryDTO }>>
   >): Promise<TokensDoc> {
-    const profile = await db.getDocument('users', input.userId)
+    const profile = await this.db.getDocument('users', input.userId)
 
     if (profile.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -270,7 +271,7 @@ export class RecoveryService {
       true,
     ])
 
-    const updatedProfile = await db.updateDocument(
+    const updatedProfile = await this.db.updateDocument(
       'users',
       profile.getId(),
       profile
@@ -283,7 +284,7 @@ export class RecoveryService {
     )
 
     user.setAll(updatedProfile.toObject())
-    const recoveryDocument = await db.getDocument(
+    const recoveryDocument = await this.db.getDocument(
       'tokens',
       verifiedToken.getId(),
     )
@@ -292,8 +293,8 @@ export class RecoveryService {
      * We act like we're updating and validating
      * the recovery token but actually we don't need it anymore.
      */
-    await db.deleteDocument('tokens', verifiedToken.getId())
-    await db.purgeCachedDocument('users', profile.getId())
+    await this.db.deleteDocument('tokens', verifiedToken.getId())
+    await this.db.purgeCachedDocument('users', profile.getId())
 
     return recoveryDocument
   }

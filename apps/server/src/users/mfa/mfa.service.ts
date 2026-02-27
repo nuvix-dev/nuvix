@@ -10,7 +10,7 @@ export class MfaService {
    * Update Mfa Status
    */
   async updateMfaStatus(id: string, mfa: boolean) {
-    const user = await db.getDocument('users', id)
+    const user = await this.db.getDocument('users', id)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -18,7 +18,11 @@ export class MfaService {
 
     user.set('mfa', mfa)
 
-    const updatedUser = await db.updateDocument('users', user.getId(), user)
+    const updatedUser = await this.db.updateDocument(
+      'users',
+      user.getId(),
+      user,
+    )
 
     // TODO: Implement queue for events
 
@@ -29,7 +33,7 @@ export class MfaService {
    * Get Mfa factors
    */
   async getMfaFactors(userId: string) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -50,7 +54,7 @@ export class MfaService {
    * Get Mfa Recovery Codes
    */
   async getMfaRecoveryCodes(userId: string) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -71,7 +75,7 @@ export class MfaService {
    * Generate Mfa Recovery Codes
    */
   async generateMfaRecoveryCodes(userId: string) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -85,7 +89,7 @@ export class MfaService {
 
     const newRecoveryCodes = TOTP.generateBackupCodes()
     user.set('mfaRecoveryCodes', newRecoveryCodes)
-    await db.updateDocument('users', user.getId(), user)
+    await this.db.updateDocument('users', user.getId(), user)
 
     // TODO: Implement queue for events
 
@@ -98,7 +102,7 @@ export class MfaService {
    * Regenerate Mfa Recovery Codes
    */
   async regenerateMfaRecoveryCodes(userId: string) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -111,7 +115,7 @@ export class MfaService {
 
     const newRecoveryCodes = TOTP.generateBackupCodes()
     user.set('mfaRecoveryCodes', newRecoveryCodes)
-    await db.updateDocument('users', user.getId(), user)
+    await this.db.updateDocument('users', user.getId(), user)
 
     // TODO: Implement queue for events
 
@@ -124,7 +128,7 @@ export class MfaService {
    * Delete Mfa Authenticator
    */
   async deleteMfaAuthenticator(userId: string, _type: string) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -136,8 +140,8 @@ export class MfaService {
       throw new Exception(Exception.USER_AUTHENTICATOR_NOT_FOUND)
     }
 
-    await db.deleteDocument('authenticators', authenticator.getId())
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.deleteDocument('authenticators', authenticator.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     // TODO: Implement queue for events
   }

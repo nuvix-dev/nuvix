@@ -56,7 +56,7 @@ export class AccountService {
   private readonly platform: Doc<Platform>
   constructor(
     private readonly coreService: CoreService,
-    private readonly appConfig: AppConfigService,
+
     private readonly eventEmitter: EventEmitter2,
     private readonly jwtService: JwtService,
     @InjectQueue(QueueFor.MAILS)

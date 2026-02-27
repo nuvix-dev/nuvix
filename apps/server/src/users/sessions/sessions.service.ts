@@ -24,7 +24,7 @@ export class SessionsService {
    * Get all sessions
    */
   async getSessions(userId: string, locale: LocaleTranslator) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -58,7 +58,7 @@ export class SessionsService {
 
     locale: LocaleTranslator,
   ) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -66,7 +66,7 @@ export class SessionsService {
 
     const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
     const detector = new Detector(userAgent)
-    const record = this.geoDb.get(ip)
+    const record = this.geothis.db.get(ip)
 
     const duration =
       project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
@@ -97,7 +97,7 @@ export class SessionsService {
       locale.getText('locale.country.unknown'),
     )
 
-    const createdSession = await db.createDocument('sessions', session)
+    const createdSession = await this.db.createDocument('sessions', session)
     createdSession.set('secret', secret).set('countryName', countryName)
 
     // TODO: Implement queue for events
@@ -109,20 +109,20 @@ export class SessionsService {
    * Delete User Session
    */
   async deleteSession(userId: string, sessionId: string) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
-    const session = await db.getDocument('sessions', sessionId)
+    const session = await this.db.getDocument('sessions', sessionId)
 
     if (session.empty()) {
       throw new Exception(Exception.USER_SESSION_NOT_FOUND)
     }
 
-    await db.deleteDocument('sessions', session.getId())
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.deleteDocument('sessions', session.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     // TODO: Implement queue for events
   }
@@ -131,7 +131,7 @@ export class SessionsService {
    * Delete User Sessions
    */
   async deleteSessions(userId: string) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -140,9 +140,9 @@ export class SessionsService {
     const sessions = user.get('sessions', []) as SessionsDoc[]
 
     for (const session of sessions) {
-      await db.deleteDocument('sessions', session.getId())
+      await this.db.deleteDocument('sessions', session.getId())
     }
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
   }
 }

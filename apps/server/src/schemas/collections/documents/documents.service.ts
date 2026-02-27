@@ -38,18 +38,18 @@ export class DocumentsService {
    */
   async getDocuments(collectionId: string, queries: Query[] = []) {
     const collection = await Authorization.skip(() =>
-      db.getDocument(SchemaMeta.collections, collectionId),
+      this.db.getDocument(SchemaMeta.collections, collectionId),
     )
 
     if (this.isEmpty(collection)) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
-    db.setCollectionEnabledValidate(false)
+    this.db.setCollectionEnabledValidate(false)
 
     const filterQueries = Query.groupByType(queries).filters
-    const documents = await db.find(collection.getId(), queries)
+    const documents = await this.db.find(collection.getId(), queries)
 
-    const total = await db.count(
+    const total = await this.db.count(
       collection.getId(),
       filterQueries,
       configuration.limits.limitCount,
@@ -70,13 +70,13 @@ export class DocumentsService {
     user: UsersDoc,
   ) {
     const collection = await Authorization.skip(() =>
-      db.getDocument(SchemaMeta.collections, collectionId),
+      this.db.getDocument(SchemaMeta.collections, collectionId),
     )
 
     if (this.isEmpty(collection)) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
-    db.setCollectionEnabledValidate(false)
+    this.db.setCollectionEnabledValidate(false)
 
     const allowedPermissions = [
       PermissionType.Read,
@@ -103,7 +103,7 @@ export class DocumentsService {
     this.checkPermissions(collection, document, PermissionType.Update)
 
     try {
-      const createdDocument = await db.createDocument(
+      const createdDocument = await this.db.createDocument(
         collection.getId(),
         document,
       )
@@ -221,16 +221,16 @@ export class DocumentsService {
     queries: Query[] = [],
   ) {
     const collection = await Authorization.skip(() =>
-      db.getDocument(SchemaMeta.collections, collectionId),
+      this.db.getDocument(SchemaMeta.collections, collectionId),
     )
 
     if (this.isEmpty(collection)) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
-    db.setCollectionEnabledValidate(false)
+    this.db.setCollectionEnabledValidate(false)
 
     try {
-      const document = await db.getDocument(
+      const document = await this.db.getDocument(
         collection.getId(),
         documentId,
         queries,
@@ -281,16 +281,16 @@ export class DocumentsService {
     }
 
     const collection = await Authorization.skip(() =>
-      db.getDocument(SchemaMeta.collections, collectionId),
+      this.db.getDocument(SchemaMeta.collections, collectionId),
     )
 
     if (this.isEmpty(collection)) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
-    db.setCollectionEnabledValidate(false)
+    this.db.setCollectionEnabledValidate(false)
 
     const document = await Authorization.skip(() =>
-      db.getDocument(collection.getId(), documentId),
+      this.db.getDocument(collection.getId(), documentId),
     )
 
     if (document.empty()) {
@@ -311,7 +311,7 @@ export class DocumentsService {
     const newDocument = new Doc(data)
 
     try {
-      const updatedDocument = await db.updateDocument(
+      const updatedDocument = await this.db.updateDocument(
         collection.getId(),
         document.getId(),
         newDocument,
@@ -341,24 +341,24 @@ export class DocumentsService {
     timestamp?: Date,
   ) {
     const collection = await Authorization.skip(() =>
-      db.getDocument(SchemaMeta.collections, collectionId),
+      this.db.getDocument(SchemaMeta.collections, collectionId),
     )
 
     if (this.isEmpty(collection)) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
-    db.setCollectionEnabledValidate(false)
+    this.db.setCollectionEnabledValidate(false)
 
     const document = await Authorization.skip(async () =>
-      db.getDocument(collection.getId(), documentId),
+      this.db.getDocument(collection.getId(), documentId),
     )
 
     if (document.empty()) {
       throw new Exception(Exception.DOCUMENT_NOT_FOUND)
     }
 
-    await db.withRequestTimestamp(timestamp ?? null, async () =>
-      db.deleteDocument(collection.getId(), documentId),
+    await this.db.withRequestTimestamp(timestamp ?? null, async () =>
+      this.db.deleteDocument(collection.getId(), documentId),
     )
 
     return

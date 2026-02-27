@@ -70,7 +70,7 @@ export class SessionService {
 
   constructor(
     private readonly coreService: CoreService,
-    private readonly appConfig: AppConfigService,
+
     private eventEmitter: EventEmitter2,
     private readonly jwtService: JwtService,
     @InjectQueue(QueueFor.MAILS)
@@ -130,7 +130,7 @@ export class SessionService {
     const sessions = user.get('sessions', []) as SessionsDoc[]
 
     for (const session of sessions) {
-      await db.deleteDocument('sessions', session.getId())
+      await this.db.deleteDocument('sessions', session.getId())
 
       if (!request.domainVerification) {
         response.header('X-Fallback-Cookies', JSON.stringify([]))
@@ -170,7 +170,7 @@ export class SessionService {
       })),
     )
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     this.eventEmitter.emit(AppEvents.SESSION_DELETE, {
       userId: user.getId(),
@@ -231,7 +231,7 @@ export class SessionService {
         continue
       }
 
-      await db.deleteDocument('sessions', session.getId())
+      await this.db.deleteDocument('sessions', session.getId())
 
       session.set('current', false)
 
@@ -257,7 +257,7 @@ export class SessionService {
         response.header('X-Fallback-Cookies', JSON.stringify({}))
       }
 
-      await db.purgeCachedDocument('users', user.getId())
+      await this.db.purgeCachedDocument('users', user.getId())
 
       this.eventEmitter.emit(AppEvents.SESSIONS_DELETE, {
         userId: user.getId(),
@@ -329,8 +329,8 @@ export class SessionService {
         )
     }
 
-    await db.updateDocument('sessions', sessionId, session)
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.updateDocument('sessions', sessionId, session)
+    await this.db.purgeCachedDocument('users', user.getId())
 
     this.eventEmitter.emit(AppEvents.SESSION_UPDATE, {
       userId: user.getId(),
@@ -357,7 +357,9 @@ export class SessionService {
     const email = input.email.toLowerCase()
     const protocol = request.protocol
 
-    const profile = await db.findOne('users', [Query.equal('email', [email])])
+    const profile = await this.db.findOne('users', [
+      Query.equal('email', [email]),
+    ])
 
     if (
       !profile ||
@@ -381,7 +383,7 @@ export class SessionService {
     const auths = project.get('auths', {})
     const duration = auths.duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
-    const record = this.geodb.get(request.ip)
+    const record = this.geothis.db.get(request.ip)
     const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
 
     const session = new Doc<Sessions>({
@@ -415,17 +417,17 @@ export class SessionService {
         )
         .set('hash', Auth.DEFAULT_ALGO)
         .set('hashOptions', Auth.DEFAULT_ALGO_OPTIONS)
-      await db.updateDocument('users', user.getId(), user)
+      await this.db.updateDocument('users', user.getId(), user)
     }
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     session.set('$permissions', [
       Permission.read(Role.user(user.getId())),
       Permission.update(Role.user(user.getId())),
       Permission.delete(Role.user(user.getId())),
     ])
-    const createdSession = await db.createDocument('sessions', session)
+    const createdSession = await this.db.createDocument('sessions', session)
 
     if (!request.domainVerification) {
       response.header(
@@ -468,7 +470,7 @@ export class SessionService {
     })
 
     if (project.get('auths', {}).sessionAlerts ?? false) {
-      const sessionCount = await db.count('sessions', [
+      const sessionCount = await this.db.count('sessions', [
         Query.equal('userId', [user.getId()]),
       ])
 
@@ -499,7 +501,7 @@ export class SessionService {
     const maxUsers = this.appConfig.appLimits.users
 
     if (limit !== 0) {
-      const total = await db.count('users', [], maxUsers)
+      const total = await this.db.count('users', [], maxUsers)
 
       if (total >= limit) {
         throw new Exception(Exception.USER_COUNT_EXCEEDED)
@@ -526,13 +528,13 @@ export class SessionService {
       accessedAt: new Date(),
     })
     user.delete('$sequence')
-    await Authorization.skip(() => db.createDocument('users', user))
+    await Authorization.skip(() => this.db.createDocument('users', user))
 
     // Create session token
     const duration =
       project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
-    const record = this.geodb.get(request.ip)
+    const record = this.geothis.db.get(request.ip)
     const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
 
     const session = new Doc({
@@ -558,9 +560,9 @@ export class SessionService {
       Permission.update(Role.user(user.getId())),
       Permission.delete(Role.user(user.getId())),
     ])
-    const createdSession = await db.createDocument('sessions', session)
+    const createdSession = await this.db.createDocument('sessions', session)
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     this.eventEmitter.emit(AppEvents.USER_CREATE, {
       userId: user.getId(),
@@ -810,7 +812,7 @@ export class SessionService {
     if (!user.empty()) {
       const userId = user.getId()
 
-      const identityWithMatchingEmail = await db.findOne('identities', [
+      const identityWithMatchingEmail = await this.db.findOne('identities', [
         Query.equal('providerEmail', [email]),
         Query.notEqual('userInternalId', user.getSequence()),
       ])
@@ -818,7 +820,7 @@ export class SessionService {
         return failureRedirect(Exception.USER_ALREADY_EXISTS)
       }
 
-      const userWithMatchingEmail = await db.find('users', [
+      const userWithMatchingEmail = await this.db.find('users', [
         Query.equal('email', [email]),
         Query.notEqual('$id', userId),
       ])
@@ -833,20 +835,23 @@ export class SessionService {
     const current = Auth.sessionVerify(sessions, Auth.secret)
 
     if (current) {
-      const currentDocument = await db.getDocument('sessions', current)
+      const currentDocument = await this.db.getDocument('sessions', current)
       if (!currentDocument.empty()) {
-        await db.deleteDocument('sessions', currentDocument.getId())
-        await db.purgeCachedDocument('users', user.getId())
+        await this.db.deleteDocument('sessions', currentDocument.getId())
+        await this.db.purgeCachedDocument('users', user.getId())
       }
     }
 
     if (user.empty()) {
-      const session = await db.findOne('sessions', [
+      const session = await this.db.findOne('sessions', [
         Query.equal('provider', [provider]),
         Query.equal('providerUid', [oauth2ID]),
       ])
       if (!session.empty()) {
-        const foundUser = await db.getDocument('users', session.get('userId'))
+        const foundUser = await this.db.getDocument(
+          'users',
+          session.get('userId'),
+        )
         user.setAll(foundUser.toObject())
       }
     }
@@ -859,7 +864,7 @@ export class SessionService {
         )
       }
 
-      const userWithEmail = await db.findOne('users', [
+      const userWithEmail = await this.db.findOne('users', [
         Query.equal('email', [email]),
       ])
       if (!userWithEmail.empty()) {
@@ -867,13 +872,13 @@ export class SessionService {
       }
 
       if (user.empty()) {
-        const identity = await db.findOne('identities', [
+        const identity = await this.db.findOne('identities', [
           Query.equal('provider', [provider]),
           Query.equal('providerUid', [oauth2ID]),
         ])
 
         if (!identity.empty()) {
-          const foundUser = await db.getDocument(
+          const foundUser = await this.db.getDocument(
             'users',
             identity.get('userId'),
           )
@@ -886,13 +891,13 @@ export class SessionService {
         const maxUsers = this.appConfig.appLimits.users
 
         if (limit !== 0) {
-          const total = await db.count('users', [], maxUsers)
+          const total = await this.db.count('users', [], maxUsers)
           if (total >= limit) {
             return failureRedirect(Exception.USER_COUNT_EXCEEDED)
           }
         }
 
-        const identityWithMatchingEmail = await db.findOne('identities', [
+        const identityWithMatchingEmail = await this.db.findOne('identities', [
           Query.equal('providerEmail', [email]),
         ])
         if (!identityWithMatchingEmail.empty()) {
@@ -924,10 +929,10 @@ export class SessionService {
           user.delete('$sequence')
 
           const userDoc = await Authorization.skip(() =>
-            db.createDocument('users', user),
+            this.db.createDocument('users', user),
           )
 
-          await db.createDocument(
+          await this.db.createDocument(
             'targets',
             new Doc({
               $permissions: [
@@ -957,14 +962,14 @@ export class SessionService {
       return failureRedirect(Exception.USER_BLOCKED)
     }
 
-    let identity = await db.findOne('identities', [
+    let identity = await this.db.findOne('identities', [
       Query.equal('userInternalId', [user.getSequence()]),
       Query.equal('provider', [provider]),
       Query.equal('providerUid', [oauth2ID]),
     ])
 
     if (identity.empty()) {
-      const identitiesWithMatchingEmail = await db.find('identities', [
+      const identitiesWithMatchingEmail = await this.db.find('identities', [
         Query.equal('providerEmail', [email]),
         Query.notEqual('userInternalId', user.getSequence()),
       ])
@@ -972,7 +977,7 @@ export class SessionService {
         return failureRedirect(Exception.GENERAL_BAD_REQUEST)
       }
 
-      identity = (await db.createDocument(
+      identity = (await this.db.createDocument(
         'identities',
         new Doc({
           $id: ID.unique(),
@@ -1001,7 +1006,7 @@ export class SessionService {
           'providerAccessTokenExpiry',
           new Date(Date.now() + accessTokenExpiry * 1000),
         )
-      await db.updateDocument('identities', identity.getId(), identity)
+      await this.db.updateDocument('identities', identity.getId(), identity)
     }
 
     if (!user.get('email')) {
@@ -1013,7 +1018,7 @@ export class SessionService {
     }
 
     user.set('status', true)
-    await db.updateDocument('users', user.getId(), user)
+    await this.db.updateDocument('users', user.getId(), user)
 
     const duration =
       project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
@@ -1036,7 +1041,7 @@ export class SessionService {
         ip: request.ip,
       })
 
-      await db.createDocument(
+      await this.db.createDocument(
         'tokens',
         token.set('$permissions', [
           Permission.read(Role.user(user.getId())),
@@ -1050,7 +1055,7 @@ export class SessionService {
     } else {
       // Create session
       const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
-      const record = this.geodb.get(request.ip)
+      const record = this.geothis.db.get(request.ip)
       const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
 
       const session = new Doc<Sessions>({
@@ -1075,7 +1080,7 @@ export class SessionService {
         ...detector.getDevice(),
       })
 
-      const createdSession = await db.createDocument(
+      const createdSession = await this.db.createDocument(
         'sessions',
         session.set('$permissions', [
           Permission.read(Role.user(user.getId())),
@@ -1122,7 +1127,7 @@ export class SessionService {
           target
             .set('sessionId', createdSession.getId())
             .set('sessionInternalId', createdSession.getSequence())
-          await db.updateDocument('targets', target.getId(), target)
+          await this.db.updateDocument('targets', target.getId(), target)
         }
       }
 
@@ -1136,7 +1141,7 @@ export class SessionService {
       })
     }
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     parsedState.search = query.toString()
     const finalSuccessUrl = parsedState.toString()
@@ -1261,7 +1266,9 @@ export class SessionService {
       phrase = PhraseGenerator.generate()
     }
 
-    const result = await db.findOne('users', [Query.equal('email', [email])])
+    const result = await this.db.findOne('users', [
+      Query.equal('email', [email]),
+    ])
     if (!result.empty()) {
       user.setAll(result.toObject())
     } else {
@@ -1269,7 +1276,7 @@ export class SessionService {
       const maxUsers = this.appConfig.appLimits.users
 
       if (limit !== 0) {
-        const total = await db.count('users', [], maxUsers)
+        const total = await this.db.count('users', [], maxUsers)
 
         if (total >= limit) {
           throw new Exception(Exception.USER_COUNT_EXCEEDED)
@@ -1277,7 +1284,7 @@ export class SessionService {
       }
 
       // Makes sure this email is not already used in another identity
-      const identityWithMatchingEmail = await db.findOne('identities', [
+      const identityWithMatchingEmail = await this.db.findOne('identities', [
         Query.equal('providerEmail', [email]),
       ])
       if (!identityWithMatchingEmail.empty()) {
@@ -1307,7 +1314,7 @@ export class SessionService {
       })
 
       user.delete('$sequence')
-      await Authorization.skip(() => db.createDocument('users', user))
+      await Authorization.skip(() => this.db.createDocument('users', user))
     }
 
     const tokenSecret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_MAGIC_URL)
@@ -1326,7 +1333,7 @@ export class SessionService {
 
     Authorization.setRole(Role.user(user.getId()).toString())
 
-    const createdToken = await db.createDocument(
+    const createdToken = await this.db.createDocument(
       'tokens',
       token.set('$permissions', [
         Permission.read(Role.user(user.getId())),
@@ -1335,7 +1342,7 @@ export class SessionService {
       ]),
     )
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     if (!url) {
       url = `${request.protocol}://${request.host}/console/auth/magic-url`
@@ -1486,7 +1493,9 @@ export class SessionService {
       phrase = PhraseGenerator.generate()
     }
 
-    const result = await db.findOne('users', [Query.equal('email', [email])])
+    const result = await this.db.findOne('users', [
+      Query.equal('email', [email]),
+    ])
     if (!result.empty()) {
       user.setAll(result.toObject())
     } else {
@@ -1494,7 +1503,7 @@ export class SessionService {
       const maxUsers = this.appConfig.appLimits.users
 
       if (limit !== 0) {
-        const total = await db.count('users', [], maxUsers)
+        const total = await this.db.count('users', [], maxUsers)
 
         if (total >= limit) {
           throw new Exception(Exception.USER_COUNT_EXCEEDED)
@@ -1502,7 +1511,7 @@ export class SessionService {
       }
 
       // Makes sure this email is not already used in another identity
-      const identityWithMatchingEmail = await db.findOne('identities', [
+      const identityWithMatchingEmail = await this.db.findOne('identities', [
         Query.equal('providerEmail', [email]),
       ])
       if (!identityWithMatchingEmail.empty()) {
@@ -1531,7 +1540,7 @@ export class SessionService {
       })
 
       user.delete('$sequence')
-      await Authorization.skip(() => db.createDocument('users', user))
+      await Authorization.skip(() => this.db.createDocument('users', user))
     }
 
     const tokenSecret = Auth.codeGenerator(6)
@@ -1550,7 +1559,7 @@ export class SessionService {
 
     Authorization.setRole(Role.user(user.getId()).toString())
 
-    const createdToken = await db.createDocument(
+    const createdToken = await this.db.createDocument(
       'tokens',
       token.set('$permissions', [
         Permission.read(Role.user(user.getId())),
@@ -1559,7 +1568,7 @@ export class SessionService {
       ]),
     )
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     let subject = locale.getText('emails.otpSession.subject')
     const customTemplate =
@@ -1695,7 +1704,9 @@ export class SessionService {
     }
 
     const { userId, phone } = input
-    const result = await db.findOne('users', [Query.equal('phone', [phone])])
+    const result = await this.db.findOne('users', [
+      Query.equal('phone', [phone]),
+    ])
 
     if (!result.empty()) {
       user.setAll(result.toObject())
@@ -1704,7 +1715,7 @@ export class SessionService {
       const maxUsers = this.appConfig.appLimits.users
 
       if (limit !== 0) {
-        const total = await db.count('users', [], maxUsers)
+        const total = await this.db.count('users', [], maxUsers)
 
         if (total >= limit) {
           throw new Exception(Exception.USER_COUNT_EXCEEDED)
@@ -1731,11 +1742,11 @@ export class SessionService {
       })
 
       user.delete('$sequence')
-      await Authorization.skip(() => db.createDocument('users', user))
+      await Authorization.skip(() => this.db.createDocument('users', user))
 
       try {
         const target = await Authorization.skip(() =>
-          db.createDocument(
+          this.db.createDocument(
             'targets',
             new Doc({
               $permissions: [
@@ -1753,7 +1764,7 @@ export class SessionService {
         user.set('targets', [...user.get('targets', []), target])
       } catch (error) {
         if (error instanceof DuplicateException) {
-          const existingTarget = await db.findOne('targets', [
+          const existingTarget = await this.db.findOne('targets', [
             Query.equal('identifier', [phone]),
           ])
           if (existingTarget && !existingTarget.empty()) {
@@ -1761,7 +1772,7 @@ export class SessionService {
           }
         }
       }
-      await db.purgeCachedDocument('users', user.getId())
+      await this.db.purgeCachedDocument('users', user.getId())
     }
 
     let secret: string | null = null
@@ -1792,7 +1803,7 @@ export class SessionService {
 
     Authorization.setRole(Role.user(user.getId()).toString())
 
-    const createdToken = await db.createDocument(
+    const createdToken = await this.db.createDocument(
       'tokens',
       token.set('$permissions', [
         Permission.read(Role.user(user.getId())),
@@ -1800,7 +1811,7 @@ export class SessionService {
         Permission.delete(Role.user(user.getId())),
       ]),
     )
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     if (sendSMS) {
       const customTemplate =
@@ -1992,7 +2003,7 @@ export class SessionService {
     db: Database
   }) {
     const userFromRequest = await Authorization.skip(() =>
-      db.getDocument('users', input.userId),
+      this.db.getDocument('users', input.userId),
     )
 
     if (userFromRequest.empty()) {
@@ -2014,7 +2025,7 @@ export class SessionService {
     const duration =
       project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
-    const record = this.geodb.get(request.ip)
+    const record = this.geothis.db.get(request.ip)
     const sessionSecret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
 
     const tokenType = verifiedToken.get('type')
@@ -2059,12 +2070,12 @@ export class SessionService {
       Permission.update(Role.user(user.getId())),
       Permission.delete(Role.user(user.getId())),
     ])
-    const createdSession = await db.createDocument('sessions', session)
+    const createdSession = await this.db.createDocument('sessions', session)
 
     await Authorization.skip(() =>
-      db.deleteDocument('tokens', verifiedToken.getId()),
+      this.db.deleteDocument('tokens', verifiedToken.getId()),
     )
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     // Magic URL + Email OTP
     if (tokenType === TokenType.MAGIC_URL || tokenType === TokenType.EMAIL) {
@@ -2076,7 +2087,7 @@ export class SessionService {
     }
 
     try {
-      await db.updateDocument('users', user.getId(), user)
+      await this.db.updateDocument('users', user.getId(), user)
     } catch (_error) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
@@ -2090,7 +2101,7 @@ export class SessionService {
     const isSessionAlertsEnabled =
       project.get('auths', {}).sessionAlerts ?? false
 
-    const sessionCount = await db.count('sessions', [
+    const sessionCount = await this.db.count('sessions', [
       Query.equal('userId', [user.getId()]),
     ])
     const isNotFirstSession = sessionCount !== 1

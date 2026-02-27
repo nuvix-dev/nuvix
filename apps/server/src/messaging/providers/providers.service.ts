@@ -85,7 +85,10 @@ export class ProvidersService {
     })
 
     try {
-      const createdProvider = await db.createDocument('providers', provider)
+      const createdProvider = await this.db.createDocument(
+        'providers',
+        provider,
+      )
 
       return createdProvider
     } catch (error) {
@@ -344,8 +347,8 @@ export class ProvidersService {
 
     const { filters } = Query.groupByType(queries)
 
-    const providers = await db.find('providers', queries)
-    const total = await db.count('providers', filters)
+    const providers = await this.db.find('providers', queries)
+    const total = await this.db.count('providers', filters)
 
     return {
       data: providers,
@@ -357,7 +360,7 @@ export class ProvidersService {
    * Get Provider
    */
   async getProvider(id: string) {
-    const provider = await db.getDocument('providers', id)
+    const provider = await this.db.getDocument('providers', id)
 
     if (provider.empty()) {
       throw new Exception(Exception.PROVIDER_NOT_FOUND)
@@ -389,7 +392,7 @@ export class ProvidersService {
       options: Record<string, keyof typeof updatedFields>,
     ) => boolean
   }) {
-    const provider = await db.getDocument('providers', providerId)
+    const provider = await this.db.getDocument('providers', providerId)
 
     if (provider.empty()) {
       throw new Exception(Exception.PROVIDER_NOT_FOUND)
@@ -440,7 +443,7 @@ export class ProvidersService {
       }
     }
 
-    const updatedProvider = await db.updateDocument(
+    const updatedProvider = await this.db.updateDocument(
       'providers',
       provider.getId(),
       provider,
@@ -717,12 +720,12 @@ export class ProvidersService {
    * Deletes a provider.
    */
   async deleteProvider(providerId: string) {
-    const provider = await db.getDocument('providers', providerId)
+    const provider = await this.db.getDocument('providers', providerId)
 
     if (provider.empty()) {
       throw new Exception(Exception.PROVIDER_NOT_FOUND)
     }
 
-    await db.deleteDocument('providers', providerId)
+    await this.db.deleteDocument('providers', providerId)
   }
 }

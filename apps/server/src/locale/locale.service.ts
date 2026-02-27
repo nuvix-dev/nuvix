@@ -27,7 +27,7 @@ export class LocaleService {
       currency: null,
     }
 
-    const record = this.geoDb.get(ip)
+    const record = this.geothis.db.get(ip)
 
     if (record) {
       const countryCode = record.country?.iso_code

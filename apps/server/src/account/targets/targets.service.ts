@@ -44,14 +44,14 @@ export class TargetsService {
     let provider: ProvidersDoc | null = null
     if (providerId) {
       provider = await Authorization.skip(() =>
-        db.withSchema(Schemas.Core, () =>
-          db.getDocument('providers', providerId!),
+        this.db.withSchema(Schemas.Core, () =>
+          this.db.getDocument('providers', providerId!),
         ),
       )
     }
 
     const target = await Authorization.skip(() =>
-      db.getDocument('targets', finalTargetId),
+      this.db.getDocument('targets', finalTargetId),
     )
 
     if (!target.empty()) {
@@ -62,10 +62,10 @@ export class TargetsService {
     const device = detector.getDevice()
 
     const sessionId = Auth.sessionVerify(user.get('sessions', []), Auth.secret)
-    const session = await db.getDocument('sessions', sessionId.toString())
+    const session = await this.db.getDocument('sessions', sessionId.toString())
 
     try {
-      const createdTarget = await db.createDocument(
+      const createdTarget = await this.db.createDocument(
         'targets',
         new Doc<Targets>({
           $id: finalTargetId,
@@ -86,7 +86,7 @@ export class TargetsService {
         }),
       )
 
-      await db.purgeCachedDocument('users', user.getId())
+      await this.db.purgeCachedDocument('users', user.getId())
 
       return createdTarget
     } catch (error) {
@@ -109,7 +109,7 @@ export class TargetsService {
     WithUser<UpdatePushTargetDTO & { request: NuvixRequest; targetId: string }>
   >) {
     const target = await Authorization.skip(
-      async () => await db.getDocument('targets', targetId),
+      async () => await this.db.getDocument('targets', targetId),
     )
 
     if (target.empty()) {
@@ -129,13 +129,13 @@ export class TargetsService {
 
     target.set('name', `${device.deviceBrand} ${device.deviceModel}`)
 
-    const updatedTarget = await db.updateDocument(
+    const updatedTarget = await this.db.updateDocument(
       'targets',
       target.getId(),
       target,
     )
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     return updatedTarget
   }
@@ -149,7 +149,7 @@ export class TargetsService {
     project,
   }: WithDB<WithUser<{ targetId: string; project: ProjectsDoc }>>) {
     const target = await Authorization.skip(
-      async () => await db.getDocument('targets', targetId),
+      async () => await this.db.getDocument('targets', targetId),
     )
 
     if (target.empty()) {
@@ -160,9 +160,9 @@ export class TargetsService {
       throw new Exception(Exception.USER_TARGET_NOT_FOUND)
     }
 
-    await db.deleteDocument('targets', target.getId())
+    await this.db.deleteDocument('targets', target.getId())
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     await this.deletesQueue.add(DeleteType.TARGET, {
       document: target.clone(),

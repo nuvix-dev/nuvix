@@ -14,7 +14,6 @@ export class LogsHook implements Hook {
   constructor(
     @InjectQueue(QueueFor.LOGS)
     private readonly logsQueue: Queue<ApiLogsQueueJobData>,
-    private readonly appConfig: AppConfigService,
   ) {}
 
   async onResponse(

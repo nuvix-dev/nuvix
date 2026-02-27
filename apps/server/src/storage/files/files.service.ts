@@ -58,7 +58,7 @@ export class FilesService {
    */
   async getFiles(bucketId: string, queries: Query[] = [], search?: string) {
     const bucket = await Authorization.skip(() =>
-      db.getDocument('buckets', bucketId),
+      this.db.getDocument('buckets', bucketId),
     )
 
     if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
@@ -77,12 +77,12 @@ export class FilesService {
     }
 
     const filterQueries = Query.groupByType(queries).filters
-    const files = (await db.find(
+    const files = (await this.db.find(
       this.getCollectionName(bucket.getSequence()),
       queries,
     )) as FilesDoc[]
 
-    const total = await db.count(
+    const total = await this.db.count(
       this.getCollectionName(bucket.getSequence()),
       filterQueries,
       configuration.limits.limitCount,
@@ -107,7 +107,7 @@ export class FilesService {
   ) {
     const deviceForFiles = this.coreService.getProjectDevice(project.getId())
     const bucket = await Authorization.skip(() =>
-      db.getDocument('buckets', bucketId),
+      this.db.getDocument('buckets', bucketId),
     )
 
     if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
@@ -251,7 +251,7 @@ export class FilesService {
     let metadata: Record<string, any> = { content_type: file.mimetype }
     let chunksUploaded = 0
     // Fetch existing document
-    fileDocument = await db.getDocument<Files>(
+    fileDocument = await this.db.getDocument<Files>(
       this.getCollectionName(bucket.getSequence()),
       fileId,
     )
@@ -302,7 +302,7 @@ export class FilesService {
 
       // Create or update file document
       if (fileDocument.empty()) {
-        fileDocument = await db.createDocument<Files>(
+        fileDocument = await this.db.createDocument<Files>(
           this.getCollectionName(bucket.getSequence()),
           new Doc({
             $id: fileId,
@@ -335,14 +335,14 @@ export class FilesService {
           throw new Exception(Exception.USER_UNAUTHORIZED)
         }
 
-        fileDocument = await db.updateDocument(
+        fileDocument = await this.db.updateDocument(
           this.getCollectionName(bucket.getSequence()),
           fileId,
           fileDocument,
         )
       }
     } else if (fileDocument.empty()) {
-      fileDocument = await db.createDocument<Files>(
+      fileDocument = await this.db.createDocument<Files>(
         this.getCollectionName(bucket.getSequence()),
         new Doc({
           $id: fileId,
@@ -362,7 +362,7 @@ export class FilesService {
         }),
       )
     } else {
-      fileDocument = await db.updateDocument(
+      fileDocument = await this.db.updateDocument(
         this.getCollectionName(bucket.getSequence()),
         fileId,
         fileDocument
@@ -379,7 +379,7 @@ export class FilesService {
    */
   async getFile(bucketId: string, fileId: string) {
     const bucket = await Authorization.skip(() =>
-      db.getDocument('buckets', bucketId),
+      this.db.getDocument('buckets', bucketId),
     )
 
     if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
@@ -396,12 +396,12 @@ export class FilesService {
     // TODO: we have to review this part later for security issues
     const file = (
       fileSecurity && !valid
-        ? await db.getDocument(
+        ? await this.db.getDocument(
             this.getCollectionName(bucket.getSequence()),
             fileId,
           )
         : await Authorization.skip(() =>
-            db.getDocument(
+            this.db.getDocument(
               this.getCollectionName(bucket.getSequence()),
               fileId,
             ),
@@ -440,7 +440,7 @@ export class FilesService {
       output,
     } = params
     const bucket = await Authorization.skip(
-      async () => await db.getDocument('buckets', bucketId),
+      async () => await this.db.getDocument('buckets', bucketId),
     )
 
     if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
@@ -456,13 +456,13 @@ export class FilesService {
 
     const file =
       fileSecurity && !valid
-        ? await db.getDocument(
+        ? await this.db.getDocument(
             this.getCollectionName(bucket.getSequence()),
             fileId,
           )
         : await Authorization.skip(
             async () =>
-              await db.getDocument(
+              await this.db.getDocument(
                 this.getCollectionName(bucket.getSequence()),
                 fileId,
               ),
@@ -579,7 +579,7 @@ export class FilesService {
   ) {
     const deviceForFiles = this.coreService.getProjectDevice(project.getId())
     const bucket = await Authorization.skip(() =>
-      db.getDocument('buckets', bucketId),
+      this.db.getDocument('buckets', bucketId),
     )
 
     if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
@@ -595,12 +595,12 @@ export class FilesService {
 
     const file =
       fileSecurity && !valid
-        ? await db.getDocument(
+        ? await this.db.getDocument(
             this.getCollectionName(bucket.getSequence()),
             fileId,
           )
         : await Authorization.skip(() =>
-            db.getDocument(
+            this.db.getDocument(
               this.getCollectionName(bucket.getSequence()),
               fileId,
             ),
@@ -714,7 +714,7 @@ export class FilesService {
   ) {
     const deviceForFiles = this.coreService.getProjectDevice(project.getId())
     const bucket = await Authorization.skip(() =>
-      db.getDocument('buckets', bucketId),
+      this.db.getDocument('buckets', bucketId),
     )
 
     if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
@@ -730,12 +730,12 @@ export class FilesService {
 
     const file =
       fileSecurity && !valid
-        ? await db.getDocument(
+        ? await this.db.getDocument(
             this.getCollectionName(bucket.getSequence()),
             fileId,
           )
         : await Authorization.skip(() =>
-            db.getDocument(
+            this.db.getDocument(
               this.getCollectionName(bucket.getSequence()),
               fileId,
             ),
@@ -850,7 +850,7 @@ export class FilesService {
   ) {
     const deviceForFiles = this.coreService.getProjectDevice(project.getId())
     const bucket = await Authorization.skip(() =>
-      db.getDocument('buckets', bucketId),
+      this.db.getDocument('buckets', bucketId),
     )
 
     let decoded: any
@@ -873,7 +873,7 @@ export class FilesService {
     }
 
     const file = await Authorization.skip(() =>
-      db.getDocument(this.getCollectionName(bucket.getSequence()), fileId),
+      this.db.getDocument(this.getCollectionName(bucket.getSequence()), fileId),
     )
 
     if (file.empty()) {
@@ -945,7 +945,7 @@ export class FilesService {
    */
   async updateFile(bucketId: string, fileId: string, input: UpdateFileDTO) {
     const bucket = await Authorization.skip(() =>
-      db.getDocument('buckets', bucketId),
+      this.db.getDocument('buckets', bucketId),
     )
 
     if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
@@ -960,7 +960,7 @@ export class FilesService {
     }
 
     const file = (await Authorization.skip(() =>
-      db.getDocument(this.getCollectionName(bucket.getSequence()), fileId),
+      this.db.getDocument(this.getCollectionName(bucket.getSequence()), fileId),
     )) as FilesDoc
 
     if (file.empty()) {
@@ -997,14 +997,14 @@ export class FilesService {
     }
 
     if (fileSecurity && !valid) {
-      return db.updateDocument(
+      return this.db.updateDocument(
         this.getCollectionName(bucket.getSequence()),
         fileId,
         file,
       )
     }
     return Authorization.skip(() =>
-      db.updateDocument(
+      this.db.updateDocument(
         this.getCollectionName(bucket.getSequence()),
         fileId,
         file,
@@ -1018,7 +1018,7 @@ export class FilesService {
   async deleteFile(bucketId: string, fileId: string, project: Doc) {
     const deviceForFiles = this.coreService.getProjectDevice(project.getId())
     const bucket = await Authorization.skip(() =>
-      db.getDocument('buckets', bucketId),
+      this.db.getDocument('buckets', bucketId),
     )
 
     if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
@@ -1033,7 +1033,7 @@ export class FilesService {
     }
 
     const file = await Authorization.skip(() =>
-      db.getDocument(this.getCollectionName(bucket.getSequence()), fileId),
+      this.db.getDocument(this.getCollectionName(bucket.getSequence()), fileId),
     )
 
     if (file.empty()) {
@@ -1059,13 +1059,13 @@ export class FilesService {
     if (deviceDeleted) {
       const deleted =
         fileSecurity && !valid
-          ? await db.deleteDocument(
+          ? await this.db.deleteDocument(
               this.getCollectionName(bucket.getSequence()),
               fileId,
             )
           : await Authorization.skip(
               async () =>
-                await db.deleteDocument(
+                await this.db.deleteDocument(
                   this.getCollectionName(bucket.getSequence()),
                   fileId,
                 ),

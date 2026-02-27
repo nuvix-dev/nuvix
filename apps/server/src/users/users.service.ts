@@ -82,8 +82,8 @@ export class UsersService {
     const filterQueries = Query.groupByType(queries).filters
 
     return {
-      data: await db.find('users', queries),
-      total: await db.count(
+      data: await this.db.find('users', queries),
+      total: await this.db.count(
         'users',
         filterQueries,
         configuration.limits.limitCount,
@@ -95,7 +95,7 @@ export class UsersService {
    * Find a user by id
    */
   async findOne(id: string) {
-    const user = await db.getDocument('users', id)
+    const user = await this.db.getDocument('users', id)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -108,7 +108,7 @@ export class UsersService {
    * Get user preferences
    */
   async getPrefs(id: string) {
-    const user = await db.getDocument('users', id)
+    const user = await this.db.getDocument('users', id)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -121,13 +121,13 @@ export class UsersService {
    * Update user preferences
    */
   async updatePrefs(id: string, prefs?: Record<string, any>) {
-    const user = await db.getDocument('users', id)
+    const user = await this.db.getDocument('users', id)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
-    const updatedUser = await db.updateDocument(
+    const updatedUser = await this.db.updateDocument(
       'users',
       user.getId(),
       user.set('prefs', prefs),
@@ -140,20 +140,24 @@ export class UsersService {
    * Update user status
    */
   async updateStatus(id: string, { status }: UpdateUserStatusDTO) {
-    const user = await db.getDocument('users', id)
+    const user = await this.db.getDocument('users', id)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
-    return db.updateDocument('users', user.getId(), user.set('status', status))
+    return this.db.updateDocument(
+      'users',
+      user.getId(),
+      user.set('status', status),
+    )
   }
 
   /**
    * Update user labels
    */
   async updateLabels(id: string, { labels }: UpdateUserLabelDTO) {
-    const user = await db.getDocument('users', id)
+    const user = await this.db.getDocument('users', id)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -161,28 +165,28 @@ export class UsersService {
 
     user.set('labels', Array.from(new Set(labels)))
 
-    return db.updateDocument('users', user.getId(), user)
+    return this.db.updateDocument('users', user.getId(), user)
   }
 
   /**
    * Update user name
    */
   async updateName(id: string, { name }: UpdateUserNameDTO) {
-    const user = await db.getDocument('users', id)
+    const user = await this.db.getDocument('users', id)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
     user.set('name', name)
-    return db.updateDocument('users', user.getId(), user)
+    return this.db.updateDocument('users', user.getId(), user)
   }
 
   /**
    * Update user password
    */
   async updatePassword(id: string, { password }: UpdateUserPasswordDTO) {
-    const user = await db.getDocument('users', id)
+    const user = await this.db.getDocument('users', id)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -201,7 +205,7 @@ export class UsersService {
     }
 
     if (password.length === 0) {
-      const updatedUser = await db.updateDocument(
+      const updatedUser = await this.db.updateDocument(
         'users',
         user.getId(),
         user.set('password', '').set('passwordUpdate', new Date()),
@@ -234,7 +238,7 @@ export class UsersService {
       history = [...history, newPassword].slice(-historyLimit)
     }
 
-    const updatedUser = await db.updateDocument(
+    const updatedUser = await this.db.updateDocument(
       'users',
       user.getId(),
       user
@@ -252,7 +256,7 @@ export class UsersService {
    * Update user email
    */
   async updateEmail(id: string, email: string) {
-    const user = await db.getDocument('users', id)
+    const user = await this.db.getDocument('users', id)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -262,7 +266,7 @@ export class UsersService {
 
     if (email.length !== 0) {
       // Check if email exists in identities
-      const identityWithMatchingEmail = await db.findOne('identities', [
+      const identityWithMatchingEmail = await this.db.findOne('identities', [
         Query.equal('providerEmail', [email]),
         Query.notEqual('userInternalId', user.getSequence()),
       ])
@@ -270,7 +274,7 @@ export class UsersService {
         throw new Exception(Exception.USER_EMAIL_ALREADY_EXISTS)
       }
 
-      const target = await db.findOne('targets', [
+      const target = await this.db.findOne('targets', [
         Query.equal('identifier', [email]),
       ])
 
@@ -283,7 +287,11 @@ export class UsersService {
     user.set('email', email).set('emailVerification', false)
 
     try {
-      const updatedUser = await db.updateDocument('users', user.getId(), user)
+      const updatedUser = await this.db.updateDocument(
+        'users',
+        user.getId(),
+        user,
+      )
       const oldTarget = updatedUser.findWhere(
         'targets',
         (t: TargetsDoc) => t.get('identifier') === oldEmail,
@@ -291,16 +299,16 @@ export class UsersService {
 
       if (oldTarget && !oldTarget.empty()) {
         if (email.length !== 0) {
-          await db.updateDocument(
+          await this.db.updateDocument(
             'targets',
             oldTarget.getId(),
             oldTarget.set('identifier', email),
           )
         } else {
-          await db.deleteDocument('targets', oldTarget.getId())
+          await this.db.deleteDocument('targets', oldTarget.getId())
         }
       } else if (email.length !== 0) {
-        const target = await db.createDocument(
+        const target = await this.db.createDocument(
           'targets',
           new Doc({
             $permissions: [
@@ -317,7 +325,7 @@ export class UsersService {
         updatedUser.set('targets', [...updatedUser.get('targets', []), target])
       }
 
-      await db.purgeCachedDocument('users', user.getId())
+      await this.db.purgeCachedDocument('users', user.getId())
       return updatedUser
     } catch (error) {
       if (error instanceof DuplicateException) {
@@ -331,7 +339,7 @@ export class UsersService {
    * Update user phone
    */
   async updatePhone(id: string, phone: string) {
-    const user = await db.getDocument('users', id)
+    const user = await this.db.getDocument('users', id)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -341,7 +349,7 @@ export class UsersService {
     user.set('phone', phone).set('phoneVerification', false)
 
     if (phone.length !== 0) {
-      const target = await db.findOne('targets', [
+      const target = await this.db.findOne('targets', [
         Query.equal('identifier', [phone]),
       ])
 
@@ -351,7 +359,11 @@ export class UsersService {
     }
 
     try {
-      const updatedUser = await db.updateDocument('users', user.getId(), user)
+      const updatedUser = await this.db.updateDocument(
+        'users',
+        user.getId(),
+        user,
+      )
       const oldTarget = updatedUser.findWhere(
         'targets',
         (t: TargetsDoc) => t.get('identifier') === oldPhone,
@@ -359,16 +371,16 @@ export class UsersService {
 
       if (oldTarget && !oldTarget.empty()) {
         if (phone.length !== 0) {
-          await db.updateDocument(
+          await this.db.updateDocument(
             'targets',
             oldTarget.getId(),
             oldTarget.set('identifier', phone),
           )
         } else {
-          await db.deleteDocument('targets', oldTarget.getId())
+          await this.db.deleteDocument('targets', oldTarget.getId())
         }
       } else if (phone.length !== 0) {
-        const target = await db.createDocument(
+        const target = await this.db.createDocument(
           'targets',
           new Doc({
             $permissions: [
@@ -384,7 +396,7 @@ export class UsersService {
         )
         updatedUser.set('targets', [...updatedUser.get('targets', []), target])
       }
-      await db.purgeCachedDocument('users', user.getId())
+      await this.db.purgeCachedDocument('users', user.getId())
       return updatedUser
     } catch (error) {
       if (error instanceof DuplicateException) {
@@ -401,13 +413,13 @@ export class UsersService {
     id: string,
     input: UpdateUserEmailVerificationDTO,
   ) {
-    const user = await db.getDocument('users', id)
+    const user = await this.db.getDocument('users', id)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
-    const updatedUser = await db.updateDocument(
+    const updatedUser = await this.db.updateDocument(
       'users',
       user.getId(),
       user.set('emailVerification', input.emailVerification),
@@ -423,13 +435,13 @@ export class UsersService {
     id: string,
     input: UpdateUserPoneVerificationDTO,
   ) {
-    const user = await db.getDocument('users', id)
+    const user = await this.db.getDocument('users', id)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
-    const updatedUser = await db.updateDocument(
+    const updatedUser = await this.db.updateDocument(
       'users',
       user.getId(),
       user.set('phoneVerification', input.phoneVerification),
@@ -586,7 +598,7 @@ export class UsersService {
    * Get all memberships
    */
   async getMemberships(userId: string, queries: Query[] = [], search?: string) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -599,10 +611,10 @@ export class UsersService {
       queries.push(Query.search('search', search))
     }
 
-    const memberships = await db.find('memberships', queries)
+    const memberships = await this.db.find('memberships', queries)
 
     for (const membership of memberships) {
-      const team = await db.getDocument('teams', membership.get('teamId'))
+      const team = await this.db.getDocument('teams', membership.get('teamId'))
 
       membership
         .set('teamName', team.get('name'))
@@ -624,7 +636,7 @@ export class UsersService {
     locale: LocaleTranslator,
     queries: Query[] = [],
   ) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -648,7 +660,7 @@ export class UsersService {
       const client = detector.getClient()
       const device = detector.getDevice()
 
-      const countryCode = this.geoDb.get(log.ip)?.country?.iso_code
+      const countryCode = this.geothis.db.get(log.ip)?.country?.iso_code
       const countryName = locale.getText(
         `countries.${countryCode}`,
         locale.getText('locale.country.unknown'),
@@ -696,8 +708,8 @@ export class UsersService {
 
     const filterQueries = Query.groupByType(queries).filters
     return {
-      data: await db.find('identities', queries),
-      total: await db.count(
+      data: await this.db.find('identities', queries),
+      total: await this.db.count(
         'identities',
         filterQueries,
         configuration.limits.limitCount,
@@ -709,13 +721,13 @@ export class UsersService {
    * Delete an identity
    */
   async deleteIdentity(identityId: string) {
-    const identity = await db.getDocument('identities', identityId)
+    const identity = await this.db.getDocument('identities', identityId)
 
     if (identity.empty()) {
       throw new Exception(Exception.USER_IDENTITY_NOT_FOUND)
     }
 
-    await db.deleteDocument('identities', identityId)
+    await this.db.deleteDocument('identities', identityId)
   }
 
   /**
@@ -727,7 +739,7 @@ export class UsersService {
     userAgent: string,
     ip: string,
   ) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -752,8 +764,8 @@ export class UsersService {
       ip: ip,
     })
 
-    const createdToken = await db.createDocument('tokens', token)
-    await db.purgeCachedDocument('users', user.getId())
+    const createdToken = await this.db.createDocument('tokens', token)
+    await this.db.purgeCachedDocument('users', user.getId())
 
     createdToken.set('secret', secret)
 
@@ -764,7 +776,7 @@ export class UsersService {
    * Create Jwt
    */
   async createJwt(userId: string, input: CreateJwtDTO) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -800,7 +812,7 @@ export class UsersService {
    * Delete User
    */
   async remove(userId: string, project: ProjectsDoc) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -808,7 +820,7 @@ export class UsersService {
 
     // Clone user object to send to workers
     const clone = user.clone()
-    await db.deleteDocument('users', userId)
+    await this.db.deleteDocument('users', userId)
 
     await this.deletesQueue.add(DeleteType.DOCUMENT, {
       document: clone,
@@ -845,7 +857,7 @@ export class UsersService {
       email = email.toLowerCase()
 
       // Check if email exists in identities
-      const identityWithMatchingEmail = await db.findOne('identities', [
+      const identityWithMatchingEmail = await this.db.findOne('identities', [
         Query.equal('providerEmail', [email]),
       ])
       if (!identityWithMatchingEmail.empty()) {
@@ -905,11 +917,11 @@ export class UsersService {
         search: [userId, email, phone, name].filter(Boolean).join(' '),
       })
 
-      const createdUser = await db.createDocument('users', user)
+      const createdUser = await this.db.createDocument('users', user)
 
       if (email) {
         try {
-          const target = await db.createDocument(
+          const target = await this.db.createDocument(
             'targets',
             new Doc({
               $permissions: [
@@ -929,7 +941,7 @@ export class UsersService {
           ])
         } catch (error) {
           if (error instanceof DuplicateException) {
-            const existingTarget = await db.findOne('targets', [
+            const existingTarget = await this.db.findOne('targets', [
               Query.equal('identifier', [email]),
             ])
             if (existingTarget) {
@@ -943,7 +955,7 @@ export class UsersService {
 
       if (phone) {
         try {
-          const target = await db.createDocument(
+          const target = await this.db.createDocument(
             'targets',
             new Doc({
               $permissions: [
@@ -963,7 +975,7 @@ export class UsersService {
           ])
         } catch (error) {
           if (error instanceof DuplicateException) {
-            const existingTarget = await db.findOne('targets', [
+            const existingTarget = await this.db.findOne('targets', [
               Query.equal('identifier', [phone]),
             ])
             if (existingTarget) {
@@ -975,7 +987,7 @@ export class UsersService {
         }
       }
 
-      await db.purgeCachedDocument('users', createdUser.getId())
+      await this.db.purgeCachedDocument('users', createdUser.getId())
       this.event.emit(`user.${createdUser.getId()}.create`, createdUser)
 
       return createdUser
@@ -999,13 +1011,13 @@ export class UsersService {
 
     await Authorization.skip(async () => {
       for (const metric of metrics) {
-        const result = await db.findOne('stats', qb =>
+        const result = await this.db.findOne('stats', qb =>
           qb.equal('metric', metric).equal('period', MetricPeriod.INF),
         )
 
         stats[metric] = { total: result?.get('value') ?? 0, data: {} }
 
-        const results = await db.find('stats', qb =>
+        const results = await this.db.find('stats', qb =>
           qb
             .equal('metric', metric)
             .equal('period', days.period)

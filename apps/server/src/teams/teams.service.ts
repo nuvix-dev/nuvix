@@ -31,8 +31,8 @@ export class TeamsService {
     }
 
     const filterQueries = Query.groupByType(queries).filters
-    const results = await db.find('teams', queries)
-    const total = await db.count('teams', filterQueries)
+    const results = await this.db.find('teams', queries)
+    const total = await this.db.count('teams', filterQueries)
 
     return {
       data: results,
@@ -76,7 +76,7 @@ export class TeamsService {
       }
 
       const membershipId = ID.unique()
-      await db.createDocument(
+      await this.db.createDocument(
         'memberships',
         new Doc({
           $id: membershipId,
@@ -101,7 +101,7 @@ export class TeamsService {
         }),
       )
 
-      await db.purgeCachedDocument('users', user.getId())
+      await this.db.purgeCachedDocument('users', user.getId())
     }
 
     return team
@@ -111,7 +111,7 @@ export class TeamsService {
    * Update team
    */
   async update(id: string, input: UpdateTeamDTO) {
-    const team = await db.getDocument('teams', id)
+    const team = await this.db.getDocument('teams', id)
 
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
@@ -120,7 +120,11 @@ export class TeamsService {
     team.set('name', input.name)
     team.set('search', [id, input.name].join(' '))
 
-    const updatedTeam = await db.updateDocument('teams', team.getId(), team)
+    const updatedTeam = await this.db.updateDocument(
+      'teams',
+      team.getId(),
+      team,
+    )
 
     return updatedTeam
   }
@@ -129,13 +133,13 @@ export class TeamsService {
    * Remove team
    */
   async remove(id: string) {
-    const team = await db.getDocument('teams', id)
+    const team = await this.db.getDocument('teams', id)
 
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
     }
 
-    const deleted = await db.deleteDocument('teams', team.getId())
+    const deleted = await this.db.deleteDocument('teams', team.getId())
     if (!deleted) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
@@ -153,7 +157,7 @@ export class TeamsService {
    * Find a team by id
    */
   async findOne(id: string) {
-    const team = await db.getDocument('teams', id)
+    const team = await this.db.getDocument('teams', id)
 
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
@@ -166,7 +170,7 @@ export class TeamsService {
    * Get team preferences
    */
   async getPrefs(id: string) {
-    const team = await db.getDocument('teams', id)
+    const team = await this.db.getDocument('teams', id)
 
     if (!team) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
@@ -179,14 +183,18 @@ export class TeamsService {
    * Set team preferences
    */
   async setPrefs(id: string, { prefs }: UpdateTeamPrefsDTO) {
-    const team = await db.getDocument('teams', id)
+    const team = await this.db.getDocument('teams', id)
 
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
     }
 
     team.set('prefs', prefs)
-    const updatedTeam = await db.updateDocument('teams', team.getId(), team)
+    const updatedTeam = await this.db.updateDocument(
+      'teams',
+      team.getId(),
+      team,
+    )
 
     return updatedTeam.get('prefs')
   }
