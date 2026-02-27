@@ -13,13 +13,6 @@ describe('Auth', () => {
     Authorization.setRole(Role.any().toString())
   })
 
-  test('cookie name', () => {
-    const name = 'cookie-name'
-
-    expect(Auth.setCookieName(name)).toBe(name)
-    expect(Auth.cookieName).toBe(name)
-  })
-
   test('encode decode session', () => {
     const id = 'id'
     const secret = 'secret'
@@ -345,7 +338,6 @@ describe('Auth', () => {
   })
 
   test('privileged user roles', () => {
-    Auth.setPlatformActor(true)
     const user = new Doc<Users>({
       $id: ID.custom('123'),
       emailVerification: true,
@@ -366,7 +358,7 @@ describe('Auth', () => {
       ],
     })
 
-    const roles = Auth.getRoles(user)
+    const roles = Auth.getRoles(user, true, false)
 
     expect(roles).toHaveLength(7)
     expect(roles).not.toContain(Role.users().toString())
@@ -387,7 +379,6 @@ describe('Auth', () => {
   })
 
   test('app user roles', () => {
-    Auth.setTrustedActor(true)
     const user = new Doc<Users>({
       $id: ID.custom('123'),
       memberships: [
@@ -406,7 +397,7 @@ describe('Auth', () => {
       ],
     })
 
-    const roles = Auth.getRoles(user)
+    const roles = Auth.getRoles(user, false, true)
 
     expect(roles).toHaveLength(7)
     expect(roles).not.toContain(Role.users().toString())

@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
 import { Doc } from '@nuvix/db'
-import { Context, SessionType } from '@nuvix/utils'
+import { SessionType } from '@nuvix/utils'
 import { ProjectsDoc } from '@nuvix/utils/types'
 import { Exception } from '../../extend/exception'
 import { Auth } from '@nuvix/core/helpers'

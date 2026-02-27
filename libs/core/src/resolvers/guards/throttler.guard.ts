@@ -1,6 +1,5 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
-import { Doc } from '@nuvix/db'
-import { Context, KeyArgs, RouteContext } from '@nuvix/utils'
+import { configuration, KeyArgs, RouteContext } from '@nuvix/utils'
 import { ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
 import { Exception } from '../../extend/exception'
 import { RatelimitService } from '../../rate-limit.service'
@@ -14,28 +13,26 @@ interface RateLimitResult {
 
 @Injectable()
 export class ThrottlerGuard implements CanActivate {
-  constructor(
-    private readonly ratelimitService: RatelimitService,
-    private readonly appConfig: AppConfigService,
-  ) {}
+  constructor(private readonly ratelimitService: RatelimitService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request: NuvixRequest = context.switchToHttp().getRequest()
     const response: NuvixRes = context.switchToHttp().getResponse()
 
-    if (!this.appConfig.get('app').enableThrottling) {
+    // If throttling is disabled globally, allow all requests
+    if (!configuration.app.enableThrottling) {
       return true
     }
 
     const rateLimitOptions =
       request.routeOptions?.config?.[RouteContext.RATE_LIMIT]
+    // If no rate limit options are defined for this route, allow the request
     if (!rateLimitOptions) {
       return true
     }
 
     const abuseKeys = this.generateAbuseKeys(rateLimitOptions, request)
-    const project = this.getProject(request)
-    const user = this.getUser(request)
+    const { project, user } = request.context
 
     let closestResult: RateLimitResult | null = null
 
@@ -83,7 +80,7 @@ export class ThrottlerGuard implements CanActivate {
         ip: request.ip,
         params: request.params ?? {},
         body: request.body ?? {},
-        user: this.getUser(request),
+        user: request.context.user,
         req: request,
       }
       const result = templateKey(keyArgs)
@@ -97,14 +94,6 @@ export class ThrottlerGuard implements CanActivate {
     return ['ip:{ip}']
   }
 
-  private getProject(request: NuvixRequest): ProjectsDoc {
-    return request[Context.Project] ?? new Doc({ $id: 'global' })
-  }
-
-  private getUser(request: NuvixRequest): UsersDoc {
-    return request[Context.User] ?? new Doc({ $id: 'anonymous' })
-  }
-
   private buildRateLimitKey(
     request: NuvixRequest,
     project: ProjectsDoc,
@@ -113,7 +102,7 @@ export class ThrottlerGuard implements CanActivate {
   ): string {
     const config = request.routeOptions.config
     const processedKey = this.processTemplate(abuseKey, request)
-    return `rl:${config.method}:${request.host + request.url}:${project.getId()}:${user.getId()}::${processedKey}`
+    return `rl:${config.method}:${request.host + request.url}:${project.getId() || 'global'}:${user.getId() || '--'}::${processedKey}`
   }
 
   private processTemplate(template: string, request: NuvixRequest): string {
@@ -124,7 +113,7 @@ export class ThrottlerGuard implements CanActivate {
         case 'url':
           return request.routeOptions.config.url
         case 'userId':
-          return (request[Context.User]?.getId() || 'anonymous').toString()
+          return request.context.user.getId() || '--'
         default:
           return this.processCustomKey(key, request)
       }
@@ -145,7 +134,7 @@ export class ThrottlerGuard implements CanActivate {
 
   private getParamValue(paramName: string, request: NuvixRequest): string {
     // Check params first
-    const paramValue = (request.params as any)?.[paramName]
+    const paramValue = (request.params as any)[paramName]
     if (paramValue !== undefined) {
       if (Array.isArray(paramValue)) {
         return JSON.stringify(paramValue)
@@ -174,8 +163,8 @@ export class ThrottlerGuard implements CanActivate {
     response: NuvixRes,
     result: RateLimitResult,
   ): void {
-    response.header('X-RateLimit-Limit', result.limit.toString())
-    response.header('X-RateLimit-Remaining', result.remaining.toString())
-    response.header('X-RateLimit-Reset', result.resetTime.toString())
+    response.raw.setHeader('X-RateLimit-Limit', result.limit.toString())
+    response.raw.setHeader('X-RateLimit-Remaining', result.remaining.toString())
+    response.raw.setHeader('X-RateLimit-Reset', result.resetTime.toString())
   }
 }
