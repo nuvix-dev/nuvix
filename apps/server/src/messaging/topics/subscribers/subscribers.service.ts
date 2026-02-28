@@ -10,12 +10,19 @@ import {
   Query,
   Role,
 } from '@nuvix/db'
-import { MessageType, Schemas } from '@nuvix/utils'
+import { MessageType } from '@nuvix/utils'
 import type { Subscribers, SubscribersDoc } from '@nuvix/utils/types'
 import type { CreateSubscriber, ListSubscribers } from './subscribers.types'
+import { CoreService } from '@nuvix/core/core.service'
 
 @Injectable()
 export class SubscribersService {
+  protected readonly db: Database
+
+  constructor(private readonly coreService: CoreService) {
+    this.db = this.coreService.getDatabase()
+  }
+
   /**
    * Create Subscriber
    */
@@ -38,9 +45,7 @@ export class SubscribersService {
     }
 
     const target = await Authorization.skip(() =>
-      this.db.withSchema(Schemas.Auth, () =>
-        this.db.getDocument('targets', targetId),
-      ),
+      this.db.getDocument('targets', targetId),
     )
 
     if (target.empty()) {
@@ -48,9 +53,7 @@ export class SubscribersService {
     }
 
     const user = await Authorization.skip(() =>
-      this.db.withSchema(Schemas.Auth, () =>
-        this.db.getDocument('users', target.get('userId')),
-      ),
+      this.db.getDocument('users', target.get('userId')),
     )
 
     const subscriber = new Doc<Subscribers>({
@@ -134,14 +137,10 @@ export class SubscribersService {
     const enrichedSubscribers = await Promise.all(
       subscribers.map(async subscriber => {
         const target = await Authorization.skip(() =>
-          this.db.withSchema(Schemas.Auth, () =>
-            this.db.getDocument('targets', subscriber.get('targetId')),
-          ),
+          this.db.getDocument('targets', subscriber.get('targetId')),
         )
         const user = await Authorization.skip(() =>
-          this.db.withSchema(Schemas.Auth, () =>
-            this.db.getDocument('users', target.get('userId')),
-          ),
+          this.db.getDocument('users', target.get('userId')),
         )
 
         return subscriber
@@ -175,14 +174,10 @@ export class SubscribersService {
     }
 
     const target = await Authorization.skip(() =>
-      this.db.withSchema(Schemas.Auth, () =>
-        this.db.getDocument('targets', subscriber.get('targetId')),
-      ),
+      this.db.getDocument('targets', subscriber.get('targetId')),
     )
     const user = await Authorization.skip(() =>
-      this.db.withSchema(Schemas.Auth, () =>
-        this.db.getDocument('users', target.get('userId')),
-      ),
+      this.db.getDocument('users', target.get('userId')),
     )
 
     subscriber.set('target', target).set('userName', user.get('name'))
@@ -208,8 +203,9 @@ export class SubscribersService {
       throw new Exception(Exception.SUBSCRIBER_NOT_FOUND)
     }
 
-    const target = await this.db.withSchema(Schemas.Auth, () =>
-      this.db.getDocument('targets', subscriber.get('targetId')),
+    const target = await this.db.getDocument(
+      'targets',
+      subscriber.get('targetId'),
     )
 
     await this.db.deleteDocument('subscribers', subscriberId)

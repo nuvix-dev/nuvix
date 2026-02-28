@@ -1,23 +1,16 @@
-import {
-  Body,
-  Controller,
-  Param,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Param, UseInterceptors } from '@nestjs/common'
 import { Delete, Get, Post } from '@nuvix/core'
 import {
   Auth,
   AuthType,
   Namespace,
-  ProjectDatabase,
   QueryFilter,
   QuerySearch,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { SubscribersQueryPipe } from '@nuvix/core/pipes/queries'
 import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
-import { Database, Query as Queries } from '@nuvix/db'
+import { Query as Queries } from '@nuvix/db'
 import { IListResponse, IResponse } from '@nuvix/utils'
 import { SubscribersDoc } from '@nuvix/utils/types'
 import { TopicParamsDTO } from '../DTO/topics.dto'
@@ -25,7 +18,6 @@ import { CreateSubscriberDTO, SubscriberParamsDTO } from './DTO/subscriber.dto'
 import { SubscribersService } from './subscribers.service'
 
 @Namespace('messaging')
-
 @Auth([AuthType.ADMIN, AuthType.KEY])
 @Controller({ path: 'messaging/topics/:topicId/subscribers', version: ['1'] })
 @UseInterceptors(ApiInterceptor, ResponseInterceptor)
@@ -34,8 +26,9 @@ export class SubscribersController {
 
   @Post('', {
     summary: 'Create subscriber',
-    scopes: 'subscribers.create',
+    scopes: 'subscribers.write',
     model: Models.SUBSCRIBER,
+    auth: [AuthType.KEY, AuthType.ADMIN, AuthType.SESSION, AuthType.JWT],
     audit: {
       key: 'subscriber.create',
       resource: 'subscriber/{res.$id}',
@@ -47,7 +40,6 @@ export class SubscribersController {
   })
   async createSubscriber(
     @Param() { topicId }: TopicParamsDTO,
-
     @Body() input: CreateSubscriberDTO,
   ): Promise<IResponse<SubscribersDoc>> {
     return this.subscribersService.createSubscriber({
@@ -67,7 +59,6 @@ export class SubscribersController {
   })
   async listSubscribers(
     @Param() { topicId }: TopicParamsDTO,
-
     @QueryFilter(SubscribersQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<SubscribersDoc>> {
@@ -95,7 +86,8 @@ export class SubscribersController {
 
   @Delete(':subscriberId', {
     summary: 'Delete subscriber',
-    scopes: 'subscribers.delete',
+    scopes: 'subscribers.write',
+    auth: [AuthType.KEY, AuthType.ADMIN, AuthType.SESSION, AuthType.JWT],
     audit: {
       key: 'subscriber.delete',
       resource: 'subscriber/{params.subscriberId}',
