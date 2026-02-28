@@ -1,23 +1,33 @@
-import type { Validator } from '@nuvix/db'
+import { Doc, type Validator } from '@nuvix/db'
 import type { PlatformsDoc } from '@nuvix/utils/types'
 import { Hostname } from './hostname'
 import { Platform } from './platform'
 
 export class Origin implements Validator {
-  private hostnames: string[] = []
-  private schemes: string[] = []
-  private scheme: string | undefined
-  private host: string | null = null
-  private origin = ''
+  protected hostnames: string[] = []
+  protected schemes: string[] = []
+  protected scheme: string | undefined
+  protected host: string | null = null
+  protected origin = ''
 
   /**
    * Constructor
-   *
-   * @param platforms Array of platform documents
    */
-  constructor(platforms: PlatformsDoc[]) {
-    this.hostnames = Platform.getHostnames(platforms)
-    this.schemes = Platform.getSchemes(platforms)
+  constructor(platforms: PlatformsDoc[])
+  constructor(allowedHostnames: string[], allowedSchemas: string[])
+  constructor(
+    platformsOrHostnames: PlatformsDoc[] | string[],
+    allowedSchemas?: string[],
+  ) {
+    if (platformsOrHostnames.some(p => p instanceof Doc)) {
+      this.hostnames = Platform.getHostnames(
+        platformsOrHostnames as PlatformsDoc[],
+      )
+      this.schemes = Platform.getSchemes(platformsOrHostnames as PlatformsDoc[])
+    } else {
+      this.hostnames = platformsOrHostnames as string[]
+      this.schemes = allowedSchemas as string[]
+    }
   }
 
   /**

@@ -11,6 +11,8 @@ import type { AuthType } from '../decorators'
 import { localeTranslatorInstance } from './locale.helper'
 import { Detector } from './detector.helper'
 import { Platform } from '../validators/network/platform'
+import { RedirectValidator } from '../validators'
+import { Exception } from '../extend/exception'
 
 export class RequestContext {
   private _allowedHostnames?: string[]
@@ -91,6 +93,16 @@ export class RequestContext {
       ...Platform.getSchemes(this.project.get('platforms')),
     ]
     return this._allowedSchemes
+  }
+
+  public validateRedirectURL(url: string) {
+    const allowedHostnames = this.getAllowedHostnames()
+    const allowedSchemes = this.getAllowedSchemes()
+
+    const validator = new RedirectValidator(allowedHostnames, allowedSchemes)
+    if (!validator.$valid(url)) {
+      throw new Exception(Exception.GENERAL_BAD_REQUEST, validator.$description)
+    }
   }
 
   constructor(init?: Partial<RequestContext>) {

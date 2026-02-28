@@ -1,17 +1,10 @@
-import {
-  Body,
-  Controller,
-  Req,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Req, UseInterceptors } from '@nestjs/common'
 import { Post, Put } from '@nuvix/core'
-import { Locale, Namespace, Project, User } from '@nuvix/core/decorators'
-import { LocaleTranslator, Models } from '@nuvix/core/helpers'
+import { Ctx, Namespace, User } from '@nuvix/core/decorators'
+import { Models, RequestContext } from '@nuvix/core/helpers'
 import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
-import { Database } from '@nuvix/db'
 import type { IResponse } from '@nuvix/utils'
-import type { ProjectsDoc, TokensDoc, UsersDoc } from '@nuvix/utils/types'
+import type { TokensDoc, UsersDoc } from '@nuvix/utils/types'
 import { CreateRecoveryDTO, UpdateRecoveryDTO } from './DTO/recovery.dto'
 import { RecoveryService } from './recovery.service'
 
@@ -24,6 +17,8 @@ export class RecoveryController {
   @Post('', {
     summary: 'Create password recovery',
     scopes: ['sessions.write'],
+    model: Models.TOKEN,
+    sensitiveFields: ['secret'],
     throttle: {
       limit: 10,
       key: ['url:{url},email:{body-email}', 'url:{url},ip:{ip}'],
@@ -53,9 +48,10 @@ export class RecoveryController {
   @Put('', {
     summary: 'Update password recovery (confirmation)',
     model: Models.TOKEN,
+    sensitiveFields: ['secret'],
     throttle: {
       limit: 10,
-      key: 'ip:{ip},userId:{param-userId}',
+      key: 'url:{url},userId:{body-userId}',
     },
     audit: {
       key: 'recovery.update',
@@ -70,11 +66,12 @@ export class RecoveryController {
   async updateRecovery(
     @User() user: UsersDoc,
     @Body() input: UpdateRecoveryDTO,
+    @Ctx() ctx: RequestContext,
   ): Promise<IResponse<TokensDoc>> {
     return this.recoveryService.updateRecovery({
       user,
       input,
-      project,
+      ctx,
     })
   }
 }

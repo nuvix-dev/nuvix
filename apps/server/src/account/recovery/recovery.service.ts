@@ -1,12 +1,8 @@
-import * as fs from 'node:fs/promises'
-import path from 'node:path'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
-
-import type { SmtpConfig } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Hooks } from '@nuvix/core/extend/hooks'
-import { Auth, LocaleTranslator } from '@nuvix/core/helpers'
+import { Auth, EmailHelper, RequestContext } from '@nuvix/core/helpers'
 import { MailJob, MailQueueOptions } from '@nuvix/core/resolvers'
 import { PasswordHistoryValidator } from '@nuvix/core/validators'
 import {
@@ -24,22 +20,23 @@ import {
   QueueFor,
   TokenType,
 } from '@nuvix/utils'
-import type {
-  ProjectsDoc,
-  Tokens,
-  TokensDoc,
-  UsersDoc,
-} from '@nuvix/utils/types'
+import type { Tokens, TokensDoc, UsersDoc } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
-import Template from 'handlebars'
 import { CreateRecoveryDTO, UpdateRecoveryDTO } from './DTO/recovery.dto'
+import { CoreService } from '@nuvix/core/core.service'
 
 @Injectable()
 export class RecoveryService {
+  private readonly db: Database
+  private readonly emailHelper = new EmailHelper()
+
   constructor(
+    private readonly coreService: CoreService,
     @InjectQueue(QueueFor.MAILS)
     private readonly mailsQueue: Queue<MailQueueOptions>,
-  ) {}
+  ) {
+    this.db = this.coreService.getDatabase()
+  }
 
   /**
    * Create Recovery
@@ -57,13 +54,9 @@ export class RecoveryService {
     }
 
     const ctx = request.context
-
     const email = input.email.toLowerCase()
     let url = input.url
-
-    if (!url) {
-      throw new Exception(Exception.GENERAL_BAD_REQUEST, 'url is required')
-    }
+    ctx.validateRedirectURL(url)
 
     const profile = await this.db.findOne('users', [
       Query.equal('email', [email]),
@@ -89,8 +82,8 @@ export class RecoveryService {
       type: TokenType.RECOVERY,
       secret: Auth.hash(secret), // One way hash encryption to protect DB leak
       expire: expire,
-      userAgent,
-      ip,
+      userAgent: request.headers['user-agent'] || 'UNKNOWN',
+      ip: request.ip,
     })
 
     Authorization.setRole(Role.user(profile.getId()).toString())
@@ -111,100 +104,39 @@ export class RecoveryService {
     urlObj.searchParams.set('expire', expire.toISOString())
     url = urlObj.toString()
 
-    const projectName = project.empty()
-      ? 'Console'
-      : project.get('name', '[APP-NAME]')
-    let body = locale.getText('emails.recovery.body')
-    let subject = locale.getText('emails.recovery.subject')
-    const customTemplate =
-      project.get('templates', {})[`email.recovery-${locale.default}`] ?? {}
+    const project = ctx.project
+    const projectName = project.get('name')
+    const locale = ctx.translator()
 
-    const templatePath = path.join(
-      this.appConfig.assetConfig.templates,
-      'email-inner-base.tpl',
-    )
-    const templateSource = await fs.readFile(templatePath, 'utf8')
-    const template = Template.compile(templateSource)
+    const payload = await this.emailHelper
+      .builder(project)
+      .usingTemplate(
+        'email-inner-base.tpl',
+        `recovery-${locale.fallbackLocale}`,
+      )
+      .withSubject(locale.t('emails.recovery.subject'))
+      .withData({
+        body: locale.t('emails.recovery.body', { project: projectName }),
+        hello: locale.t('emails.recovery.hello', {
+          user: profile.get('name', 'User'),
+        }),
+        footer: locale.t('emails.recovery.footer'),
+        thanks: locale.t('emails.recovery.thanks'),
+        signature: locale.t('emails.recovery.signature', {
+          project: projectName,
+        }),
+      })
+      .withVariables({
+        direction: locale.t('settings.direction'),
+        user: profile.get('name', 'User'),
+        redirect: url,
+        project: projectName,
+      })
+      .build()
 
-    const emailData = {
-      body: body,
-      hello: locale.getText('emails.recovery.hello'),
-      footer: locale.getText('emails.recovery.footer'),
-      thanks: locale.getText('emails.recovery.thanks'),
-      signature: locale.getText('emails.recovery.signature'),
-    }
+    await this.mailsQueue.add(MailJob.SEND_EMAIL, payload)
 
-    body = template(emailData)
-
-    const smtp = project.get('smtp', {}) as SmtpConfig
-    const smtpEnabled = smtp.enabled ?? false
-    const systemConfig = this.appConfig.get('system')
-
-    let senderEmail =
-      systemConfig.emailAddress || this.appConfig.get('app').emailTeam
-    let senderName =
-      systemConfig.emailName || `${this.appConfig.get('app').name} Server`
-    let replyTo = ''
-
-    const smtpServer: SmtpConfig = {} as SmtpConfig
-
-    if (smtpEnabled) {
-      if (smtp.senderEmail) {
-        senderEmail = smtp.senderEmail
-      }
-      if (smtp.senderName) {
-        senderName = smtp.senderName
-      }
-      if (smtp.replyTo) {
-        replyTo = smtp.replyTo
-      }
-
-      smtpServer.host = smtp.host
-      smtpServer.port = smtp.port
-      smtpServer.username = smtp.username
-      smtpServer.password = smtp.password
-      smtpServer.secure = smtp.secure ?? false
-
-      if (customTemplate) {
-        if (customTemplate.senderEmail) {
-          senderEmail = customTemplate.senderEmail
-        }
-        if (customTemplate.senderName) {
-          senderName = customTemplate.senderName
-        }
-        if (customTemplate.replyTo) {
-          replyTo = customTemplate.replyTo
-        }
-
-        body = customTemplate.message || body
-        subject = customTemplate.subject || subject
-      }
-
-      smtpServer.replyTo = replyTo
-      smtpServer.senderEmail = senderEmail
-      smtpServer.senderName = senderName
-    }
-
-    const emailVariables = {
-      direction: locale.getText('settings.direction'),
-      user: profile.get('name'),
-      redirect: url,
-      project: projectName,
-      team: '',
-    }
-
-    await this.mailsQueue.add(MailJob.SEND_EMAIL, {
-      email: profile.get('email', ''),
-      subject,
-      body,
-      server: smtpServer,
-      variables: emailVariables,
-    })
-
-    createdRecovery.set(
-      'secret',
-      Auth.isPlatformActor || Auth.isTrustedActor ? secret : undefined,
-    )
+    createdRecovery.set('secret', secret)
 
     return createdRecovery
   }
@@ -213,12 +145,13 @@ export class RecoveryService {
    * Update password recovery (confirmation)
    */
   async updateRecovery({
-    project,
     user,
     input,
-  }: WithDB<
-    WithProject<WithUser<{ input: UpdateRecoveryDTO }>>
-  >): Promise<TokensDoc> {
+    ctx,
+  }: WithUser<{
+    input: UpdateRecoveryDTO
+    ctx: RequestContext
+  }>): Promise<TokensDoc> {
     const profile = await this.db.getDocument('users', input.userId)
 
     if (profile.empty()) {
@@ -244,7 +177,7 @@ export class RecoveryService {
       Auth.DEFAULT_ALGO_OPTIONS,
     )
 
-    const historyLimit = project.get('auths', {}).passwordHistory ?? 0
+    const historyLimit = ctx.project.get('auths', {}).passwordHistory ?? 0
     let history = profile.get('passwordHistory', [])
 
     if (newPassword && historyLimit > 0) {
@@ -261,12 +194,7 @@ export class RecoveryService {
       history = history.slice(Math.max(0, history.length - historyLimit))
     }
 
-    await Hooks.trigger('passwordValidator', [
-      project,
-      input.password,
-      user,
-      true,
-    ])
+    await Hooks.trigger('passwordValidator', [input.password, user, true])
 
     const updatedProfile = await this.db.updateDocument(
       'users',
@@ -297,7 +225,4 @@ export class RecoveryService {
   }
 }
 
-type WithDB<T = unknown> = T
 type WithUser<T = unknown> = { user: UsersDoc } & T
-type WithProject<T = unknown> = { project: ProjectsDoc } & T
-type WithLocale<T = unknown> = { locale: LocaleTranslator } & T
