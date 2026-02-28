@@ -25,7 +25,6 @@ import {
   QueueFor,
   SchemaMeta,
 } from '@nuvix/utils'
-import type { ProjectsDoc } from '@nuvix/utils/types'
 import type { Queue } from 'bullmq'
 import type {
   CreateCollectionDTO,
@@ -47,7 +46,7 @@ export class CollectionsService {
   /**
    * Create a new collection.
    */
-  async createCollection(input: CreateCollectionDTO) {
+  async createCollection(db: Database, input: CreateCollectionDTO) {
     const { name, enabled, documentSecurity } = input
     let { collectionId, permissions = [] } = input
 
@@ -55,7 +54,7 @@ export class CollectionsService {
     collectionId = collectionId === 'unique()' ? ID.unique() : collectionId
 
     try {
-      await this.db.createDocument(
+      await db.createDocument(
         SchemaMeta.collections,
         new Doc({
           $id: collectionId,
@@ -67,12 +66,12 @@ export class CollectionsService {
         }),
       )
 
-      const collection = await this.db.getDocument(
+      const collection = await db.getDocument(
         SchemaMeta.collections,
         collectionId,
       )
 
-      await this.db.createCollection({
+      await db.createCollection({
         id: collection.getId(),
         permissions,
         documentSecurity,
@@ -80,7 +79,7 @@ export class CollectionsService {
       })
 
       this.event.emit(
-        `schema.${this.db.schema}.collection.${collectionId}.created`,
+        `schema.${db.schema}.collection.${collectionId}.created`,
         collection,
       )
       return collection
@@ -98,14 +97,14 @@ export class CollectionsService {
   /**
    * Get collections for a schema.
    */
-  async getCollections(queries: Query[] = [], search?: string) {
+  async getCollections(db: Database, queries: Query[] = [], search?: string) {
     if (search) {
       queries.push(Query.search('search', search))
     }
 
     const filterQueries = Query.groupByType(queries).filters
-    const collections = await this.db.find(SchemaMeta.collections, queries)
-    const total = await this.db.count(
+    const collections = await db.find(SchemaMeta.collections, queries)
+    const total = await db.count(
       SchemaMeta.collections,
       filterQueries,
       configuration.limits.limitCount,
@@ -120,8 +119,8 @@ export class CollectionsService {
   /**
    * Find one collection.
    */
-  async getCollection(collectionId: string) {
-    const collection = await this.db.getDocument(
+  async getCollection(db: Database, collectionId: string) {
+    const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -154,11 +153,15 @@ export class CollectionsService {
   /**
    * Update a collection.
    */
-  async updateCollection(collectionId: string, input: UpdateCollectionDTO) {
+  async updateCollection(
+    db: Database,
+    collectionId: string,
+    input: UpdateCollectionDTO,
+  ) {
     const { name, documentSecurity } = input
     let { permissions, enabled } = input
 
-    const collection = await this.db.getDocument(
+    const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -171,7 +174,7 @@ export class CollectionsService {
     }
     enabled = enabled ?? collection.get('enabled')
 
-    const updatedCollection = await this.db.updateDocument(
+    const updatedCollection = await db.updateDocument(
       SchemaMeta.collections,
       collectionId,
       collection
@@ -182,7 +185,7 @@ export class CollectionsService {
         .set('search', `${collectionId} ${name}`),
     )
 
-    await this.db.updateCollection({
+    await db.updateCollection({
       id: collection.getId(),
       permissions: permissions ?? updatedCollection.get('$permissions'),
       documentSecurity:
@@ -191,7 +194,7 @@ export class CollectionsService {
     })
 
     this.event.emit(
-      `schema.${this.db.schema}.collection.${collectionId}.updated`,
+      `schema.${db.schema}.collection.${collectionId}.updated`,
       updatedCollection,
     )
     return updatedCollection
@@ -200,8 +203,8 @@ export class CollectionsService {
   /**
    * Remove a collection.
    */
-  async removeCollection(collectionId: string) {
-    const collection = await this.db.getDocument(
+  async removeCollection(db: Database, collectionId: string) {
+    const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -210,7 +213,7 @@ export class CollectionsService {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
 
-    if (!(await this.db.deleteDocument(SchemaMeta.collections, collectionId))) {
+    if (!(await db.deleteDocument(SchemaMeta.collections, collectionId))) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
         'Failed to remove collection from DB',
@@ -218,19 +221,17 @@ export class CollectionsService {
     }
 
     await this.collectionsQueue.add(CollectionsJob.DELETE_COLLECTION, {
-      database: this.db.schema,
+      database: db.schema,
       collection,
-      project,
     })
 
-    await this.db.purgeCachedCollection(collection.getId())
+    await db.purgeCachedCollection(collection.getId())
   }
 
   /**
-   * @todo we have to put it in schemas controller
    * Get Usage.
    */
-  async getUsage(range = '7d') {
+  async getUsage(db: Database, range = '7d') {
     const periods = usageConfig
     const stats: Record<string, any> = {}
     const usage: Record<string, any> = {}
@@ -239,14 +240,14 @@ export class CollectionsService {
 
     await Authorization.skip(async () => {
       for (const metric of metrics) {
-        const result = await this.db.findOne('stats', qb =>
+        const result = await db.findOne('stats', qb =>
           qb.equal('metric', metric).equal('period', MetricPeriod.INF),
         )
 
         stats[metric] = { total: result.get('value') }
         const limit = days.limit
         const period = days.period
-        const results = await this.db.find('stats', qb =>
+        const results = await db.find('stats', qb =>
           qb
             .equal('metric', metric)
             .equal('period', period)
@@ -292,8 +293,8 @@ export class CollectionsService {
   /**
    * Get collection Usage.
    */
-  async getCollectionUsage(collectionId: string, range = '7d') {
-    const collection = await this.db.getDocument(
+  async getCollectionUsage(db: Database, collectionId: string, range = '7d') {
+    const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -307,19 +308,19 @@ export class CollectionsService {
     const usage: Record<string, any> = {}
     const days = periods[range as keyof typeof periods]
     const metrics = [
-      MetricFor.SCHEMA_ID_DOCUMENTS.replace('{schemaId}', this.db.schema),
+      MetricFor.SCHEMA_ID_DOCUMENTS.replace('{schemaId}', db.schema),
     ]
 
     await Authorization.skip(async () => {
       for (const metric of metrics) {
-        const result: any = await this.db.findOne('stats', qb =>
+        const result: any = await db.findOne('stats', qb =>
           qb.equal('metric', metric).equal('period', MetricPeriod.INF),
         )
 
         stats[metric] = { total: result?.value ?? 0 }
         const limit = days.limit
         const period = days.period
-        const results = await this.db.find('stats', qb =>
+        const results = await db.find('stats', qb =>
           qb
             .equal('metric', metric)
             .equal('period', period)

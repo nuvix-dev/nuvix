@@ -733,7 +733,6 @@ export type CollectionsJobData = {
   collection: CollectionsDoc
   attribute?: AttributesDoc
   index?: IndexesDoc
-  project: ProjectsDoc
 }
 
 type JobData = {
@@ -741,7 +740,6 @@ type JobData = {
   collection: Collections
   attribute?: Attributes
   index?: Indexes
-  project: Projects
 }
 
 export enum Status {
