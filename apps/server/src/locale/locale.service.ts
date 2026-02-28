@@ -16,7 +16,7 @@ export class LocaleService {
     ip,
     locale,
   }: TLocalService.GetUserLocale): ILocaleResponse.GetUserLocale {
-    const defaultValue = locale.getText('locale.country.unknown')
+    const defaultValue = locale.t('locale.country.unknown')
     const output: ILocaleResponse.GetUserLocale = {
       ip,
       countryCode: '--',
@@ -27,7 +27,7 @@ export class LocaleService {
       currency: null,
     }
 
-    const record = this.geothis.db.get(ip)
+    const record = this.geoDb.get(ip)
 
     if (record) {
       const countryCode = record.country?.iso_code
@@ -35,14 +35,12 @@ export class LocaleService {
       output.countryCode = countryCode ?? '--'
       output.continentCode = continentCode ?? '--'
 
-      output.country = locale.getText(
-        `countries.${countryCode?.toLowerCase()}`,
-        defaultValue,
-      )
-      output.continent = locale.getText(
-        `continents.${continentCode?.toLowerCase()}`,
-        defaultValue,
-      )
+      output.country =
+        locale.getRaw(`countries.${countryCode?.toLowerCase()}` as any) ??
+        defaultValue
+      output.continent =
+        locale.getRaw(`continents.${continentCode?.toLowerCase()}` as any) ??
+        defaultValue
 
       output.eu = !!(continentCode && euList.includes(continentCode))
 

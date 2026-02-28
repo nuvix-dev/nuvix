@@ -1,4 +1,4 @@
-import { Controller, Ip, UseGuards, UseInterceptors } from '@nestjs/common'
+import { Controller, Ip, UseInterceptors } from '@nestjs/common'
 import { Get } from '@nuvix/core'
 import {
   continents,
@@ -17,7 +17,6 @@ import { LocaleService } from './locale.service'
 import type { ILocaleResponse } from './locale.types'
 
 @Controller({ version: ['1'], path: 'locale' })
-
 @Namespace('locale')
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class LocaleController {
@@ -72,10 +71,13 @@ export class LocaleController {
   ): IListResponse<ILocaleResponse.GetCountries> {
     return {
       data: countries
-        .map(c => ({
-          name: locale.getText(`countries.${c.toLowerCase()}`),
-          code: c,
-        }))
+        .map(c => {
+          const key = `countries.${c.toLowerCase()}`
+          return {
+            name: locale.has(key) ? locale.getRaw(key)! : c,
+            code: c,
+          }
+        })
         .sort((a, b) => a.name.localeCompare(b.name)),
       total: countries.length,
     }
@@ -95,12 +97,15 @@ export class LocaleController {
   ): IListResponse<ILocaleResponse.GetCountries> {
     return {
       data: euList
-        .map(c => ({
-          name: locale.getText(`countries.${c.toLowerCase()}`),
-          code: c,
-        }))
+        .map(c => {
+          const key = `countries.${c.toLowerCase()}`
+          return {
+            name: locale.has(key) ? locale.getRaw(key)! : c,
+            code: c,
+          }
+        })
         .sort((a, b) => a.name.localeCompare(b.name)),
-      total: countries.length,
+      total: euList.length,
     }
   }
 
@@ -120,13 +125,13 @@ export class LocaleController {
     const data: ILocaleResponse.GetCountriesPhone[] = []
 
     for (const [name, code] of list) {
-      const countryName = locale.getText(
-        `countries.${name.toLowerCase()}`,
-        false,
-      )
-      if (!countryName) {
+      const key = `countries.${name.toLowerCase()}`
+
+      if (!locale.has(key)) {
         continue
       }
+
+      const countryName = locale.getRaw(key)!
 
       data.push({
         code: `+${code}`,
@@ -155,10 +160,13 @@ export class LocaleController {
   ): IListResponse<ILocaleResponse.GetContinents> {
     return {
       data: continents
-        .map(c => ({
-          name: locale.getText(`continents.${c.toLowerCase()}`),
-          code: c,
-        }))
+        .map(c => {
+          const key = `continents.${c.toLowerCase()}`
+          return {
+            name: locale.has(key) ? locale.getRaw(key)! : c,
+            code: c,
+          }
+        })
         .sort((a, b) => a.name.localeCompare(b.name)),
       total: continents.length,
     }
