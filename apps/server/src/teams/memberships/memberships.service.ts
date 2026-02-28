@@ -1,10 +1,8 @@
-import * as fs from 'node:fs'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
-import { AppConfigService, CoreService } from '@nuvix/core'
-import type { SmtpConfig } from '@nuvix/core/config'
+import { CoreService } from '@nuvix/core'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Auth, Detector, ID, LocaleTranslator } from '@nuvix/core/helpers'
+import { Auth, emailHelper, ID, RequestContext } from '@nuvix/core/helpers'
 import { MailJob, MailQueueOptions } from '@nuvix/core/resolvers'
 import { TOTP } from '@nuvix/core/validators'
 import {
@@ -18,10 +16,8 @@ import {
   Role,
 } from '@nuvix/db'
 import { configuration, QueueFor, SessionProvider } from '@nuvix/utils'
-import type { Memberships, ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
+import type { Memberships, UsersDoc } from '@nuvix/utils/types'
 import type { Queue } from 'bullmq'
-import Template from 'handlebars'
-import { sprintf } from 'sprintf-js'
 import {
   CreateMembershipDTO,
   UpdateMembershipDTO,
@@ -30,11 +26,14 @@ import {
 
 @Injectable()
 export class MembershipsService {
+  private readonly db: Database
   constructor(
     private readonly coreService: CoreService,
     @InjectQueue(QueueFor.MAILS)
     private readonly mailsQueue: Queue<MailQueueOptions, any, MailJob>,
-  ) {}
+  ) {
+    this.db = coreService.getDatabase()
+  }
 
   /**
    * Add a member to the team
@@ -42,18 +41,20 @@ export class MembershipsService {
   async addMember(
     id: string,
     input: CreateMembershipDTO,
-
     user: UsersDoc,
-    locale: LocaleTranslator,
+    ctx: RequestContext,
   ) {
-    const url = input.url ? input.url.trim() : ''
+    const url = input.url?.trim()
+    const isPrivileged = ctx.isAPIUser || ctx.isAdminUser
     if (!url) {
-      if (!Auth.isTrustedActor) {
+      if (!isPrivileged) {
         throw new Exception(
           Exception.GENERAL_ARGUMENT_INVALID,
           'URL is required',
         )
       }
+    } else {
+      ctx.validateRedirectURL(url)
     }
 
     if (!input.userId && !input.email && !input.phone) {
@@ -63,7 +64,7 @@ export class MembershipsService {
       )
     }
 
-    if (!Auth.isTrustedActor && !configuration.smtp.enabled()) {
+    if (!isPrivileged && !configuration.smtp.enabled()) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED)
     }
 
@@ -72,7 +73,7 @@ export class MembershipsService {
       throw new Exception(Exception.TEAM_NOT_FOUND)
     }
 
-    let email = input.email ? input.email.trim().toLowerCase() : ''
+    let email = input.email?.trim().toLowerCase()
     let name = input.name ? input.name.trim() : email
     let invitee: UsersDoc | null = null
 
@@ -98,7 +99,7 @@ export class MembershipsService {
       email = invitee.get('email', '')
       input.phone = invitee.get('phone', '')
       name = !name ? invitee.get('name', '') : name
-    } else if (input.email) {
+    } else if (email) {
       invitee = await this.db.findOne('users', [Query.equal('email', [email])])
       if (
         !invitee.empty() &&
@@ -128,21 +129,20 @@ export class MembershipsService {
       const userId = ID.unique()
 
       // Check user limit if not privileged or app user
-      const limit = project.get('auths', {}).limit ?? 0
-      if (!Auth.isTrustedActor && limit !== 0) {
+      const limit = ctx.project.get('auths', {}).limit ?? 0
+      if (!isPrivileged && limit !== 0) {
         const total = await this.db.count('users', [])
         if (total >= limit) {
-          throw new Exception(
-            Exception.USER_COUNT_EXCEEDED,
-            'User registration is restricted. Contact your administrator for more information.',
-          )
+          throw new Exception(Exception.USER_COUNT_EXCEEDED)
         }
       }
 
       // Ensure email is not already used in another identity
-      const identityWithMatchingEmail = await this.db.findOne('identities', [
-        Query.equal('providerEmail', [email]),
-      ])
+      const identityWithMatchingEmail = email
+        ? await this.db.findOne('identities', [
+            Query.equal('providerEmail', [email]),
+          ])
+        : null
       if (identityWithMatchingEmail && !identityWithMatchingEmail.empty()) {
         throw new Exception(Exception.USER_EMAIL_ALREADY_EXISTS)
       }
@@ -181,10 +181,10 @@ export class MembershipsService {
 
     const isOwner = Authorization.isRole(`team:${team.getId()}/owner`)
 
-    if (!isOwner && !Auth.isTrustedActor) {
+    if (!isOwner && !isPrivileged) {
       throw new Exception(
         Exception.USER_UNAUTHORIZED,
-        'User is not allowed to send invitations for this team',
+        'User is not allowed to send invitation`s for this team',
       )
     }
 
@@ -206,13 +206,13 @@ export class MembershipsService {
       teamInternalId: team.getSequence(),
       roles: input.roles,
       invited: new Date(),
-      joined: Auth.isTrustedActor ? new Date() : null,
-      confirm: Auth.isTrustedActor,
+      joined: isPrivileged ? new Date() : null,
+      confirm: isPrivileged,
       secret: Auth.hash(secret),
       search: [membershipId, invitee.getId()].join(' '),
     })
 
-    if (Auth.isTrustedActor) {
+    if (isPrivileged) {
       try {
         membership = await Authorization.skip(() =>
           this.db.createDocument('memberships', membership),
@@ -246,95 +246,45 @@ export class MembershipsService {
 
       const email = invitee.get('email')
       if (email) {
-        const projectName = project.empty()
-          ? 'Console'
-          : project.get('name', '[APP-NAME]')
-        let subject = sprintf(
-          locale.getText('emails.invitation.subject'),
-          team.get('name'),
-          projectName,
-        )
-        const customTemplate =
-          project.get('templates', {})?.[
-            `email.invitation-${locale.default}`
-          ] ?? {}
-        const templatePath = `${this.appConfig.assetConfig.templates}/email-inner-base.tpl`
-        const templateSource = fs.readFileSync(templatePath, 'utf8')
-        const template = Template.compile(templateSource)
+        const project = ctx.project
+        const locale = ctx.translator()
 
-        const emailData = {
-          hello: locale.getText('emails.invitation.hello'),
-          body: locale.getText('emails.invitation.body'),
-          footer: locale.getText('emails.invitation.footer'),
-          thanks: locale.getText('emails.invitation.thanks'),
-          signature: locale.getText('emails.invitation.signature'),
-        }
+        const payload = await emailHelper
+          .builder(project)
+          .to(email)
+          .usingTemplate(
+            'email-inner-base.tpl',
+            `invitation-${locale.fallbackLocale}`,
+          )
+          .withSubject(
+            locale.t('emails.invitation.subject', {
+              0: team.get('name', '[TEAM]'),
+              1: project.get('name'),
+            }),
+          )
+          .withData({
+            hello: locale.t('emails.invitation.hello', {
+              user: invitee.get('name', email),
+            }),
+            body: locale.t('emails.invitation.body', {
+              owner: user.get('name'),
+              team: team.get('name'),
+              project: project.get('name'),
+            }),
+            footer: locale.t('emails.invitation.footer'),
+            thanks: locale.t('emails.invitation.thanks'),
+            signature: locale.t('emails.invitation.signature', {
+              project: project.get('name'),
+            }),
+          })
+          .withVariables({
+            direction: locale.t('settings.direction'),
+            redirect: url.toString(),
+            project: project.get('name'),
+          })
+          .build()
 
-        let body = template(emailData)
-
-        const smtp = project.get('smtp', {}) as SmtpConfig
-        const smtpEnabled = smtp.enabled ?? false
-        const systemConfig = this.appConfig.get('system')
-
-        let senderEmail =
-          systemConfig.emailAddress || configuration.app.emailTeam
-        let senderName =
-          systemConfig.emailName || `${configuration.app.name} Server`
-        let replyTo = ''
-
-        if (smtpEnabled) {
-          if (smtp.senderEmail) {
-            senderEmail = smtp.senderEmail
-          }
-          if (smtp.senderName) {
-            senderName = smtp.senderName
-          }
-          if (smtp.replyTo) {
-            replyTo = smtp.replyTo
-          }
-
-          if (customTemplate) {
-            if (customTemplate.senderEmail) {
-              senderEmail = customTemplate.senderEmail
-            }
-            if (customTemplate.senderName) {
-              senderName = customTemplate.senderName
-            }
-            if (customTemplate.replyTo) {
-              replyTo = customTemplate.replyTo
-            }
-
-            body = customTemplate.message || body
-            subject = customTemplate.subject || subject
-          }
-        }
-
-        const emailVariables = {
-          owner: user.get('name'),
-          direction: locale.getText('settings.direction'),
-          user: invitee.get('name'),
-          team: team.get('name'),
-          redirect: url.toString(),
-          project: projectName,
-        }
-
-        await this.mailsQueue.add(MailJob.SEND_EMAIL, {
-          email,
-          subject,
-          body,
-          server: {
-            host: smtp.host,
-            port: smtp.port,
-            username: smtp.username,
-            password: smtp.password,
-            secure: smtp.secure,
-            from: senderEmail,
-            replyTo,
-            senderEmail,
-            senderName,
-          },
-          variables: emailVariables,
-        })
+        await this.mailsQueue.add(MailJob.SEND_EMAIL, payload)
       }
     }
 
@@ -445,6 +395,7 @@ export class MembershipsService {
     teamId: string,
     memberId: string,
     input: UpdateMembershipDTO,
+    ctx: RequestContext,
   ) {
     const team = await this.db.getDocument('teams', teamId)
     if (team.empty()) {
@@ -462,7 +413,7 @@ export class MembershipsService {
     }
     const isOwner = Authorization.isRole(`team:${team.getId()}/owner`)
 
-    if (!isOwner && !Auth.isTrustedActor) {
+    if (!isOwner && !ctx.isAdminUser && !ctx.isAPIUser) {
       throw new Exception(
         Exception.USER_UNAUTHORIZED,
         'User is not allowed to modify roles',
@@ -558,7 +509,9 @@ export class MembershipsService {
     if (!hasSession) {
       Authorization.setRole(Role.user(user.getId()).toString())
 
-      const detector = new Detector(request.headers['user-agent'] ?? 'UNKNWON')
+      const ctx = request.context
+      const project = ctx.project
+      const detector = ctx.detector(request.headers['user-agent'])
       const record = this.coreService.getGeoDb().get(request.ip)
       const authDuration =
         project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
@@ -590,8 +543,7 @@ export class MembershipsService {
       await this.db.createDocument('sessions', sessionDoc)
       Authorization.setRole(Role.user(userId).toString())
 
-      const domainVerification = request.domainVerification
-      if (!domainVerification) {
+      if (configuration.server.fallbackCookies) {
         response.header(
           'X-Fallback-Cookies',
           JSON.stringify({
@@ -600,19 +552,16 @@ export class MembershipsService {
         )
       }
 
-      const cookieDomain = Auth.cookieDomain
-      const cookieSamesite = Auth.cookieSamesite
-
       response.setCookie(
         Auth.cookieName,
         Auth.encodeSession(user.getId(), sessionSecret),
         {
           expires: new Date(Math.floor(expire.getTime() / 1000)),
           path: '/',
-          domain: cookieDomain,
+          domain: ctx.cookieDomain,
           secure: protocol === 'https',
           httpOnly: true,
-          sameSite: cookieSamesite,
+          sameSite: ctx.cookieSameSite,
         },
       )
     }

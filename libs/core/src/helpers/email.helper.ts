@@ -172,3 +172,5 @@ export class EmailBuilder<S extends EmailState = {}> {
     })
   }
 }
+
+export const emailHelper = new EmailHelper()

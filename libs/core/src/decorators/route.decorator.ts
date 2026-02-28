@@ -124,7 +124,7 @@ export interface RouteOptions<T = unknown> {
    * This is separate from `sensitiveFields` to allow for different handling in audit logs vs API responses if needed.
    * For example, you might want to redact certain fields in API responses but still include them in audit logs for security auditing purposes, or vice versa.
    */
-  secretFields?: keyof T extends string ? (keyof T)[] : string[]
+  secretFields?: (keyof T extends string ? (keyof T)[] : never) | string[]
   /** SDK generation options */
   sdk?: SdkOptions
   /** Unique operation identifier for OpenAPI */
