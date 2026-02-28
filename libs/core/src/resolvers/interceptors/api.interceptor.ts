@@ -54,7 +54,7 @@ export class ApiInterceptor implements NestInterceptor {
       if (missingScopes.length > 0) {
         throw new Exception(
           Exception.GENERAL_UNAUTHORIZED_SCOPE,
-          `${user.get('email', 'User')} (role: ${request.role ?? '#'}) missing scopes [${missingScopes.join(', ')}]`,
+          `${user.get('email', 'User')} (role: ${request.context.role ?? '#'}) missing scopes [${missingScopes.join(', ')}]`,
         )
       }
     }

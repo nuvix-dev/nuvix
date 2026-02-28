@@ -1,9 +1,6 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
-import { Doc } from '@nuvix/db'
 import { SessionType } from '@nuvix/utils'
-import { ProjectsDoc } from '@nuvix/utils/types'
 import { Exception } from '../../extend/exception'
-import { Auth } from '@nuvix/core/helpers'
 import { authMethods } from '@nuvix/core/config'
 import { Reflector } from '@nestjs/core'
 import { AllowedSessionType } from '@nuvix/core/decorators'
@@ -14,7 +11,7 @@ export class SessionTypeGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request: NuvixRequest = context.switchToHttp().getRequest()
-
+    const ctx = request.context
     const sessionType = this.reflector.getAllAndOverride<SessionType>(
       AllowedSessionType,
       [context.getHandler(), context.getClass()],
@@ -24,8 +21,11 @@ export class SessionTypeGuard implements CanActivate {
       return true
     }
 
-    const project = this.getProject(request)
-    if (project.empty() || Auth.isPlatformActor || Auth.isTrustedActor) {
+    const project = ctx.project
+    if (project.empty()) {
+      return false
+    }
+    if (ctx.isPrivilegedUser()) {
       return true
     }
 
@@ -95,10 +95,6 @@ export class SessionTypeGuard implements CanActivate {
     }
 
     return true
-  }
-
-  private getProject(request: NuvixRequest): ProjectsDoc {
-    return request[Context.Project] ?? new Doc()
   }
 
   private isEnabled(
