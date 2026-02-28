@@ -1,31 +1,17 @@
-import {
-  Controller,
-  Param,
-  Req,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Controller, Param, Req, UseInterceptors } from '@nestjs/common'
 import { Delete, Get, Post } from '@nuvix/core'
-import {
-  Auth,
-  AuthType,
-  Locale,
-  Namespace,
-  Project,
-} from '@nuvix/core/decorators'
+import { Auth, AuthType, Locale, Namespace } from '@nuvix/core/decorators'
 import type { LocaleTranslator } from '@nuvix/core/helpers'
 import { Models } from '@nuvix/core/helpers'
 import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
-import type { Database } from '@nuvix/db'
 import { IListResponse, IResponse } from '@nuvix/utils'
-import type { ProjectsDoc, SessionsDoc } from '@nuvix/utils/types'
+import type { SessionsDoc } from '@nuvix/utils/types'
 import { UserParamDTO } from '../DTO/user.dto'
 import { SessionParamDTO } from './DTO/session.dto'
 import { SessionsService } from './sessions.service'
 
 @Namespace('users')
 @Controller({ version: ['1'], path: 'users/:userId/sessions' })
-
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.ADMIN, AuthType.KEY])
 export class SessionsController {
@@ -49,8 +35,9 @@ export class SessionsController {
 
   @Post('', {
     summary: 'Create session',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.SESSION,
+    secretFields: ['secret'],
     audit: {
       key: 'session.create',
       resource: 'user/{res.userId}',
@@ -63,21 +50,18 @@ export class SessionsController {
   async createSession(
     @Param() { userId }: UserParamDTO,
     @Req() req: NuvixRequest,
-
-    @Locale() localeTranslater: LocaleTranslator,
   ): Promise<IResponse<SessionsDoc>> {
     return this.sessionsService.createSession(
       userId,
       req.headers['user-agent'] || 'UNKNOWN',
       req.ip,
-      project,
-      localeTranslater,
+      req.context,
     )
   }
 
   @Delete('', {
     summary: 'Delete user sessions',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.NONE,
     audit: {
       key: 'sessions.delete',
@@ -94,7 +78,7 @@ export class SessionsController {
 
   @Delete(':sessionId', {
     summary: 'Delete user session',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.NONE,
     audit: {
       key: 'session.delete',

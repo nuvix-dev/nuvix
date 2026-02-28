@@ -1,23 +1,21 @@
 import { Injectable } from '@nestjs/common'
-import { EventEmitter2 } from '@nestjs/event-emitter'
 import { CoreService } from '@nuvix/core'
 import { Exception } from '@nuvix/core/extend/exception'
-import type { LocaleTranslator } from '@nuvix/core/helpers'
+import type { LocaleTranslator, RequestContext } from '@nuvix/core/helpers'
 import { Auth, Detector, ID } from '@nuvix/core/helpers'
 import { Database, Doc, Permission, Role } from '@nuvix/db'
 import { SessionProvider } from '@nuvix/utils'
-import type { ProjectsDoc, Sessions, SessionsDoc } from '@nuvix/utils/types'
+import type { Sessions, SessionsDoc } from '@nuvix/utils/types'
 import { CountryResponse, Reader } from 'maxmind'
 
 @Injectable()
 export class SessionsService {
   private readonly geoDb: Reader<CountryResponse>
+  private readonly db: Database
 
-  constructor(
-    private readonly coreService: CoreService,
-    readonly _event: EventEmitter2,
-  ) {
+  constructor(private readonly coreService: CoreService) {
     this.geoDb = this.coreService.getGeoDb()
+    this.db = this.coreService.getDatabase()
   }
 
   /**
@@ -33,10 +31,10 @@ export class SessionsService {
     const sessions = user.get('sessions', []) as SessionsDoc[]
 
     for (const session of sessions) {
-      const countryName = locale.getText(
-        `countries.${session.get('countryCode')}`,
-        locale.getText('locale.country.unknown'),
-      )
+      const key = `countries.${session.get('countryCode')}`
+      const countryName = locale.has(key)
+        ? locale.getRaw(key)
+        : locale.t('locale.country.unknown')
 
       session.set('countryName', countryName)
       session.set('current', false)
@@ -55,8 +53,7 @@ export class SessionsService {
     userId: string,
     userAgent: string,
     ip: string,
-
-    locale: LocaleTranslator,
+    ctx: RequestContext,
   ) {
     const user = await this.db.getDocument('users', userId)
 
@@ -66,7 +63,9 @@ export class SessionsService {
 
     const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
     const detector = new Detector(userAgent)
-    const record = this.geothis.db.get(ip)
+    const record = this.geoDb.get(ip)
+    const project = ctx.project
+    const locale = ctx.translator()
 
     const duration =
       project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
@@ -92,15 +91,14 @@ export class SessionsService {
       ...detector.getDevice(),
     })
 
-    const countryName = locale.getText(
-      `countries.${session.get('countryCode')}`,
-      locale.getText('locale.country.unknown'),
-    )
+    const key = `countries.${session.get('countryCode')}`
+    const countryName = locale.has(key)
+      ? locale.getRaw(key)
+      : locale.t('locale.country.unknown')
 
     const createdSession = await this.db.createDocument('sessions', session)
-    createdSession.set('secret', secret).set('countryName', countryName)
 
-    // TODO: Implement queue for events
+    createdSession.set('secret', secret).set('countryName', countryName)
 
     return createdSession
   }
@@ -123,8 +121,6 @@ export class SessionsService {
 
     await this.db.deleteDocument('sessions', session.getId())
     await this.db.purgeCachedDocument('users', user.getId())
-
-    // TODO: Implement queue for events
   }
 
   /**
