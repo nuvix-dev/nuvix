@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { CoreService } from '@nuvix/core'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Auth, ID } from '@nuvix/core/helpers'
+import { ID, RequestContext } from '@nuvix/core/helpers'
 import { DeletesQueue } from '@nuvix/core/resolvers'
 import {
   Database,
@@ -20,7 +20,10 @@ import {
 
 @Injectable()
 export class TeamsService {
-  constructor(private readonly coreService: CoreService) {}
+  protected readonly db: Database
+  constructor(private readonly coreService: CoreService) {
+    this.db = this.coreService.getDatabase()
+  }
 
   /**
    * Find all teams
@@ -43,10 +46,10 @@ export class TeamsService {
   /**
    * Create a new team
    */
-  async create(user: UsersDoc | null, input: CreateTeamDTO) {
+  async create(user: UsersDoc, input: CreateTeamDTO, ctx: RequestContext) {
     const teamId = input.teamId === 'unique()' ? ID.unique() : input.teamId
 
-    const team = await db
+    const team = await this.db
       .createDocument(
         'teams',
         new Doc({
@@ -57,7 +60,7 @@ export class TeamsService {
             Permission.delete(Role.team(teamId, 'owner')),
           ],
           name: input.name,
-          total: Auth.isTrustedActor ? 0 : 1,
+          total: ctx.isAPIUser || ctx.isAdminUser ? 0 : 1, // If team is created by API or Admin user, set total to 0, otherwise set to 1 (for the creator)
           prefs: {},
           search: [teamId, input.name].join(' '),
         }),
@@ -69,8 +72,8 @@ export class TeamsService {
         throw error
       })
 
-    if (!Auth.isTrustedActor && user) {
-      // Don't add user on server mode
+    // If team is created by API or Admin user, do not create membership for the creator
+    if (!ctx.isAPIUser && !ctx.isAdminUser && !user.empty()) {
       if (!input.roles?.includes('owner')) {
         input.roles?.push('owner')
       }

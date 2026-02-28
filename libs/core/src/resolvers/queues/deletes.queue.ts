@@ -296,7 +296,7 @@ export class DeletesQueue extends Queue {
   /**
    * Delete memberships for a team
    */
-  public async deleteMemberships(db: Database, team: TeamsDoc): Promise<void> {
+  public async deleteMemberships(team: TeamsDoc): Promise<void> {
     const teamInternalId = team.getSequence()
 
     return this.deleteByGroup<Memberships>(
