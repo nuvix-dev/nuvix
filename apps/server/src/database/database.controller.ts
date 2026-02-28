@@ -1,25 +1,9 @@
-import {
-  Body,
-  Controller,
-  Param,
-  Query,
-  Res,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Param, Query, UseInterceptors } from '@nestjs/common'
 import { Get, Post } from '@nuvix/core'
-import {
-  Auth,
-  AuthType,
-  Namespace,
-  Project,
-  ProjectPg,
-} from '@nuvix/core/decorators'
+import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
-import { DataSource } from '@nuvix/pg'
 import { IListResponse, SchemaType } from '@nuvix/utils'
-import type { ProjectsDoc } from '@nuvix/utils/types'
 // DTO's
 import {
   CreateSchemaDTO,
@@ -29,7 +13,6 @@ import {
 import { DatabaseService } from './database.service'
 
 @Controller({ version: ['1'], path: ['database'] })
-
 @Namespace('database')
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.ADMIN, AuthType.KEY])
@@ -47,10 +30,9 @@ export class DatabaseController {
     },
   })
   async getSchemas(
-    @ProjectPg() pg: DataSource,
     @Query() { type }: SchemaQueryDTO,
   ): Promise<IListResponse<unknown>> {
-    const schemas = await this.databaseService.getSchemas(pg, type)
+    const schemas = await this.databaseService.getSchemas(type)
     return schemas
   }
 
@@ -58,26 +40,16 @@ export class DatabaseController {
     summary: 'Create schema',
     description:
       'Create a new schema in the database. Supports managed, unmanaged, and document schema types',
-    scopes: 'schemas.create',
+    scopes: 'schemas.write',
     model: Models.SCHEMA,
     sdk: {
       name: 'createSchema',
     },
   })
-  async createSchema(
-    @ProjectPg() pg: DataSource,
-    @Body() body: CreateSchemaDTO,
-
-    @Res({ passthrough: true }) res: NuvixRes,
-  ) {
+  async createSchema(@Body() body: CreateSchemaDTO) {
     const result = await (body.type !== SchemaType.Document
-      ? this.databaseService.createSchema(pg, body)
-      : this.databaseService.createDocumentSchema(pg, project, body))
-    if (body.type === SchemaType.Document) {
-      res.status(202)
-    } else {
-      res.status(201)
-    }
+      ? this.databaseService.createSchema(body)
+      : this.databaseService.createDocumentSchema(body))
     return result
   }
 
@@ -90,11 +62,8 @@ export class DatabaseController {
       name: 'getSchema',
     },
   })
-  async getSchema(
-    @ProjectPg() pg: DataSource,
-    @Param() { schemaId }: SchemaParamsDTO,
-  ) {
-    const result = await this.databaseService.getSchema(pg, schemaId)
+  async getSchema(@Param() { schemaId }: SchemaParamsDTO) {
+    const result = await this.databaseService.getSchema(schemaId)
     return result
   }
 }
