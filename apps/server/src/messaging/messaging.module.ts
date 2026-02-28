@@ -66,7 +66,7 @@ export class MessagingModule implements NestModule {
     @InjectQueue(QueueFor.MESSAGING)
     private readonly queue: Queue<MessagingJobData, any, MessagingJob>,
   ) {
-    const db = coreService.getPlatformDb()
+    const db = coreService.getInternalDatabase()
 
     db.on(Events.DocumentCreate, 'messaging_schedule', async doc => {
       try {
@@ -120,7 +120,6 @@ export class MessagingModule implements NestModule {
           {
             scheduleId,
             message: messageId,
-            project,
           },
           {
             delay,

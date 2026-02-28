@@ -1,5 +1,4 @@
-import { Database, Query } from '@nuvix/db'
-import type { ProjectsDoc } from '@nuvix/utils/types'
+import { Query } from '@nuvix/db'
 import {
   CreateEmailMessageDTO,
   CreatePushMessageDTO,
@@ -9,44 +8,36 @@ import {
   UpdateSmsMessageDTO,
 } from './DTO/message.dto'
 
-interface DB {
-  db: Database
-}
-
-interface Project {
-  project: ProjectsDoc
-}
-
 interface QandS {
   queries?: Query[]
   search?: string
 }
 
-export interface CreateEmailMessage extends DB, Project {
+export interface CreateEmailMessage {
   input: CreateEmailMessageDTO
 }
-export interface CreateSmsMessage extends DB, Project {
+export interface CreateSmsMessage {
   input: CreateSmsMessageDTO
 }
-export interface CreatePushMessage extends DB, Project {
+export interface CreatePushMessage {
   input: CreatePushMessageDTO
 }
 
-export interface ListMessages extends DB, QandS {}
-export interface ListTargets extends DB {
+export interface ListMessages extends QandS {}
+export interface ListTargets {
   messageId: string
   queries?: Query[]
 }
 
-export interface UpdateEmailMessage extends DB, Project {
+export interface UpdateEmailMessage {
   input: UpdateEmailMessageDTO
   messageId: string
 }
-export interface UpdateSmsMessage extends DB, Project {
+export interface UpdateSmsMessage {
   input: UpdateSmsMessageDTO
   messageId: string
 }
-export interface UpdatePushMessage extends DB, Project {
+export interface UpdatePushMessage {
   input: UpdatePushMessageDTO
   messageId: string
 }

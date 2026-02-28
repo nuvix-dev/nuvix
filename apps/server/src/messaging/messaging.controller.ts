@@ -1,26 +1,18 @@
-import {
-  Body,
-  Controller,
-  Param,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Param, UseInterceptors } from '@nestjs/common'
 import { Delete, Get, Patch, Post } from '@nuvix/core'
 import {
   Auth,
   AuthType,
   Namespace,
-  Project,
-  ProjectDatabase,
   QueryFilter,
   QuerySearch,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { MessagesQueryPipe, TargetsQueryPipe } from '@nuvix/core/pipes/queries'
 import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
-import { Database, Query as Queries } from '@nuvix/db'
+import { Query as Queries } from '@nuvix/db'
 import { IListResponse, IResponse } from '@nuvix/utils'
-import type { MessagesDoc, ProjectsDoc, TargetsDoc } from '@nuvix/utils/types'
+import type { MessagesDoc, TargetsDoc } from '@nuvix/utils/types'
 import {
   CreateEmailMessageDTO,
   CreatePushMessageDTO,
@@ -42,7 +34,7 @@ export class MessagingController {
 
   @Post('email', {
     summary: 'Create email',
-    scopes: 'messages.create',
+    scopes: 'messages.write',
     model: Models.MESSAGE,
     audit: {
       key: 'message.create',
@@ -58,13 +50,12 @@ export class MessagingController {
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.createEmailMessage({
       input,
-      project,
     })
   }
 
   @Post('sms', {
     summary: 'Create SMS',
-    scopes: 'messages.create',
+    scopes: 'messages.write',
     model: Models.MESSAGE,
     audit: {
       key: 'message.create',
@@ -80,13 +71,12 @@ export class MessagingController {
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.createSmsMessage({
       input,
-      project,
     })
   }
 
   @Post('push', {
     summary: 'Create push notification',
-    scopes: 'messages.create',
+    scopes: 'messages.write',
     model: Models.MESSAGE,
     audit: {
       key: 'message.create',
@@ -102,7 +92,6 @@ export class MessagingController {
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.createPushMessage({
       input,
-      project,
     })
   }
 
@@ -151,7 +140,6 @@ export class MessagingController {
   })
   async listTargets(
     @Param() { messageId }: MessageParamsDTO,
-
     @QueryFilter(TargetsQueryPipe) queries: Queries[],
   ): Promise<IListResponse<TargetsDoc>> {
     return this.messagingService.listTargets({
@@ -162,7 +150,7 @@ export class MessagingController {
 
   @Patch('email/:messageId', {
     summary: 'Update email',
-    scopes: 'messages.update',
+    scopes: 'messages.write',
     model: Models.MESSAGE,
     audit: {
       key: 'message.update',
@@ -175,19 +163,17 @@ export class MessagingController {
   })
   async updateEmail(
     @Param() { messageId }: MessageParamsDTO,
-
     @Body() input: UpdateEmailMessageDTO,
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.updateEmailMessage({
       messageId,
       input,
-      project,
     })
   }
 
   @Patch('sms/:messageId', {
     summary: 'Update SMS',
-    scopes: 'messages.update',
+    scopes: 'messages.write',
     model: Models.MESSAGE,
     audit: {
       key: 'message.update',
@@ -200,19 +186,17 @@ export class MessagingController {
   })
   async updateSms(
     @Param() { messageId }: MessageParamsDTO,
-
     @Body() input: UpdateSmsMessageDTO,
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.updateSmsMessage({
       messageId,
       input,
-      project,
     })
   }
 
   @Patch('push/:messageId', {
     summary: 'Update push notification',
-    scopes: 'messages.update',
+    scopes: 'messages.write',
     model: Models.MESSAGE,
     audit: {
       key: 'message.update',
@@ -225,19 +209,17 @@ export class MessagingController {
   })
   async updatePush(
     @Param() { messageId }: MessageParamsDTO,
-
     @Body() input: UpdatePushMessageDTO,
   ): Promise<IResponse<MessagesDoc>> {
     return this.messagingService.updatePushMessage({
       messageId,
       input,
-      project,
     })
   }
 
   @Delete(':messageId', {
     summary: 'Delete message',
-    scopes: 'messages.delete',
+    scopes: 'messages.write',
     audit: {
       key: 'message.delete',
       resource: 'message/{res.$id}',

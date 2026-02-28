@@ -1,16 +1,16 @@
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
 import { JwtService } from '@nestjs/jwt'
-import { AppConfigService, CoreService } from '@nuvix/core'
+import { CoreService } from '@nuvix/core'
 import { Exception } from '@nuvix/core/extend/exception'
 import { MessagingJob, MessagingJobData } from '@nuvix/core/resolvers'
 import { Database, Doc, ID, Query } from '@nuvix/db'
 import {
+  configuration,
   MessageStatus,
   MessageType,
   QueueFor,
   ScheduleResourceType,
-  Schemas,
 } from '@nuvix/utils'
 import type { Messages, Schedules } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
@@ -27,22 +27,23 @@ import type {
 
 @Injectable()
 export class MessagingService {
-  private readonly dbForPlatform: Database
+  private readonly internalDb: Database
+  private readonly db: Database
 
   constructor(
     private readonly coreService: CoreService,
-
     private readonly jwtService: JwtService,
     @InjectQueue(QueueFor.MESSAGING)
     private readonly queue: Queue<MessagingJobData, any, MessagingJob>,
   ) {
-    this.dbForPlatform = this.coreService.getPlatformDb()
+    this.internalDb = this.coreService.getInternalDatabase()
+    this.db = this.coreService.getDatabase()
   }
 
   /**
    * Create Email Message
    */
-  async createEmailMessage({ input, project }: CreateEmailMessage) {
+  async createEmailMessage({ input }: CreateEmailMessage) {
     const {
       messageId: inputMessageId,
       subject,
@@ -83,13 +84,11 @@ export class MessagingService {
     const mergedTargets = [...targets, ...cc, ...bcc]
 
     if (mergedTargets.length > 0) {
-      const foundTargets = await this.db.withSchema(Schemas.Auth, () =>
-        this.db.find('targets', qb =>
-          qb
-            .equal('$id', ...mergedTargets)
-            .equal('providerType', MessageType.EMAIL)
-            .limit(mergedTargets.length),
-        ),
+      const foundTargets = await this.db.find('targets', qb =>
+        qb
+          .equal('$id', ...mergedTargets)
+          .equal('providerType', MessageType.EMAIL)
+          .limit(mergedTargets.length),
       )
 
       if (foundTargets.length !== mergedTargets.length) {
@@ -151,23 +150,20 @@ export class MessagingService {
     switch (status) {
       case MessageStatus.PROCESSING:
         await this.queue.add(MessagingJob.EXTERNAL, {
-          project,
           message: createdMessage,
         })
         break
       case MessageStatus.SCHEDULED: {
         const schedule = new Doc<Schedules>({
-          region: project.get('region'),
           resourceType: ScheduleResourceType.MESSAGE,
           resourceId: createdMessage.getId(),
           resourceInternalId: createdMessage.getSequence(),
           resourceUpdatedAt: new Date().toISOString(),
-          projectId: project.getId(),
           schedule: scheduledAt,
           active: true,
         })
 
-        const createdSchedule = await this.dbForPlatform.createDocument(
+        const createdSchedule = await this.internalDb.createDocument(
           'schedules',
           schedule,
         )
@@ -187,7 +183,7 @@ export class MessagingService {
   /**
    * Create SMS Message
    */
-  async createSmsMessage({ input, project }: CreateSmsMessage) {
+  async createSmsMessage({ input }: CreateSmsMessage) {
     const {
       messageId: inputMessageId,
       content,
@@ -221,13 +217,11 @@ export class MessagingService {
     }
 
     if (targets.length > 0) {
-      const foundTargets = await this.db.withSchema(Schemas.Auth, () =>
-        this.db.find('targets', qb =>
-          qb
-            .equal('$id', ...targets)
-            .equal('providerType', MessageType.SMS)
-            .limit(targets.length),
-        ),
+      const foundTargets = await this.db.find('targets', qb =>
+        qb
+          .equal('$id', ...targets)
+          .equal('providerType', MessageType.SMS)
+          .limit(targets.length),
       )
 
       if (foundTargets.length !== targets.length) {
@@ -259,23 +253,21 @@ export class MessagingService {
     switch (status) {
       case MessageStatus.PROCESSING:
         await this.queue.add(MessagingJob.EXTERNAL, {
-          project,
           message: createdMessage,
         })
         break
       case MessageStatus.SCHEDULED: {
         const schedule = new Doc<Schedules>({
-          region: project.get('region'),
           resourceType: ScheduleResourceType.MESSAGE,
           resourceId: createdMessage.getId(),
           resourceInternalId: createdMessage.getSequence(),
           resourceUpdatedAt: new Date().toISOString(),
-          projectId: project.getId(),
+
           schedule: scheduledAt,
           active: true,
         })
 
-        const createdSchedule = await this.dbForPlatform.createDocument(
+        const createdSchedule = await this.internalDb.createDocument(
           'schedules',
           schedule,
         )
@@ -295,7 +287,7 @@ export class MessagingService {
   /**
    * Create Push Message
    */
-  async createPushMessage({ input, project }: CreatePushMessage) {
+  async createPushMessage({ input }: CreatePushMessage) {
     const {
       messageId: inputMessageId,
       title = '',
@@ -341,13 +333,11 @@ export class MessagingService {
     }
 
     if (targets.length > 0) {
-      const foundTargets = await this.db.withSchema(Schemas.Auth, () =>
-        this.db.find('targets', qb =>
-          qb
-            .equal('$id', ...targets)
-            .equal('providerType', MessageType.PUSH)
-            .limit(targets.length),
-        ),
+      const foundTargets = await this.db.find('targets', qb =>
+        qb
+          .equal('$id', ...targets)
+          .equal('providerType', MessageType.PUSH)
+          .limit(targets.length),
       )
 
       if (foundTargets.length !== targets.length) {
@@ -383,8 +373,8 @@ export class MessagingService {
         throw new Exception(Exception.STORAGE_FILE_TYPE_UNSUPPORTED)
       }
 
-      const host = this.appConfig.get('app').domain || 'localhost'
-      const protocol = this.appConfig.get('app').forceHttps ? 'https' : 'http'
+      const host = configuration.server.host || 'localhost'
+      const protocol = configuration.app.forceHttps ? 'https' : 'http'
       const scheduleTime = scheduledAt
 
       // Set expiry to 15 days from now
@@ -403,7 +393,6 @@ export class MessagingService {
         {
           bucketId: bucket.getId(),
           fileId: file.getId(),
-          projectId: project.getId(),
         },
         {
           expiresIn: expiry,
@@ -414,7 +403,7 @@ export class MessagingService {
       processedImage = {
         bucketId: bucket.getId(),
         fileId: file.getId(),
-        url: `${protocol}://${host}/v1/storage/buckets/${bucket.getId()}/files/${file.getId()}/push?project=${project.getId()}&jwt=${jwt}`,
+        url: `${protocol}://${host}/v1/storage/buckets/${bucket.getId()}/files/${file.getId()}/push?jwt=${jwt}`,
       }
     }
 
@@ -476,23 +465,21 @@ export class MessagingService {
     switch (status) {
       case MessageStatus.PROCESSING:
         await this.queue.add(MessagingJob.EXTERNAL, {
-          project,
           message: createdMessage,
         })
         break
       case MessageStatus.SCHEDULED: {
         const schedule = new Doc({
-          region: project.get('region'),
           resourceType: ScheduleResourceType.MESSAGE,
           resourceId: createdMessage.getId(),
           resourceInternalId: createdMessage.getSequence(),
           resourceUpdatedAt: new Date().toISOString(),
-          projectId: project.getId(),
+
           schedule: scheduledAt,
           active: true,
         })
 
-        const createdSchedule = await this.dbForPlatform.createDocument(
+        const createdSchedule = await this.internalDb.createDocument(
           'schedules',
           schedule,
         )
@@ -562,14 +549,8 @@ export class MessagingService {
     const { filters } = Query.groupByType(queries)
 
     queries.push(Query.equal('$id', targetIDs))
-    const { targets, total } = await this.db.withSchema(
-      Schemas.Auth,
-      async () => {
-        const targets = await this.db.find('targets', queries)
-        const total = await this.db.count('targets', filters)
-        return { targets, total }
-      },
-    )
+    const targets = await this.db.find('targets', queries)
+    const total = await this.db.count('targets', filters)
 
     return {
       data: targets,
@@ -580,12 +561,7 @@ export class MessagingService {
   /**
    * Update Email Message
    */
-  async updateEmailMessage({
-    messageId,
-    input,
-
-    project,
-  }: UpdateEmailMessage) {
+  async updateEmailMessage({ messageId, input }: UpdateEmailMessage) {
     const message = await this.db.getDocument('messages', messageId)
 
     if (message.empty()) {
@@ -642,17 +618,16 @@ export class MessagingService {
 
     if (!currentScheduledAt && input.scheduledAt) {
       const schedule = new Doc<Schedules>({
-        region: project.get('region'),
         resourceType: 'message',
         resourceId: message.getId(),
         resourceInternalId: message.getSequence(),
         resourceUpdatedAt: new Date().toISOString(),
-        projectId: project.getId(),
+
         schedule: input.scheduledAt,
         active: status === MessageStatus.SCHEDULED,
       })
 
-      const createdSchedule = await this.dbForPlatform.createDocument(
+      const createdSchedule = await this.internalDb.createDocument(
         'schedules',
         schedule,
       )
@@ -660,7 +635,7 @@ export class MessagingService {
     }
 
     if (currentScheduledAt) {
-      const schedule = await this.dbForPlatform.getDocument(
+      const schedule = await this.internalDb.getDocument(
         'schedules',
         message.get('scheduleId'),
       )
@@ -678,7 +653,7 @@ export class MessagingService {
         schedule.set('schedule', input.scheduledAt)
       }
 
-      await this.dbForPlatform.updateDocument(
+      await this.internalDb.updateDocument(
         'schedules',
         schedule.getId(),
         schedule,
@@ -762,7 +737,6 @@ export class MessagingService {
 
     if (status === MessageStatus.PROCESSING) {
       await this.queue.add(MessagingJob.EXTERNAL, {
-        project,
         message: updatedMessage,
       })
     }
@@ -773,7 +747,7 @@ export class MessagingService {
   /**
    * Update SMS Message
    */
-  async updateSmsMessage({ messageId, input, project }: UpdateSmsMessage) {
+  async updateSmsMessage({ messageId, input }: UpdateSmsMessage) {
     const message = await this.db.getDocument('messages', messageId)
 
     if (message.empty()) {
@@ -830,17 +804,16 @@ export class MessagingService {
 
     if (!currentScheduledAt && input.scheduledAt) {
       const schedule = new Doc<Schedules>({
-        region: project.get('region'),
         resourceType: 'message',
         resourceId: message.getId(),
         resourceInternalId: message.getSequence(),
         resourceUpdatedAt: new Date().toISOString(),
-        projectId: project.getId(),
+
         schedule: input.scheduledAt,
         active: status === MessageStatus.SCHEDULED,
       })
 
-      const createdSchedule = await this.dbForPlatform.createDocument(
+      const createdSchedule = await this.internalDb.createDocument(
         'schedules',
         schedule,
       )
@@ -848,7 +821,7 @@ export class MessagingService {
     }
 
     if (currentScheduledAt) {
-      const schedule = await this.dbForPlatform.getDocument(
+      const schedule = await this.internalDb.getDocument(
         'schedules',
         message.get('scheduleId'),
       )
@@ -866,7 +839,7 @@ export class MessagingService {
         schedule.set('schedule', input.scheduledAt)
       }
 
-      await this.dbForPlatform.updateDocument(
+      await this.internalDb.updateDocument(
         'schedules',
         schedule.getId(),
         schedule,
@@ -909,7 +882,6 @@ export class MessagingService {
 
     if (status === MessageStatus.PROCESSING) {
       await this.queue.add(MessagingJob.EXTERNAL, {
-        project,
         message: updatedMessage,
       })
     }
@@ -920,12 +892,7 @@ export class MessagingService {
   /**
    * Update Push Message
    */
-  async updatePushMessage({
-    messageId,
-    input,
-
-    project,
-  }: UpdatePushMessage) {
+  async updatePushMessage({ messageId, input }: UpdatePushMessage) {
     const message = await this.db.getDocument('messages', messageId)
 
     if (message.empty()) {
@@ -982,17 +949,16 @@ export class MessagingService {
 
     if (!currentScheduledAt && input.scheduledAt) {
       const schedule = new Doc<Schedules>({
-        region: project.get('region'),
         resourceType: 'message',
         resourceId: message.getId(),
         resourceInternalId: message.getSequence(),
         resourceUpdatedAt: new Date().toISOString(),
-        projectId: project.getId(),
+
         schedule: input.scheduledAt,
         active: status === MessageStatus.SCHEDULED,
       })
 
-      const createdSchedule = await this.dbForPlatform.createDocument(
+      const createdSchedule = await this.internalDb.createDocument(
         'schedules',
         schedule,
       )
@@ -1001,7 +967,7 @@ export class MessagingService {
 
     // Handle schedule updates
     if (currentScheduledAt) {
-      const schedule = await this.dbForPlatform.getDocument(
+      const schedule = await this.internalDb.getDocument(
         'schedules',
         message.get('scheduleId'),
       )
@@ -1019,7 +985,7 @@ export class MessagingService {
         schedule.set('schedule', input.scheduledAt)
       }
 
-      await this.dbForPlatform.updateDocument(
+      await this.internalDb.updateDocument(
         'schedules',
         schedule.getId(),
         schedule,
@@ -1112,8 +1078,8 @@ export class MessagingService {
         throw new Exception(Exception.STORAGE_FILE_TYPE_UNSUPPORTED)
       }
 
-      const host = this.appConfig.get('app').domain || 'localhost'
-      const protocol = this.appConfig.get('app').forceHttps ? 'https' : 'http'
+      const host = configuration.server.host || 'localhost'
+      const protocol = configuration.app.forceHttps ? 'https' : 'http'
 
       const scheduleTime = currentScheduledAt || input.scheduledAt
       let expiry: number
@@ -1131,7 +1097,6 @@ export class MessagingService {
         {
           bucketId: bucket.getId(),
           fileId: file.getId(),
-          projectId: project.getId(),
         },
         {
           expiresIn: expiry,
@@ -1142,7 +1107,7 @@ export class MessagingService {
       pushData.image = {
         bucketId: bucket.getId(),
         fileId: file.getId(),
-        url: `${protocol}://${host}/v1/storage/buckets/${bucket.getId()}/files/${file.getId()}/push?project=${project.getId()}&jwt=${jwt}`,
+        url: `${protocol}://${host}/v1/storage/buckets/${bucket.getId()}/files/${file.getId()}/push?jwt=${jwt}`,
       }
     }
 
@@ -1160,7 +1125,6 @@ export class MessagingService {
 
     if (status === MessageStatus.PROCESSING) {
       await this.queue.add(MessagingJob.EXTERNAL, {
-        project,
         message: updatedMessage,
       })
     }
@@ -1192,7 +1156,7 @@ export class MessagingService {
 
         if (scheduleId) {
           try {
-            await this.dbForPlatform.deleteDocument('schedules', scheduleId)
+            await this.internalDb.deleteDocument('schedules', scheduleId)
           } catch {
             // Ignore
           }
