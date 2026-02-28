@@ -27,9 +27,16 @@ import type {
   UpdateTwilioProvider,
   UpdateVonageProvider,
 } from './providers.types'
+import { CoreService } from '@nuvix/core/core.service'
 
 @Injectable()
 export class ProvidersService {
+  private readonly db: Database
+
+  constructor(private readonly coreService: CoreService) {
+    this.db = this.coreService.getDatabase()
+  }
+
   /**
    * Common method to create a provider.
    */
@@ -43,7 +50,7 @@ export class ProvidersService {
     enabledCondition,
   }: {
     input: T
-    db: Database
+
     providerType: string
     messageType: string
     credentialFields: Record<string, keyof typeof input>
@@ -102,7 +109,7 @@ export class ProvidersService {
   /**
    * Creates a Mailgun provider.
    */
-  async createMailgunProvider({ input, db }: CreateMailgunProvider) {
+  async createMailgunProvider({ input }: CreateMailgunProvider) {
     return this.createProvider({
       input,
 
@@ -130,7 +137,7 @@ export class ProvidersService {
   /**
    * Creates a SendGrid provider.
    */
-  async createSendGridProvider({ input, db }: CreateSendgridProvider) {
+  async createSendGridProvider({ input }: CreateSendgridProvider) {
     return this.createProvider({
       input,
 
@@ -153,7 +160,7 @@ export class ProvidersService {
   /**
    * Creates an SMTP provider.
    */
-  async createSmtpProvider({ input, db }: CreateSmtpProvider) {
+  async createSmtpProvider({ input }: CreateSmtpProvider) {
     return this.createProvider({
       input,
 
@@ -182,7 +189,7 @@ export class ProvidersService {
   /**
    * Creates a MSG91 provider.
    */
-  async createMsg91Provider({ input, db }: CreateMsg91Provider) {
+  async createMsg91Provider({ input }: CreateMsg91Provider) {
     return this.createProvider({
       input,
 
@@ -204,7 +211,7 @@ export class ProvidersService {
   /**
    * Creates a Telesign provider.
    */
-  async createTelesignProvider({ input, db }: CreateTelesignProvider) {
+  async createTelesignProvider({ input }: CreateTelesignProvider) {
     return this.createProvider({
       input,
 
@@ -227,7 +234,7 @@ export class ProvidersService {
   /**
    * Creates a TextMagic provider.
    */
-  async createTextMagicProvider({ input, db }: CreateTextmagicProvider) {
+  async createTextMagicProvider({ input }: CreateTextmagicProvider) {
     return this.createProvider({
       input,
 
@@ -250,7 +257,7 @@ export class ProvidersService {
   /**
    * Creates a Twilio provider.
    */
-  async createTwilioProvider({ input, db }: CreateTwilioProvider) {
+  async createTwilioProvider({ input }: CreateTwilioProvider) {
     return this.createProvider({
       input,
 
@@ -273,7 +280,7 @@ export class ProvidersService {
   /**
    * Creates a Vonage provider.
    */
-  async createVonageProvider({ input, db }: CreateVonageProvider) {
+  async createVonageProvider({ input }: CreateVonageProvider) {
     return this.createProvider({
       input,
 
@@ -296,7 +303,7 @@ export class ProvidersService {
   /**
    * Creates a Firebase Cloud Messaging (FCM) provider.
    */
-  async createFcmProvider({ input, db }: CreateFcmProvider) {
+  async createFcmProvider({ input }: CreateFcmProvider) {
     return this.createProvider({
       input,
 
@@ -314,7 +321,7 @@ export class ProvidersService {
   /**
    * Creates an APNS provider.
    */
-  async createApnsProvider({ input, db }: CreateApnsProvider) {
+  async createApnsProvider({ input }: CreateApnsProvider) {
     return this.createProvider({
       input,
 
@@ -382,7 +389,7 @@ export class ProvidersService {
     enabledCondition,
   }: {
     providerId: string
-    db: Database
+
     providerType: string
     updatedFields: T
     credentialFields: Record<string, keyof typeof updatedFields>

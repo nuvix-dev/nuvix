@@ -1,4 +1,4 @@
-import { Database, Query } from '@nuvix/db'
+import { Query } from '@nuvix/db'
 import { CreateApnsProviderDTO, UpdateApnsProviderDTO } from './DTO/apns.dto'
 import { CreateFcmProviderDTO, UpdateFcmProviderDTO } from './DTO/fcm.dto'
 import {
@@ -28,16 +28,12 @@ import {
   UpdateVonageProviderDTO,
 } from './DTO/vonage.dto'
 
-interface DB {
-  db: Database
-}
-
 interface QandS {
   queries?: Query[]
   search?: string
 }
 
-interface CreateProviderBase<T> extends DB {
+interface CreateProviderBase<T> {
   input: T
 }
 
@@ -76,9 +72,9 @@ export type CreateProviderInput =
 
 export type CreateAnyProvider = CreateProviderBase<CreateProviderInput>
 
-export interface ListProviders extends DB, QandS {}
+export interface ListProviders extends QandS {}
 
-interface UpdateProviderBase<T> extends DB {
+interface UpdateProviderBase<T> {
   input: T
   providerId: string
 }

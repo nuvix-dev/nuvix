@@ -1,23 +1,16 @@
-import {
-  Body,
-  Controller,
-  Param,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Param, UseInterceptors } from '@nestjs/common'
 import { Delete, Get, Patch, Post } from '@nuvix/core'
 import {
   Auth,
   AuthType,
   Namespace,
-  ProjectDatabase,
   QueryFilter,
   QuerySearch,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { ProvidersQueryPipe } from '@nuvix/core/pipes/queries'
 import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
-import { Database, Query as Queries } from '@nuvix/db'
+import { Query as Queries } from '@nuvix/db'
 import { IListResponse, IResponse } from '@nuvix/utils'
 import { ProvidersDoc } from '@nuvix/utils/types'
 import { CreateApnsProviderDTO, UpdateApnsProviderDTO } from './DTO/apns.dto'
@@ -52,7 +45,6 @@ import {
 import { ProvidersService } from './providers.service'
 
 @Namespace('messaging')
-
 @Auth([AuthType.ADMIN, AuthType.KEY])
 @Controller({ path: 'messaging/providers', version: ['1'] })
 @UseInterceptors(ApiInterceptor, ResponseInterceptor)
@@ -61,8 +53,9 @@ export class ProvidersController {
 
   @Post('mailgun', {
     summary: 'Create Mailgun provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -82,8 +75,9 @@ export class ProvidersController {
 
   @Post('sendgrid', {
     summary: 'Create Sendgrid provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -103,8 +97,9 @@ export class ProvidersController {
 
   @Post('smtp', {
     summary: 'Create SMTP provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -124,8 +119,9 @@ export class ProvidersController {
 
   @Post('msg91', {
     summary: 'Create Msg91 provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -145,8 +141,9 @@ export class ProvidersController {
 
   @Post('telesign', {
     summary: 'Create Telesign provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -166,8 +163,9 @@ export class ProvidersController {
 
   @Post('textmagic', {
     summary: 'Create Textmagic provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -187,8 +185,9 @@ export class ProvidersController {
 
   @Post('twilio', {
     summary: 'Create Twilio provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -208,8 +207,9 @@ export class ProvidersController {
 
   @Post('vonage', {
     summary: 'Create Vonage provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -229,8 +229,9 @@ export class ProvidersController {
 
   @Post('fcm', {
     summary: 'Create FCM provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -250,8 +251,9 @@ export class ProvidersController {
 
   @Post('apns', {
     summary: 'Create APNS provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -292,6 +294,7 @@ export class ProvidersController {
     summary: 'Get provider',
     scopes: 'providers.read',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     sdk: {
       name: 'getProvider',
       descMd: '/docs/references/messaging/get-provider.md',
@@ -305,8 +308,9 @@ export class ProvidersController {
 
   @Patch('mailgun/:providerId', {
     summary: 'Update Mailgun provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -329,8 +333,9 @@ export class ProvidersController {
 
   @Patch('sendgrid/:providerId', {
     summary: 'Update Sendgrid provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -353,8 +358,9 @@ export class ProvidersController {
 
   @Patch('smtp/:providerId', {
     summary: 'Update SMTP provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -377,8 +383,9 @@ export class ProvidersController {
 
   @Patch('msg91/:providerId', {
     summary: 'Update Msg91 provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -401,8 +408,9 @@ export class ProvidersController {
 
   @Patch('telesign/:providerId', {
     summary: 'Update Telesign provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -425,8 +433,9 @@ export class ProvidersController {
 
   @Patch('textmagic/:providerId', {
     summary: 'Update Textmagic provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -449,8 +458,9 @@ export class ProvidersController {
 
   @Patch('twilio/:providerId', {
     summary: 'Update Twilio provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -473,8 +483,9 @@ export class ProvidersController {
 
   @Patch('vonage/:providerId', {
     summary: 'Update Vonage provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -497,8 +508,9 @@ export class ProvidersController {
 
   @Patch('fcm/:providerId', {
     summary: 'Update FCM provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -521,8 +533,9 @@ export class ProvidersController {
 
   @Patch('apns/:providerId', {
     summary: 'Update APNS provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    secretFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -545,7 +558,7 @@ export class ProvidersController {
 
   @Delete(':providerId', {
     summary: 'Delete provider',
-    scopes: 'providers.delete',
+    scopes: 'providers.write',
     audit: {
       key: 'provider.delete',
       resource: 'provider/{res.$id}',
