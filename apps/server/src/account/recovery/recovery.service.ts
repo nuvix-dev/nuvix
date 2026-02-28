@@ -110,6 +110,7 @@ export class RecoveryService {
 
     const payload = await this.emailHelper
       .builder(project)
+      .to(profile.get('email'))
       .usingTemplate(
         'email-inner-base.tpl',
         `recovery-${locale.fallbackLocale}`,

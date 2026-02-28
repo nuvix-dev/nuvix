@@ -1,33 +1,19 @@
-import {
-  Body,
-  Controller,
-  Param,
-  Req,
-  Session,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Param, Req, UseInterceptors } from '@nestjs/common'
 import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
 import {
   Auth,
   AuthType,
-  Locale,
+  Ctx,
   Namespace,
-  Project,
   Scope,
   User,
 } from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
-import { LocaleTranslator, Models } from '@nuvix/core/helpers'
+import { Models, RequestContext } from '@nuvix/core/helpers'
 import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
-import { Database, type Doc } from '@nuvix/db'
+import { type Doc } from '@nuvix/db'
 import type { IResponse } from '@nuvix/utils'
-import type {
-  ChallengesDoc,
-  ProjectsDoc,
-  SessionsDoc,
-  UsersDoc,
-} from '@nuvix/utils/types'
+import type { ChallengesDoc, SessionsDoc, UsersDoc } from '@nuvix/utils/types'
 import {
   CreateMfaChallengeDTO,
   MfaAuthenticatorTypeParamDTO,
@@ -39,7 +25,6 @@ import { MfaService } from './mfa.service'
 
 @Controller({ version: ['1'], path: 'account/mfa' })
 @Namespace('account')
-
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.SESSION, AuthType.JWT])
 @Scope('account')
@@ -62,10 +47,11 @@ export class MfaController {
   async updateMfa(
     @Body() { mfa }: UpdateAccountMfaDTO,
     @User() user: UsersDoc,
+    @Ctx() ctx: RequestContext,
   ): Promise<IResponse<UsersDoc>> {
     return this.mfaService.updateMfa({
       mfa,
-      session,
+      session: ctx.session,
       user,
     })
   }
@@ -99,8 +85,8 @@ export class MfaController {
   })
   async createMfaAuthenticator(
     @Param() { type }: MfaAuthenticatorTypeParamDTO,
-
     @User() user: UsersDoc,
+    @Ctx() ctx: RequestContext,
   ): Promise<
     IResponse<
       Doc<{
@@ -111,7 +97,7 @@ export class MfaController {
   > {
     return this.mfaService.createMfaAuthenticator({
       type,
-      project,
+      ctx,
       user,
     })
   }
@@ -133,83 +119,14 @@ export class MfaController {
     @Param() { type }: MfaAuthenticatorTypeParamDTO,
     @Body() { otp }: VerifyMfaAuthenticatorDTO,
     @User() user: UsersDoc,
+    @Ctx() { getSession }: RequestContext,
   ): Promise<IResponse<UsersDoc>> {
     return this.mfaService.verifyMfaAuthenticator({
       type,
       otp,
       user,
-      session,
+      session: getSession(),
     })
-  }
-
-  @Post('recovery-codes', {
-    summary: 'Create MFA recovery codes',
-    model: Models.MFA_RECOVERY_CODES,
-    audit: {
-      key: 'user.update',
-      resource: 'user/{res.$id}',
-      userId: '{res.$id}',
-    },
-    sdk: {
-      name: 'createMfaRecoveryCodes',
-      descMd: '/docs/references/account/create-mfa-recovery-codes.md',
-    },
-  })
-  async createMfaRecoveryCodes(@User() user: UsersDoc): Promise<
-    IResponse<
-      Doc<{
-        recoveryCodes: string[]
-      }>
-    >
-  > {
-    return this.mfaService.createMfaRecoveryCodes({ user, db })
-  }
-
-  @Patch('recovery-codes', {
-    summary: 'Update MFA recovery codes (regenerate)',
-    model: Models.MFA_RECOVERY_CODES,
-    audit: {
-      key: 'user.update',
-      resource: 'user/{res.$id}',
-      userId: '{res.$id}',
-    },
-    sdk: {
-      name: 'updateMfaRecoveryCodes',
-      descMd: '/docs/references/account/update-mfa-recovery-codes.md',
-    },
-  })
-  async updateMfaRecoveryCodes(@User() user: UsersDoc): Promise<
-    IResponse<
-      Doc<{
-        recoveryCodes: string[]
-      }>
-    >
-  > {
-    return this.mfaService.updateMfaRecoveryCodes({ user })
-  }
-
-  @Get('recovery-codes', {
-    summary: 'List MFA recovery codes',
-    model: Models.MFA_RECOVERY_CODES,
-    sdk: {
-      name: 'getMfaRecoveryCodes',
-      descMd: '/docs/references/account/get-mfa-recovery-codes.md',
-    },
-  })
-  async getMfaRecoveryCodes(@User() user: UsersDoc): Promise<
-    IResponse<{
-      recoveryCodes: string[]
-    }>
-  > {
-    const mfaRecoveryCodes = user.get('mfaRecoveryCodes', [])
-
-    if (!mfaRecoveryCodes || mfaRecoveryCodes.length === 0) {
-      throw new Exception(Exception.USER_RECOVERY_CODES_NOT_FOUND)
-    }
-
-    return {
-      recoveryCodes: mfaRecoveryCodes,
-    }
   }
 
   @Delete('authenticators/:type', {
@@ -235,12 +152,85 @@ export class MfaController {
     })
   }
 
+  @Post('recovery-codes', {
+    summary: 'Create MFA recovery codes',
+    model: Models.MFA_RECOVERY_CODES,
+    secretFields: ['recoveryCodes'],
+    audit: {
+      key: 'user.update',
+      resource: 'user/{res.$id}',
+      userId: '{res.$id}',
+    },
+    sdk: {
+      name: 'createMfaRecoveryCodes',
+      descMd: '/docs/references/account/create-mfa-recovery-codes.md',
+    },
+  })
+  async createMfaRecoveryCodes(@User() user: UsersDoc): Promise<
+    IResponse<
+      Doc<{
+        recoveryCodes: string[]
+      }>
+    >
+  > {
+    return this.mfaService.createMfaRecoveryCodes({ user })
+  }
+
+  @Patch('recovery-codes', {
+    summary: 'Update MFA recovery codes (regenerate)',
+    model: Models.MFA_RECOVERY_CODES,
+    secretFields: ['recoveryCodes'],
+    audit: {
+      key: 'user.update',
+      resource: 'user/{res.$id}',
+      userId: '{res.$id}',
+    },
+    sdk: {
+      name: 'updateMfaRecoveryCodes',
+      descMd: '/docs/references/account/update-mfa-recovery-codes.md',
+    },
+  })
+  async updateMfaRecoveryCodes(@User() user: UsersDoc): Promise<
+    IResponse<
+      Doc<{
+        recoveryCodes: string[]
+      }>
+    >
+  > {
+    return this.mfaService.updateMfaRecoveryCodes({ user })
+  }
+
+  @Get('recovery-codes', {
+    summary: 'List MFA recovery codes',
+    model: Models.MFA_RECOVERY_CODES,
+    secretFields: ['recoveryCodes'],
+    sdk: {
+      name: 'getMfaRecoveryCodes',
+      descMd: '/docs/references/account/get-mfa-recovery-codes.md',
+    },
+  })
+  async getMfaRecoveryCodes(@User() user: UsersDoc): Promise<
+    IResponse<{
+      recoveryCodes: string[]
+    }>
+  > {
+    const mfaRecoveryCodes = user.get('mfaRecoveryCodes', [])
+
+    if (!mfaRecoveryCodes || mfaRecoveryCodes.length === 0) {
+      throw new Exception(Exception.USER_RECOVERY_CODES_NOT_FOUND)
+    }
+
+    return {
+      recoveryCodes: mfaRecoveryCodes,
+    }
+  }
+
   @Post('challenge', {
     summary: 'Create MFA challenge',
     model: Models.MFA_CHALLENGE,
     throttle: {
       limit: 10,
-      key: 'ip:{ip},userId:{userId}',
+      key: 'url:{url},userId:{userId}',
     },
     audit: {
       key: 'challenge.create',
@@ -256,16 +246,12 @@ export class MfaController {
     @Body() { factor }: CreateMfaChallengeDTO,
     @Req() request: NuvixRequest,
     @User() user: UsersDoc,
-
-    @Locale() locale: LocaleTranslator,
   ): Promise<IResponse<ChallengesDoc>> {
     return this.mfaService.createMfaChallenge({
       factor,
       userAgent: request.headers['user-agent'] || 'UNKNOWN',
       user,
-
-      project,
-      locale,
+      ctx: request.context,
     })
   }
 
@@ -274,7 +260,7 @@ export class MfaController {
     model: Models.SESSION,
     throttle: {
       limit: 10,
-      key: 'challengeId:{param-challengeId}',
+      key: 'url:{url},challengeId:{body-challengeId}',
     },
     audit: {
       key: 'challenge.update',
@@ -285,12 +271,12 @@ export class MfaController {
   async updateMfaChallenge(
     @Body() input: VerifyMfaChallengeDTO,
     @User() user: UsersDoc,
+    @Ctx() { getSession }: RequestContext,
   ): Promise<IResponse<SessionsDoc>> {
     return this.mfaService.updateMfaChallenge({
       ...input,
       user,
-
-      session,
+      session: getSession(),
     })
   }
 }

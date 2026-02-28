@@ -116,8 +116,15 @@ export interface RouteOptions<T = unknown> {
       }
   /**
    * Fields that contain sensitive information and should be redacted in logs and responses.
+   * these fields will be returned as empty string or actual value based on auth context (e.g., api users might see actual values while regular users see redacted values), and will be completely omitted from audit logs to prevent sensitive data from being stored in logs.
    */
   sensitiveFields?: keyof T extends string ? (keyof T)[] : never
+  /**
+   * Fields that contain sensitive information and should be redacted in logs and audits.
+   * This is separate from `sensitiveFields` to allow for different handling in audit logs vs API responses if needed.
+   * For example, you might want to redact certain fields in API responses but still include them in audit logs for security auditing purposes, or vice versa.
+   */
+  secretFields?: keyof T extends string ? (keyof T)[] : string[]
   /** SDK generation options */
   sdk?: SdkOptions
   /** Unique operation identifier for OpenAPI */

@@ -19,7 +19,7 @@ export class EmailHelper {
   constructor() {}
 
   builder(project: ProjectsDoc) {
-    return new EmailBuilder(this, project)
+    return EmailBuilder.create(this, project)
   }
 
   async render(templateFile: string, data: Record<string, any>) {
@@ -86,66 +86,89 @@ export class EmailHelper {
   }
 }
 
-class EmailBuilder {
-  private userEmail!: string
-  private templateFile!: string
-  private templateKey!: string
-  private subject!: string
-  private templateData: Record<string, any> = {}
-  private variables: Record<string, any> = {}
+type EmailState = {
+  email?: string
+  templateFile?: string
+  templateKey?: string
+  subject?: string
+  templateData?: Record<string, any>
+  variables?: Record<string, any>
+}
 
-  constructor(
+type RequiredKeys = 'email' | 'templateFile' | 'templateKey' | 'subject'
+
+type AllRequired<S extends EmailState> = S extends Required<
+  Pick<EmailState, RequiredKeys>
+>
+  ? true
+  : false
+
+export class EmailBuilder<S extends EmailState = {}> {
+  private constructor(
     private readonly helper: EmailHelper,
     private readonly project: ProjectsDoc,
+    private readonly state: S,
   ) {}
 
+  static create(helper: EmailHelper, project: ProjectsDoc) {
+    return new EmailBuilder(helper, project, {})
+  }
+
   to(email: string) {
-    this.userEmail = email
-    return this
+    return new EmailBuilder(this.helper, this.project, { ...this.state, email })
   }
 
   usingTemplate(file: string, key: string) {
-    this.templateFile = file
-    this.templateKey = key
-    return this
+    return new EmailBuilder(this.helper, this.project, {
+      ...this.state,
+      templateFile: file,
+      templateKey: key,
+    })
   }
 
   withSubject(subject: string) {
-    this.subject = subject
-    return this
+    return new EmailBuilder(this.helper, this.project, {
+      ...this.state,
+      subject,
+    })
   }
 
   withData(data: Record<string, any>) {
-    this.templateData = data
-    return this
+    return new EmailBuilder(this.helper, this.project, {
+      ...this.state,
+      templateData: data,
+    })
   }
 
   withVariables(vars: Record<string, any>) {
-    this.variables = vars
-    return this
+    return new EmailBuilder(this.helper, this.project, {
+      ...this.state,
+      variables: vars,
+    })
   }
 
-  async build(): Promise<BuiltEmail> {
+  async build(
+    this: AllRequired<S> extends true ? EmailBuilder<S> : never,
+  ): Promise<BuiltEmail> {
     const customTemplate =
-      this.project.get('templates', {})?.[`email.${this.templateKey}`] ?? null
+      this.project.get('templates', {})?.[`email.${this.state.templateKey}`] ??
+      null
 
     const rendered = await this.helper.render(
-      this.templateFile,
-      this.templateData,
+      this.state.templateFile!,
+      this.state.templateData ?? {},
     )
 
-    const finalSubject = customTemplate?.subject ?? this.subject
-
+    const finalSubject = customTemplate?.subject ?? this.state.subject!
     const finalBody = customTemplate?.message ?? rendered
-
     const smtpServer = this.helper.resolveSmtp(this.project, customTemplate)
 
     return Object.freeze({
-      email: this.userEmail,
+      email: this.state.email!,
       subject: finalSubject,
       body: finalBody,
       server: smtpServer,
-      variables: this.variables,
+      variables: this.state.variables ?? {},
     })
   }
 }

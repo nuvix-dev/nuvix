@@ -47,6 +47,10 @@ export class RequestContext {
     return this._isAdminUser
   }
 
+  public getSession() {
+    return this.session as SessionsDoc
+  }
+
   /**
    * Returns a locale translator instance for translating messages based on the request's locale.
    */

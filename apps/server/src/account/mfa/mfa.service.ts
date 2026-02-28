@@ -1,11 +1,7 @@
-import * as fs from 'node:fs/promises'
-import path from 'node:path'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
-
-import type { SmtpConfig } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Auth, Detector, LocaleTranslator } from '@nuvix/core/helpers'
+import { Auth, EmailHelper, RequestContext } from '@nuvix/core/helpers'
 import {
   MailJob,
   MailQueueOptions,
@@ -14,7 +10,7 @@ import {
 } from '@nuvix/core/resolvers'
 import { MfaType, TOTP } from '@nuvix/core/validators'
 import { Database, Doc, ID, Permission, Role } from '@nuvix/db'
-import { QueueFor } from '@nuvix/utils'
+import { configuration, QueueFor } from '@nuvix/utils'
 import {
   EmailChallenge,
   PhoneChallenge,
@@ -23,17 +19,20 @@ import {
 import type {
   AuthenticatorsDoc,
   ChallengesDoc,
-  ProjectsDoc,
   SessionsDoc,
   UsersDoc,
 } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
-import Template from 'handlebars'
 import { CreateMfaChallengeDTO, VerifyMfaChallengeDTO } from './DTO/mfa.dto'
+import { CoreService } from '@nuvix/core/core.service'
 
 @Injectable()
 export class MfaService {
+  private readonly db: Database
+  private readonly emailHelper = new EmailHelper()
+
   constructor(
+    private readonly coreService: CoreService,
     @InjectQueue(QueueFor.MAILS)
     private readonly mailsQueue: Queue<MailQueueOptions>,
     @InjectQueue(QueueFor.MESSAGING)
@@ -42,7 +41,9 @@ export class MfaService {
       unknown,
       MessagingJob
     >,
-  ) {}
+  ) {
+    this.db = this.coreService.getDatabase()
+  }
 
   /**
    * Update MFA
@@ -51,9 +52,7 @@ export class MfaService {
     user,
     mfa,
     session,
-  }: WithDB<
-    WithUser<{ mfa: boolean; session?: SessionsDoc }>
-  >): Promise<UsersDoc> {
+  }: WithUser<{ mfa: boolean; session?: SessionsDoc }>): Promise<UsersDoc> {
     user.set('mfa', mfa)
 
     user = await this.db.updateDocument('users', user.getId(), user)
@@ -120,8 +119,8 @@ export class MfaService {
   async createMfaAuthenticator({
     user,
     type,
-    project,
-  }: WithDB<WithUser<WithProject<{ type: string }>>>): Promise<
+    ctx,
+  }: WithUser<{ type: string; ctx: RequestContext }>): Promise<
     Doc<{ secret: string; uri: string }>
   > {
     let otp: TOTP
@@ -135,7 +134,7 @@ export class MfaService {
     }
 
     otp.setLabel(user.get('email'))
-    otp.setIssuer(project.get('name'))
+    otp.setIssuer(ctx.project.get('name'))
 
     const authenticator = TOTP.getAuthenticatorFromUser(user)
 
@@ -181,9 +180,11 @@ export class MfaService {
     otp,
     user,
     session,
-  }: WithDB<
-    WithUser<{ session: SessionsDoc; otp: string; type: string }>
-  >): Promise<UsersDoc> {
+  }: WithUser<{
+    session: SessionsDoc
+    otp: string
+    type: string
+  }>): Promise<UsersDoc> {
     let authenticator: AuthenticatorsDoc | null = null
 
     switch (type) {
@@ -235,11 +236,35 @@ export class MfaService {
   }
 
   /**
+   * Delete Authenticator
+   */
+  async deleteMfaAuthenticator({
+    user,
+    type,
+  }: WithUser<{ type: string }>): Promise<void> {
+    const authenticator = (() => {
+      switch (type) {
+        case MfaType.TOTP:
+          return TOTP.getAuthenticatorFromUser(user)
+        default:
+          return null
+      }
+    })()
+
+    if (!authenticator) {
+      throw new Exception(Exception.USER_AUTHENTICATOR_NOT_FOUND)
+    }
+
+    await this.db.deleteDocument('authenticators', authenticator.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
+  }
+
+  /**
    * Create MFA recovery codes
    */
   async createMfaRecoveryCodes({
     user,
-  }: WithDB<WithUser>): Promise<Doc<{ recoveryCodes: string[] }>> {
+  }: WithUser): Promise<Doc<{ recoveryCodes: string[] }>> {
     const mfaRecoveryCodes = user.get('mfaRecoveryCodes', [])
 
     if (mfaRecoveryCodes.length > 0) {
@@ -262,7 +287,7 @@ export class MfaService {
    */
   async updateMfaRecoveryCodes({
     user,
-  }: WithDB<WithUser>): Promise<Doc<{ recoveryCodes: string[] }>> {
+  }: WithUser): Promise<Doc<{ recoveryCodes: string[] }>> {
     const mfaRecoveryCodes = user.get('mfaRecoveryCodes', [])
 
     if (mfaRecoveryCodes.length === 0) {
@@ -281,45 +306,17 @@ export class MfaService {
   }
 
   /**
-   * Delete Authenticator
-   */
-  async deleteMfaAuthenticator({
-    user,
-
-    type,
-  }: WithDB<WithUser<{ type: string }>>): Promise<void> {
-    const authenticator = (() => {
-      switch (type) {
-        case MfaType.TOTP:
-          return TOTP.getAuthenticatorFromUser(user)
-        default:
-          return null
-      }
-    })()
-
-    if (!authenticator) {
-      throw new Exception(Exception.USER_AUTHENTICATOR_NOT_FOUND)
-    }
-
-    await this.db.deleteDocument('authenticators', authenticator.getId())
-    await this.db.purgeCachedDocument('users', user.getId())
-  }
-
-  /**
    * Create MFA Challenge
    */
   async createMfaChallenge({
     user,
     userAgent,
-    locale,
-    project,
     factor,
-  }: WithDB<
-    WithUser<
-      WithProject<WithLocale<CreateMfaChallengeDTO & { userAgent: string }>>
-    >
+    ctx,
+  }: WithUser<
+    CreateMfaChallengeDTO & { userAgent: string; ctx: RequestContext }
   >): Promise<ChallengesDoc> {
-    const expire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_CONFIRM * 1000)
+    const expire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_OTP * 1000)
     const code = Auth.codeGenerator(6)
 
     const challenge: ChallengesDoc = new Doc({
@@ -342,13 +339,12 @@ export class MfaService {
       challenge,
     )
 
+    const locale = ctx.translator()
+    const project = ctx.project
     switch (factor) {
       case TOTP.PHONE: {
-        if (!this.appConfig.get('sms').enabled) {
-          throw new Exception(
-            Exception.GENERAL_PHONE_DISABLED,
-            'Phone provider not configured',
-          )
+        if (!configuration.sms.enabled) {
+          throw new Exception(Exception.GENERAL_PHONE_DISABLED)
         }
         if (!user.get('phone')) {
           throw new Exception(Exception.USER_PHONE_NOT_FOUND)
@@ -358,10 +354,13 @@ export class MfaService {
         }
 
         const customSmsTemplate =
-          project.get('templates', {})[`sms.mfaChallenge-${locale.default}`] ??
-          {}
+          project.get('templates', {})[
+            `sms.mfaChallenge-${locale.fallbackLocale}`
+          ] ?? {}
 
-        let smsMessage = locale.getText('sms.verification.body')
+        let smsMessage = locale.t('sms.verification.body', {
+          secret: code,
+        })
         if (customSmsTemplate?.message) {
           smsMessage = customSmsTemplate.message
         }
@@ -386,7 +385,7 @@ export class MfaService {
 
       case TOTP.EMAIL: {
         if (!configuration.smtp.enabled()) {
-          throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP disabled')
+          throw new Exception(Exception.GENERAL_SMTP_DISABLED)
         }
         if (!user.get('email')) {
           throw new Exception(Exception.USER_EMAIL_NOT_FOUND)
@@ -395,109 +394,52 @@ export class MfaService {
           throw new Exception(Exception.USER_EMAIL_NOT_VERIFIED)
         }
 
-        let subject = locale.getText('emails.mfaChallenge.subject')
-        const customEmailTemplate =
-          project.get('templates', {})[
-            `email.mfaChallenge-${locale.default}`
-          ] ?? {}
-
-        const detector = new Detector(userAgent)
+        const detector = ctx.detector(userAgent)
         const agentOs = detector.getOS()
         const agentClient = detector.getClient()
         const agentDevice = detector.getDevice()
 
-        const templatePath = path.join(
-          this.appConfig.assetConfig.templates,
-          'email-mfa-challenge.tpl',
-        )
-        const templateSource = await fs.readFile(templatePath, 'utf8')
-        const template = Template.compile(templateSource)
+        const payload = await this.emailHelper
+          .builder(project)
+          .to(user.get('email'))
+          .usingTemplate(
+            'email-mfa-challenge.tpl',
+            `mfaChallenge-${locale.fallbackLocale}`,
+          )
+          .withSubject(
+            locale.t('emails.mfaChallenge.subject', {
+              project: project.get('name'),
+            }),
+          )
+          .withData({
+            hello: locale.t('emails.mfaChallenge.hello', {
+              user: user.get('name') || user.get('email'),
+            }),
+            description: locale.t('emails.mfaChallenge.description', {
+              project: project.get('name'),
+            }),
+            clientInfo: locale.t('emails.mfaChallenge.clientInfo', {
+              agentDevice: agentDevice.deviceBrand || 'UNKNOWN',
+              agentClient: agentClient.clientName || 'UNKNOWN',
+              agentOs: agentOs.osName || 'UNKNOWN',
+            }),
+            thanks: locale.t('emails.mfaChallenge.thanks'),
+            signature: locale.t('emails.mfaChallenge.signature', {
+              project: project.get('name'),
+            }),
+          })
+          .withVariables({
+            direction: locale.t('settings.direction'),
+            user: user.get('name'),
+            project: project.get('name'),
+            otp: code,
+          })
+          .build()
 
-        const emailData = {
-          hello: locale.getText('emails.mfaChallenge.hello'),
-          description: locale.getText('emails.mfaChallenge.description'),
-          clientInfo: locale.getText('emails.mfaChallenge.clientInfo'),
-          thanks: locale.getText('emails.mfaChallenge.thanks'),
-          signature: locale.getText('emails.mfaChallenge.signature'),
-        }
-
-        let body = template(emailData)
-
-        const smtp = project.get('smtp', {}) as SmtpConfig
-        const smtpEnabled = smtp.enabled ?? false
-        const systemConfig = this.appConfig.get('system')
-
-        let senderEmail =
-          systemConfig.emailAddress || this.appConfig.get('app').emailTeam
-        let senderName =
-          systemConfig.emailName || `${this.appConfig.get('app').name} Server`
-        let replyTo = ''
-
-        const smtpServer: SmtpConfig = {} as SmtpConfig
-
-        if (smtpEnabled) {
-          if (smtp.senderEmail) {
-            senderEmail = smtp.senderEmail
-          }
-          if (smtp.senderName) {
-            senderName = smtp.senderName
-          }
-          if (smtp.replyTo) {
-            replyTo = smtp.replyTo
-          }
-
-          smtpServer.host = smtp.host
-          smtpServer.port = smtp.port
-          smtpServer.username = smtp.username
-          smtpServer.password = smtp.password
-          smtpServer.secure = smtp.secure ?? false
-
-          if (customEmailTemplate) {
-            if (customEmailTemplate.senderEmail) {
-              senderEmail = customEmailTemplate.senderEmail
-            }
-            if (customEmailTemplate.senderName) {
-              senderName = customEmailTemplate.senderName
-            }
-            if (customEmailTemplate.replyTo) {
-              replyTo = customEmailTemplate.replyTo
-            }
-
-            body = customEmailTemplate.message || body
-            subject = customEmailTemplate.subject || subject
-          }
-
-          smtpServer.replyTo = replyTo
-          smtpServer.senderEmail = senderEmail
-          smtpServer.senderName = senderName
-        }
-
-        const emailVariables = {
-          direction: locale.getText('settings.direction'),
-          user: user.get('name'),
-          project: project.get('name'),
-          otp: code,
-          agentDevice: agentDevice.deviceBrand || 'UNKNOWN',
-          agentClient: agentClient.clientName || 'UNKNOWN',
-          agentOs: agentOs.osName || 'UNKNOWN',
-        }
-
-        await this.mailsQueue.add(MailJob.SEND_EMAIL, {
-          email: user.get('email'),
-          subject,
-          body,
-          server: smtpServer,
-          variables: emailVariables,
-        })
+        await this.mailsQueue.add(MailJob.SEND_EMAIL, payload)
         break
       }
     }
-
-    // TODO: Handle Events
-    // await this.eventEmitter.emit(EVENT_MFA_CHALLENGE_CREATE, {
-    //   userId: user.getId(),
-    //   challengeId: createdChallenge.getId(),
-    // });
 
     return createdChallenge
   }
@@ -510,8 +452,8 @@ export class MfaService {
     session,
     otp,
     challengeId,
-  }: WithDB<
-    WithUser<VerifyMfaChallengeDTO & { session: SessionsDoc }>
+  }: WithUser<
+    VerifyMfaChallengeDTO & { session: SessionsDoc }
   >): Promise<SessionsDoc> {
     const challenge = await this.db.getDocument('challenges', challengeId)
 
@@ -581,17 +523,8 @@ export class MfaService {
 
     await this.db.updateDocument('sessions', session.getId(), session)
 
-    // TODO: Handle Events
-    // await this.eventEmitter.emit(EVENT_MFA_CHALLENGE_VERIFY, {
-    //   userId: user.getId(),
-    //   sessionId: session.getId(),
-    // });
-
     return session
   }
 }
 
-type WithDB<T = unknown> = T
 type WithUser<T = unknown> = { user: UsersDoc } & T
-type WithProject<T = unknown> = { project: ProjectsDoc } & T
-type WithLocale<T = unknown> = { locale: LocaleTranslator } & T
