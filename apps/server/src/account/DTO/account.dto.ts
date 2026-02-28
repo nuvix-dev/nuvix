@@ -6,6 +6,7 @@ import {
   IsOptional,
   IsString,
   Length,
+  MaxLength,
 } from 'class-validator'
 
 export class CreateAccountDTO {
@@ -52,11 +53,11 @@ export class UpdateEmailDTO {
   declare email: string
 
   /**
-   * User password. Must be at least 8 chars.
+   * User password.
    */
   @IsNotEmpty()
   @IsString()
-  @Length(8, 256, { message: 'Password must be between 8 and 256 characters.' })
+  @MaxLength(256)
   declare password: string
 }
 
@@ -70,10 +71,11 @@ export class UpdatePasswordDTO {
   declare password: string
 
   /**
-   * Current user password. Must be at least 8 chars.
+   * Current user password.
    */
   @IsNotEmpty()
   @IsString()
+  @MaxLength(256)
   declare oldPassword: string
 }
 
@@ -98,10 +100,10 @@ export class UpdatePhoneDTO {
   declare phone: string
 
   /**
-   * User password. Must be at least 8 chars.
+   * User password.
    */
   @IsNotEmpty()
   @IsString()
-  @Length(8, 256, { message: 'Password must be between 8 and 256 characters.' })
+  @MaxLength(256)
   declare password: string
 }

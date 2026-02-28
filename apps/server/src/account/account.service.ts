@@ -519,6 +519,8 @@ export class AccountService {
     locale,
     url,
   }: WithUser<WithLocale<{ url?: string; request: NuvixRequest }>>) {
+    if (url) request.context.validateRedirectURL(url)
+
     if (!configuration.smtp.enabled()) {
       throw new Exception(Exception.GENERAL_SMTP_DISABLED)
     }

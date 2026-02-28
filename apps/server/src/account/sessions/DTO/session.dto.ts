@@ -27,7 +27,7 @@ export class CreateEmailSessionDTO {
   /**
    * User password. Must be at least 8 chars.
    */
-  @MinLength(8)
+  @MaxLength(256)
   declare password: string
 }
 

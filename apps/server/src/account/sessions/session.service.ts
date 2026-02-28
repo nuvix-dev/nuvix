@@ -613,7 +613,10 @@ export class SessionService {
   }) {
     const ctx = request.context
     const protocol = request.protocol
-    // TODO: validate url
+
+    if (input.success) ctx.validateRedirectURL(input.success)
+    if (input.failure) ctx.validateRedirectURL(input.failure)
+
     const success = input.success || ''
     const failure = input.failure || ''
     const scopes = input.scopes || []
@@ -1161,7 +1164,10 @@ export class SessionService {
   }) {
     const ctx = request.context
     const protocol = request.protocol
-    // todo: validate url...
+
+    if (input.success) ctx.validateRedirectURL(input.success)
+    if (input.failure) ctx.validateRedirectURL(input.failure)
+
     const success = input.success || ''
     const failure = input.failure || ''
     const scopes = input.scopes || []
@@ -1238,7 +1244,9 @@ export class SessionService {
       url: inputUrl = '',
       phrase: inputPhrase = false,
     } = input
-    // todo: validate url
+
+    if (inputUrl) ctx.validateRedirectURL(inputUrl)
+
     let url = inputUrl
     let phrase: string | undefined
 
