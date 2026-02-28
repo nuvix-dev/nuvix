@@ -11,18 +11,11 @@ import {
   UseInterceptors,
 } from '@nestjs/common'
 import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
-import {
-  AuthType,
-  CurrentSchema,
-  CurrentSchemaType,
-  Namespace,
-  Project,
-} from '@nuvix/core/decorators'
+import { AuthType, CurrentSchemaType, Namespace } from '@nuvix/core/decorators'
 import { ParseDuplicatePipe } from '@nuvix/core/pipes'
 import { ApiInterceptor, SchemaGuard } from '@nuvix/core/resolvers'
 import { DataSource } from '@nuvix/pg'
-import { Context, SchemaType } from '@nuvix/utils'
-import type { ProjectsDoc } from '@nuvix/utils/types'
+import { SchemaType } from '@nuvix/utils'
 import { PermissionsDTO } from './DTO/permissions.dto'
 import {
   FunctionParamsDTO,
@@ -48,8 +41,6 @@ export class SchemasController {
   async queryTable(
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
     @Req() request: NuvixRequest,
-    @CurrentSchema() pg: DataSource,
-
     @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
     limit: number,
     @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
@@ -57,12 +48,12 @@ export class SchemasController {
   ) {
     return this.schemasService.select({
       table,
-      pg,
+
       limit,
       offset,
       schema,
       url: request.raw.url || request.url,
-      project,
+
       context: this.requestToContext(request),
     })
   }
@@ -73,7 +64,6 @@ export class SchemasController {
     scopes: 'schemas.tables.create',
   })
   async insertIntoTable(
-    @CurrentSchema() pg: DataSource,
     @Req() request: NuvixRequest,
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
     @Body() input: Record<string, any> | Record<string, any>[],
@@ -86,13 +76,12 @@ export class SchemasController {
     columns?: string[],
   ) {
     return this.schemasService.insert({
-      pg,
       schema,
       table,
       input,
       columns,
       url: request.raw.url || request.url,
-      project,
+
       context: this.requestToContext(request),
     })
   }
@@ -105,7 +94,7 @@ export class SchemasController {
   })
   async updateTables(
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
-    @CurrentSchema() pg: DataSource,
+
     @Req() request: NuvixRequest,
     @Body() input: Record<string, any>,
 
@@ -123,7 +112,6 @@ export class SchemasController {
     force = false,
   ) {
     return this.schemasService.update({
-      pg,
       schema,
       table,
       input,
@@ -132,7 +120,7 @@ export class SchemasController {
       limit,
       offset,
       force,
-      project,
+
       context: this.requestToContext(request),
     })
   }
@@ -146,7 +134,7 @@ export class SchemasController {
   // })
   // async upsertTable(
   //   @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
-  //   @CurrentSchema() pg: DataSource,
+  //
   //   @Req() request: NuvixRequest,
   //   @Body() input: Record<string, any> | Record<string, any>[],
   //   @Query('columns', new ParseArrayPipe({ items: String, optional: true }))
@@ -167,7 +155,7 @@ export class SchemasController {
   })
   async deleteTables(
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
-    @CurrentSchema() pg: DataSource,
+
     @Req() request: NuvixRequest,
 
     @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
@@ -178,14 +166,13 @@ export class SchemasController {
     force = false,
   ) {
     return this.schemasService.delete({
-      pg,
       schema,
       table,
       url: request.raw.url || request.url,
       limit,
       offset,
       force,
-      project,
+
       context: this.requestToContext(request),
     })
   }
@@ -199,7 +186,6 @@ export class SchemasController {
     },
   })
   async callFunction(
-    @CurrentSchema() pg: DataSource,
     @Req() request: NuvixRequest,
     @Param() {
       schemaId: schema = 'public',
@@ -213,14 +199,13 @@ export class SchemasController {
     @Body() args: Record<string, any> | any[] = [],
   ) {
     return this.schemasService.callFunction({
-      pg,
       schema,
       functionName,
       url: request.raw.url || request.url,
       limit,
       offset,
       args,
-      project,
+
       context: this.requestToContext(request),
     })
   }
@@ -239,16 +224,13 @@ export class SchemasController {
   })
   @CurrentSchemaType(SchemaType.Managed)
   manageTablePermissions(
-    @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId }: TableParamsDTO,
     @Body() body: PermissionsDTO,
   ): Promise<string[]> {
     return this.schemasService.updatePermissions({
-      pg,
       permissions: body.permissions,
       tableId,
       schema,
-      project,
     })
   }
 
@@ -259,17 +241,14 @@ export class SchemasController {
   })
   @CurrentSchemaType(SchemaType.Managed)
   manageRowPermissions(
-    @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId, rowId }: RowParamsDTO,
     @Body() body: PermissionsDTO,
   ): Promise<string[]> {
     return this.schemasService.updatePermissions({
-      pg,
       permissions: body.permissions,
       tableId,
       schema,
       rowId,
-      project,
     })
   }
 
@@ -280,14 +259,11 @@ export class SchemasController {
   })
   @CurrentSchemaType(SchemaType.Managed)
   getTablePermissions(
-    @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId }: TableParamsDTO,
   ): Promise<string[]> {
     return this.schemasService.getPermissions({
-      pg,
       tableId,
       schema,
-      project,
     })
   }
 
@@ -298,15 +274,12 @@ export class SchemasController {
   })
   @CurrentSchemaType(SchemaType.Managed)
   getRowPermissions(
-    @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId, rowId }: RowParamsDTO,
   ): Promise<string[]> {
     return this.schemasService.getPermissions({
-      pg,
       tableId,
       schema,
       rowId,
-      project,
     })
   }
 }

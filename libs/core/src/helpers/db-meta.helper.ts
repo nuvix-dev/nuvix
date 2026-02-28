@@ -14,7 +14,6 @@ export const setupDatabaseMeta = async ({
   client,
   request,
   extra,
-  project,
   extraPrefix,
 }: SetupDatabaseMeta) => {
   const escapeString = (value: string): string => {

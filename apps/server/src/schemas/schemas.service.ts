@@ -56,14 +56,13 @@ export class SchemasService {
       offset,
     })
 
-    return this.withMetaTransaction(pg, project, context, async () => {
+    return this.withMetaTransaction(pg, context, async () => {
       return qb.catch(e => this.processError(e))
     })
   }
 
   private async withMetaTransaction(
     pg: DataSource,
-
     context: Record<string, any>,
     callback: () => Promise<any>,
   ) {
@@ -73,7 +72,6 @@ export class SchemasService {
       await setupDatabaseMeta({
         request,
         extra,
-        project,
         client: pg,
         extraPrefix: 'request.auth',
       })
