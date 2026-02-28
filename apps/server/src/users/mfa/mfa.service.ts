@@ -1,11 +1,17 @@
 import { Injectable } from '@nestjs/common'
+import { CoreService } from '@nuvix/core/core.service'
 import { Exception } from '@nuvix/core/extend/exception'
 import { MfaType, TOTP } from '@nuvix/core/validators'
-
 import { Database, Doc } from '@nuvix/db'
 
 @Injectable()
 export class MfaService {
+  private readonly db: Database
+
+  constructor(private readonly coreService: CoreService) {
+    this.db = this.coreService.getDatabase()
+  }
+
   /**
    * Update Mfa Status
    */
@@ -23,8 +29,6 @@ export class MfaService {
       user.getId(),
       user,
     )
-
-    // TODO: Implement queue for events
 
     return updatedUser
   }
@@ -91,8 +95,6 @@ export class MfaService {
     user.set('mfaRecoveryCodes', newRecoveryCodes)
     await this.db.updateDocument('users', user.getId(), user)
 
-    // TODO: Implement queue for events
-
     return new Doc({
       recoveryCodes: newRecoveryCodes,
     })
@@ -117,8 +119,6 @@ export class MfaService {
     user.set('mfaRecoveryCodes', newRecoveryCodes)
     await this.db.updateDocument('users', user.getId(), user)
 
-    // TODO: Implement queue for events
-
     return new Doc({
       recoveryCodes: newRecoveryCodes,
     })
@@ -142,7 +142,5 @@ export class MfaService {
 
     await this.db.deleteDocument('authenticators', authenticator.getId())
     await this.db.purgeCachedDocument('users', user.getId())
-
-    // TODO: Implement queue for events
   }
 }

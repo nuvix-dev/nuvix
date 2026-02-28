@@ -1,15 +1,9 @@
-import {
-  Body,
-  Controller,
-  Param,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Param, UseInterceptors } from '@nestjs/common'
 import { Delete, Get, Patch, Put } from '@nuvix/core'
 import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
-import type { Database, Doc } from '@nuvix/db'
+import type { Doc } from '@nuvix/db'
 import { IResponse } from '@nuvix/utils'
 import { UsersDoc } from '@nuvix/utils/types'
 import { UserParamDTO } from '../DTO/user.dto'
@@ -18,7 +12,6 @@ import { MfaService } from './mfa.service'
 
 @Namespace('users')
 @Controller({ version: ['1'], path: 'users/:userId/mfa' })
-
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.KEY])
 export class MfaController {
@@ -26,8 +19,9 @@ export class MfaController {
 
   @Patch('', {
     summary: 'Update MFA',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.USER,
+    secretFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.update',
       resource: 'user/{params.userId}',
@@ -61,6 +55,7 @@ export class MfaController {
     summary: 'Get MFA recovery codes',
     scopes: 'users.read',
     model: Models.MFA_RECOVERY_CODES,
+    secretFields: ['recoveryCodes'],
     sdk: {
       name: 'getMfaRecoveryCodes',
       descMd: '/docs/references/users/get-mfa-recovery-codes.md',
@@ -76,8 +71,9 @@ export class MfaController {
 
   @Patch('recovery-codes', {
     summary: 'Create MFA recovery codes',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.MFA_RECOVERY_CODES,
+    secretFields: ['recoveryCodes'],
     audit: {
       key: 'recovery.create',
       resource: 'user/{res.$id}',
@@ -98,8 +94,9 @@ export class MfaController {
 
   @Put('recovery-codes', {
     summary: 'Update MFA recovery codes (regenerate)',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.MFA_RECOVERY_CODES,
+    secretFields: ['recoveryCodes'],
     audit: {
       key: 'recovery.update',
       resource: 'user/{res.$id}',
@@ -120,7 +117,7 @@ export class MfaController {
 
   @Delete('authenticators/:type', {
     summary: 'Delete authenticator',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.NONE,
     audit: {
       key: 'user.update',
