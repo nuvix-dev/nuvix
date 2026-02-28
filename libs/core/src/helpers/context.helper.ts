@@ -47,6 +47,10 @@ export class RequestContext {
     return this._isAdminUser
   }
 
+  public isPrivilegedUser() {
+    return this.isAdminUser || this.isAPIUser
+  }
+
   public getSession() {
     return this.session as SessionsDoc
   }
