@@ -162,7 +162,7 @@ export class StatsQueue extends AbstractBatchQueue<
     )
   }
 
-  private static formatDate(
+  public static formatDate(
     period: MetricPeriod,
     date: Date | string,
   ): string | null {

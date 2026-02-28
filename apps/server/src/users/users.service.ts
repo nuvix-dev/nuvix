@@ -54,13 +54,14 @@ import {
   UpdateUserLabelDTO,
   UpdateUserNameDTO,
   UpdateUserPasswordDTO,
-  UpdateUserPoneVerificationDTO,
+  UpdateUserPhoneVerificationDTO,
   UpdateUserStatusDTO,
 } from './DTO/user.dto'
 
 @Injectable()
 export class UsersService {
   private readonly geoDb: Reader<CountryResponse>
+  private readonly db: Database
 
   constructor(
     private readonly coreService: CoreService,
@@ -70,6 +71,7 @@ export class UsersService {
     private readonly deletesQueue: Queue<DeletesJobData, unknown, DeleteType>,
   ) {
     this.geoDb = this.coreService.getGeoDb()
+    this.db = this.coreService.getDatabase()
   }
 
   /**
@@ -185,7 +187,11 @@ export class UsersService {
   /**
    * Update user password
    */
-  async updatePassword(id: string, { password }: UpdateUserPasswordDTO) {
+  async updatePassword(
+    id: string,
+    { password }: UpdateUserPasswordDTO,
+    project: ProjectsDoc,
+  ) {
     const user = await this.db.getDocument('users', id)
 
     if (user.empty()) {
@@ -433,7 +439,7 @@ export class UsersService {
    */
   async updatePhoneVerification(
     id: string,
-    input: UpdateUserPoneVerificationDTO,
+    input: UpdateUserPhoneVerificationDTO,
   ) {
     const user = await this.db.getDocument('users', id)
 
@@ -469,7 +475,7 @@ export class UsersService {
   /**
    * Create a new user with argon2
    */
-  createWithArgon2(createUserDTO: CreateUserDTO) {
+  createWithArgon2(createUserDTO: CreateUserDTO, project: ProjectsDoc) {
     return this.createUser(
       project,
       HashAlgorithm.ARGON2,
@@ -485,7 +491,7 @@ export class UsersService {
   /**
    * Create a new user with bcrypt
    */
-  createWithBcrypt(createUserDTO: CreateUserDTO) {
+  createWithBcrypt(createUserDTO: CreateUserDTO, project: ProjectsDoc) {
     return this.createUser(
       project,
       HashAlgorithm.BCRYPT,
@@ -501,7 +507,7 @@ export class UsersService {
   /**
    * Create a new user with md5
    */
-  createWithMd5(createUserDTO: CreateUserDTO) {
+  createWithMd5(createUserDTO: CreateUserDTO, project: ProjectsDoc) {
     return this.createUser(
       project,
       HashAlgorithm.MD5,
@@ -517,7 +523,7 @@ export class UsersService {
   /**
    * Create a new user with sha
    */
-  createWithSha(createUserDTO: CreateUserWithShaDTO) {
+  createWithSha(createUserDTO: CreateUserWithShaDTO, project: ProjectsDoc) {
     let hashOptions = {}
     if (createUserDTO.passwordVersion) {
       hashOptions = { version: createUserDTO.passwordVersion }
@@ -537,7 +543,7 @@ export class UsersService {
   /**
    * Create a new user with phpass
    */
-  createWithPhpass(createUserDTO: CreateUserDTO) {
+  createWithPhpass(createUserDTO: CreateUserDTO, project: ProjectsDoc) {
     return this.createUser(
       project,
       HashAlgorithm.PHPASS,
@@ -553,7 +559,10 @@ export class UsersService {
   /**
    * Create a new user with scrypt
    */
-  createWithScrypt(createUserDTO: CreateUserWithScryptDTO) {
+  createWithScrypt(
+    createUserDTO: CreateUserWithScryptDTO,
+    project: ProjectsDoc,
+  ) {
     const hashOptions = {
       salt: createUserDTO.passwordSalt,
       costCpu: createUserDTO.passwordCpu,
@@ -576,7 +585,10 @@ export class UsersService {
   /**
    * Create a new user with scryptMod
    */
-  createWithScryptMod(createUserDTO: CreateUserWithScryptModifedDTO) {
+  createWithScryptMod(
+    createUserDTO: CreateUserWithScryptModifedDTO,
+    project: ProjectsDoc,
+  ) {
     const hashOptions = {
       salt: createUserDTO.passwordSalt,
       saltSeparator: createUserDTO.passwordSaltSeparator,
@@ -648,7 +660,7 @@ export class UsersService {
       queries.push(Query.limit(configuration.limits.limitCount))
     }
 
-    const audit = new Audit(db)
+    const audit = new Audit(this.db)
     const logs: any[] = await audit.getLogsByUser(user.getSequence(), queries)
     const output: AuditDoc[] = []
 
@@ -660,11 +672,11 @@ export class UsersService {
       const client = detector.getClient()
       const device = detector.getDevice()
 
-      const countryCode = this.geothis.db.get(log.ip)?.country?.iso_code
-      const countryName = locale.getText(
-        `countries.${countryCode}`,
-        locale.getText('locale.country.unknown'),
-      )
+      const countryCode = this.geoDb.get(log.ip)?.country?.iso_code
+      const key = `countries.${countryCode}`
+      const countryName = locale.has(key)
+        ? locale.getRaw(key)
+        : locale.t('locale.country.unknown')
 
       output.push(
         new Doc({
@@ -811,7 +823,7 @@ export class UsersService {
   /**
    * Delete User
    */
-  async remove(userId: string, project: ProjectsDoc) {
+  async remove(userId: string) {
     const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
@@ -824,7 +836,6 @@ export class UsersService {
 
     await this.deletesQueue.add(DeleteType.DOCUMENT, {
       document: clone,
-      project,
     })
   }
 
@@ -839,6 +850,7 @@ export class UsersService {
    * @param name
    */
   async createUser(
+    project: ProjectsDoc,
     hash: HashAlgorithm,
     hashOptions: any,
     userId?: string,

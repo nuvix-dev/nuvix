@@ -1,16 +1,10 @@
-import {
-  Body,
-  Controller,
-  Param,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Param, UseInterceptors } from '@nestjs/common'
 import { Delete, Get, Patch, Post } from '@nuvix/core'
 import { Auth, AuthType, Namespace, QueryFilter } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { TargetsQueryPipe } from '@nuvix/core/pipes/queries'
 import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
-import type { Database, Query } from '@nuvix/db'
+import type { Query } from '@nuvix/db'
 import { IListResponse, IResponse } from '@nuvix/utils'
 import { TargetsDoc } from '@nuvix/utils/types'
 import { UserParamDTO } from '../DTO/user.dto'
@@ -31,7 +25,7 @@ export class TargetsController {
 
   @Post('', {
     summary: 'Create user target',
-    scopes: 'targets.create',
+    scopes: 'targets.write',
     model: Models.TARGET,
     audit: {
       key: 'target.create',
@@ -85,7 +79,7 @@ export class TargetsController {
 
   @Patch(':targetId', {
     summary: 'Update user target',
-    scopes: 'targets.update',
+    scopes: 'targets.write',
     model: Models.TARGET,
     audit: {
       key: 'target.update',
@@ -105,7 +99,7 @@ export class TargetsController {
 
   @Delete(':targetId', {
     summary: 'Delete user target',
-    scopes: 'targets.delete',
+    scopes: 'targets.write',
     model: Models.NONE,
     audit: {
       key: 'target.delete',

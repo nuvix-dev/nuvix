@@ -11,13 +11,31 @@ import {
   Query,
   Role,
 } from '@nuvix/db'
-import { configuration, MessageType, Schemas } from '@nuvix/utils'
+import {
+  configuration,
+  DeleteType,
+  MessageType,
+  QueueFor,
+  Schemas,
+} from '@nuvix/utils'
 import type { ProvidersDoc } from '@nuvix/utils/types'
 import { CreateTargetDTO, UpdateTargetDTO } from './DTO/target.dto'
+import { CoreService } from '@nuvix/core/core.service'
+import { InjectQueue } from '@nestjs/bullmq'
+import { Queue } from 'bullmq'
+import { DeletesJobData } from '@nuvix/core/resolvers'
 
 @Injectable()
 export class TargetsService {
-  constructor(private readonly event: EventEmitter2) {}
+  private readonly db: Database
+  constructor(
+    private readonly coreService: CoreService,
+    private readonly event: EventEmitter2,
+    @InjectQueue(QueueFor.DELETES)
+    private readonly deletesQueue: Queue<DeletesJobData, unknown, DeleteType>,
+  ) {
+    this.db = this.coreService.getDatabase()
+  }
 
   /**
    * Create a new target
@@ -234,6 +252,8 @@ export class TargetsService {
     await this.db.deleteDocument('targets', target.getId())
     await this.db.purgeCachedDocument('users', user.getId())
 
-    // TODO: Implement queue for deletes
+    await this.deletesQueue.add(DeleteType.TARGET, {
+      document: target.clone(),
+    })
   }
 }
