@@ -3,21 +3,28 @@ import { Injectable } from '@nestjs/common'
 import { Exception } from '@nuvix/core/extend/exception'
 import type { DeletesJobData } from '@nuvix/core/resolvers'
 import { Database, Doc, DuplicateException, ID, Query } from '@nuvix/db'
-import { DeleteType, QueueFor, Schemas } from '@nuvix/utils'
-import type { ProjectsDoc, Topics } from '@nuvix/utils/types'
+import { DeleteType, QueueFor } from '@nuvix/utils'
+import type { Topics } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
 import type { CreateTopic, ListTopics, UpdateTopic } from './topics.types'
+import { CoreService } from '@nuvix/core/core.service'
 
 @Injectable()
 export class TopicsService {
+  private readonly db: Database
+
   constructor(
+    private readonly coreService: CoreService,
     @InjectQueue(QueueFor.DELETES)
     private readonly deletesQueue: Queue<DeletesJobData, unknown, DeleteType>,
-  ) {}
+  ) {
+    this.db = this.coreService.getDatabase()
+  }
+
   /**
    * Create Topic
    */
-  async createTopic({ input, db }: CreateTopic) {
+  async createTopic({ input }: CreateTopic) {
     const { topicId: inputTopicId, name, subscribe } = input
     const topicId = inputTopicId === 'unique()' ? ID.unique() : inputTopicId
 
@@ -50,32 +57,12 @@ export class TopicsService {
     const { filters } = Query.groupByType(queries)
 
     const topics = await this.db.find('topics', queries)
-    const data = await this.populateTargets(topics)
     const total = await this.db.count('topics', filters)
 
     return {
-      data,
+      data: topics,
       total,
     }
-  }
-
-  private populateTargets(topics: Doc<Topics>[]) {
-    return this.db.withSchema(Schemas.Auth, () =>
-      this.db.skipValidation(() =>
-        Promise.all(
-          topics.map(async topic => {
-            const targetIds = topic.get('targets', [])
-            if (targetIds.length > 0) {
-              const targets = await this.db.find('targets', [
-                Query.equal('$sequence', [...targetIds]),
-              ])
-              topic.set('targets', targets)
-            }
-            return topic
-          }),
-        ),
-      ),
-    )
   }
 
   /**
@@ -88,10 +75,7 @@ export class TopicsService {
       throw new Exception(Exception.TOPIC_NOT_FOUND)
     }
 
-    const populatedTopic = await this.populateTargets([topic]).then(
-      ([populated]) => populated!,
-    )
-    return populatedTopic
+    return topic
   }
 
   /**
@@ -114,16 +98,13 @@ export class TopicsService {
 
     const updatedTopic = await this.db.updateDocument('topics', topicId, topic)
 
-    const populatedTopic = await this.populateTargets([updatedTopic]).then(
-      ([populated]) => populated!,
-    )
-    return populatedTopic
+    return updatedTopic
   }
 
   /**
    * Deletes a topic.
    */
-  async deleteTopic(topicId: string, project: ProjectsDoc) {
+  async deleteTopic(topicId: string) {
     const topic = await this.db.getDocument('topics', topicId)
 
     if (topic.empty()) {
@@ -133,7 +114,6 @@ export class TopicsService {
     await this.db.deleteDocument('topics', topicId)
 
     await this.deletesQueue.add(DeleteType.TOPIC, {
-      project,
       document: topic.clone(),
     })
     return

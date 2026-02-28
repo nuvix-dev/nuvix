@@ -1,26 +1,18 @@
-import {
-  Body,
-  Controller,
-  Param,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Param, UseInterceptors } from '@nestjs/common'
 import { Delete, Get, Patch, Post } from '@nuvix/core'
 import {
   Auth,
   AuthType,
   Namespace,
-  Project,
-  ProjectDatabase,
   QueryFilter,
   QuerySearch,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { TopicsQueryPipe } from '@nuvix/core/pipes/queries'
 import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
-import { Database, Query as Queries } from '@nuvix/db'
+import { Query as Queries } from '@nuvix/db'
 import type { IListResponse, IResponse } from '@nuvix/utils'
-import type { ProjectsDoc, TopicsDoc } from '@nuvix/utils/types'
+import type { TopicsDoc } from '@nuvix/utils/types'
 import {
   CreateTopicDTO,
   TopicParamsDTO,
@@ -29,7 +21,6 @@ import {
 import { TopicsService } from './topics.service'
 
 @Namespace('messaging')
-
 @Auth([AuthType.ADMIN, AuthType.KEY])
 @Controller({ path: 'messaging/topics', version: ['1'] })
 @UseInterceptors(ApiInterceptor, ResponseInterceptor)
@@ -38,7 +29,7 @@ export class TopicsController {
 
   @Post('', {
     summary: 'Create topic',
-    scopes: 'topics.create',
+    scopes: 'topics.write',
     model: Models.TOPIC,
     audit: {
       key: 'topic.create',
@@ -93,7 +84,7 @@ export class TopicsController {
 
   @Patch(':topicId', {
     summary: 'Update topic',
-    scopes: 'topics.update',
+    scopes: 'topics.write',
     model: Models.TOPIC,
     audit: {
       key: 'topic.update',
@@ -106,7 +97,6 @@ export class TopicsController {
   })
   async updateTopic(
     @Param() { topicId }: TopicParamsDTO,
-
     @Body() input: UpdateTopicDTO,
   ): Promise<IResponse<TopicsDoc>> {
     return this.topicsService.updateTopic({
@@ -117,7 +107,7 @@ export class TopicsController {
 
   @Delete(':topicId', {
     summary: 'Delete topic',
-    scopes: 'topics.delete',
+    scopes: 'topics.write',
     audit: {
       key: 'topic.delete',
       resource: 'topic/{res.$id}',
@@ -128,6 +118,6 @@ export class TopicsController {
     },
   })
   async deleteTopic(@Param() { topicId }: TopicParamsDTO): Promise<void> {
-    return this.topicsService.deleteTopic(topicId, project)
+    return this.topicsService.deleteTopic(topicId)
   }
 }
