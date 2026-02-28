@@ -21,16 +21,20 @@ import {
   QueueFor,
 } from '@nuvix/utils'
 import collections from '@nuvix/utils/collections'
-import { ProjectsDoc } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
 import { CreateBucketDTO, UpdateBucketDTO } from './DTO/bucket.dto'
+import { CoreService } from '@nuvix/core/core.service'
 
 @Injectable()
 export class StorageService {
+  private readonly db: Database
   constructor(
+    private readonly coreService: CoreService,
     @InjectQueue(QueueFor.DELETES)
     private readonly deletesQueue: Queue<DeletesJobData, unknown, DeleteType>,
-  ) {}
+  ) {
+    this.db = this.coreService.getDatabase()
+  }
 
   private getCollectionName(s: number) {
     return `bucket_${s}`
@@ -181,7 +185,7 @@ export class StorageService {
   /**
    * Delete a bucket.
    */
-  async deleteBucket(id: string, project: ProjectsDoc) {
+  async deleteBucket(id: string) {
     const bucket = await this.db.getDocument('buckets', id)
 
     if (bucket.empty()) {
@@ -197,7 +201,6 @@ export class StorageService {
 
     await this.deletesQueue.add(DeleteType.DOCUMENT, {
       document: bucket.clone(),
-      project,
     })
 
     return

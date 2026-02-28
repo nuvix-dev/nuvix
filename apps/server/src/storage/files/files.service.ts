@@ -6,7 +6,7 @@ import { JwtService } from '@nestjs/jwt'
 import { CoreService } from '@nuvix/core'
 import { logos } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Auth } from '@nuvix/core/helpers'
+import { RequestContext } from '@nuvix/core/helpers'
 import {
   Authorization,
   Database,
@@ -17,7 +17,7 @@ import {
   Query,
   Role,
 } from '@nuvix/db'
-import { FileExt, FileSize } from '@nuvix/storage'
+import { Device, FileExt, FileSize } from '@nuvix/storage'
 import { configuration } from '@nuvix/utils'
 import type { Files, FilesDoc } from '@nuvix/utils/types'
 import {
@@ -29,11 +29,16 @@ import {
 @Injectable()
 export class FilesService {
   private sharpModule?: typeof import('sharp')
+  private readonly db: Database
+  private readonly deviceForFiles: Device
 
   constructor(
     private readonly coreService: CoreService,
     private readonly jwtService: JwtService,
-  ) {}
+  ) {
+    this.db = this.coreService.getDatabase()
+    this.deviceForFiles = this.coreService.getStorageDevice()
+  }
 
   private async getSharp() {
     if (!this.sharpModule) {
@@ -56,12 +61,20 @@ export class FilesService {
   /**
    * Get files.
    */
-  async getFiles(bucketId: string, queries: Query[] = [], search?: string) {
+  async getFiles(
+    bucketId: string,
+    ctx: RequestContext,
+    queries: Query[] = [],
+    search?: string,
+  ) {
     const bucket = await Authorization.skip(() =>
       this.db.getDocument('buckets', bucketId),
     )
 
-    if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
+    if (
+      bucket.empty() ||
+      (!bucket.get('enabled') && !ctx.isAPIUser && !ctx.isAdminUser)
+    ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
     }
 
@@ -103,14 +116,16 @@ export class FilesService {
     file: SavedMultipartFile,
     request: NuvixRequest,
     user: Doc,
-    project: Doc,
   ) {
-    const deviceForFiles = this.coreService.getProjectDevice(project.getId())
+    const ctx = request.context
     const bucket = await Authorization.skip(() =>
       this.db.getDocument('buckets', bucketId),
     )
 
-    if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
+    if (
+      bucket.empty() ||
+      (!bucket.get('enabled') && !ctx.isAPIUser && !ctx.isAdminUser)
+    ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
     }
 
@@ -139,7 +154,7 @@ export class FilesService {
         : []
     }
 
-    if (!Auth.isTrustedActor) {
+    if (!ctx.isAPIUser && !ctx.isAdminUser) {
       permissions.forEach(permission => {
         const parsedPermission = Permission.parse(permission)
         if (!Authorization.isRole(parsedPermission.role.toString())) {
@@ -243,7 +258,7 @@ export class FilesService {
       )
     }
 
-    const _path = deviceForFiles.getPath(
+    const _path = this.deviceForFiles.getPath(
       path.join(bucket.getId(), `${fileId}.${fileExt}`),
     )
 
@@ -269,7 +284,7 @@ export class FilesService {
       }
     }
 
-    chunksUploaded = await deviceForFiles.upload(
+    chunksUploaded = await this.deviceForFiles.upload(
       file.filepath,
       _path,
       chunk,
@@ -287,12 +302,12 @@ export class FilesService {
     if (chunksUploaded === chunks) {
       // Validate file
       const sizeActual = fileSize
-      const fileHash = await deviceForFiles.getFileHash(_path)
+      const fileHash = await this.deviceForFiles.getFileHash(_path)
       const mimeType = file.mimetype
 
-      const data = await deviceForFiles.read(_path)
+      const data = await this.deviceForFiles.read(_path)
       if (data) {
-        if (!(await deviceForFiles.write(_path, data, mimeType))) {
+        if (!(await this.deviceForFiles.write(_path, data, mimeType))) {
           throw new Exception(
             Exception.GENERAL_SERVER_ERROR,
             'Failed to save file',
@@ -377,23 +392,26 @@ export class FilesService {
   /**
    * Get a File.
    */
-  async getFile(bucketId: string, fileId: string) {
+  async getFile(bucketId: string, fileId: string, ctx: RequestContext) {
     const bucket = await Authorization.skip(() =>
       this.db.getDocument('buckets', bucketId),
     )
 
-    if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
+    if (
+      bucket.empty() ||
+      (!bucket.get('enabled') && !ctx.isAPIUser && !ctx.isAdminUser)
+    ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
     }
 
     const fileSecurity = bucket.get('fileSecurity', false)
     const validator = new Authorization(PermissionType.Read)
+
     const valid = validator.$valid(bucket.getRead())
     if (!fileSecurity && !valid) {
       throw new Exception(Exception.USER_UNAUTHORIZED)
     }
 
-    // TODO: we have to review this part later for security issues
     const file = (
       fileSecurity && !valid
         ? await this.db.getDocument(
@@ -423,9 +441,8 @@ export class FilesService {
     bucketId: string,
     fileId: string,
     params: PreviewFileQueryDTO,
-    project: Doc,
+    ctx: RequestContext,
   ) {
-    const deviceForFiles = this.coreService.getProjectDevice(project.getId())
     const {
       width,
       height,
@@ -443,7 +460,10 @@ export class FilesService {
       async () => await this.db.getDocument('buckets', bucketId),
     )
 
-    if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
+    if (
+      bucket.empty() ||
+      (!bucket.get('enabled') && !ctx.isAPIUser && !ctx.isAdminUser)
+    ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
     }
 
@@ -475,7 +495,7 @@ export class FilesService {
     const path = file.get('path', '')
 
     try {
-      await deviceForFiles.exists(path)
+      await this.deviceForFiles.exists(path)
     } catch {
       throw new Exception(
         Exception.STORAGE_FILE_NOT_FOUND,
@@ -490,7 +510,7 @@ export class FilesService {
     // Unsupported file types or files larger then 10 MB
     if (!mimeType.startsWith('image/') || size / 1024 > 10 * 1024) {
       const path = logos[mimeType as keyof typeof logos] ?? logos.default
-      const buffer = await deviceForFiles.read(path)
+      const buffer = await this.deviceForFiles.read(path)
       return new StreamableFile(buffer, {
         type: 'image/png',
         disposition: `inline; filename="${fileName}"`,
@@ -498,7 +518,7 @@ export class FilesService {
       })
     }
 
-    const fileBuffer = await deviceForFiles.read(path)
+    const fileBuffer = await this.deviceForFiles.read(path)
     const sharp = await this.getSharp()
     let image = sharp(fileBuffer)
 
@@ -575,14 +595,16 @@ export class FilesService {
     fileId: string,
     response: NuvixRes,
     request: NuvixRequest,
-    project: Doc,
   ) {
-    const deviceForFiles = this.coreService.getProjectDevice(project.getId())
+    const ctx = request.context
     const bucket = await Authorization.skip(() =>
       this.db.getDocument('buckets', bucketId),
     )
 
-    if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
+    if (
+      bucket.empty() ||
+      (!bucket.get('enabled') && !ctx.isAPIUser && !ctx.isAdminUser)
+    ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
     }
 
@@ -613,7 +635,7 @@ export class FilesService {
     const path = file.get('path', '')
 
     try {
-      await deviceForFiles.exists(path)
+      await this.deviceForFiles.exists(path)
     } catch {
       throw new Exception(
         Exception.STORAGE_FILE_NOT_FOUND,
@@ -662,7 +684,7 @@ export class FilesService {
     )
 
     if (rangeHeader) {
-      const source = await deviceForFiles.read(path)
+      const source = await this.deviceForFiles.read(path)
       const buffer = source.subarray(start, end + 1)
       return new StreamableFile(buffer, {
         type: mimeType,
@@ -683,7 +705,11 @@ export class FilesService {
           configuration.storage.maxOutputChunkSize,
           size - offset,
         )
-        const chunkData = await deviceForFiles.read(path, offset, chunkSize)
+        const chunkData = await this.deviceForFiles.read(
+          path,
+          offset,
+          chunkSize,
+        )
         chunks.push(chunkData)
       }
 
@@ -694,7 +720,7 @@ export class FilesService {
         length: buffer.length,
       })
     }
-    const buffer = await deviceForFiles.read(path)
+    const buffer = await this.deviceForFiles.read(path)
     return new StreamableFile(buffer, {
       type: mimeType,
       disposition: `attachment; filename="${fileName}"`,
@@ -710,14 +736,16 @@ export class FilesService {
     fileId: string,
     response: NuvixRes,
     request: NuvixRequest,
-    project: Doc,
   ) {
-    const deviceForFiles = this.coreService.getProjectDevice(project.getId())
+    const ctx = request.context
     const bucket = await Authorization.skip(() =>
       this.db.getDocument('buckets', bucketId),
     )
 
-    if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
+    if (
+      bucket.empty() ||
+      (!bucket.get('enabled') && !ctx.isAPIUser && !ctx.isAdminUser)
+    ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
     }
 
@@ -748,7 +776,7 @@ export class FilesService {
     const path = file.get('path', '')
 
     try {
-      await deviceForFiles.exists(path)
+      await this.deviceForFiles.exists(path)
     } catch {
       throw new Exception(
         Exception.STORAGE_FILE_NOT_FOUND,
@@ -797,7 +825,7 @@ export class FilesService {
     )
 
     if (rangeHeader) {
-      const source = await deviceForFiles.read(path)
+      const source = await this.deviceForFiles.read(path)
       const buffer = source.subarray(start, end + 1)
       return new StreamableFile(buffer, {
         type: mimeType,
@@ -818,7 +846,11 @@ export class FilesService {
           configuration.storage.maxOutputChunkSize,
           size - offset,
         )
-        const chunkData = await deviceForFiles.read(path, offset, chunkSize)
+        const chunkData = await this.deviceForFiles.read(
+          path,
+          offset,
+          chunkSize,
+        )
         chunks.push(chunkData)
       }
 
@@ -829,7 +861,7 @@ export class FilesService {
         length: buffer.length,
       })
     }
-    const buffer = await deviceForFiles.read(path)
+    const buffer = await this.deviceForFiles.read(path)
     return new StreamableFile(buffer, {
       type: mimeType,
       disposition: `attachment; filename="${fileName}"`,
@@ -846,14 +878,13 @@ export class FilesService {
     jwt: string,
     request: NuvixRequest,
     response: NuvixRes,
-    project: Doc,
   ) {
-    const deviceForFiles = this.coreService.getProjectDevice(project.getId())
+    const ctx = request.context
     const bucket = await Authorization.skip(() =>
       this.db.getDocument('buckets', bucketId),
     )
 
-    let decoded: any
+    let decoded: Record<string, unknown>
     try {
       decoded = this.jwtService.verify(jwt)
     } catch (_error) {
@@ -868,7 +899,10 @@ export class FilesService {
       throw new Exception(Exception.USER_UNAUTHORIZED)
     }
 
-    if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
+    if (
+      bucket.empty() ||
+      (!bucket.get('enabled') && !ctx.isAPIUser && !ctx.isAdminUser)
+    ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
     }
 
@@ -883,7 +917,7 @@ export class FilesService {
     const path = file.get('path', '')
 
     try {
-      await deviceForFiles.exists(path)
+      await this.deviceForFiles.exists(path)
     } catch {
       throw new Exception(
         Exception.STORAGE_FILE_NOT_FOUND,
@@ -922,7 +956,7 @@ export class FilesService {
       response.header('Content-Length', finalEnd - start + 1)
       response.status(206)
 
-      const source = await deviceForFiles.read(path)
+      const source = await this.deviceForFiles.read(path)
       const buffer = source.subarray(start, end + 1)
       return new StreamableFile(buffer, {
         type: mimeType,
@@ -932,7 +966,7 @@ export class FilesService {
     }
 
     response.header('Content-Length', size)
-    const buffer = await deviceForFiles.read(path)
+    const buffer = await this.deviceForFiles.read(path)
     return new StreamableFile(buffer, {
       type: mimeType,
       disposition: `attachment; filename="${fileName}"`,
@@ -943,12 +977,20 @@ export class FilesService {
   /**
    * Update a file.
    */
-  async updateFile(bucketId: string, fileId: string, input: UpdateFileDTO) {
+  async updateFile(
+    bucketId: string,
+    fileId: string,
+    input: UpdateFileDTO,
+    ctx: RequestContext,
+  ) {
     const bucket = await Authorization.skip(() =>
       this.db.getDocument('buckets', bucketId),
     )
 
-    if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
+    if (
+      bucket.empty() ||
+      (!bucket.get('enabled') && !ctx.isAPIUser && !ctx.isAdminUser)
+    ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
     }
 
@@ -974,7 +1016,7 @@ export class FilesService {
     ])
 
     const roles = Authorization.getRoles()
-    if (!Auth.isTrustedActor && permissions) {
+    if (!ctx.isAPIUser && !ctx.isAdminUser && permissions) {
       permissions.forEach(permission => {
         const parsedPermission = Permission.parse(permission)
         if (!Authorization.isRole(parsedPermission.toString())) {
@@ -1015,13 +1057,15 @@ export class FilesService {
   /**
    * Delete a file.
    */
-  async deleteFile(bucketId: string, fileId: string, project: Doc) {
-    const deviceForFiles = this.coreService.getProjectDevice(project.getId())
+  async deleteFile(bucketId: string, fileId: string, ctx: RequestContext) {
     const bucket = await Authorization.skip(() =>
       this.db.getDocument('buckets', bucketId),
     )
 
-    if (bucket.empty() || (!bucket.get('enabled') && !Auth.isTrustedActor)) {
+    if (
+      bucket.empty() ||
+      (!bucket.get('enabled') && !ctx.isAPIUser && !ctx.isAdminUser)
+    ) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
     }
 
@@ -1048,12 +1092,12 @@ export class FilesService {
     let deviceDeleted = false
 
     if (file.get('chunksTotal') !== file.get('chunksUploaded')) {
-      deviceDeleted = await deviceForFiles.abort(
+      deviceDeleted = await this.deviceForFiles.abort(
         filePath,
         file.get('metadata', {}).uploadId ?? '',
       )
     } else {
-      deviceDeleted = await deviceForFiles.delete(filePath)
+      deviceDeleted = await this.deviceForFiles.delete(filePath)
     }
 
     if (deviceDeleted) {

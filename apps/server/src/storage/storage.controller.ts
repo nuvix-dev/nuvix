@@ -1,27 +1,18 @@
-import {
-  Body,
-  Controller,
-  Param,
-  Query,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Param, Query, UseInterceptors } from '@nestjs/common'
 import { Delete, Get, Post, Put } from '@nuvix/core'
 import {
   Auth,
   AuthType,
   Namespace,
-  Project,
-  ProjectDatabase,
   QueryFilter,
   QuerySearch,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { BucketsQueryPipe } from '@nuvix/core/pipes/queries'
 import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
-import { Database, Query as Queries } from '@nuvix/db'
+import { Query as Queries } from '@nuvix/db'
 import { IListResponse, IResponse } from '@nuvix/utils'
-import type { BucketsDoc, ProjectsDoc } from '@nuvix/utils/types'
+import type { BucketsDoc } from '@nuvix/utils/types'
 import {
   BucketParamsDTO,
   CreateBucketDTO,
@@ -31,7 +22,6 @@ import {
 import { StorageService } from './storage.service'
 
 @Namespace('storage')
-
 @Auth([AuthType.ADMIN, AuthType.KEY])
 @Controller({ version: ['1'], path: 'storage' })
 @UseInterceptors(ApiInterceptor, ResponseInterceptor)
@@ -56,7 +46,7 @@ export class StorageController {
 
   @Post('buckets', {
     summary: 'Create bucket',
-    scopes: 'buckets.create',
+    scopes: 'buckets.write',
     model: Models.BUCKET,
     audit: {
       key: 'bucket.create',
@@ -90,7 +80,7 @@ export class StorageController {
 
   @Put('buckets/:bucketId', {
     summary: 'Update bucket',
-    scopes: 'buckets.update',
+    scopes: 'buckets.write',
     model: Models.BUCKET,
     audit: {
       key: 'bucket.update',
@@ -110,7 +100,7 @@ export class StorageController {
 
   @Delete('buckets/:bucketId', {
     summary: 'Delete bucket',
-    scopes: 'buckets.delete',
+    scopes: 'buckets.write',
     model: Models.NONE,
     audit: {
       key: 'bucket.delete',
@@ -122,7 +112,7 @@ export class StorageController {
     },
   })
   async deleteBucket(@Param() { bucketId }: BucketParamsDTO): Promise<void> {
-    return this.storageService.deleteBucket(bucketId, project)
+    return this.storageService.deleteBucket(bucketId)
   }
 
   @Get('usage', {

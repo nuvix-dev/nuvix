@@ -37,7 +37,7 @@ export type KeyArgs = {
   req: NuvixRequest
 }
 
-type V = 'url' | 'ip' | 'userId' | 'method' | `body-${string}`
+type V = 'url' | 'ip' | 'userId' | 'method' | `body-${string}` | 'chunkId'
 
 type Segment = `${string}:{${V}}`
 
@@ -45,7 +45,10 @@ type One = Segment
 type Two = `${One},${One}`
 type Three = `${Two},${One}`
 type Four = `${Three},${One}`
-type Key = One | Two | Three | Four
+type Five = `${Four},${One}`
+type Six = `${Five},${One}`
+
+type Key = One | Two | Three | Four | Five | Six
 
 export type ThrottleOptions = {
   limit: number
