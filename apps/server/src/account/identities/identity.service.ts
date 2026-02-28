@@ -1,18 +1,25 @@
 import { Injectable } from '@nestjs/common'
+import { CoreService } from '@nuvix/core/core.service'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Database, Query } from '@nuvix/db'
+import { Database, OrderException, Query } from '@nuvix/db'
 import { configuration } from '@nuvix/utils'
 import type { IdentitiesDoc, UsersDoc } from '@nuvix/utils/types'
 
 @Injectable()
 export class IdentityService {
+  private readonly db: Database
+
+  constructor(coreService: CoreService) {
+    this.db = coreService.getDatabase()
+  }
+
   /**
    * Get Identities
    */
   async getIdentities({
     user,
     queries = [],
-  }: WithDB<WithUser<{ queries?: Query[] }>>): Promise<{
+  }: WithUser<{ queries?: Query[] }>): Promise<{
     data: IdentitiesDoc[]
     total: number
   }> {
@@ -31,8 +38,8 @@ export class IdentityService {
         data: results,
         total: total,
       }
-    } catch (error: any) {
-      if (error.name === 'OrderException') {
+    } catch (error: unknown) {
+      if (error instanceof OrderException) {
         throw new Exception(
           Exception.DATABASE_QUERY_ORDER_NULL,
           `The order attribute '${error.get()}' had a null value. Cursor pagination requires all documents order attribute values are non-null.`,
@@ -45,9 +52,7 @@ export class IdentityService {
   /**
    * Delete Identity
    */
-  async deleteIdentity({
-    identityId,
-  }: WithDB<{ identityId: string }>): Promise<void> {
+  async deleteIdentity({ identityId }: { identityId: string }): Promise<void> {
     const identity = await this.db.getDocument('identities', identityId)
 
     if (identity.empty()) {
@@ -58,5 +63,4 @@ export class IdentityService {
   }
 }
 
-type WithDB<T = unknown> = T
 type WithUser<T = unknown> = { user: UsersDoc } & T
