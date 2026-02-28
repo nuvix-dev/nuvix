@@ -267,7 +267,7 @@ export class AccountController {
     })
   }
 
-  @Post('verification', {
+  @Post(['verification', 'verifications/email'], {
     summary: 'Create email verification',
     scopes: 'account',
     model: Models.TOKEN,
@@ -301,7 +301,7 @@ export class AccountController {
     })
   }
 
-  @Put('verification', {
+  @Put(['verification', 'verifications/email'], {
     summary: 'Update email verification (confirmation)',
     scopes: 'public',
     model: Models.TOKEN,
@@ -332,7 +332,7 @@ export class AccountController {
     })
   }
 
-  @Post('verification/phone', {
+  @Post(['verification/phone', 'verifications/phone'], {
     summary: 'Create phone verification',
     scopes: 'account',
     model: Models.TOKEN,
@@ -364,7 +364,7 @@ export class AccountController {
     })
   }
 
-  @Put('verification/phone', {
+  @Put(['verification/phone', 'verifications/phone'], {
     summary: 'Update phone verification (confirmation)',
     scopes: 'public',
     model: Models.TOKEN,

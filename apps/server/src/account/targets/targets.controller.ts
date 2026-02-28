@@ -1,24 +1,10 @@
-import {
-  Body,
-  Controller,
-  Param,
-  Req,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Param, Req, UseInterceptors } from '@nestjs/common'
 import { Delete, Post, Put } from '@nuvix/core'
-import {
-  Auth,
-  AuthType,
-  Namespace,
-  Project,
-  User,
-} from '@nuvix/core/decorators'
+import { Auth, AuthType, Namespace, User } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
-import { Database } from '@nuvix/db'
 import type { IResponse } from '@nuvix/utils'
-import type { ProjectsDoc, TargetsDoc, UsersDoc } from '@nuvix/utils/types'
+import type { TargetsDoc, UsersDoc } from '@nuvix/utils/types'
 import {
   CreatePushTargetDTO,
   TargetIdParamDTO,
@@ -28,7 +14,6 @@ import { TargetsService } from './targets.service'
 
 @Controller({ version: ['1'], path: 'account/targets' })
 @Namespace('account')
-
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth(AuthType.SESSION)
 export class TargetsController {
@@ -36,7 +21,7 @@ export class TargetsController {
 
   @Post('push', {
     summary: 'Create push target',
-    scopes: 'targets.create',
+    scopes: 'targets.write',
     model: Models.TARGET,
     audit: {
       key: 'target.create',
@@ -51,20 +36,19 @@ export class TargetsController {
   async createPushTarget(
     @Body() input: CreatePushTargetDTO,
     @User() user: UsersDoc,
-
     @Req() request: NuvixRequest,
   ): Promise<IResponse<TargetsDoc>> {
     return this.targetService.createPushTarget({
       ...input,
       user,
-
       userAgent: request.headers['user-agent'] || 'UNKNOWN',
+      ctx: request.context,
     })
   }
 
   @Put(':targetId/push', {
     summary: 'Update push target',
-    scopes: 'targets.update',
+    scopes: 'targets.write',
     model: Models.TARGET,
     audit: {
       key: 'target.update',
@@ -80,21 +64,19 @@ export class TargetsController {
     @Param() { targetId }: TargetIdParamDTO,
     @Body() input: UpdatePushTargetDTO,
     @User() user: UsersDoc,
-
     @Req() request: NuvixRequest,
   ): Promise<IResponse<TargetsDoc>> {
     return this.targetService.updatePushTarget({
       targetId,
       ...input,
       user,
-
       request,
     })
   }
 
   @Delete(':targetId/push', {
     summary: 'Delete push target',
-    scopes: 'targets.delete',
+    scopes: 'targets.write',
     model: Models.NONE,
     audit: {
       key: 'target.delete',
@@ -113,8 +95,6 @@ export class TargetsController {
     return this.targetService.deletePushTarget({
       targetId,
       user,
-
-      project,
     })
   }
 }
