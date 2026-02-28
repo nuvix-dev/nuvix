@@ -18,7 +18,12 @@ import {
   Query,
   Role,
 } from '@nuvix/db'
-import { type HashAlgorithm, QueueFor, TokenType } from '@nuvix/utils'
+import {
+  configuration,
+  type HashAlgorithm,
+  QueueFor,
+  TokenType,
+} from '@nuvix/utils'
 import type {
   ProjectsDoc,
   Tokens,
@@ -41,25 +46,17 @@ export class RecoveryService {
    */
   async createRecovery({
     user,
-    project,
-    locale,
-    ip,
-    userAgent,
+    request,
     input,
-  }: WithDB<
-    WithUser<
-      WithProject<
-        WithLocale<{
-          input: CreateRecoveryDTO
-          ip?: string
-          userAgent: string
-        }>
-      >
-    >
-  >): Promise<TokensDoc> {
+  }: WithUser<{
+    input: CreateRecoveryDTO
+    request: NuvixRequest
+  }>): Promise<TokensDoc> {
     if (!configuration.smtp.enabled()) {
-      throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP disabled')
+      throw new Exception(Exception.GENERAL_SMTP_DISABLED)
     }
+
+    const ctx = request.context
 
     const email = input.email.toLowerCase()
     let url = input.url

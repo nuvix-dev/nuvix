@@ -17,16 +17,16 @@ import { RecoveryService } from './recovery.service'
 
 @Controller({ version: ['1'], path: 'account/recovery' })
 @Namespace('account')
-
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class RecoveryController {
   constructor(private readonly recoveryService: RecoveryService) {}
 
   @Post('', {
     summary: 'Create password recovery',
+    scopes: ['sessions.write'],
     throttle: {
       limit: 10,
-      key: ({ body, ip }) => [`email:${body.email}`, `ip:${ip}`],
+      key: ['url:{url},email:{body-email}', 'url:{url},ip:{ip}'],
     },
     audit: {
       key: 'recovery.create',
@@ -41,17 +41,12 @@ export class RecoveryController {
   async createRecovery(
     @User() user: UsersDoc,
     @Body() input: CreateRecoveryDTO,
-    @Locale() locale: LocaleTranslator,
-
     @Req() request: NuvixRequest,
   ): Promise<IResponse<TokensDoc>> {
     return this.recoveryService.createRecovery({
       user,
       input,
-      locale,
-      project,
-      ip: request.ip,
-      userAgent: request.headers['user-agent'] || 'UNKNOWN',
+      request,
     })
   }
 

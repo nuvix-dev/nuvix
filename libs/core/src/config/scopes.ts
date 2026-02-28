@@ -2,171 +2,84 @@ const consoleScopes = {
   'project.read': {
     description: 'Access to read project details',
   },
-  'organization.create': {
-    description: 'Access to create organization',
-  },
-  'organization.read': {
-    description: 'Access to read organization details',
-  },
-  'organization.update': {
-    description: 'Access to update organization settings',
-  },
-  'organization.delete': {
-    description: 'Access to delete organization',
+  'organization.write': {
+    description: 'Access to create, update, and delete organization',
   },
 }
 
 export const scopes = {
-  // List of publicly visible scopes
   account: {
     description: 'Access to your account',
   },
-  'sessions.create': {
-    description: 'Access to create user sessions',
+
+  'sessions.write': {
+    description: 'Access to create, update, and delete user sessions',
   },
-  'sessions.update': {
-    description: 'Access to update user sessions',
-  },
-  'sessions.delete': {
-    description: 'Access to delete user sessions',
-  },
+
   'users.read': {
     description: "Access to read your project's users",
   },
-  'users.create': {
-    description: "Access to create your project's users",
+  'users.write': {
+    description: "Access to create, update, and delete your project's users",
   },
-  'users.update': {
-    description: "Access to update your project's users",
-  },
-  'users.delete': {
-    description: "Access to delete your project's users",
-  },
+
   'teams.read': {
     description: "Access to read your project's teams",
   },
-  'teams.create': {
-    description: "Access to create your project's teams",
+  'teams.write': {
+    description: "Access to create, update, and delete your project's teams",
   },
-  'teams.update': {
-    description: "Access to update your project's teams",
-  },
-  'teams.delete': {
-    description: "Access to delete your project's teams",
-  },
-  'databases.read': {
-    description: "Access to read your project's databases",
-  },
-  'databases.create': {
-    description: "Access to create your project's databases",
-  },
-  'databases.update': {
-    description: "Access to update your project's databases",
-  },
-  'databases.delete': {
-    description: "Access to delete your project's databases",
-  },
+
   'collections.read': {
     description: "Access to read your project's database collections",
   },
-  'collections.create': {
-    description: "Access to create your project's database collections",
+  'collections.write': {
+    description:
+      "Access to create, update, and delete your project's database collections",
   },
-  'collections.update': {
-    description: "Access to update your project's database collections",
-  },
-  'collections.delete': {
-    description: "Access to delete your project's database collections",
-  },
+
   'attributes.read': {
     description:
       "Access to read your project's database collection's attributes",
   },
-  'attributes.create': {
+  'attributes.write': {
     description:
-      "Access to create your project's database collection's attributes",
+      "Access to create, update, and delete your project's database collection's attributes",
   },
-  'attributes.update': {
-    description:
-      "Access to update your project's database collection's attributes",
-  },
-  'attributes.delete': {
-    description:
-      "Access to delete your project's database collection's attributes",
-  },
+
   'indexes.read': {
     description: "Access to read your project's database collection's indexes",
   },
-  'indexes.create': {
+  'indexes.write': {
     description:
-      "Access to create your project's database collection's indexes",
+      "Access to create, update, and delete your project's database collection's indexes",
   },
-  'indexes.update': {
-    description:
-      "Access to update your project's database collection's indexes",
-  },
-  'indexes.delete': {
-    description:
-      "Access to delete your project's database collection's indexes",
-  },
+
   'documents.read': {
     description: "Access to read your project's database documents",
   },
-  'documents.create': {
-    description: "Access to create your project's database documents",
+  'documents.write': {
+    description:
+      "Access to create, update, and delete your project's database documents",
   },
-  'documents.update': {
-    description: "Access to update your project's database documents",
-  },
-  'documents.delete': {
-    description: "Access to delete your project's database documents",
-  },
+
   'files.read': {
     description:
       "Access to read your project's storage files and preview images",
   },
-  'files.create': {
-    description: "Access to create your project's storage files",
+  'files.write': {
+    description:
+      "Access to create, update, and delete your project's storage files",
   },
-  'files.update': {
-    description: "Access to update your project's storage files",
-  },
-  'files.delete': {
-    description: "Access to delete your project's storage files",
-  },
+
   'buckets.read': {
     description: "Access to read your project's storage buckets",
   },
-  'buckets.create': {
-    description: "Access to create your project's storage buckets",
-  },
-  'buckets.update': {
-    description: "Access to update your project's storage buckets",
-  },
-  'buckets.delete': {
-    description: "Access to delete your project's storage buckets",
-  },
-  'functions.read': {
-    description: "Access to read your project's functions and code deployments",
-  },
-  'functions.create': {
+  'buckets.write': {
     description:
-      "Access to create your project's functions and code deployments",
+      "Access to create, update, and delete your project's storage buckets",
   },
-  'functions.update': {
-    description:
-      "Access to update your project's functions and code deployments",
-  },
-  'functions.delete': {
-    description:
-      "Access to delete your project's functions and code deployments",
-  },
-  'execution.read': {
-    description: "Access to read your project's execution logs",
-  },
-  'execution.create': {
-    description: "Access to execute your project's functions",
-  },
+
   'locale.read': {
     description: "Access to access your project's Locale service",
   },
@@ -176,131 +89,57 @@ export const scopes = {
   'health.read': {
     description: "Access to read your project's health status",
   },
+
   'providers.read': {
     description: "Access to read your project's providers",
   },
-  'providers.create': {
-    description: "Access to create your project's providers",
+  'providers.write': {
+    description:
+      "Access to create, update, and delete your project's providers",
   },
-  'providers.update': {
-    description: "Access to update your project's providers",
-  },
-  'providers.delete': {
-    description: "Access to delete your project's providers",
-  },
+
   'messages.read': {
     description: "Access to read your project's messages",
   },
-  'messages.create': {
-    description: "Access to create your project's messages",
+  'messages.write': {
+    description: "Access to create, update, and delete your project's messages",
   },
-  'messages.update': {
-    description: "Access to update your project's messages",
-  },
-  'messages.delete': {
-    description: "Access to delete your project's messages",
-  },
+
   'topics.read': {
     description: "Access to read your project's topics",
   },
-  'topics.create': {
-    description: "Access to create your project's topics",
+  'topics.write': {
+    description: "Access to create, update, and delete your project's topics",
   },
-  'topics.update': {
-    description: "Access to update your project's topics",
-  },
-  'topics.delete': {
-    description: "Access to delete your project's topics",
-  },
+
   'subscribers.read': {
     description: "Access to read your project's subscribers",
   },
-  'subscribers.create': {
-    description: "Access to create your project's subscribers",
+  'subscribers.write': {
+    description:
+      "Access to create, update, and delete your project's subscribers",
   },
-  'subscribers.update': {
-    description: "Access to update your project's subscribers",
-  },
-  'subscribers.delete': {
-    description: "Access to delete your project's subscribers",
-  },
+
   'targets.read': {
     description: "Access to read your project's targets",
   },
-  'targets.create': {
-    description: "Access to create your project's targets",
-  },
-  'targets.update': {
-    description: "Access to update your project's targets",
-  },
-  'targets.delete': {
-    description: "Access to delete your project's targets",
-  },
-  'rules.read': {
-    description: "Access to read your project's proxy rules",
-  },
-  'rules.create': {
-    description: "Access to create your project's proxy rules",
-  },
-  'rules.update': {
-    description: "Access to update your project's proxy rules",
-  },
-  'rules.delete': {
-    description: "Access to delete your project's proxy rules",
-  },
-  'migrations.read': {
-    description: "Access to read your project's migrations",
-  },
-  'migrations.create': {
-    description: "Access to create your project's migrations",
-  },
-  'migrations.update': {
-    description: "Access to update your project's migrations",
-  },
-  'migrations.delete': {
-    description: "Access to delete your project's migrations",
-  },
-  'vcs.read': {
-    description: "Access to read your project's VCS repositories",
-  },
-  'vcs.create': {
-    description: "Access to create your project's VCS repositories",
-  },
-  'vcs.update': {
-    description: "Access to update your project's VCS repositories",
-  },
-  'vcs.delete': {
-    description: "Access to delete your project's VCS repositories",
-  },
-  'assistant.read': {
-    description: 'Access to read the Assistant service',
+  'targets.write': {
+    description: "Access to create, update, and delete your project's targets",
   },
 
-  // schema
-
-  'schemas.create': {
-    description: 'Access to create a schema',
-  },
-  'schemas.update': {
-    description: 'Access to update a schema',
-  },
-  'schemas.delete': {
-    description: 'Access to delete a schema',
-  },
   'schemas.read': {
     description: 'Access to read a schema',
   },
+  'schemas.write': {
+    description: 'Access to create, update, and delete a schema',
+  },
+
   'schemas.tables.read': {
-    description: 'Access to read a schema tables',
+    description: 'Access to read schema tables',
   },
-  'schemas.tables.create': {
-    description: 'Access to create a schema tables',
+  'schemas.tables.write': {
+    description: 'Access to create, update, and delete schema tables',
   },
-  'schemas.tables.update': {
-    description: 'Access to update a schema tables',
-  },
-  'schemas.tables.delete': {
-    description: 'Access to delete a schema tables',
-  },
+
   ...consoleScopes,
 } as const

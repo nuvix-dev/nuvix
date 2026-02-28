@@ -10,8 +10,12 @@ import { Doc } from '@nuvix/db'
 import type { AuthType } from '../decorators'
 import { localeTranslatorInstance } from './locale.helper'
 import { Detector } from './detector.helper'
+import { Platform } from '../validators/network/platform'
 
 export class RequestContext {
+  private _allowedHostnames?: string[]
+  private _allowedSchemes?: string[]
+
   project: ProjectsDoc = new Doc()
   user: UsersDoc = new Doc()
   team?: TeamsDoc
@@ -41,12 +45,52 @@ export class RequestContext {
     return this._isAdminUser
   }
 
-  translator() {
+  /**
+   * Returns a locale translator instance for translating messages based on the request's locale.
+   */
+  public translator() {
+    // In the future, we can enhance this to return different translator instances based on the context (e.g., user preferences, project settings, etc.)
     return localeTranslatorInstance
   }
 
-  detector(userAgent: string = 'UNKNOWN') {
+  /**
+   * Returns a detector instance for detecting device, browser, and OS information based on the user agent string.
+   */
+  public detector(userAgent: string = 'UNKNOWN') {
     return new Detector(userAgent)
+  }
+
+  /**
+   * Returns the allowed hostnames for the project based on its configured platforms. This is used for validating redirect URLs and callback URLs to prevent open redirect vulnerabilities.
+   * The allowed hostnames are cached after the first retrieval for performance optimization.
+   */
+  public getAllowedHostnames(): string[] {
+    if (this._allowedHostnames !== undefined) {
+      return this._allowedHostnames
+    }
+
+    this._allowedHostnames = Platform.getHostnames(
+      this.project.get('platforms'),
+    )
+    return this._allowedHostnames
+  }
+
+  /**
+   * Returns the allowed schemes for the project based on its configured platforms. This is used for validating redirect URLs and callback URLs to prevent open redirect vulnerabilities.
+   * The allowed schemes are cached after the first retrieval for performance optimization.
+   * By default, it includes 'exp' for Expo apps and a custom scheme for Nuvix callbacks, in addition to schemes derived from the project's platforms.
+   */
+  public getAllowedSchemes(): string[] {
+    if (this._allowedSchemes !== undefined) {
+      return this._allowedSchemes
+    }
+
+    this._allowedSchemes = [
+      'exp',
+      `nuvix-callback-${this.project.getId()}`,
+      ...Platform.getSchemes(this.project.get('platforms')),
+    ]
+    return this._allowedSchemes
   }
 
   constructor(init?: Partial<RequestContext>) {

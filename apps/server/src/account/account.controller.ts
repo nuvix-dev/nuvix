@@ -43,7 +43,7 @@ export class AccountController {
 
   @Post('', {
     summary: 'Create Account',
-    scopes: 'sessions.create',
+    scopes: 'sessions.write',
     throttle: {
       limit: 10,
       configKey: 'create_account',

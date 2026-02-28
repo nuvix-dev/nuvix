@@ -50,6 +50,7 @@ export class SessionsController {
     summary: 'List Sessions',
     scopes: 'account',
     model: { type: Models.SESSION, list: true },
+    sensitiveFields: ['secret'],
     sdk: {
       name: 'listSessions',
       descMd: '/docs/references/account/list-sessions.md',
@@ -150,13 +151,13 @@ export class SessionsController {
 
   @Post(['sessions/email', 'sessions'], {
     summary: 'Create email password session',
-    scopes: 'sessions.create',
+    scopes: 'sessions.write',
     model: Models.SESSION,
     sensitiveFields: ['secret'],
     auth: [],
     throttle: {
       limit: 10,
-      key: 'email:{body-email}',
+      key: 'url:{url},email:{body-email}',
       configKey: 'create_email_session',
     },
     audit: {
@@ -186,7 +187,7 @@ export class SessionsController {
 
   @Post('sessions/anonymous', {
     summary: 'Create anonymous session',
-    scopes: 'sessions.create',
+    scopes: 'sessions.write',
     model: Models.SESSION,
     sensitiveFields: ['secret'],
     auth: [],
@@ -220,13 +221,13 @@ export class SessionsController {
 
   @Post('sessions/token', {
     summary: 'Create session',
-    scopes: 'sessions.create',
+    scopes: 'sessions.write',
     model: Models.SESSION,
     sensitiveFields: ['secret'],
     auth: [],
     throttle: {
       limit: 10,
-      key: 'ip:{ip},userId:{param-userId}',
+      key: 'ip:{ip},userId:{body-userId}',
       configKey: 'create_token_session',
     },
     audit: {
@@ -255,7 +256,7 @@ export class SessionsController {
 
   @Get('sessions/oauth2/:provider', {
     summary: 'Create OAuth2 session',
-    scopes: 'sessions.create',
+    scopes: 'sessions.write',
     auth: [],
     throttle: {
       limit: 50,
@@ -384,7 +385,7 @@ export class SessionsController {
 
   @Get('tokens/oauth2/:provider', {
     summary: 'Create OAuth2 token',
-    scopes: 'sessions.create',
+    scopes: 'sessions.write',
     auth: [],
     throttle: {
       limit: 50,
@@ -412,13 +413,13 @@ export class SessionsController {
 
   @Post('tokens/magic-url', {
     summary: 'Create magic URL token',
-    scopes: 'sessions.create',
-    auth: [],
+    scopes: 'sessions.write',
     model: Models.TOKEN,
+    auth: [],
     sensitiveFields: ['secret'],
     throttle: {
       limit: 60,
-      key: ({ body, ip }) => [`email:${body.email}`, `ip:${ip}`],
+      key: ['url:{url},email:{body-email}', 'url:{url},ip:{ip}'],
     },
     audit: {
       key: 'session.create',
@@ -445,13 +446,13 @@ export class SessionsController {
 
   @Post('tokens/email', {
     summary: 'Create email token(OTP)',
-    scopes: 'sessions.create',
-    auth: [],
+    scopes: 'sessions.write',
     model: Models.TOKEN,
     sensitiveFields: ['secret'],
+    auth: [],
     throttle: {
       limit: 10,
-      key: ({ body, ip }) => [`email:${body.email}`, `ip:${ip}`],
+      key: ['url:{url},email:{body-email}', 'url:{url},ip:{ip}'],
     },
     audit: {
       key: 'session.create',
@@ -478,13 +479,13 @@ export class SessionsController {
 
   @Put('sessions/magic-url', {
     summary: 'Update magic URL session',
-    scopes: 'sessions.update',
+    scopes: 'sessions.write',
     auth: [],
     model: Models.SESSION,
     sensitiveFields: ['secret'],
     throttle: {
       limit: 10,
-      key: 'ip:{ip},userId:{param-userId}',
+      key: 'ip:{ip},userId:{body-userId}',
     },
     audit: {
       key: 'session.create',
@@ -512,13 +513,13 @@ export class SessionsController {
 
   @Put('sessions/phone', {
     summary: 'Update phone session',
-    scopes: 'sessions.update',
-    auth: [],
+    scopes: 'sessions.write',
     model: Models.SESSION,
+    auth: [],
     sensitiveFields: ['secret'],
     throttle: {
       limit: 10,
-      key: 'ip:{ip},userId:{param-userId}',
+      key: 'ip:{ip},userId:{body-userId}',
     },
     audit: {
       key: 'session.create',
@@ -546,13 +547,13 @@ export class SessionsController {
 
   @Post(['tokens/phone', 'sessions/phone'], {
     summary: 'Create phone token',
-    scopes: 'sessions.create',
-    auth: [],
+    scopes: 'sessions.write',
     model: Models.TOKEN,
     sensitiveFields: ['secret'],
+    auth: [],
     throttle: {
       limit: 10,
-      key: ({ body, ip }) => [`phone:${body.phone}`, `ip:${ip}`],
+      key: ['url:{url},phone:{body-phone}', 'url:{url},ip:{ip}'],
     },
     audit: {
       key: 'session.create',
@@ -580,11 +581,11 @@ export class SessionsController {
   @Post(['jwts', 'jwt'], {
     summary: 'Create JWT',
     scopes: 'account',
-    auth: AuthType.JWT, // Only allow users with JWT auth to create another JWT
     model: Models.JWT,
+    auth: [AuthType.SESSION, AuthType.JWT], // Only allow users with valid session or JWT to create a new JWT
     throttle: {
       limit: 100,
-      key: 'userId:{userId}',
+      key: 'url:{url},userId:{userId}',
     },
     sdk: {
       name: 'createJWT',
