@@ -12,7 +12,6 @@ import {
   CurrentDatabase,
   CurrentSchemaType,
   Namespace,
-  Project,
   QueryFilter,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
@@ -24,7 +23,7 @@ import {
 } from '@nuvix/core/resolvers'
 import type { Database, Query as Queries } from '@nuvix/db'
 import { IListResponse, IResponse, SchemaType } from '@nuvix/utils'
-import type { IndexesDoc, ProjectsDoc } from '@nuvix/utils/types'
+import type { IndexesDoc } from '@nuvix/utils/types'
 import { CollectionParamsDTO } from '../DTO/collection.dto'
 import { CreateIndexDTO, IndexParamsDTO } from './DTO/indexes.dto'
 import { IndexesService } from './indexes.service'
@@ -43,7 +42,7 @@ export class IndexesController {
 
   @Post('', {
     summary: 'Create index',
-    scopes: ['collections.update', 'indexes.create'],
+    scopes: ['collections.write', 'indexes.write'],
     model: Models.INDEX,
     audit: {
       key: 'index.create',
@@ -52,7 +51,6 @@ export class IndexesController {
     sdk: {
       name: 'createIndex',
       descMd: '/docs/references/schemas/collections/create-index.md',
-      code: 202,
     },
   })
   async createIndex(
@@ -60,7 +58,7 @@ export class IndexesController {
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() input: CreateIndexDTO,
   ): Promise<IResponse<IndexesDoc>> {
-    return this.indexesService.createIndex(collectionId, input, project)
+    return this.indexesService.createIndex(db, collectionId, input)
   }
 
   @Get('', {
@@ -77,7 +75,7 @@ export class IndexesController {
     @Param() { collectionId }: CollectionParamsDTO,
     @QueryFilter(IndexesQueryPipe) queries?: Queries[],
   ): Promise<IListResponse<IndexesDoc>> {
-    return this.indexesService.getIndexes(collectionId, queries)
+    return this.indexesService.getIndexes(db, collectionId, queries)
   }
 
   @Get(':key', {
@@ -93,12 +91,12 @@ export class IndexesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId, key }: IndexParamsDTO,
   ): Promise<IResponse<IndexesDoc>> {
-    return this.indexesService.getIndex(collectionId, key)
+    return this.indexesService.getIndex(db, collectionId, key)
   }
 
   @Delete(':key', {
     summary: 'Delete index',
-    scopes: ['collections.update', 'indexes.delete'],
+    scopes: ['collections.write', 'indexes.write'],
     model: Models.INDEX,
     audit: {
       key: 'index.delete',
@@ -107,13 +105,12 @@ export class IndexesController {
     sdk: {
       name: 'deleteIndex',
       descMd: '/docs/references/schemas/collections/delete-index.md',
-      code: 202,
     },
   })
   async removeIndex(
     @CurrentDatabase() db: Database,
     @Param() { collectionId, key }: IndexParamsDTO,
   ): Promise<IndexesDoc> {
-    return this.indexesService.deleteIndex(collectionId, key, project)
+    return this.indexesService.deleteIndex(db, collectionId, key)
   }
 }
