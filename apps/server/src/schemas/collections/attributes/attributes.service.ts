@@ -30,7 +30,6 @@ import type {
   Attributes,
   AttributesDoc,
   CollectionsDoc,
-  ProjectsDoc,
 } from '@nuvix/utils/types'
 import type { Queue } from 'bullmq'
 // DTOs
@@ -80,8 +79,12 @@ export class AttributesService {
   /**
    * Get attributes for a collection.
    */
-  async getAttributes(collectionId: string, queries: Query[] = []) {
-    const collection = await this.db.getDocument(
+  async getAttributes(
+    db: Database,
+    collectionId: string,
+    queries: Query[] = [],
+  ) {
+    const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -94,8 +97,8 @@ export class AttributesService {
     )
 
     const filterQueries = Query.groupByType(queries).filters
-    const attributes = await this.db.find(SchemaMeta.attributes, queries)
-    const total = await this.db.count(
+    const attributes = await db.find(SchemaMeta.attributes, queries)
+    const total = await db.count(
       SchemaMeta.attributes,
       filterQueries,
       configuration.limits.limitCount,
@@ -111,6 +114,7 @@ export class AttributesService {
    * Create string attribute.
    */
   async createStringAttribute(
+    db: Database,
     collectionId: string,
     input: CreateStringAttributeDTO,
   ) {
@@ -139,13 +143,14 @@ export class AttributesService {
       filters,
     })
 
-    return this.createAttribute(collectionId, attribute, project)
+    return this.createAttribute(db, collectionId, attribute)
   }
 
   /**
    * Create email attribute.
    */
   async createEmailAttribute(
+    db: Database,
     collectionId: string,
     input: CreateEmailAttributeDTO,
   ) {
@@ -161,13 +166,14 @@ export class AttributesService {
       format: AttributeFormat.EMAIL,
     })
 
-    return this.createAttribute(collectionId, attribute, project)
+    return this.createAttribute(db, collectionId, attribute)
   }
 
   /**
    * Create enum attribute.
    */
   async createEnumAttribute(
+    db: Database,
     collectionId: string,
     input: CreateEnumAttributeDTO,
   ) {
@@ -191,13 +197,17 @@ export class AttributesService {
       formatOptions: { elements },
     })
 
-    return this.createAttribute(collectionId, attribute, project)
+    return this.createAttribute(db, collectionId, attribute)
   }
 
   /**
    * Create IP attribute.
    */
-  async createIPAttribute(collectionId: string, input: CreateIpAttributeDTO) {
+  async createIPAttribute(
+    db: Database,
+    collectionId: string,
+    input: CreateIpAttributeDTO,
+  ) {
     const { key, required, default: defaultValue, array } = input
 
     const attribute = new Doc<Attributes>({
@@ -210,13 +220,17 @@ export class AttributesService {
       format: AttributeFormat.IP,
     })
 
-    return this.createAttribute(collectionId, attribute, project)
+    return this.createAttribute(db, collectionId, attribute)
   }
 
   /**
    * Create URL attribute.
    */
-  async createURLAttribute(collectionId: string, input: CreateURLAttributeDTO) {
+  async createURLAttribute(
+    db: Database,
+    collectionId: string,
+    input: CreateURLAttributeDTO,
+  ) {
     const { key, required, default: defaultValue, array } = input
 
     const attribute = new Doc<Attributes>({
@@ -229,13 +243,14 @@ export class AttributesService {
       format: AttributeFormat.URL,
     })
 
-    return this.createAttribute(collectionId, attribute, project)
+    return this.createAttribute(db, collectionId, attribute)
   }
 
   /**
    * Create integer attribute.
    */
   async createIntegerAttribute(
+    db: Database,
     collectionId: string,
     input: CreateIntegerAttributeDTO,
   ) {
@@ -280,7 +295,7 @@ export class AttributesService {
       },
     })
 
-    attribute = await this.createAttribute(collectionId, attribute, project)
+    attribute = await this.createAttribute(db, collectionId, attribute)
 
     const formatOptions = attribute.get('formatOptions', {})
 
@@ -296,6 +311,7 @@ export class AttributesService {
    * Create a float attribute.
    */
   async createFloatAttribute(
+    db: Database,
     collectionId: string,
     input: CreateFloatAttributeDTO,
   ) {
@@ -335,9 +351,9 @@ export class AttributesService {
     })
 
     const createdAttribute = await this.createAttribute(
+      db,
       collectionId,
       attribute,
-      project,
     )
 
     const formatOptions = createdAttribute.get('formatOptions', {})
@@ -354,6 +370,7 @@ export class AttributesService {
    * Create a boolean attribute.
    */
   async createBooleanAttribute(
+    db: Database,
     collectionId: string,
     input: CreateBooleanAttributeDTO,
   ) {
@@ -368,13 +385,14 @@ export class AttributesService {
       array,
     })
 
-    return this.createAttribute(collectionId, attribute, project)
+    return this.createAttribute(db, collectionId, attribute)
   }
 
   /**
    * Create a date attribute.
    */
   async createDateAttribute(
+    db: Database,
     collectionId: string,
     input: CreateDatetimeAttributeDTO,
   ) {
@@ -389,20 +407,21 @@ export class AttributesService {
       array,
     })
 
-    return this.createAttribute(collectionId, attribute, project)
+    return this.createAttribute(db, collectionId, attribute)
   }
 
   /**
    * Create a relationship attribute.
    */
   async createRelationshipAttribute(
+    db: Database,
     collectionId: string,
     input: CreateRelationAttributeDTO,
   ) {
     const { key, type, twoWay, twoWayKey, onDelete, relatedCollectionId } =
       input
 
-    const collection = await this.db.getDocument(
+    const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -410,7 +429,7 @@ export class AttributesService {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
 
-    const relatedCollectionDocument = await this.db.getDocument(
+    const relatedCollectionDocument = await db.getDocument(
       SchemaMeta.collections,
       relatedCollectionId,
     )
@@ -419,7 +438,7 @@ export class AttributesService {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
 
-    const relatedCollection = await this.db.getCollection(
+    const relatedCollection = await db.getCollection(
       relatedCollectionDocument.getId(),
     )
 
@@ -482,14 +501,14 @@ export class AttributesService {
       },
     })
 
-    return this.createAttribute(collectionId, attribute, project)
+    return this.createAttribute(db, collectionId, attribute)
   }
 
   /**
    * Get an attribute.
    */
-  async getAttribute(collectionId: string, key: string) {
-    const collection = await this.db.getDocument(
+  async getAttribute(db: Database, collectionId: string, key: string) {
+    const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -498,7 +517,7 @@ export class AttributesService {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
 
-    const attribute = await this.db.getDocument(
+    const attribute = await db.getDocument(
       SchemaMeta.attributes,
       this.getAttrId(collection.getSequence(), key),
     )
@@ -519,6 +538,7 @@ export class AttributesService {
    * Update an string attribute.
    */
   async updateStringAttribute(
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateStringAttributeDTO,
@@ -526,6 +546,7 @@ export class AttributesService {
     const { size, required, default: defaultValue, newKey } = input
 
     return this.updateAttribute({
+      db,
       collectionId,
       key,
       type: AttributeType.String,
@@ -541,6 +562,7 @@ export class AttributesService {
    * Update email attribute.
    */
   async updateEmailAttribute(
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateEmailAttributeDTO,
@@ -548,6 +570,7 @@ export class AttributesService {
     const { required, default: defaultValue, newKey } = input
 
     return this.updateAttribute({
+      db,
       collectionId,
       key,
       type: AttributeType.String,
@@ -563,6 +586,7 @@ export class AttributesService {
    * Update enum attribute.
    */
   async updateEnumAttribute(
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateEnumAttributeDTO,
@@ -577,6 +601,7 @@ export class AttributesService {
     }
 
     return this.updateAttribute({
+      db,
       collectionId,
       key,
       type: AttributeType.String,
@@ -592,6 +617,7 @@ export class AttributesService {
    * Update IP attribute.
    */
   async updateIPAttribute(
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateIpAttributeDTO,
@@ -599,6 +625,7 @@ export class AttributesService {
     const { required, default: defaultValue, newKey } = input
 
     return this.updateAttribute({
+      db,
       collectionId,
       key,
       type: AttributeType.String,
@@ -614,6 +641,7 @@ export class AttributesService {
    * Update URL attribute.
    */
   async updateURLAttribute(
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateURLAttributeDTO,
@@ -621,6 +649,7 @@ export class AttributesService {
     const { required, default: defaultValue, newKey } = input
 
     return this.updateAttribute({
+      db,
       collectionId,
       key,
       type: AttributeType.String,
@@ -636,6 +665,7 @@ export class AttributesService {
    * Update integer attribute.
    */
   async updateIntegerAttribute(
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateIntegerAttributeDTO,
@@ -643,6 +673,7 @@ export class AttributesService {
     const { required, default: defaultValue, newKey, min, max } = input
 
     const attribute = await this.updateAttribute({
+      db,
       collectionId,
       key,
       type: AttributeType.Integer,
@@ -666,6 +697,7 @@ export class AttributesService {
    * Update float attribute.
    */
   async updateFloatAttribute(
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateFloatAttributeDTO,
@@ -673,6 +705,7 @@ export class AttributesService {
     const { required, default: defaultValue, newKey, min, max } = input
 
     const attribute = await this.updateAttribute({
+      db,
       collectionId,
       key,
       type: AttributeType.Float,
@@ -696,6 +729,7 @@ export class AttributesService {
    * Update boolean attribute.
    */
   async updateBooleanAttribute(
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateBooleanAttributeDTO,
@@ -703,6 +737,7 @@ export class AttributesService {
     const { required, default: defaultValue, newKey } = input
 
     return this.updateAttribute({
+      db,
       collectionId,
       key,
       type: AttributeType.Boolean,
@@ -717,6 +752,7 @@ export class AttributesService {
    * Update date attribute.
    */
   async updateDateAttribute(
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateDatetimeAttributeDTO,
@@ -724,6 +760,7 @@ export class AttributesService {
     const { required, default: defaultValue, newKey } = input
 
     return this.updateAttribute({
+      db,
       collectionId,
       key,
       type: AttributeType.Timestamptz,
@@ -738,6 +775,7 @@ export class AttributesService {
    * Update relationship attribute.
    */
   async updateRelationshipAttribute(
+    db: Database,
     collectionId: string,
     key: string,
     input: UpdateRelationAttributeDTO,
@@ -745,6 +783,7 @@ export class AttributesService {
     const { onDelete, newKey } = input
 
     const attribute = await this.updateAttribute({
+      db,
       collectionId,
       key,
       type: AttributeType.Relationship,
@@ -765,7 +804,11 @@ export class AttributesService {
   /**
    * Create a new attribute.
    */
-  async createAttribute(collectionId: string, attribute: AttributesDoc) {
+  async createAttribute(
+    db: Database,
+    collectionId: string,
+    attribute: AttributesDoc,
+  ) {
     const key = attribute.get('key')
     const type = attribute.get('type') as AttributeType
     const size = attribute.get('size', 0)
@@ -777,7 +820,7 @@ export class AttributesService {
     const defaultValue = attribute.get('default', null)
     const options = attribute.get('options', {})
 
-    const collection = await this.db.getDocument(
+    const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -810,7 +853,7 @@ export class AttributesService {
     let relatedCollection!: CollectionsDoc
     if (type === AttributeType.Relationship) {
       options.side = RelationSide.Parent
-      relatedCollection = await this.db.getDocument(
+      relatedCollection = await db.getDocument(
         SchemaMeta.collections,
         options.relatedCollection ?? '',
       )
@@ -840,11 +883,8 @@ export class AttributesService {
         options,
       })
 
-      this.db.checkAttribute(collection as any, newAttribute as any)
-      attribute = await this.db.createDocument(
-        SchemaMeta.attributes,
-        newAttribute,
-      )
+      db.checkAttribute(collection as any, newAttribute as any)
+      attribute = await db.createDocument(SchemaMeta.attributes, newAttribute)
     } catch (error) {
       if (error instanceof DuplicateException) {
         throw new Exception(Exception.ATTRIBUTE_ALREADY_EXISTS)
@@ -858,8 +898,8 @@ export class AttributesService {
       throw error
     }
 
-    this.db.purgeCachedDocument(SchemaMeta.collections, collectionId)
-    this.db.purgeCachedCollection(collection.getId())
+    db.purgeCachedDocument(SchemaMeta.collections, collectionId)
+    db.purgeCachedCollection(collection.getId())
 
     if (type === AttributeType.Relationship && options.twoWay) {
       const twoWayKey = options.twoWayKey
@@ -887,10 +927,10 @@ export class AttributesService {
           options,
         })
 
-        this.db.checkAttribute(relatedCollection as any, twoWayAttribute as any)
-        await this.db.createDocument(SchemaMeta.attributes, twoWayAttribute)
+        db.checkAttribute(relatedCollection as any, twoWayAttribute as any)
+        await db.createDocument(SchemaMeta.attributes, twoWayAttribute)
       } catch (error) {
-        await this.db.deleteDocument(SchemaMeta.attributes, attribute.getId())
+        await db.deleteDocument(SchemaMeta.attributes, attribute.getId())
         if (error instanceof DuplicateException) {
           throw new Exception(Exception.ATTRIBUTE_ALREADY_EXISTS)
         }
@@ -903,18 +943,14 @@ export class AttributesService {
         throw error
       }
 
-      this.db.purgeCachedDocument(
-        SchemaMeta.collections,
-        relatedCollection.getId(),
-      )
-      this.db.purgeCachedCollection(relatedCollection.getId())
+      db.purgeCachedDocument(SchemaMeta.collections, relatedCollection.getId())
+      db.purgeCachedCollection(relatedCollection.getId())
     }
 
     await this.collectionsQueue.add(CollectionsJob.CREATE_ATTRIBUTE, {
-      database: this.db.schema,
+      database: db.schema,
       collection,
       attribute,
-      project,
     })
 
     return attribute
@@ -924,6 +960,7 @@ export class AttributesService {
    * Update an attribute.
    */
   async updateAttribute({
+    db,
     collectionId,
     key,
     type,
@@ -951,7 +988,7 @@ export class AttributesService {
     options: Record<string, any>
     newKey?: string
   }) {
-    const collection = await this.db.getDocument(
+    const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -960,7 +997,7 @@ export class AttributesService {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
 
-    let attribute = await this.db.getDocument(
+    let attribute = await db.getDocument(
       SchemaMeta.attributes,
       this.getAttrId(collection.getSequence(), key),
     )
@@ -1080,7 +1117,7 @@ export class AttributesService {
       }
       attribute.set('options', primaryDocumentOptions)
 
-      await this.db.updateRelationship({
+      await db.updateRelationship({
         collectionId: collection.getId(),
         id: key,
         newKey,
@@ -1088,12 +1125,12 @@ export class AttributesService {
       })
 
       if (primaryDocumentOptions.twoWay) {
-        const relatedCollection = await this.db.getDocument(
+        const relatedCollection = await db.getDocument(
           SchemaMeta.collections,
           primaryDocumentOptions.relatedCollection,
         )
 
-        const relatedAttribute = await this.db.getDocument(
+        const relatedAttribute = await db.getDocument(
           SchemaMeta.attributes,
           this.getRelatedAttrId(
             relatedCollection.getSequence(),
@@ -1110,20 +1147,20 @@ export class AttributesService {
           ...options,
         }
         relatedAttribute.set('options', relatedOptions)
-        await this.db.updateDocument(
+        await db.updateDocument(
           SchemaMeta.attributes,
           relatedAttribute.getId(),
           relatedAttribute,
         )
 
-        this.db.purgeCachedDocument(
+        db.purgeCachedDocument(
           SchemaMeta.collections,
           relatedCollection.getId(),
         )
       }
     } else {
       try {
-        await this.db.updateAttribute(collection.getId(), key, {
+        await db.updateAttribute(collection.getId(), key, {
           size,
           type: type as AttributeType,
           required,
@@ -1142,35 +1179,29 @@ export class AttributesService {
     if (newKey && key !== newKey) {
       const original = attribute.clone()
 
-      await this.db.deleteDocument(SchemaMeta.attributes, attribute.getId())
+      await db.deleteDocument(SchemaMeta.attributes, attribute.getId())
 
       attribute
         .set('$id', this.getAttrId(collection.getSequence(), newKey))
         .set('key', newKey)
 
       try {
-        attribute = await this.db.createDocument(
-          SchemaMeta.attributes,
-          attribute,
-        )
+        attribute = await db.createDocument(SchemaMeta.attributes, attribute)
       } catch {
-        attribute = await this.db.createDocument(
-          SchemaMeta.attributes,
-          original,
-        )
+        attribute = await db.createDocument(SchemaMeta.attributes, original)
       }
     } else {
-      attribute = await this.db.updateDocument(
+      attribute = await db.updateDocument(
         SchemaMeta.attributes,
         this.getAttrId(collection.getSequence(), key),
         attribute,
       )
     }
 
-    this.db.purgeCachedDocument(SchemaMeta.collections, collection.getId())
+    db.purgeCachedDocument(SchemaMeta.collections, collection.getId())
 
     this.event.emit(
-      `schema.${this.db.schema}.collection.${collectionId}.attribute.${key}.updated`,
+      `schema.${db.schema}.collection.${collectionId}.attribute.${key}.updated`,
       attribute.toObject(),
     )
 
@@ -1180,8 +1211,8 @@ export class AttributesService {
   /**
    * Delete an attribute.
    */
-  async deleteAttribute(collectionId: string, key: string) {
-    const collection = await this.db.getDocument(
+  async deleteAttribute(db: Database, collectionId: string, key: string) {
+    const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
     )
@@ -1190,7 +1221,7 @@ export class AttributesService {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
 
-    const attribute = await this.db.getDocument(
+    const attribute = await db.getDocument(
       SchemaMeta.attributes,
       this.getAttrId(collection.getSequence(), key),
     )
@@ -1201,20 +1232,20 @@ export class AttributesService {
 
     // Only update status if removing available attribute
     if (attribute.get('status') === Status.AVAILABLE) {
-      await this.db.updateDocument(
+      await db.updateDocument(
         SchemaMeta.attributes,
         attribute.getId(),
         attribute.set('status', Status.DELETING),
       )
     }
 
-    this.db.purgeCachedDocument(SchemaMeta.collections, collectionId)
-    this.db.purgeCachedCollection(collection.getId())
+    db.purgeCachedDocument(SchemaMeta.collections, collectionId)
+    db.purgeCachedCollection(collection.getId())
 
     if (attribute.get('type') === AttributeType.Relationship) {
       const options = attribute.get('options')
       if (options.twoWay) {
-        const relatedCollection = await this.db.getDocument(
+        const relatedCollection = await db.getDocument(
           SchemaMeta.collections,
           options.relatedCollection,
         )
@@ -1223,7 +1254,7 @@ export class AttributesService {
           throw new Exception(Exception.COLLECTION_NOT_FOUND)
         }
 
-        const relatedAttribute = await this.db.getDocument(
+        const relatedAttribute = await db.getDocument(
           SchemaMeta.attributes,
           this.getRelatedAttrId(
             relatedCollection.getSequence(),
@@ -1235,26 +1266,25 @@ export class AttributesService {
         }
 
         if (relatedAttribute.get('status') === Status.AVAILABLE) {
-          await this.db.updateDocument(
+          await db.updateDocument(
             SchemaMeta.attributes,
             relatedAttribute.getId(),
             relatedAttribute.set('status', Status.DELETING),
           )
         }
 
-        this.db.purgeCachedDocument(
+        db.purgeCachedDocument(
           SchemaMeta.collections,
           options.relatedCollection,
         )
-        this.db.purgeCachedCollection(relatedCollection.getId())
+        db.purgeCachedCollection(relatedCollection.getId())
       }
     }
 
     await this.collectionsQueue.add(CollectionsJob.DELETE_ATTRIBUTE, {
-      database: this.db.schema,
+      database: db.schema,
       collection,
       attribute,
-      project,
     })
 
     return attribute

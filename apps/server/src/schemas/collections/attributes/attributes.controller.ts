@@ -12,7 +12,6 @@ import {
   CurrentDatabase,
   CurrentSchemaType,
   Namespace,
-  Project,
   QueryFilter,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
@@ -24,7 +23,7 @@ import {
 } from '@nuvix/core/resolvers'
 import type { Database, Query as Queries } from '@nuvix/db'
 import { IListResponse, IResponse, SchemaType } from '@nuvix/utils'
-import type { AttributesDoc, ProjectsDoc } from '@nuvix/utils/types'
+import type { AttributesDoc } from '@nuvix/utils/types'
 import { CollectionParamsDTO } from '../DTO/collection.dto'
 import { AttributesService } from './attributes.service'
 // DTOs
@@ -78,12 +77,12 @@ export class AttributesController {
     @Param() { collectionId }: CollectionParamsDTO,
     @QueryFilter(AttributesQueryPipe) queries?: Queries[],
   ): Promise<IListResponse<AttributesDoc>> {
-    return this.attributesService.getAttributes(collectionId, queries)
+    return this.attributesService.getAttributes(db, collectionId, queries)
   }
 
   @Post('string', {
     summary: 'Create string attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_STRING,
     audit: {
       key: 'attribute.create',
@@ -101,6 +100,7 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateStringAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createStringAttribute(
+      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -109,7 +109,7 @@ export class AttributesController {
 
   @Post('email', {
     summary: 'Create email attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_EMAIL,
     audit: {
       key: 'attribute.create',
@@ -127,6 +127,7 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateEmailAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createEmailAttribute(
+      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -135,7 +136,7 @@ export class AttributesController {
 
   @Post('enum', {
     summary: 'Create enum attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_ENUM,
     audit: {
       key: 'attribute.create',
@@ -153,6 +154,7 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateEnumAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createEnumAttribute(
+      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -161,7 +163,7 @@ export class AttributesController {
 
   @Post('ip', {
     summary: 'Create IP address attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_IP,
     audit: {
       key: 'attribute.create',
@@ -179,6 +181,7 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateIpAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createIPAttribute(
+      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -187,7 +190,7 @@ export class AttributesController {
 
   @Post('url', {
     summary: 'Create URL attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_URL,
     audit: {
       key: 'attribute.create',
@@ -205,6 +208,7 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateURLAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createURLAttribute(
+      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -213,7 +217,7 @@ export class AttributesController {
 
   @Post('integer', {
     summary: 'Create integer attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_INTEGER,
     audit: {
       key: 'attribute.create',
@@ -232,6 +236,7 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateIntegerAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createIntegerAttribute(
+      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -240,7 +245,7 @@ export class AttributesController {
 
   @Post('float', {
     summary: 'Create float attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_FLOAT,
     audit: {
       key: 'attribute.create',
@@ -258,6 +263,7 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateFloatAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createFloatAttribute(
+      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -266,7 +272,7 @@ export class AttributesController {
 
   @Post('boolean', {
     summary: 'Create boolean attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_BOOLEAN,
     audit: {
       key: 'attribute.create',
@@ -285,6 +291,7 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateBooleanAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createBooleanAttribute(
+      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -293,7 +300,7 @@ export class AttributesController {
 
   @Post(['datetime', 'timestamptz'], {
     summary: 'Create datetime attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_DATETIME,
     audit: {
       key: 'attribute.create',
@@ -312,6 +319,7 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateDatetimeAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createDateAttribute(
+      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -320,7 +328,7 @@ export class AttributesController {
 
   @Post('relationship', {
     summary: 'Create relationship attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_RELATIONSHIP,
     audit: {
       key: 'attribute.create',
@@ -339,6 +347,7 @@ export class AttributesController {
     @Body() createAttributeDTO: CreateRelationAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createRelationshipAttribute(
+      db,
       collectionId,
       createAttributeDTO,
       project,
@@ -358,12 +367,12 @@ export class AttributesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId, key }: AttributeParamsDTO,
   ): Promise<IResponse<AttributesDoc>> {
-    return this.attributesService.getAttribute(collectionId, key)
+    return this.attributesService.getAttribute(db, collectionId, key)
   }
 
   @Patch('string/:key', {
     summary: 'Update string attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_STRING,
     audit: {
       key: 'attribute.update',
@@ -380,6 +389,7 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateStringAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateStringAttribute(
+      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -388,7 +398,7 @@ export class AttributesController {
 
   @Patch('email/:key', {
     summary: 'Update email attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_EMAIL,
     audit: {
       key: 'attribute.update',
@@ -405,6 +415,7 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateEmailAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateEmailAttribute(
+      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -413,7 +424,7 @@ export class AttributesController {
 
   @Patch('enum/:key', {
     summary: 'Update enum attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_ENUM,
     audit: {
       key: 'attribute.update',
@@ -430,6 +441,7 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateEnumAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateEnumAttribute(
+      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -438,7 +450,7 @@ export class AttributesController {
 
   @Patch('ip/:key', {
     summary: 'Update IP address attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_IP,
     audit: {
       key: 'attribute.update',
@@ -455,6 +467,7 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateIpAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateIPAttribute(
+      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -463,7 +476,7 @@ export class AttributesController {
 
   @Patch('url/:key', {
     summary: 'Update URL attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_URL,
     audit: {
       key: 'attribute.update',
@@ -480,6 +493,7 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateURLAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateURLAttribute(
+      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -488,7 +502,7 @@ export class AttributesController {
 
   @Patch('integer/:key', {
     summary: 'Update integer attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_INTEGER,
     audit: {
       key: 'attribute.update',
@@ -506,6 +520,7 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateIntegerAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateIntegerAttribute(
+      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -514,7 +529,7 @@ export class AttributesController {
 
   @Patch('float/:key', {
     summary: 'Update float attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_FLOAT,
     audit: {
       key: 'attribute.update',
@@ -531,6 +546,7 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateFloatAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateFloatAttribute(
+      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -539,7 +555,7 @@ export class AttributesController {
 
   @Patch('boolean/:key', {
     summary: 'Update boolean attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_BOOLEAN,
     audit: {
       key: 'attribute.update',
@@ -557,6 +573,7 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateBooleanAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateBooleanAttribute(
+      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -565,7 +582,7 @@ export class AttributesController {
 
   @Patch(['datetime/:key', 'timestamptz/:key'], {
     summary: 'Update DateTime attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_DATETIME,
     audit: {
       key: 'attribute.update',
@@ -583,6 +600,7 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateDatetimeAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateDateAttribute(
+      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -591,7 +609,7 @@ export class AttributesController {
 
   @Patch('relationship/:key', {
     summary: 'Update relationship attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_RELATIONSHIP,
     audit: {
       key: 'attribute.update',
@@ -609,6 +627,7 @@ export class AttributesController {
     @Body() updateAttributeDTO: UpdateRelationAttributeDTO,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.updateRelationshipAttribute(
+      db,
       collectionId,
       key,
       updateAttributeDTO,
@@ -617,7 +636,7 @@ export class AttributesController {
 
   @Delete(':key', {
     summary: 'Delete attribute',
-    scopes: ['collections.update', 'attributes.delete'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE,
     audit: {
       key: 'attribute.delete',
@@ -633,6 +652,11 @@ export class AttributesController {
     @CurrentDatabase() db: Database,
     @Param() { collectionId, key }: AttributeParamsDTO,
   ): Promise<AttributesDoc> {
-    return this.attributesService.deleteAttribute(collectionId, key, project)
+    return this.attributesService.deleteAttribute(
+      db,
+      collectionId,
+      key,
+      project,
+    )
   }
 }
