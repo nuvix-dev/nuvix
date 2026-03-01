@@ -1,8 +1,6 @@
-import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Exception } from '@nuvix/core/extend/exception'
-import { CollectionsJob, CollectionsJobData } from '@nuvix/core/resolvers'
 import {
   AttributeType,
   Database,
@@ -22,7 +20,6 @@ import {
 import {
   AttributeFormat,
   configuration,
-  QueueFor,
   SchemaMeta,
   Status,
 } from '@nuvix/utils'
@@ -31,7 +28,6 @@ import type {
   AttributesDoc,
   CollectionsDoc,
 } from '@nuvix/utils/types'
-import type { Queue } from 'bullmq'
 // DTOs
 import type {
   CreateBooleanAttributeDTO,
@@ -59,15 +55,7 @@ import { CollectionsHelper } from '@nuvix/core/helpers'
 
 @Injectable()
 export class AttributesService {
-  constructor(
-    @InjectQueue(QueueFor.COLLECTIONS)
-    private readonly collectionsQueue: Queue<
-      CollectionsJobData,
-      unknown,
-      CollectionsJob
-    >,
-    private readonly event: EventEmitter2,
-  ) {}
+  constructor(private readonly event: EventEmitter2) {}
 
   /**
    * Get attributes for a collection.
