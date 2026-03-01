@@ -49,10 +49,8 @@ export enum SchemaMeta {
 export enum QueueFor {
   AUDITS = 'audits',
   PROJECTS = 'projects',
-  FUNCTIONS = 'functions',
   MESSAGING = 'messaging',
   MAILS = 'mails',
-  COLLECTIONS = 'collections',
   STATS = 'stats',
   LOGS = 'logs',
   DELETES = 'deletes',

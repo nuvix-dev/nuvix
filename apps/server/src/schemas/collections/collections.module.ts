@@ -1,4 +1,3 @@
-import { BullModule } from '@nestjs/bullmq'
 import {
   type MiddlewareConsumer,
   Module,
@@ -12,7 +11,6 @@ import {
   SchemaHook,
   StatsHook,
 } from '@nuvix/core/resolvers'
-import { QueueFor } from '@nuvix/utils'
 import { AttributesController } from './attributes/attributes.controller'
 import { AttributesService } from './attributes/attributes.service'
 import { CollectionsController } from './collections.controller'
@@ -23,11 +21,6 @@ import { IndexesController } from './indexes/indexes.controller'
 import { IndexesService } from './indexes/indexes.service'
 
 @Module({
-  imports: [
-    BullModule.registerQueue({
-      name: QueueFor.COLLECTIONS,
-    }),
-  ],
   controllers: [
     CollectionsController,
     AttributesController,
