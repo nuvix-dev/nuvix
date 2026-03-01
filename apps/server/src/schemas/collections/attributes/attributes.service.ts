@@ -55,6 +55,7 @@ import type {
   UpdateStringAttributeDTO,
   UpdateURLAttributeDTO,
 } from './DTO/attributes.dto'
+import { CollectionsHelper } from '@nuvix/core/helpers'
 
 @Injectable()
 export class AttributesService {
@@ -67,14 +68,6 @@ export class AttributesService {
     >,
     private readonly event: EventEmitter2,
   ) {}
-
-  getRelatedAttrId(collectionSequence: number, key: string): string {
-    return `related_${collectionSequence}_${key}`
-  }
-
-  getAttrId(collectionSequence: number, key: string): string {
-    return `${collectionSequence}_${key}`
-  }
 
   /**
    * Get attributes for a collection.
@@ -519,7 +512,7 @@ export class AttributesService {
 
     const attribute = await db.getDocument(
       SchemaMeta.attributes,
-      this.getAttrId(collection.getSequence(), key),
+      CollectionsHelper.getAttrId(collection.getSequence(), key),
     )
 
     if (attribute.empty()) {
@@ -867,7 +860,7 @@ export class AttributesService {
 
     try {
       const newAttribute = new Doc<Attributes>({
-        $id: this.getAttrId(collection.getSequence(), key),
+        $id: CollectionsHelper.getAttrId(collection.getSequence(), key),
         key,
         collectionInternalId: collection.getSequence(),
         collectionId,
@@ -910,13 +903,16 @@ export class AttributesService {
       try {
         const twoWayAttribute = new Doc<Attributes>({
           $id: ID.custom(
-            this.getRelatedAttrId(relatedCollection.getSequence(), twoWayKey),
+            CollectionsHelper.getRelatedAttrId(
+              relatedCollection.getSequence(),
+              twoWayKey,
+            ),
           ),
           key: twoWayKey,
           collectionInternalId: relatedCollection.getSequence(),
           collectionId: relatedCollection.getId(),
           type,
-          status: Status.PENDING,
+          status: Status.AVAILABLE, // Set two way attribute as available directly since both attributes will be created in the same request
           size,
           required,
           default: defaultValue,
@@ -947,10 +943,22 @@ export class AttributesService {
       db.purgeCachedCollection(relatedCollection.getId())
     }
 
-    await this.collectionsQueue.add(CollectionsJob.CREATE_ATTRIBUTE, {
-      database: db.schema,
+    await CollectionsHelper.createAttribute({
+      db,
       collection,
       attribute,
+    }).catch(async error => {
+      await db.deleteDocument(SchemaMeta.attributes, attribute.getId())
+      if (type === AttributeType.Relationship && options.twoWay) {
+        await db.deleteDocument(
+          SchemaMeta.attributes,
+          CollectionsHelper.getRelatedAttrId(
+            relatedCollection.getSequence(),
+            options.twoWayKey,
+          ),
+        )
+      }
+      throw error
     })
 
     return attribute
@@ -999,7 +1007,7 @@ export class AttributesService {
 
     let attribute = await db.getDocument(
       SchemaMeta.attributes,
-      this.getAttrId(collection.getSequence(), key),
+      CollectionsHelper.getAttrId(collection.getSequence(), key),
     )
 
     if (attribute.empty()) {
@@ -1132,7 +1140,7 @@ export class AttributesService {
 
         const relatedAttribute = await db.getDocument(
           SchemaMeta.attributes,
-          this.getRelatedAttrId(
+          CollectionsHelper.getRelatedAttrId(
             relatedCollection.getSequence(),
             primaryDocumentOptions.twoWayKey,
           ),
@@ -1182,7 +1190,10 @@ export class AttributesService {
       await db.deleteDocument(SchemaMeta.attributes, attribute.getId())
 
       attribute
-        .set('$id', this.getAttrId(collection.getSequence(), newKey))
+        .set(
+          '$id',
+          CollectionsHelper.getAttrId(collection.getSequence(), newKey),
+        )
         .set('key', newKey)
 
       try {
@@ -1193,7 +1204,7 @@ export class AttributesService {
     } else {
       attribute = await db.updateDocument(
         SchemaMeta.attributes,
-        this.getAttrId(collection.getSequence(), key),
+        CollectionsHelper.getAttrId(collection.getSequence(), key),
         attribute,
       )
     }
@@ -1223,7 +1234,7 @@ export class AttributesService {
 
     const attribute = await db.getDocument(
       SchemaMeta.attributes,
-      this.getAttrId(collection.getSequence(), key),
+      CollectionsHelper.getAttrId(collection.getSequence(), key),
     )
 
     if (attribute.empty()) {
@@ -1231,13 +1242,13 @@ export class AttributesService {
     }
 
     // Only update status if removing available attribute
-    if (attribute.get('status') === Status.AVAILABLE) {
-      await db.updateDocument(
-        SchemaMeta.attributes,
-        attribute.getId(),
-        attribute.set('status', Status.DELETING),
-      )
-    }
+    // if (attribute.get('status') === Status.AVAILABLE) {
+    //   await db.updateDocument(
+    //     SchemaMeta.attributes,
+    //     attribute.getId(),
+    //     attribute.set('status', Status.DELETING),
+    //   )
+    // }
 
     db.purgeCachedDocument(SchemaMeta.collections, collectionId)
     db.purgeCachedCollection(collection.getId())
@@ -1256,7 +1267,7 @@ export class AttributesService {
 
         const relatedAttribute = await db.getDocument(
           SchemaMeta.attributes,
-          this.getRelatedAttrId(
+          CollectionsHelper.getRelatedAttrId(
             relatedCollection.getSequence(),
             options.twoWayKey,
           ),
@@ -1265,13 +1276,13 @@ export class AttributesService {
           throw new Exception(Exception.ATTRIBUTE_NOT_FOUND)
         }
 
-        if (relatedAttribute.get('status') === Status.AVAILABLE) {
-          await db.updateDocument(
-            SchemaMeta.attributes,
-            relatedAttribute.getId(),
-            relatedAttribute.set('status', Status.DELETING),
-          )
-        }
+        // if (relatedAttribute.get('status') === Status.AVAILABLE) {
+        //   await db.updateDocument(
+        //     SchemaMeta.attributes,
+        //     relatedAttribute.getId(),
+        //     relatedAttribute.set('status', Status.DELETING),
+        //   )
+        // }
 
         db.purgeCachedDocument(
           SchemaMeta.collections,
@@ -1281,12 +1292,12 @@ export class AttributesService {
       }
     }
 
-    await this.collectionsQueue.add(CollectionsJob.DELETE_ATTRIBUTE, {
-      database: db.schema,
+    await CollectionsHelper.deleteAttribute({
+      db,
       collection,
       attribute,
     })
 
-    return attribute
+    return
   }
 }
