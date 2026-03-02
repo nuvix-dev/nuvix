@@ -117,4 +117,28 @@ export const services = {
     optional: true,
     icon: '/images/services/messaging.png',
   },
+  projects: {
+    key: 'projects',
+    name: 'Projects',
+    subtitle:
+      'The Projects service allows you to manage your projects and their resources.',
+    sdk: true,
+    docs: true,
+    docsUrl: 'https://nuvix.in/docs/client/projects',
+    tests: false,
+    optional: true,
+    icon: '/images/services/projects.png',
+  },
+  project: {
+    key: 'project',
+    name: 'Project',
+    subtitle:
+      'The Project service allows you to manage your project and its resources.',
+    sdk: true,
+    docs: true,
+    docsUrl: 'https://nuvix.in/docs/client/projects',
+    tests: false,
+    optional: true,
+    icon: '/images/services/projects.png',
+  },
 } as const

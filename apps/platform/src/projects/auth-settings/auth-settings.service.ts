@@ -13,7 +13,7 @@ export class AuthSettingsService {
   private readonly db: Database
 
   constructor(private coreService: CoreService) {
-    this.db = this.coreService.getPlatformDb()
+    this.db = this.coreService.getInternalDatabase()
   }
 
   /**

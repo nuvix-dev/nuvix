@@ -46,7 +46,7 @@ export class WebhooksController {
 
   @Post('', {
     summary: 'Create webhook',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.WEBHOOK,
     sdk: {
       name: 'createWebhook',
@@ -77,7 +77,7 @@ export class WebhooksController {
 
   @Put(':webhookId', {
     summary: 'Update webhook',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.WEBHOOK,
     sdk: {
       name: 'updateWebhook',
@@ -93,7 +93,7 @@ export class WebhooksController {
 
   @Patch(':webhookId/signature', {
     summary: 'Update webhook signature key',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.WEBHOOK,
     sdk: {
       name: 'updateWebhookSignature',
@@ -108,7 +108,7 @@ export class WebhooksController {
 
   @Delete(':webhookId', {
     summary: 'Delete webhook',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     sdk: {
       name: 'deleteWebhook',
       descMd: '/docs/references/projects/delete-webhook.md',

@@ -39,7 +39,7 @@ export class AuthSettingsController {
 
   @Patch('session-alerts', {
     summary: 'Update project sessions emails',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
     sdk: {
       name: 'updateSessionAlerts',
@@ -55,7 +55,7 @@ export class AuthSettingsController {
 
   @Patch('limit', {
     summary: 'Update project users limit',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
     sdk: {
       name: 'updateAuthLimit',
@@ -71,7 +71,7 @@ export class AuthSettingsController {
 
   @Patch('duration', {
     summary: 'Update project authentication duration',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
     sdk: {
       name: 'updateAuthDuration',
@@ -90,7 +90,7 @@ export class AuthSettingsController {
 
   @Patch('password-history', {
     summary: 'Update authentication password history',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
     sdk: {
       name: 'updateAuthPasswordHistory',
@@ -109,7 +109,7 @@ export class AuthSettingsController {
 
   @Patch('password-dictionary', {
     summary: 'Update authentication password dictionary status',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
     sdk: {
       name: 'updateAuthPasswordDictionary',
@@ -128,7 +128,7 @@ export class AuthSettingsController {
 
   @Patch('personal-data', {
     summary: 'Update personal data check',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
     sdk: {
       name: 'updatePersonalDataCheck',
@@ -144,7 +144,7 @@ export class AuthSettingsController {
 
   @Patch('max-sessions', {
     summary: 'Update project user sessions limit',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
     sdk: {
       name: 'updateAuthSessionsLimit',
@@ -160,7 +160,7 @@ export class AuthSettingsController {
 
   @Patch('mock-numbers', {
     summary: 'Update the mock numbers for the project',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
     sdk: {
       name: 'updateMockNumbers',
@@ -176,7 +176,7 @@ export class AuthSettingsController {
 
   @Patch('memberships-privacy', {
     summary: 'Update project memberships privacy attributes',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
     sdk: {
       name: 'updateMembershipsPrivacy',
@@ -192,7 +192,7 @@ export class AuthSettingsController {
 
   @Patch(':method', {
     summary: 'Update project auth method status',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
     sdk: {
       name: 'updateAuthStatus',

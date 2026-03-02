@@ -27,7 +27,7 @@ export class MetadataController {
 
   @Put('exposed-schemas', {
     summary: 'Update Exposed Schemas',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
   })
   async updateExposedSchemas(

@@ -8,7 +8,7 @@ export class MetadataService {
   private readonly db: Database
 
   constructor(private coreService: CoreService) {
-    this.db = this.coreService.getPlatformDb()
+    this.db = this.coreService.getInternalDatabase()
   }
 
   async updateExposedSchemas(projectId: string, schemas: string[]) {

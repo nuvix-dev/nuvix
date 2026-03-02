@@ -3,17 +3,11 @@ import {
   ParseDatePipe,
   Query,
   Req,
-  UseGuards,
   UseInterceptors,
   VERSION_NEUTRAL,
 } from '@nestjs/common'
-import { Get } from '@nuvix/core'
-import {
-  Auth,
-  AuthType,
-  ProjectDatabase,
-  ProjectPg,
-} from '@nuvix/core/decorators'
+import { CoreService, Get } from '@nuvix/core'
+import { Auth, AuthType } from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Models } from '@nuvix/core/helpers'
 import {
@@ -37,9 +31,10 @@ import {
 
 @Controller({ version: ['1', VERSION_NEUTRAL], path: 'project' })
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
-
 @Auth([AuthType.ADMIN])
 export class ProjectController {
+  constructor(private readonly coreService: CoreService) {}
+
   @Get('usage', {
     summary: 'Get project usage stats',
     scopes: 'project.read',
@@ -50,7 +45,6 @@ export class ProjectController {
     },
   })
   async getUsage(
-    @ProjectDatabase() projectDb: Database,
     @Query('startDate', new ParseDatePipe()) startDate: Date,
     @Query('endDate', new ParseDatePipe()) endDate: Date,
     @Query('period') period: any = MetricPeriod.DAY,
@@ -67,24 +61,16 @@ export class ProjectController {
 
     const metrics = {
       total: [
-        MetricFor.EXECUTIONS,
-        MetricFor.EXECUTIONS_MB_SECONDS,
-        MetricFor.BUILDS_MB_SECONDS,
         MetricFor.DOCUMENTS,
         MetricFor.USERS,
         MetricFor.BUCKETS,
         MetricFor.FILES_STORAGE,
-        MetricFor.DEPLOYMENTS_STORAGE,
-        MetricFor.BUILDS_STORAGE,
       ],
       period: [
         MetricFor.REQUESTS,
         MetricFor.INBOUND,
         MetricFor.OUTBOUND,
         MetricFor.USERS,
-        MetricFor.EXECUTIONS,
-        MetricFor.EXECUTIONS_MB_SECONDS,
-        MetricFor.BUILDS_MB_SECONDS,
       ],
     }
 
@@ -103,23 +89,27 @@ export class ProjectController {
     await Authorization.skip(async () => {
       // Fetch total metrics
       for (const metric of metrics.total) {
-        const result = await projectDb.findOne('stats', qb =>
-          qb.equal('metric', metric).equal('period', MetricPeriod.INF),
-        )
+        const result = await this.coreService
+          .getDatabase()
+          .findOne('stats', qb =>
+            qb.equal('metric', metric).equal('period', MetricPeriod.INF),
+          )
         total[metric] = result?.get('value') ?? 0
       }
 
       // Fetch period metrics
       for (const metric of metrics.period) {
-        const results = await projectDb.find('stats', qb =>
-          qb
-            .equal('metric', metric)
-            .equal('period', period)
-            .greaterThanEqual('time', firstDay.toISOString())
-            .lessThan('time', lastDay.toISOString())
-            .limit(limit)
-            .orderDesc('time'),
-        )
+        const results = await this.coreService
+          .getDatabase()
+          .find('stats', qb =>
+            qb
+              .equal('metric', metric)
+              .equal('period', period)
+              .greaterThanEqual('time', firstDay.toISOString())
+              .lessThan('time', lastDay.toISOString())
+              .limit(limit)
+              .orderDesc('time'),
+          )
         stats[metric] = {}
         for (const result of results) {
           const time = result.get('time') as string
@@ -148,68 +138,7 @@ export class ProjectController {
     }
 
     // Create breakdowns
-    const functions = await projectDb.find('functions')
-    const buckets = await projectDb.find('buckets')
-
-    const executionsBreakdown = await Promise.all(
-      functions.map(async func => {
-        const id = func.getId()
-        const name = func.get('name')
-        const metric = MetricFor.FUNCTION_ID_EXECUTIONS.replace(
-          '{functionInternalId}',
-          func.getSequence().toString(),
-        )
-        const result = await projectDb.findOne('stats', qb =>
-          qb.equal('metric', metric).equal('period', 'inf'),
-        )
-
-        return {
-          resourceId: id,
-          name: name,
-          value: result?.get('value') ?? 0,
-        }
-      }),
-    )
-
-    const executionsMbSecondsBreakdown = await Promise.all(
-      functions.map(async func => {
-        const id = func.getId()
-        const name = func.get('name')
-        const metric = MetricFor.FUNCTION_ID_EXECUTIONS_MB_SECONDS.replace(
-          '{functionInternalId}',
-          func.getSequence().toString(),
-        )
-        const result = await projectDb.findOne('stats', qb =>
-          qb.equal('metric', metric).equal('period', 'inf'),
-        )
-
-        return {
-          resourceId: id,
-          name: name,
-          value: result?.get('value') ?? 0,
-        }
-      }),
-    )
-
-    const buildsMbSecondsBreakdown = await Promise.all(
-      functions.map(async func => {
-        const id = func.getId()
-        const name = func.get('name')
-        const metric = MetricFor.FUNCTION_ID_BUILDS_MB_SECONDS.replace(
-          '{functionInternalId}',
-          func.getSequence().toString(),
-        )
-        const result = await projectDb.findOne('stats', qb =>
-          qb.equal('metric', metric).equal('period', 'inf'),
-        )
-
-        return {
-          resourceId: id,
-          name: name,
-          value: result?.get('value') ?? 0,
-        }
-      }),
-    )
+    const buckets = await this.coreService.getDatabase().find('buckets')
 
     const bucketsBreakdown = await Promise.all(
       buckets.map(async bucket => {
@@ -219,9 +148,11 @@ export class ProjectController {
           '{bucketInternalId}',
           bucket.getSequence().toString(),
         )
-        const result = await projectDb.findOne('stats', qb =>
-          qb.equal('metric', metric).equal('period', 'inf'),
-        )
+        const result = await this.coreService
+          .getDatabase()
+          .findOne('stats', qb =>
+            qb.equal('metric', metric).equal('period', 'inf'),
+          )
 
         return {
           resourceId: id,
@@ -251,23 +182,11 @@ export class ProjectController {
       requests: usage[MetricFor.REQUESTS] || [],
       network,
       users: usage[MetricFor.USERS] || [],
-      executions: usage[MetricFor.EXECUTIONS] || [],
-      executionsTotal: total[MetricFor.EXECUTIONS] || 0,
-      executionsMbSecondsTotal: total[MetricFor.EXECUTIONS_MB_SECONDS] || 0,
-      buildsMbSecondsTotal: total[MetricFor.BUILDS_MB_SECONDS] || 0,
       documentsTotal: total[MetricFor.DOCUMENTS] || 0,
       usersTotal: total[MetricFor.USERS] || 0,
       bucketsTotal: total[MetricFor.BUCKETS] || 0,
       filesStorageTotal: total[MetricFor.FILES_STORAGE] || 0,
-      functionsStorageTotal:
-        (total[MetricFor.DEPLOYMENTS_STORAGE] || 0) +
-        (total[MetricFor.BUILDS_STORAGE] || 0),
-      buildsStorageTotal: total[MetricFor.BUILDS_STORAGE] || 0,
-      deploymentsStorageTotal: total[MetricFor.DEPLOYMENTS_STORAGE] || 0,
-      executionsBreakdown,
       bucketsBreakdown,
-      executionsMbSecondsBreakdown,
-      buildsMbSecondsBreakdown,
     }
   }
 
@@ -275,7 +194,8 @@ export class ProjectController {
     summary: 'Get Project Logs',
     scopes: 'project.read',
   })
-  async getLogs(@Req() req: NuvixRequest, @ProjectPg() dataSource: DataSource) {
+  async getLogs(@Req() req: NuvixRequest) {
+    const dataSource = this.coreService.getDataSourceWithMainPool()
     const qb = dataSource.qb('api_logs').withSchema(Schemas.System)
     const astToQueryBuilder = new ASTToQueryBuilder(qb, dataSource)
 

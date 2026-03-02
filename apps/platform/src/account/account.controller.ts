@@ -13,6 +13,7 @@ import {
 } from '@nestjs/common'
 import {
   AuditEvent,
+  Ctx,
   Locale,
   ResModel,
   Scope,
@@ -20,7 +21,7 @@ import {
   User,
 } from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
-import { LocaleTranslator, Models } from '@nuvix/core/helpers'
+import { LocaleTranslator, Models, RequestContext } from '@nuvix/core/helpers'
 import { ConsoleInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import type { UsersDoc } from '@nuvix/utils/types'
 import { AccountService } from './account.service'
@@ -83,11 +84,8 @@ export class AccountController {
   @Get('sessions')
   @Scope('account')
   @ResModel(Models.SESSION, { list: true })
-  async getSessions(
-    @User() user: UsersDoc,
-    @Locale() locale: LocaleTranslator,
-  ) {
-    return this.accountService.getSessions(user, locale)
+  async getSessions(@User() user: UsersDoc, @Ctx() ctx: RequestContext) {
+    return this.accountService.getSessions(user, ctx)
   }
 
   @Delete('sessions')
@@ -109,9 +107,9 @@ export class AccountController {
   async getSession(
     @User() user: UsersDoc,
     @Param('id') sessionId: string,
-    @Locale() locale: LocaleTranslator,
+    @Ctx() ctx: RequestContext,
   ) {
-    return this.accountService.getSession(user, sessionId, locale)
+    return this.accountService.getSession(user, sessionId, ctx)
   }
 
   @Delete('sessions/:id')
@@ -152,12 +150,10 @@ export class AccountController {
     @Body() input: CreateEmailSessionDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
-    @Locale() locale: LocaleTranslator,
   ) {
     return this.accountService.createEmailSession(
       user,
       input,
-      locale,
       request,
       response,
     )
