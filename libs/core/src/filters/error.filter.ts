@@ -30,7 +30,6 @@ export class ErrorFilter implements ExceptionFilter {
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp()
     const response = ctx.getResponse<NuvixRes>()
-    const request = ctx.getRequest<NuvixRequest>()
 
     let status: number
     let message: string
@@ -123,8 +122,6 @@ export class ErrorFilter implements ExceptionFilter {
     } else if (debugErrors) {
       this.logger.debug(exception)
     }
-
-    request.error = { message, type, ...extra }
 
     if (!configuration.app.isProduction && debugErrors) {
       extra.exception = (exception as any)?.stack

@@ -27,19 +27,21 @@ import {
 
 @Injectable()
 export class SchemasService {
+  private readonly pg: DataSource
+  constructor() {}
+
   async select({
-    pg,
     table,
     url,
     limit,
     offset,
     schema,
-    project,
+
     context,
   }: Select) {
-    const qb = pg.qb(table).withSchema(schema)
+    const qb = this.pg.qb(table).withSchema(schema)
     const allowedSchemas = project.get('metadata')?.allowedSchemas || []
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, pg, {
+    const astToQueryBuilder = new ASTToQueryBuilder(qb, this.pg, {
       allowedSchemas,
     })
 
@@ -66,29 +68,20 @@ export class SchemasService {
     context: Record<string, any>,
     callback: () => Promise<any>,
   ) {
-    return pg.transaction(async () => {
+    return this.pg.transaction(async () => {
       const { role, request, ...extra } = context as any
-      await pg.execute(`SET LOCAL ROLE ${pg.escapeIdentifier(role)};`)
+      await this.pg.execute(`SET LOCAL ROLE ${pg.escapeIdentifier(role)};`)
       await setupDatabaseMeta({
         request,
         extra,
-        client: pg,
+        client: this.pg,
         extraPrefix: 'request.auth',
       })
       return callback()
     })
   }
 
-  async insert({
-    pg,
-    table,
-    input,
-    columns,
-    schema,
-    url,
-    context,
-    project,
-  }: Insert) {
+  async insert({ table, input, columns, schema, url, context }: Insert) {
     if (!input) {
       throw new Exception(
         Exception.INVALID_PARAMS,
@@ -123,22 +116,21 @@ export class SchemasService {
       data = input
     }
 
-    const qb = pg.qb(table).withSchema(schema)
+    const qb = this.pg.qb(table).withSchema(schema)
     const { select } = this.getParamsFromUrl(url, table)
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, pg)
+    const astToQueryBuilder = new ASTToQueryBuilder(qb, this.pg)
 
     astToQueryBuilder.applyReturning(select)
     qb.insert(data)
 
-    return this.withMetaTransaction(pg, project, context, async () =>
+    return this.withMetaTransaction(pg, context, async () =>
       qb.catch(e => this.processError(e)),
     )
   }
 
   async update({
-    pg,
     table,
-    project,
+
     input,
     columns,
     schema,
@@ -168,10 +160,10 @@ export class SchemasService {
       data = input
     }
 
-    const qb = pg.qb(table).withSchema(schema)
+    const qb = this.pg.qb(table).withSchema(schema)
     const { select, filter, order } = this.getParamsFromUrl(url, table)
     const allowedSchemas = project.get('metadata')?.allowedSchemas || []
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, pg, {
+    const astToQueryBuilder = new ASTToQueryBuilder(qb, this.pg, {
       allowedSchemas,
     })
 
@@ -192,15 +184,14 @@ export class SchemasService {
     })
     qb.update(data)
 
-    return this.withMetaTransaction(pg, project, context, async () =>
+    return this.withMetaTransaction(pg, context, async () =>
       qb.catch(e => this.processError(e)),
     )
   }
 
   async delete({
-    pg,
     table,
-    project,
+
     schema,
     url,
     limit,
@@ -208,10 +199,10 @@ export class SchemasService {
     force,
     context,
   }: Delete) {
-    const qb = pg.table(table).withSchema(schema)
+    const qb = this.pg.table(table).withSchema(schema)
     const { select, filter, order } = this.getParamsFromUrl(url, table)
     const allowedSchemas = project.get('metadata')?.allowedSchemas || []
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, pg, {
+    const astToQueryBuilder = new ASTToQueryBuilder(qb, this.pg, {
       allowedSchemas,
     })
 
@@ -232,13 +223,12 @@ export class SchemasService {
     })
     qb.delete()
 
-    return this.withMetaTransaction(pg, project, context, async () =>
+    return this.withMetaTransaction(pg, context, async () =>
       qb.catch(e => this.processError(e)),
     )
   }
 
   async callFunction({
-    pg,
     functionName,
     schema,
     url,
@@ -246,7 +236,6 @@ export class SchemasService {
     offset,
     args,
     context,
-    project,
   }: CallFunction) {
     let placeholder: string
     let values: any[]
@@ -266,8 +255,8 @@ export class SchemasService {
     const raw = new Raw(pg)
     raw.set(`??.??(${placeholder})`, values)
 
-    const qb = pg.queryBuilder().table(raw as any)
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, pg)
+    const qb = this.pg.queryBuilder().table(raw as any)
+    const astToQueryBuilder = new ASTToQueryBuilder(qb, this.pg)
 
     const { select, filter, order } = this.getParamsFromUrl(url, functionName)
 
@@ -279,8 +268,6 @@ export class SchemasService {
       offset,
     })
     const result = await this.withMetaTransaction(
-      pg,
-      project,
       context,
       async () => {
         return qb.catch(e => this.processError(e))
@@ -341,7 +328,6 @@ export class SchemasService {
   }
 
   async updatePermissions({
-    pg,
     tableId,
     schema,
     permissions,
@@ -366,7 +352,7 @@ export class SchemasService {
     })
 
     // Get current permissions from DB
-    const query = pg
+    const query = this.pg
       .table(`${tableId}_perms`)
       .withSchema(schema)
       .select(['permission', 'roles'])
@@ -405,7 +391,7 @@ export class SchemasService {
       if (newPermissions.length === 0) {
         // Delete existing row
         if (currentPermissions.length > 0) {
-          const delQuery = pg
+          const delQuery = this.pg
             .table(`${tableId}_perms`)
             .withSchema(schema)
             .andWhere('permission', type)
@@ -420,7 +406,7 @@ export class SchemasService {
         }
       } else if (currentPermissions.length > 0) {
         // Update existing row
-        const updQuery = pg
+        const updQuery = this.pg
           .table(`${tableId}_perms`)
           .withSchema(schema)
           .andWhere('permission', type)
@@ -436,7 +422,7 @@ export class SchemasService {
         })
       } else {
         // Insert new row
-        await pg
+        await this.pg
           .table(`${tableId}_perms`)
           .withSchema(schema)
           .insert({
@@ -451,12 +437,11 @@ export class SchemasService {
   }
 
   async getPermissions({
-    pg,
     tableId,
     rowId,
     schema,
   }: GetPermissions): Promise<string[]> {
-    const query = pg
+    const query = this.pg
       .table(`${tableId}_perms`)
       .withSchema(schema)
       .select(['roles', 'permission'])

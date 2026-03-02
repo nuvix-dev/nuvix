@@ -6,7 +6,7 @@ import type {
   UsersDoc,
 } from '@nuvix/utils/types'
 import type { Key } from './key.helper'
-import { Doc } from '@nuvix/db'
+import { Database, Doc } from '@nuvix/db'
 import type { AuthType } from '../decorators'
 import { localeTranslatorInstance } from './locale.helper'
 import { Detector } from './detector.helper'
@@ -32,6 +32,8 @@ export class RequestContext {
   currentSchema?: Schema
   authMeta: AuthMeta = {}
   sessionMeta: Record<string, unknown> = {}
+
+  currentSchemaDB?: Database
 
   cookieDomain = configuration.server.cookieDomain
   cookieSameSite = configuration.server.cookieSameSite

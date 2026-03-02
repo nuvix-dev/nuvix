@@ -14,7 +14,6 @@ import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
 import { AuthType, CurrentSchemaType, Namespace } from '@nuvix/core/decorators'
 import { ParseDuplicatePipe } from '@nuvix/core/pipes'
 import { ApiInterceptor, SchemaGuard } from '@nuvix/core/resolvers'
-import { DataSource } from '@nuvix/pg'
 import { SchemaType } from '@nuvix/utils'
 import { PermissionsDTO } from './DTO/permissions.dto'
 import {
@@ -61,7 +60,7 @@ export class SchemasController {
   @Post(['tables/:tableId'], {
     summary: 'Insert data into table',
     description: 'Insert one or more records into a specific table',
-    scopes: 'schemas.tables.create',
+    scopes: 'schemas.tables.write',
   })
   async insertIntoTable(
     @Req() request: NuvixRequest,
@@ -90,7 +89,7 @@ export class SchemasController {
     summary: 'Update table data',
     description:
       'Update existing records in a specific table with optional pagination and force flag',
-    scopes: 'schemas.tables.update',
+    scopes: 'schemas.tables.write',
   })
   async updateTables(
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
@@ -125,27 +124,9 @@ export class SchemasController {
     })
   }
 
-  // @Put(['tables/:tableId'], {
-  //   summary: 'Upsert table data',
-  //   description:
-  //     'Insert or update records in a specific table (upsert operation)',
-  //   scopes: ['schemas.tables.create', 'schemas.tables.update'],
-  //   docs: false,
-  // })
-  // async upsertTable(
-  //   @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
-  //
-  //   @Req() request: NuvixRequest,
-  //   @Body() input: Record<string, any> | Record<string, any>[],
-  //   @Query('columns', new ParseArrayPipe({ items: String, optional: true }))
-  //   columns?: string[],
-  //   @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
-  //   @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
-  // ) {}
-
   @Delete(['tables/:tableId'], {
     summary: 'Delete table data',
-    scopes: 'schemas.tables.delete',
+    scopes: 'schemas.tables.write',
     description:
       'Delete records from a specific table with optional pagination and force flag',
     sdk: {
