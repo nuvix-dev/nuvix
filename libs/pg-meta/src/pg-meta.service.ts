@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common'
 import { CoreService } from '@nuvix/core'
 import { DataSource } from '@nuvix/pg'
 import { Schema, SchemaMeta, Schemas, SchemaType } from '@nuvix/utils'
-import type { CollectionsDoc, ProjectsDoc } from '@nuvix/utils/types'
+import type { CollectionsDoc } from '@nuvix/utils/types'
 import type { GeneratorQueryDTO } from './DTO/generator.dto'
 import type { PostgresMeta } from './lib'
 import { getGeneratorMetadata } from './lib/generators'
@@ -15,7 +15,6 @@ export class PgMetaService {
   async generateTypescript(
     client: PostgresMeta,
     query: GeneratorQueryDTO,
-    project: ProjectsDoc,
   ): Promise<string> {
     const {
       included_schemas,
@@ -31,10 +30,7 @@ export class PgMetaService {
     const schemasWithCollections: Record<string, CollectionsDoc[]> = {}
 
     for (const schema of schemas.filter(s => s.type === SchemaType.Document)) {
-      const db = this.coreService.getProjectDb(client.client, {
-        projectId: project.getId(),
-        schema: schema.name,
-      })
+      const db = this.coreService.getDatabaseForSchema(schema.name)
 
       const collections = await db.find(SchemaMeta.collections, qb =>
         qb.limit(1000),
