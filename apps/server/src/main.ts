@@ -72,7 +72,7 @@ async function bootstrap() {
 
   await SwaggerModule.loadPluginMetadata(async () => {
     try {
-      // @ts-nocheck
+      // @ts-ignore
       return await (await import('./metadata')).default()
     } catch (err) {
       logger.warn('No swagger metadata found, skipping...')

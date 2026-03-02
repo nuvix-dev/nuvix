@@ -21,7 +21,7 @@ import {
   CoreService,
 } from '@nuvix/core'
 import { ErrorFilter } from '@nuvix/core/filters'
-import { Auth, RequestContext } from '@nuvix/core/helpers'
+import { RequestContext } from '@nuvix/core/helpers'
 import { NuvixAdapter, NuvixFactory } from '@nuvix/core/server'
 import { Authorization, Role, storage } from '@nuvix/db'
 import {
@@ -132,7 +132,7 @@ export async function bootstrap() {
 
   await SwaggerModule.loadPluginMetadata(async () => {
     try {
-      // @ts-nocheck
+      // @ts-ignore
       return await (await import('./metadata')).default()
     } catch (err) {
       logger.warn('No swagger metadata found, skipping...')
