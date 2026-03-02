@@ -68,9 +68,8 @@ export const applyAppConfig = (app: NestFastifyApplication): void => {
   fastify.addHook('onRequest', async req => {
     const request = req as unknown as NuvixRequest
     request.context = new RequestContext()
-    const project = await internaldb.getDocument(
-      'projects',
-      configuration.app.projectId,
+    const project = await Authorization.skip(() =>
+      internaldb.getDocument('projects', configuration.app.projectId),
     )
 
     if (project.empty()) {
