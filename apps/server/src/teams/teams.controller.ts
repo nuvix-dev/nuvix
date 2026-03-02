@@ -15,8 +15,8 @@ import { Models, RequestContext } from '@nuvix/core/helpers'
 import { TeamsQueryPipe } from '@nuvix/core/pipes/queries'
 import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { Query as Queries } from '@nuvix/db'
-import { IListResponse, IResponse } from '@nuvix/utils'
-import { TeamsDoc, UsersDoc } from '@nuvix/utils/types'
+import type { IListResponse, IResponse } from '@nuvix/utils'
+import type { TeamsDoc, UsersDoc } from '@nuvix/utils/types'
 import {
   CreateTeamDTO,
   TeamsParamDTO,

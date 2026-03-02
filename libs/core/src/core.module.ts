@@ -43,7 +43,6 @@ import { StatsHelper } from './helpers/stats.helper.js'
     EventEmitterModule.forRoot({
       global: true,
     }),
-    StatsHelper,
   ],
   providers: [CoreService, RatelimitService, StatsHelper],
   exports: [CoreService, RatelimitService, QueueModule],

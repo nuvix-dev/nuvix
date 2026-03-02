@@ -14,35 +14,35 @@ export class MailsQueue extends Queue {
   private readonly transporter: Transporter
   private readonly templateCache = new Map<string, Template.TemplateDelegate>()
 
-  constructor(private readonly appConfig: AppConfigService) {
+  constructor() {
     super()
-    const config = this.appConfig.getSmtpConfig()
+    // const config = this.appConfig.getSmtpConfig()
 
-    this.transporter = createTransport({
-      host: config.host,
-      pool: true,
-      port: config.port,
-      secure: config.secure,
-      auth:
-        config.user || config.password
-          ? { user: config.user, pass: config.password }
-          : undefined,
-      dkim:
-        config.dkim.domain || config.dkim.key || config.dkim.privateKey
-          ? {
-              domainName: config.dkim.domain,
-              keySelector: config.dkim.key,
-              privateKey: config.dkim.privateKey,
-            }
-          : undefined,
-      from: { name: config.sender, address: config.emailFrom },
-      sender: { name: config.sender, address: config.emailFrom },
-      connectionTimeout: 10000,
-      greetingTimeout: 10000,
-      socketTimeout: 20000,
-      logger: !appConfig.get('app').isProduction,
-      tls: { rejectUnauthorized: false },
-    } as any)
+    // this.transporter = createTransport({
+    //   host: config.host,
+    //   pool: true,
+    //   port: config.port,
+    //   secure: config.secure,
+    //   auth:
+    //     config.user || config.password
+    //       ? { user: config.user, pass: config.password }
+    //       : undefined,
+    //   dkim:
+    //     config.dkim.domain || config.dkim.key || config.dkim.privateKey
+    //       ? {
+    //           domainName: config.dkim.domain,
+    //           keySelector: config.dkim.key,
+    //           privateKey: config.dkim.privateKey,
+    //         }
+    //       : undefined,
+    //   from: { name: config.sender, address: config.emailFrom },
+    //   sender: { name: config.sender, address: config.emailFrom },
+    //   connectionTimeout: 10000,
+    //   greetingTimeout: 10000,
+    //   socketTimeout: 20000,
+    //   logger: !appConfig.get('app').isProduction,
+    //   tls: { rejectUnauthorized: false },
+    // } as any)
   }
 
   async process(job: Job<MailQueueOptions | MailsQueueOptions>) {

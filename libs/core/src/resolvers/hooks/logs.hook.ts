@@ -1,7 +1,7 @@
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
 import { Doc } from '@nuvix/db'
-import { Context, QueueFor } from '@nuvix/utils'
+import { QueueFor } from '@nuvix/utils'
 import type { ProjectsDoc } from '@nuvix/utils/types'
 import type { Queue } from 'bullmq'
 import { AuthType } from '../../decorators'

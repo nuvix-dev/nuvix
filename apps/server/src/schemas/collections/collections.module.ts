@@ -7,7 +7,6 @@ import {
   ApiHook,
   AuditHook,
   AuthHook,
-  CollectionsQueue,
   SchemaHook,
   StatsHook,
 } from '@nuvix/core/resolvers'
@@ -32,7 +31,6 @@ import { IndexesService } from './indexes/indexes.service'
     AttributesService,
     IndexesService,
     DocumentsService,
-    CollectionsQueue,
   ],
 })
 export class CollectionsModule implements NestModule {
