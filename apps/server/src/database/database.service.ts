@@ -14,7 +14,7 @@ export class DatabaseService {
 
   constructor(private readonly coreService: CoreService) {
     this.db = this.coreService.getDatabase()
-    this.dataSource = this.coreService.getDataSource()
+    this.dataSource = this.coreService.getDataSourceWithMainPool()
   }
 
   public async createDocumentSchema({

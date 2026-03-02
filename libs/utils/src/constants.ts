@@ -206,11 +206,13 @@ export enum AuthFactor {
 }
 
 export enum DatabaseRole {
-  ADMIN = 'nuvix_admin',
-  NUVIX = 'nuvix',
+  // ADMIN = 'nuvix_admin',
+  APP = 'nuvix_app',
   POSTGRES = 'postgres',
   ANON = 'anon',
   AUTHENTICATED = 'authenticated',
+  SERVICE_ROLE = 'service_role',
+  AUTHENTICATOR = 'authenticator',
 }
 
 export enum RouteContext {

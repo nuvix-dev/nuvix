@@ -19,6 +19,7 @@ import { PermissionsDTO } from './DTO/permissions.dto'
 import {
   FunctionParamsDTO,
   RowParamsDTO,
+  SelectQueryDTO,
   TableParamsDTO,
 } from './DTO/table.dto'
 import { SchemasService } from './schemas.service'
@@ -40,20 +41,11 @@ export class SchemasController {
   async queryTable(
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
     @Req() request: NuvixRequest,
-    @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
-    limit: number,
-    @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
-    offset?: number,
+    @Query() query: SelectQueryDTO,
   ) {
     return this.schemasService.select({
       table,
-
-      limit,
-      offset,
       schema,
-      url: request.raw.url || request.url,
-
-      context: this.requestToContext(request),
     })
   }
 
@@ -191,13 +183,6 @@ export class SchemasController {
     })
   }
 
-  private requestToContext(request: NuvixRequest): Record<string, any> {
-    return {
-      ...request[Context.AuthMeta],
-      request,
-    }
-  }
-
   @Put(['tables/:tableId/permissions'], {
     summary: 'Update table permissions',
     description: 'Manage permissions for a specific table',
@@ -262,5 +247,9 @@ export class SchemasController {
       schema,
       rowId,
     })
+  }
+
+  private buildContext(request: NuvixRequest): string {
+    return ''
   }
 }

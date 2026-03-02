@@ -267,12 +267,9 @@ export class SchemasService {
       limit,
       offset,
     })
-    const result = await this.withMetaTransaction(
-      context,
-      async () => {
-        return qb.catch(e => this.processError(e))
-      },
-    )
+    const result = await this.withMetaTransaction(context, async () => {
+      return qb.catch(e => this.processError(e))
+    })
 
     if (
       Array.isArray(result) &&

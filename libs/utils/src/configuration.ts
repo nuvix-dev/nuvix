@@ -204,8 +204,16 @@ const createConfig = () => {
         host: env.get('NUVIX_DATABASE_HOST', 'localhost'),
         port: env.int('NUVIX_DATABASE_PORT', 5432),
         user: env.get('NUVIX_DATABASE_USER', 'postgres'),
-        password: env.getRequired('NUVIX_DATABASE_PASSWORD'),
-        adminPassword: env.getRequired('NUVIX_DATABASE_ADMIN_PASSWORD'),
+        password: env.getRequired('NUVIX_DATABASE_PASSWORD'), // for app role
+        authenticatorPassword: env.get(
+          'NUVIX_DATABASE_AUTHENTICATOR_PASSWORD',
+          env.getRequired('NUVIX_DATABASE_PASSWORD'),
+        ), // for authenticator role
+        postgresPassword: env.get(
+          'NUVIX_DATABASE_POSTGRES_PASSWORD',
+          env.getRequired('NUVIX_DATABASE_PASSWORD'),
+        ), // for postgres role
+        // adminPassword: env.getRequired('NUVIX_DATABASE_ADMIN_PASSWORD'), // for admin role
         database: 'postgres',
         ssl: env.bool('NUVIX_DATABASE_SSL', false),
         maxConnections: env.int('NUVIX_DATABASE_MAX_CONNECTIONS', 20),

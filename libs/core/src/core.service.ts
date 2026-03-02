@@ -43,9 +43,11 @@ export class CoreService implements OnModuleDestroy {
   private readonly redisInstance: IORedis | null = null
   private readonly pool: Pool | null = null
   private readonly postgresPool: Pool | null = null
+  private readonly authenticatorPool: Pool | null = null
   private readonly storageDevice: Device | null = null
   private readonly internalDb: Database | null = null
   private readonly database: Database | null = null
+  private readonly dataSourceWithMainPool: DataSource | null = null
   private readonly dataSource: DataSource | null = null
 
   constructor(private readonly statsHelper: StatsHelper) {
@@ -57,11 +59,14 @@ export class CoreService implements OnModuleDestroy {
     this.internalDb = this.createInternalDb()
     this.database = this.createDatabase()
     this.dataSource = this.createDataSource()
+    this.dataSourceWithMainPool = this.createDataSourceWithMainPool()
 
     if (this.isConsole()) {
       this.postgresPool = this.createPostgresPool()
     } else {
       this.storageDevice = this.createStorageDevice()
+      this.authenticatorPool = this.createAuthenticatorPool()
+      this.dataSource = this.createDataSource()
     }
   }
 
@@ -137,6 +142,10 @@ export class CoreService implements OnModuleDestroy {
   }
 
   private createDataSource() {
+    return new DataSource(this.getPoolForAuthenticator())
+  }
+
+  private createDataSourceWithMainPool() {
     return new DataSource(this.getPool())
   }
 
@@ -174,8 +183,8 @@ export class CoreService implements OnModuleDestroy {
     const { postgres, timeouts } = configuration.database
     const pool = new Pool({
       database: DEFAULT_DATABASE,
-      user: DatabaseRole.ADMIN,
-      password: postgres.adminPassword,
+      user: DatabaseRole.APP,
+      password: postgres.password,
       host: postgres.host,
       port: postgres.port,
       ssl: postgres.ssl
@@ -208,7 +217,7 @@ export class CoreService implements OnModuleDestroy {
     const pool = new Pool({
       database: DEFAULT_DATABASE,
       user: DatabaseRole.POSTGRES,
-      password: postgres.password || postgres.adminPassword,
+      password: postgres.postgresPassword,
       host: postgres.host,
       port: postgres.port,
       ssl: postgres.ssl ? { rejectUnauthorized: false } : undefined,
@@ -234,6 +243,37 @@ export class CoreService implements OnModuleDestroy {
     return pool
   }
 
+  private createAuthenticatorPool(): Pool {
+    const { postgres, timeouts } = configuration.database
+    const pool = new Pool({
+      database: DEFAULT_DATABASE,
+      user: DatabaseRole.AUTHENTICATOR,
+      password: postgres.authenticatorPassword,
+      host: postgres.host,
+      port: postgres.port,
+      ssl: postgres.ssl ? { rejectUnauthorized: false } : undefined,
+      statement_timeout: timeouts.statement,
+      query_timeout: timeouts.query,
+      idleTimeoutMillis: timeouts.idle,
+      connectionTimeoutMillis: timeouts.connection,
+      max:
+        postgres.maxConnections > 20
+          ? Math.floor(postgres.maxConnections / 2)
+          : postgres.maxConnections, // limit to 10 for external pool to avoid exhausting connections
+      min: 2,
+      keepAlive: true,
+      keepAliveInitialDelayMillis: 10_000,
+      application_name: 'nuvix-core-authenticator',
+      allowExitOnIdle: true,
+    })
+
+    pool.on('error', err => {
+      this.logger.error('Authenticator database pool error:', err)
+    })
+
+    return pool
+  }
+
   public getPool(): Pool {
     if (!this.pool) {
       throw new Exception('Main database pool not initialized')
@@ -246,6 +286,13 @@ export class CoreService implements OnModuleDestroy {
       throw new Exception('Postgres database pool not initialized')
     }
     return this.postgresPool
+  }
+
+  public getPoolForAuthenticator(): Pool {
+    if (!this.authenticatorPool) {
+      throw new Exception('Authenticator database pool not initialized')
+    }
+    return this.authenticatorPool
   }
 
   private createRedisInstance() {
@@ -313,16 +360,23 @@ export class CoreService implements OnModuleDestroy {
   }
 
   /**
-   * Returns the initialized DataSource instance for the main database. If the main database is not initialized, an exception is thrown.
-   * @returns {DataSource} The initialized DataSource instance for the main database.
-   * @throws {Exception} If the main database is not initialized, an exception is thrown with a message indicating that the main database is not initialized.
-   * @public
+   * Returns the initialized DataSource instance for the authenticator database. If the authenticator database is not initialized, an exception is thrown.
    */
   public getDataSource(): DataSource {
     if (!this.dataSource) {
-      throw new Exception('Main data source not initialized')
+      throw new Exception('Authenticator data source not initialized')
     }
     return this.dataSource
+  }
+
+  /**
+   * Returns the initialized DataSource instance for the main database. If the main database is not initialized, an exception is thrown.
+   */
+  public getDataSourceWithMainPool(): DataSource {
+    if (!this.dataSourceWithMainPool) {
+      throw new Exception('Main data source not initialized')
+    }
+    return this.dataSourceWithMainPool
   }
 
   /**
