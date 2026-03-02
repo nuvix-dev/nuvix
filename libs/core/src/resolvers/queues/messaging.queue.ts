@@ -1,5 +1,5 @@
 import { OnWorkerEvent, Processor } from '@nestjs/bullmq'
-import { Injectable, Logger } from '@nestjs/common'
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
 import { Database, Doc, Query } from '@nuvix/db'
 import {
   APNS,
@@ -49,7 +49,10 @@ export class MessagingQueue extends Queue {
   private readonly deviceForFiles: Device
   private smsAdapter?: SMSAdapter
 
-  constructor(private readonly coreService: CoreService) {
+  constructor(
+    @Inject(forwardRef(() => CoreService))
+    private readonly coreService: CoreService,
+  ) {
     super()
     this.internalDb = this.coreService.getInternalDatabase()
     this.db = this.coreService.getDatabase()

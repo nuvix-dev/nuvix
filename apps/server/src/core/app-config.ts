@@ -67,13 +67,13 @@ export const applyAppConfig = (app: NestFastifyApplication): void => {
 
   fastify.addHook('onRequest', async req => {
     const request = req as unknown as NuvixRequest
+    request.context = new RequestContext()
     const project = await internaldb.getDocument(
       'projects',
       configuration.app.projectId,
     )
 
     if (project.empty()) {
-      request.context = new RequestContext()
       throw new Exception(Exception.PROJECT_NOT_FOUND, 'Project not found', 404)
     }
 
@@ -83,10 +83,9 @@ export const applyAppConfig = (app: NestFastifyApplication): void => {
       throw new Exception(Exception.INVALID_PARAMS, 'Invalid mode', 400)
     }
 
-    request.context = new RequestContext({
-      project,
-      mode: mode === AppMode.ADMIN ? AppMode.ADMIN : AppMode.DEFAULT,
-    })
+    request.context.project = project
+    request.context.mode =
+      mode === AppMode.ADMIN ? AppMode.ADMIN : AppMode.DEFAULT
   })
 
   app.useGlobalFilters(new ErrorFilter())

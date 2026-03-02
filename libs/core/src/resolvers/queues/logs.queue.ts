@@ -1,5 +1,5 @@
 import { Processor } from '@nestjs/bullmq'
-import { Injectable, Logger } from '@nestjs/common'
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
 import { configuration, QueueFor, Schemas } from '@nuvix/utils'
 import { Job } from 'bullmq'
 import { CoreService } from '../../core.service.js'
@@ -36,7 +36,10 @@ export class ApiLogsQueue extends AbstractBatchQueue<
 
   private readonly dataSource: DataSource
 
-  constructor(private readonly coreService: CoreService) {
+  constructor(
+    @Inject(forwardRef(() => CoreService))
+    private readonly coreService: CoreService,
+  ) {
     super()
     this.dataSource = this.coreService.getDataSource()
   }

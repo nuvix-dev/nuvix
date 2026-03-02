@@ -45,7 +45,7 @@ import { StatsHelper } from './helpers/stats.helper.js'
     }),
   ],
   providers: [CoreService, RatelimitService, StatsHelper],
-  exports: [CoreService, RatelimitService, QueueModule],
+  exports: [QueueModule, CoreService, RatelimitService],
 })
 export class CoreModule implements OnModuleDestroy, OnModuleInit {
   constructor(private readonly coreService: CoreService) {}

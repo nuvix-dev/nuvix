@@ -58,13 +58,13 @@ export class CoreService implements OnModuleDestroy {
 
     this.internalDb = this.createInternalDb()
     this.database = this.createDatabase()
-    this.dataSource = this.createDataSource()
     this.dataSourceWithMainPool = this.createDataSourceWithMainPool()
 
     if (this.isConsole()) {
       this.postgresPool = this.createPostgresPool()
     } else {
       this.storageDevice = this.createStorageDevice()
+      this.authenticatorPool = this.createAuthenticatorPool()
       this.authenticatorPool = this.createAuthenticatorPool()
       this.dataSource = this.createDataSource()
     }

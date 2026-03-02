@@ -1,5 +1,5 @@
 import { Processor } from '@nestjs/bullmq'
-import { Injectable, Logger } from '@nestjs/common'
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
 import { Authorization, type Database, Doc } from '@nuvix/db'
 import {
   configuration,
@@ -34,7 +34,10 @@ export class StatsQueue extends AbstractBatchQueue<
 
   private readonly db: Database
 
-  constructor(private readonly coreService: CoreService) {
+  constructor(
+    @Inject(forwardRef(() => CoreService))
+    private readonly coreService: CoreService,
+  ) {
     super()
     this.db = this.coreService.getDatabase()
   }

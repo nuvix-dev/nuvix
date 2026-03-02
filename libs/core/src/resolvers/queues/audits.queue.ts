@@ -1,5 +1,5 @@
 import { Processor } from '@nestjs/bullmq'
-import { Injectable, Logger } from '@nestjs/common'
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
 import { Audit } from '@nuvix/audit'
 import { Doc } from '@nuvix/db'
 import { AppMode, configuration, QueueFor } from '@nuvix/utils'
@@ -23,7 +23,10 @@ export class AuditsQueue extends AbstractBatchQueue<
 
   private readonly audits: Audit
 
-  constructor(private readonly coreService: CoreService) {
+  constructor(
+    @Inject(forwardRef(() => CoreService))
+    private readonly coreService: CoreService,
+  ) {
     super()
     this.audits = new Audit(this.coreService.getDatabase())
   }

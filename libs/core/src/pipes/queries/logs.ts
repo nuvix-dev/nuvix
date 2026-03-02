@@ -1,16 +1,9 @@
 import { BaseQueryPipe } from './base'
 
 export class Logs extends BaseQueryPipe {
-  public static override ALLOWED_ATTRIBUTES = [
-    'status',
-    'responseStatusCode',
-    'duration',
-    'requestMethod',
-    'requestPath',
-    'deploymentId',
-  ]
+  public static override ALLOWED_ATTRIBUTES = ['time', 'period']
 
   public constructor() {
-    super('executions', Logs.ALLOWED_ATTRIBUTES) //TODO: Update this later
+    super('stats', Logs.ALLOWED_ATTRIBUTES) //TODO: Update this later
   }
 }

@@ -1,5 +1,5 @@
 import { OnWorkerEvent, Processor } from '@nestjs/bullmq'
-import { Logger } from '@nestjs/common'
+import { forwardRef, Inject, Logger } from '@nestjs/common'
 import { Audit } from '@nuvix/audit'
 import { Database, Doc, IEntity, Query } from '@nuvix/db'
 import { DeleteDocumentType, DeleteType, QueueFor } from '@nuvix/utils'
@@ -27,7 +27,10 @@ export class DeletesQueue extends Queue {
   private readonly db: Database
   private readonly logger = new Logger(DeletesQueue.name)
 
-  constructor(private readonly coreService: CoreService) {
+  constructor(
+    @Inject(forwardRef(() => CoreService))
+    private readonly coreService: CoreService,
+  ) {
     super()
     this.internalDb = this.coreService.getInternalDatabase()
     this.db = this.coreService.getDatabase()
