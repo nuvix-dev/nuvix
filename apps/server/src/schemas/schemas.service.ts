@@ -14,7 +14,6 @@ import {
   SelectNode,
   SelectParser,
 } from '@nuvix/utils/query'
-import { ProjectsDoc } from '@nuvix/utils/types'
 import {
   CallFunction,
   Delete,
@@ -40,6 +39,14 @@ export class SchemasService {
     context,
   }: Select) {
     const qb = this.pg.qb(table).withSchema(schema)
+
+    qb.with('result', qb => {
+      const subQb = this.pg.qb(table).withSchema(schema)
+      const allowedSchemas = project.get('metadata')?.allowedSchemas || []
+      const astToQueryBuilder = new ASTToQueryBuilder(subQb, this.pg, {
+        allowedSchemas,
+      })
+    })
     const allowedSchemas = project.get('metadata')?.allowedSchemas || []
     const astToQueryBuilder = new ASTToQueryBuilder(qb, this.pg, {
       allowedSchemas,

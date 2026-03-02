@@ -43,7 +43,7 @@ export class MembershipsController {
     summary: 'Create team membership',
     scopes: ['teams.write'],
     model: Models.MEMBERSHIP,
-    secretFields: ['secret'],
+    sensitiveFields: ['secret'],
     audit: {
       key: 'membership.create',
       resource: 'team/{params.teamId}',
@@ -85,7 +85,7 @@ export class MembershipsController {
     summary: 'Get team membership',
     scopes: ['teams.read'],
     model: Models.MEMBERSHIP,
-    secretFields: ['secret'],
+    sensitiveFields: ['secret'],
     sdk: {
       name: 'getMembership',
       descMd: '/docs/references/teams/get-team-member.md',
@@ -102,7 +102,7 @@ export class MembershipsController {
     scopes: ['teams.write'],
     model: Models.MEMBERSHIP,
     auth: [AuthType.KEY, AuthType.JWT, AuthType.SESSION],
-    secretFields: ['secret'],
+    sensitiveFields: ['secret'],
     audit: {
       key: 'membership.update',
       resource: 'team/{req.teamId}',
@@ -129,7 +129,7 @@ export class MembershipsController {
     summary: 'Update team membership status',
     scopes: ['teams.write'],
     model: Models.MEMBERSHIP,
-    secretFields: ['secret'],
+    sensitiveFields: ['secret'],
     audit: {
       key: 'membership.update',
       resource: 'team/{req.teamId}',

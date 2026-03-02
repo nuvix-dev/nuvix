@@ -1,8 +1,8 @@
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable, Logger } from '@nestjs/common'
 import { Doc } from '@nuvix/db'
-import { AppMode, AuthActivity, QueueFor, RouteContext } from '@nuvix/utils'
-import { ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
+import { AuthActivity, QueueFor, RouteContext } from '@nuvix/utils'
+import { UsersDoc } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
 import { AuditEventType } from '../../decorators'
 import { Exception } from '../../extend/exception'
@@ -25,10 +25,8 @@ export class AuditHook implements Hook {
     }
 
     try {
-      const project = req[Context.Project] as ProjectsDoc
-      const user = req[Context.User] as UsersDoc
-      const res = req.hooks_args?.preSerialization?.args?.[0]
-      await this.handleAudit(req, res, { audit, user, project })
+      const body = req.hooks_args?.preSerialization?.args?.[0]
+      await this.handleAudit(req, body, audit)
     } catch (e) {
       this.logger.error('Unexpected error during audit handling', { error: e })
     }
@@ -36,36 +34,24 @@ export class AuditHook implements Hook {
     return
   }
 
-  async handleAudit(
-    req: NuvixRequest,
-    res: string | any,
-    {
-      audit,
-      user,
-      project,
-    }: {
-      audit: AuditEventType
-      user: UsersDoc
-      project: ProjectsDoc
-    },
-  ) {
+  async handleAudit(req: NuvixRequest, body: any, audit: AuditEventType) {
     const { event, meta } = audit
 
     try {
-      res = typeof res === 'string' ? JSON.parse(res) : res
-    } catch {
+      body = typeof body === 'string' ? JSON.parse(body) : body
+    } catch (e) {
       this.logger.error(
         `Failed to parse response for resource mapping: ${meta.resource}`,
-        { res },
+        { body },
       )
       throw new Exception(Exception.GENERAL_SERVER_ERROR)
     }
 
-    const resource = this.mapResource(meta.resource, req, res)
+    const resource = this.mapResource(meta.resource, req, body)
     if (meta.userId && this.isMappingPart(meta.userId)) {
-      meta.userId = this.mapValue(req, res, meta.userId)
+      meta.userId = this.mapValue(req, body, meta.userId)
     }
-    const mode = req[Context.Mode] as AppMode
+
     if (!user || user.empty()) {
       user = new Doc({
         $id: '',
@@ -79,32 +65,31 @@ export class AuditHook implements Hook {
     }
 
     await this.auditsQueue.add(event, {
-      project,
       mode,
       ip: req.ip,
       userAgent: req.headers['user-agent'] || '',
       resource,
       user,
-      data: res,
+      data: body,
     })
   }
 
   private mapResource(
     resource: string,
     req: NuvixRequest,
-    res: Record<string, any>,
+    body: Record<string, any>,
   ): string {
     return resource
       .split('/')
       .map(part =>
-        this.isMappingPart(part) ? this.mapValue(req, res, part) : part,
+        this.isMappingPart(part) ? this.mapValue(req, body, part) : part,
       )
       .join('/')
   }
 
   private mapValue(
     req: NuvixRequest,
-    res: Record<string, any>,
+    body: Record<string, any>,
     path: string,
   ): any {
     path = path.slice(1, -1)
@@ -119,7 +104,7 @@ export class AuditHook implements Hook {
         value = params?.[key] ?? query?.[key] ?? reqBody?.[key]
         break
       case 'res':
-        value = res?.[key]
+        value = body?.[key]
         break
       case 'params':
         value = params?.[key]

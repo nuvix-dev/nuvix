@@ -68,7 +68,7 @@ export class UsersController {
     summary: 'Create user',
     scopes: 'users.write',
     model: Models.USER,
-    secretFields: ['password', 'hashOptions'],
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.create',
       resource: 'user/{res.$id}',
@@ -89,7 +89,7 @@ export class UsersController {
     summary: 'Create user with Argon2 password',
     scopes: 'users.write',
     model: Models.USER,
-    secretFields: ['password', 'hashOptions'],
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.create',
       resource: 'user/{res.$id}',
@@ -110,7 +110,7 @@ export class UsersController {
     summary: 'Create user with bcrypt password',
     scopes: 'users.write',
     model: Models.USER,
-    secretFields: ['password', 'hashOptions'],
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.create',
       resource: 'user/{res.$id}',
@@ -131,7 +131,7 @@ export class UsersController {
     summary: 'Create user with MD5 password',
     scopes: 'users.write',
     model: Models.USER,
-    secretFields: ['password', 'hashOptions'],
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.create',
       resource: 'user/{res.$id}',
@@ -152,7 +152,7 @@ export class UsersController {
     summary: 'Create user with SHA password',
     scopes: 'users.write',
     model: Models.USER,
-    secretFields: ['password', 'hashOptions'],
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.create',
       resource: 'user/{res.$id}',
@@ -173,7 +173,7 @@ export class UsersController {
     summary: 'Create user with PHPass password',
     scopes: 'users.write',
     model: Models.USER,
-    secretFields: ['password', 'hashOptions'],
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.create',
       resource: 'user/{res.$id}',
@@ -195,7 +195,7 @@ export class UsersController {
     summary: 'Create user with Scrypt password',
     scopes: 'users.write',
     model: Models.USER,
-    secretFields: ['password', 'hashOptions'],
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.create',
       resource: 'user/{res.$id}',
@@ -216,7 +216,7 @@ export class UsersController {
     summary: 'Create user with Scrypt modified password',
     scopes: 'users.write',
     model: Models.USER,
-    secretFields: ['password', 'hashOptions'],
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.create',
       resource: 'user/{res.$id}',
@@ -353,7 +353,7 @@ export class UsersController {
     summary: 'Update user status',
     scopes: 'users.write',
     model: Models.USER,
-    secretFields: ['password', 'hashOptions'],
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
@@ -375,7 +375,7 @@ export class UsersController {
     summary: 'Update user labels',
     scopes: 'users.write',
     model: Models.USER,
-    secretFields: ['password', 'hashOptions'],
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
@@ -397,7 +397,7 @@ export class UsersController {
     summary: 'Update name',
     scopes: 'users.write',
     model: Models.USER,
-    secretFields: ['password', 'hashOptions'],
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
@@ -419,7 +419,7 @@ export class UsersController {
     summary: 'Update password',
     scopes: 'users.write',
     model: Models.USER,
-    secretFields: ['password', 'hashOptions'],
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
@@ -442,7 +442,7 @@ export class UsersController {
     summary: 'Update email',
     scopes: 'users.write',
     model: Models.USER,
-    secretFields: ['password', 'hashOptions'],
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
@@ -464,7 +464,7 @@ export class UsersController {
     summary: 'Update phone',
     scopes: 'users.write',
     model: Models.USER,
-    secretFields: ['password', 'hashOptions'],
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
@@ -522,7 +522,7 @@ export class UsersController {
     summary: 'Create token',
     scopes: 'users.write',
     model: Models.TOKEN,
-    secretFields: ['secret'],
+    sensitiveFields: ['secret'],
     audit: {
       key: 'tokens.create',
       resource: 'user/{params.userId}',
@@ -569,7 +569,7 @@ export class UsersController {
     summary: 'Update phone verification',
     scopes: 'users.write',
     model: Models.USER,
-    secretFields: ['password', 'hashOptions'],
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'verification.update',
       resource: 'user/{res.$id}',
@@ -590,7 +590,7 @@ export class UsersController {
     summary: 'Update phone verification',
     scopes: 'users.write',
     model: Models.USER,
-    secretFields: ['password', 'hashOptions'],
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'verification.update',
       resource: 'user/{res.$id}',

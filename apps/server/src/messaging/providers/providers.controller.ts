@@ -55,7 +55,7 @@ export class ProvidersController {
     summary: 'Create Mailgun provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -77,7 +77,7 @@ export class ProvidersController {
     summary: 'Create Sendgrid provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -99,7 +99,7 @@ export class ProvidersController {
     summary: 'Create SMTP provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -121,7 +121,7 @@ export class ProvidersController {
     summary: 'Create Msg91 provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -143,7 +143,7 @@ export class ProvidersController {
     summary: 'Create Telesign provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -165,7 +165,7 @@ export class ProvidersController {
     summary: 'Create Textmagic provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -187,7 +187,7 @@ export class ProvidersController {
     summary: 'Create Twilio provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -209,7 +209,7 @@ export class ProvidersController {
     summary: 'Create Vonage provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -231,7 +231,7 @@ export class ProvidersController {
     summary: 'Create FCM provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -253,7 +253,7 @@ export class ProvidersController {
     summary: 'Create APNS provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -294,7 +294,7 @@ export class ProvidersController {
     summary: 'Get provider',
     scopes: 'providers.read',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     sdk: {
       name: 'getProvider',
       descMd: '/docs/references/messaging/get-provider.md',
@@ -310,7 +310,7 @@ export class ProvidersController {
     summary: 'Update Mailgun provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -335,7 +335,7 @@ export class ProvidersController {
     summary: 'Update Sendgrid provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -360,7 +360,7 @@ export class ProvidersController {
     summary: 'Update SMTP provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -385,7 +385,7 @@ export class ProvidersController {
     summary: 'Update Msg91 provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -410,7 +410,7 @@ export class ProvidersController {
     summary: 'Update Telesign provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -435,7 +435,7 @@ export class ProvidersController {
     summary: 'Update Textmagic provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -460,7 +460,7 @@ export class ProvidersController {
     summary: 'Update Twilio provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -485,7 +485,7 @@ export class ProvidersController {
     summary: 'Update Vonage provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -510,7 +510,7 @@ export class ProvidersController {
     summary: 'Update FCM provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -535,7 +535,7 @@ export class ProvidersController {
     summary: 'Update APNS provider',
     scopes: 'providers.write',
     model: Models.PROVIDER,
-    secretFields: ['credentials'],
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',

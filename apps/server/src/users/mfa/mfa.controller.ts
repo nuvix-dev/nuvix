@@ -21,7 +21,7 @@ export class MfaController {
     summary: 'Update MFA',
     scopes: 'users.write',
     model: Models.USER,
-    secretFields: ['password', 'hashOptions'],
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.update',
       resource: 'user/{params.userId}',
@@ -55,7 +55,7 @@ export class MfaController {
     summary: 'Get MFA recovery codes',
     scopes: 'users.read',
     model: Models.MFA_RECOVERY_CODES,
-    secretFields: ['recoveryCodes'],
+    sensitiveFields: ['recoveryCodes'],
     sdk: {
       name: 'getMfaRecoveryCodes',
       descMd: '/docs/references/users/get-mfa-recovery-codes.md',
@@ -73,7 +73,7 @@ export class MfaController {
     summary: 'Create MFA recovery codes',
     scopes: 'users.write',
     model: Models.MFA_RECOVERY_CODES,
-    secretFields: ['recoveryCodes'],
+    sensitiveFields: ['recoveryCodes'],
     audit: {
       key: 'recovery.create',
       resource: 'user/{res.$id}',
@@ -96,7 +96,7 @@ export class MfaController {
     summary: 'Update MFA recovery codes (regenerate)',
     scopes: 'users.write',
     model: Models.MFA_RECOVERY_CODES,
-    secretFields: ['recoveryCodes'],
+    sensitiveFields: ['recoveryCodes'],
     audit: {
       key: 'recovery.update',
       resource: 'user/{res.$id}',

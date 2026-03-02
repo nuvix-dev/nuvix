@@ -155,7 +155,7 @@ export class MfaController {
   @Post('recovery-codes', {
     summary: 'Create MFA recovery codes',
     model: Models.MFA_RECOVERY_CODES,
-    secretFields: ['recoveryCodes'],
+    sensitiveFields: ['recoveryCodes'],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
@@ -179,7 +179,7 @@ export class MfaController {
   @Patch('recovery-codes', {
     summary: 'Update MFA recovery codes (regenerate)',
     model: Models.MFA_RECOVERY_CODES,
-    secretFields: ['recoveryCodes'],
+    sensitiveFields: ['recoveryCodes'],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
@@ -203,7 +203,7 @@ export class MfaController {
   @Get('recovery-codes', {
     summary: 'List MFA recovery codes',
     model: Models.MFA_RECOVERY_CODES,
-    secretFields: ['recoveryCodes'],
+    sensitiveFields: ['recoveryCodes'],
     sdk: {
       name: 'getMfaRecoveryCodes',
       descMd: '/docs/references/account/get-mfa-recovery-codes.md',

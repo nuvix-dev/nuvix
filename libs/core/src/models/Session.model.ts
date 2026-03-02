@@ -126,7 +126,7 @@ export class SessionModel extends BaseModel {
   /**
    * Secret used to authenticate the user.
    */
-  @Expose() secret = '' // Default to empty string
+  @Expose({ groups: ['admin'] }) secret = '' // Default to empty string
 
   /**
    * Most recent date when the session successfully passed MFA challenge.

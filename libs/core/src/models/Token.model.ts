@@ -11,7 +11,7 @@ export class TokenModel extends BaseModel {
   /**
    * Token secret key. This will return an empty string unless the response is returned using an API key or as part of a webhook payload.
    */
-  @Expose() secret = '' // Default to empty string
+  @Expose({ groups: ['admin'] }) secret = '' // Default to empty string
 
   /**
    * Token expiration date in ISO 8601 format.

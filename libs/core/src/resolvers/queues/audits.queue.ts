@@ -57,7 +57,6 @@ export class AuditsQueue extends AbstractBatchQueue<
 }
 
 export type AuditsQueueJobData = {
-  project: ProjectsDoc | object
   user: UsersDoc | object
   resource: string
   mode: AppMode

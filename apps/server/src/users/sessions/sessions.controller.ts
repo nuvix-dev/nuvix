@@ -37,7 +37,7 @@ export class SessionsController {
     summary: 'Create session',
     scopes: 'users.write',
     model: Models.SESSION,
-    secretFields: ['secret'],
+    sensitiveFields: ['secret'],
     audit: {
       key: 'session.create',
       resource: 'user/{res.userId}',
