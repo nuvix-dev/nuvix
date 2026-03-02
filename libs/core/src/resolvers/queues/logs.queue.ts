@@ -41,7 +41,7 @@ export class ApiLogsQueue extends AbstractBatchQueue<
     private readonly coreService: CoreService,
   ) {
     super()
-    this.dataSource = this.coreService.getDataSource()
+    this.dataSource = this.coreService.getDataSourceWithMainPool()
   }
 
   protected buildItem(job: Job<ApiLogsQueueJobData>): ApiLog {

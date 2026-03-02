@@ -8,14 +8,7 @@ import { JwtModule, JwtService } from '@nestjs/jwt'
 import { ScheduleModule } from '@nestjs/schedule'
 import { CoreModule } from '@nuvix/core'
 import { Key } from '@nuvix/core/helpers'
-import {
-  ApiHook,
-  AuditHook,
-  AuthHook,
-  CorsHook,
-  HostHook,
-  MailsQueue,
-} from '@nuvix/core/resolvers'
+import { ApiHook, AuthHook, CorsHook, MailsQueue } from '@nuvix/core/resolvers'
 import { PgMetaModule } from '@nuvix/pg-meta'
 import { configuration } from '@nuvix/utils'
 import { AccountController } from './account/account.controller'
@@ -23,8 +16,6 @@ import { AccountModule } from './account/account.module'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { ProjectModule } from './projects/project.module'
-import { ProjectHook } from './resolvers/hooks/project.hook'
-import { AuditsQueue } from './resolvers/queues/audits.queue'
 
 @Module({
   imports: [
@@ -39,7 +30,7 @@ import { AuditsQueue } from './resolvers/queues/audits.queue'
     PgMetaModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MailsQueue, AuditsQueue],
+  providers: [AppService, MailsQueue],
 })
 export class AppModule implements NestModule, OnModuleInit {
   constructor(private readonly jwtService: JwtService) {}
@@ -50,9 +41,9 @@ export class AppModule implements NestModule, OnModuleInit {
 
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(ProjectHook, HostHook, CorsHook)
+      .apply(CorsHook)
       .forRoutes('*')
-      .apply(AuthHook, ApiHook, AuditHook)
+      .apply(AuthHook, ApiHook)
       .forRoutes(AccountController)
   }
 }

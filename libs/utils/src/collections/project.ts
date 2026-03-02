@@ -1,4 +1,7 @@
 import { Collection } from '@nuvix/db'
-import { commonCollections } from './common'
+import { authCollections, commonCollections } from './common'
 
-export const projectCollections: Record<string, Collection> = commonCollections
+export const projectCollections: Record<string, Collection> = {
+  ...authCollections,
+  ...commonCollections,
+}

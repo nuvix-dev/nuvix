@@ -8,8 +8,6 @@ import {
   Post,
   Req,
   Res,
-  Session,
-  UseGuards,
   UseInterceptors,
   VERSION_NEUTRAL,
 } from '@nestjs/common'
@@ -23,13 +21,8 @@ import {
 } from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
 import { LocaleTranslator, Models } from '@nuvix/core/helpers'
-import {
-  AuthGuard,
-  ConsoleInterceptor,
-  Public,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
-import type { SessionsDoc, UsersDoc } from '@nuvix/utils/types'
+import { ConsoleInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
+import type { UsersDoc } from '@nuvix/utils/types'
 import { AccountService } from './account.service'
 import {
   CreateAccountDTO,
@@ -41,14 +34,12 @@ import {
 import { CreateEmailSessionDTO } from './DTO/session.dto'
 
 @Controller({ version: ['1', VERSION_NEUTRAL], path: 'account' })
-@UseGuards(AuthGuard)
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
 export class AccountController {
   constructor(private readonly accountService: AccountService) {}
 
-  // @Public()
   @Post()
-  @Scope('sessions.create')
+  @Scope('sessions.write')
   @ResModel(Models.ACCOUNT)
   @Throttle(10)
   @AuditEvent('user.create', {
@@ -132,8 +123,8 @@ export class AccountController {
     @Param('id') id: string,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
-    @Session() session: SessionsDoc,
   ) {
+    const session = request.context.getSession()
     if (id === 'current') {
       id = session.getId()
     }
@@ -148,9 +139,8 @@ export class AccountController {
     return this.accountService.updateSession(user, id)
   }
 
-  @Public()
   @Post(['sessions/email', 'sessions'])
-  @Scope('sessions.create')
+  @Scope('sessions.write')
   @ResModel(Models.SESSION)
   @Throttle(100)
   @AuditEvent('session.create', {
