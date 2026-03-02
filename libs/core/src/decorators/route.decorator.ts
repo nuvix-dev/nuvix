@@ -117,7 +117,7 @@ export interface RouteOptions<T = unknown> {
   /**
    * Fields that contain sensitive information and should be redacted in logs.
    */
-  sensitiveFields?: keyof T extends string ? (keyof T)[] : never
+  sensitiveFields?: (keyof T extends string ? (keyof T)[] : never) | string[]
   /** SDK generation options */
   sdk?: SdkOptions
   /** Unique operation identifier for OpenAPI */

@@ -1,14 +1,28 @@
 import { Processor } from '@nestjs/bullmq'
 import { Injectable, Logger } from '@nestjs/common'
 import { configuration, QueueFor, Schemas } from '@nuvix/utils'
-import type { ProjectsDoc } from '@nuvix/utils/types'
 import { Job } from 'bullmq'
 import { CoreService } from '../../core.service.js'
 import { AbstractBatchQueue } from './batch.queue.js'
 import { DataSource } from '@nuvix/pg'
 
+const SENSITIVE_KEYS = new Set([
+  'authorization',
+  'cookie',
+  'set-cookie',
+  'x-nuvix-signature',
+  'x-nuvix-timestamp',
+  'x-nuvix-nonce',
+  'secret',
+  'token',
+  'apikey',
+  'x-nuvix-key',
+  'x-nuvix-session',
+  'x-nuvix-jwt',
+])
+
 @Injectable()
-@Processor(QueueFor.LOGS, { concurrency: 5000 })
+@Processor(QueueFor.LOGS, { concurrency: 1000 })
 export class ApiLogsQueue extends AbstractBatchQueue<
   ApiLog,
   ApiLogsQueueJobData
@@ -28,23 +42,60 @@ export class ApiLogsQueue extends AbstractBatchQueue<
   }
 
   protected buildItem(job: Job<ApiLogsQueueJobData>): ApiLog {
-    return job.data.log
+    return job.data
+  }
+
+  private isSensitiveKey(key: string): boolean {
+    if (SENSITIVE_KEYS.has(key)) return true
+
+    return (
+      key.includes('token') ||
+      key.includes('secret') ||
+      key.includes('key') ||
+      key.includes('password') ||
+      key.includes('auth')
+    )
+  }
+
+  /**
+   * Deep recursive redaction for metadata
+   */
+  private redact(data: any): any {
+    if (!data || typeof data !== 'object') return data
+    if (Array.isArray(data)) return data.map(v => this.redact(v))
+
+    return Object.keys(data).reduce(
+      (acc, key) => {
+        const k = key.toLowerCase()
+        // Redact sensitive keys at any level of nesting
+        if (this.isSensitiveKey(k)) {
+          acc[key] = '[REDACTED]'
+        } else if (typeof data[key] === 'object') {
+          acc[key] = this.redact(data[key])
+        } else {
+          acc[key] = data[key]
+        }
+        return acc
+      },
+      {} as Record<string, any>,
+    )
   }
 
   protected async persist(batch: ApiLog[]): Promise<void> {
+    const redactedBatch = batch.map(log => ({
+      ...log,
+      metadata: this.redact(log.metadata),
+    }))
+
     await this.dataSource
       .table('api_logs')
       .withSchema(Schemas.System)
-      .insert(batch)
-
+      .insert(redactedBatch)
     this.logger.log(`Flushed ${batch.length} api logs`)
   }
 }
 
-export type ApiLogsQueueJobData = {
-  project: ProjectsDoc | object
-  log: ApiLog
-}
+export type ApiLogsQueueJobData = ApiLog
 
 export interface ApiLog {
   request_id: string
@@ -55,7 +106,6 @@ export interface ApiLog {
   client_ip?: string
   user_agent?: string
   resource: string
-  url?: string
   latency_ms?: number
   region?: string
   error?: string

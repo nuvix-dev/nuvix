@@ -1,11 +1,10 @@
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
 import { configuration, MetricFor, QueueFor } from '@nuvix/utils'
-import type { ProjectsDoc } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
-import { Auth } from '../../helpers'
 import { Hook } from '../../server'
 import { StatsQueueJob, StatsQueueOptions } from '../queues'
+import { Transform } from 'stream'
 
 @Injectable()
 export class StatsHook implements Hook {
@@ -23,12 +22,7 @@ export class StatsHook implements Hook {
       return
     }
 
-    const project: ProjectsDoc = req[Context.Project]
-    if (
-      project.empty() ||
-      project.getId() === 'console' ||
-      Auth.isPlatformActor
-    ) {
+    if (req.context.isAdminUser) {
       return
     }
 
@@ -36,7 +30,6 @@ export class StatsHook implements Hook {
     const resBodySize: number = Number(reply.getHeader('Content-Length')) || 0
 
     await this.statsQueue.add(StatsQueueJob.ADD_METRIC, {
-      project,
       metrics: [
         { key: MetricFor.REQUESTS, value: 1 },
         { key: MetricFor.INBOUND, value: reqBodySize },
@@ -45,5 +38,26 @@ export class StatsHook implements Hook {
     })
 
     return
+  }
+
+  async preParsing(req: NuvixRequest, _: NuvixRes, payload: any): Promise<any> {
+    let bytesReceived = 0
+
+    // We wrap the payload stream to count bytes without storing them in memory
+    const countingStream = new Transform({
+      transform(chunk, _, callback) {
+        bytesReceived += chunk.length
+        this.push(chunk)
+        callback()
+      },
+    })
+
+    // Attach a helper to retrieve the final count later
+    req.hooks_args = req.hooks_args || {}
+    req.hooks_args.onRequest = {
+      sizeRef: () => bytesReceived,
+    }
+
+    return payload.pipe(countingStream)
   }
 }

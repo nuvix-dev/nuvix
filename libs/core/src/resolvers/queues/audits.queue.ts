@@ -3,13 +3,13 @@ import { Injectable, Logger } from '@nestjs/common'
 import { Audit } from '@nuvix/audit'
 import { Doc } from '@nuvix/db'
 import { AppMode, configuration, QueueFor } from '@nuvix/utils'
-import type { ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
+import type { UsersDoc } from '@nuvix/utils/types'
 import { Job } from 'bullmq'
 import { CoreService } from '../../core.service.js'
 import { AbstractBatchQueue } from './batch.queue.js'
 
 @Injectable()
-@Processor(QueueFor.AUDITS, { concurrency: 50000 })
+@Processor(QueueFor.AUDITS, { concurrency: 1000 })
 export class AuditsQueue extends AbstractBatchQueue<
   AuditLog,
   AuditsQueueJobData

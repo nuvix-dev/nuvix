@@ -18,8 +18,7 @@ export class AuditHook implements Hook {
   ) {}
 
   async preSerialization(req: NuvixRequest, reply: NuvixRes) {
-    const audit: AuditEventType | undefined =
-      req.routeOptions?.config[RouteContext.AUDIT]
+    const audit = req.routeOptions?.config[RouteContext.AUDIT]
     if (!audit || !audit.event || reply.statusCode >= 400) {
       return
     }
@@ -36,6 +35,8 @@ export class AuditHook implements Hook {
 
   async handleAudit(req: NuvixRequest, body: any, audit: AuditEventType) {
     const { event, meta } = audit
+    const ctx = req.context
+    let user = ctx.user
 
     try {
       body = typeof body === 'string' ? JSON.parse(body) : body
@@ -58,19 +59,19 @@ export class AuditHook implements Hook {
         status: true,
         $sequence: -1,
         type: AuthActivity.GUEST,
-        email: `guest.${project.getId()}@service.${req.host}`,
+        email: `guest.${ctx.project.getId()}@service.${req.host}`,
         password: '',
         name: 'Guest',
       }) as unknown as UsersDoc
     }
 
     await this.auditsQueue.add(event, {
-      mode,
+      mode: ctx.mode,
       ip: req.ip,
       userAgent: req.headers['user-agent'] || '',
       resource,
       user,
-      data: body,
+      data: body ? this.stripSensitiveData(body, []) : undefined, // TODO: define sensitive fields to strip from audit logs
     })
   }
 
@@ -124,5 +125,18 @@ export class AuditHook implements Hook {
 
   private isMappingPart(part: string): boolean {
     return /{.*\..*}/.test(part)
+  }
+
+  protected stripSensitiveData(
+    data: Record<string, any>,
+    keys: string[],
+  ): Record<string, any> {
+    const strippedData = { ...data }
+    for (const key of keys) {
+      if (key in strippedData) {
+        strippedData[key] = '[REDACTED]'
+      }
+    }
+    return strippedData
   }
 }

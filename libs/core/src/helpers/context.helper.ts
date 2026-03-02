@@ -31,8 +31,8 @@ export class RequestContext {
   namespace?: string
   currentSchema?: Schema
   authMeta: AuthMeta = {}
-  sessionMeta: Record<string, unknown> = {}
 
+  errorMessage?: string
   currentSchemaDB?: Database
 
   cookieDomain = configuration.server.cookieDomain

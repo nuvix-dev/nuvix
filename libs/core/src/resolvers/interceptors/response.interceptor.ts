@@ -163,9 +163,8 @@ export class ResponseInterceptor implements NestInterceptor {
 
   transformToPlain(
     plainOrClass: any,
-    options: ResolverTypeContextOptions,
+    { list, ...options }: ResolverTypeContextOptions,
   ): PlainLiteralObject {
-    delete options.list
     if (!plainOrClass) {
       return plainOrClass
     }
