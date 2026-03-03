@@ -1,5 +1,3 @@
-import * as fs from 'node:fs/promises'
-import path from 'node:path'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable, UseInterceptors } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
@@ -20,10 +18,7 @@ import {
   MailQueueOptions,
   ResponseInterceptor,
 } from '@nuvix/core/resolvers'
-import {
-  PasswordHistoryValidator,
-  PersonalDataValidator,
-} from '@nuvix/core/validators'
+import { PersonalDataValidator } from '@nuvix/core/validators'
 import {
   Authorization,
   Database,
@@ -43,13 +38,11 @@ import {
 } from '@nuvix/utils'
 import type {
   MembershipsDoc,
-  Sessions,
   SessionsDoc,
   TargetsDoc,
   UsersDoc,
 } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
-import Template from 'handlebars'
 import { CountryResponse, Reader } from 'maxmind'
 import { UpdateEmailDTO, UpdatePasswordDTO } from './DTO/account.dto'
 import { CreateEmailSessionDTO } from './DTO/session.dto'
@@ -458,7 +451,7 @@ export class AccountService {
         session.set('current', true)
 
         // If current session, delete the cookies too
-        response.cookie(Auth.cookieName, '', {
+        response.cookie('nc_session', '', {
           expires: new Date(0),
           path: '/',
           domain: ctx.cookieDomain,
@@ -526,7 +519,7 @@ export class AccountService {
       if (session.getId() === request.context.getSession().getId()) {
         session.set('current', true)
 
-        response.cookie(Auth.cookieName, '', {
+        response.cookie('nc_session', '', {
           expires: new Date(0),
           path: '/',
           domain: request.context.cookieDomain,
@@ -662,7 +655,7 @@ export class AccountService {
     const locale = ctx.translator()
 
     response
-      .cookie(Auth.cookieName, Auth.encodeSession(user.getId(), secret), {
+      .cookie('nc_session', Auth.encodeSession(user.getId(), secret), {
         expires: expire,
         path: '/',
         secure: protocol === 'https',
