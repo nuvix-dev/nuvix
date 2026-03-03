@@ -25,7 +25,7 @@ export class StatsHook implements Hook {
       return
     }
 
-    const reqBodySize: number = req.requestSize || 0
+    const reqBodySize: number = req.requestSize?.() || 0
     const resBodySize: number = Number(reply.getHeader('Content-Length')) || 0
 
     await this.statsQueue.add(StatsQueueJob.ADD_METRIC, {

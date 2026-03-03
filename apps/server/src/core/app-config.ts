@@ -89,18 +89,22 @@ export const applyAppConfig = (app: NestFastifyApplication): void => {
       mode === AppMode.ADMIN ? AppMode.ADMIN : AppMode.DEFAULT
   })
 
-  fastify.addHook('onRequest', (req, _rep, done) => {
-    const request = req as unknown as NuvixRequest
-    let bytesReceived = 0
+  fastify.addHook('onRequest', (request, _rep, done) => {
+    const req = request as unknown as NuvixRequest
+    let size = 0
 
-    request.raw.on('data', chunk => {
-      bytesReceived += chunk.length
-    })
+    // Patch the raw stream push method
+    const origPush = req.raw.push
+    req.raw.push = function (chunk: any, encoding?: BufferEncoding) {
+      if (chunk) {
+        size += Buffer.isBuffer(chunk)
+          ? chunk.length
+          : Buffer.byteLength(chunk, encoding)
+      }
+      return origPush.call(this, chunk, encoding)
+    }
 
-    request.raw.on('end', () => {
-      request['requestSize'] = bytesReceived
-    })
-
+    req.requestSize = () => size
     done()
   })
 

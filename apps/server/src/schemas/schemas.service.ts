@@ -23,51 +23,44 @@ import {
   Update,
   UpdatePermissions,
 } from './schemas.types'
+import { CoreService } from '@nuvix/core/core.service'
 
 @Injectable()
 export class SchemasService {
   private readonly pg: DataSource
-  constructor() {}
+  private readonly dataSource: DataSource
 
-  async select({
-    table,
-    url,
-    limit,
-    offset,
-    schema,
+  constructor(private readonly coreService: CoreService) {
+    this.dataSource = this.coreService.getDataSourceWithMainPool()
+    this.pg = this.coreService.getDataSource()
+  }
 
-    context,
-  }: Select) {
-    const qb = this.pg.qb(table).withSchema(schema)
+  async select({ table, schema, query, context }: Select) {
+    const allowedSchemas = context.ctx.getExposedSchemas()
+    const { limit, offset, filter, select, order } = query
 
-    qb.with('result', qb => {
-      const subQb = this.pg.qb(table).withSchema(schema)
-      const allowedSchemas = project.get('metadata')?.allowedSchemas || []
-      const astToQueryBuilder = new ASTToQueryBuilder(subQb, this.pg, {
-        allowedSchemas,
-      })
-    })
-    const allowedSchemas = project.get('metadata')?.allowedSchemas || []
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, this.pg, {
-      allowedSchemas,
-    })
+    const qb = this.pg.queryBuilder()
+    qb.from(table).withSchema(schema)
 
-    const { filter, select, order } = this.getParamsFromUrl(url, table)
-
-    astToQueryBuilder.applySelect(select)
-    astToQueryBuilder.applyFilters(filter, {
-      applyExtra: true,
-      tableName: table,
-    })
-    astToQueryBuilder.applyOrder(order, table)
-    astToQueryBuilder.applyLimitOffset({
+    const ast = new ASTToQueryBuilder(qb, this.pg, { allowedSchemas })
+    ast.applySelect(select)
+    ast.applyFilters(filter, { applyExtra: true, tableName: table })
+    ast.applyOrder(order, table)
+    ast.applyLimitOffset({
       limit: limit ?? filter?.limit ?? 500,
-      offset,
+      offset: offset ?? filter?.offset ?? 0,
     })
 
-    return this.withMetaTransaction(pg, context, async () => {
-      return qb.catch(e => this.processError(e))
-    })
+    const _sql = qb.toSQL().toNative()
+    const params = _sql.bindings
+
+    const sql = `
+  BEGIN;
+  SET LOCAL ROLE ${this.pg.escapeIdentifier('anon')};
+  ${_sql.sql};
+  COMMIT;
+    `
+    return await this.pg.execute(sql, params as any[])
   }
 
   private async withMetaTransaction(
@@ -356,7 +349,7 @@ export class SchemasService {
     })
 
     // Get current permissions from DB
-    const query = this.pg
+    const query = this.dataSource
       .table(`${tableId}_perms`)
       .withSchema(schema)
       .select(['permission', 'roles'])
@@ -395,7 +388,7 @@ export class SchemasService {
       if (newPermissions.length === 0) {
         // Delete existing row
         if (currentPermissions.length > 0) {
-          const delQuery = this.pg
+          const delQuery = this.dataSource
             .table(`${tableId}_perms`)
             .withSchema(schema)
             .andWhere('permission', type)
@@ -410,7 +403,7 @@ export class SchemasService {
         }
       } else if (currentPermissions.length > 0) {
         // Update existing row
-        const updQuery = this.pg
+        const updQuery = this.dataSource
           .table(`${tableId}_perms`)
           .withSchema(schema)
           .andWhere('permission', type)
@@ -426,7 +419,7 @@ export class SchemasService {
         })
       } else {
         // Insert new row
-        await this.pg
+        await this.dataSource
           .table(`${tableId}_perms`)
           .withSchema(schema)
           .insert({
@@ -445,7 +438,7 @@ export class SchemasService {
     rowId,
     schema,
   }: GetPermissions): Promise<string[]> {
-    const query = this.pg
+    const query = this.dataSource
       .table(`${tableId}_perms`)
       .withSchema(schema)
       .select(['roles', 'permission'])

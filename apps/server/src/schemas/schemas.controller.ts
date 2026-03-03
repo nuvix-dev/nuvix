@@ -23,6 +23,8 @@ import {
   TableParamsDTO,
 } from './DTO/table.dto'
 import { SchemasService } from './schemas.service'
+import { RestContext, TQuery } from './schemas.types'
+import { OrderParser, Parser, SelectParser } from '@nuvix/utils/query'
 
 // Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
 @Controller({ version: ['1'], path: ['schemas/:schemaId', 'public'] })
@@ -46,6 +48,8 @@ export class SchemasController {
     return this.schemasService.select({
       table,
       schema,
+      query: this.parseQuery({ ...query, table }),
+      context: this.buildContext(request),
     })
   }
 
@@ -189,11 +193,11 @@ export class SchemasController {
     auth: [AuthType.ADMIN, AuthType.KEY],
   })
   @CurrentSchemaType(SchemaType.Managed)
-  manageTablePermissions(
+  async manageTablePermissions(
     @Param() { schemaId: schema = 'public', tableId }: TableParamsDTO,
     @Body() body: PermissionsDTO,
   ): Promise<string[]> {
-    return this.schemasService.updatePermissions({
+    return await this.schemasService.updatePermissions({
       permissions: body.permissions,
       tableId,
       schema,
@@ -206,11 +210,11 @@ export class SchemasController {
     auth: [AuthType.ADMIN, AuthType.KEY],
   })
   @CurrentSchemaType(SchemaType.Managed)
-  manageRowPermissions(
+  async manageRowPermissions(
     @Param() { schemaId: schema = 'public', tableId, rowId }: RowParamsDTO,
     @Body() body: PermissionsDTO,
   ): Promise<string[]> {
-    return this.schemasService.updatePermissions({
+    return await this.schemasService.updatePermissions({
       permissions: body.permissions,
       tableId,
       schema,
@@ -249,7 +253,30 @@ export class SchemasController {
     })
   }
 
-  private buildContext(request: NuvixRequest): string {
-    return ''
+  private buildContext(request: NuvixRequest): RestContext {
+    return {
+      ip: request.ip,
+      headers: request.headers,
+      method: request.method,
+      url: request.url,
+      ctx: request.context,
+    }
+  }
+
+  private parseQuery(query: SelectQueryDTO & { table: string }): TQuery {
+    const { filter, select, order, table: tableName, ...rest } = query
+    let parsed: TQuery = { ...rest }
+
+    if (filter) {
+      parsed.filter = Parser.create({ tableName }).parse(filter)
+    }
+    if (select) {
+      parsed.select = new SelectParser({ tableName }).parse(select)
+    }
+    if (order) {
+      parsed.order = OrderParser.parse(order, tableName)
+    }
+
+    return parsed
   }
 }

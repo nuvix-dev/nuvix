@@ -37,7 +37,7 @@ declare module 'fastify' {
     context: RequestContext;
     // Allow storing hooks arguments and other arbitrary properties
     hooks_args: Record<string, any>;
-    requestSize?: number;
+    requestSize?: ()=> number;
     rate_limit?: {
       limit: number;
       remaining: number;

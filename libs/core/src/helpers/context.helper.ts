@@ -115,6 +115,10 @@ export class RequestContext {
     }
   }
 
+  public getExposedSchemas(): string[] {
+    return this.project.get('metadata')?.allowedSchemas || []
+  }
+
   constructor(init?: Partial<RequestContext>) {
     Object.assign(this, init)
   }

@@ -1,11 +1,24 @@
+import {
+  Expression,
+  ParserResult,
+  SelectNode,
+  ParsedOrdering,
+} from '@nuvix/utils/query'
+import { SelectQueryDTO } from './DTO/table.dto'
+import { RequestContext } from '@nuvix/core/helpers'
+
+export interface TQuery
+  extends Omit<SelectQueryDTO, 'select' | 'filter' | 'order'> {
+  filter?: Expression & ParserResult
+  select?: SelectNode[]
+  order?: ParsedOrdering[]
+}
+
 export interface Select {
   schema: string
   table: string
-  url: string
-  limit?: number
-  offset?: number
-  shape?: 'array' | 'object'
-  context: Record<string, any>
+  query: TQuery
+  context: RestContext
 }
 
 export interface Insert {
@@ -52,4 +65,12 @@ export interface GetPermissions {
   schema: string
   rowId?: number
   tableId: string
+}
+
+export interface RestContext {
+  ip: string
+  headers: Record<string, string | string[] | undefined>
+  method: string
+  url: string
+  ctx: RequestContext
 }
