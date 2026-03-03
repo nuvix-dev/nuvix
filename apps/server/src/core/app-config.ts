@@ -10,7 +10,6 @@ import { AppMode, configuration } from '@nuvix/utils'
 import { CoreService } from '@nuvix/core/core.service'
 import { RequestContext } from '@nuvix/core/helpers'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Transform } from 'node:stream'
 
 /**
  * Applies common app configuration to the given NestFastifyApplication instance.
@@ -77,7 +76,9 @@ export const applyAppConfig = (app: NestFastifyApplication): void => {
       throw new Exception(Exception.PROJECT_NOT_FOUND, 'Project not found', 404)
     }
 
-    const mode = (request.query as { mode?: string }).mode as string | undefined
+    const mode =
+      request.headers['x-nuvix-mode'] ||
+      ((request.query as { mode?: string }).mode as string | undefined)
 
     if (mode && ![AppMode.ADMIN, AppMode.DEFAULT].includes(mode as AppMode)) {
       throw new Exception(Exception.INVALID_PARAMS, 'Invalid mode', 400)

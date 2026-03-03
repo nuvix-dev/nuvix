@@ -42,7 +42,7 @@ export class LogsHook implements Hook {
         headers, // Processed further in queue
         query: req.query,
         mode: ctx.mode,
-        auth_type: ctx.authType,
+        session_type: ctx.authType,
         user: !ctx.user.empty() ? ctx.user.getId() : undefined,
       },
     })

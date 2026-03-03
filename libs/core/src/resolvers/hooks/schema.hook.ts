@@ -14,7 +14,7 @@ export class SchemaHook implements Hook {
         'SchemaHook should not be initialized in console application',
       )
     }
-    this.dataSource = this.coreService.getDataSource()
+    this.dataSource = this.coreService.getDataSourceWithMainPool()
   }
 
   async preHandler(request: NuvixRequest) {
