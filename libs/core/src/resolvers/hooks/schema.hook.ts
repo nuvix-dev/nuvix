@@ -39,6 +39,10 @@ export class SchemaHook implements Hook {
         if (!schema.enabled) {
           throw new Exception(Exception.SCHEMA_NOT_FOUND)
         }
+        if (schema.type === SchemaType.Document) {
+          request.context.currentSchemaDB =
+            this.coreService.getDatabaseForSchema(schema.name)
+        }
         const allowed = project.get('metadata')?.allowedSchemas ?? []
         // May be we will add Document schema too in future
         if (

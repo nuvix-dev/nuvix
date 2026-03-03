@@ -9,11 +9,9 @@ import collections from '@nuvix/utils/collections'
 
 @Injectable()
 export class DatabaseService {
-  private readonly db: Database
   private readonly dataSource: DataSource
 
   constructor(private readonly coreService: CoreService) {
-    this.db = this.coreService.getDatabase()
     this.dataSource = this.coreService.getDataSourceWithMainPool()
   }
 
@@ -32,14 +30,22 @@ export class DatabaseService {
       throw new Exception(Exception.SCHEMA_ALREADY_EXISTS)
     }
 
-    await this.dataSource.execute('select system.create_schema(?, ?, ?)', [
-      name,
-      type,
-      description ?? null,
-    ])
+    await this.dataSource.transaction(tx =>
+      tx.query(
+        tx.$client,
+        tx
+          .raw('select system.create_schema(?, ?, ?)', [
+            name,
+            type,
+            description ?? null,
+          ])
+          .toSQL(),
+      ),
+    )
 
+    const db = this.coreService.getDatabaseForSchema(name)
     try {
-      await this.db.create(name)
+      await db.create(name)
 
       for (const [_key, collection] of Object.entries(collections.database)) {
         if (collection.$collection !== Database.METADATA) {
@@ -53,7 +59,7 @@ export class DatabaseService {
         const indexes = (collection.indexes ?? []).map(index => new Doc(index))
 
         try {
-          await this.db.createCollection({
+          await db.createCollection({
             id: collection.$id,
             attributes,
             indexes,
@@ -139,11 +145,19 @@ export class DatabaseService {
       )
     }
 
-    await this.dataSource.execute('select system.create_schema(?, ?, ?)', [
-      data.name,
-      data.type,
-      data.description ?? null,
-    ])
+    await this.dataSource.transaction(tx =>
+      tx.query(
+        tx.$client,
+        tx
+          .raw('select system.create_schema(?, ?, ?)', [
+            data.name,
+            data.type,
+            data.description ?? null,
+          ])
+          .toSQL(),
+      ),
+    )
+
     const schema = await this.dataSource
       .table<Schema>('schemas')
       .withSchema(Schemas.System)

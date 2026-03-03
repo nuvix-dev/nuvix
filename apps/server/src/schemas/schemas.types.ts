@@ -72,5 +72,6 @@ export interface RestContext {
   headers: Record<string, string | string[] | undefined>
   method: string
   url: string
+  id: string
   ctx: RequestContext
 }

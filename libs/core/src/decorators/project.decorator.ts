@@ -7,6 +7,12 @@ import { Database } from '@nuvix/db'
 export const CurrentDatabase = createParamDecorator<any, Database>(
   (_data: unknown, ctx: ExecutionContext) => {
     const request: NuvixRequest = ctx.switchToHttp().getRequest()
-    return request.context.currentSchemaDB as Database
+    const db = request.context.currentSchemaDB
+    if (!db) {
+      throw new Error(
+        'CurrentDatabase not found in request context. Make sure that SchemaHook is properly configured and the schema exists.',
+      )
+    }
+    return db
   },
 )

@@ -1,8 +1,13 @@
 import { Injectable } from '@nestjs/common'
 import { Exception } from '@nuvix/core/extend/exception'
-import { setupDatabaseMeta } from '@nuvix/core/helpers'
-import { Database, Doc, PermissionsValidator, PermissionType } from '@nuvix/db'
-import { DataSource, Raw } from '@nuvix/pg'
+import {
+  Authorization,
+  Database,
+  Doc,
+  PermissionsValidator,
+  PermissionType,
+} from '@nuvix/db'
+import { DataSource, Raw, Transaction } from '@nuvix/pg'
 import { transformPgError } from '@nuvix/utils/database'
 import {
   ASTToQueryBuilder,
@@ -19,11 +24,13 @@ import {
   Delete,
   GetPermissions,
   Insert,
+  RestContext,
   Select,
   Update,
   UpdatePermissions,
 } from './schemas.types'
 import { CoreService } from '@nuvix/core/core.service'
+import { DatabaseRole } from '@nuvix/utils'
 
 @Injectable()
 export class SchemasService {
@@ -39,44 +46,44 @@ export class SchemasService {
     const allowedSchemas = context.ctx.getExposedSchemas()
     const { limit, offset, filter, select, order } = query
 
-    const qb = this.pg.queryBuilder()
-    qb.from(table).withSchema(schema)
+    return this.pg
+      .transaction(async tx => {
+        const qb = tx.queryBuilder()
 
-    const ast = new ASTToQueryBuilder(qb, this.pg, { allowedSchemas })
-    ast.applySelect(select)
-    ast.applyFilters(filter, { applyExtra: true, tableName: table })
-    ast.applyOrder(order, table)
-    ast.applyLimitOffset({
-      limit: limit ?? filter?.limit ?? 500,
-      offset: offset ?? filter?.offset ?? 0,
-    })
+        qb.from(table).withSchema(schema)
 
-    const _sql = qb.toSQL().toNative()
-    const params = _sql.bindings
+        const ast = new ASTToQueryBuilder(qb, this.pg, { allowedSchemas })
+        ast.applySelect(select)
+        ast.applyFilters(filter, { applyExtra: true, tableName: table })
+        ast.applyOrder(order, table)
+        ast.applyLimitOffset({
+          limit: limit ?? filter?.limit ?? 500,
+          offset: offset ?? filter?.offset ?? 0,
+        })
 
-    const sql = `
-  BEGIN;
-  SET LOCAL ROLE ${this.pg.escapeIdentifier('anon')};
-  ${_sql.sql};
-  COMMIT;
-    `
-    return await this.pg.execute(sql, params as any[])
+        await this.preQuery(context, tx)
+        return qb.finally(() => tx.commit())
+      })
+      .catch(this.processError)
   }
 
   private async withMetaTransaction(
-    pg: DataSource,
     context: Record<string, any>,
     callback: () => Promise<any>,
   ) {
-    return this.pg.transaction(async () => {
+    return this.pg.transaction(async tx => {
       const { role, request, ...extra } = context as any
-      await this.pg.execute(`SET LOCAL ROLE ${pg.escapeIdentifier(role)};`)
-      await setupDatabaseMeta({
-        request,
-        extra,
-        client: this.pg,
-        extraPrefix: 'request.auth',
-      })
+      tx.query(
+        tx.$client,
+        `SET LOCAL ROLE ${this.pg.escapeIdentifier('anon')};`,
+      )
+      // await this.pg.query(tx, `SET LOCAL ROLE ${this.pg.escapeIdentifier('anon')};`)
+      // await setupDatabaseMeta({
+      //   request,
+      //   extra,
+      //   client: this.pg,
+      //   extraPrefix: 'request.auth',
+      // })
       return callback()
     })
   }
@@ -467,4 +474,144 @@ export class SchemasService {
 
     return result
   }
+
+  async preQuery(context: RestContext, tx: Transaction) {
+    const { ctx } = context
+    const { user, session } = ctx
+
+    const roles = Authorization.getRoles() ?? []
+    const role = user.empty() ? DatabaseRole.ANON : DatabaseRole.AUTHENTICATED
+
+    const headers: Record<string, string> = {}
+    for (const [k, v] of Object.entries(context.headers ?? {})) {
+      if (v != null) headers[k.toLowerCase()] = String(v)
+    }
+
+    const userPayload =
+      user && !user.empty()
+        ? {
+            id: user.getId(),
+            name: user.get('name'),
+            email: user.get('email'),
+          }
+        : null
+
+    const sessionPayload = session
+      ? {
+          id: session.getId(),
+          userId: session.get('userId'),
+          provider: session.get('provider'),
+          ip: session.get('ip'),
+          userAgent: session.get('userAgent'),
+        }
+      : null
+
+    // Use Postgres Arrays for roles {"any", "guests"}
+    const roleLiteral =
+      roles.length > 0
+        ? `{${roles.map(r => `"${r.replace(/"/g, '\\"')}"`).join(',')}}`
+        : '{}'
+
+    await tx.queryBuilder().select(
+      tx.raw(
+        `
+        set_config('role', ?, true),  
+        set_config('request.method', ?, true),
+        set_config('request.path', ?, true),
+        set_config('request.id', ?, true),
+        set_config('request.headers', ?, true),
+        set_config('request.ip', ?, true),
+        set_config('request.auth.user', ?, true),
+        set_config('request.auth.session', ?, true),
+        set_config('request.auth.roles', ?, true)
+                `,
+        [
+          role,
+          context.method.toUpperCase(),
+          context.url ?? '',
+          context.id ?? '',
+          JSON.stringify(headers),
+          context.ip ?? '',
+          userPayload ?? '',
+          sessionPayload ?? '',
+          roleLiteral,
+        ],
+      ),
+    )
+  }
 }
+
+// function applyContextToWith(
+//   qb: ReturnType<DataSource['queryBuilder']>,
+//   context: RestContext,
+//   pg: any,
+// ) {
+//   const { ctx } = context
+//   const { user, session } = ctx
+
+//   const roles = Authorization.getRoles() ?? []
+
+//   const headers: Record<string, string | string[]> = {}
+//   for (const [k, v] of Object.entries(context.headers ?? {})) {
+//     if (v != null) headers[k.toLowerCase()] = v
+//   }
+
+//   const userPayload =
+//     user && !user.empty()
+//       ? JSON.stringify({
+//           id: user.getId(),
+//           name: user.get('name'),
+//           email: user.get('email'),
+//         })
+//       : undefined
+
+//   const sessionPayload =
+//     session && !session.empty()
+//       ? JSON.stringify({
+//           id: session.getId(),
+//           userId: session.get('userId'),
+//           provider: session.get('provider'),
+//           ip: session.get('ip'),
+//           userAgent: session.get('userAgent'),
+//         })
+//       : undefined
+
+//   const roleLiteral =
+//     roles.length > 0
+//       ? `{${roles.map(r => `"${r.replace(/"/g, '\\"')}"`).join(',')}}`
+//       : '{}'
+//   const role =
+//     user && !user.empty() ? DatabaseRole.AUTHENTICATED : DatabaseRole.ANON
+
+//   qb.with('ctx', sub => {
+//     sub.select(
+//       pg.raw(
+//         `
+//         set_config('role', ?, true),
+//         set_config('request.method', ?, true),
+//         set_config('request.path', ?, true),
+//         set_config('request.id', ?, true),
+//         set_config('request.headers', ?, true),
+//         set_config('request.ip', ?, true),
+//         set_config('request.auth.user', ?, true),
+//         set_config('request.auth.session', ?, true),
+//         set_config('request.auth.roles', ?, true),
+//         1 as d
+//         `, // the "1 as d" is just a dummy select
+//         [
+//           role,
+//           context.method.toUpperCase(),
+//           context.url ?? '',
+//           context.id ?? '',
+//           JSON.stringify(headers),
+//           context.ip ?? '',
+//           userPayload ?? '',
+//           sessionPayload ?? '',
+//           roleLiteral,
+//         ],
+//       ),
+//     )
+//   })
+
+//   return qb
+// }

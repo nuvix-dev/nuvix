@@ -260,6 +260,7 @@ export class SchemasController {
       method: request.method,
       url: request.url,
       ctx: request.context,
+      id: request.id,
     }
   }
 

@@ -1,5 +1,4 @@
 export * from './auth.helper'
-export * from './db-meta.helper'
 export * from './detector.helper'
 export * from './ID.helper'
 export * from './key.helper'
