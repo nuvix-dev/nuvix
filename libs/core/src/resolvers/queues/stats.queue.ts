@@ -1,6 +1,11 @@
 import { Processor } from '@nestjs/bullmq'
 import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
-import { Authorization, type Database, Doc } from '@nuvix/db'
+import {
+  Authorization,
+  type Database,
+  Doc,
+  TransactionException,
+} from '@nuvix/db'
 import {
   configuration,
   fnv1a128,
@@ -161,7 +166,18 @@ export class StatsQueue extends AbstractBatchQueue<
     this.logger.log(`Flushing ${docs.length} stats`)
 
     await Authorization.skip(() =>
-      this.db.createOrUpdateDocumentsWithIncrease('stats', 'value', docs),
+      this.db
+        .createOrUpdateDocumentsWithIncrease('stats', 'value', docs)
+        .catch(err => {
+          if (err instanceof TransactionException) {
+            return this.db.createOrUpdateDocumentsWithIncrease(
+              'stats',
+              'value',
+              docs,
+            )
+          }
+          throw err
+        }),
     )
   }
 

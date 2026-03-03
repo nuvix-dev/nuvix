@@ -30,11 +30,11 @@ export class ThrottlerGuard implements CanActivate {
     }
 
     const rateLimitOptions = this.reflector.getAllAndOverride<ThrottleOptions>(
-      Throttle,
+      Throttle.name,
       [context.getClass(), context.getHandler()],
     )
     // If no rate limit options are defined for this route, allow the request
-    if (!rateLimitOptions) {
+    if (rateLimitOptions === undefined) {
       return true
     }
 
@@ -170,8 +170,9 @@ export class ThrottlerGuard implements CanActivate {
     response: NuvixRes,
     result: RateLimitResult,
   ): void {
-    response.raw.setHeader('X-RateLimit-Limit', result.limit.toString())
-    response.raw.setHeader('X-RateLimit-Remaining', result.remaining.toString())
-    response.raw.setHeader('X-RateLimit-Reset', result.resetTime.toString())
+    response
+      .header('X-RateLimit-Limit', result.limit.toString())
+      .header('X-RateLimit-Remaining', result.remaining.toString())
+      .header('X-RateLimit-Reset', result.resetTime.toString())
   }
 }
