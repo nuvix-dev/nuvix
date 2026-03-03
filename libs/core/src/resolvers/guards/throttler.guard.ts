@@ -1,8 +1,10 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
-import { configuration, KeyArgs, RouteContext } from '@nuvix/utils'
+import { configuration, KeyArgs, ThrottleOptions } from '@nuvix/utils'
 import { ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
 import { Exception } from '../../extend/exception'
 import { RatelimitService } from '../../rate-limit.service'
+import { Reflector } from '@nestjs/core'
+import { Throttle } from '@nuvix/core/decorators'
 
 interface RateLimitResult {
   allowed: boolean
@@ -13,7 +15,10 @@ interface RateLimitResult {
 
 @Injectable()
 export class ThrottlerGuard implements CanActivate {
-  constructor(private readonly ratelimitService: RatelimitService) {}
+  constructor(
+    private readonly ratelimitService: RatelimitService,
+    private readonly reflector: Reflector,
+  ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request: NuvixRequest = context.switchToHttp().getRequest()
@@ -24,8 +29,10 @@ export class ThrottlerGuard implements CanActivate {
       return true
     }
 
-    const rateLimitOptions =
-      request.routeOptions?.config?.[RouteContext.RATE_LIMIT]
+    const rateLimitOptions = this.reflector.getAllAndOverride<ThrottleOptions>(
+      Throttle,
+      [context.getClass(), context.getHandler()],
+    )
     // If no rate limit options are defined for this route, allow the request
     if (!rateLimitOptions) {
       return true

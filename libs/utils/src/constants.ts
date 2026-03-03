@@ -217,7 +217,6 @@ export enum DatabaseRole {
 
 export enum RouteContext {
   AUDIT = 'audit',
-  RATE_LIMIT = 'rateLimit',
   SKIP_LOGGING = 'skipLogging',
   SCHEMA_TYPE = 'schemaType',
 }

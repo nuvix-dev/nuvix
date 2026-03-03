@@ -4,7 +4,6 @@ import { configuration, MetricFor, QueueFor } from '@nuvix/utils'
 import { Queue } from 'bullmq'
 import { Hook } from '../../server'
 import { StatsQueueJob, StatsQueueOptions } from '../queues'
-import { Transform } from 'stream'
 
 @Injectable()
 export class StatsHook implements Hook {
@@ -26,7 +25,7 @@ export class StatsHook implements Hook {
       return
     }
 
-    const reqBodySize: number = req.hooks_args.onRequest?.sizeRef?.() ?? 0
+    const reqBodySize: number = req.requestSize || 0
     const resBodySize: number = Number(reply.getHeader('Content-Length')) || 0
 
     await this.statsQueue.add(StatsQueueJob.ADD_METRIC, {
@@ -38,26 +37,5 @@ export class StatsHook implements Hook {
     })
 
     return
-  }
-
-  async preParsing(req: NuvixRequest, _: NuvixRes, payload: any): Promise<any> {
-    let bytesReceived = 0
-
-    // We wrap the payload stream to count bytes without storing them in memory
-    const countingStream = new Transform({
-      transform(chunk, _, callback) {
-        bytesReceived += chunk.length
-        this.push(chunk)
-        callback()
-      },
-    })
-
-    // Attach a helper to retrieve the final count later
-    req.hooks_args = req.hooks_args || {}
-    req.hooks_args.onRequest = {
-      sizeRef: () => bytesReceived,
-    }
-
-    return payload.pipe(countingStream)
   }
 }

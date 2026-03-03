@@ -14,7 +14,7 @@ import { CoreService } from '../../core.service.js'
 import { AbstractBatchQueue } from './batch.queue.js'
 
 @Injectable()
-@Processor(QueueFor.STATS, { concurrency: 1000 })
+@Processor(QueueFor.STATS, { concurrency: 10 })
 export class StatsQueue extends AbstractBatchQueue<
   Array<{ key: MetricFor; value: number }>,
   StatsQueueOptions

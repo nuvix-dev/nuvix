@@ -17,7 +17,6 @@ import type { RequestContext } from '@nuvix/core/helpers/context.helper';
 declare module 'fastify' {
   interface FastifyContextConfig {
     [RouteContext.AUDIT]?: AuditEventType;
-    [RouteContext.RATE_LIMIT]?: ThrottleOptions;
     [RouteContext.SKIP_LOGGING]?: boolean;
     [RouteContext.SCHEMA_TYPE]?: SchemaType[] | SchemaType;
   }
@@ -38,6 +37,7 @@ declare module 'fastify' {
     context: RequestContext;
     // Allow storing hooks arguments and other arbitrary properties
     hooks_args: Record<string, any>;
+    requestSize?: number;
     rate_limit?: {
       limit: number;
       remaining: number;

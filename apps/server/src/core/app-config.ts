@@ -10,6 +10,7 @@ import { AppMode, configuration } from '@nuvix/utils'
 import { CoreService } from '@nuvix/core/core.service'
 import { RequestContext } from '@nuvix/core/helpers'
 import { Exception } from '@nuvix/core/extend/exception'
+import { Transform } from 'node:stream'
 
 /**
  * Applies common app configuration to the given NestFastifyApplication instance.
@@ -85,6 +86,21 @@ export const applyAppConfig = (app: NestFastifyApplication): void => {
     request.context.project = project
     request.context.mode =
       mode === AppMode.ADMIN ? AppMode.ADMIN : AppMode.DEFAULT
+  })
+
+  fastify.addHook('onRequest', (req, _rep, done) => {
+    const request = req as unknown as NuvixRequest
+    let bytesReceived = 0
+
+    request.raw.on('data', chunk => {
+      bytesReceived += chunk.length
+    })
+
+    request.raw.on('end', () => {
+      request['requestSize'] = bytesReceived
+    })
+
+    done()
   })
 
   app.useGlobalFilters(new ErrorFilter())
