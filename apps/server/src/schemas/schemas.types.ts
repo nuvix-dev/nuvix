@@ -1,57 +1,68 @@
-import {
+import type {
   Expression,
   ParserResult,
   SelectNode,
   ParsedOrdering,
 } from '@nuvix/utils/query'
-import { SelectQueryDTO } from './DTO/table.dto'
-import { RequestContext } from '@nuvix/core/helpers'
+import type { SelectQueryDTO } from './DTO/table.dto'
+import type { RequestContext } from '@nuvix/core/helpers'
 
-export interface TQuery
+export interface SelectQuery
   extends Omit<SelectQueryDTO, 'select' | 'filter' | 'order'> {
   filter?: Expression & ParserResult
   select?: SelectNode[]
   order?: ParsedOrdering[]
 }
 
-export interface Select {
+type Common = {
   schema: string
   table: string
-  query: TQuery
   context: RestContext
 }
 
-export interface Insert {
-  table: string
+export interface Select extends Common {
+  query: SelectQuery
+}
+
+export interface InsertQuery {
+  columns?: string[]
+  select?: SelectNode[]
+}
+
+export interface Insert extends Common {
   input:
     | Record<string, string | number | null | boolean>
     | Record<string, string | number | null | boolean>[]
-  columns?: string[]
-  schema: string
-  url: string
   returnPref?: 'minimal' | 'location' | 'full'
-  context: Record<string, any>
+  query: InsertQuery
+}
+
+export interface UpdateQuery extends SelectQuery {
+  force?: boolean
+  columns?: string[]
 }
 
 export interface Update extends Omit<Insert, 'input'> {
   input: Record<string, string | number | null | boolean>
-  limit?: number
-  offset?: number
+  query: UpdateQuery
+}
+
+export interface DeleteQuery extends SelectQuery {
   force?: boolean
 }
 
-export interface Delete extends Select {
-  force?: boolean
+export interface Delete extends Omit<Select, 'query'> {
+  query: DeleteQuery
 }
+
+interface CallFunctionQuery extends SelectQuery {}
 
 export interface CallFunction {
   schema: string
   functionName: string
-  url: string
-  limit?: number
-  offset?: number
   args?: Record<string, string | number | boolean | null> | any[]
-  context: Record<string, any>
+  query: CallFunctionQuery
+  context: RestContext
 }
 
 export interface UpdatePermissions {

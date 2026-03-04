@@ -2,9 +2,6 @@ import {
   Body,
   Controller,
   Param,
-  ParseArrayPipe,
-  ParseBoolPipe,
-  ParseIntPipe,
   Query,
   Req,
   UseGuards,
@@ -12,18 +9,21 @@ import {
 } from '@nestjs/common'
 import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
 import { AuthType, CurrentSchemaType, Namespace } from '@nuvix/core/decorators'
-import { ParseDuplicatePipe } from '@nuvix/core/pipes'
 import { ApiInterceptor, SchemaGuard } from '@nuvix/core/resolvers'
 import { SchemaType } from '@nuvix/utils'
 import { PermissionsDTO } from './DTO/permissions.dto'
 import {
+  CallFunctionQueryDTO,
+  DeleteQueryDTO,
   FunctionParamsDTO,
+  InsertQueryDTO,
   RowParamsDTO,
   SelectQueryDTO,
   TableParamsDTO,
+  UpdateQueryDTO,
 } from './DTO/table.dto'
 import { SchemasService } from './schemas.service'
-import { RestContext, TQuery } from './schemas.types'
+import { RestContext, SelectQuery } from './schemas.types'
 import { OrderParser, Parser, SelectParser } from '@nuvix/utils/query'
 
 // Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
@@ -62,22 +62,14 @@ export class SchemasController {
     @Req() request: NuvixRequest,
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
     @Body() input: Record<string, any> | Record<string, any>[],
-
-    @Query(
-      'columns',
-      ParseDuplicatePipe,
-      new ParseArrayPipe({ items: String, optional: true }),
-    )
-    columns?: string[],
+    @Query() { columns, select }: InsertQueryDTO,
   ) {
     return this.schemasService.insert({
       schema,
       table,
       input,
-      columns,
-      url: request.raw.url || request.url,
-
-      context: this.requestToContext(request),
+      query: { ...this.parseQuery({ select, table }), columns },
+      context: this.buildContext(request),
     })
   }
 
@@ -89,34 +81,16 @@ export class SchemasController {
   })
   async updateTables(
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
-
     @Req() request: NuvixRequest,
     @Body() input: Record<string, any>,
-
-    @Query(
-      'columns',
-      ParseDuplicatePipe,
-      new ParseArrayPipe({ items: String, optional: true }),
-    )
-    columns?: string[],
-    @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
-    limit?: number,
-    @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
-    offset?: number,
-    @Query('force', ParseDuplicatePipe, new ParseBoolPipe({ optional: true }))
-    force = false,
+    @Query() query: UpdateQueryDTO,
   ) {
     return this.schemasService.update({
       schema,
       table,
       input,
-      columns,
-      url: request.raw.url || request.url,
-      limit,
-      offset,
-      force,
-
-      context: this.requestToContext(request),
+      query: this.parseQuery({ ...query, table }),
+      context: this.buildContext(request),
     })
   }
 
@@ -132,25 +106,14 @@ export class SchemasController {
   })
   async deleteTables(
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
-
     @Req() request: NuvixRequest,
-
-    @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
-    limit?: number,
-    @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
-    offset?: number,
-    @Query('force', ParseDuplicatePipe, new ParseBoolPipe({ optional: true }))
-    force = false,
+    @Query() query: DeleteQueryDTO,
   ) {
     return this.schemasService.delete({
       schema,
       table,
-      url: request.raw.url || request.url,
-      limit,
-      offset,
-      force,
-
-      context: this.requestToContext(request),
+      query: this.parseQuery({ ...query, table }),
+      context: this.buildContext(request),
     })
   }
 
@@ -168,22 +131,15 @@ export class SchemasController {
       schemaId: schema = 'public',
       functionId: functionName,
     }: FunctionParamsDTO,
-
-    @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
-    limit?: number,
-    @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
-    offset?: number,
+    @Query() query: CallFunctionQueryDTO,
     @Body() args: Record<string, any> | any[] = [],
   ) {
     return this.schemasService.callFunction({
       schema,
       functionName,
-      url: request.raw.url || request.url,
-      limit,
-      offset,
       args,
-
-      context: this.requestToContext(request),
+      query: this.parseQuery({ ...query, table: functionName }),
+      context: this.buildContext(request),
     })
   }
 
@@ -264,9 +220,11 @@ export class SchemasController {
     }
   }
 
-  private parseQuery(query: SelectQueryDTO & { table: string }): TQuery {
+  private parseQuery<T>(
+    query: SelectQueryDTO & { table: string } & T,
+  ): SelectQuery & T {
     const { filter, select, order, table: tableName, ...rest } = query
-    let parsed: TQuery = { ...rest }
+    let parsed: SelectQuery = { ...rest }
 
     if (filter) {
       parsed.filter = Parser.create({ tableName }).parse(filter)
@@ -278,6 +236,6 @@ export class SchemasController {
       parsed.order = OrderParser.parse(order, tableName)
     }
 
-    return parsed
+    return parsed as SelectQuery & T
   }
 }
