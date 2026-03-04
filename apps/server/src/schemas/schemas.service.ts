@@ -9,16 +9,7 @@ import {
 } from '@nuvix/db'
 import { DataSource, Raw, Transaction } from '@nuvix/pg'
 import { transformPgError } from '@nuvix/utils/database'
-import {
-  ASTToQueryBuilder,
-  Expression,
-  OrderParser,
-  ParsedOrdering,
-  Parser,
-  ParserResult,
-  SelectNode,
-  SelectParser,
-} from '@nuvix/utils/query'
+import { ASTToQueryBuilder } from '@nuvix/utils/query'
 import {
   CallFunction,
   Delete,
@@ -37,6 +28,8 @@ export class SchemasService {
   private readonly pg: DataSource
   private readonly dataSource: DataSource
 
+  private static limit = 500
+
   constructor(private readonly coreService: CoreService) {
     this.dataSource = this.coreService.getDataSourceWithMainPool()
     this.pg = this.coreService.getDataSource()
@@ -46,49 +39,36 @@ export class SchemasService {
     const allowedSchemas = context.ctx.getExposedSchemas()
     const { limit, offset, filter, select, order } = query
 
-    return this.pg
-      .transaction(async tx => {
-        const qb = tx.queryBuilder()
+    const qb = this.pg.table(table).withSchema(schema)
+    const ast = new ASTToQueryBuilder(qb, this.pg, { allowedSchemas })
+    ast.applySelect(select)
+    ast.applyFilters(filter, { applyExtra: true, tableName: table })
+    ast.applyOrder(order, table)
+    ast.applyLimitOffset({
+      limit: limit ?? filter?.limit ?? SchemasService.limit,
+      offset: offset ?? filter?.offset ?? 0,
+    })
 
-        qb.from(table).withSchema(schema)
-
-        const ast = new ASTToQueryBuilder(qb, this.pg, { allowedSchemas })
-        ast.applySelect(select)
-        ast.applyFilters(filter, { applyExtra: true, tableName: table })
-        ast.applyOrder(order, table)
-        ast.applyLimitOffset({
-          limit: limit ?? filter?.limit ?? 500,
-          offset: offset ?? filter?.offset ?? 0,
-        })
-
-        await this.preQuery(context, tx)
-        return qb.finally(() => tx.commit())
-      })
-      .catch(this.processError)
-  }
-
-  private async withMetaTransaction(
-    context: Record<string, any>,
-    callback: () => Promise<any>,
-  ) {
-    return this.pg.transaction(async tx => {
-      const { role, request, ...extra } = context as any
-      tx.query(
-        tx.$client,
-        `SET LOCAL ROLE ${this.pg.escapeIdentifier('anon')};`,
-      )
-      // await this.pg.query(tx, `SET LOCAL ROLE ${this.pg.escapeIdentifier('anon')};`)
-      // await setupDatabaseMeta({
-      //   request,
-      //   extra,
-      //   client: this.pg,
-      //   extraPrefix: 'request.auth',
-      // })
-      return callback()
+    return this.handleQuery(context, async tx => {
+      qb.transacting(tx as any)
+      const result = await qb
+      return result
     })
   }
 
-  async insert({ table, input, columns, schema, url, context }: Insert) {
+  private async handleQuery<T>(
+    context: RestContext,
+    callback: (tx: Transaction) => Promise<T>,
+  ) {
+    return this.pg
+      .transaction(async tx => {
+        await this.preQuery(context, tx)
+        return callback(tx)
+      })
+      .catch(this.processError) as Promise<T>
+  }
+
+  async insert({ table, input, schema, query, context }: Insert) {
     if (!input) {
       throw new Exception(
         Exception.INVALID_PARAMS,
@@ -98,6 +78,7 @@ export class SchemasService {
     const isArrayData = Array.isArray(input)
 
     let data: Record<string, any> | Record<string, any>[]
+    const { columns, select } = query
 
     if (columns?.length) {
       if (isArrayData) {
@@ -124,29 +105,20 @@ export class SchemasService {
     }
 
     const qb = this.pg.qb(table).withSchema(schema)
-    const { select } = this.getParamsFromUrl(url, table)
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, this.pg)
-
-    astToQueryBuilder.applyReturning(select)
+    const ast = new ASTToQueryBuilder(qb, this.pg, {
+      allowedSchemas: context.ctx.getExposedSchemas(),
+    })
+    ast.applyReturning(select)
     qb.insert(data)
 
-    return this.withMetaTransaction(pg, context, async () =>
-      qb.catch(e => this.processError(e)),
-    )
+    return this.handleQuery(context, async tx => {
+      qb.transacting(tx as any)
+      const result = await qb
+      return result
+    })
   }
 
-  async update({
-    table,
-
-    input,
-    columns,
-    schema,
-    url,
-    limit,
-    offset,
-    context,
-    force = false,
-  }: Update) {
+  async update({ table, input, query, schema, context }: Update) {
     if (!input) {
       throw new Exception(
         Exception.INVALID_PARAMS,
@@ -154,6 +126,7 @@ export class SchemasService {
       )
     }
     let data: Record<string, any> | Record<string, any>[]
+    const { columns, filter, select, order, limit, offset, force } = query
 
     if (columns?.length) {
       data = columns.reduce(
@@ -168,14 +141,11 @@ export class SchemasService {
     }
 
     const qb = this.pg.qb(table).withSchema(schema)
-    const { select, filter, order } = this.getParamsFromUrl(url, table)
-    const allowedSchemas = project.get('metadata')?.allowedSchemas || []
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, this.pg, {
-      allowedSchemas,
+    const ast = new ASTToQueryBuilder(qb, this.pg, {
+      allowedSchemas: context.ctx.getExposedSchemas(),
     })
-
-    astToQueryBuilder.applyReturning(select)
-    astToQueryBuilder.applyFilters(filter, {
+    ast.applyReturning(select)
+    ast.applyFilters(filter, {
       applyExtra: true,
       tableName: table,
       throwOnEmpty: !force,
@@ -184,37 +154,33 @@ export class SchemasService {
         'you must provide a filter to update data or use &force=true',
       ),
     })
-    astToQueryBuilder.applyOrder(order, table)
-    astToQueryBuilder.applyLimitOffset({
+    ast.applyOrder(order, table)
+    ast.applyLimitOffset({
       limit,
       offset,
     })
     qb.update(data)
 
-    return this.withMetaTransaction(pg, context, async () =>
-      qb.catch(e => this.processError(e)),
-    )
+    return this.handleQuery(context, async tx => {
+      qb.transacting(tx as any)
+      const result = await qb
+      return result
+    })
   }
 
   async delete({
     table,
-
     schema,
-    url,
-    limit,
-    offset,
-    force,
+    query: { filter, select, order, limit, offset, force },
     context,
   }: Delete) {
     const qb = this.pg.table(table).withSchema(schema)
-    const { select, filter, order } = this.getParamsFromUrl(url, table)
-    const allowedSchemas = project.get('metadata')?.allowedSchemas || []
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, this.pg, {
-      allowedSchemas,
+    const ast = new ASTToQueryBuilder(qb, this.pg, {
+      allowedSchemas: context.ctx.getExposedSchemas(),
     })
 
-    astToQueryBuilder.applyReturning(select)
-    astToQueryBuilder.applyFilters(filter, {
+    ast.applyReturning(select)
+    ast.applyFilters(filter, {
       applyExtra: true,
       tableName: table,
       throwOnEmpty: !force,
@@ -223,24 +189,24 @@ export class SchemasService {
         'you must provide a filter to delete data or use &force=true',
       ),
     })
-    astToQueryBuilder.applyOrder(order, table)
-    astToQueryBuilder.applyLimitOffset({
+    ast.applyOrder(order, table)
+    ast.applyLimitOffset({
       limit,
       offset,
     })
     qb.delete()
 
-    return this.withMetaTransaction(pg, context, async () =>
-      qb.catch(e => this.processError(e)),
-    )
+    return this.handleQuery(context, async tx => {
+      qb.transacting(tx as any)
+      const result = await qb
+      return result
+    })
   }
 
   async callFunction({
     functionName,
     schema,
-    url,
-    limit,
-    offset,
+    query: { limit, offset, select, filter, order },
     args,
     context,
   }: CallFunction) {
@@ -259,23 +225,22 @@ export class SchemasService {
       values = [schema, functionName, ..._values]
     }
 
-    const raw = new Raw(pg)
+    const raw = new Raw(this.pg)
     raw.set(`??.??(${placeholder})`, values)
 
     const qb = this.pg.queryBuilder().table(raw as any)
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, this.pg)
-
-    const { select, filter, order } = this.getParamsFromUrl(url, functionName)
-
-    astToQueryBuilder.applySelect(select)
-    astToQueryBuilder.applyFilters(filter)
-    astToQueryBuilder.applyOrder(order, functionName)
-    astToQueryBuilder.applyLimitOffset({
+    const ast = new ASTToQueryBuilder(qb, this.pg)
+    ast.applySelect(select)
+    ast.applyFilters(filter)
+    ast.applyOrder(order, functionName)
+    ast.applyLimitOffset({
       limit,
       offset,
     })
-    const result = await this.withMetaTransaction(context, async () => {
-      return qb.catch(e => this.processError(e))
+
+    const result = await this.handleQuery(context, async tx => {
+      qb.transacting(tx as any)
+      return qb
     })
 
     if (
@@ -302,33 +267,6 @@ export class SchemasService {
       hint: error.details.hint,
       detail: error.details.detail,
     })
-  }
-
-  private getParamsFromUrl(
-    url: string,
-    tableName: string,
-  ): {
-    filter?: Expression & ParserResult
-    select?: SelectNode[]
-    order?: ParsedOrdering[]
-  } {
-    const queryString = url.includes('?') ? url.split('?')[1] : ''
-    const urlParams = new URLSearchParams(queryString)
-
-    const _filter = urlParams.get('filter') || ''
-    const filter = _filter
-      ? Parser.create({ tableName }).parse(_filter)
-      : undefined
-
-    const _select = urlParams.get('select') || ''
-    const select = _select
-      ? new SelectParser({ tableName }).parse(_select)
-      : undefined
-
-    const _order = urlParams.get('order') || ''
-    const order = _order ? OrderParser.parse(_order, tableName) : undefined
-
-    return { filter, select, order }
   }
 
   async updatePermissions({
