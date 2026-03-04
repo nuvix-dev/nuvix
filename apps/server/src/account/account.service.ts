@@ -560,8 +560,6 @@ export class AccountService {
     await this.db.purgeCachedDocument('users', user.getId())
     url ??= `${request.protocol}://${request.host}`
 
-    // Parse and merge URL query parameters
-    // TODO: verify url...
     const urlObj = new URL(url)
     urlObj.searchParams.set('userId', user.getId())
     urlObj.searchParams.set('secret', verificationSecret)
