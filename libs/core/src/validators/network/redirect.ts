@@ -7,10 +7,10 @@ export class RedirectValidator extends Origin {
    * @return string
    */
   override get $description(): string {
-    const platform = Platform.getNameByScheme(this.scheme)
-    const host = this.host ? `(${this.host})` : ''
+    const platform = Platform.getNameByScheme(this._scheme)
+    const host = this._host ? `(${this._host})` : ''
 
-    if (!this.host && !this.scheme) {
+    if (!this._host && !this._scheme) {
       return 'Invalid URI.'
     }
 

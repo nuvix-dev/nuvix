@@ -59,7 +59,7 @@ export type ThrottleOptions = {
    */
   configKey?: string
 }
-export type AbuseKey = Key
+export type AbuseKey = string // Key
 export type AbuseKeyParam = V
 export type IResponse<T, E = unknown> = T & E
 

@@ -114,26 +114,31 @@ export class CorsHook implements Hook, OnModuleInit {
   }
 
   private determineOrigin(origin: string, req: NuvixRequest): string | false {
-    let parsed: URL
-
-    try {
-      parsed = new URL(origin)
-
-      if (!['http:', 'https:'].includes(parsed.protocol)) {
-        return false
-      }
-    } catch {
-      return false
-    }
-
     const isConsole =
       this.coreService.isConsole() || req.context.mode === AppMode.ADMIN
 
     if (isConsole) {
+      let parsed: URL
+      try {
+        parsed = new URL(origin)
+
+        if (!['http:', 'https:'].includes(parsed.protocol)) {
+          return false
+        }
+      } catch {
+        return false
+      }
       return this.matchConsoleOrigin(origin, parsed.hostname) ? origin : false
     }
 
-    const validator = new Origin(req.context.project.get('platforms', []))
+    const allowedHostnames = req.context.getAllowedHostnames()
+    const allowedSchemes = req.context.getAllowedSchemes()
+
+    if (allowedHostnames.length === 0) {
+      return false
+    }
+
+    const validator = new Origin(allowedHostnames, allowedSchemes)
     return validator.$valid(origin) ? origin : false
   }
 

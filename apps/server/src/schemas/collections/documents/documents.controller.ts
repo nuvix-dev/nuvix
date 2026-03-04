@@ -76,7 +76,7 @@ export class DocumentsController {
     scopes: ['documents.write'],
     model: Models.DOCUMENT,
     throttle: {
-      key: ({ user, ip }) => [`ip:${ip}`, `userId:${user.getId()}`].join(','),
+      key: 'ip:{ip},method:{method},url:{url},userId:{userId}',
       limit: configuration.limits.writeRateDefault * 2,
       ttl: configuration.limits.writeRatePeriodDefault,
     },
@@ -135,7 +135,7 @@ export class DocumentsController {
     scopes: ['documents.write'],
     model: Models.DOCUMENT,
     throttle: {
-      key: ({ user, ip }) => [`ip:${ip}`, `userId:${user.getId()}`].join(','),
+      key: 'ip:{ip},method:{method},url:{url},userId:{userId}',
       limit: configuration.limits.writeRateDefault * 2,
       ttl: configuration.limits.writeRatePeriodDefault,
     },
@@ -167,7 +167,7 @@ export class DocumentsController {
     summary: 'Delete document',
     scopes: ['documents.write'],
     throttle: {
-      key: ({ user, ip }) => [`ip:${ip}`, `userId:${user.getId()}`].join(','),
+      key: 'ip:{ip},method:{method},url:{url},userId:{userId}',
       limit: configuration.limits.writeRateDefault,
       ttl: configuration.limits.writeRatePeriodDefault,
     },

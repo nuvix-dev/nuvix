@@ -27,7 +27,7 @@ export class Hostname implements Validator {
       return false
     }
 
-    // Max length 253 chars: https://en.wikipedia.org/wiki/Hostname#:~:text=The%20entire%20hostname%2C%20including%20the,maximum%20of%20253%20ASCII%20characters
+    // Max length 253 chars
     if (value.length > 253) {
       return false
     }
@@ -39,6 +39,13 @@ export class Hostname implements Validator {
 
     // This tests for: 'myapp.com:3000'
     if (value.includes(':')) {
+      return false
+    }
+
+    // Validate hostname characters and label lengths (max 63 per label)
+    const hostnameRegex =
+      /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)*[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/
+    if (!hostnameRegex.test(value)) {
       return false
     }
 
