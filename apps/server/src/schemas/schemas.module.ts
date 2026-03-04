@@ -1,11 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'
-import {
-  ApiHook,
-  AuditHook,
-  AuthHook,
-  SchemaHook,
-  StatsHook,
-} from '@nuvix/core/resolvers'
+import { SchemaHook } from '@nuvix/core/resolvers'
 import { CollectionsModule } from './collections/collections.module'
 import { SchemasController } from './schemas.controller'
 import { SchemasService } from './schemas.service'
@@ -17,8 +11,6 @@ import { SchemasService } from './schemas.service'
 })
 export class SchemasModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AuthHook, ApiHook, SchemaHook, StatsHook, AuditHook)
-      .forRoutes(SchemasController)
+    consumer.apply(SchemaHook).forRoutes(SchemasController)
   }
 }

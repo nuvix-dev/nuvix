@@ -1,9 +1,4 @@
-import {
-  type MiddlewareConsumer,
-  Module,
-  type NestModule,
-} from '@nestjs/common'
-import { ApiHook, AuditHook, AuthHook, StatsHook } from '@nuvix/core/resolvers'
+import { Module } from '@nestjs/common'
 import { AccountController } from './account.controller'
 import { AccountService } from './account.service'
 import { IdentityController } from './identities/identity.controller'
@@ -35,17 +30,4 @@ import { TargetsService } from './targets/targets.service'
     TargetsService,
   ],
 })
-export class AccountModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AuthHook, ApiHook, StatsHook, AuditHook)
-      .forRoutes(
-        AccountController,
-        IdentityController,
-        MfaController,
-        RecoveryController,
-        SessionsController,
-        TargetsController,
-      )
-  }
-}
+export class AccountModule {}

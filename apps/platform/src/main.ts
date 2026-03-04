@@ -1,6 +1,8 @@
 /**
  * Main entry point for the Nuvix Console API application.
  */
+import { CoreService } from '@nuvix/core'
+CoreService.setIsConsole(true)
 
 import cookieParser from '@fastify/cookie'
 import fastifyMultipart from '@fastify/multipart'
@@ -18,7 +20,6 @@ import {
   configureDbFiltersAndFormats,
   configureHandlebarsHelpers,
   configurePgTypeParsers,
-  CoreService,
 } from '@nuvix/core'
 import { ErrorFilter } from '@nuvix/core/filters'
 import { RequestContext } from '@nuvix/core/helpers'
@@ -41,7 +42,6 @@ configureDbFiltersAndFormats()
 validateConfig()
 configureHandlebarsHelpers()
 Authorization.enableAsyncLocalStorage()
-CoreService.setIsConsole(true)
 
 export async function bootstrap() {
   const logLevels = configuration.app.isProduction

@@ -8,7 +8,7 @@ import { JwtModule, JwtService } from '@nestjs/jwt'
 import { ScheduleModule } from '@nestjs/schedule'
 import { CoreModule } from '@nuvix/core'
 import { Key } from '@nuvix/core/helpers'
-import { ApiHook, AuthHook, CorsHook, MailsQueue } from '@nuvix/core/resolvers'
+import { ApiHook, AuthHook, CorsHook } from '@nuvix/core/resolvers'
 import { PgMetaModule } from '@nuvix/pg-meta'
 import { configuration } from '@nuvix/utils'
 import { AccountController } from './account/account.controller'
@@ -30,7 +30,7 @@ import { ProjectModule } from './projects/project.module'
     PgMetaModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MailsQueue],
+  providers: [AppService],
 })
 export class AppModule implements NestModule, OnModuleInit {
   constructor(private readonly jwtService: JwtService) {}

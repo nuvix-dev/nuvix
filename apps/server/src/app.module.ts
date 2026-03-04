@@ -9,12 +9,12 @@ import { ScheduleModule } from '@nestjs/schedule'
 import { CoreModule } from '@nuvix/core'
 import { Key } from '@nuvix/core/helpers'
 import {
-  ApiLogsQueue,
-  AuditsQueue,
+  ApiHook,
+  AuditHook,
+  AuthHook,
   CorsHook,
   LogsHook,
-  MailsQueue,
-  StatsQueue,
+  StatsHook,
 } from '@nuvix/core/resolvers'
 import { configuration } from '@nuvix/utils'
 import { AccountModule } from './account/account.module'
@@ -48,7 +48,7 @@ import { UsersModule } from './users/users.module'
     LocaleModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MailsQueue, AuditsQueue, StatsQueue, ApiLogsQueue],
+  providers: [AppService],
 })
 export class AppModule implements NestModule, OnModuleInit {
   constructor(private readonly jwtService: JwtService) {}
@@ -60,6 +60,8 @@ export class AppModule implements NestModule, OnModuleInit {
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(CorsHook)
+      .forRoutes('*')
+      .apply(AuthHook, ApiHook, AuditHook, StatsHook)
       .forRoutes('*')
       .apply(...(configuration.app.enableApiLogs ? [LogsHook] : []))
       .forRoutes('*')

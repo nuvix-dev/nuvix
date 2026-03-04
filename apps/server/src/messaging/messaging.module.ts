@@ -1,18 +1,9 @@
 import { BullModule, InjectQueue } from '@nestjs/bullmq'
+import { Logger, Module } from '@nestjs/common'
 import {
-  Logger,
-  type MiddlewareConsumer,
-  Module,
-  type NestModule,
-} from '@nestjs/common'
-import {
-  ApiHook,
-  AuditHook,
-  AuthHook,
   MessagingJob,
   MessagingJobData,
   MessagingQueue,
-  StatsHook,
 } from '@nuvix/core/resolvers'
 import { QueueFor, ScheduleResourceType } from '@nuvix/utils'
 import { MessagingController } from './messaging.controller'
@@ -48,18 +39,8 @@ import type { Queue } from 'bullmq'
     MessagingQueue,
   ],
 })
-export class MessagingModule implements NestModule {
+export class MessagingModule {
   private readonly logger = new Logger(MessagingModule.name)
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AuthHook, ApiHook, StatsHook, AuditHook)
-      .forRoutes(
-        MessagingController,
-        ProvidersController,
-        TopicsController,
-        SubscribersController,
-      )
-  }
 
   constructor(
     coreService: CoreService,

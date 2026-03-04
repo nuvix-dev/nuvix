@@ -1,5 +1,4 @@
-import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'
-import { ApiHook, AuditHook, AuthHook, StatsHook } from '@nuvix/core/resolvers'
+import { Module } from '@nestjs/common'
 import { DatabaseController } from './database.controller'
 import { DatabaseService } from './database.service'
 
@@ -7,10 +6,4 @@ import { DatabaseService } from './database.service'
   controllers: [DatabaseController],
   providers: [DatabaseService],
 })
-export class DatabaseModule implements NestModule {
-  configure(consumer: MiddlewareConsumer) {
-    consumer
-      .apply(AuthHook, ApiHook, StatsHook, AuditHook)
-      .forRoutes(DatabaseController)
-  }
-}
+export class DatabaseModule {}

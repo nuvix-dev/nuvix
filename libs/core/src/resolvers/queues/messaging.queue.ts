@@ -46,7 +46,6 @@ export class MessagingQueue extends Queue {
   private readonly logger = new Logger(MessagingQueue.name)
   private readonly internalDb: Database
   private readonly db: Database
-  private readonly deviceForFiles: Device
   private smsAdapter?: SMSAdapter
 
   constructor(
@@ -56,7 +55,6 @@ export class MessagingQueue extends Queue {
     super()
     this.internalDb = this.coreService.getInternalDatabase()
     this.db = this.coreService.getDatabase()
-    this.deviceForFiles = this.coreService.getStorageDevice()
   }
 
   async process(job: Job<MessagingJobData, any, MessagingJob>): Promise<any> {
@@ -298,7 +296,8 @@ export class MessagingQueue extends Queue {
 
         const path = file.get('path', '')
 
-        if (!(await this.deviceForFiles.exists(path))) {
+        const deviceForFiles = this.coreService.getStorageDevice()
+        if (!(await deviceForFiles.exists(path))) {
           throw new Error(`File not found in ${path}`)
         }
 
@@ -312,7 +311,7 @@ export class MessagingQueue extends Queue {
         //     await deviceForFiles.transfer(path, path, this.getLocalDevice(project));
         // }
 
-        const fileData = await this.deviceForFiles.read(path)
+        const fileData = await deviceForFiles.read(path)
 
         attachments[i] = new Attachment(
           file.get('name'),

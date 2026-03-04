@@ -3,13 +3,7 @@ import {
   Module,
   type NestModule,
 } from '@nestjs/common'
-import {
-  ApiHook,
-  AuditHook,
-  AuthHook,
-  SchemaHook,
-  StatsHook,
-} from '@nuvix/core/resolvers'
+import { SchemaHook } from '@nuvix/core/resolvers'
 import { AttributesController } from './attributes/attributes.controller'
 import { AttributesService } from './attributes/attributes.service'
 import { CollectionsController } from './collections.controller'
@@ -36,7 +30,7 @@ import { IndexesService } from './indexes/indexes.service'
 export class CollectionsModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(AuthHook, ApiHook, SchemaHook, StatsHook, AuditHook)
+      .apply(SchemaHook)
       .forRoutes(
         CollectionsController,
         AttributesController,
