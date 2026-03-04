@@ -53,13 +53,14 @@ type Key = One | Two | Three | Four | Five | Six
 export type ThrottleOptions = {
   limit: number
   ttl?: number // time to live in seconds
-  key?: Key | Key[] | ((args: KeyArgs) => string | string[])
+  key?: Key | Key[] | ((args: KeyArgs) => Key | Key[])
   /**
    * Get the throttle config from project configuration, if not set then use the default limit and ttl
    */
   configKey?: string
 }
-
+export type AbuseKey = Key
+export type AbuseKeyParam = V
 export type IResponse<T, E = unknown> = T & E
 
 export type IListResponse<T, E = unknown> = {

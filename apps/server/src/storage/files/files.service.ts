@@ -12,6 +12,7 @@ import {
   Database,
   Doc,
   ID,
+  KeyValidator,
   Permission,
   PermissionType,
   Query,
@@ -109,6 +110,16 @@ export class FilesService {
 
   /**
    * Create|Upload file.
+   * Supports single-request uploads and resumable chunked uploads via Content-Range.
+   *
+   * Chunked upload flow:
+   * 1. First chunk creates the file document with upload metadata.
+   * 2. Subsequent chunks are validated against the existing document for consistency.
+   * 3. Final chunk triggers file finalization (hash, write, metadata update).
+   *
+   * Headers for chunked uploads:
+   * - Content-Range: bytes <start>-<end>/<totalSize>
+   * - x-nuvix-id: <fileId> (required for chunks after the first)
    */
   async createFile(
     bucketId: string,
@@ -185,62 +196,145 @@ export class FilesService {
     const stats = await fs.stat(file.filepath)
     const fileSize = stats.size
     const fileExt = fileName.split('.').pop()?.toLowerCase() ?? ''
-    const contentRange = request.headers['content-range']
+    const contentRange = request.headers['content-range'] as string | undefined
 
-    if (!fileSize) {
+    if (!fileSize || fileSize <= 0) {
       throw new Exception(Exception.STORAGE_FILE_EMPTY, 'File size is zero.')
     }
 
     let fileId = input.fileId === 'unique()' ? ID.unique() : input.fileId
     let chunk = 1
     let chunks = 1
-    let initialChunkSize = 0
+    let chunkSize = 0
+    let rangeStart = 0
+    let rangeEnd = 0
     let finalFileSize = fileSize
+    let isChunkedUpload = false
 
     if (contentRange) {
-      const match = /^bytes (\d+)-(\d+)\/(\d+)$/.exec(contentRange)
+      isChunkedUpload = true
+      const contentRangeTrimmed = contentRange.trim()
+      const match = /^bytes (\d+)-(\d+)\/(\d+)$/.exec(contentRangeTrimmed)
       if (!match) {
         throw new Exception(
           Exception.STORAGE_INVALID_CONTENT_RANGE,
-          'Invalid Content-Range format.',
+          'Invalid Content-Range header format. Expected: bytes <start>-<end>/<total>',
         )
       }
 
-      const [, start, end, size] = match.map(Number)
+      const [, startStr, endStr, sizeStr] = match
+      rangeStart = Number(startStr)
+      rangeEnd = Number(endStr)
+      const totalSize = Number(sizeStr)
+
+      // Validate parsed numbers are finite integers
+      if (
+        !Number.isFinite(rangeStart) ||
+        !Number.isFinite(rangeEnd) ||
+        !Number.isFinite(totalSize) ||
+        !Number.isInteger(rangeStart) ||
+        !Number.isInteger(rangeEnd) ||
+        !Number.isInteger(totalSize)
+      ) {
+        throw new Exception(
+          Exception.STORAGE_INVALID_CONTENT_RANGE,
+          'Content-Range values must be valid integers',
+        )
+      }
+
+      // Validate range boundaries
+      if (rangeStart < 0) {
+        throw new Exception(
+          Exception.STORAGE_INVALID_CONTENT_RANGE,
+          'Range start must be non-negative',
+        )
+      }
+
+      if (rangeEnd < rangeStart) {
+        throw new Exception(
+          Exception.STORAGE_INVALID_CONTENT_RANGE,
+          'Range end must be greater than or equal to range start',
+        )
+      }
+
+      if (rangeEnd >= totalSize) {
+        throw new Exception(
+          Exception.STORAGE_INVALID_CONTENT_RANGE,
+          'Range end must be less than total size',
+        )
+      }
+
+      if (totalSize <= 0) {
+        throw new Exception(
+          Exception.STORAGE_INVALID_CONTENT_RANGE,
+          'Total size must be positive',
+        )
+      }
+
+      // Resolve file ID from header for subsequent chunks
       const headerFileId = request.headers['x-nuvix-id']
       if (headerFileId) {
         fileId = (
           Array.isArray(headerFileId) ? headerFileId[0] : headerFileId
         ) as string
-        if (!/^(?:[a-zA-Z0-9][a-zA-Z0-9._-]{0,35})$/.test(fileId)) {
+        if (!new KeyValidator().$valid(fileId)) {
           throw new Exception(
             Exception.INVALID_PARAMS,
-            'Invalid file ID format',
+            'Invalid file ID format in x-nuvix-id header',
           )
         }
       }
 
-      if (
-        start === undefined ||
-        end === undefined ||
-        size === undefined ||
-        start > end ||
-        end >= size ||
-        start < 0
-      ) {
+      chunkSize = rangeEnd - rangeStart + 1
+
+      // Validate that the actual uploaded file size matches the declared range
+      if (fileSize !== chunkSize) {
         throw new Exception(
           Exception.STORAGE_INVALID_CONTENT_RANGE,
-          'Invalid range values',
+          `Uploaded chunk size (${fileSize}) does not match Content-Range declaration (${chunkSize})`,
         )
       }
 
-      const chunkSize = end - start + 1
-      initialChunkSize = initialChunkSize || chunkSize
-      chunks = Math.ceil(size / initialChunkSize)
-      chunk = Math.floor(start / initialChunkSize) + 1
-      finalFileSize = size
+      const isLastChunk = rangeEnd + 1 === totalSize
+
+      if (isLastChunk && rangeStart > 0 && totalSize % chunkSize !== 0) {
+        // This is the last chunk and its size differs from the regular chunk size.
+        // We cannot reliably derive the standard chunk size, chunk count, or chunk
+        // index from the remainder chunk alone. Set chunk = -1 to signal that
+        // these values should be resolved from the existing file document
+        // (which was created by the first chunk).
+        chunk = -1
+        chunks = -1
+      } else {
+        // Calculate chunk index and total chunks based on chunk size
+        chunks = Math.ceil(totalSize / chunkSize)
+        chunk = Math.floor(rangeStart / chunkSize) + 1
+
+        // Validate chunk alignment (start should be a multiple of chunkSize)
+        const expectedStart = (chunk - 1) * chunkSize
+        if (rangeStart !== expectedStart) {
+          throw new Exception(
+            Exception.STORAGE_INVALID_CONTENT_RANGE,
+            `Chunk is not aligned. Expected start offset ${expectedStart} but got ${rangeStart}`,
+          )
+        }
+
+        // For the last chunk, validate the expected remainder size
+        if (chunk === chunks) {
+          const expectedLastChunkSize = totalSize - expectedStart
+          if (chunkSize !== expectedLastChunkSize) {
+            throw new Exception(
+              Exception.STORAGE_INVALID_CONTENT_RANGE,
+              `Last chunk size mismatch. Expected ${expectedLastChunkSize} but got ${chunkSize}`,
+            )
+          }
+        }
+      }
+
+      finalFileSize = totalSize
     }
 
+    // Validate file extension
     const allowedFileExtensions = bucket.get('allowedFileExtensions', [])
     const fileExtValidator = new FileExt(allowedFileExtensions)
     if (allowedFileExtensions.length && !fileExtValidator.isValid(fileName)) {
@@ -250,11 +344,12 @@ export class FilesService {
       )
     }
 
+    // Validate total file size against bucket limit
     const fileSizeValidator = new FileSize(maximumFileSize)
     if (!fileSizeValidator.isValid(finalFileSize)) {
       throw new Exception(
         Exception.STORAGE_INVALID_FILE_SIZE,
-        'File size exceeds bucket limit',
+        `File size (${finalFileSize} bytes) exceeds the bucket limit (${maximumFileSize} bytes)`,
       )
     }
 
@@ -263,45 +358,134 @@ export class FilesService {
     )
 
     let fileDocument: FilesDoc
-    let metadata: Record<string, any> = { content_type: file.mimetype }
+    let metadata: Record<string, any> = {
+      content_type: file.mimetype,
+      ...(isChunkedUpload && {
+        chunked: true,
+        chunkSize,
+        uploadStartedAt: Date.now(),
+      }),
+    }
     let chunksUploaded = 0
-    // Fetch existing document
+
+    // Fetch existing document for resumable uploads
     fileDocument = await this.db.getDocument<Files>(
       this.getCollectionName(bucket.getSequence()),
       fileId,
     )
+
     if (!fileDocument.empty()) {
-      const chunksTotal = fileDocument.get('chunksTotal', 1)
+      const existingChunksTotal = fileDocument.get('chunksTotal', 1)
       chunksUploaded = fileDocument.get('chunksUploaded', 0)
       metadata = fileDocument.get('metadata', {})
-      chunks = chunksTotal
+      const existingSizeOriginal = fileDocument.get('sizeOriginal', 0)
+
+      // Validate consistency for resumable uploads
+      if (isChunkedUpload) {
+        // Ensure total file size matches the original declaration
+        if (existingSizeOriginal !== finalFileSize) {
+          throw new Exception(
+            Exception.STORAGE_INVALID_CONTENT_RANGE,
+            `Total file size mismatch. Existing document declares ${existingSizeOriginal} bytes but this chunk declares ${finalFileSize} bytes`,
+          )
+        }
+
+        // Ensure chunk count is consistent
+        if (chunks !== -1 && existingChunksTotal !== chunks) {
+          throw new Exception(
+            Exception.STORAGE_INVALID_CONTENT_RANGE,
+            `Chunk count mismatch. Existing document has ${existingChunksTotal} chunks but calculated ${chunks} from Content-Range`,
+          )
+        }
+
+        // Ensure chunk size is consistent with initial upload
+        const existingChunkSize = metadata.chunkSize
+        if (
+          existingChunkSize &&
+          chunk !== chunks &&
+          chunkSize !== existingChunkSize
+        ) {
+          throw new Exception(
+            Exception.STORAGE_INVALID_CONTENT_RANGE,
+            `Chunk size mismatch. Expected ${existingChunkSize} bytes per chunk but got ${chunkSize}`,
+          )
+        }
+      }
+
+      chunks = existingChunksTotal
 
       if (chunk === -1) {
-        chunk = chunksTotal
+        chunk = existingChunksTotal
       }
-      if (chunksUploaded === chunksTotal) {
+
+      // Validate consistency for resumable uploads (after chunk resolution)
+      if (isChunkedUpload) {
+        // Validate the chunk hasn't already been uploaded (duplicate detection)
+        const uploadedChunks: number[] = metadata.uploadedChunks ?? []
+        if (uploadedChunks.includes(chunk)) {
+          throw new Exception(
+            Exception.STORAGE_FILE_ALREADY_EXISTS,
+            `Chunk ${chunk} has already been uploaded`,
+          )
+        }
+      }
+
+      if (chunksUploaded === existingChunksTotal) {
         throw new Exception(Exception.STORAGE_FILE_ALREADY_EXISTS)
       }
+    } else if (isChunkedUpload && chunk !== 1) {
+      // If this is a chunked upload but not the first chunk and no document exists,
+      // the upload session may have expired or never started.
+      // chunk = -1 means this was identified as the last chunk (smaller remainder)
+      // and requires an existing document to resolve chunk metadata.
+      throw new Exception(
+        Exception.STORAGE_FILE_NOT_FOUND,
+        'Upload session not found. The first chunk must be uploaded before subsequent chunks.',
+      )
     }
 
-    chunksUploaded = await this.deviceForFiles.upload(
-      file.filepath,
-      _path,
-      chunk,
-      chunks,
-      metadata,
-    )
+    // Perform the actual upload
+    try {
+      chunksUploaded = await this.deviceForFiles.upload(
+        file.filepath,
+        _path,
+        chunk,
+        chunks,
+        metadata,
+      )
+    } catch (error) {
+      // Clean up temp file on upload failure
+      try {
+        await fs.unlink(file.filepath).catch(() => {})
+      } catch {
+        // Ignore cleanup errors
+      }
+      throw new Exception(
+        Exception.GENERAL_SERVER_ERROR,
+        `Failed uploading chunk ${chunk}/${chunks}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      )
+    }
 
     if (!chunksUploaded) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
-        'Failed uploading file',
+        'Failed uploading file: device returned zero chunks uploaded',
       )
     }
 
+    // Track uploaded chunk indices in metadata for duplicate detection
+    if (isChunkedUpload) {
+      const uploadedChunks: number[] = metadata.uploadedChunks ?? []
+      if (!uploadedChunks.includes(chunk)) {
+        uploadedChunks.push(chunk)
+        uploadedChunks.sort((a, b) => a - b)
+      }
+      metadata.uploadedChunks = uploadedChunks
+      metadata.lastChunkUploadedAt = Date.now()
+    }
+
     if (chunksUploaded === chunks) {
-      // Validate file
-      const sizeActual = fileSize
+      // === All chunks uploaded — finalize the file ===
       const fileHash = await this.deviceForFiles.getFileHash(_path)
       const mimeType = file.mimetype
 
@@ -313,6 +497,30 @@ export class FilesService {
             'Failed to save file',
           )
         }
+      }
+
+      // Compute actual size on disk after assembly
+      let sizeActual: number
+      try {
+        const finalStats = await fs.stat(
+          this.deviceForFiles.getPath(
+            path.join(bucket.getId(), `${fileId}.${fileExt}`),
+          ),
+        )
+        sizeActual = finalStats.size
+      } catch {
+        sizeActual = fileSize
+      }
+
+      // Clean up upload tracking metadata from the final document
+      const finalMetadata: Record<string, any> = {
+        content_type: mimeType,
+        completedAt: Date.now(),
+        ...(isChunkedUpload && {
+          chunked: true,
+          chunkSize: metadata.chunkSize,
+          uploadStartedAt: metadata.uploadStartedAt,
+        }),
       }
 
       // Create or update file document
@@ -333,7 +541,7 @@ export class FilesService {
             chunksTotal: chunks,
             chunksUploaded,
             search: [fileId, fileName].join(' '),
-            metadata,
+            metadata: finalMetadata,
           }),
         )
       } else {
@@ -342,7 +550,7 @@ export class FilesService {
           .set('signature', fileHash)
           .set('mimeType', mimeType)
           .set('sizeActual', sizeActual)
-          .set('metadata', metadata)
+          .set('metadata', finalMetadata)
           .set('chunksUploaded', chunksUploaded)
 
         const updateValidator = new Authorization(PermissionType.Update)
@@ -357,6 +565,7 @@ export class FilesService {
         )
       }
     } else if (fileDocument.empty()) {
+      // === First chunk of a new chunked upload ===
       fileDocument = await this.db.createDocument<Files>(
         this.getCollectionName(bucket.getSequence()),
         new Doc({
@@ -377,6 +586,7 @@ export class FilesService {
         }),
       )
     } else {
+      // === Intermediate chunk of an existing chunked upload ===
       fileDocument = await this.db.updateDocument(
         this.getCollectionName(bucket.getSequence()),
         fileId,
