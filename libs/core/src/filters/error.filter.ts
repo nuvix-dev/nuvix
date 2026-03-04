@@ -20,7 +20,7 @@ import {
   TruncateException,
 } from '@nuvix/db'
 import { Exception, errorCodes } from '../extend/exception'
-import { configuration } from '@nuvix/utils'
+import { APP_VERSION, configuration } from '@nuvix/utils'
 
 @Catch()
 export class ErrorFilter implements ExceptionFilter {
@@ -133,7 +133,7 @@ export class ErrorFilter implements ExceptionFilter {
       code: status,
       message,
       type,
-      version: '1.0.0',
+      version: APP_VERSION,
       ...extra,
     })
   }
