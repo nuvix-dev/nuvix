@@ -34,6 +34,7 @@ export class RequestContext {
 
   errorMessage?: string
   currentSchemaDB?: Database
+  sensitiveFields: string[] = []
 
   cookieDomain = configuration.server.cookieDomain
   cookieSameSite = configuration.server.cookieSameSite

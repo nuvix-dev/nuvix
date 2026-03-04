@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common'
 import { Reflector } from '@nestjs/core'
 import { Observable } from 'rxjs'
-import { _Namespace, Auth as Auths, Scope } from '../../decorators'
+import { _Namespace, Auth as Auths, Scope, Sensitive } from '../../decorators'
 import { Exception } from '../../extend/exception'
 import { TOTP } from '../../validators/MFA.validator'
 
@@ -33,7 +33,12 @@ export class ApiInterceptor implements NestInterceptor {
       context.getHandler(),
       context.getClass(),
     ])
+    const sensitiveFields = this.reflector.getAllAndOverride(Sensitive, [
+      context.getHandler(),
+      context.getClass(),
+    ])
 
+    request.context.sensitiveFields = sensitiveFields || []
     if (namespace) {
       request.context.namespace = namespace
       if (

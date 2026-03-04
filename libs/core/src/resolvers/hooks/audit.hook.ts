@@ -71,7 +71,9 @@ export class AuditHook implements Hook {
       userAgent: req.headers['user-agent'] || '',
       resource,
       user,
-      data: body ? this.stripSensitiveData(body, []) : undefined, // TODO: define sensitive fields to strip from audit logs
+      data: body
+        ? this.stripSensitiveData(body, ctx.sensitiveFields)
+        : undefined,
     })
   }
 
