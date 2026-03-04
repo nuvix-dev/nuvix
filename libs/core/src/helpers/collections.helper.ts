@@ -336,7 +336,7 @@ export class CollectionsHelper {
         qb
           .equal('type', AttributeType.Relationship)
           .equal('collectionInternalId', collectionInternalId)
-          .equal('options->relatedCollection' as any, collection.getId()),
+          .equal('options->>relatedCollection' as any, collection.getId()),
       )
 
       for (const relationship of relationships) {

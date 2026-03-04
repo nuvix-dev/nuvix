@@ -1,7 +1,7 @@
 import { AttributeType, OnDelete, RelationSide, RelationType } from '@nuvix/db'
 import { AttributeFormat } from '@nuvix/utils'
 import type { Attributes } from '@nuvix/utils/types'
-import { Exclude, Expose } from 'class-transformer'
+import { Exclude, Expose, Transform } from 'class-transformer'
 import { BaseModel } from './base.model'
 
 @Exclude()
@@ -103,6 +103,142 @@ export class AttributeModel
    * Possible values are `parent` or `child`.
    */
   @Expose() side?: RelationSide
+
+  constructor(partial: Partial<AttributeModel>) {
+    super()
+    Object.assign(this, partial)
+  }
+}
+
+@Exclude()
+export class AttributeModelWithTransform
+  extends BaseModel
+  implements Partial<Omit<Attributes, 'default'>>
+{
+  @Expose({ toClassOnly: true }) formatOptions: Attributes['formatOptions']
+  @Expose({ toClassOnly: true }) options: Attributes['options']
+
+  @Exclude() declare $id: string
+  @Exclude() declare $createdAt: Date
+  @Exclude() declare $updatedAt: Date
+  @Exclude() declare $permissions: string[]
+  /**
+   * Attribute Key.
+   */
+  @Expose() declare key: string
+
+  /**
+   * Attribute type.
+   */
+  @Expose() declare type: AttributeType
+
+  /**
+   * Attribute status. Possible values: `available`, `processing`, `deleting`, `stuck`, or `failed`.
+   */
+  @Expose() status = 'available'
+
+  /**
+   * Error message. Displays error generated on failure of creating or deleting an attribute.
+   */
+  @Expose() error?: string
+
+  /**
+   * Is attribute required?
+   */
+  @Expose() required = false
+
+  /**
+   * Is attribute an array?
+   */
+  @Expose() array = false
+
+  /**
+   * Attribute default value.
+   */
+  @Expose() declare default?: boolean | string | number | null
+
+  /**
+   *  Attribute format.
+   */
+  @Expose() format?: AttributeFormat
+
+  /**
+   * Enum elements (for enum type only).
+   */
+  @Transform(({ obj }) => {
+    return obj.formatOptions?.elements
+  })
+  @Expose()
+  elements?: string[]
+
+  /**
+   * Numeric attribute options.
+   */
+  @Expose() min?: number | null
+
+  /**
+   * Numeric attribute options.
+   */
+  @Expose() max?: number | null
+
+  /**
+   * Attribute size (for string).
+   */
+  @Expose() size?: number
+
+  /**
+   * Related collection ID (for relationship type only).
+   */
+  @Transform(({ obj }) => {
+    return obj.options?.relatedCollection
+  })
+  @Expose()
+  relatedCollection?: string | null
+
+  /**
+   * Relation type, possible values are: `oneToOne`, `oneToMany`, `manyToOne`, `manyToMany` (for relationship type only).
+   */
+  @Transform(({ obj }) => {
+    return obj.options?.relationType
+  })
+  @Expose()
+  relationType?: RelationType
+
+  /**
+   * Indicates whether the relationship is two-way (for relationship type only).
+   */
+  @Transform(({ obj }) => {
+    return obj.options?.twoWay
+  })
+  @Expose()
+  twoWay?: boolean
+
+  /**
+   * Two-way attribute key (for relationship type only).
+   */
+  @Transform(({ obj }) => {
+    return obj.options?.twoWayKey
+  })
+  @Expose()
+  twoWayKey?: string | undefined
+
+  /**
+   * On delete action, possible values are: `cascade`, `restrict`, or `setNull` (for relationship type only).
+   */
+  @Transform(({ obj }) => {
+    return obj.options?.onDelete
+  })
+  @Expose()
+  onDelete?: OnDelete
+  /**
+   * Attribute side (for relationship type only).
+   * Possible values are `parent` or `child`.
+   */
+  @Transform(({ obj }) => {
+    return obj.options?.side
+  })
+  @Expose()
+  side?: RelationSide
 
   constructor(partial: Partial<AttributeModel>) {
     super()

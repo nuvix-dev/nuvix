@@ -1,20 +1,7 @@
-import { AttributeType } from '@nuvix/db'
-import { AttributeFormat } from '@nuvix/utils'
 import { Exclude, Expose, Transform, Type } from 'class-transformer'
-import {
-  AttributeBooleanModel,
-  AttributeDatetimeModel,
-  AttributeEmailModel,
-  AttributeEnumModel,
-  AttributeFloatModel,
-  AttributeIntegerModel,
-  AttributeIPModel,
-  AttributeRelationshipModel,
-  AttributeStringModel,
-  AttributeURLModel,
-} from './Attributes.model'
 import { BaseModel } from './base.model'
 import { IndexModel } from './Index.model'
+import { AttributeModel } from './Attribute.model'
 
 @Exclude()
 export class CollectionModel extends BaseModel {
@@ -46,33 +33,7 @@ export class CollectionModel extends BaseModel {
   @Expose()
   @Transform(({ obj }) => {
     return (obj?.attributes ?? ([] as any[])).map((att: any) => {
-      switch (att.type) {
-        case AttributeType.Boolean:
-          return new AttributeBooleanModel(att)
-        case AttributeType.Integer:
-          return new AttributeIntegerModel(att)
-        case AttributeType.Float:
-          return new AttributeFloatModel(att)
-        case AttributeType.Timestamptz:
-          return new AttributeDatetimeModel(att)
-        case AttributeType.Relationship:
-          return new AttributeRelationshipModel(att)
-        case AttributeType.String:
-          switch (att.format) {
-            case AttributeFormat.EMAIL:
-              return new AttributeEmailModel(att)
-            case AttributeFormat.ENUM:
-              return new AttributeEnumModel(att)
-            case AttributeFormat.IP:
-              return new AttributeIPModel(att)
-            case AttributeFormat.URL:
-              return new AttributeURLModel(att)
-            default:
-              return new AttributeStringModel(att)
-          }
-        default:
-          return new AttributeStringModel(att)
-      }
+      return new AttributeModel(att)
     })
   })
   attributes: any[] = []

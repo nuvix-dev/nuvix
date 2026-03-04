@@ -37,6 +37,23 @@ export class CoreService implements OnModuleDestroy {
     return CoreService.isConsole()
   }
 
+  /**
+   * Connection pool budget allocation (percentages must sum to ≤ 100).
+   * - MAIN (app role): handles the bulk of application queries
+   * - AUTHENTICATOR: handles auth/RLS queries (server mode only)
+   * - POSTGRES: admin operations (console mode only)
+   *
+   * In server mode:  MAIN gets 70%, AUTHENTICATOR gets 30%
+   * In console mode: MAIN gets 70%, POSTGRES gets 30%
+   */
+  private static readonly POOL_BUDGET = {
+    MAIN: 0.7,
+    AUTHENTICATOR: 0.3,
+    POSTGRES: 0.3,
+    /** Absolute minimum connections any pool should have */
+    MIN_PER_POOL: 2,
+  } as const
+
   private readonly logger = new Logger(CoreService.name)
   private readonly cache: Cache | null = null
   private readonly geoDb: Reader<CountryResponse> | null = null
@@ -64,7 +81,6 @@ export class CoreService implements OnModuleDestroy {
       this.postgresPool = this.createPostgresPool()
     } else {
       this.storageDevice = this.createStorageDevice()
-      this.authenticatorPool = this.createAuthenticatorPool()
       this.authenticatorPool = this.createAuthenticatorPool()
       this.dataSource = this.createDataSource()
     }
@@ -175,103 +191,94 @@ export class CoreService implements OnModuleDestroy {
     return this.geoDb
   }
 
-  private createMainPool(): Pool {
-    if (this.pool) {
-      return this.pool
-    }
+  /**
+   * Computes the max connections for a pool given its budget fraction.
+   * Ensures every pool gets at least MIN_PER_POOL connections.
+   */
+  private getMaxForPool(fraction: number): number {
+    const { maxConnections } = configuration.database.postgres
+    return Math.max(
+      CoreService.POOL_BUDGET.MIN_PER_POOL,
+      Math.floor(maxConnections * fraction),
+    )
+  }
 
+  /**
+   * Shared pool factory — eliminates config duplication across pools.
+   */
+  private createPool(options: {
+    user: string
+    password: string
+    budgetFraction: number
+    applicationName: string
+  }): Pool {
     const { postgres, timeouts } = configuration.database
     const pool = new Pool({
       database: DEFAULT_DATABASE,
-      user: DatabaseRole.APP,
-      password: postgres.password,
+      user: options.user,
+      password: options.password,
       host: postgres.host,
       port: postgres.port,
-      ssl: postgres.ssl
-        ? { rejectUnauthorized: false } // For simplicity, we are not verifying the SSL certificate. In production, it's recommended to use a valid certificate and set rejectUnauthorized to true.
-        : undefined,
+      ssl: postgres.ssl ? { rejectUnauthorized: false } : undefined,
       statement_timeout: timeouts.statement,
       query_timeout: timeouts.query,
       idleTimeoutMillis: timeouts.idle,
       connectionTimeoutMillis: timeouts.connection,
-      max: postgres.maxConnections,
-      min: 2,
+      max: this.getMaxForPool(options.budgetFraction),
+      min: CoreService.POOL_BUDGET.MIN_PER_POOL,
       keepAlive: true,
       keepAliveInitialDelayMillis: 10_000,
-      application_name: 'nuvix-core',
+      application_name: options.applicationName,
       allowExitOnIdle: true,
     })
 
     pool.on('error', err => {
-      this.logger.error('Main database pool error:', err)
+      this.logger.error(
+        `[${options.applicationName}] database pool error: ${err.message}`,
+        err.stack,
+      )
     })
 
     return pool
+  }
+
+  private createMainPool(): Pool {
+    if (this.pool) {
+      return this.pool
+    }
+    const { postgres } = configuration.database
+    return this.createPool({
+      user: DatabaseRole.APP,
+      password: postgres.password,
+      budgetFraction: CoreService.POOL_BUDGET.MAIN,
+      applicationName: 'nuvix-core',
+    })
   }
 
   private createPostgresPool(): Pool {
     if (this.postgresPool) {
       return this.postgresPool
     }
-    const { postgres, timeouts } = configuration.database
-    const pool = new Pool({
-      database: DEFAULT_DATABASE,
+    const { postgres } = configuration.database
+    return this.createPool({
       user: DatabaseRole.POSTGRES,
       password: postgres.postgresPassword,
-      host: postgres.host,
-      port: postgres.port,
-      ssl: postgres.ssl ? { rejectUnauthorized: false } : undefined,
-      statement_timeout: timeouts.statement,
-      query_timeout: timeouts.query,
-      idleTimeoutMillis: timeouts.idle,
-      connectionTimeoutMillis: timeouts.connection,
-      max:
-        postgres.maxConnections > 20
-          ? Math.floor(postgres.maxConnections / 2)
-          : postgres.maxConnections, // limit to 10 for external pool to avoid exhausting connections
-      min: 2,
-      keepAlive: true,
-      keepAliveInitialDelayMillis: 10_000,
-      application_name: 'nuvix-core-pg',
-      allowExitOnIdle: true,
+      budgetFraction: CoreService.POOL_BUDGET.POSTGRES,
+      applicationName: 'nuvix-core-pg',
     })
-
-    pool.on('error', err => {
-      this.logger.error('Postgres database pool error:', err)
-    })
-
-    return pool
   }
 
   private createAuthenticatorPool(): Pool {
-    const { postgres, timeouts } = configuration.database
-    const pool = new Pool({
-      database: DEFAULT_DATABASE,
+    if (this.authenticatorPool) {
+      return this.authenticatorPool
+    }
+    const { postgres } = configuration.database
+    return this.createPool({
       user: DatabaseRole.AUTHENTICATOR,
       password: postgres.authenticatorPassword,
-      host: postgres.host,
-      port: postgres.port,
-      ssl: postgres.ssl ? { rejectUnauthorized: false } : undefined,
-      statement_timeout: timeouts.statement,
-      query_timeout: timeouts.query,
-      idleTimeoutMillis: timeouts.idle,
-      connectionTimeoutMillis: timeouts.connection,
-      max:
-        postgres.maxConnections > 20
-          ? Math.floor(postgres.maxConnections / 2)
-          : postgres.maxConnections, // limit to 10 for external pool to avoid exhausting connections
-      min: 2,
-      keepAlive: true,
-      keepAliveInitialDelayMillis: 10_000,
-      application_name: 'nuvix-core-authenticator',
-      allowExitOnIdle: true,
+      budgetFraction: CoreService.POOL_BUDGET.AUTHENTICATOR,
+      applicationName: 'nuvix-core-authenticator',
     })
-
-    pool.on('error', err => {
-      this.logger.error('Authenticator database pool error:', err)
-    })
-
-    return pool
   }
 
   public getPool(): Pool {

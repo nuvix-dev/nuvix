@@ -23,6 +23,7 @@ const DEFAULT_HEADERS = [
   'range',
   'content-range',
   // Nuvix headers
+  'X-Nuvix-Project', // keep for sdk compatibility
   'X-Nuvix-Key',
   'X-Nuvix-Locale',
   'X-Nuvix-Mode',
@@ -204,7 +205,7 @@ const createConfig = () => {
         host: env.get('NUVIX_DATABASE_HOST', 'localhost'),
         port: env.int('NUVIX_DATABASE_PORT', 5432),
         user: env.get('NUVIX_DATABASE_USER', 'postgres'),
-        password: env.getRequired('NUVIX_DATABASE_PASSWORD'), // for app role
+        password: env.getRequired('NUVIX_DATABASE_PASSWORD') as string, // for app role
         authenticatorPassword: env.get(
           'NUVIX_DATABASE_AUTHENTICATOR_PASSWORD',
           env.getRequired('NUVIX_DATABASE_PASSWORD'),

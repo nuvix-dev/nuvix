@@ -1,10 +1,28 @@
 import { Exclude, Expose } from 'class-transformer'
-import { BaseModel } from './base.model'
 
 /**
  * Doc model.
  */
-export class DocumentModel extends BaseModel {
+@Expose()
+export class DocumentModel {
+  /**
+   *  ID.
+   */
+  @Expose() declare $id: string
+  /**
+   * User creation date in ISO 8601 format.
+   */
+  @Expose() declare $createdAt: Date
+  /**
+   * User update date in ISO 8601 format.
+   */
+  @Expose() declare $updatedAt: Date
+
+  /**
+   * Permissions.
+   */
+  @Expose() declare $permissions: string[]
+
   /**
    * Collection ID.
    */

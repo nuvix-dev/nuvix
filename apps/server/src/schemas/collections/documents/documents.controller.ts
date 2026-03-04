@@ -55,7 +55,11 @@ export class DocumentsController {
   @Get('', {
     summary: 'List documents',
     scopes: ['documents.read'],
-    model: { type: Models.DOCUMENT, list: true },
+    model: {
+      type: Models.DOCUMENT,
+      list: true,
+      excludeExtraneousValues: false,
+    },
     sdk: {
       name: 'listDocuments',
       descMd: '/docs/references/schemas/collections/list-documents.md',
@@ -74,7 +78,7 @@ export class DocumentsController {
   @Post('', {
     summary: 'Create document',
     scopes: ['documents.write'],
-    model: Models.DOCUMENT,
+    model: { type: Models.DOCUMENT, excludeExtraneousValues: false },
     throttle: {
       key: 'ip:{ip},method:{method},url:{url},userId:{userId}',
       limit: configuration.limits.writeRateDefault * 2,
@@ -108,7 +112,7 @@ export class DocumentsController {
   @Get(':documentId', {
     summary: 'Get document',
     scopes: ['documents.read'],
-    model: Models.DOCUMENT,
+    model: { type: Models.DOCUMENT, excludeExtraneousValues: false },
     sdk: {
       name: 'getDocument',
       descMd: '/docs/references/schemas/collections/get-document.md',
@@ -133,7 +137,7 @@ export class DocumentsController {
   @Patch(':documentId', {
     summary: 'Update document',
     scopes: ['documents.write'],
-    model: Models.DOCUMENT,
+    model: { type: Models.DOCUMENT, excludeExtraneousValues: false },
     throttle: {
       key: 'ip:{ip},method:{method},url:{url},userId:{userId}',
       limit: configuration.limits.writeRateDefault * 2,

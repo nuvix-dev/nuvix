@@ -3,7 +3,7 @@ import { AccountModel } from '../models/Account.model'
 import { AlgoArgon2Model } from '../models/AlgoArgon2.model'
 import { AlgoBcryptModel } from '../models/AlgoBcrypt.model'
 import { AlgoMd5Model } from '../models/AlgoMd5.model'
-import { AttributeModel } from '../models/Attribute.model'
+import { AttributeModelWithTransform } from '../models/Attribute.model'
 import {
   AttributeBooleanModel,
   AttributeDatetimeModel,
@@ -97,7 +97,7 @@ export class Models {
   public static DOCUMENT = DocumentModel
 
   // Database Attributes
-  public static ATTRIBUTE = AttributeModel
+  public static ATTRIBUTE = AttributeModelWithTransform
   public static ATTRIBUTE_STRING = AttributeStringModel
   public static ATTRIBUTE_INTEGER = AttributeIntegerModel
   public static ATTRIBUTE_FLOAT = AttributeFloatModel
