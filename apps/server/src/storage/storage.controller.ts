@@ -1,31 +1,18 @@
-import {
-  Body,
-  Controller,
-  Param,
-  Query,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Param, Query, UseInterceptors } from '@nestjs/common'
 import { Delete, Get, Post, Put } from '@nuvix/core'
 import {
   Auth,
   AuthType,
   Namespace,
-  Project,
-  ProjectDatabase,
   QueryFilter,
   QuerySearch,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { BucketsQueryPipe } from '@nuvix/core/pipes/queries'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
-import { Database, Query as Queries } from '@nuvix/db'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
+import { Query as Queries } from '@nuvix/db'
 import { IListResponse, IResponse } from '@nuvix/utils'
-import type { BucketsDoc, ProjectsDoc } from '@nuvix/utils/types'
+import type { BucketsDoc } from '@nuvix/utils/types'
 import {
   BucketParamsDTO,
   CreateBucketDTO,
@@ -35,7 +22,6 @@ import {
 import { StorageService } from './storage.service'
 
 @Namespace('storage')
-@UseGuards(ProjectGuard)
 @Auth([AuthType.ADMIN, AuthType.KEY])
 @Controller({ version: ['1'], path: 'storage' })
 @UseInterceptors(ApiInterceptor, ResponseInterceptor)
@@ -52,16 +38,15 @@ export class StorageController {
     },
   })
   async getBuckets(
-    @ProjectDatabase() db: Database,
     @QueryFilter(BucketsQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<BucketsDoc>> {
-    return this.storageService.getBuckets(db, queries, search)
+    return this.storageService.getBuckets(queries, search)
   }
 
   @Post('buckets', {
     summary: 'Create bucket',
-    scopes: 'buckets.create',
+    scopes: 'buckets.write',
     model: Models.BUCKET,
     audit: {
       key: 'bucket.create',
@@ -73,10 +58,9 @@ export class StorageController {
     },
   })
   async createBucket(
-    @ProjectDatabase() db: Database,
     @Body() createBucketDTO: CreateBucketDTO,
   ): Promise<IResponse<BucketsDoc>> {
-    return this.storageService.createBucket(db, createBucketDTO)
+    return this.storageService.createBucket(createBucketDTO)
   }
 
   @Get('buckets/:bucketId', {
@@ -89,15 +73,14 @@ export class StorageController {
     },
   })
   async getBucket(
-    @ProjectDatabase() db: Database,
     @Param() { bucketId }: BucketParamsDTO,
   ): Promise<IResponse<BucketsDoc>> {
-    return this.storageService.getBucket(db, bucketId)
+    return this.storageService.getBucket(bucketId)
   }
 
   @Put('buckets/:bucketId', {
     summary: 'Update bucket',
-    scopes: 'buckets.update',
+    scopes: 'buckets.write',
     model: Models.BUCKET,
     audit: {
       key: 'bucket.update',
@@ -109,16 +92,15 @@ export class StorageController {
     },
   })
   async updateBucket(
-    @ProjectDatabase() db: Database,
     @Param() { bucketId }: BucketParamsDTO,
     @Body() createBucketDTO: UpdateBucketDTO,
   ): Promise<IResponse<BucketsDoc>> {
-    return this.storageService.updateBucket(db, bucketId, createBucketDTO)
+    return this.storageService.updateBucket(bucketId, createBucketDTO)
   }
 
   @Delete('buckets/:bucketId', {
     summary: 'Delete bucket',
-    scopes: 'buckets.delete',
+    scopes: 'buckets.write',
     model: Models.NONE,
     audit: {
       key: 'bucket.delete',
@@ -129,12 +111,8 @@ export class StorageController {
       descMd: '/docs/references/storage/delete-bucket.md',
     },
   })
-  async deleteBucket(
-    @ProjectDatabase() db: Database,
-    @Param() { bucketId }: BucketParamsDTO,
-    @Project() project: ProjectsDoc,
-  ): Promise<void> {
-    return this.storageService.deleteBucket(db, bucketId, project)
+  async deleteBucket(@Param() { bucketId }: BucketParamsDTO): Promise<void> {
+    return this.storageService.deleteBucket(bucketId)
   }
 
   @Get('usage', {
@@ -147,10 +125,9 @@ export class StorageController {
     },
   })
   async getUsage(
-    @ProjectDatabase() db: Database,
     @Query() { range }: UsageQueryDTO,
   ): Promise<IResponse<Record<string, any>>> {
-    return this.storageService.getStorageUsage(db, range)
+    return this.storageService.getStorageUsage(range)
   }
 
   @Get(':bucket/usage', {
@@ -163,10 +140,9 @@ export class StorageController {
     },
   })
   async getBucketUsage(
-    @ProjectDatabase() db: Database,
     @Param() { bucketId }: BucketParamsDTO,
     @Query() { range }: UsageQueryDTO,
   ): Promise<IResponse<Record<string, any>>> {
-    return this.storageService.getBucketStorageUsage(db, bucketId, range)
+    return this.storageService.getBucketStorageUsage(bucketId, range)
   }
 }

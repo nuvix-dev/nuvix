@@ -1,19 +1,9 @@
-import {
-  Body,
-  Controller,
-  Param,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Param, UseInterceptors } from '@nestjs/common'
 import { Delete, Get, Patch, Put } from '@nuvix/core'
-import { Auth, AuthDatabase, AuthType, Namespace } from '@nuvix/core/decorators'
+import { Auth, AuthType, Namespace } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
-import type { Database, Doc } from '@nuvix/db'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
+import type { Doc } from '@nuvix/db'
 import { IResponse } from '@nuvix/utils'
 import { UsersDoc } from '@nuvix/utils/types'
 import { UserParamDTO } from '../DTO/user.dto'
@@ -22,7 +12,6 @@ import { MfaService } from './mfa.service'
 
 @Namespace('users')
 @Controller({ version: ['1'], path: 'users/:userId/mfa' })
-@UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.KEY])
 export class MfaController {
@@ -30,8 +19,9 @@ export class MfaController {
 
   @Patch('', {
     summary: 'Update MFA',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.USER,
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.update',
       resource: 'user/{params.userId}',
@@ -42,11 +32,10 @@ export class MfaController {
     },
   })
   async updateMfa(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
     @Body() { mfa }: UpdateMfaStatusDTO,
   ): Promise<IResponse<UsersDoc>> {
-    return this.mfaService.updateMfaStatus(db, userId, mfa)
+    return this.mfaService.updateMfaStatus(userId, mfa)
   }
 
   @Get('factors', {
@@ -58,37 +47,33 @@ export class MfaController {
       descMd: '/docs/references/users/list-mfa-factors.md',
     },
   })
-  async getMfaFactors(
-    @AuthDatabase() db: Database,
-    @Param() { userId }: UserParamDTO,
-  ): Promise<unknown> {
-    return this.mfaService.getMfaFactors(db, userId)
+  async getMfaFactors(@Param() { userId }: UserParamDTO): Promise<unknown> {
+    return this.mfaService.getMfaFactors(userId)
   }
 
   @Get('recovery-codes', {
     summary: 'Get MFA recovery codes',
     scopes: 'users.read',
     model: Models.MFA_RECOVERY_CODES,
+    sensitiveFields: ['recoveryCodes'],
     sdk: {
       name: 'getMfaRecoveryCodes',
       descMd: '/docs/references/users/get-mfa-recovery-codes.md',
     },
   })
-  async getMfaRecoveryCodes(
-    @AuthDatabase() db: Database,
-    @Param() { userId }: UserParamDTO,
-  ): Promise<
+  async getMfaRecoveryCodes(@Param() { userId }: UserParamDTO): Promise<
     Doc<{
       recoveryCodes: string[]
     }>
   > {
-    return this.mfaService.getMfaRecoveryCodes(db, userId)
+    return this.mfaService.getMfaRecoveryCodes(userId)
   }
 
   @Patch('recovery-codes', {
     summary: 'Create MFA recovery codes',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.MFA_RECOVERY_CODES,
+    sensitiveFields: ['recoveryCodes'],
     audit: {
       key: 'recovery.create',
       resource: 'user/{res.$id}',
@@ -99,21 +84,19 @@ export class MfaController {
       descMd: '/docs/references/users/create-mfa-recovery-codes.md',
     },
   })
-  async generateMfaRecoveryCodes(
-    @AuthDatabase() db: Database,
-    @Param() { userId }: UserParamDTO,
-  ): Promise<
+  async generateMfaRecoveryCodes(@Param() { userId }: UserParamDTO): Promise<
     Doc<{
       recoveryCodes: string[]
     }>
   > {
-    return this.mfaService.generateMfaRecoveryCodes(db, userId)
+    return this.mfaService.generateMfaRecoveryCodes(userId)
   }
 
   @Put('recovery-codes', {
     summary: 'Update MFA recovery codes (regenerate)',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.MFA_RECOVERY_CODES,
+    sensitiveFields: ['recoveryCodes'],
     audit: {
       key: 'recovery.update',
       resource: 'user/{res.$id}',
@@ -124,20 +107,17 @@ export class MfaController {
       descMd: '/docs/references/users/update-mfa-recovery-codes.md',
     },
   })
-  async regenerateMfaRecoveryCodes(
-    @AuthDatabase() db: Database,
-    @Param() { userId }: UserParamDTO,
-  ): Promise<
+  async regenerateMfaRecoveryCodes(@Param() { userId }: UserParamDTO): Promise<
     Doc<{
       recoveryCodes: string[]
     }>
   > {
-    return this.mfaService.regenerateMfaRecoveryCodes(db, userId)
+    return this.mfaService.regenerateMfaRecoveryCodes(userId)
   }
 
   @Delete('authenticators/:type', {
     summary: 'Delete authenticator',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.NONE,
     audit: {
       key: 'user.update',
@@ -150,9 +130,8 @@ export class MfaController {
     },
   })
   async deleteMfaAuthenticator(
-    @AuthDatabase() db: Database,
     @Param() { userId, type }: MfaTypeParamDTO,
   ): Promise<void> {
-    return this.mfaService.deleteMfaAuthenticator(db, userId, type)
+    return this.mfaService.deleteMfaAuthenticator(userId, type)
   }
 }

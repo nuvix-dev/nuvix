@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common'
 import { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { Audit } from '@nuvix/audit'
-import { AppConfigService, CoreService } from '@nuvix/core'
+import { CoreService } from '@nuvix/core'
 import {
   authMethods,
   defaultSmtpConfig,
@@ -21,36 +21,22 @@ import {
   Permission,
   Role,
 } from '@nuvix/db'
-import { ApiKey, Schemas } from '@nuvix/utils'
+import { ApiKey, configuration, Schemas } from '@nuvix/utils'
 import collections from '@nuvix/utils/collections'
 import { setupDatabase } from '@nuvix/utils/database'
 import type { Keys, Projects, Teams } from '@nuvix/utils/types'
 import { loadAuthConfig } from '../../../platform/src/projects/projects.service'
 
-export async function dbSetup(
-  app: NestFastifyApplication,
-  config: AppConfigService,
-) {
+export async function dbSetup(app: NestFastifyApplication) {
   const logger = new Logger('Setup')
   const coreService = app.get(CoreService)
   try {
     logger.log('🚀 Initializing Nuvix Test setup...')
-    const pool = coreService.createProjectDbClient('initial-setup')
-    await pool
-      .query(`create schema if not exists ${Schemas.Internal};`)
-      .catch(e =>
-        logger.error('❌ Failed to create internal database schema', e),
-      )
-      .finally(() => pool.end())
-
-    const db = coreService.getPlatformDb()
+    const db = coreService.getInternalDatabase()
 
     try {
       await db.getCache().flush()
-      await db
-        .exists(undefined, Database.METADATA)
-        .then(is => (is ? undefined : db.create()))
-      logger.log('✓ Platform database initialized successfully')
+      await db.create()
     } catch (e) {
       if (!(e instanceof DuplicateException)) {
         throw e
@@ -231,11 +217,11 @@ export async function dbSetup(
           org: team,
           projectId,
           name: 'My Project',
-          password: config.getDatabaseConfig().postgres.adminPassword || '',
+          password: '',
         })
         logger.log(`✓ Default project created with ID: ${projectId}`)
 
-        const apiKey = config.get('app').testApiKey
+        const apiKey = configuration.app.testApiKey
         if (apiKey) {
           logger.log('🔑 Creating test API key for default project')
           const key = new Doc<Keys>({

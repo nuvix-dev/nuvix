@@ -4,32 +4,25 @@ import {
   Param,
   Req,
   Res,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
 import { Delete, Get, Patch, Post } from '@nuvix/core'
 import {
   AllowSessionType,
   Auth,
-  AuthDatabase,
   AuthType,
-  Locale,
+  Ctx,
   Namespace,
-  Project,
   QueryFilter,
   QuerySearch,
   User,
 } from '@nuvix/core/decorators'
-import { LocaleTranslator, Models } from '@nuvix/core/helpers'
+import { Models, RequestContext } from '@nuvix/core/helpers'
 import { MembershipsQueryPipe } from '@nuvix/core/pipes/queries'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
-import { Database, Query as Queries } from '@nuvix/db'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
+import { Query as Queries } from '@nuvix/db'
 import { IListResponse, IResponse, SessionType } from '@nuvix/utils'
-import type { MembershipsDoc, ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
+import type { MembershipsDoc, UsersDoc } from '@nuvix/utils/types'
 import { TeamsParamDTO } from '../DTO/team.dto'
 import {
   CreateMembershipDTO,
@@ -40,7 +33,6 @@ import {
 import { MembershipsService } from './memberships.service'
 
 @Namespace('teams')
-@UseGuards(ProjectGuard)
 @Auth([AuthType.ADMIN, AuthType.KEY, AuthType.SESSION, AuthType.JWT])
 @Controller({ version: ['1'], path: 'teams/:teamId/memberships' })
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
@@ -49,8 +41,9 @@ export class MembershipsController {
 
   @Post('', {
     summary: 'Create team membership',
-    scopes: ['teams.create', 'teams.update'],
+    scopes: ['teams.write'],
     model: Models.MEMBERSHIP,
+    sensitiveFields: ['secret'],
     audit: {
       key: 'membership.create',
       resource: 'team/{params.teamId}',
@@ -63,21 +56,12 @@ export class MembershipsController {
   })
   @AllowSessionType(SessionType.INVITES)
   async addMember(
-    @AuthDatabase() db: Database,
     @Param() { teamId }: TeamsParamDTO,
     @Body() input: CreateMembershipDTO,
-    @Project() project: ProjectsDoc,
-    @Locale() locale: LocaleTranslator,
     @User() user: UsersDoc,
+    @Ctx() ctx: RequestContext,
   ): Promise<IResponse<MembershipsDoc>> {
-    return this.membershipsService.addMember(
-      db,
-      teamId,
-      input,
-      project,
-      user,
-      locale,
-    )
+    return this.membershipsService.addMember(teamId, input, user, ctx)
   }
 
   @Get('', {
@@ -90,34 +74,35 @@ export class MembershipsController {
     },
   })
   async getMembers(
-    @AuthDatabase() db: Database,
     @Param() { teamId }: TeamsParamDTO,
     @QueryFilter(MembershipsQueryPipe) queries: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<MembershipsDoc>> {
-    return this.membershipsService.getMembers(db, teamId, queries, search)
+    return this.membershipsService.getMembers(teamId, queries, search)
   }
 
   @Get(':membershipId', {
     summary: 'Get team membership',
     scopes: ['teams.read'],
     model: Models.MEMBERSHIP,
+    sensitiveFields: ['secret'],
     sdk: {
       name: 'getMembership',
       descMd: '/docs/references/teams/get-team-member.md',
     },
   })
   async getMember(
-    @AuthDatabase() db: Database,
     @Param() { teamId, membershipId }: MembershipParamDTO,
   ): Promise<IResponse<MembershipsDoc>> {
-    return this.membershipsService.getMember(db, teamId, membershipId)
+    return this.membershipsService.getMember(teamId, membershipId)
   }
 
   @Patch(':membershipId', {
     summary: 'Update membership',
-    scopes: ['teams.update'],
+    scopes: ['teams.write'],
     model: Models.MEMBERSHIP,
+    auth: [AuthType.KEY, AuthType.JWT, AuthType.SESSION],
+    sensitiveFields: ['secret'],
     audit: {
       key: 'membership.update',
       resource: 'team/{req.teamId}',
@@ -128,17 +113,23 @@ export class MembershipsController {
     },
   })
   async updateMember(
-    @AuthDatabase() db: Database,
     @Param() { teamId, membershipId }: MembershipParamDTO,
     @Body() input: UpdateMembershipDTO,
+    @Ctx() ctx: RequestContext,
   ): Promise<IResponse<MembershipsDoc>> {
-    return this.membershipsService.updateMember(db, teamId, membershipId, input)
+    return this.membershipsService.updateMember(
+      teamId,
+      membershipId,
+      input,
+      ctx,
+    )
   }
 
   @Patch(':membershipId/status', {
     summary: 'Update team membership status',
-    scopes: ['teams.update'],
+    scopes: ['teams.write'],
     model: Models.MEMBERSHIP,
+    sensitiveFields: ['secret'],
     audit: {
       key: 'membership.update',
       resource: 'team/{req.teamId}',
@@ -150,29 +141,25 @@ export class MembershipsController {
     },
   })
   async updateMemberStatus(
-    @AuthDatabase() db: Database,
     @Param() { teamId, membershipId }: MembershipParamDTO,
     @Body() input: UpdateMembershipStatusDTO,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) res: NuvixRes,
     @User() user: UsersDoc,
-    @Project() project: ProjectsDoc,
   ): Promise<IResponse<MembershipsDoc>> {
     return this.membershipsService.updateMemberStatus(
-      db,
       teamId,
       membershipId,
       input,
       request,
       res,
       user,
-      project,
     )
   }
 
   @Delete(':membershipId', {
     summary: 'Delete team membership',
-    scopes: ['teams.update'],
+    scopes: ['teams.write'],
     model: Models.NONE,
     audit: {
       key: 'membership.delete',
@@ -184,9 +171,8 @@ export class MembershipsController {
     },
   })
   async removeMember(
-    @AuthDatabase() db: Database,
     @Param() { teamId, membershipId }: MembershipParamDTO,
   ): Promise<void> {
-    return this.membershipsService.deleteMember(db, teamId, membershipId)
+    return this.membershipsService.deleteMember(teamId, membershipId)
   }
 }

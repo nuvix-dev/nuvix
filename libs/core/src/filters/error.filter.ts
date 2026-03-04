@@ -19,13 +19,13 @@ import {
   TimeoutException,
   TruncateException,
 } from '@nuvix/db'
-import { AppConfigService } from '../config.service'
 import { Exception, errorCodes } from '../extend/exception'
+import { APP_VERSION, configuration } from '@nuvix/utils'
 
 @Catch()
 export class ErrorFilter implements ExceptionFilter {
   private readonly logger = new Logger(ErrorFilter.name)
-  constructor(private readonly appConfig: AppConfigService) {}
+  constructor() {}
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp()
@@ -117,24 +117,23 @@ export class ErrorFilter implements ExceptionFilter {
 
     message ??= (exception as any)?.message
 
-    const debugErrors = this.appConfig.get('app').debug.errors
+    const debugErrors = configuration.app.debug.errors
     if (status >= 500) {
       this.logger.error(exception)
     } else if (debugErrors) {
       this.logger.debug(exception)
     }
 
-    request.error = { message, type, ...extra }
-
-    if (!this.appConfig.get('app').isProduction && debugErrors) {
+    if (!configuration.app.isProduction && debugErrors) {
       extra.exception = (exception as any)?.stack
     }
 
+    request.context.errorMessage = JSON.stringify(message)
     response.status(status).send({
       code: status,
       message,
       type,
-      version: '1.0.0',
+      version: APP_VERSION,
       ...extra,
     })
   }

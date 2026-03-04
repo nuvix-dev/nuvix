@@ -43,7 +43,7 @@ export class KeysController {
 
   @Post('', {
     summary: 'Create key',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.KEY,
     sdk: {
       name: 'createKey',
@@ -74,7 +74,7 @@ export class KeysController {
 
   @Put(':keyId', {
     summary: 'Update key',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.KEY,
     sdk: {
       name: 'updateKey',
@@ -90,7 +90,7 @@ export class KeysController {
 
   @Delete(':keyId', {
     summary: 'Delete key',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.NONE,
     sdk: {
       name: 'deleteKey',

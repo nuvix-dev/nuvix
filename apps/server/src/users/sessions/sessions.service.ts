@@ -1,30 +1,28 @@
 import { Injectable } from '@nestjs/common'
-import { EventEmitter2 } from '@nestjs/event-emitter'
 import { CoreService } from '@nuvix/core'
 import { Exception } from '@nuvix/core/extend/exception'
-import type { LocaleTranslator } from '@nuvix/core/helpers'
+import type { LocaleTranslator, RequestContext } from '@nuvix/core/helpers'
 import { Auth, Detector, ID } from '@nuvix/core/helpers'
 import { Database, Doc, Permission, Role } from '@nuvix/db'
 import { SessionProvider } from '@nuvix/utils'
-import type { ProjectsDoc, Sessions, SessionsDoc } from '@nuvix/utils/types'
+import type { Sessions, SessionsDoc } from '@nuvix/utils/types'
 import { CountryResponse, Reader } from 'maxmind'
 
 @Injectable()
 export class SessionsService {
   private readonly geoDb: Reader<CountryResponse>
+  private readonly db: Database
 
-  constructor(
-    private readonly coreService: CoreService,
-    readonly _event: EventEmitter2,
-  ) {
+  constructor(private readonly coreService: CoreService) {
     this.geoDb = this.coreService.getGeoDb()
+    this.db = this.coreService.getDatabase()
   }
 
   /**
    * Get all sessions
    */
-  async getSessions(db: Database, userId: string, locale: LocaleTranslator) {
-    const user = await db.getDocument('users', userId)
+  async getSessions(userId: string, locale: LocaleTranslator) {
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -33,10 +31,10 @@ export class SessionsService {
     const sessions = user.get('sessions', []) as SessionsDoc[]
 
     for (const session of sessions) {
-      const countryName = locale.getText(
-        `countries.${session.get('countryCode')}`,
-        locale.getText('locale.country.unknown'),
-      )
+      const key = `countries.${session.get('countryCode')}`
+      const countryName = locale.has(key)
+        ? locale.getRaw(key)
+        : locale.t('locale.country.unknown')
 
       session.set('countryName', countryName)
       session.set('current', false)
@@ -52,14 +50,12 @@ export class SessionsService {
    * Create User Session
    */
   async createSession(
-    db: Database,
     userId: string,
     userAgent: string,
     ip: string,
-    project: ProjectsDoc,
-    locale: LocaleTranslator,
+    ctx: RequestContext,
   ) {
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -68,6 +64,8 @@ export class SessionsService {
     const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
     const detector = new Detector(userAgent)
     const record = this.geoDb.get(ip)
+    const project = ctx.project
+    const locale = ctx.translator()
 
     const duration =
       project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
@@ -93,15 +91,14 @@ export class SessionsService {
       ...detector.getDevice(),
     })
 
-    const countryName = locale.getText(
-      `countries.${session.get('countryCode')}`,
-      locale.getText('locale.country.unknown'),
-    )
+    const key = `countries.${session.get('countryCode')}`
+    const countryName = locale.has(key)
+      ? locale.getRaw(key)
+      : locale.t('locale.country.unknown')
 
-    const createdSession = await db.createDocument('sessions', session)
+    const createdSession = await this.db.createDocument('sessions', session)
+
     createdSession.set('secret', secret).set('countryName', countryName)
-
-    // TODO: Implement queue for events
 
     return createdSession
   }
@@ -109,30 +106,28 @@ export class SessionsService {
   /**
    * Delete User Session
    */
-  async deleteSession(db: Database, userId: string, sessionId: string) {
-    const user = await db.getDocument('users', userId)
+  async deleteSession(userId: string, sessionId: string) {
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
-    const session = await db.getDocument('sessions', sessionId)
+    const session = await this.db.getDocument('sessions', sessionId)
 
     if (session.empty()) {
       throw new Exception(Exception.USER_SESSION_NOT_FOUND)
     }
 
-    await db.deleteDocument('sessions', session.getId())
-    await db.purgeCachedDocument('users', user.getId())
-
-    // TODO: Implement queue for events
+    await this.db.deleteDocument('sessions', session.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
   }
 
   /**
    * Delete User Sessions
    */
-  async deleteSessions(db: Database, userId: string) {
-    const user = await db.getDocument('users', userId)
+  async deleteSessions(userId: string) {
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -141,9 +136,9 @@ export class SessionsService {
     const sessions = user.get('sessions', []) as SessionsDoc[]
 
     for (const session of sessions) {
-      await db.deleteDocument('sessions', session.getId())
+      await this.db.deleteDocument('sessions', session.getId())
     }
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
   }
 }

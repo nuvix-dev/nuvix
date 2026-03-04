@@ -45,6 +45,7 @@ export class ResponseInterceptor implements NestInterceptor {
     @Optional()
     protected readonly defaultOptions: ClassSerializerInterceptorOptions = {
       excludePrefixes: ['$tenant'],
+      excludeExtraneousValues: true,
     },
   ) {
     // classTransformer =
@@ -59,8 +60,13 @@ export class ResponseInterceptor implements NestInterceptor {
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
     const contextOptions = this.getContextOptions(context)
+    const request = context.switchToHttp().getRequest<NuvixRequest>()
+
+    const groups = request.context.isPrivilegedUser() ? ['admin'] : undefined
+
     const options = {
       ...this.defaultOptions,
+      groups,
       ...contextOptions,
     }
     return next
@@ -157,9 +163,8 @@ export class ResponseInterceptor implements NestInterceptor {
 
   transformToPlain(
     plainOrClass: any,
-    options: ResolverTypeContextOptions,
+    { list, ...options }: ResolverTypeContextOptions,
   ): PlainLiteralObject {
-    delete options.list
     if (!plainOrClass) {
       return plainOrClass
     }

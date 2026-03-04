@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common'
 import { CoreService } from '@nuvix/core'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Auth, ID } from '@nuvix/core/helpers'
+import { ID, RequestContext } from '@nuvix/core/helpers'
 import { DeletesQueue } from '@nuvix/core/resolvers'
 import {
   Database,
@@ -20,19 +20,22 @@ import {
 
 @Injectable()
 export class TeamsService {
-  constructor(private readonly coreService: CoreService) {}
+  protected readonly db: Database
+  constructor(private readonly coreService: CoreService) {
+    this.db = this.coreService.getDatabase()
+  }
 
   /**
    * Find all teams
    */
-  async findAll(db: Database, queries: Query[] = [], search?: string) {
+  async findAll(queries: Query[] = [], search?: string) {
     if (search) {
       queries.push(Query.search('search', search))
     }
 
     const filterQueries = Query.groupByType(queries).filters
-    const results = await db.find('teams', queries)
-    const total = await db.count('teams', filterQueries)
+    const results = await this.db.find('teams', queries)
+    const total = await this.db.count('teams', filterQueries)
 
     return {
       data: results,
@@ -43,10 +46,10 @@ export class TeamsService {
   /**
    * Create a new team
    */
-  async create(db: Database, user: UsersDoc | null, input: CreateTeamDTO) {
+  async create(user: UsersDoc, input: CreateTeamDTO, ctx: RequestContext) {
     const teamId = input.teamId === 'unique()' ? ID.unique() : input.teamId
 
-    const team = await db
+    const team = await this.db
       .createDocument(
         'teams',
         new Doc({
@@ -57,7 +60,7 @@ export class TeamsService {
             Permission.delete(Role.team(teamId, 'owner')),
           ],
           name: input.name,
-          total: Auth.isTrustedActor ? 0 : 1,
+          total: ctx.isAPIUser || ctx.isAdminUser ? 0 : 1, // If team is created by API or Admin user, set total to 0, otherwise set to 1 (for the creator)
           prefs: {},
           search: [teamId, input.name].join(' '),
         }),
@@ -69,14 +72,14 @@ export class TeamsService {
         throw error
       })
 
-    if (!Auth.isTrustedActor && user) {
-      // Don't add user on server mode
+    // If team is created by API or Admin user, do not create membership for the creator
+    if (!ctx.isAPIUser && !ctx.isAdminUser && !user.empty()) {
       if (!input.roles?.includes('owner')) {
         input.roles?.push('owner')
       }
 
       const membershipId = ID.unique()
-      await db.createDocument(
+      await this.db.createDocument(
         'memberships',
         new Doc({
           $id: membershipId,
@@ -101,7 +104,7 @@ export class TeamsService {
         }),
       )
 
-      await db.purgeCachedDocument('users', user.getId())
+      await this.db.purgeCachedDocument('users', user.getId())
     }
 
     return team
@@ -110,8 +113,8 @@ export class TeamsService {
   /**
    * Update team
    */
-  async update(db: Database, id: string, input: UpdateTeamDTO) {
-    const team = await db.getDocument('teams', id)
+  async update(id: string, input: UpdateTeamDTO) {
+    const team = await this.db.getDocument('teams', id)
 
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
@@ -120,7 +123,11 @@ export class TeamsService {
     team.set('name', input.name)
     team.set('search', [id, input.name].join(' '))
 
-    const updatedTeam = await db.updateDocument('teams', team.getId(), team)
+    const updatedTeam = await this.db.updateDocument(
+      'teams',
+      team.getId(),
+      team,
+    )
 
     return updatedTeam
   }
@@ -128,14 +135,14 @@ export class TeamsService {
   /**
    * Remove team
    */
-  async remove(db: Database, id: string) {
-    const team = await db.getDocument('teams', id)
+  async remove(id: string) {
+    const team = await this.db.getDocument('teams', id)
 
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
     }
 
-    const deleted = await db.deleteDocument('teams', team.getId())
+    const deleted = await this.db.deleteDocument('teams', team.getId())
     if (!deleted) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
@@ -144,7 +151,7 @@ export class TeamsService {
     }
 
     const deletes = new DeletesQueue(this.coreService)
-    await deletes.deleteMemberships(db, team)
+    await deletes.deleteMemberships(team)
 
     return
   }
@@ -152,8 +159,8 @@ export class TeamsService {
   /**
    * Find a team by id
    */
-  async findOne(db: Database, id: string) {
-    const team = await db.getDocument('teams', id)
+  async findOne(id: string) {
+    const team = await this.db.getDocument('teams', id)
 
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
@@ -165,8 +172,8 @@ export class TeamsService {
   /**
    * Get team preferences
    */
-  async getPrefs(db: Database, id: string) {
-    const team = await db.getDocument('teams', id)
+  async getPrefs(id: string) {
+    const team = await this.db.getDocument('teams', id)
 
     if (!team) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
@@ -178,15 +185,19 @@ export class TeamsService {
   /**
    * Set team preferences
    */
-  async setPrefs(db: Database, id: string, { prefs }: UpdateTeamPrefsDTO) {
-    const team = await db.getDocument('teams', id)
+  async setPrefs(id: string, { prefs }: UpdateTeamPrefsDTO) {
+    const team = await this.db.getDocument('teams', id)
 
     if (team.empty()) {
       throw new Exception(Exception.TEAM_NOT_FOUND)
     }
 
     team.set('prefs', prefs)
-    const updatedTeam = await db.updateDocument('teams', team.getId(), team)
+    const updatedTeam = await this.db.updateDocument(
+      'teams',
+      team.getId(),
+      team,
+    )
 
     return updatedTeam.get('prefs')
   }

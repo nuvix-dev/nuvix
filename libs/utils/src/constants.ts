@@ -1,22 +1,11 @@
 import { findProjectRoot } from './helpers'
 
+export const APP_VERSION = '0.1.0'
 export const PROJECT_ROOT = findProjectRoot()
-
-/** Symbol used to identify the project database client instance. */
-export const PROJECT_DB_CLIENT: unique symbol = Symbol('project-db-client')
-/** Symbol used to identify the project PostgreSQL database instance. */
-export const PROJECT_PG: unique symbol = Symbol('project-pg')
-/** Symbol used to identify audits for a specific project. */
-export const AUDITS_FOR_PROJECT: unique symbol = Symbol('auditsForProject')
 
 export const IS_PUBLIC_KEY = 'isPublic'
 export const HOOKS = 'hooks'
 export const DEFAULT_DATABASE = 'postgres'
-
-export const CORE_SCHEMA_DB: unique symbol = Symbol('coreSchemaDb')
-export const AUTH_SCHEMA_DB: unique symbol = Symbol('authSchemaDb')
-export const CURRENT_SCHEMA_DB: unique symbol = Symbol('currentSchemaDb')
-export const CURRENT_SCHEMA_PG: unique symbol = Symbol('currentSchemaPg')
 
 export const APP_DATABASE_ATTRIBUTE_STRING_MAX_LENGTH = 1_073_741_824 // 2^32 bits / 4 bits per char
 export const APP_DATABASE_TIMEOUT_MILLISECONDS = 15_000
@@ -39,7 +28,6 @@ export enum ApiKey {
 }
 
 export enum Schemas {
-  Auth = 'auth',
   Core = 'core',
   System = 'system',
   Internal = 'internal', // used for platform internal stuff
@@ -60,11 +48,8 @@ export enum SchemaMeta {
 export enum QueueFor {
   AUDITS = 'audits',
   PROJECTS = 'projects',
-  FUNCTIONS = 'functions',
   MESSAGING = 'messaging',
-  DATABASE = 'database',
   MAILS = 'mails',
-  COLLECTIONS = 'collections',
   STATS = 'stats',
   LOGS = 'logs',
   DELETES = 'deletes',
@@ -110,34 +95,6 @@ export enum MetricFor {
   REQUESTS = 'network.requests',
   INBOUND = 'network.inbound',
   OUTBOUND = 'network.outbound',
-
-  FUNCTIONS = 'functions',
-  DEPLOYMENTS = 'deployments',
-  DEPLOYMENTS_STORAGE = 'deployments.storage',
-  BUILDS = 'builds',
-  BUILDS_SUCCESS = 'builds.success',
-  BUILDS_FAILED = 'builds.failed',
-  BUILDS_STORAGE = 'builds.storage',
-  BUILDS_COMPUTE = 'builds.compute',
-  BUILDS_COMPUTE_SUCCESS = 'builds.compute.success',
-  BUILDS_COMPUTE_FAILED = 'builds.compute.failed',
-  BUILDS_MB_SECONDS = 'builds.mbSeconds',
-  FUNCTION_ID_BUILDS = '{functionInternalId}.builds',
-  FUNCTION_ID_BUILDS_SUCCESS = '{functionInternalId}.builds.success',
-  FUNCTION_ID_BUILDS_FAILED = '{functionInternalId}.builds.failed',
-  FUNCTION_ID_BUILDS_STORAGE = '{functionInternalId}.builds.storage',
-  FUNCTION_ID_BUILDS_COMPUTE = '{functionInternalId}.builds.compute',
-  FUNCTION_ID_BUILDS_COMPUTE_SUCCESS = '{functionInternalId}.builds.compute.success',
-  FUNCTION_ID_BUILDS_COMPUTE_FAILED = '{functionInternalId}.builds.compute.failed',
-  FUNCTION_ID_DEPLOYMENTS = '{resourceType}.{resourceInternalId}.deployments',
-  FUNCTION_ID_DEPLOYMENTS_STORAGE = '{resourceType}.{resourceInternalId}.deployments.storage',
-  FUNCTION_ID_BUILDS_MB_SECONDS = '{functionInternalId}.builds.mbSeconds',
-  EXECUTIONS = 'executions',
-  EXECUTIONS_COMPUTE = 'executions.compute',
-  EXECUTIONS_MB_SECONDS = 'executions.mbSeconds',
-  FUNCTION_ID_EXECUTIONS = '{functionInternalId}.executions',
-  FUNCTION_ID_EXECUTIONS_COMPUTE = '{functionInternalId}.executions.compute',
-  FUNCTION_ID_EXECUTIONS_MB_SECONDS = '{functionInternalId}.executions.mbSeconds',
 }
 
 export enum MessageType {
@@ -177,15 +134,11 @@ export enum Status {
 }
 
 export enum DeleteType {
-  DATABASES = 'databases',
   DOCUMENT = 'document',
   COLLECTIONS = 'collections',
-  TEAM_PROJECTS = 'teams_projects',
-  EXECUTIONS = 'executions',
   AUDIT = 'audit',
   ABUSE = 'abuse',
   USAGE = 'usage',
-  REALTIME = 'realtime',
   SESSIONS = 'sessions',
   SCHEDULES = 'schedules',
   TOPIC = 'topic',
@@ -195,13 +148,8 @@ export enum DeleteType {
 }
 
 export enum DeleteDocumentType {
-  PROJECTS = 'projects',
-  FUNCTIONS = 'functions',
-  DEPLOYMENTS = 'deployments',
   USERS = 'users',
   BUCKETS = 'buckets',
-  RULES = 'rules',
-  INSTALLATIONS = 'installations',
 }
 
 export enum AttributeFormat {
@@ -212,22 +160,6 @@ export enum AttributeFormat {
   URL = 'url',
   INTEGER = 'integer',
   FLOAT = 'float',
-}
-
-export enum Context {
-  Project = 'project',
-  User = 'user',
-  Team = 'team',
-  Session = 'session',
-  Locale = 'locale',
-  ApiKey = 'apiKey',
-  Scopes = 'scopes',
-  Role = 'role',
-  Mode = 'mode',
-  AuthType = 'authType',
-  Namespace = 'namespace',
-  CurrentSchema = 'currentSchema',
-  AuthMeta = 'authMeta',
 }
 
 export enum HashAlgorithm {
@@ -275,16 +207,17 @@ export enum AuthFactor {
 }
 
 export enum DatabaseRole {
-  ADMIN = 'nuvix_admin',
-  NUVIX = 'nuvix',
+  // ADMIN = 'nuvix_admin',
+  APP = 'nuvix_app',
   POSTGRES = 'postgres',
   ANON = 'anon',
   AUTHENTICATED = 'authenticated',
+  SERVICE_ROLE = 'service_role',
+  AUTHENTICATOR = 'authenticator',
 }
 
 export enum RouteContext {
   AUDIT = 'audit',
-  RATE_LIMIT = 'rateLimit',
   SKIP_LOGGING = 'skipLogging',
   SCHEMA_TYPE = 'schemaType',
 }

@@ -1,10 +1,16 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common'
-import { Doc } from '@nuvix/db'
-import { Context, KeyArgs, RouteContext } from '@nuvix/utils'
+import {
+  AbuseKey,
+  AbuseKeyParam,
+  configuration,
+  KeyArgs,
+  ThrottleOptions,
+} from '@nuvix/utils'
 import { ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
-import { AppConfigService } from '../../config.service'
 import { Exception } from '../../extend/exception'
 import { RatelimitService } from '../../rate-limit.service'
+import { Reflector } from '@nestjs/core'
+import { Throttle } from '@nuvix/core/decorators'
 
 interface RateLimitResult {
   allowed: boolean
@@ -17,26 +23,29 @@ interface RateLimitResult {
 export class ThrottlerGuard implements CanActivate {
   constructor(
     private readonly ratelimitService: RatelimitService,
-    private readonly appConfig: AppConfigService,
+    private readonly reflector: Reflector,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request: NuvixRequest = context.switchToHttp().getRequest()
     const response: NuvixRes = context.switchToHttp().getResponse()
 
-    if (!this.appConfig.get('app').enableThrottling) {
+    // If throttling is disabled globally, allow all requests
+    if (!configuration.app.enableThrottling) {
       return true
     }
 
-    const rateLimitOptions =
-      request.routeOptions?.config?.[RouteContext.RATE_LIMIT]
-    if (!rateLimitOptions) {
+    const rateLimitOptions = this.reflector.getAllAndOverride<ThrottleOptions>(
+      Throttle.name,
+      [context.getClass(), context.getHandler()],
+    )
+    // If no rate limit options are defined for this route, allow the request
+    if (rateLimitOptions === undefined) {
       return true
     }
 
     const abuseKeys = this.generateAbuseKeys(rateLimitOptions, request)
-    const project = this.getProject(request)
-    const user = this.getUser(request)
+    const { project, user } = request.context
 
     let closestResult: RateLimitResult | null = null
 
@@ -48,7 +57,7 @@ export class ThrottlerGuard implements CanActivate {
         abuseKey,
       )
       const result = await this.ratelimitService.checkRateLimit(rateLimitKey, {
-        limit: rateLimitOptions.limit,
+        limit: rateLimitOptions.limit || 0,
         window: rateLimitOptions.ttl ?? 3600,
       })
 
@@ -74,9 +83,9 @@ export class ThrottlerGuard implements CanActivate {
   }
 
   private generateAbuseKeys(
-    rateLimitOptions: any,
+    rateLimitOptions: ThrottleOptions,
     request: NuvixRequest,
-  ): string[] {
+  ): AbuseKey[] {
     const { key: templateKey } = rateLimitOptions
 
     if (typeof templateKey === 'function') {
@@ -84,7 +93,7 @@ export class ThrottlerGuard implements CanActivate {
         ip: request.ip,
         params: request.params ?? {},
         body: request.body ?? {},
-        user: this.getUser(request),
+        user: request.context.user,
         req: request,
       }
       const result = templateKey(keyArgs)
@@ -95,88 +104,103 @@ export class ThrottlerGuard implements CanActivate {
       return [templateKey]
     }
 
-    return ['ip:{ip}']
-  }
-
-  private getProject(request: NuvixRequest): ProjectsDoc {
-    return request[Context.Project] ?? new Doc({ $id: 'global' })
-  }
-
-  private getUser(request: NuvixRequest): UsersDoc {
-    return request[Context.User] ?? new Doc({ $id: 'anonymous' })
+    return ['url:{url},ip:{ip}']
   }
 
   private buildRateLimitKey(
     request: NuvixRequest,
     project: ProjectsDoc,
     user: UsersDoc,
-    abuseKey: string,
+    abuseKey: AbuseKey,
   ): string {
-    const config = request.routeOptions.config
-    const processedKey = this.processTemplate(abuseKey, request)
-    return `rl:${config.method}:${request.host + request.url}:${project.getId()}:${user.getId()}::${processedKey}`
-  }
-
-  private processTemplate(template: string, request: NuvixRequest): string {
-    return template.replace(/\{(\w+)\}/g, (_, key) => {
-      switch (key) {
-        case 'ip':
-          return request.ip
-        case 'url':
-          return request.routeOptions.config.url
-        case 'userId':
-          return (request[Context.User]?.getId() || 'anonymous').toString()
-        default:
-          return this.processCustomKey(key, request)
-      }
+    const processedKey = this.processTemplate(abuseKey, {
+      ip: request.ip,
+      params: request.params as Record<string, any>,
+      body: request.body as Record<string, any>,
+      user,
+      req: request,
     })
+
+    return `rl:${project.getId() || 'global'}:${processedKey}`
   }
 
-  private processCustomKey(key: string, request: NuvixRequest): string {
-    if (key.startsWith('param-')) {
-      return this.getParamValue(key.slice(6), request)
-    }
+  private processTemplate(template: AbuseKey, args: KeyArgs): string {
+    const segments = template.split(',')
 
-    if (key.startsWith('header.')) {
-      return this.getHeaderValue(key.slice(7), request)
+    const values = segments.map(segment => {
+      const match = segment.match(/\{(.+?)\}/)
+
+      if (!match) return 'unknown'
+
+      const key = match[1] as AbuseKeyParam
+      return this.resolveKey(key, args)
+    })
+
+    return values.join(':')
+  }
+
+  private resolveKey(key: AbuseKeyParam, args: KeyArgs): string {
+    const { req, user, body } = args
+
+    if (key === 'ip') return req.ip
+    if (key === 'url') return req.routeOptions.config.url
+    if (key === 'method') return req.routeOptions.config.method as string
+    if (key === 'userId') return user?.getId() || '--'
+    if (key === 'chunkId') return this.resolveChunkId(req)
+
+    if (key.startsWith('body-')) {
+      const field = key.slice(5)
+      const value = body?.[field]
+
+      if (value === undefined) return 'unknown'
+      if (Array.isArray(value)) return JSON.stringify(value)
+
+      return String(value)
     }
 
     return 'unknown'
-  }
-
-  private getParamValue(paramName: string, request: NuvixRequest): string {
-    // Check params first
-    const paramValue = (request.params as any)?.[paramName]
-    if (paramValue !== undefined) {
-      if (Array.isArray(paramValue)) {
-        return JSON.stringify(paramValue)
-      }
-      return paramValue
-    }
-
-    // If not found in params, check body
-    const bodyValue = (request.body as any)?.[paramName]
-    if (bodyValue !== undefined) {
-      if (Array.isArray(bodyValue)) {
-        return JSON.stringify(bodyValue)
-      }
-      return bodyValue
-    }
-
-    return 'unknown'
-  }
-
-  private getHeaderValue(headerName: string, request: NuvixRequest): string {
-    const value = request.headers[headerName.toLowerCase()]
-    return (Array.isArray(value) ? value[0] : value) || 'unknown'
   }
 
   private setRateLimitHeaders(
     response: NuvixRes,
     result: RateLimitResult,
   ): void {
-    response.header('X-RateLimit-Limit', result.limit.toString())
-    response.header('X-RateLimit-Remaining', result.remaining.toString())
-    response.header('X-RateLimit-Reset', result.resetTime.toString())
+    response
+      .header('X-RateLimit-Limit', result.limit.toString())
+      .header('X-RateLimit-Remaining', result.remaining.toString())
+      .header('X-RateLimit-Reset', result.resetTime.toString())
+  }
+
+  /**
+   * Resolve a unique chunk identifier from the request headers.
+   *
+   * For chunked uploads the client sends:
+   *   - Content-Range: bytes <start>-<end>/<total>
+   *   - x-nuvix-id: <fileId>  (for chunks after the first)
+   *
+   * We combine the file ID and the byte-range start offset to produce
+   * a key that is unique per chunk, so that each chunk request gets its
+   * own rate-limit bucket instead of all chunks sharing one.
+   *
+   * For non-chunked (single-request) uploads we fall back to `'single'`.
+   */
+  private resolveChunkId(req: NuvixRequest): string {
+    const contentRange = req.headers['content-range'] as string | undefined
+    if (!contentRange) {
+      return 'single'
+    }
+
+    const match = /^bytes (\d+)-(\d+)\/(\d+)$/.exec(contentRange.trim())
+    if (!match) {
+      return 'unknown'
+    }
+
+    const rangeStart = match[1]
+    const fileId =
+      (Array.isArray(req.headers['x-nuvix-id'])
+        ? req.headers['x-nuvix-id'][0]
+        : req.headers['x-nuvix-id']) ?? 'unknown'
+
+    return `${fileId}:${rangeStart}`
   }
 }

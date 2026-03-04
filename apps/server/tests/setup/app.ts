@@ -1,7 +1,6 @@
 import { ConsoleLogger, LOG_LEVELS } from '@nestjs/common'
 import { NestFastifyApplication } from '@nestjs/platform-fastify'
 import {
-  AppConfigService,
   configureDbFiltersAndFormats,
   configureHandlebarsHelpers,
   configurePgTypeParsers,
@@ -9,7 +8,7 @@ import {
 import { NuvixAdapter } from '@nuvix/core/server'
 import { Test, TestingModule } from '@nuvix/core/server/test'
 import { Authorization } from '@nuvix/db'
-import { configuration, validateRequiredConfig } from '@nuvix/utils'
+import { configuration, validateConfig } from '@nuvix/utils'
 import { AppModule } from 'apps/server/src/app.module'
 import QueryString from 'qs'
 import { applyAppConfig } from '../../src/core'
@@ -17,7 +16,7 @@ import { dbSetup } from './db'
 
 configurePgTypeParsers()
 configureDbFiltersAndFormats()
-validateRequiredConfig()
+validateConfig()
 configureHandlebarsHelpers()
 Authorization.enableAsyncLocalStorage()
 let app: NestFastifyApplication
@@ -50,9 +49,8 @@ export async function getApp(): Promise<NestFastifyApplication> {
       },
     )
 
-    const config = app.get(AppConfigService)
-    applyAppConfig(app, config)
-    await dbSetup(app, config)
+    applyAppConfig(app)
+    await dbSetup(app)
 
     logger.setLogLevels([])
     await app.init()

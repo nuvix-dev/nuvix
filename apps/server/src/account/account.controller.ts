@@ -4,29 +4,21 @@ import {
   HttpStatus,
   Req,
   Res,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
 import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
 import {
   AllowSessionType,
-  AuthDatabase,
   AuthType,
   Locale,
   Namespace,
-  Project,
   User,
 } from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
-import { LocaleTranslator, Models } from '@nuvix/core/helpers'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
-import { Database } from '@nuvix/db'
+import { LocaleTranslator, Models, RequestContext } from '@nuvix/core/helpers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { SessionType, type IResponse } from '@nuvix/utils'
-import type { ProjectsDoc, TokensDoc, UsersDoc } from '@nuvix/utils/types'
+import type { TokensDoc, UsersDoc } from '@nuvix/utils/types'
 import { AccountService } from './account.service'
 import {
   CreateAccountDTO,
@@ -41,17 +33,17 @@ import {
   UpdateEmailVerificationDTO,
   UpdatePhoneVerificationDTO,
 } from './DTO/verification.dto'
+import { Ctx } from '@nuvix/core/decorators'
 
 @Controller({ version: ['1'], path: 'account' })
 @Namespace('account')
-@UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class AccountController {
   constructor(private readonly accountService: AccountService) {}
 
   @Post('', {
     summary: 'Create Account',
-    scopes: 'sessions.create',
+    scopes: 'sessions.write',
     throttle: {
       limit: 10,
       configKey: 'create_account',
@@ -70,19 +62,17 @@ export class AccountController {
   })
   @AllowSessionType(SessionType.EMAIL_PASSWORD)
   async createAccount(
-    @AuthDatabase() db: Database,
-    @Body() input: CreateAccountDTO,
+    @Body() { userId, email, password, name }: CreateAccountDTO,
     @User() user: UsersDoc,
-    @Project() project: ProjectsDoc,
+    @Ctx() ctx: RequestContext,
   ): Promise<IResponse<UsersDoc>> {
     return this.accountService.createAccount(
-      db,
-      input.userId,
-      input.email,
-      input.password,
-      input.name,
+      userId,
+      email,
+      password,
+      name,
       user,
-      project,
+      ctx,
     )
   }
 
@@ -117,12 +107,8 @@ export class AccountController {
       descMd: '/docs/references/account/delete.md',
     },
   })
-  async deleteAccount(
-    @AuthDatabase() db: Database,
-    @User() user: UsersDoc,
-    @Project() project: ProjectsDoc,
-  ): Promise<void> {
-    return this.accountService.deleteAccount(db, user, project)
+  async deleteAccount(@User() user: UsersDoc): Promise<void> {
+    return this.accountService.deleteAccount(user)
   }
 
   @Get('prefs', {
@@ -154,11 +140,10 @@ export class AccountController {
     },
   })
   async updatePrefs(
-    @AuthDatabase() db: Database,
     @User() user: UsersDoc,
     @Body() input: UpdatePrefsDTO,
   ): Promise<IResponse<Record<string, unknown>>> {
-    return this.accountService.updatePrefs(db, user, input.prefs)
+    return this.accountService.updatePrefs(user, input.prefs)
   }
 
   @Patch('name', {
@@ -176,11 +161,10 @@ export class AccountController {
     },
   })
   async updateName(
-    @AuthDatabase() db: Database,
     @User() user: UsersDoc,
     @Body() { name }: UpdateNameDTO,
   ): Promise<IResponse<UsersDoc>> {
-    return this.accountService.updateName(db, name, user)
+    return this.accountService.updateName(name, user)
   }
 
   @Patch('password', {
@@ -199,17 +183,15 @@ export class AccountController {
     },
   })
   async updatePassword(
-    @AuthDatabase() db: Database,
     @User() user: UsersDoc,
     @Body() { password, oldPassword }: UpdatePasswordDTO,
-    @Project() project: ProjectsDoc,
+    @Ctx() ctx: RequestContext,
   ): Promise<IResponse<UsersDoc>> {
     return this.accountService.updatePassword({
-      db: db,
       password,
       oldPassword,
       user,
-      project,
+      ctx,
     })
   }
 
@@ -228,11 +210,10 @@ export class AccountController {
     },
   })
   async updateEmail(
-    @AuthDatabase() db: Database,
     @User() user: UsersDoc,
     @Body() updateEmailDTO: UpdateEmailDTO,
   ): Promise<IResponse<UsersDoc>> {
-    return this.accountService.updateEmail(db, user, updateEmailDTO)
+    return this.accountService.updateEmail(user, updateEmailDTO)
   }
 
   @Patch('phone', {
@@ -250,17 +231,13 @@ export class AccountController {
     },
   })
   async updatePhone(
-    @AuthDatabase() db: Database,
     @User() user: UsersDoc,
     @Body() { password, phone }: UpdatePhoneDTO,
-    @Project() project: ProjectsDoc,
   ): Promise<IResponse<UsersDoc>> {
     return this.accountService.updatePhone({
-      db: db,
       password,
       phone,
       user,
-      project,
     })
   }
 
@@ -279,27 +256,26 @@ export class AccountController {
     },
   })
   async updateStatus(
-    @AuthDatabase() db: Database,
     @User() user: UsersDoc,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
   ): Promise<IResponse<UsersDoc>> {
     return this.accountService.updateStatus({
-      db: db,
       user,
       request,
       response,
     })
   }
 
-  @Post('verification', {
+  @Post(['verification', 'verifications/email'], {
     summary: 'Create email verification',
     scopes: 'account',
     model: Models.TOKEN,
+    sensitiveFields: ['secret'],
     auth: [AuthType.SESSION, AuthType.JWT],
     throttle: {
       limit: 10,
-      key: 'ip:{ip},userId:{param-userId}',
+      key: 'url:{url},userId:{userId}',
     },
     audit: {
       key: 'verification.create',
@@ -314,31 +290,26 @@ export class AccountController {
   async createEmailVerification(
     @Body() { url }: CreateEmailVerificationDTO,
     @Req() request: NuvixRequest,
-    @Res({ passthrough: true }) response: NuvixRes,
-    @Project() project: ProjectsDoc,
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
     @Locale() locale: LocaleTranslator,
   ): Promise<IResponse<TokensDoc>> {
     return this.accountService.createEmailVerification({
       url,
       request,
-      response,
-      project,
       user,
-      db,
       locale,
     })
   }
 
-  @Put('verification', {
+  @Put(['verification', 'verifications/email'], {
     summary: 'Update email verification (confirmation)',
     scopes: 'public',
     model: Models.TOKEN,
+    sensitiveFields: ['secret'],
     auth: [AuthType.SESSION, AuthType.JWT],
     throttle: {
       limit: 10,
-      key: 'ip:{ip},userId:{param-userId}',
+      key: 'url:{url},userId:{body-userId}',
     },
     audit: {
       key: 'verification.update',
@@ -352,27 +323,24 @@ export class AccountController {
   })
   async updateEmailVerification(
     @Body() { userId, secret }: UpdateEmailVerificationDTO,
-    @Res({ passthrough: true }) response: NuvixRes,
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
   ): Promise<IResponse<TokensDoc>> {
     return this.accountService.updateEmailVerification({
       userId,
       secret,
-      response,
       user,
-      db,
     })
   }
 
-  @Post('verification/phone', {
+  @Post(['verification/phone', 'verifications/phone'], {
     summary: 'Create phone verification',
     scopes: 'account',
     model: Models.TOKEN,
+    sensitiveFields: ['secret'],
     auth: [AuthType.SESSION, AuthType.JWT],
     throttle: {
       limit: 10,
-      key: 'ip:{ip},userId:{param-userId}',
+      key: ['url:{url},userId:{userId}', 'url:{url},ip:{ip}'],
     },
     audit: {
       key: 'verification.create',
@@ -386,30 +354,25 @@ export class AccountController {
   })
   async createPhoneVerification(
     @Req() request: NuvixRequest,
-    @Res({ passthrough: true }) response: NuvixRes,
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
-    @Project() project: ProjectsDoc,
     @Locale() locale: LocaleTranslator,
   ): Promise<IResponse<TokensDoc>> {
     return this.accountService.createPhoneVerification({
       request,
-      response,
       user,
-      db,
-      project,
       locale,
     })
   }
 
-  @Put('verification/phone', {
+  @Put(['verification/phone', 'verifications/phone'], {
     summary: 'Update phone verification (confirmation)',
     scopes: 'public',
     model: Models.TOKEN,
+    sensitiveFields: ['secret'],
     auth: [AuthType.SESSION, AuthType.JWT],
     throttle: {
       limit: 10,
-      key: 'ip:{ip},userId:{param-userId}',
+      key: 'userId:{body-userId}',
     },
     audit: {
       key: 'verification.update',
@@ -424,13 +387,11 @@ export class AccountController {
   async updatePhoneVerification(
     @Body() { userId, secret }: UpdatePhoneVerificationDTO,
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
   ) {
     return this.accountService.updatePhoneVerification({
       userId,
       secret,
       user,
-      db,
     })
   }
 }

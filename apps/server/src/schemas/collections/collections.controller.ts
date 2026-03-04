@@ -13,7 +13,6 @@ import {
   CurrentDatabase,
   CurrentSchemaType,
   Namespace,
-  Project,
   QueryFilter,
   QuerySearch,
 } from '@nuvix/core/decorators'
@@ -22,13 +21,12 @@ import { Models } from '@nuvix/core/helpers'
 import { CollectionsQueryPipe, LogsQueryPipe } from '@nuvix/core/pipes/queries'
 import {
   ApiInterceptor,
-  ProjectGuard,
   ResponseInterceptor,
   SchemaGuard,
 } from '@nuvix/core/resolvers'
 import type { Database, Query as Queries } from '@nuvix/db'
 import { IListResponse, IResponse, SchemaType } from '@nuvix/utils'
-import type { CollectionsDoc, ProjectsDoc } from '@nuvix/utils/types'
+import type { CollectionsDoc } from '@nuvix/utils/types'
 import { CollectionsService } from './collections.service'
 // DTOs
 import {
@@ -39,7 +37,7 @@ import {
 
 @Namespace('schemas')
 @Auth([AuthType.ADMIN, AuthType.KEY])
-@UseGuards(ProjectGuard, SchemaGuard)
+@UseGuards(SchemaGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Controller({ version: ['1'], path: 'schemas/:schemaId/collections' })
 @CurrentSchemaType(SchemaType.Document)
@@ -65,7 +63,7 @@ export class CollectionsController {
 
   @Post('', {
     summary: 'Create collection',
-    scopes: 'collections.create',
+    scopes: 'collections.write',
     model: Models.COLLECTION,
     audit: {
       key: 'collection.create',
@@ -101,7 +99,7 @@ export class CollectionsController {
 
   @Put(':collectionId', {
     summary: 'Update collection',
-    scopes: 'collections.update',
+    scopes: 'collections.write',
     model: Models.COLLECTION,
     audit: {
       key: 'collection.update',
@@ -126,7 +124,7 @@ export class CollectionsController {
 
   @Delete(':collectionId', {
     summary: 'Delete collection',
-    scopes: 'collections.delete',
+    scopes: 'collections.write',
     audit: {
       key: 'collection.delete',
       resource: 'schema/{params.schemaId}/collection/{params.collectionId}',
@@ -139,9 +137,8 @@ export class CollectionsController {
   async removeCollection(
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
-    @Project() project: ProjectsDoc,
   ): Promise<void> {
-    return this.collectionsService.removeCollection(db, collectionId, project)
+    return this.collectionsService.removeCollection(db, collectionId)
   }
 
   @Get(':collectionId/usage', {
@@ -172,11 +169,9 @@ export class CollectionsController {
     docs: false,
   })
   async findCollectionLogs(
-    @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @QueryFilter(LogsQueryPipe) queries?: Queries[],
   ): Promise<IListResponse<unknown>> {
     throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
-    return this.collectionsService.getCollectionLogs(db, collectionId, queries)
   }
 }

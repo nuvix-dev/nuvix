@@ -1,134 +1,104 @@
 import { Processor } from '@nestjs/bullmq'
-import {
-  Injectable,
-  Logger,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common'
-import { Doc } from '@nuvix/db'
+import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common'
 import { configuration, QueueFor, Schemas } from '@nuvix/utils'
-import type { ProjectsDoc } from '@nuvix/utils/types'
 import { Job } from 'bullmq'
 import { CoreService } from '../../core.service.js'
-import { Queue } from './queue'
+import { AbstractBatchQueue } from './batch.queue.js'
+import { DataSource } from '@nuvix/pg'
 
-interface ApiLogsBuffer {
-  project: ProjectsDoc
-  logs: ApiLog[]
-}
+const SENSITIVE_KEYS = new Set([
+  'authorization',
+  'cookie',
+  'set-cookie',
+  'x-nuvix-signature',
+  'x-nuvix-timestamp',
+  'x-nuvix-nonce',
+  'secret',
+  'token',
+  'apikey',
+  'x-nuvix-key',
+  'x-nuvix-session',
+  'x-nuvix-jwt',
+])
 
 @Injectable()
-@Processor(QueueFor.LOGS, { concurrency: 5000 })
-export class ApiLogsQueue
-  extends Queue
-  implements OnModuleInit, OnModuleDestroy
-{
-  private static readonly BATCH_SIZE = configuration.limits.batchSize || 5000
-  private static readonly BATCH_INTERVAL_MS =
+@Processor(QueueFor.LOGS, { concurrency: 1000 })
+export class ApiLogsQueue extends AbstractBatchQueue<
+  ApiLog,
+  ApiLogsQueueJobData
+> {
+  protected readonly logger = new Logger(ApiLogsQueue.name)
+
+  protected readonly batchSize = configuration.limits.batchSize || 5000
+
+  protected readonly batchIntervalMs =
     configuration.limits.batchIntervalMs || 3000
-  private readonly logger = new Logger(ApiLogsQueue.name)
-  private buffer = new Map<number, ApiLogsBuffer>()
-  private interval!: NodeJS.Timeout
 
-  constructor(private readonly coreService: CoreService) {
+  private readonly dataSource: DataSource
+
+  constructor(
+    @Inject(forwardRef(() => CoreService))
+    private readonly coreService: CoreService,
+  ) {
     super()
+    this.dataSource = this.coreService.getDataSourceWithMainPool()
   }
 
-  onModuleInit() {
-    this.startTimer()
+  protected buildItem(job: Job<ApiLogsQueueJobData>): ApiLog {
+    return job.data
   }
 
-  async onModuleDestroy() {
-    this.logger.log('Module destroying. Flushing remaining api logs...')
-    clearInterval(this.interval)
-    await this.flushBuffer()
-  }
+  private isSensitiveKey(key: string): boolean {
+    if (SENSITIVE_KEYS.has(key)) return true
 
-  private startTimer(): void {
-    if (this.interval) {
-      clearInterval(this.interval)
-    }
-    this.interval = setInterval(
-      () => this.flushBuffer(),
-      ApiLogsQueue.BATCH_INTERVAL_MS,
+    return (
+      key.includes('token') ||
+      key.includes('secret') ||
+      key.includes('key') ||
+      key.includes('password') ||
+      key.includes('auth')
     )
   }
 
-  private async flushBuffer(): Promise<void> {
-    if (this.buffer.size === 0) {
-      return
-    }
+  /**
+   * Deep recursive redaction for metadata
+   */
+  private redact(data: any): any {
+    if (!data || typeof data !== 'object') return data
+    if (Array.isArray(data)) return data.map(v => this.redact(v))
 
-    const bufferCopy = new Map(this.buffer)
-    this.buffer.clear()
-
-    for (const [projectId, data] of bufferCopy.entries()) {
-      if (data.logs.length === 0) {
-        continue
-      }
-      const { project, logs } = data
-
-      const client = await this.coreService.createProjectPgClient(project)
-      const dataSource = this.coreService.getProjectPg(client)
-
-      try {
-        await dataSource
-          .table('api_logs')
-          .withSchema(Schemas.System)
-          .insert(logs)
-      } catch (error: any) {
-        this.logger.error(
-          `Error flushing api logs for project ${projectId}: ${error?.message || error}`,
-          error?.stack,
-        )
-        // Re-add failed logs to buffer for retry
-        const currentBuffer = this.buffer.get(projectId) || {
-          project: data.project,
-          logs: [],
+    return Object.keys(data).reduce(
+      (acc, key) => {
+        const k = key.toLowerCase()
+        // Redact sensitive keys at any level of nesting
+        if (this.isSensitiveKey(k)) {
+          acc[key] = '[REDACTED]'
+        } else if (typeof data[key] === 'object') {
+          acc[key] = this.redact(data[key])
+        } else {
+          acc[key] = data[key]
         }
-        currentBuffer.logs.push(...data.logs)
-        this.buffer.set(projectId, currentBuffer)
-      } finally {
-        await this.coreService.releaseDatabaseClient(client)
-      }
-    }
+        return acc
+      },
+      {} as Record<string, any>,
+    )
   }
 
-  async process(job: Job<ApiLogsQueueJobData>): Promise<void> {
-    this.logger.debug(`Processing job ${job.id} for project log`)
-    const project = new Doc(job.data.project as object)
-    const projectId = project.getSequence()
-    const log = job.data.log
+  protected async persist(batch: ApiLog[]): Promise<void> {
+    const redactedBatch = batch.map(log => ({
+      ...log,
+      metadata: this.redact(log.metadata),
+    }))
 
-    if (!this.buffer.has(projectId)) {
-      this.buffer.set(projectId, {
-        project: new Doc({
-          $id: project.getId(),
-          $sequence: projectId,
-          database: project.get('database'),
-        }) as unknown as ProjectsDoc,
-        logs: [],
-      })
-    }
-
-    this.buffer.get(projectId)?.logs.push(log)
-
-    if (
-      (this.buffer.get(projectId)?.logs.length ?? 0) >= ApiLogsQueue.BATCH_SIZE
-    ) {
-      // Temporarily stop the timer to avoid a race condition where the timer
-      // and a full buffer try to flush at the same exact time.
-      clearInterval(this.interval)
-      await this.flushBuffer()
-      this.startTimer() // Restart the timer
-    }
+    await this.dataSource
+      .table('api_logs')
+      .withSchema(Schemas.System)
+      .insert(redactedBatch)
+    this.logger.log(`Flushed ${batch.length} api logs`)
   }
 }
 
-export type ApiLogsQueueJobData = {
-  project: ProjectsDoc | object
-  log: ApiLog
-}
+export type ApiLogsQueueJobData = ApiLog
 
 export interface ApiLog {
   request_id: string
@@ -139,7 +109,6 @@ export interface ApiLog {
   client_ip?: string
   user_agent?: string
   resource: string
-  url?: string
   latency_ms?: number
   region?: string
   error?: string

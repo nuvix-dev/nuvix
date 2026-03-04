@@ -1,19 +1,25 @@
 import { Injectable } from '@nestjs/common'
+import { CoreService } from '@nuvix/core/core.service'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Database, Query } from '@nuvix/db'
+import { Database, OrderException, Query } from '@nuvix/db'
 import { configuration } from '@nuvix/utils'
 import type { IdentitiesDoc, UsersDoc } from '@nuvix/utils/types'
 
 @Injectable()
 export class IdentityService {
+  private readonly db: Database
+
+  constructor(coreService: CoreService) {
+    this.db = coreService.getDatabase()
+  }
+
   /**
    * Get Identities
    */
   async getIdentities({
-    db,
     user,
     queries = [],
-  }: WithDB<WithUser<{ queries?: Query[] }>>): Promise<{
+  }: WithUser<{ queries?: Query[] }>): Promise<{
     data: IdentitiesDoc[]
     total: number
   }> {
@@ -21,8 +27,8 @@ export class IdentityService {
 
     const filterQueries = Query.groupByType(queries).filters
     try {
-      const results = await db.find('identities', queries)
-      const total = await db.count(
+      const results = await this.db.find('identities', queries)
+      const total = await this.db.count(
         'identities',
         filterQueries,
         configuration.limits.limitCount,
@@ -32,8 +38,8 @@ export class IdentityService {
         data: results,
         total: total,
       }
-    } catch (error: any) {
-      if (error.name === 'OrderException') {
+    } catch (error: unknown) {
+      if (error instanceof OrderException) {
         throw new Exception(
           Exception.DATABASE_QUERY_ORDER_NULL,
           `The order attribute '${error.get()}' had a null value. Cursor pagination requires all documents order attribute values are non-null.`,
@@ -46,19 +52,15 @@ export class IdentityService {
   /**
    * Delete Identity
    */
-  async deleteIdentity({
-    db,
-    identityId,
-  }: WithDB<{ identityId: string }>): Promise<void> {
-    const identity = await db.getDocument('identities', identityId)
+  async deleteIdentity({ identityId }: { identityId: string }): Promise<void> {
+    const identity = await this.db.getDocument('identities', identityId)
 
     if (identity.empty()) {
       throw new Exception(Exception.USER_IDENTITY_NOT_FOUND)
     }
 
-    await db.deleteDocument('identities', identityId)
+    await this.db.deleteDocument('identities', identityId)
   }
 }
 
-type WithDB<T = unknown> = { db: Database } & T
 type WithUser<T = unknown> = { user: UsersDoc } & T

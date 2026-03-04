@@ -2,42 +2,33 @@ import {
   Body,
   Controller,
   Param,
-  ParseArrayPipe,
-  ParseBoolPipe,
-  ParseIntPipe,
   Query,
   Req,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
 import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
-import {
-  AuthType,
-  CurrentSchema,
-  CurrentSchemaType,
-  Namespace,
-  Project,
-} from '@nuvix/core/decorators'
-import { ParseDuplicatePipe } from '@nuvix/core/pipes'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  SchemaGuard,
-} from '@nuvix/core/resolvers'
-import { DataSource } from '@nuvix/pg'
-import { Context, SchemaType } from '@nuvix/utils'
-import type { ProjectsDoc } from '@nuvix/utils/types'
+import { AuthType, CurrentSchemaType, Namespace } from '@nuvix/core/decorators'
+import { ApiInterceptor, SchemaGuard } from '@nuvix/core/resolvers'
+import { SchemaType } from '@nuvix/utils'
 import { PermissionsDTO } from './DTO/permissions.dto'
 import {
+  CallFunctionQueryDTO,
+  DeleteQueryDTO,
   FunctionParamsDTO,
+  InsertQueryDTO,
   RowParamsDTO,
+  SelectQueryDTO,
   TableParamsDTO,
+  UpdateQueryDTO,
 } from './DTO/table.dto'
 import { SchemasService } from './schemas.service'
+import { RestContext, SelectQuery } from './schemas.types'
+import { OrderParser, Parser, SelectParser } from '@nuvix/utils/query'
 
 // Note: The `schemaId` parameter is used in hooks and must be included in all relevant routes.
 @Controller({ version: ['1'], path: ['schemas/:schemaId', 'public'] })
-@UseGuards(ProjectGuard, SchemaGuard)
+@UseGuards(SchemaGuard)
 @Namespace('schemas')
 @UseInterceptors(ApiInterceptor)
 @CurrentSchemaType([SchemaType.Managed, SchemaType.Unmanaged])
@@ -52,52 +43,33 @@ export class SchemasController {
   async queryTable(
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
     @Req() request: NuvixRequest,
-    @CurrentSchema() pg: DataSource,
-    @Project() project: ProjectsDoc,
-    @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
-    limit: number,
-    @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
-    offset?: number,
+    @Query() query: SelectQueryDTO,
   ) {
     return this.schemasService.select({
       table,
-      pg,
-      limit,
-      offset,
       schema,
-      url: request.raw.url || request.url,
-      project,
-      context: this.requestToContext(request),
+      query: this.parseQuery({ ...query, table }),
+      context: this.buildContext(request),
     })
   }
 
   @Post(['tables/:tableId'], {
     summary: 'Insert data into table',
     description: 'Insert one or more records into a specific table',
-    scopes: 'schemas.tables.create',
+    scopes: 'schemas.tables.write',
   })
   async insertIntoTable(
-    @CurrentSchema() pg: DataSource,
     @Req() request: NuvixRequest,
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
     @Body() input: Record<string, any> | Record<string, any>[],
-    @Project() project: ProjectsDoc,
-    @Query(
-      'columns',
-      ParseDuplicatePipe,
-      new ParseArrayPipe({ items: String, optional: true }),
-    )
-    columns?: string[],
+    @Query() { columns, select }: InsertQueryDTO,
   ) {
     return this.schemasService.insert({
-      pg,
       schema,
       table,
       input,
-      columns,
-      url: request.raw.url || request.url,
-      project,
-      context: this.requestToContext(request),
+      query: { ...this.parseQuery({ select, table }), columns },
+      context: this.buildContext(request),
     })
   }
 
@@ -105,63 +77,26 @@ export class SchemasController {
     summary: 'Update table data',
     description:
       'Update existing records in a specific table with optional pagination and force flag',
-    scopes: 'schemas.tables.update',
+    scopes: 'schemas.tables.write',
   })
   async updateTables(
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
-    @CurrentSchema() pg: DataSource,
     @Req() request: NuvixRequest,
     @Body() input: Record<string, any>,
-    @Project() project: ProjectsDoc,
-    @Query(
-      'columns',
-      ParseDuplicatePipe,
-      new ParseArrayPipe({ items: String, optional: true }),
-    )
-    columns?: string[],
-    @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
-    limit?: number,
-    @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
-    offset?: number,
-    @Query('force', ParseDuplicatePipe, new ParseBoolPipe({ optional: true }))
-    force = false,
+    @Query() query: UpdateQueryDTO,
   ) {
     return this.schemasService.update({
-      pg,
       schema,
       table,
       input,
-      columns,
-      url: request.raw.url || request.url,
-      limit,
-      offset,
-      force,
-      project,
-      context: this.requestToContext(request),
+      query: this.parseQuery({ ...query, table }),
+      context: this.buildContext(request),
     })
   }
 
-  // @Put(['tables/:tableId'], {
-  //   summary: 'Upsert table data',
-  //   description:
-  //     'Insert or update records in a specific table (upsert operation)',
-  //   scopes: ['schemas.tables.create', 'schemas.tables.update'],
-  //   docs: false,
-  // })
-  // async upsertTable(
-  //   @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
-  //   @CurrentSchema() pg: DataSource,
-  //   @Req() request: NuvixRequest,
-  //   @Body() input: Record<string, any> | Record<string, any>[],
-  //   @Query('columns', new ParseArrayPipe({ items: String, optional: true }))
-  //   columns?: string[],
-  //   @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
-  //   @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
-  // ) {}
-
   @Delete(['tables/:tableId'], {
     summary: 'Delete table data',
-    scopes: 'schemas.tables.delete',
+    scopes: 'schemas.tables.write',
     description:
       'Delete records from a specific table with optional pagination and force flag',
     sdk: {
@@ -171,26 +106,14 @@ export class SchemasController {
   })
   async deleteTables(
     @Param() { schemaId: schema = 'public', tableId: table }: TableParamsDTO,
-    @CurrentSchema() pg: DataSource,
     @Req() request: NuvixRequest,
-    @Project() project: ProjectsDoc,
-    @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
-    limit?: number,
-    @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
-    offset?: number,
-    @Query('force', ParseDuplicatePipe, new ParseBoolPipe({ optional: true }))
-    force = false,
+    @Query() query: DeleteQueryDTO,
   ) {
     return this.schemasService.delete({
-      pg,
       schema,
       table,
-      url: request.raw.url || request.url,
-      limit,
-      offset,
-      force,
-      project,
-      context: this.requestToContext(request),
+      query: this.parseQuery({ ...query, table }),
+      context: this.buildContext(request),
     })
   }
 
@@ -203,37 +126,21 @@ export class SchemasController {
     },
   })
   async callFunction(
-    @CurrentSchema() pg: DataSource,
     @Req() request: NuvixRequest,
     @Param() {
       schemaId: schema = 'public',
       functionId: functionName,
     }: FunctionParamsDTO,
-    @Project() project: ProjectsDoc,
-    @Query('limit', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
-    limit?: number,
-    @Query('offset', ParseDuplicatePipe, new ParseIntPipe({ optional: true }))
-    offset?: number,
+    @Query() query: CallFunctionQueryDTO,
     @Body() args: Record<string, any> | any[] = [],
   ) {
     return this.schemasService.callFunction({
-      pg,
       schema,
       functionName,
-      url: request.raw.url || request.url,
-      limit,
-      offset,
       args,
-      project,
-      context: this.requestToContext(request),
+      query: this.parseQuery({ ...query, table: functionName }),
+      context: this.buildContext(request),
     })
-  }
-
-  private requestToContext(request: NuvixRequest): Record<string, any> {
-    return {
-      ...request[Context.AuthMeta],
-      request,
-    }
   }
 
   @Put(['tables/:tableId/permissions'], {
@@ -242,18 +149,14 @@ export class SchemasController {
     auth: [AuthType.ADMIN, AuthType.KEY],
   })
   @CurrentSchemaType(SchemaType.Managed)
-  manageTablePermissions(
-    @CurrentSchema() pg: DataSource,
+  async manageTablePermissions(
     @Param() { schemaId: schema = 'public', tableId }: TableParamsDTO,
     @Body() body: PermissionsDTO,
-    @Project() project: ProjectsDoc,
   ): Promise<string[]> {
-    return this.schemasService.updatePermissions({
-      pg,
+    return await this.schemasService.updatePermissions({
       permissions: body.permissions,
       tableId,
       schema,
-      project,
     })
   }
 
@@ -263,19 +166,15 @@ export class SchemasController {
     auth: [AuthType.ADMIN, AuthType.KEY],
   })
   @CurrentSchemaType(SchemaType.Managed)
-  manageRowPermissions(
-    @CurrentSchema() pg: DataSource,
+  async manageRowPermissions(
     @Param() { schemaId: schema = 'public', tableId, rowId }: RowParamsDTO,
     @Body() body: PermissionsDTO,
-    @Project() project: ProjectsDoc,
   ): Promise<string[]> {
-    return this.schemasService.updatePermissions({
-      pg,
+    return await this.schemasService.updatePermissions({
       permissions: body.permissions,
       tableId,
       schema,
       rowId,
-      project,
     })
   }
 
@@ -286,15 +185,11 @@ export class SchemasController {
   })
   @CurrentSchemaType(SchemaType.Managed)
   getTablePermissions(
-    @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId }: TableParamsDTO,
-    @Project() project: ProjectsDoc,
   ): Promise<string[]> {
     return this.schemasService.getPermissions({
-      pg,
       tableId,
       schema,
-      project,
     })
   }
 
@@ -305,16 +200,42 @@ export class SchemasController {
   })
   @CurrentSchemaType(SchemaType.Managed)
   getRowPermissions(
-    @CurrentSchema() pg: DataSource,
     @Param() { schemaId: schema = 'public', tableId, rowId }: RowParamsDTO,
-    @Project() project: ProjectsDoc,
   ): Promise<string[]> {
     return this.schemasService.getPermissions({
-      pg,
       tableId,
       schema,
       rowId,
-      project,
     })
+  }
+
+  private buildContext(request: NuvixRequest): RestContext {
+    return {
+      ip: request.ip,
+      headers: request.headers,
+      method: request.method,
+      url: request.url,
+      ctx: request.context,
+      id: request.id,
+    }
+  }
+
+  private parseQuery<T>(
+    query: SelectQueryDTO & { table: string } & T,
+  ): SelectQuery & T {
+    const { filter, select, order, table: tableName, ...rest } = query
+    let parsed: SelectQuery = { ...rest }
+
+    if (filter) {
+      parsed.filter = Parser.create({ tableName }).parse(filter)
+    }
+    if (select) {
+      parsed.select = new SelectParser({ tableName }).parse(select)
+    }
+    if (order) {
+      parsed.order = OrderParser.parse(order, tableName)
+    }
+
+    return parsed as SelectQuery & T
   }
 }

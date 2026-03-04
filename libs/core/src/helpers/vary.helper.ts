@@ -1,17 +1,15 @@
-const validFieldnameRE = /^[!#$%&'*+\-.^\w`|~]+$/u
+const validFieldnameRE = /^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$/
 
-export function validateFieldname(fieldname: string) {
+function validateFieldname(fieldname: string) {
   if (!validFieldnameRE.test(fieldname)) {
     throw new TypeError('Fieldname contains invalid characters.')
   }
 }
 
-export function parse(header: string): string[] {
+function parse(header: string): string[] {
   const trimmed = header.trim().toLowerCase()
-  if (!trimmed) {
-    return []
-  }
-  return trimmed.split(/\s*,\s*/)
+  if (!trimmed) return []
+  return trimmed.split(/\s*,\s*/).filter(Boolean)
 }
 
 export function createAddFieldnameToVary(fieldname: string) {
@@ -19,19 +17,23 @@ export function createAddFieldnameToVary(fieldname: string) {
   const fieldLower = fieldname.toLowerCase()
 
   return (reply: NuvixRes) => {
-    const existing = reply.getHeader('Vary')?.toString() || ''
+    const existingRaw = reply.getHeader('Vary')
+    const existing = Array.isArray(existingRaw)
+      ? existingRaw.join(', ')
+      : (existingRaw?.toString() ?? '')
+
     const values = new Set(parse(existing))
 
-    if (values.has('*')) {
-      return
-    }
+    if (values.has('*')) return
+
     if (fieldLower === '*') {
       reply.raw.setHeader('Vary', '*')
       return
     }
 
     values.add(fieldLower)
-    reply.raw.setHeader('Vary', Array.from(values).join(', '))
+
+    reply.raw.setHeader('Vary', [...values].join(', '))
   }
 }
 

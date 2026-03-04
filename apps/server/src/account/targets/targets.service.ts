@@ -1,7 +1,7 @@
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Auth, Detector } from '@nuvix/core/helpers'
+import { RequestContext } from '@nuvix/core/helpers'
 import type { DeletesJobData } from '@nuvix/core/resolvers'
 import {
   Authorization,
@@ -12,61 +12,61 @@ import {
   Permission,
   Role,
 } from '@nuvix/db'
-import { DeleteType, MessageType, QueueFor, Schemas } from '@nuvix/utils'
-import type {
-  ProjectsDoc,
-  ProvidersDoc,
-  Targets,
-  UsersDoc,
-} from '@nuvix/utils/types'
+import { DeleteType, MessageType, QueueFor } from '@nuvix/utils'
+import type { ProvidersDoc, Targets, UsersDoc } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
 import { CreatePushTargetDTO, UpdatePushTargetDTO } from './DTO/target.dto'
+import { CoreService } from '@nuvix/core/core.service'
 
 @Injectable()
 export class TargetsService {
+  private readonly db: Database
   constructor(
+    private readonly coreService: CoreService,
     @InjectQueue(QueueFor.DELETES)
     private readonly deletesQueue: Queue<DeletesJobData, unknown, DeleteType>,
-  ) {}
+  ) {
+    this.db = this.coreService.getDatabase()
+  }
 
   /**
    * Create Push Target
    */
   async createPushTarget({
-    db,
     user,
     targetId,
     userAgent,
     providerId,
     identifier,
-  }: WithDB<WithUser<CreatePushTargetDTO & { userAgent: string }>>) {
+    ctx,
+  }: WithUser<
+    CreatePushTargetDTO & { userAgent: string; ctx: RequestContext }
+  >) {
     const finalTargetId = targetId === 'unique()' ? ID.unique() : targetId
 
     let provider: ProvidersDoc | null = null
     if (providerId) {
       provider = await Authorization.skip(() =>
-        db.withSchema(Schemas.Core, () =>
-          db.getDocument('providers', providerId!),
-        ),
+        this.db.getDocument('providers', providerId!),
       )
     }
 
     const target = await Authorization.skip(() =>
-      db.getDocument('targets', finalTargetId),
+      this.db.getDocument('targets', finalTargetId),
     )
 
     if (!target.empty()) {
       throw new Exception(Exception.USER_TARGET_ALREADY_EXISTS)
     }
 
-    const detector = new Detector(userAgent)
+    const detector = ctx.detector(userAgent)
     const device = detector.getDevice()
 
-    const sessionId = Auth.sessionVerify(user.get('sessions', []), Auth.secret)
-    const session = await db.getDocument('sessions', sessionId.toString())
+    const sessionId = ctx.session!.getId()
+    const session = await this.db.getDocument('sessions', sessionId.toString())
 
     try {
-      const createdTarget = await db.createDocument(
+      const createdTarget = await this.db.createDocument(
         'targets',
         new Doc<Targets>({
           $id: finalTargetId,
@@ -87,7 +87,7 @@ export class TargetsService {
         }),
       )
 
-      await db.purgeCachedDocument('users', user.getId())
+      await this.db.purgeCachedDocument('users', user.getId())
 
       return createdTarget
     } catch (error) {
@@ -102,16 +102,15 @@ export class TargetsService {
    * Update Push Target
    */
   async updatePushTarget({
-    db,
     user,
     request,
     targetId,
     identifier,
-  }: WithDB<
-    WithUser<UpdatePushTargetDTO & { request: NuvixRequest; targetId: string }>
+  }: WithUser<
+    UpdatePushTargetDTO & { request: NuvixRequest; targetId: string }
   >) {
     const target = await Authorization.skip(
-      async () => await db.getDocument('targets', targetId),
+      async () => await this.db.getDocument('targets', targetId),
     )
 
     if (target.empty()) {
@@ -126,18 +125,18 @@ export class TargetsService {
       target.set('identifier', identifier).set('expired', false)
     }
 
-    const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
+    const detector = request.context.detector(request.headers['user-agent'])
     const device = detector.getDevice()
 
     target.set('name', `${device.deviceBrand} ${device.deviceModel}`)
 
-    const updatedTarget = await db.updateDocument(
+    const updatedTarget = await this.db.updateDocument(
       'targets',
       target.getId(),
       target,
     )
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     return updatedTarget
   }
@@ -145,14 +144,9 @@ export class TargetsService {
   /**
    * Delete Push Target
    */
-  async deletePushTarget({
-    db,
-    user,
-    targetId,
-    project,
-  }: WithDB<WithUser<{ targetId: string; project: ProjectsDoc }>>) {
+  async deletePushTarget({ user, targetId }: WithUser<{ targetId: string }>) {
     const target = await Authorization.skip(
-      async () => await db.getDocument('targets', targetId),
+      async () => await this.db.getDocument('targets', targetId),
     )
 
     if (target.empty()) {
@@ -163,16 +157,14 @@ export class TargetsService {
       throw new Exception(Exception.USER_TARGET_NOT_FOUND)
     }
 
-    await db.deleteDocument('targets', target.getId())
+    await this.db.deleteDocument('targets', target.getId())
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     await this.deletesQueue.add(DeleteType.TARGET, {
       document: target.clone(),
-      project,
     })
   }
 }
 
-type WithDB<T = unknown> = { db: Database } & T
 type WithUser<T = unknown> = { user: UsersDoc } & T

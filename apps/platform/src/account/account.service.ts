@@ -1,23 +1,24 @@
-import * as fs from 'node:fs/promises'
-import path from 'node:path'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable, UseInterceptors } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { JwtService } from '@nestjs/jwt'
-import { AppConfigService, CoreService, Platform } from '@nuvix/core'
+import { CoreService } from '@nuvix/core'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Hooks } from '@nuvix/core/extend/hooks'
-import { Auth, Detector, LocaleTranslator } from '@nuvix/core/helpers'
+import {
+  Auth,
+  Detector,
+  emailHelper,
+  LocaleTranslator,
+  RequestContext,
+} from '@nuvix/core/helpers'
 import type { DeletesJobData } from '@nuvix/core/resolvers'
 import {
   MailJob,
   MailQueueOptions,
   ResponseInterceptor,
 } from '@nuvix/core/resolvers'
-import {
-  PasswordHistoryValidator,
-  PersonalDataValidator,
-} from '@nuvix/core/validators'
+import { PersonalDataValidator } from '@nuvix/core/validators'
 import {
   Authorization,
   Database,
@@ -37,26 +38,24 @@ import {
 } from '@nuvix/utils'
 import type {
   MembershipsDoc,
-  Sessions,
   SessionsDoc,
   TargetsDoc,
   UsersDoc,
 } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
-import Template from 'handlebars'
 import { CountryResponse, Reader } from 'maxmind'
 import { UpdateEmailDTO, UpdatePasswordDTO } from './DTO/account.dto'
 import { CreateEmailSessionDTO } from './DTO/session.dto'
+import { platform } from '../platform'
 
 @Injectable()
 @UseInterceptors(ResponseInterceptor)
 export class AccountService {
   private readonly geodb: Reader<CountryResponse>
   private readonly db: Database
-  private readonly platform: Doc<Platform>
+
   constructor(
     private readonly coreService: CoreService,
-    private readonly appConfig: AppConfigService,
     private readonly eventEmitter: EventEmitter2,
     private readonly jwtService: JwtService,
     @InjectQueue(QueueFor.MAILS)
@@ -64,9 +63,8 @@ export class AccountService {
     @InjectQueue(QueueFor.DELETES)
     private readonly deletesQueue: Queue<DeletesJobData, unknown, DeleteType>,
   ) {
-    this.db = this.coreService.getPlatformDb()
+    this.db = this.coreService.getInternalDatabase()
     this.geodb = coreService.getGeoDb()
-    this.platform = coreService.getPlatform()
   }
 
   /**
@@ -82,8 +80,8 @@ export class AccountService {
   ): Promise<UsersDoc> {
     email = email.toLowerCase()
 
-    const whitelistEmails = this.platform.get('authWhitelistEmails')
-    const whitelistIPs = this.platform.get('authWhitelistIPs', false)
+    const whitelistEmails = platform.get('authWhitelistEmails')
+    const whitelistIPs = platform.get('authWhitelistIPs', false)
 
     if (
       whitelistEmails &&
@@ -97,7 +95,7 @@ export class AccountService {
       throw new Exception(Exception.USER_IP_NOT_WHITELISTED)
     }
 
-    const limit = this.platform.get('auths').limit ?? 0
+    const limit = platform.get('auths').limit ?? 0
     if (limit !== 0) {
       const total = await this.db.count('users', [])
 
@@ -114,7 +112,7 @@ export class AccountService {
       throw new Exception(Exception.GENERAL_BAD_REQUEST)
     }
 
-    if (this.platform.get('auths').personalDataCheck ?? false) {
+    if (platform.get('auths').personalDataCheck ?? false) {
       const personalDataValidator = new PersonalDataValidator(
         userId,
         email,
@@ -134,7 +132,6 @@ export class AccountService {
       true,
     ])
 
-    const passwordHistory = this.platform.get('auths').passwordHistory ?? 0
     const hashedPassword =
       (await Auth.passwordHash(
         password,
@@ -155,8 +152,7 @@ export class AccountService {
         emailVerification: true, // we don't need to verify email on account creation by admin
         status: true,
         password: hashedPassword,
-        passwordHistory:
-          passwordHistory > 0 && hashedPassword ? [hashedPassword] : [],
+        passwordHistory: [],
         passwordUpdate: new Date(),
         hash: Auth.DEFAULT_ALGO,
         hashOptions: Auth.DEFAULT_ALGO_OPTIONS,
@@ -376,23 +372,7 @@ export class AccountService {
       Auth.DEFAULT_ALGO_OPTIONS,
     )
 
-    const historyLimit = this.platform.get('auths').passwordHistory ?? 0
-    let history = user.get('passwordHistory', [])
-    if (historyLimit > 0 && hashedNewPassword) {
-      const validator = new PasswordHistoryValidator(
-        history,
-        user.get('hash'),
-        user.get('hashOptions'),
-      )
-      if (!(await validator.$valid(newPassword))) {
-        throw new Exception(Exception.USER_PASSWORD_RECENTLY_USED)
-      }
-
-      history.push(hashedNewPassword)
-      history = history.slice(-historyLimit)
-    }
-
-    if (this.platform.get('auths').personalDataCheck ?? false) {
+    if (platform.get('auths').personalDataCheck ?? false) {
       const personalDataValidator = new PersonalDataValidator(
         user.getId(),
         user.get('email'),
@@ -406,7 +386,7 @@ export class AccountService {
 
     user
       .set('password', hashedNewPassword)
-      .set('passwordHistory', history)
+      .set('passwordHistory', [])
       .set('passwordUpdate', new Date())
       .set('hash', Auth.DEFAULT_ALGO)
       .set('hashOptions', Auth.DEFAULT_ALGO_OPTIONS)
@@ -419,18 +399,19 @@ export class AccountService {
   /**
    * Get User's Sessions
    */
-  async getSessions(user: UsersDoc, locale: LocaleTranslator) {
+  async getSessions(user: UsersDoc, ctx: RequestContext) {
     const sessions = user.get('sessions', [])
-    const current = Auth.sessionVerify(sessions, Auth.secret)
+    const locale = ctx.translator()
 
     const updatedSessions = sessions.map((session: SessionsDoc) => {
-      const countryName = locale.getText(
-        `countries${session.get('countryCode', '')?.toLowerCase()}`,
-        locale.getText('locale.country.unknown'),
-      )
+      const key = `countries.${session.get('countryCode')}`
+      const countryName = locale.has(key)
+        ? locale.getRaw(key)
+        : locale.t('locale.country.unknown')
 
       session.set('countryName', countryName)
-      session.set('current', current === session.getId())
+      session.set('current', ctx.getSession().getId() === session.getId())
+      session.delete('secret')
 
       return session
     })
@@ -453,28 +434,30 @@ export class AccountService {
     const protocol = request.protocol
     const sessions = user.get('sessions', []) as SessionsDoc[]
 
+    const ctx = request.context
     for (const session of sessions) {
       await this.db.deleteDocument('sessions', session.getId())
       session.set('current', false)
+      const locale = ctx.translator()
+      const key = `countries.${session.get('countryCode')}`
       session.set(
         'countryName',
-        locale.getText(
-          `countries${session.get('countryCode', '')?.toLowerCase()}`,
-          locale.getText('locale.country.unknown'),
-        ),
+        locale.has(key)
+          ? locale.getRaw(key)
+          : locale.t('locale.country.unknown'),
       )
 
-      if (session.get('secret') === Auth.hash(Auth.secret)) {
+      if (session.getId() === ctx.getSession().getId()) {
         session.set('current', true)
 
         // If current session, delete the cookies too
-        response.cookie(Auth.cookieName, '', {
+        response.cookie('nc_session', '', {
           expires: new Date(0),
           path: '/',
-          domain: Auth.cookieDomain,
+          domain: ctx.cookieDomain,
           secure: protocol === 'https',
           httpOnly: true,
-          sameSite: Auth.cookieSamesite,
+          sameSite: ctx.cookieSameSite,
         })
       }
     }
@@ -488,23 +471,23 @@ export class AccountService {
   /**
    * Get a Session
    */
-  async getSession(user: UsersDoc, id: string, locale: LocaleTranslator) {
+  async getSession(user: UsersDoc, id: string, ctx: RequestContext) {
     const sessions = user.get('sessions', []) as SessionsDoc[]
-    const sessionId =
-      id === 'current'
-        ? (Auth.sessionVerify(user.get('sessions'), Auth.secret) as string)
-        : id
+    const current = ctx.getSession()
+    const sessionId = id === 'current' ? current.getId() : id
 
     for (const session of sessions) {
       if (sessionId === session.getId()) {
-        const countryName = locale.getText(
-          `countries${session.get('countryCode', '')?.toLowerCase()}`,
-          locale.getText('locale.country.unknown'),
-        )
+        const locale = ctx.translator()
+        const key = `countries.${session.get('countryCode')}`
+        const countryName = locale.has(key)
+          ? locale.getRaw(key)
+          : locale.t('locale.country.unknown')
 
         session
-          .set('current', session.get('secret') === Auth.hash(Auth.secret))
+          .set('current', session.getId() === current.getId())
           .set('countryName', countryName)
+          .delete('secret')
 
         return session
       }
@@ -533,16 +516,16 @@ export class AccountService {
       await this.db.deleteDocument('sessions', session.getId())
 
       session.set('current', false)
-      if (session.get('secret') === Auth.hash(Auth.secret)) {
+      if (session.getId() === request.context.getSession().getId()) {
         session.set('current', true)
 
-        response.cookie(Auth.cookieName, '', {
+        response.cookie('nc_session', '', {
           expires: new Date(0),
           path: '/',
-          domain: Auth.cookieDomain,
+          domain: request.context.cookieDomain,
           secure: protocol === 'https',
           httpOnly: true,
-          sameSite: Auth.cookieSamesite,
+          sameSite: request.context.cookieSameSite,
         })
       }
 
@@ -556,12 +539,7 @@ export class AccountService {
   /**
    * Update a Session
    */
-  async updateSession(user: UsersDoc, _sessionId: string) {
-    const sessionId =
-      _sessionId === 'current'
-        ? (Auth.sessionVerify(user.get('sessions'), Auth.secret) as string)
-        : _sessionId
-
+  async updateSession(user: UsersDoc, sessionId: string) {
     const sessions = user.get('sessions', []) as SessionsDoc[]
     let session: SessionsDoc | null = null
 
@@ -576,7 +554,7 @@ export class AccountService {
       throw new Exception(Exception.USER_SESSION_NOT_FOUND)
     }
 
-    const auths = this.platform.get('auths')
+    const auths = platform.get('auths')
     const authDuration = auths.duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
     session.set('expire', new Date(Date.now() + authDuration * 1000))
 
@@ -592,7 +570,6 @@ export class AccountService {
   async createEmailSession(
     user: UsersDoc,
     input: CreateEmailSessionDTO,
-    locale: LocaleTranslator,
     request: NuvixRequest,
     response: NuvixRes,
   ) {
@@ -623,7 +600,7 @@ export class AccountService {
     user.setAll(profile.toObject())
 
     const duration =
-      this.platform.get('auths').duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
+      platform.get('auths').duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
     const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
     const record = this.geodb.get(request.ip)
     const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
@@ -674,34 +651,37 @@ export class AccountService {
     )
 
     const expire = new Date(Date.now() + duration * 1000)
+    const ctx = request.context
+    const locale = ctx.translator()
+
     response
-      .cookie(Auth.cookieName, Auth.encodeSession(user.getId(), secret), {
+      .cookie('nc_session', Auth.encodeSession(user.getId(), secret), {
         expires: expire,
         path: '/',
         secure: protocol === 'https',
-        domain: Auth.cookieDomain,
-        sameSite: Auth.cookieSamesite,
+        domain: ctx.cookieDomain,
+        sameSite: ctx.cookieSameSite,
         httpOnly: true,
       })
       .status(201)
 
-    const countryName = locale.getText(
-      `countries${session.get('countryCode', '')?.toLowerCase()}`,
-      locale.getText('locale.country.unknown'),
-    )
+    const key = `countries.${session.get('countryCode')}`
+    const countryName = locale.has(key)
+      ? locale.getRaw(key)
+      : locale.t('locale.country.unknown')
 
     createdSession
       .set('current', true)
       .set('countryName', countryName)
-      .set('secret', Auth.encodeSession(user.getId(), secret))
+      .delete('secret')
 
-    if (this.platform.get('auths').sessionAlerts ?? false) {
+    if (platform.get('auths').sessionAlerts ?? false) {
       const sessionCount = await this.db.count('sessions', qb =>
         qb.equal('userId', user.getId()),
       )
 
       if (sessionCount !== 1) {
-        await this.sendSessionAlert(locale, user, createdSession)
+        await this.sendSessionAlert(user, createdSession, ctx)
       }
     }
 
@@ -712,86 +692,64 @@ export class AccountService {
    * Send Session Alert.
    */
   async sendSessionAlert(
-    locale: LocaleTranslator,
     user: UsersDoc,
     session: SessionsDoc,
+    ctx: RequestContext,
   ) {
-    const subject: string = locale.getText('emails.sessionAlert.subject')
-    const templatePath = path.join(
-      this.appConfig.assetConfig.templates,
-      'email-session-alert.tpl',
-    )
-    const templateSource = await fs.readFile(templatePath, 'utf8')
-    const template = Template.compile(templateSource)
+    const project = new Doc({ $id: 'console', name: 'Console' })
+    const locale = ctx.translator()
+    const projectName = project.get('name')
+    const key = `countries.${session.get('countryCode')}`
+    const country = (
+      locale.has(key) ? locale.getRaw(key) : locale.t('locale.country.unknown')
+    ) as string
 
-    const emailData = {
-      hello: locale.getText('emails.sessionAlert.hello'),
-      body: locale.getText('emails.sessionAlert.body'),
-      listDevice: locale.getText('emails.sessionAlert.listDevice'),
-      listIpAddress: locale.getText('emails.sessionAlert.listIpAddress'),
-      listCountry: locale.getText('emails.sessionAlert.listCountry'),
-      footer: locale.getText('emails.sessionAlert.footer'),
-      thanks: locale.getText('emails.sessionAlert.thanks'),
-      signature: locale.getText('emails.sessionAlert.signature'),
-    }
+    const payload = await emailHelper
+      .builder(project as any)
+      .to(user.get('email'))
+      .usingTemplate(
+        'email-session-alert.tpl',
+        `sessionAlert-${locale.fallbackLocale}`,
+      )
+      .withSubject(
+        locale.t('emails.sessionAlert.subject', { project: projectName }),
+      )
+      .withData({
+        hello: locale.t('emails.sessionAlert.hello', {
+          user: user.get('name', 'User'),
+        }),
+        body: locale.t('emails.sessionAlert.body', {
+          project: projectName,
+          date: new Date().toLocaleDateString(locale.fallbackLocale, {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+          }),
+          time: new Date().toLocaleTimeString(locale.fallbackLocale),
+          year: new Date().getFullYear().toString(),
+        }),
+        listDevice: locale.t('emails.sessionAlert.listDevice', {
+          device: session.get('clientName'),
+        }),
+        listIpAddress: locale.t('emails.sessionAlert.listIpAddress', {
+          ipAddress: session.get('ip'),
+        }),
+        listCountry: locale.t('emails.sessionAlert.listCountry', {
+          country,
+        }),
+        footer: locale.t('emails.sessionAlert.footer'),
+        thanks: locale.t('emails.sessionAlert.thanks'),
+        signature: locale.t('emails.sessionAlert.signature', {
+          project: projectName,
+        }),
+      })
+      .withVariables({
+        direction: locale.t('settings.direction'),
+        user: user.get('name', 'User'),
+        project: projectName,
+      })
+      .build()
 
-    const emailVariables = {
-      direction: locale.getText('settings.direction'),
-      date: new Date().toLocaleDateString(locale.default, {
-        month: 'long',
-        day: 'numeric',
-      }),
-      year: new Date().getFullYear(),
-      time: new Date().toLocaleTimeString(locale.default),
-      user: user.get('name'),
-      project: 'Console',
-      device: session.get('clientName'),
-      ipAddress: session.get('ip'),
-      country: locale.getText(
-        `countries.${session.get('countryCode')}`,
-        locale.getText('locale.country.unknown'),
-      ),
-    }
-
-    const body = template(emailData)
-    const email = user.get('email')
-
-    await this.mailsQueue.add(MailJob.SEND_EMAIL, {
-      email,
-      subject,
-      body,
-      variables: emailVariables,
-    })
-  }
-
-  /**
-   * Create JWT
-   */
-  async createJWT(user: UsersDoc, response: NuvixRes) {
-    const sessions = user.get('sessions', []) as SessionsDoc[]
-    let current = new Doc<Sessions>()
-
-    for (const session of sessions) {
-      if (session.get('secret') === Auth.hash(Auth.secret)) {
-        current = session
-        break
-      }
-    }
-
-    if (current.empty()) {
-      throw new Exception(Exception.USER_SESSION_NOT_FOUND)
-    }
-
-    const payload = {
-      userId: user.getId(),
-      sessionId: current.getId(),
-    }
-
-    const jwt = this.jwtService.sign(payload, {
-      expiresIn: '15m', // 900 seconds
-    })
-
-    response.status(201)
-    return new Doc({ jwt })
+    await this.mailsQueue.add(MailJob.SEND_EMAIL, payload)
   }
 }

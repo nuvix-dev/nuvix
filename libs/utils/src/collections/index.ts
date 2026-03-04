@@ -9,7 +9,7 @@ const collections = {
   internal: internalCollections,
   bucket: bucketCollections,
   database: dbCollections,
-  common: commonCollections('project'),
+  common: commonCollections,
 }
 
 export default collections

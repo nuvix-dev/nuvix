@@ -40,31 +40,13 @@ export async function setupDatabase({
   projectId,
 }: DatabaseSetupOptions): Promise<SetupResult> {
   try {
-    const pool = coreService.createMainPool()
-    const coreSchema = coreService.getProjectDb(pool, {
-      projectId,
-      schema: Schemas.Core,
-    })
+    const coreSchema = coreService.getDatabase()
 
     await createSchemaIfNotExists(coreSchema, Schemas.Core)
 
-    // Create auth schema
-    const authSchema = coreService.getProjectDb(pool, {
-      projectId,
-      schema: Schemas.Auth,
-    })
-
-    await createSchemaIfNotExists(authSchema, Schemas.Auth)
-
     // Setup collections
-    const authCollectionEntries = Object.entries(collections.auth) ?? []
     const coreCollectionEntries = Object.entries(collections.project) ?? []
 
-    const authCount = await setupCollections(
-      authSchema,
-      authCollectionEntries,
-      projectId,
-    )
     const coreCount = await setupCollections(
       coreSchema,
       coreCollectionEntries,
@@ -78,9 +60,9 @@ export async function setupDatabase({
 
     return {
       success: true,
-      schemas: [Schemas.Core, Schemas.Auth],
+      schemas: [Schemas.Core],
       collections: {
-        auth: authCount,
+        auth: 0,
         core: coreCount,
       },
     }

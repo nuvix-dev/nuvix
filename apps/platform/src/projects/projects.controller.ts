@@ -75,7 +75,7 @@ export class ProjectsController {
 
   @Patch(':projectId', {
     summary: 'Update project',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
     audit: {
       key: 'project.update',
@@ -95,7 +95,7 @@ export class ProjectsController {
 
   @Post(':projectId/jwts', {
     summary: 'Create JWT',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.JWT,
     sdk: {
       name: 'createJWT',
@@ -111,7 +111,7 @@ export class ProjectsController {
 
   @Patch(':projectId/service', {
     summary: 'Update service status',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
     sdk: {
       name: 'updateServiceStatus',
@@ -127,7 +127,7 @@ export class ProjectsController {
 
   @Patch(':projectId/service/all', {
     summary: 'Update all service status',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
     sdk: {
       name: 'updateServiceStatusAll',
@@ -143,7 +143,7 @@ export class ProjectsController {
 
   @Patch(':projectId/api', {
     summary: 'Update API status',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
     sdk: {
       name: 'updateApiStatus',
@@ -159,7 +159,7 @@ export class ProjectsController {
 
   @Patch(':projectId/api/all', {
     summary: 'Update all API status',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
     sdk: {
       name: 'updateApiStatusAll',
@@ -175,7 +175,7 @@ export class ProjectsController {
 
   @Patch(':projectId/oauth2', {
     summary: 'Update project OAuth2',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
     sdk: {
       name: 'updateOAuth2',
@@ -191,7 +191,7 @@ export class ProjectsController {
 
   @Patch(':projectId/smtp', {
     summary: 'Update SMTP',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PROJECT,
     sdk: {
       name: 'updateSmtp',

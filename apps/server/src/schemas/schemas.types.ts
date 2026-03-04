@@ -1,68 +1,88 @@
-import type { DataSource } from '@nuvix/pg'
-import { ProjectsDoc } from '@nuvix/utils/types'
+import type {
+  Expression,
+  ParserResult,
+  SelectNode,
+  ParsedOrdering,
+} from '@nuvix/utils/query'
+import type { SelectQueryDTO } from './DTO/table.dto'
+import type { RequestContext } from '@nuvix/core/helpers'
 
-export interface Select {
-  schema: string
-  pg: DataSource
-  table: string
-  url: string
-  limit?: number
-  offset?: number
-  shape?: 'array' | 'object'
-  project: ProjectsDoc
-  context: Record<string, any>
+export interface SelectQuery
+  extends Omit<SelectQueryDTO, 'select' | 'filter' | 'order'> {
+  filter?: Expression & ParserResult
+  select?: SelectNode[]
+  order?: ParsedOrdering[]
 }
 
-export interface Insert {
-  pg: DataSource
+type Common = {
+  schema: string
   table: string
+  context: RestContext
+}
+
+export interface Select extends Common {
+  query: SelectQuery
+}
+
+export interface InsertQuery {
+  columns?: string[]
+  select?: SelectNode[]
+}
+
+export interface Insert extends Common {
   input:
     | Record<string, string | number | null | boolean>
     | Record<string, string | number | null | boolean>[]
-  columns?: string[]
-  schema: string
-  url: string
   returnPref?: 'minimal' | 'location' | 'full'
-  project: ProjectsDoc
-  context: Record<string, any>
+  query: InsertQuery
+}
+
+export interface UpdateQuery extends SelectQuery {
+  force?: boolean
+  columns?: string[]
 }
 
 export interface Update extends Omit<Insert, 'input'> {
   input: Record<string, string | number | null | boolean>
-  limit?: number
-  offset?: number
+  query: UpdateQuery
+}
+
+export interface DeleteQuery extends SelectQuery {
   force?: boolean
 }
 
-export interface Delete extends Select {
-  force?: boolean
+export interface Delete extends Omit<Select, 'query'> {
+  query: DeleteQuery
 }
+
+interface CallFunctionQuery extends SelectQuery {}
 
 export interface CallFunction {
   schema: string
-  pg: DataSource
   functionName: string
-  url: string
-  limit?: number
-  offset?: number
   args?: Record<string, string | number | boolean | null> | any[]
-  project: ProjectsDoc
-  context: Record<string, any>
+  query: CallFunctionQuery
+  context: RestContext
 }
 
 export interface UpdatePermissions {
-  pg: DataSource
   schema: string
   permissions: string[]
   rowId?: number
   tableId: string
-  project: ProjectsDoc
 }
 
 export interface GetPermissions {
-  pg: DataSource
   schema: string
   rowId?: number
   tableId: string
-  project: ProjectsDoc
+}
+
+export interface RestContext {
+  ip: string
+  headers: Record<string, string | string[] | undefined>
+  method: string
+  url: string
+  id: string
+  ctx: RequestContext
 }

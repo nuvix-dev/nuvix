@@ -1,20 +1,16 @@
-import { Database, Query } from '@nuvix/db'
+import { Query } from '@nuvix/db'
 import { CreateSubscriberDTO } from './DTO/subscriber.dto'
-
-interface DB {
-  db: Database
-}
 
 interface QandS {
   queries?: Query[]
   search?: string
 }
 
-export interface CreateSubscriber extends DB {
+export interface CreateSubscriber {
   input: CreateSubscriberDTO
   topicId: string
 }
 
-export interface ListSubscribers extends DB, QandS {
+export interface ListSubscribers extends QandS {
   topicId: string
 }

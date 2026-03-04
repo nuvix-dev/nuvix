@@ -1,8 +1,4 @@
-import { InjectQueue } from '@nestjs/bullmq'
-import { Injectable } from '@nestjs/common'
-import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Exception } from '@nuvix/core/extend/exception'
-import { CollectionsJob, CollectionsJobData } from '@nuvix/core/resolvers'
 import {
   AttributeType,
   Database,
@@ -12,46 +8,21 @@ import {
   IndexValidator,
   Query,
 } from '@nuvix/db'
-import { configuration, QueueFor, SchemaMeta, Status } from '@nuvix/utils'
+import { configuration, SchemaMeta, Status } from '@nuvix/utils'
 import type {
   Attributes,
   AttributesDoc,
   Indexes,
   IndexesDoc,
-  ProjectsDoc,
 } from '@nuvix/utils/types'
-import type { Queue } from 'bullmq'
 import type { CreateIndexDTO } from './DTO/indexes.dto'
+import { CollectionsHelper } from '@nuvix/core/helpers'
 
-@Injectable()
 export class IndexesService {
-  constructor(
-    @InjectQueue(QueueFor.COLLECTIONS)
-    private readonly collectionsQueue: Queue<
-      CollectionsJobData,
-      unknown,
-      CollectionsJob
-    >,
-    readonly _event: EventEmitter2,
-  ) {}
-
-  getRelatedAttrId(collectionSequence: number, key: string): string {
-    return `related_${collectionSequence}_${key}`
-  }
-
-  getAttrId(collectionSequence: number, key: string): string {
-    return `${collectionSequence}_${key}`
-  }
-
   /**
    * Create a Index.
    */
-  async createIndex(
-    db: Database,
-    collectionId: string,
-    input: CreateIndexDTO,
-    project: ProjectsDoc,
-  ) {
+  async createIndex(db: Database, collectionId: string, input: CreateIndexDTO) {
     const { key, type, attributes, orders } = input
 
     const collection = await db.getDocument(
@@ -136,9 +107,11 @@ export class IndexesService {
     }
 
     let index = new Doc<Indexes>({
-      $id: ID.custom(this.getAttrId(collection.getSequence(), key)),
+      $id: ID.custom(
+        CollectionsHelper.getAttrId(collection.getSequence(), key),
+      ),
       key,
-      status: Status.PENDING,
+      status: Status.AVAILABLE,
       collectionInternalId: collection.getSequence(),
       collectionId,
       type,
@@ -157,6 +130,12 @@ export class IndexesService {
 
     try {
       index = await db.createDocument(SchemaMeta.indexes, index)
+      await CollectionsHelper.createIndex({ db, collection, index }).catch(
+        async error => {
+          await db.deleteDocument(SchemaMeta.indexes, index.getId())
+          throw error
+        },
+      )
     } catch (error) {
       if (error instanceof DuplicateException) {
         throw new Exception(Exception.INDEX_ALREADY_EXISTS)
@@ -165,14 +144,6 @@ export class IndexesService {
     }
 
     await db.purgeCachedDocument(SchemaMeta.collections, collectionId)
-
-    await this.collectionsQueue.add(CollectionsJob.CREATE_INDEX, {
-      database: db.schema,
-      collection,
-      index,
-      project,
-    })
-
     return index
   }
 
@@ -233,12 +204,7 @@ export class IndexesService {
   /**
    * Delete an index.
    */
-  async deleteIndex(
-    db: Database,
-    collectionId: string,
-    key: string,
-    project: ProjectsDoc,
-  ) {
+  async deleteIndex(db: Database, collectionId: string, key: string) {
     const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
@@ -250,7 +216,7 @@ export class IndexesService {
 
     const index = await db.getDocument(
       SchemaMeta.indexes,
-      this.getAttrId(collection.getSequence(), key),
+      CollectionsHelper.getAttrId(collection.getSequence(), key),
     )
 
     if (index.empty()) {
@@ -259,22 +225,10 @@ export class IndexesService {
 
     // Only update status if removing available index
     if (index.get('status') === Status.AVAILABLE) {
-      await db.updateDocument(
-        SchemaMeta.indexes,
-        index.getId(),
-        index.set('status', Status.DELETING),
-      )
+      await CollectionsHelper.deleteIndex({ db, collection, index })
     }
 
     await db.purgeCachedDocument(SchemaMeta.collections, collectionId)
-
-    await this.collectionsQueue.add(CollectionsJob.DELETE_INDEX, {
-      database: db.schema,
-      collection,
-      index,
-      project,
-    })
-
     return index
   }
 }

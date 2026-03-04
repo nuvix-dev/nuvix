@@ -7,30 +7,24 @@ import {
   Req,
   Res,
   StreamableFile,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
 import { ApiBody } from '@nestjs/swagger'
 import { Delete, Get, Post, Put } from '@nuvix/core'
 import {
+  Ctx,
   MultipartParam,
   Namespace,
-  Project,
-  ProjectDatabase,
   QueryFilter,
   QuerySearch,
   UploadedFile,
-  AuthUser as User,
+  User,
 } from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Models } from '@nuvix/core/helpers'
+import { Models, RequestContext } from '@nuvix/core/helpers'
 import { FilesQueryPipe } from '@nuvix/core/pipes/queries'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
-import { Database, Doc, Query as Queries } from '@nuvix/db'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
+import { Doc, KeyValidator, Query as Queries } from '@nuvix/db'
 import { configuration, IListResponse, IResponse } from '@nuvix/utils'
 import { FilesDoc } from '@nuvix/utils/types'
 import { BucketParamsDTO } from '../DTO/bucket.dto'
@@ -42,7 +36,7 @@ import {
 import { FilesService } from './files.service'
 
 @Namespace('storage')
-@UseGuards(ProjectGuard)
+
 @Controller({ version: ['1'], path: 'storage/buckets/:bucketId/files' })
 @UseInterceptors(ApiInterceptor, ResponseInterceptor)
 export class FilesController {
@@ -58,27 +52,22 @@ export class FilesController {
     },
   })
   async getFiles(
-    @ProjectDatabase() db: Database,
     @Param() { bucketId }: BucketParamsDTO,
+    @Ctx() ctx: RequestContext,
     @QueryFilter(FilesQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<FilesDoc>> {
-    return this.filesService.getFiles(db, bucketId, queries, search)
+    return this.filesService.getFiles(bucketId, ctx, queries, search)
   }
 
   @Post('', {
     summary: 'Create file',
-    scopes: 'files.create',
+    scopes: 'files.write',
     model: Models.FILE,
     throttle: {
       limit: configuration.limits.writeRateDefault,
       ttl: configuration.limits.writeRatePeriodDefault,
-      key: ({ req, user, ip }) =>
-        [
-          `ip:${ip}`,
-          `userId:${user.getId()}`,
-          `chunkId:${req.headers['x-nuvix-id']}`,
-        ].join(','),
+      key: 'ip:{ip},method:{method},url:{url},userId:{userId},chunkId:{chunkId}',
       configKey: 'bucket_files_create',
     },
     audit: {
@@ -115,26 +104,31 @@ export class FilesController {
     },
   })
   async createFile(
-    @ProjectDatabase() db: Database,
     @Param() { bucketId }: BucketParamsDTO,
     @MultipartParam('fileId') fileId: string,
     @MultipartParam('permissions') permissions: string[],
     @UploadedFile() file: SavedMultipartFile,
     @Req() req: NuvixRequest,
     @User() user: Doc,
-    @Project() project: Doc,
   ): Promise<IResponse<FilesDoc>> {
     if (!fileId) {
       throw new Exception(Exception.INVALID_PARAMS, 'fileId is required', 400)
     }
+
+    const validator = new KeyValidator(false)
+    if (!validator.$valid(fileId)) {
+      throw new Exception(
+        Exception.GENERAL_ARGUMENT_INVALID,
+        validator.$description,
+      )
+    }
+
     return this.filesService.createFile(
-      db,
       bucketId,
       { fileId, permissions },
       file,
       req,
       user,
-      project,
     )
   }
 
@@ -148,10 +142,10 @@ export class FilesController {
     },
   })
   async getFile(
-    @ProjectDatabase() db: Database,
     @Param() { fileId, bucketId }: FileParamsDTO,
+    @Ctx() ctx: RequestContext,
   ): Promise<IResponse<FilesDoc>> {
-    return this.filesService.getFile(db, bucketId, fileId)
+    return this.filesService.getFile(bucketId, fileId, ctx)
   }
 
   @Get(':fileId/preview', {
@@ -170,18 +164,11 @@ export class FilesController {
     },
   })
   async previewFile(
-    @ProjectDatabase() db: Database,
     @Param() { fileId, bucketId }: FileParamsDTO,
-    @Project() project: Doc,
+    @Ctx() ctx: RequestContext,
     @Query() queryParams: PreviewFileQueryDTO,
   ): Promise<StreamableFile> {
-    return this.filesService.previewFile(
-      db,
-      bucketId,
-      fileId,
-      queryParams,
-      project,
-    )
+    return this.filesService.previewFile(bucketId, fileId, queryParams, ctx)
   }
 
   @Get(':fileId/download', {
@@ -205,20 +192,11 @@ export class FilesController {
     },
   })
   async downloadFile(
-    @ProjectDatabase() db: Database,
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Req() req: NuvixRequest,
     @Res({ passthrough: true }) res: NuvixRes,
-    @Project() project: Doc,
   ): Promise<StreamableFile> {
-    return this.filesService.downloadFile(
-      db,
-      bucketId,
-      fileId,
-      res,
-      req,
-      project,
-    )
+    return this.filesService.downloadFile(bucketId, fileId, res, req)
   }
 
   @Get(':fileId/view', {
@@ -242,47 +220,42 @@ export class FilesController {
     },
   })
   async viewFile(
-    @ProjectDatabase() db: Database,
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Req() req: NuvixRequest,
     @Res({ passthrough: true }) res: NuvixRes,
-    @Project() project: Doc,
   ): Promise<StreamableFile> {
-    return this.filesService.viewFile(db, bucketId, fileId, res, req, project)
+    return this.filesService.viewFile(bucketId, fileId, res, req)
   }
 
   @Get(':fileId/push', {
     summary: 'Get file for push notification',
     scopes: 'files.read',
+    docs: false,
     // No need to document this endpoint in the SDK as it's used internally for push notifications
   })
   async getFileForPushNotification(
-    @ProjectDatabase() db: Database,
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Query('jwt') jwt: string,
     @Req() req: NuvixRequest,
     @Res({ passthrough: true }) res: NuvixRes,
-    @Project() project: Doc,
   ): Promise<StreamableFile> {
     return this.filesService.getFileForPushNotification(
-      db,
       bucketId,
       fileId,
       jwt,
       req,
       res,
-      project,
     )
   }
 
   @Put(':fileId', {
     summary: 'Update file',
-    scopes: 'files.update',
+    scopes: 'files.write',
     model: Models.FILE,
     throttle: {
       limit: configuration.limits.writeRateDefault,
       ttl: configuration.limits.writeRatePeriodDefault,
-      key: ({ user, ip }) => [`ip:${ip}`, `userId:${user.getId()}`].join(','),
+      key: 'ip:{ip},method:{method},url:{url},userId:{userId}',
       configKey: 'bucket_files_update',
     },
     audit: {
@@ -295,21 +268,21 @@ export class FilesController {
     },
   })
   async updateFile(
-    @ProjectDatabase() db: Database,
     @Param() { fileId, bucketId }: FileParamsDTO,
     @Body() updateFileDTO: UpdateFileDTO,
+    @Ctx() ctx: RequestContext,
   ): Promise<IResponse<FilesDoc>> {
-    return this.filesService.updateFile(db, bucketId, fileId, updateFileDTO)
+    return this.filesService.updateFile(bucketId, fileId, updateFileDTO, ctx)
   }
 
   @Delete(':fileId', {
     summary: 'Delete file',
-    scopes: 'files.delete',
+    scopes: 'files.write',
     model: Models.NONE,
     throttle: {
       limit: configuration.limits.writeRateDefault,
       ttl: configuration.limits.writeRatePeriodDefault,
-      key: ({ user, ip }) => [`ip:${ip}`, `userId:${user.getId()}`].join(','),
+      key: 'ip:{ip},method:{method},url:{url},userId:{userId}',
       configKey: 'bucket_files_delete',
     },
     audit: {
@@ -322,10 +295,9 @@ export class FilesController {
     },
   })
   async deleteFile(
-    @ProjectDatabase() db: Database,
     @Param() { fileId, bucketId }: FileParamsDTO,
-    @Project() project: Doc,
+    @Ctx() ctx: RequestContext,
   ): Promise<void> {
-    return this.filesService.deleteFile(db, bucketId, fileId, project)
+    return this.filesService.deleteFile(bucketId, fileId, ctx)
   }
 }

@@ -11,19 +11,36 @@ import {
   Query,
   Role,
 } from '@nuvix/db'
-import { configuration, MessageType, Schemas } from '@nuvix/utils'
+import {
+  configuration,
+  DeleteType,
+  MessageType,
+  QueueFor,
+  Schemas,
+} from '@nuvix/utils'
 import type { ProvidersDoc } from '@nuvix/utils/types'
 import { CreateTargetDTO, UpdateTargetDTO } from './DTO/target.dto'
+import { CoreService } from '@nuvix/core/core.service'
+import { InjectQueue } from '@nestjs/bullmq'
+import { Queue } from 'bullmq'
+import { DeletesJobData } from '@nuvix/core/resolvers'
 
 @Injectable()
 export class TargetsService {
-  constructor(private readonly event: EventEmitter2) {}
+  private readonly db: Database
+  constructor(
+    private readonly coreService: CoreService,
+    private readonly event: EventEmitter2,
+    @InjectQueue(QueueFor.DELETES)
+    private readonly deletesQueue: Queue<DeletesJobData, unknown, DeleteType>,
+  ) {
+    this.db = this.coreService.getDatabase()
+  }
 
   /**
    * Create a new target
    */
   async createTarget(
-    db: Database,
     userId: string,
     { targetId, providerId, ...input }: CreateTargetDTO,
   ) {
@@ -31,8 +48,8 @@ export class TargetsService {
 
     let provider!: ProvidersDoc
     if (providerId) {
-      provider = await db.withSchema(Schemas.Core, () =>
-        db.getDocument('providers', providerId),
+      provider = await this.db.withSchema(Schemas.Core, () =>
+        this.db.getDocument('providers', providerId),
       )
     }
 
@@ -53,20 +70,20 @@ export class TargetsService {
         throw new Exception(Exception.PROVIDER_INCORRECT_TYPE)
     }
 
-    const user = await db.getDocument('users', userId)
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
-    const existingTarget = await db.getDocument('targets', targetId)
+    const existingTarget = await this.db.getDocument('targets', targetId)
 
     if (!existingTarget.empty()) {
       throw new Exception(Exception.USER_TARGET_ALREADY_EXISTS)
     }
 
     try {
-      const target = await db.createDocument(
+      const target = await this.db.createDocument(
         'targets',
         new Doc({
           $id: targetId,
@@ -85,7 +102,7 @@ export class TargetsService {
         }),
       )
 
-      await db.purgeCachedDocument('users', user.getId())
+      await this.db.purgeCachedDocument('users', user.getId())
       this.event.emit(
         `user.${user.getId()}.target.${target.getId()}.create`,
         target,
@@ -103,8 +120,8 @@ export class TargetsService {
   /**
    * Get all targets for a user
    */
-  async getTargets(db: Database, userId: string, queries: Query[] = []) {
-    const user = await db.getDocument('users', userId)
+  async getTargets(userId: string, queries: Query[] = []) {
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -112,8 +129,8 @@ export class TargetsService {
     queries.push(Query.equal('userId', [userId]))
 
     return {
-      data: await db.find('targets', queries),
-      total: await db.count(
+      data: await this.db.find('targets', queries),
+      total: await this.db.count(
         'targets',
         queries,
         configuration.limits.limitCount,
@@ -124,19 +141,14 @@ export class TargetsService {
   /**
    * Update a target
    */
-  async updateTarget(
-    db: Database,
-    userId: string,
-    targetId: string,
-    input: UpdateTargetDTO,
-  ) {
-    const user = await db.getDocument('users', userId)
+  async updateTarget(userId: string, targetId: string, input: UpdateTargetDTO) {
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
-    const target = await db.getDocument('targets', targetId)
+    const target = await this.db.getDocument('targets', targetId)
 
     if (target.empty()) {
       throw new Exception(Exception.USER_TARGET_NOT_FOUND)
@@ -170,7 +182,7 @@ export class TargetsService {
     }
 
     if (input.providerId) {
-      const provider = await db.getDocument('providers', input.providerId)
+      const provider = await this.db.getDocument('providers', input.providerId)
 
       if (provider.empty()) {
         throw new Exception(Exception.PROVIDER_NOT_FOUND)
@@ -188,12 +200,12 @@ export class TargetsService {
       target.set('name', input.name)
     }
 
-    const updatedTarget = await db.updateDocument(
+    const updatedTarget = await this.db.updateDocument(
       'targets',
       target.getId(),
       target,
     )
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     return updatedTarget
   }
@@ -201,14 +213,14 @@ export class TargetsService {
   /**
    * Get A target
    */
-  async getTarget(db: Database, userId: string, targetId: string) {
-    const user = await db.getDocument('users', userId)
+  async getTarget(userId: string, targetId: string) {
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
-    const target = await db.getDocument('targets', targetId)
+    const target = await this.db.getDocument('targets', targetId)
 
     if (target.empty() || target.get('userId') !== userId) {
       throw new Exception(Exception.USER_TARGET_NOT_FOUND)
@@ -220,14 +232,14 @@ export class TargetsService {
   /**
    * Delete a target
    */
-  async deleteTarget(db: Database, userId: string, targetId: string) {
-    const user = await db.getDocument('users', userId)
+  async deleteTarget(userId: string, targetId: string) {
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
 
-    const target = await db.getDocument('targets', targetId)
+    const target = await this.db.getDocument('targets', targetId)
 
     if (target.empty()) {
       throw new Exception(Exception.USER_TARGET_NOT_FOUND)
@@ -237,9 +249,11 @@ export class TargetsService {
       throw new Exception(Exception.USER_TARGET_NOT_FOUND)
     }
 
-    await db.deleteDocument('targets', target.getId())
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.deleteDocument('targets', target.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
-    // TODO: Implement queue for deletes
+    await this.deletesQueue.add(DeleteType.TARGET, {
+      document: target.clone(),
+    })
   }
 }

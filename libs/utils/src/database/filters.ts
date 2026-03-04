@@ -299,19 +299,6 @@ export const filters: Record<
       return []
     },
   },
-  subQueryProjectTopicTargets: {
-    encode: () => null,
-    decode: async (_, document, database) => {
-      const targetIds = await Authorization.skip(async () => {
-        const subscribers = await database.find('subscribers', [
-          Query.equal('topicInternalId', [document.getSequence()]),
-          Query.limit(configuration.limits.subscribersSubquery),
-        ])
-        return subscribers.map(subscriber => subscriber.get('targetInternalId'))
-      })
-      return targetIds
-    },
-  },
   providerSearch: {
     encode: (_, provider) => {
       const searchValues = [

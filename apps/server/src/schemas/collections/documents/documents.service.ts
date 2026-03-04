@@ -1,7 +1,5 @@
-import { Injectable } from '@nestjs/common'
-import { EventEmitter2 } from '@nestjs/event-emitter'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Auth } from '@nuvix/core/helpers'
+import { RequestContext } from '@nuvix/core/helpers'
 import {
   Authorization,
   AuthorizationException,
@@ -19,17 +17,13 @@ import {
 } from '@nuvix/db'
 import { configuration, SchemaMeta } from '@nuvix/utils'
 import type { CollectionsDoc, UsersDoc } from '@nuvix/utils/types'
-// DTOs
 import type { CreateDocumentDTO, UpdateDocumentDTO } from './DTO/document.dto'
 
-@Injectable()
 export class DocumentsService {
-  constructor(readonly _event: EventEmitter2) {}
-
-  private isEmpty(collection: CollectionsDoc) {
+  private isEmpty(collection: CollectionsDoc, ctx: RequestContext) {
     return (
       collection.empty() ||
-      (!collection.get('enabled', false) && !Auth.isTrustedActor)
+      (!collection.get('enabled', false) && !ctx.isPrivilegedUser())
     )
   }
 
@@ -38,6 +32,7 @@ export class DocumentsService {
    */
   async getDocuments(
     db: Database,
+    ctx: RequestContext,
     collectionId: string,
     queries: Query[] = [],
   ) {
@@ -45,7 +40,7 @@ export class DocumentsService {
       db.getDocument(SchemaMeta.collections, collectionId),
     )
 
-    if (this.isEmpty(collection)) {
+    if (this.isEmpty(collection, ctx)) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
     db.setCollectionEnabledValidate(false)
@@ -73,12 +68,13 @@ export class DocumentsService {
     collectionId: string,
     { documentId, permissions, data }: CreateDocumentDTO,
     user: UsersDoc,
+    ctx: RequestContext,
   ) {
     const collection = await Authorization.skip(() =>
       db.getDocument(SchemaMeta.collections, collectionId),
     )
 
-    if (this.isEmpty(collection)) {
+    if (this.isEmpty(collection, ctx)) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
     db.setCollectionEnabledValidate(false)
@@ -104,8 +100,8 @@ export class DocumentsService {
 
     const document = new Doc(data)
 
-    this.setPermissions(document, permissions, user, false)
-    this.checkPermissions(collection, document, PermissionType.Update)
+    this.setPermissions(ctx, document, permissions, user, false)
+    this.checkPermissions(ctx, collection, document, PermissionType.Update)
 
     try {
       const createdDocument = await db.createDocument(
@@ -126,11 +122,12 @@ export class DocumentsService {
   }
 
   private checkPermissions(
+    ctx: RequestContext,
     collection: CollectionsDoc,
     document: Doc,
     permission: PermissionType,
   ) {
-    if (Auth.isTrustedActor) {
+    if (ctx.isPrivilegedUser()) {
       return
     }
     const documentSecurity = collection.get('documentSecurity', false)
@@ -150,6 +147,7 @@ export class DocumentsService {
   }
 
   private setPermissions(
+    ctx: RequestContext,
     document: Doc,
     permissions: string[] | null,
     user: UsersDoc,
@@ -178,7 +176,7 @@ export class DocumentsService {
     permissions = Permission.aggregate(permissions, allowedPermissions)
 
     // Add permissions for current user if none were provided
-    if (permissions === null && !Auth.isTrustedActor) {
+    if (permissions === null && !ctx.isPrivilegedUser()) {
       permissions = []
       if (user.getId()) {
         for (const perm of allowedPermissions) {
@@ -190,7 +188,7 @@ export class DocumentsService {
     }
 
     // Users can only manage their own roles, API keys and Admin users can manage any
-    if (!Auth.isTrustedActor) {
+    if (!ctx.isPrivilegedUser()) {
       for (const type of Database.PERMISSIONS) {
         for (const p of permissions ?? []) {
           const parsed = Permission.parse(p)
@@ -222,6 +220,7 @@ export class DocumentsService {
    */
   async getDocument(
     db: Database,
+    ctx: RequestContext,
     collectionId: string,
     documentId: string,
     queries: Query[] = [],
@@ -230,7 +229,7 @@ export class DocumentsService {
       db.getDocument(SchemaMeta.collections, collectionId),
     )
 
-    if (this.isEmpty(collection)) {
+    if (this.isEmpty(collection, ctx)) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
     db.setCollectionEnabledValidate(false)
@@ -263,7 +262,6 @@ export class DocumentsService {
    * TODO: Implement audit logs and return real data.
    */
   async getDocumentLogs(
-    _db: Database,
     _collectionId: string,
     _documentId: string,
     _queries: Query[] = [],
@@ -280,6 +278,7 @@ export class DocumentsService {
    */
   async updateDocument(
     db: Database,
+    ctx: RequestContext,
     collectionId: string,
     documentId: string,
     { data, permissions }: UpdateDocumentDTO,
@@ -292,7 +291,7 @@ export class DocumentsService {
       db.getDocument(SchemaMeta.collections, collectionId),
     )
 
-    if (this.isEmpty(collection)) {
+    if (this.isEmpty(collection, ctx)) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
     db.setCollectionEnabledValidate(false)
@@ -345,6 +344,7 @@ export class DocumentsService {
    */
   async deleteDocument(
     db: Database,
+    ctx: RequestContext,
     collectionId: string,
     documentId: string,
     timestamp?: Date,
@@ -353,7 +353,7 @@ export class DocumentsService {
       db.getDocument(SchemaMeta.collections, collectionId),
     )
 
-    if (this.isEmpty(collection)) {
+    if (this.isEmpty(collection, ctx)) {
       throw new Exception(Exception.COLLECTION_NOT_FOUND)
     }
     db.setCollectionEnabledValidate(false)

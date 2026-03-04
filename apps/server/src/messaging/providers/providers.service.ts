@@ -27,15 +27,22 @@ import type {
   UpdateTwilioProvider,
   UpdateVonageProvider,
 } from './providers.types'
+import { CoreService } from '@nuvix/core/core.service'
 
 @Injectable()
 export class ProvidersService {
+  private readonly db: Database
+
+  constructor(private readonly coreService: CoreService) {
+    this.db = this.coreService.getDatabase()
+  }
+
   /**
    * Common method to create a provider.
    */
   private async createProvider<T extends CreateProviderInput>({
     input,
-    db,
+
     providerType,
     messageType,
     credentialFields,
@@ -43,7 +50,7 @@ export class ProvidersService {
     enabledCondition,
   }: {
     input: T
-    db: Database
+
     providerType: string
     messageType: string
     credentialFields: Record<string, keyof typeof input>
@@ -85,7 +92,10 @@ export class ProvidersService {
     })
 
     try {
-      const createdProvider = await db.createDocument('providers', provider)
+      const createdProvider = await this.db.createDocument(
+        'providers',
+        provider,
+      )
 
       return createdProvider
     } catch (error) {
@@ -99,10 +109,10 @@ export class ProvidersService {
   /**
    * Creates a Mailgun provider.
    */
-  async createMailgunProvider({ input, db }: CreateMailgunProvider) {
+  async createMailgunProvider({ input }: CreateMailgunProvider) {
     return this.createProvider({
       input,
-      db,
+
       providerType: 'mailgun',
       messageType: MessageType.EMAIL,
       credentialFields: {
@@ -127,10 +137,10 @@ export class ProvidersService {
   /**
    * Creates a SendGrid provider.
    */
-  async createSendGridProvider({ input, db }: CreateSendgridProvider) {
+  async createSendGridProvider({ input }: CreateSendgridProvider) {
     return this.createProvider({
       input,
-      db,
+
       providerType: 'sendgrid',
       messageType: MessageType.EMAIL,
       credentialFields: {
@@ -150,10 +160,10 @@ export class ProvidersService {
   /**
    * Creates an SMTP provider.
    */
-  async createSmtpProvider({ input, db }: CreateSmtpProvider) {
+  async createSmtpProvider({ input }: CreateSmtpProvider) {
     return this.createProvider({
       input,
-      db,
+
       providerType: 'smtp',
       messageType: MessageType.EMAIL,
       credentialFields: {
@@ -179,10 +189,10 @@ export class ProvidersService {
   /**
    * Creates a MSG91 provider.
    */
-  async createMsg91Provider({ input, db }: CreateMsg91Provider) {
+  async createMsg91Provider({ input }: CreateMsg91Provider) {
     return this.createProvider({
       input,
-      db,
+
       providerType: 'msg91',
       messageType: MessageType.SMS,
       credentialFields: {
@@ -201,10 +211,10 @@ export class ProvidersService {
   /**
    * Creates a Telesign provider.
    */
-  async createTelesignProvider({ input, db }: CreateTelesignProvider) {
+  async createTelesignProvider({ input }: CreateTelesignProvider) {
     return this.createProvider({
       input,
-      db,
+
       providerType: 'telesign',
       messageType: MessageType.SMS,
       credentialFields: {
@@ -224,10 +234,10 @@ export class ProvidersService {
   /**
    * Creates a TextMagic provider.
    */
-  async createTextMagicProvider({ input, db }: CreateTextmagicProvider) {
+  async createTextMagicProvider({ input }: CreateTextmagicProvider) {
     return this.createProvider({
       input,
-      db,
+
       providerType: 'textmagic',
       messageType: MessageType.SMS,
       credentialFields: {
@@ -247,10 +257,10 @@ export class ProvidersService {
   /**
    * Creates a Twilio provider.
    */
-  async createTwilioProvider({ input, db }: CreateTwilioProvider) {
+  async createTwilioProvider({ input }: CreateTwilioProvider) {
     return this.createProvider({
       input,
-      db,
+
       providerType: 'twilio',
       messageType: MessageType.SMS,
       credentialFields: {
@@ -270,10 +280,10 @@ export class ProvidersService {
   /**
    * Creates a Vonage provider.
    */
-  async createVonageProvider({ input, db }: CreateVonageProvider) {
+  async createVonageProvider({ input }: CreateVonageProvider) {
     return this.createProvider({
       input,
-      db,
+
       providerType: 'vonage',
       messageType: MessageType.SMS,
       credentialFields: {
@@ -293,10 +303,10 @@ export class ProvidersService {
   /**
    * Creates a Firebase Cloud Messaging (FCM) provider.
    */
-  async createFcmProvider({ input, db }: CreateFcmProvider) {
+  async createFcmProvider({ input }: CreateFcmProvider) {
     return this.createProvider({
       input,
-      db,
+
       providerType: 'fcm',
       messageType: MessageType.PUSH,
       credentialFields: {
@@ -311,10 +321,10 @@ export class ProvidersService {
   /**
    * Creates an APNS provider.
    */
-  async createApnsProvider({ input, db }: CreateApnsProvider) {
+  async createApnsProvider({ input }: CreateApnsProvider) {
     return this.createProvider({
       input,
-      db,
+
       providerType: 'apns',
       messageType: MessageType.PUSH,
       credentialFields: {
@@ -337,15 +347,15 @@ export class ProvidersService {
   /**
    * Lists all providers.
    */
-  async listProviders({ db, queries = [], search }: ListProviders) {
+  async listProviders({ queries = [], search }: ListProviders) {
     if (search) {
       queries.push(Query.search('search', search))
     }
 
     const { filters } = Query.groupByType(queries)
 
-    const providers = await db.find('providers', queries)
-    const total = await db.count('providers', filters)
+    const providers = await this.db.find('providers', queries)
+    const total = await this.db.count('providers', filters)
 
     return {
       data: providers,
@@ -356,8 +366,8 @@ export class ProvidersService {
   /**
    * Get Provider
    */
-  async getProvider(db: Database, id: string) {
-    const provider = await db.getDocument('providers', id)
+  async getProvider(id: string) {
+    const provider = await this.db.getDocument('providers', id)
 
     if (provider.empty()) {
       throw new Exception(Exception.PROVIDER_NOT_FOUND)
@@ -371,7 +381,7 @@ export class ProvidersService {
    */
   private async updateProvider<T extends Record<string, any>>({
     providerId,
-    db,
+
     providerType,
     updatedFields,
     credentialFields,
@@ -379,7 +389,7 @@ export class ProvidersService {
     enabledCondition,
   }: {
     providerId: string
-    db: Database
+
     providerType: string
     updatedFields: T
     credentialFields: Record<string, keyof typeof updatedFields>
@@ -389,7 +399,7 @@ export class ProvidersService {
       options: Record<string, keyof typeof updatedFields>,
     ) => boolean
   }) {
-    const provider = await db.getDocument('providers', providerId)
+    const provider = await this.db.getDocument('providers', providerId)
 
     if (provider.empty()) {
       throw new Exception(Exception.PROVIDER_NOT_FOUND)
@@ -440,7 +450,7 @@ export class ProvidersService {
       }
     }
 
-    const updatedProvider = await db.updateDocument(
+    const updatedProvider = await this.db.updateDocument(
       'providers',
       provider.getId(),
       provider,
@@ -454,12 +464,12 @@ export class ProvidersService {
    */
   async updateMailgunProvider({
     providerId,
-    db,
+
     input,
   }: UpdateMailgunProvider) {
     return this.updateProvider({
       providerId,
-      db,
+
       providerType: 'mailgun',
       updatedFields: input,
       credentialFields: {
@@ -486,12 +496,12 @@ export class ProvidersService {
    */
   async updateSendGridProvider({
     providerId,
-    db,
+
     input,
   }: UpdateSendgridProvider) {
     return this.updateProvider({
       providerId,
-      db,
+
       providerType: 'sendgrid',
       updatedFields: input,
       credentialFields: {
@@ -512,10 +522,10 @@ export class ProvidersService {
   /**
    * Updates an SMTP provider.
    */
-  async updateSmtpProvider({ providerId, db, input }: UpdateSmtpProvider) {
+  async updateSmtpProvider({ providerId, input }: UpdateSmtpProvider) {
     return this.updateProvider({
       providerId,
-      db,
+
       providerType: 'smtp',
       updatedFields: input,
       credentialFields: {
@@ -542,10 +552,10 @@ export class ProvidersService {
   /**
    * Updates a MSG91 provider.
    */
-  async updateMsg91Provider({ providerId, db, input }: UpdateMsg91Provider) {
+  async updateMsg91Provider({ providerId, input }: UpdateMsg91Provider) {
     return this.updateProvider({
       providerId,
-      db,
+
       providerType: 'msg91',
       updatedFields: input,
       credentialFields: {
@@ -566,12 +576,12 @@ export class ProvidersService {
    */
   async updateTelesignProvider({
     providerId,
-    db,
+
     input,
   }: UpdateTelesignProvider) {
     return this.updateProvider({
       providerId,
-      db,
+
       providerType: 'telesign',
       updatedFields: input,
       credentialFields: {
@@ -593,12 +603,12 @@ export class ProvidersService {
    */
   async updateTextMagicProvider({
     providerId,
-    db,
+
     input,
   }: UpdateTextmagicProvider) {
     return this.updateProvider({
       providerId,
-      db,
+
       providerType: 'textmagic',
       updatedFields: input,
       credentialFields: {
@@ -618,10 +628,10 @@ export class ProvidersService {
   /**
    * Updates a Twilio provider.
    */
-  async updateTwilioProvider({ providerId, db, input }: UpdateTwilioProvider) {
+  async updateTwilioProvider({ providerId, input }: UpdateTwilioProvider) {
     return this.updateProvider({
       providerId,
-      db,
+
       providerType: 'twilio',
       updatedFields: input,
       credentialFields: {
@@ -641,10 +651,10 @@ export class ProvidersService {
   /**
    * Updates a Vonage provider.
    */
-  async updateVonageProvider({ providerId, db, input }: UpdateVonageProvider) {
+  async updateVonageProvider({ providerId, input }: UpdateVonageProvider) {
     return this.updateProvider({
       providerId,
-      db,
+
       providerType: 'vonage',
       updatedFields: input,
       credentialFields: {
@@ -664,7 +674,7 @@ export class ProvidersService {
   /**
    * Updates an FCM provider.
    */
-  async updateFcmProvider({ providerId, db, input }: UpdateFcmProvider) {
+  async updateFcmProvider({ providerId, input }: UpdateFcmProvider) {
     // Handle serviceAccountJSON parsing if it's a string
     if (
       input.serviceAccountJSON &&
@@ -675,7 +685,7 @@ export class ProvidersService {
 
     return this.updateProvider({
       providerId,
-      db,
+
       providerType: 'fcm',
       updatedFields: input,
       credentialFields: {
@@ -690,10 +700,10 @@ export class ProvidersService {
   /**
    * Updates an APNS provider.
    */
-  async updateApnsProvider({ providerId, db, input }: UpdateApnsProvider) {
+  async updateApnsProvider({ providerId, input }: UpdateApnsProvider) {
     return this.updateProvider({
       providerId,
-      db,
+
       providerType: 'apns',
       updatedFields: input,
       credentialFields: {
@@ -716,13 +726,13 @@ export class ProvidersService {
   /**
    * Deletes a provider.
    */
-  async deleteProvider(db: Database, providerId: string) {
-    const provider = await db.getDocument('providers', providerId)
+  async deleteProvider(providerId: string) {
+    const provider = await this.db.getDocument('providers', providerId)
 
     if (provider.empty()) {
       throw new Exception(Exception.PROVIDER_NOT_FOUND)
     }
 
-    await db.deleteDocument('providers', providerId)
+    await this.db.deleteDocument('providers', providerId)
   }
 }

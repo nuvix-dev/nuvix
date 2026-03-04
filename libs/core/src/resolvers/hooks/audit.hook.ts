@@ -1,14 +1,8 @@
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable, Logger } from '@nestjs/common'
 import { Doc } from '@nuvix/db'
-import {
-  AppMode,
-  AuthActivity,
-  Context,
-  QueueFor,
-  RouteContext,
-} from '@nuvix/utils'
-import { ProjectsDoc, UsersDoc } from '@nuvix/utils/types'
+import { AuthActivity, QueueFor, RouteContext } from '@nuvix/utils'
+import { UsersDoc } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
 import { AuditEventType } from '../../decorators'
 import { Exception } from '../../extend/exception'
@@ -24,17 +18,14 @@ export class AuditHook implements Hook {
   ) {}
 
   async preSerialization(req: NuvixRequest, reply: NuvixRes) {
-    const audit: AuditEventType | undefined =
-      req.routeOptions?.config[RouteContext.AUDIT]
+    const audit = req.routeOptions?.config[RouteContext.AUDIT]
     if (!audit || !audit.event || reply.statusCode >= 400) {
       return
     }
 
     try {
-      const project = req[Context.Project] as ProjectsDoc
-      const user = req[Context.User] as UsersDoc
-      const res = req.hooks_args?.preSerialization?.args?.[0]
-      await this.handleAudit(req, res, { audit, user, project })
+      const body = req.hooks_args?.preSerialization?.args?.[0]
+      await this.handleAudit(req, body, audit)
     } catch (e) {
       this.logger.error('Unexpected error during audit handling', { error: e })
     }
@@ -42,75 +33,66 @@ export class AuditHook implements Hook {
     return
   }
 
-  async handleAudit(
-    req: NuvixRequest,
-    res: string | any,
-    {
-      audit,
-      user,
-      project,
-    }: {
-      audit: AuditEventType
-      user: UsersDoc
-      project: ProjectsDoc
-    },
-  ) {
+  async handleAudit(req: NuvixRequest, body: any, audit: AuditEventType) {
     const { event, meta } = audit
+    const ctx = req.context
+    let user = ctx.user
 
     try {
-      res = typeof res === 'string' ? JSON.parse(res) : res
-    } catch {
+      body = typeof body === 'string' ? JSON.parse(body) : body
+    } catch (e) {
       this.logger.error(
         `Failed to parse response for resource mapping: ${meta.resource}`,
-        { res },
+        { body },
       )
       throw new Exception(Exception.GENERAL_SERVER_ERROR)
     }
 
-    const resource = this.mapResource(meta.resource, req, res)
+    const resource = this.mapResource(meta.resource, req, body)
     if (meta.userId && this.isMappingPart(meta.userId)) {
-      meta.userId = this.mapValue(req, res, meta.userId)
+      meta.userId = this.mapValue(req, body, meta.userId)
     }
-    const mode = req[Context.Mode] as AppMode
+
     if (!user || user.empty()) {
       user = new Doc({
         $id: '',
         status: true,
         $sequence: -1,
         type: AuthActivity.GUEST,
-        email: `guest.${project.getId()}@service.${req.host}`,
+        email: `guest.${ctx.project.getId()}@service.${req.host}`,
         password: '',
         name: 'Guest',
       }) as unknown as UsersDoc
     }
 
     await this.auditsQueue.add(event, {
-      project,
-      mode,
+      mode: ctx.mode,
       ip: req.ip,
       userAgent: req.headers['user-agent'] || '',
       resource,
       user,
-      data: res,
+      data: body
+        ? this.stripSensitiveData(body, ctx.sensitiveFields)
+        : undefined,
     })
   }
 
   private mapResource(
     resource: string,
     req: NuvixRequest,
-    res: Record<string, any>,
+    body: Record<string, any>,
   ): string {
     return resource
       .split('/')
       .map(part =>
-        this.isMappingPart(part) ? this.mapValue(req, res, part) : part,
+        this.isMappingPart(part) ? this.mapValue(req, body, part) : part,
       )
       .join('/')
   }
 
   private mapValue(
     req: NuvixRequest,
-    res: Record<string, any>,
+    body: Record<string, any>,
     path: string,
   ): any {
     path = path.slice(1, -1)
@@ -125,7 +107,7 @@ export class AuditHook implements Hook {
         value = params?.[key] ?? query?.[key] ?? reqBody?.[key]
         break
       case 'res':
-        value = res?.[key]
+        value = body?.[key]
         break
       case 'params':
         value = params?.[key]
@@ -145,5 +127,18 @@ export class AuditHook implements Hook {
 
   private isMappingPart(part: string): boolean {
     return /{.*\..*}/.test(part)
+  }
+
+  protected stripSensitiveData(
+    data: Record<string, any>,
+    keys: string[],
+  ): Record<string, any> {
+    const strippedData = { ...data }
+    for (const key of keys) {
+      if (key in strippedData) {
+        strippedData[key] = '[REDACTED]'
+      }
+    }
+    return strippedData
   }
 }

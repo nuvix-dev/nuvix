@@ -1,26 +1,10 @@
-import {
-  Body,
-  Controller,
-  Param,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Param, UseInterceptors } from '@nestjs/common'
 import { Delete, Get, Patch, Post } from '@nuvix/core'
-import {
-  Auth,
-  AuthDatabase,
-  AuthType,
-  Namespace,
-  QueryFilter,
-} from '@nuvix/core/decorators'
+import { Auth, AuthType, Namespace, QueryFilter } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { TargetsQueryPipe } from '@nuvix/core/pipes/queries'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
-import type { Database, Query } from '@nuvix/db'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
+import type { Query } from '@nuvix/db'
 import { IListResponse, IResponse } from '@nuvix/utils'
 import { TargetsDoc } from '@nuvix/utils/types'
 import { UserParamDTO } from '../DTO/user.dto'
@@ -33,7 +17,7 @@ import { TargetsService } from './targets.service'
 
 @Namespace('users')
 @Controller({ version: ['1'], path: 'users/:userId/targets' })
-@UseGuards(ProjectGuard)
+
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.ADMIN, AuthType.KEY])
 export class TargetsController {
@@ -41,7 +25,7 @@ export class TargetsController {
 
   @Post('', {
     summary: 'Create user target',
-    scopes: 'targets.create',
+    scopes: 'targets.write',
     model: Models.TARGET,
     audit: {
       key: 'target.create',
@@ -53,11 +37,10 @@ export class TargetsController {
     },
   })
   async addTarget(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
     @Body() createTargetDTO: CreateTargetDTO,
   ): Promise<IResponse<TargetsDoc>> {
-    return this.targetsService.createTarget(db, userId, createTargetDTO)
+    return this.targetsService.createTarget(userId, createTargetDTO)
   }
 
   @Get('', {
@@ -73,11 +56,10 @@ export class TargetsController {
     },
   })
   async getTargets(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
     @QueryFilter(TargetsQueryPipe) queries?: Query[],
   ): Promise<IListResponse<TargetsDoc>> {
-    return this.targetsService.getTargets(db, userId, queries)
+    return this.targetsService.getTargets(userId, queries)
   }
 
   @Get(':targetId', {
@@ -90,15 +72,14 @@ export class TargetsController {
     },
   })
   async getTarget(
-    @AuthDatabase() db: Database,
     @Param() { userId, targetId }: TargetParamDTO,
   ): Promise<IResponse<TargetsDoc>> {
-    return this.targetsService.getTarget(db, userId, targetId)
+    return this.targetsService.getTarget(userId, targetId)
   }
 
   @Patch(':targetId', {
     summary: 'Update user target',
-    scopes: 'targets.update',
+    scopes: 'targets.write',
     model: Models.TARGET,
     audit: {
       key: 'target.update',
@@ -110,16 +91,15 @@ export class TargetsController {
     },
   })
   async updateTarget(
-    @AuthDatabase() db: Database,
     @Param() { userId, targetId }: TargetParamDTO,
     @Body() input: UpdateTargetDTO,
   ): Promise<IResponse<TargetsDoc>> {
-    return this.targetsService.updateTarget(db, userId, targetId, input)
+    return this.targetsService.updateTarget(userId, targetId, input)
   }
 
   @Delete(':targetId', {
     summary: 'Delete user target',
-    scopes: 'targets.delete',
+    scopes: 'targets.write',
     model: Models.NONE,
     audit: {
       key: 'target.delete',
@@ -131,9 +111,8 @@ export class TargetsController {
     },
   })
   async deleteTarget(
-    @AuthDatabase() db: Database,
     @Param() { userId, targetId }: TargetParamDTO,
   ): Promise<void> {
-    return this.targetsService.deleteTarget(db, userId, targetId)
+    return this.targetsService.deleteTarget(userId, targetId)
   }
 }

@@ -1,13 +1,8 @@
-import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { usageConfig } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
-import {
-  CollectionsJob,
-  CollectionsJobData,
-  StatsQueue,
-} from '@nuvix/core/resolvers'
+import { StatsQueue } from '@nuvix/core/resolvers'
 import {
   Authorization,
   Database,
@@ -22,27 +17,17 @@ import {
   configuration,
   MetricFor,
   MetricPeriod,
-  QueueFor,
   SchemaMeta,
 } from '@nuvix/utils'
-import type { ProjectsDoc } from '@nuvix/utils/types'
-import type { Queue } from 'bullmq'
 import type {
   CreateCollectionDTO,
   UpdateCollectionDTO,
 } from './DTO/collection.dto'
+import { CollectionsHelper } from '@nuvix/core/helpers'
 
 @Injectable()
 export class CollectionsService {
-  constructor(
-    @InjectQueue(QueueFor.COLLECTIONS)
-    private readonly collectionsQueue: Queue<
-      CollectionsJobData,
-      unknown,
-      CollectionsJob
-    >,
-    private readonly event: EventEmitter2,
-  ) {}
+  constructor(private readonly event: EventEmitter2) {}
 
   /**
    * Create a new collection.
@@ -138,7 +123,7 @@ export class CollectionsService {
    */
   async getCollectionLogs(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _db: Database,
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     _collectionId: string,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -204,11 +189,7 @@ export class CollectionsService {
   /**
    * Remove a collection.
    */
-  async removeCollection(
-    db: Database,
-    collectionId: string,
-    project: ProjectsDoc,
-  ) {
+  async removeCollection(db: Database, collectionId: string) {
     const collection = await db.getDocument(
       SchemaMeta.collections,
       collectionId,
@@ -225,17 +206,11 @@ export class CollectionsService {
       )
     }
 
-    await this.collectionsQueue.add(CollectionsJob.DELETE_COLLECTION, {
-      database: db.schema,
-      collection,
-      project,
-    })
-
+    await CollectionsHelper.deleteCollection({ db, collection })
     await db.purgeCachedCollection(collection.getId())
   }
 
   /**
-   * @todo we have to put it in schemas controller
    * Get Usage.
    */
   async getUsage(db: Database, range = '7d') {

@@ -1,96 +1,74 @@
 import { Injectable } from '@nestjs/common'
 import { Exception } from '@nuvix/core/extend/exception'
-import { setupDatabaseMeta } from '@nuvix/core/helpers'
-import { Database, Doc, PermissionsValidator, PermissionType } from '@nuvix/db'
-import { DataSource, Raw } from '@nuvix/pg'
-import { transformPgError } from '@nuvix/utils/database'
 import {
-  ASTToQueryBuilder,
-  Expression,
-  OrderParser,
-  ParsedOrdering,
-  Parser,
-  ParserResult,
-  SelectNode,
-  SelectParser,
-} from '@nuvix/utils/query'
-import { ProjectsDoc } from '@nuvix/utils/types'
+  Authorization,
+  Database,
+  Doc,
+  PermissionsValidator,
+  PermissionType,
+} from '@nuvix/db'
+import { DataSource, Raw, Transaction } from '@nuvix/pg'
+import { transformPgError } from '@nuvix/utils/database'
+import { ASTToQueryBuilder } from '@nuvix/utils/query'
 import {
   CallFunction,
   Delete,
   GetPermissions,
   Insert,
+  RestContext,
   Select,
   Update,
   UpdatePermissions,
 } from './schemas.types'
+import { CoreService } from '@nuvix/core/core.service'
+import { DatabaseRole } from '@nuvix/utils'
 
 @Injectable()
 export class SchemasService {
-  async select({
-    pg,
-    table,
-    url,
-    limit,
-    offset,
-    schema,
-    project,
-    context,
-  }: Select) {
-    const qb = pg.qb(table).withSchema(schema)
-    const allowedSchemas = project.get('metadata')?.allowedSchemas || []
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, pg, {
-      allowedSchemas,
+  private readonly pg: DataSource
+  private readonly dataSource: DataSource
+
+  private static limit = 500
+
+  constructor(private readonly coreService: CoreService) {
+    this.dataSource = this.coreService.getDataSourceWithMainPool()
+    this.pg = this.coreService.getDataSource()
+  }
+
+  async select({ table, schema, query, context }: Select) {
+    const allowedSchemas = context.ctx.getExposedSchemas()
+    const { limit, offset, filter, select, order } = query
+
+    const qb = this.pg.table(table).withSchema(schema)
+    const ast = new ASTToQueryBuilder(qb, this.pg, { allowedSchemas })
+    ast.applySelect(select)
+    ast.applyFilters(filter, { applyExtra: true, tableName: table })
+    ast.applyOrder(order, table)
+    ast.applyLimitOffset({
+      limit: limit ?? filter?.limit ?? SchemasService.limit,
+      offset: offset ?? filter?.offset ?? 0,
     })
 
-    const { filter, select, order } = this.getParamsFromUrl(url, table)
-
-    astToQueryBuilder.applySelect(select)
-    astToQueryBuilder.applyFilters(filter, {
-      applyExtra: true,
-      tableName: table,
-    })
-    astToQueryBuilder.applyOrder(order, table)
-    astToQueryBuilder.applyLimitOffset({
-      limit: limit ?? filter?.limit ?? 500,
-      offset,
-    })
-
-    return this.withMetaTransaction(pg, project, context, async () => {
-      return qb.catch(e => this.processError(e))
+    return this.handleQuery(context, async tx => {
+      qb.transacting(tx as any)
+      const result = await qb
+      return result
     })
   }
 
-  private async withMetaTransaction(
-    pg: DataSource,
-    project: ProjectsDoc,
-    context: Record<string, any>,
-    callback: () => Promise<any>,
+  private async handleQuery<T>(
+    context: RestContext,
+    callback: (tx: Transaction) => Promise<T>,
   ) {
-    return pg.transaction(async () => {
-      const { role, request, ...extra } = context as any
-      await pg.execute(`SET LOCAL ROLE ${pg.escapeIdentifier(role)};`)
-      await setupDatabaseMeta({
-        request,
-        extra,
-        project,
-        client: pg,
-        extraPrefix: 'request.auth',
+    return this.pg
+      .transaction(async tx => {
+        await this.preQuery(context, tx)
+        return callback(tx)
       })
-      return callback()
-    })
+      .catch(this.processError) as Promise<T>
   }
 
-  async insert({
-    pg,
-    table,
-    input,
-    columns,
-    schema,
-    url,
-    context,
-    project,
-  }: Insert) {
+  async insert({ table, input, schema, query, context }: Insert) {
     if (!input) {
       throw new Exception(
         Exception.INVALID_PARAMS,
@@ -100,6 +78,7 @@ export class SchemasService {
     const isArrayData = Array.isArray(input)
 
     let data: Record<string, any> | Record<string, any>[]
+    const { columns, select } = query
 
     if (columns?.length) {
       if (isArrayData) {
@@ -125,31 +104,21 @@ export class SchemasService {
       data = input
     }
 
-    const qb = pg.qb(table).withSchema(schema)
-    const { select } = this.getParamsFromUrl(url, table)
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, pg)
-
-    astToQueryBuilder.applyReturning(select)
+    const qb = this.pg.qb(table).withSchema(schema)
+    const ast = new ASTToQueryBuilder(qb, this.pg, {
+      allowedSchemas: context.ctx.getExposedSchemas(),
+    })
+    ast.applyReturning(select)
     qb.insert(data)
 
-    return this.withMetaTransaction(pg, project, context, async () =>
-      qb.catch(e => this.processError(e)),
-    )
+    return this.handleQuery(context, async tx => {
+      qb.transacting(tx as any)
+      const result = await qb
+      return result
+    })
   }
 
-  async update({
-    pg,
-    table,
-    project,
-    input,
-    columns,
-    schema,
-    url,
-    limit,
-    offset,
-    context,
-    force = false,
-  }: Update) {
+  async update({ table, input, query, schema, context }: Update) {
     if (!input) {
       throw new Exception(
         Exception.INVALID_PARAMS,
@@ -157,6 +126,7 @@ export class SchemasService {
       )
     }
     let data: Record<string, any> | Record<string, any>[]
+    const { columns, filter, select, order, limit, offset, force } = query
 
     if (columns?.length) {
       data = columns.reduce(
@@ -170,15 +140,12 @@ export class SchemasService {
       data = input
     }
 
-    const qb = pg.qb(table).withSchema(schema)
-    const { select, filter, order } = this.getParamsFromUrl(url, table)
-    const allowedSchemas = project.get('metadata')?.allowedSchemas || []
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, pg, {
-      allowedSchemas,
+    const qb = this.pg.qb(table).withSchema(schema)
+    const ast = new ASTToQueryBuilder(qb, this.pg, {
+      allowedSchemas: context.ctx.getExposedSchemas(),
     })
-
-    astToQueryBuilder.applyReturning(select)
-    astToQueryBuilder.applyFilters(filter, {
+    ast.applyReturning(select)
+    ast.applyFilters(filter, {
       applyExtra: true,
       tableName: table,
       throwOnEmpty: !force,
@@ -187,38 +154,33 @@ export class SchemasService {
         'you must provide a filter to update data or use &force=true',
       ),
     })
-    astToQueryBuilder.applyOrder(order, table)
-    astToQueryBuilder.applyLimitOffset({
+    ast.applyOrder(order, table)
+    ast.applyLimitOffset({
       limit,
       offset,
     })
     qb.update(data)
 
-    return this.withMetaTransaction(pg, project, context, async () =>
-      qb.catch(e => this.processError(e)),
-    )
+    return this.handleQuery(context, async tx => {
+      qb.transacting(tx as any)
+      const result = await qb
+      return result
+    })
   }
 
   async delete({
-    pg,
     table,
-    project,
     schema,
-    url,
-    limit,
-    offset,
-    force,
+    query: { filter, select, order, limit, offset, force },
     context,
   }: Delete) {
-    const qb = pg.table(table).withSchema(schema)
-    const { select, filter, order } = this.getParamsFromUrl(url, table)
-    const allowedSchemas = project.get('metadata')?.allowedSchemas || []
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, pg, {
-      allowedSchemas,
+    const qb = this.pg.table(table).withSchema(schema)
+    const ast = new ASTToQueryBuilder(qb, this.pg, {
+      allowedSchemas: context.ctx.getExposedSchemas(),
     })
 
-    astToQueryBuilder.applyReturning(select)
-    astToQueryBuilder.applyFilters(filter, {
+    ast.applyReturning(select)
+    ast.applyFilters(filter, {
       applyExtra: true,
       tableName: table,
       throwOnEmpty: !force,
@@ -227,28 +189,26 @@ export class SchemasService {
         'you must provide a filter to delete data or use &force=true',
       ),
     })
-    astToQueryBuilder.applyOrder(order, table)
-    astToQueryBuilder.applyLimitOffset({
+    ast.applyOrder(order, table)
+    ast.applyLimitOffset({
       limit,
       offset,
     })
     qb.delete()
 
-    return this.withMetaTransaction(pg, project, context, async () =>
-      qb.catch(e => this.processError(e)),
-    )
+    return this.handleQuery(context, async tx => {
+      qb.transacting(tx as any)
+      const result = await qb
+      return result
+    })
   }
 
   async callFunction({
-    pg,
     functionName,
     schema,
-    url,
-    limit,
-    offset,
+    query: { limit, offset, select, filter, order },
     args,
     context,
-    project,
   }: CallFunction) {
     let placeholder: string
     let values: any[]
@@ -265,29 +225,23 @@ export class SchemasService {
       values = [schema, functionName, ..._values]
     }
 
-    const raw = new Raw(pg)
+    const raw = new Raw(this.pg)
     raw.set(`??.??(${placeholder})`, values)
 
-    const qb = pg.queryBuilder().table(raw as any)
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, pg)
-
-    const { select, filter, order } = this.getParamsFromUrl(url, functionName)
-
-    astToQueryBuilder.applySelect(select)
-    astToQueryBuilder.applyFilters(filter)
-    astToQueryBuilder.applyOrder(order, functionName)
-    astToQueryBuilder.applyLimitOffset({
+    const qb = this.pg.queryBuilder().table(raw as any)
+    const ast = new ASTToQueryBuilder(qb, this.pg)
+    ast.applySelect(select)
+    ast.applyFilters(filter)
+    ast.applyOrder(order, functionName)
+    ast.applyLimitOffset({
       limit,
       offset,
     })
-    const result = await this.withMetaTransaction(
-      pg,
-      project,
-      context,
-      async () => {
-        return qb.catch(e => this.processError(e))
-      },
-    )
+
+    const result = await this.handleQuery(context, async tx => {
+      qb.transacting(tx as any)
+      return qb
+    })
 
     if (
       Array.isArray(result) &&
@@ -315,35 +269,7 @@ export class SchemasService {
     })
   }
 
-  private getParamsFromUrl(
-    url: string,
-    tableName: string,
-  ): {
-    filter?: Expression & ParserResult
-    select?: SelectNode[]
-    order?: ParsedOrdering[]
-  } {
-    const queryString = url.includes('?') ? url.split('?')[1] : ''
-    const urlParams = new URLSearchParams(queryString)
-
-    const _filter = urlParams.get('filter') || ''
-    const filter = _filter
-      ? Parser.create({ tableName }).parse(_filter)
-      : undefined
-
-    const _select = urlParams.get('select') || ''
-    const select = _select
-      ? new SelectParser({ tableName }).parse(_select)
-      : undefined
-
-    const _order = urlParams.get('order') || ''
-    const order = _order ? OrderParser.parse(_order, tableName) : undefined
-
-    return { filter, select, order }
-  }
-
   async updatePermissions({
-    pg,
     tableId,
     schema,
     permissions,
@@ -368,7 +294,7 @@ export class SchemasService {
     })
 
     // Get current permissions from DB
-    const query = pg
+    const query = this.dataSource
       .table(`${tableId}_perms`)
       .withSchema(schema)
       .select(['permission', 'roles'])
@@ -407,7 +333,7 @@ export class SchemasService {
       if (newPermissions.length === 0) {
         // Delete existing row
         if (currentPermissions.length > 0) {
-          const delQuery = pg
+          const delQuery = this.dataSource
             .table(`${tableId}_perms`)
             .withSchema(schema)
             .andWhere('permission', type)
@@ -422,7 +348,7 @@ export class SchemasService {
         }
       } else if (currentPermissions.length > 0) {
         // Update existing row
-        const updQuery = pg
+        const updQuery = this.dataSource
           .table(`${tableId}_perms`)
           .withSchema(schema)
           .andWhere('permission', type)
@@ -438,7 +364,7 @@ export class SchemasService {
         })
       } else {
         // Insert new row
-        await pg
+        await this.dataSource
           .table(`${tableId}_perms`)
           .withSchema(schema)
           .insert({
@@ -453,12 +379,11 @@ export class SchemasService {
   }
 
   async getPermissions({
-    pg,
     tableId,
     rowId,
     schema,
   }: GetPermissions): Promise<string[]> {
-    const query = pg
+    const query = this.dataSource
       .table(`${tableId}_perms`)
       .withSchema(schema)
       .select(['roles', 'permission'])
@@ -487,4 +412,144 @@ export class SchemasService {
 
     return result
   }
+
+  async preQuery(context: RestContext, tx: Transaction) {
+    const { ctx } = context
+    const { user, session } = ctx
+
+    const roles = Authorization.getRoles() ?? []
+    const role = user.empty() ? DatabaseRole.ANON : DatabaseRole.AUTHENTICATED
+
+    const headers: Record<string, string> = {}
+    for (const [k, v] of Object.entries(context.headers ?? {})) {
+      if (v != null) headers[k.toLowerCase()] = String(v)
+    }
+
+    const userPayload =
+      user && !user.empty()
+        ? {
+            id: user.getId(),
+            name: user.get('name'),
+            email: user.get('email'),
+          }
+        : null
+
+    const sessionPayload = session
+      ? {
+          id: session.getId(),
+          userId: session.get('userId'),
+          provider: session.get('provider'),
+          ip: session.get('ip'),
+          userAgent: session.get('userAgent'),
+        }
+      : null
+
+    // Use Postgres Arrays for roles {"any", "guests"}
+    const roleLiteral =
+      roles.length > 0
+        ? `{${roles.map(r => `"${r.replace(/"/g, '\\"')}"`).join(',')}}`
+        : '{}'
+
+    await tx.queryBuilder().select(
+      tx.raw(
+        `
+        set_config('role', ?, true),  
+        set_config('request.method', ?, true),
+        set_config('request.path', ?, true),
+        set_config('request.id', ?, true),
+        set_config('request.headers', ?, true),
+        set_config('request.ip', ?, true),
+        set_config('request.auth.user', ?, true),
+        set_config('request.auth.session', ?, true),
+        set_config('request.auth.roles', ?, true)
+                `,
+        [
+          role,
+          context.method.toUpperCase(),
+          context.url ?? '',
+          context.id ?? '',
+          JSON.stringify(headers),
+          context.ip ?? '',
+          userPayload ?? '',
+          sessionPayload ?? '',
+          roleLiteral,
+        ],
+      ),
+    )
+  }
 }
+
+// function applyContextToWith(
+//   qb: ReturnType<DataSource['queryBuilder']>,
+//   context: RestContext,
+//   pg: any,
+// ) {
+//   const { ctx } = context
+//   const { user, session } = ctx
+
+//   const roles = Authorization.getRoles() ?? []
+
+//   const headers: Record<string, string | string[]> = {}
+//   for (const [k, v] of Object.entries(context.headers ?? {})) {
+//     if (v != null) headers[k.toLowerCase()] = v
+//   }
+
+//   const userPayload =
+//     user && !user.empty()
+//       ? JSON.stringify({
+//           id: user.getId(),
+//           name: user.get('name'),
+//           email: user.get('email'),
+//         })
+//       : undefined
+
+//   const sessionPayload =
+//     session && !session.empty()
+//       ? JSON.stringify({
+//           id: session.getId(),
+//           userId: session.get('userId'),
+//           provider: session.get('provider'),
+//           ip: session.get('ip'),
+//           userAgent: session.get('userAgent'),
+//         })
+//       : undefined
+
+//   const roleLiteral =
+//     roles.length > 0
+//       ? `{${roles.map(r => `"${r.replace(/"/g, '\\"')}"`).join(',')}}`
+//       : '{}'
+//   const role =
+//     user && !user.empty() ? DatabaseRole.AUTHENTICATED : DatabaseRole.ANON
+
+//   qb.with('ctx', sub => {
+//     sub.select(
+//       pg.raw(
+//         `
+//         set_config('role', ?, true),
+//         set_config('request.method', ?, true),
+//         set_config('request.path', ?, true),
+//         set_config('request.id', ?, true),
+//         set_config('request.headers', ?, true),
+//         set_config('request.ip', ?, true),
+//         set_config('request.auth.user', ?, true),
+//         set_config('request.auth.session', ?, true),
+//         set_config('request.auth.roles', ?, true),
+//         1 as d
+//         `, // the "1 as d" is just a dummy select
+//         [
+//           role,
+//           context.method.toUpperCase(),
+//           context.url ?? '',
+//           context.id ?? '',
+//           JSON.stringify(headers),
+//           context.ip ?? '',
+//           userPayload ?? '',
+//           sessionPayload ?? '',
+//           roleLiteral,
+//         ],
+//       ),
+//     )
+//   })
+
+//   return qb
+// }

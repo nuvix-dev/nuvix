@@ -12,20 +12,18 @@ import {
   CurrentDatabase,
   CurrentSchemaType,
   Namespace,
-  Project,
   QueryFilter,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { AttributesQueryPipe } from '@nuvix/core/pipes/queries'
 import {
   ApiInterceptor,
-  ProjectGuard,
   ResponseInterceptor,
   SchemaGuard,
 } from '@nuvix/core/resolvers'
 import type { Database, Query as Queries } from '@nuvix/db'
 import { IListResponse, IResponse, SchemaType } from '@nuvix/utils'
-import type { AttributesDoc, ProjectsDoc } from '@nuvix/utils/types'
+import type { AttributesDoc } from '@nuvix/utils/types'
 import { CollectionParamsDTO } from '../DTO/collection.dto'
 import { AttributesService } from './attributes.service'
 // DTOs
@@ -58,7 +56,7 @@ import {
   path: 'schemas/:schemaId/collections/:collectionId/attributes',
 })
 @Namespace('schemas')
-@UseGuards(ProjectGuard, SchemaGuard)
+@UseGuards(SchemaGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.ADMIN, AuthType.KEY])
 @CurrentSchemaType(SchemaType.Document)
@@ -84,7 +82,7 @@ export class AttributesController {
 
   @Post('string', {
     summary: 'Create string attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_STRING,
     audit: {
       key: 'attribute.create',
@@ -93,26 +91,23 @@ export class AttributesController {
     sdk: {
       name: 'createStringAttribute',
       descMd: '/docs/references/schemas/collections/create-string-attribute.md',
-      code: 202,
     },
   })
   async createStringAttribute(
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateStringAttributeDTO,
-    @Project() project: ProjectsDoc,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createStringAttribute(
       db,
       collectionId,
       createAttributeDTO,
-      project,
     )
   }
 
   @Post('email', {
     summary: 'Create email attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_EMAIL,
     audit: {
       key: 'attribute.create',
@@ -121,26 +116,23 @@ export class AttributesController {
     sdk: {
       name: 'createEmailAttribute',
       descMd: '/docs/references/schemas/collections/create-email-attribute.md',
-      code: 202,
     },
   })
   async createEmailAttribute(
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateEmailAttributeDTO,
-    @Project() project: ProjectsDoc,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createEmailAttribute(
       db,
       collectionId,
       createAttributeDTO,
-      project,
     )
   }
 
   @Post('enum', {
     summary: 'Create enum attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_ENUM,
     audit: {
       key: 'attribute.create',
@@ -149,26 +141,23 @@ export class AttributesController {
     sdk: {
       name: 'createEnumAttribute',
       descMd: '/docs/references/schemas/collections/create-attribute-enum.md',
-      code: 202,
     },
   })
   async createEnumAttribute(
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateEnumAttributeDTO,
-    @Project() project: ProjectsDoc,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createEnumAttribute(
       db,
       collectionId,
       createAttributeDTO,
-      project,
     )
   }
 
   @Post('ip', {
     summary: 'Create IP address attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_IP,
     audit: {
       key: 'attribute.create',
@@ -177,26 +166,23 @@ export class AttributesController {
     sdk: {
       name: 'createIpAttribute',
       descMd: '/docs/references/schemas/collections/create-ip-attribute.md',
-      code: 202,
     },
   })
   async createIpAttribute(
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateIpAttributeDTO,
-    @Project() project: ProjectsDoc,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createIPAttribute(
       db,
       collectionId,
       createAttributeDTO,
-      project,
     )
   }
 
   @Post('url', {
     summary: 'Create URL attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_URL,
     audit: {
       key: 'attribute.create',
@@ -205,26 +191,23 @@ export class AttributesController {
     sdk: {
       name: 'createUrlAttribute',
       descMd: '/docs/references/schemas/collections/create-url-attribute.md',
-      code: 202,
     },
   })
   async createUrlAttribute(
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateURLAttributeDTO,
-    @Project() project: ProjectsDoc,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createURLAttribute(
       db,
       collectionId,
       createAttributeDTO,
-      project,
     )
   }
 
   @Post('integer', {
     summary: 'Create integer attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_INTEGER,
     audit: {
       key: 'attribute.create',
@@ -234,26 +217,23 @@ export class AttributesController {
       name: 'createIntegerAttribute',
       descMd:
         '/docs/references/schemas/collections/create-integer-attribute.md',
-      code: 202,
     },
   })
   async createIntegerAttribute(
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateIntegerAttributeDTO,
-    @Project() project: ProjectsDoc,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createIntegerAttribute(
       db,
       collectionId,
       createAttributeDTO,
-      project,
     )
   }
 
   @Post('float', {
     summary: 'Create float attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_FLOAT,
     audit: {
       key: 'attribute.create',
@@ -262,26 +242,23 @@ export class AttributesController {
     sdk: {
       name: 'createFloatAttribute',
       descMd: '/docs/references/schemas/collections/create-float-attribute.md',
-      code: 202,
     },
   })
   async createFloatAttribute(
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateFloatAttributeDTO,
-    @Project() project: ProjectsDoc,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createFloatAttribute(
       db,
       collectionId,
       createAttributeDTO,
-      project,
     )
   }
 
   @Post('boolean', {
     summary: 'Create boolean attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_BOOLEAN,
     audit: {
       key: 'attribute.create',
@@ -291,26 +268,23 @@ export class AttributesController {
       name: 'createBooleanAttribute',
       descMd:
         '/docs/references/schemas/collections/create-boolean-attribute.md',
-      code: 202,
     },
   })
   async createBooleanAttribute(
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateBooleanAttributeDTO,
-    @Project() project: ProjectsDoc,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createBooleanAttribute(
       db,
       collectionId,
       createAttributeDTO,
-      project,
     )
   }
 
   @Post(['datetime', 'timestamptz'], {
     summary: 'Create datetime attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_DATETIME,
     audit: {
       key: 'attribute.create',
@@ -320,26 +294,23 @@ export class AttributesController {
       name: 'createDatetimeAttribute',
       descMd:
         '/docs/references/schemas/collections/create-datetime-attribute.md',
-      code: 202,
     },
   })
   async createDatetimeAttribute(
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateDatetimeAttributeDTO,
-    @Project() project: ProjectsDoc,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createDateAttribute(
       db,
       collectionId,
       createAttributeDTO,
-      project,
     )
   }
 
   @Post('relationship', {
     summary: 'Create relationship attribute',
-    scopes: ['collections.update', 'attributes.create'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_RELATIONSHIP,
     audit: {
       key: 'attribute.create',
@@ -349,20 +320,17 @@ export class AttributesController {
       name: 'createRelationshipAttribute',
       descMd:
         '/docs/references/schemas/collections/create-relationship-attribute.md',
-      code: 202,
     },
   })
   async createRelationAttribute(
     @CurrentDatabase() db: Database,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() createAttributeDTO: CreateRelationAttributeDTO,
-    @Project() project: ProjectsDoc,
   ): Promise<IResponse<AttributesDoc>> {
     return this.attributesService.createRelationshipAttribute(
       db,
       collectionId,
       createAttributeDTO,
-      project,
     )
   }
 
@@ -384,7 +352,7 @@ export class AttributesController {
 
   @Patch('string/:key', {
     summary: 'Update string attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_STRING,
     audit: {
       key: 'attribute.update',
@@ -410,7 +378,7 @@ export class AttributesController {
 
   @Patch('email/:key', {
     summary: 'Update email attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_EMAIL,
     audit: {
       key: 'attribute.update',
@@ -436,7 +404,7 @@ export class AttributesController {
 
   @Patch('enum/:key', {
     summary: 'Update enum attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_ENUM,
     audit: {
       key: 'attribute.update',
@@ -462,7 +430,7 @@ export class AttributesController {
 
   @Patch('ip/:key', {
     summary: 'Update IP address attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_IP,
     audit: {
       key: 'attribute.update',
@@ -488,7 +456,7 @@ export class AttributesController {
 
   @Patch('url/:key', {
     summary: 'Update URL attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_URL,
     audit: {
       key: 'attribute.update',
@@ -514,7 +482,7 @@ export class AttributesController {
 
   @Patch('integer/:key', {
     summary: 'Update integer attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_INTEGER,
     audit: {
       key: 'attribute.update',
@@ -541,7 +509,7 @@ export class AttributesController {
 
   @Patch('float/:key', {
     summary: 'Update float attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_FLOAT,
     audit: {
       key: 'attribute.update',
@@ -567,7 +535,7 @@ export class AttributesController {
 
   @Patch('boolean/:key', {
     summary: 'Update boolean attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_BOOLEAN,
     audit: {
       key: 'attribute.update',
@@ -594,7 +562,7 @@ export class AttributesController {
 
   @Patch(['datetime/:key', 'timestamptz/:key'], {
     summary: 'Update DateTime attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_DATETIME,
     audit: {
       key: 'attribute.update',
@@ -621,7 +589,7 @@ export class AttributesController {
 
   @Patch('relationship/:key', {
     summary: 'Update relationship attribute',
-    scopes: ['collections.update', 'attributes.update'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE_RELATIONSHIP,
     audit: {
       key: 'attribute.update',
@@ -648,7 +616,7 @@ export class AttributesController {
 
   @Delete(':key', {
     summary: 'Delete attribute',
-    scopes: ['collections.update', 'attributes.delete'],
+    scopes: ['collections.write', 'attributes.write'],
     model: Models.ATTRIBUTE,
     audit: {
       key: 'attribute.delete',
@@ -657,19 +625,12 @@ export class AttributesController {
     sdk: {
       name: 'deleteAttribute',
       descMd: '/docs/references/schemas/collections/delete-attribute.md',
-      code: 202,
     },
   })
   async removeAttribute(
     @CurrentDatabase() db: Database,
     @Param() { collectionId, key }: AttributeParamsDTO,
-    @Project() project: ProjectsDoc,
-  ): Promise<AttributesDoc> {
-    return this.attributesService.deleteAttribute(
-      db,
-      collectionId,
-      key,
-      project,
-    )
+  ): Promise<void> {
+    return this.attributesService.deleteAttribute(db, collectionId, key)
   }
 }

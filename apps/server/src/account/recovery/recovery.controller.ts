@@ -1,42 +1,27 @@
-import {
-  Body,
-  Controller,
-  Req,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Req, UseInterceptors } from '@nestjs/common'
 import { Post, Put } from '@nuvix/core'
-import {
-  AuthDatabase,
-  Locale,
-  Namespace,
-  Project,
-  User,
-} from '@nuvix/core/decorators'
-import { LocaleTranslator, Models } from '@nuvix/core/helpers'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
-import { Database } from '@nuvix/db'
+import { Ctx, Namespace, User } from '@nuvix/core/decorators'
+import { Models, RequestContext } from '@nuvix/core/helpers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import type { IResponse } from '@nuvix/utils'
-import type { ProjectsDoc, TokensDoc, UsersDoc } from '@nuvix/utils/types'
+import type { TokensDoc, UsersDoc } from '@nuvix/utils/types'
 import { CreateRecoveryDTO, UpdateRecoveryDTO } from './DTO/recovery.dto'
 import { RecoveryService } from './recovery.service'
 
 @Controller({ version: ['1'], path: 'account/recovery' })
 @Namespace('account')
-@UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 export class RecoveryController {
   constructor(private readonly recoveryService: RecoveryService) {}
 
   @Post('', {
     summary: 'Create password recovery',
+    scopes: ['sessions.write'],
+    model: Models.TOKEN,
+    sensitiveFields: ['secret'],
     throttle: {
       limit: 10,
-      key: ({ body, ip }) => [`email:${body.email}`, `ip:${ip}`],
+      key: ['url:{url},email:{body-email}', 'url:{url},ip:{ip}'],
     },
     audit: {
       key: 'recovery.create',
@@ -49,30 +34,24 @@ export class RecoveryController {
     },
   })
   async createRecovery(
-    @AuthDatabase() db: Database,
     @User() user: UsersDoc,
     @Body() input: CreateRecoveryDTO,
-    @Locale() locale: LocaleTranslator,
-    @Project() project: ProjectsDoc,
     @Req() request: NuvixRequest,
   ): Promise<IResponse<TokensDoc>> {
     return this.recoveryService.createRecovery({
-      db,
       user,
       input,
-      locale,
-      project,
-      ip: request.ip,
-      userAgent: request.headers['user-agent'] || 'UNKNOWN',
+      request,
     })
   }
 
   @Put('', {
     summary: 'Update password recovery (confirmation)',
     model: Models.TOKEN,
+    sensitiveFields: ['secret'],
     throttle: {
       limit: 10,
-      key: 'ip:{ip},userId:{param-userId}',
+      key: 'url:{url},userId:{body-userId}',
     },
     audit: {
       key: 'recovery.update',
@@ -85,16 +64,14 @@ export class RecoveryController {
     },
   })
   async updateRecovery(
-    @AuthDatabase() db: Database,
     @User() user: UsersDoc,
     @Body() input: UpdateRecoveryDTO,
-    @Project() project: ProjectsDoc,
+    @Ctx() ctx: RequestContext,
   ): Promise<IResponse<TokensDoc>> {
     return this.recoveryService.updateRecovery({
-      db,
       user,
       input,
-      project,
+      ctx,
     })
   }
 }

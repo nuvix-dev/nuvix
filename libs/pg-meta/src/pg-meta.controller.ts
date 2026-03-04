@@ -8,19 +8,13 @@ import {
   Post,
   Query,
   UseFilters,
-  UseGuards,
   UseInterceptors,
   VERSION_NEUTRAL,
 } from '@nestjs/common'
-import { Auth, AuthType, Project } from '@nuvix/core/decorators'
+import { Auth, AuthType } from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
 import { ParseComaStringPipe } from '@nuvix/core/pipes'
-import {
-  AuthGuard,
-  ConsoleInterceptor,
-  ProjectGuard,
-} from '@nuvix/core/resolvers'
-import type { ProjectsDoc } from '@nuvix/utils/types'
+import { ConsoleInterceptor } from '@nuvix/core/resolvers'
 import { ColumnCreateDTO } from './DTO/column-create.dto'
 import { ColumnPrivilegeQueryDTO } from './DTO/column-privilege.dto'
 import { ColumnPrivilegeGrantDTO } from './DTO/column-privilege-grant.dto'
@@ -72,7 +66,6 @@ import { TriggerUpdateDTO } from './DTO/trigger-update.dto'
 import { TypeQueryDTO } from './DTO/type.dto'
 import { ViewQueryDTO } from './DTO/view.dto'
 import { ViewIdParamDTO } from './DTO/view-id.dto'
-import { Client } from './decorators'
 import { PgMetaExceptionFilter } from './extra/exception.filter'
 import { PostgresMeta } from './lib'
 import { getGeneratorMetadata } from './lib/generators'
@@ -80,18 +73,25 @@ import * as Parser from './lib/Parser'
 import { PgMetaService } from './pg-meta.service'
 import { apply as applyGoTemplate } from './templates/go'
 import { apply as applySwiftTemplate } from './templates/swift'
+import { CoreService } from '@nuvix/core/core.service'
 
 @Controller({ path: 'database', version: ['1', VERSION_NEUTRAL] })
-@UseGuards(ProjectGuard, AuthGuard)
 @UseInterceptors(ConsoleInterceptor)
 @Auth(AuthType.ADMIN)
 @UseFilters(PgMetaExceptionFilter)
 export class PgMetaController {
-  constructor(private readonly pgMetaService: PgMetaService) {}
+  protected client: PostgresMeta
+
+  constructor(
+    private readonly pgMetaService: PgMetaService,
+    private readonly coreService: CoreService,
+  ) {
+    this.client = new PostgresMeta(this.coreService.getPoolForPostgres())
+  }
 
   @Post('query')
-  async query(@Client() client: PostgresMeta, @Body() body: QueryDTO) {
-    const { data } = await client.query(body.query, false)
+  async query(@Body() body: QueryDTO) {
+    const { data } = await this.client.query(body.query, false)
     return data ?? []
   }
 
@@ -116,16 +116,13 @@ export class PgMetaController {
   /*************************** Schemas *********************************/
 
   @Get('schemas')
-  async getSchemas(
-    @Query() query: SchemaQueryDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getSchemas(@Query() query: SchemaQueryDTO) {
     const {
       include_system_schemas: includeSystemSchemas,
       limit,
       offset,
     } = query
-    const { data } = await client.schemas.list({
+    const { data } = await this.client.schemas.list({
       includeSystemSchemas,
       limit,
       offset,
@@ -134,17 +131,14 @@ export class PgMetaController {
   }
 
   @Get('schemas/:id')
-  async getSchemaById(@Param('id') id: number, @Client() client: PostgresMeta) {
-    const { data } = await client.schemas.retrieve({ id })
+  async getSchemaById(@Param('id') id: number) {
+    const { data } = await this.client.schemas.retrieve({ id })
     return data
   }
 
   @Post('schemas')
-  async createSchema(
-    @Body() body: SchemaCreateDTO,
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.schemas.create(body)
+  async createSchema(@Body() body: SchemaCreateDTO) {
+    const { data } = await this.client.schemas.create(body)
     return data
   }
 
@@ -152,10 +146,9 @@ export class PgMetaController {
   async updateSchema(
     @Param() params: SchemaIdParamDTO,
     @Body() body: SchemaUpdateDTO,
-    @Client() client: PostgresMeta,
   ) {
     const { id } = params
-    const { data } = await client.schemas.update(id, body)
+    const { data } = await this.client.schemas.update(id, body)
     return data
   }
 
@@ -163,11 +156,10 @@ export class PgMetaController {
   async deleteSchema(
     @Param() params: SchemaIdParamDTO,
     @Query() query: SchemaDeleteQueryDTO,
-    @Client() client: PostgresMeta,
   ) {
     const { id } = params
     const { cascade } = query
-    const { data } = await client.schemas.remove(id, { cascade })
+    const { data } = await this.client.schemas.remove(id, { cascade })
     return data
   }
 
@@ -175,7 +167,6 @@ export class PgMetaController {
 
   @Get('tables')
   async getTables(
-    @Client() client: PostgresMeta,
     @Query('include_system_schemas') includeSystemSchemas = false,
     @Query('limit') limit = 0,
     @Query('offset') offset = 0,
@@ -183,7 +174,7 @@ export class PgMetaController {
     @Query('included_schemas') includedSchemas?: string,
     @Query('excluded_schemas') excludedSchemas?: string,
   ) {
-    const { data } = await client.tables.list({
+    const { data } = await this.client.tables.list({
       includeSystemSchemas,
       includedSchemas: includedSchemas?.split(','),
       excludedSchemas: excludedSchemas?.split(','),
@@ -195,21 +186,15 @@ export class PgMetaController {
   }
 
   @Get('tables/:id')
-  async getTableById(
-    @Param() params: TableIdParamDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getTableById(@Param() params: TableIdParamDTO) {
     const { id } = params
-    const { data } = await client.tables.retrieve({ id })
+    const { data } = await this.client.tables.retrieve({ id })
     return data
   }
 
   @Post('tables')
-  async createTable(
-    @Body() body: TableCreateDTO,
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.tables.create(body)
+  async createTable(@Body() body: TableCreateDTO) {
+    const { data } = await this.client.tables.create(body)
     return data
   }
 
@@ -217,21 +202,20 @@ export class PgMetaController {
   async updateTable(
     @Param() params: TableIdParamDTO,
     @Body() body: TableUpdateDTO,
-    @Client() client: PostgresMeta,
   ) {
     const { id } = params
-    const { data } = await client.tables.update(id, body)
+    const { data } = await this.client.tables.update(id, body)
     return data
   }
 
   @Delete('tables/:id')
   async deleteTable(
     @Param() params: TableIdParamDTO,
-    @Client() client: PostgresMeta,
+
     @Query('cascade') cascade?: boolean,
   ) {
     const { id } = params
-    const { data } = await client.tables.remove(id, { cascade })
+    const { data } = await this.client.tables.remove(id, { cascade })
     return data
   }
 
@@ -239,14 +223,13 @@ export class PgMetaController {
 
   @Get('columns')
   async getColumns(
-    @Client() client: PostgresMeta,
     @Query('include_system_schemas') includeSystemSchemas?: boolean,
     @Query('included_schemas', ParseComaStringPipe) includedSchemas?: string[],
     @Query('excluded_schemas', ParseComaStringPipe) excludedSchemas?: string[],
     @Query('limit') limit?: number,
     @Query('offset') offset?: number,
   ) {
-    const { data } = await client.columns.list({
+    const { data } = await this.client.columns.list({
       includeSystemSchemas,
       includedSchemas,
       excludedSchemas,
@@ -259,7 +242,7 @@ export class PgMetaController {
   @Get('columns/:tableAndOrdinalPosition')
   async getColumnsByTable(
     @Param('tableAndOrdinalPosition') id: string,
-    @Client() client: PostgresMeta,
+
     @Query('include_system_schemas') includeSystemSchemas?: boolean,
     @Query('limit') limit?: number,
     @Query('offset') offset?: number,
@@ -281,7 +264,7 @@ export class PgMetaController {
 
     if (ordinalPosition) {
       // Get all columns for the table
-      const { data } = await client.columns.list({
+      const { data } = await this.client.columns.list({
         tableId,
         includeSystemSchemas,
         limit,
@@ -298,69 +281,53 @@ export class PgMetaController {
       // Get specific column by tableId.ordinalPosition
       const position = ordinalPosition.slice(1)
       const id = `${tableId}.${position}`
-      const { data } = await client.columns.retrieve({ id })
+      const { data } = await this.client.columns.retrieve({ id })
       return data
     }
     throw new Exception(Exception.GENERAL_NOT_FOUND)
   }
 
   @Post('columns')
-  async createColumn(
-    @Body() body: ColumnCreateDTO,
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.columns.create(body)
+  async createColumn(@Body() body: ColumnCreateDTO) {
+    const { data } = await this.client.columns.create(body)
     return data
   }
 
   @Patch('columns/:id')
-  async updateColumn(
-    @Param('id') id: string,
-    @Body() body: ColumnUpdateDTO,
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.columns.update(id, body)
+  async updateColumn(@Param('id') id: string, @Body() body: ColumnUpdateDTO) {
+    const { data } = await this.client.columns.update(id, body)
     return data
   }
 
   @Delete('columns/:id')
   async deleteColumn(
     @Param('id') id: string,
-    @Client() client: PostgresMeta,
+
     @Query('cascade') cascade?: boolean,
   ) {
-    const { data } = await client.columns.remove(id, { cascade })
+    const { data } = await this.client.columns.remove(id, { cascade })
     return data
   }
 
   /*************************** Extensions *********************************/
 
   @Get('extensions')
-  async getExtensions(
-    @Query() query: ExtensionQueryDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getExtensions(@Query() query: ExtensionQueryDTO) {
     const { limit, offset } = query
-    const { data } = await client.extensions.list({ limit, offset })
+    const { data } = await this.client.extensions.list({ limit, offset })
     return data ?? []
   }
 
   @Get('extensions/:name')
-  async getExtensionByName(
-    @Param() params: ExtensionNameParamDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getExtensionByName(@Param() params: ExtensionNameParamDTO) {
     const { name } = params
-    const { data } = await client.extensions.retrieve({ name })
+    const { data } = await this.client.extensions.retrieve({ name })
     return data
   }
 
   @Post('extensions')
-  async createExtension(
-    @Body() body: ExtensionCreateDTO,
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.extensions.create(body)
+  async createExtension(@Body() body: ExtensionCreateDTO) {
+    const { data } = await this.client.extensions.create(body)
     return data
   }
 
@@ -368,10 +335,9 @@ export class PgMetaController {
   async updateExtension(
     @Param() params: ExtensionNameParamDTO,
     @Body() body: ExtensionUpdateDTO,
-    @Client() client: PostgresMeta,
   ) {
     const { name } = params
-    const { data } = await client.extensions.update(name, body)
+    const { data } = await this.client.extensions.update(name, body)
     return data
   }
 
@@ -379,20 +345,19 @@ export class PgMetaController {
   async deleteExtension(
     @Param() params: ExtensionNameParamDTO,
     @Query() query: ExtensionDeleteQueryDTO,
-    @Client() client: PostgresMeta,
   ) {
     const { name } = params
     const { cascade } = query
-    const { data } = await client.extensions.remove(name, { cascade })
+    const { data } = await this.client.extensions.remove(name, { cascade })
     return data
   }
 
   /*************************** Roles *********************************/
 
   @Get('roles')
-  async getRoles(@Query() query: RoleQueryDTO, @Client() client: PostgresMeta) {
+  async getRoles(@Query() query: RoleQueryDTO) {
     const { include_default_roles: includeDefaultRoles, limit, offset } = query
-    const { data } = await client.roles.list({
+    const { data } = await this.client.roles.list({
       includeDefaultRoles,
       limit,
       offset,
@@ -401,21 +366,15 @@ export class PgMetaController {
   }
 
   @Get('roles/:id')
-  async getRoleById(
-    @Param() params: RoleIdParamDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getRoleById(@Param() params: RoleIdParamDTO) {
     const { id } = params
-    const { data } = await client.roles.retrieve({ id })
+    const { data } = await this.client.roles.retrieve({ id })
     return data
   }
 
   @Post('roles')
-  async createRole(
-    @Body() body: RoleCreateDTO,
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.roles.create(body)
+  async createRole(@Body() body: RoleCreateDTO) {
+    const { data } = await this.client.roles.create(body)
     return data
   }
 
@@ -423,30 +382,23 @@ export class PgMetaController {
   async updateRole(
     @Param() params: RoleIdParamDTO,
     @Body() body: RoleUpdateDTO,
-    @Client() client: PostgresMeta,
   ) {
     const { id } = params
-    const { data } = await client.roles.update(id, body)
+    const { data } = await this.client.roles.update(id, body)
     return data
   }
 
   @Delete('roles/:id')
-  async deleteRole(
-    @Param() params: RoleIdParamDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async deleteRole(@Param() params: RoleIdParamDTO) {
     const { id } = params
-    const { data } = await client.roles.remove(id)
+    const { data } = await this.client.roles.remove(id)
     return data
   }
 
   /*************************** Functions *********************************/
 
   @Get('functions')
-  async getFunctions(
-    @Query() query: FunctionQueryDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getFunctions(@Query() query: FunctionQueryDTO) {
     const {
       include_system_schemas: includeSystemSchemas,
       included_schemas: includedSchemas,
@@ -454,7 +406,7 @@ export class PgMetaController {
       limit,
       offset,
     } = query
-    const { data } = await client.functions.list({
+    const { data } = await this.client.functions.list({
       includeSystemSchemas,
       includedSchemas: includedSchemas?.split(','),
       excludedSchemas: excludedSchemas?.split(','),
@@ -465,21 +417,15 @@ export class PgMetaController {
   }
 
   @Get('functions/:id')
-  async getFunctionById(
-    @Param() params: FunctionIdParamDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getFunctionById(@Param() params: FunctionIdParamDTO) {
     const { id } = params
-    const { data } = await client.functions.retrieve({ id })
+    const { data } = await this.client.functions.retrieve({ id })
     return data
   }
 
   @Post('functions')
-  async createFunction(
-    @Body() body: FunctionCreateDTO,
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.functions.create(body)
+  async createFunction(@Body() body: FunctionCreateDTO) {
+    const { data } = await this.client.functions.create(body)
     return data
   }
 
@@ -487,30 +433,23 @@ export class PgMetaController {
   async updateFunction(
     @Param() params: FunctionIdParamDTO,
     @Body() body: FunctionUpdateDTO,
-    @Client() client: PostgresMeta,
   ) {
     const { id } = params
-    const { data } = await client.functions.update(id, body)
+    const { data } = await this.client.functions.update(id, body)
     return data
   }
 
   @Delete('functions/:id')
-  async deleteFunction(
-    @Param() params: FunctionIdParamDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async deleteFunction(@Param() params: FunctionIdParamDTO) {
     const { id } = params
-    const { data } = await client.functions.remove(id)
+    const { data } = await this.client.functions.remove(id)
     return data
   }
 
   /*************************** Indexes *********************************/
 
   @Get('indexes')
-  async getIndexes(
-    @Query() query: IndexQueryDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getIndexes(@Query() query: IndexQueryDTO) {
     const {
       include_system_schemas: includeSystemSchemas,
       included_schemas: includedSchemas,
@@ -518,7 +457,7 @@ export class PgMetaController {
       limit,
       offset,
     } = query
-    const { data } = await client.indexes.list({
+    const { data } = await this.client.indexes.list({
       includeSystemSchemas,
       includedSchemas: includedSchemas?.split(','),
       excludedSchemas: excludedSchemas?.split(','),
@@ -529,19 +468,16 @@ export class PgMetaController {
   }
 
   @Get('indexes/:id')
-  async getIndexById(
-    @Param() params: IndexIdParamDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getIndexById(@Param() params: IndexIdParamDTO) {
     const { id } = params
-    const { data } = await client.indexes.retrieve({ id })
+    const { data } = await this.client.indexes.retrieve({ id })
     return data
   }
 
   /*************************** Views *********************************/
 
   @Get('views')
-  async getViews(@Query() query: ViewQueryDTO, @Client() client: PostgresMeta) {
+  async getViews(@Query() query: ViewQueryDTO) {
     const {
       include_system_schemas: includeSystemSchemas,
       included_schemas: includedSchemas,
@@ -550,7 +486,7 @@ export class PgMetaController {
       offset,
       include_columns: includeColumns,
     } = query
-    const { data } = await client.views.list({
+    const { data } = await this.client.views.list({
       includeSystemSchemas,
       includedSchemas: includedSchemas?.split(','),
       excludedSchemas: excludedSchemas?.split(','),
@@ -562,24 +498,18 @@ export class PgMetaController {
   }
 
   @Get('views/:id')
-  async getViewById(
-    @Param() params: ViewIdParamDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getViewById(@Param() params: ViewIdParamDTO) {
     const { id } = params
-    const { data } = await client.views.retrieve({ id })
+    const { data } = await this.client.views.retrieve({ id })
     return data
   }
 
   /*************************** Foreign Tables *********************************/
 
   @Get('foreign-tables')
-  async getForeignTables(
-    @Query() query: ForeignTableQueryDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getForeignTables(@Query() query: ForeignTableQueryDTO) {
     const { limit, offset, include_columns: includeColumns } = query
-    const { data } = await client.foreignTables.list({
+    const { data } = await this.client.foreignTables.list({
       limit,
       offset,
       includeColumns,
@@ -588,22 +518,16 @@ export class PgMetaController {
   }
 
   @Get('foreign-tables/:id')
-  async getForeignTableById(
-    @Param() params: ForeignTableIdParamDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getForeignTableById(@Param() params: ForeignTableIdParamDTO) {
     const { id } = params
-    const { data } = await client.foreignTables.retrieve({ id })
+    const { data } = await this.client.foreignTables.retrieve({ id })
     return data
   }
 
   /*************************** Column Privileges *********************************/
 
   @Get('column-privileges')
-  async getColumnPrivileges(
-    @Query() query: ColumnPrivilegeQueryDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getColumnPrivileges(@Query() query: ColumnPrivilegeQueryDTO) {
     const {
       include_system_schemas: includeSystemSchemas,
       included_schemas: includedSchemas,
@@ -611,7 +535,7 @@ export class PgMetaController {
       limit,
       offset,
     } = query
-    const { data } = await client.columnPrivileges.list({
+    const { data } = await this.client.columnPrivileges.list({
       includeSystemSchemas,
       includedSchemas: includedSchemas?.split(','),
       excludedSchemas: excludedSchemas?.split(','),
@@ -622,30 +546,21 @@ export class PgMetaController {
   }
 
   @Post('column-privileges')
-  async grantColumnPrivileges(
-    @Body() body: ColumnPrivilegeGrantDTO[],
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.columnPrivileges.grant(body)
+  async grantColumnPrivileges(@Body() body: ColumnPrivilegeGrantDTO[]) {
+    const { data } = await this.client.columnPrivileges.grant(body)
     return data
   }
 
   @Delete('column-privileges')
-  async revokeColumnPrivileges(
-    @Body() body: ColumnPrivilegeRevokeDTO[],
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.columnPrivileges.revoke(body)
+  async revokeColumnPrivileges(@Body() body: ColumnPrivilegeRevokeDTO[]) {
+    const { data } = await this.client.columnPrivileges.revoke(body)
     return data
   }
 
   /*************************** Materialized Views *********************************/
 
   @Get('materialized-views')
-  async getMaterializedViews(
-    @Query() query: MaterializedViewQueryDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getMaterializedViews(@Query() query: MaterializedViewQueryDTO) {
     const {
       included_schemas: includedSchemas,
       excluded_schemas: excludedSchemas,
@@ -653,7 +568,7 @@ export class PgMetaController {
       offset,
       include_columns: includeColumns,
     } = query
-    const { data } = await client.materializedViews.list({
+    const { data } = await this.client.materializedViews.list({
       includedSchemas: includedSchemas?.split(','),
       excludedSchemas: excludedSchemas?.split(','),
       limit,
@@ -664,40 +579,31 @@ export class PgMetaController {
   }
 
   @Get('materialized-views/:id')
-  async getMaterializedViewById(
-    @Param() params: MaterializedViewIdParamDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getMaterializedViewById(@Param() params: MaterializedViewIdParamDTO) {
     const { id } = params
-    const { data } = await client.materializedViews.retrieve({ id })
+    const { data } = await this.client.materializedViews.retrieve({ id })
     return data
   }
 
   /*************************** Config *********************************/
 
   @Get('config')
-  async getConfig(
-    @Query() query: ConfigQueryDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getConfig(@Query() query: ConfigQueryDTO) {
     const { limit, offset } = query
-    const { data } = await client.config.list({ limit, offset })
+    const { data } = await this.client.config.list({ limit, offset })
     return data ?? []
   }
 
   @Get('config/version')
-  async getVersion(@Client() client: PostgresMeta) {
-    const { data } = await client.version.retrieve()
+  async getVersion() {
+    const { data } = await this.client.version.retrieve()
     return data
   }
 
   /*************************** Policies *********************************/
 
   @Get('policies')
-  async getPolicies(
-    @Query() query: PolicyQueryDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getPolicies(@Query() query: PolicyQueryDTO) {
     const {
       include_system_schemas: includeSystemSchemas,
       included_schemas: includedSchemas,
@@ -705,7 +611,7 @@ export class PgMetaController {
       limit,
       offset,
     } = query
-    const { data } = await client.policies.list({
+    const { data } = await this.client.policies.list({
       includeSystemSchemas,
       includedSchemas: includedSchemas?.split(','),
       excludedSchemas: excludedSchemas?.split(','),
@@ -716,63 +622,47 @@ export class PgMetaController {
   }
 
   @Get('policies/:id')
-  async getPolicyById(@Param('id') id: number, @Client() client: PostgresMeta) {
-    const { data } = await client.policies.retrieve({ id })
+  async getPolicyById(@Param('id') id: number) {
+    const { data } = await this.client.policies.retrieve({ id })
     return data
   }
 
   @Post('policies')
-  async createPolicy(
-    @Body() body: PolicyCreateDTO,
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.policies.create(body)
+  async createPolicy(@Body() body: PolicyCreateDTO) {
+    const { data } = await this.client.policies.create(body)
     return data
   }
 
   @Patch('policies/:id')
-  async updatePolicy(
-    @Param('id') id: number,
-    @Body() body: PolicyUpdateDTO,
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.policies.update(id, body)
+  async updatePolicy(@Param('id') id: number, @Body() body: PolicyUpdateDTO) {
+    const { data } = await this.client.policies.update(id, body)
     return data
   }
 
   @Delete('policies/:id')
-  async deletePolicy(@Param('id') id: number, @Client() client: PostgresMeta) {
-    const { data } = await client.policies.remove(id)
+  async deletePolicy(@Param('id') id: number) {
+    const { data } = await this.client.policies.remove(id)
     return data
   }
 
   /*************************** Publications *********************************/
 
   @Get('publications')
-  async getPublications(
-    @Query() query: PublicationQueryDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getPublications(@Query() query: PublicationQueryDTO) {
     const { limit, offset } = query
-    const { data } = await client.publications.list({ limit, offset })
+    const { data } = await this.client.publications.list({ limit, offset })
     return data ?? []
   }
 
   @Get('publications/:id')
-  async getPublicationById(
-    @Param('id') id: number,
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.publications.retrieve({ id })
+  async getPublicationById(@Param('id') id: number) {
+    const { data } = await this.client.publications.retrieve({ id })
     return data
   }
 
   @Post('publications')
-  async createPublication(
-    @Body() body: PublicationCreateDTO,
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.publications.create(body)
+  async createPublication(@Body() body: PublicationCreateDTO) {
+    const { data } = await this.client.publications.create(body)
     return data
   }
 
@@ -780,28 +670,21 @@ export class PgMetaController {
   async updatePublication(
     @Param('id') id: number,
     @Body() body: PublicationUpdateDTO,
-    @Client() client: PostgresMeta,
   ) {
-    const { data } = await client.publications.update(id, body)
+    const { data } = await this.client.publications.update(id, body)
     return data
   }
 
   @Delete('publications/:id')
-  async deletePublication(
-    @Param('id') id: number,
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.publications.remove(id)
+  async deletePublication(@Param('id') id: number) {
+    const { data } = await this.client.publications.remove(id)
     return data
   }
 
   /*************************** Table Privileges *********************************/
 
   @Get('table-privileges')
-  async getTablePrivileges(
-    @Query() query: TablePrivilegeQueryDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getTablePrivileges(@Query() query: TablePrivilegeQueryDTO) {
     const {
       include_system_schemas: includeSystemSchemas,
       included_schemas: includedSchemas,
@@ -809,7 +692,7 @@ export class PgMetaController {
       limit,
       offset,
     } = query
-    const { data } = await client.tablePrivileges.list({
+    const { data } = await this.client.tablePrivileges.list({
       includeSystemSchemas,
       includedSchemas: includedSchemas?.split(','),
       excludedSchemas: excludedSchemas?.split(','),
@@ -820,30 +703,21 @@ export class PgMetaController {
   }
 
   @Post('table-privileges')
-  async grantTablePrivileges(
-    @Body() body: TablePrivilegeGrantDTO[],
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.tablePrivileges.grant(body)
+  async grantTablePrivileges(@Body() body: TablePrivilegeGrantDTO[]) {
+    const { data } = await this.client.tablePrivileges.grant(body)
     return data
   }
 
   @Delete('table-privileges')
-  async revokeTablePrivileges(
-    @Body() body: TablePrivilegeRevokeDTO[],
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.tablePrivileges.revoke(body)
+  async revokeTablePrivileges(@Body() body: TablePrivilegeRevokeDTO[]) {
+    const { data } = await this.client.tablePrivileges.revoke(body)
     return data
   }
 
   /*************************** Triggers *********************************/
 
   @Get('triggers')
-  async getTriggers(
-    @Query() query: TriggerQueryDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async getTriggers(@Query() query: TriggerQueryDTO) {
     const {
       include_system_schemas: includeSystemSchemas,
       included_schemas: includedSchemas,
@@ -851,7 +725,7 @@ export class PgMetaController {
       limit,
       offset,
     } = query
-    const { data } = await client.triggers.list({
+    const { data } = await this.client.triggers.list({
       includeSystemSchemas,
       includedSchemas: includedSchemas?.split(','),
       excludedSchemas: excludedSchemas?.split(','),
@@ -862,30 +736,20 @@ export class PgMetaController {
   }
 
   @Get('triggers/:id')
-  async getTriggerById(
-    @Param('id') id: number,
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.triggers.retrieve({ id })
+  async getTriggerById(@Param('id') id: number) {
+    const { data } = await this.client.triggers.retrieve({ id })
     return data
   }
 
   @Post('triggers')
-  async createTrigger(
-    @Body() body: TriggerCreateDTO,
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.triggers.create(body)
+  async createTrigger(@Body() body: TriggerCreateDTO) {
+    const { data } = await this.client.triggers.create(body)
     return data
   }
 
   @Patch('triggers/:id')
-  async updateTrigger(
-    @Param('id') id: number,
-    @Body() body: TriggerUpdateDTO,
-    @Client() client: PostgresMeta,
-  ) {
-    const { data } = await client.triggers.update(id, body)
+  async updateTrigger(@Param('id') id: number, @Body() body: TriggerUpdateDTO) {
+    const { data } = await this.client.triggers.update(id, body)
     return data
   }
 
@@ -893,17 +757,16 @@ export class PgMetaController {
   async deleteTrigger(
     @Param('id') id: number,
     @Query() query: TriggerDeleteQueryDTO,
-    @Client() client: PostgresMeta,
   ) {
     const { cascade } = query
-    const { data } = await client.triggers.remove(id, { cascade })
+    const { data } = await this.client.triggers.remove(id, { cascade })
     return data
   }
 
   /*************************** Types *********************************/
 
   @Get('types')
-  async getTypes(@Query() query: TypeQueryDTO, @Client() client: PostgresMeta) {
+  async getTypes(@Query() query: TypeQueryDTO) {
     const {
       include_array_types: includeArrayTypes,
       include_system_schemas: includeSystemSchemas,
@@ -912,7 +775,7 @@ export class PgMetaController {
       limit,
       offset,
     } = query
-    const { data } = await client.types.list({
+    const { data } = await this.client.types.list({
       includeArrayTypes,
       includeSystemSchemas,
       includedSchemas: includedSchemas?.split(','),
@@ -926,21 +789,14 @@ export class PgMetaController {
   /*************************** Generators *********************************/
 
   @Get('generators/typescript')
-  async generateTypescript(
-    @Query() query: GeneratorQueryDTO,
-    @Client() client: PostgresMeta,
-    @Project() project: ProjectsDoc,
-  ) {
-    return this.pgMetaService.generateTypescript(client, query, project)
+  async generateTypescript(@Query() query: GeneratorQueryDTO) {
+    return this.pgMetaService.generateTypescript(this.client, query)
   }
 
   @Get('generators/go')
-  async generateGo(
-    @Query() query: GeneratorQueryDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async generateGo(@Query() query: GeneratorQueryDTO) {
     const { included_schemas, excluded_schemas } = query
-    const { data } = await getGeneratorMetadata(client, {
+    const { data } = await getGeneratorMetadata(this.client, {
       includedSchemas: included_schemas
         ?.split(',')
         .map(schema => schema.trim()),
@@ -952,12 +808,9 @@ export class PgMetaController {
   }
 
   @Get('generators/swift')
-  async generateSwift(
-    @Query() query: GeneratorQueryDTO,
-    @Client() client: PostgresMeta,
-  ) {
+  async generateSwift(@Query() query: GeneratorQueryDTO) {
     const { included_schemas, excluded_schemas, access_control } = query
-    const { data } = await getGeneratorMetadata(client, {
+    const { data } = await getGeneratorMetadata(this.client, {
       includedSchemas: included_schemas
         ?.split(',')
         .map(schema => schema.trim()),

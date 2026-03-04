@@ -1,30 +1,18 @@
-import {
-  Body,
-  Controller,
-  Param,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Param, UseInterceptors } from '@nestjs/common'
 import { Delete, Get, Patch, Post } from '@nuvix/core'
 import {
   Auth,
   AuthType,
   Namespace,
-  Project,
-  ProjectDatabase,
   QueryFilter,
   QuerySearch,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { TopicsQueryPipe } from '@nuvix/core/pipes/queries'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
-import { Database, Query as Queries } from '@nuvix/db'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
+import { Query as Queries } from '@nuvix/db'
 import type { IListResponse, IResponse } from '@nuvix/utils'
-import type { ProjectsDoc, TopicsDoc } from '@nuvix/utils/types'
+import type { TopicsDoc } from '@nuvix/utils/types'
 import {
   CreateTopicDTO,
   TopicParamsDTO,
@@ -33,7 +21,6 @@ import {
 import { TopicsService } from './topics.service'
 
 @Namespace('messaging')
-@UseGuards(ProjectGuard)
 @Auth([AuthType.ADMIN, AuthType.KEY])
 @Controller({ path: 'messaging/topics', version: ['1'] })
 @UseInterceptors(ApiInterceptor, ResponseInterceptor)
@@ -42,7 +29,7 @@ export class TopicsController {
 
   @Post('', {
     summary: 'Create topic',
-    scopes: 'topics.create',
+    scopes: 'topics.write',
     model: Models.TOPIC,
     audit: {
       key: 'topic.create',
@@ -54,11 +41,9 @@ export class TopicsController {
     },
   })
   async createTopic(
-    @ProjectDatabase() db: Database,
     @Body() input: CreateTopicDTO,
   ): Promise<IResponse<TopicsDoc>> {
     return this.topicsService.createTopic({
-      db,
       input,
     })
   }
@@ -73,12 +58,10 @@ export class TopicsController {
     },
   })
   async listTopics(
-    @ProjectDatabase() db: Database,
     @QueryFilter(TopicsQueryPipe) queries: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<TopicsDoc>> {
     return this.topicsService.listTopics({
-      db,
       queries,
       search,
     })
@@ -95,14 +78,13 @@ export class TopicsController {
   })
   async getTopic(
     @Param() { topicId }: TopicParamsDTO,
-    @ProjectDatabase() db: Database,
   ): Promise<IResponse<TopicsDoc>> {
-    return this.topicsService.getTopic(db, topicId)
+    return this.topicsService.getTopic(topicId)
   }
 
   @Patch(':topicId', {
     summary: 'Update topic',
-    scopes: 'topics.update',
+    scopes: 'topics.write',
     model: Models.TOPIC,
     audit: {
       key: 'topic.update',
@@ -115,11 +97,9 @@ export class TopicsController {
   })
   async updateTopic(
     @Param() { topicId }: TopicParamsDTO,
-    @ProjectDatabase() db: Database,
     @Body() input: UpdateTopicDTO,
   ): Promise<IResponse<TopicsDoc>> {
     return this.topicsService.updateTopic({
-      db,
       topicId,
       input,
     })
@@ -127,7 +107,7 @@ export class TopicsController {
 
   @Delete(':topicId', {
     summary: 'Delete topic',
-    scopes: 'topics.delete',
+    scopes: 'topics.write',
     audit: {
       key: 'topic.delete',
       resource: 'topic/{res.$id}',
@@ -137,11 +117,7 @@ export class TopicsController {
       descMd: '/docs/references/messaging/delete-topic.md',
     },
   })
-  async deleteTopic(
-    @Param() { topicId }: TopicParamsDTO,
-    @ProjectDatabase() db: Database,
-    @Project() project: ProjectsDoc,
-  ): Promise<void> {
-    return this.topicsService.deleteTopic(db, topicId, project)
+  async deleteTopic(@Param() { topicId }: TopicParamsDTO): Promise<void> {
+    return this.topicsService.deleteTopic(topicId)
   }
 }

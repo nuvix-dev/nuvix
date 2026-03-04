@@ -1,18 +1,13 @@
 import type { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { CoreService } from '@nuvix/core'
 import { Authorization, Database, Doc, Permission, Role } from '@nuvix/db'
-import { Schemas } from '@nuvix/utils'
 
 export async function ensureCoreProvider(
   app: NestFastifyApplication,
   providerId: string,
 ): Promise<void> {
   const coreService = app.get(CoreService)
-  const pool = coreService.createMainPool()
-  const db: Database = coreService.getProjectDb(pool, {
-    projectId: 'test',
-    schema: Schemas.Core,
-  })
+  const db: Database = coreService.getDatabase()
 
   await Authorization.skip(async () => {
     const existing = await db.getDocument('providers', providerId)

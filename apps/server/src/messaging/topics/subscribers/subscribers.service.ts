@@ -10,22 +10,29 @@ import {
   Query,
   Role,
 } from '@nuvix/db'
-import { MessageType, Schemas } from '@nuvix/utils'
+import { MessageType } from '@nuvix/utils'
 import type { Subscribers, SubscribersDoc } from '@nuvix/utils/types'
 import type { CreateSubscriber, ListSubscribers } from './subscribers.types'
+import { CoreService } from '@nuvix/core/core.service'
 
 @Injectable()
 export class SubscribersService {
+  protected readonly db: Database
+
+  constructor(private readonly coreService: CoreService) {
+    this.db = this.coreService.getDatabase()
+  }
+
   /**
    * Create Subscriber
    */
-  async createSubscriber({ input, db, topicId }: CreateSubscriber) {
+  async createSubscriber({ input, topicId }: CreateSubscriber) {
     const { subscriberId: inputSubscriberId, targetId } = input
     const subscriberId =
       inputSubscriberId === 'unique()' ? ID.unique() : inputSubscriberId
 
     const topic = await Authorization.skip(() =>
-      db.getDocument('topics', topicId),
+      this.db.getDocument('topics', topicId),
     )
 
     if (topic.empty()) {
@@ -38,7 +45,7 @@ export class SubscribersService {
     }
 
     const target = await Authorization.skip(() =>
-      db.withSchema(Schemas.Auth, () => db.getDocument('targets', targetId)),
+      this.db.getDocument('targets', targetId),
     )
 
     if (target.empty()) {
@@ -46,9 +53,7 @@ export class SubscribersService {
     }
 
     const user = await Authorization.skip(() =>
-      db.withSchema(Schemas.Auth, () =>
-        db.getDocument('users', target.get('userId')),
-      ),
+      this.db.getDocument('users', target.get('userId')),
     )
 
     const subscriber = new Doc<Subscribers>({
@@ -73,7 +78,7 @@ export class SubscribersService {
     })
 
     try {
-      const createdSubscriber = await db.createDocument(
+      const createdSubscriber = await this.db.createDocument(
         'subscribers',
         subscriber,
       )
@@ -92,7 +97,7 @@ export class SubscribersService {
       })()
 
       await Authorization.skip(() =>
-        db.increaseDocumentAttribute('topics', topicId, totalAttribute),
+        this.db.increaseDocumentAttribute('topics', topicId, totalAttribute),
       )
 
       createdSubscriber.set('target', target).set('userName', user.get('name'))
@@ -109,18 +114,13 @@ export class SubscribersService {
   /**
    * Lists all subscribers for a topic.
    */
-  async listSubscribers({
-    db,
-    topicId,
-    queries = [],
-    search,
-  }: ListSubscribers) {
+  async listSubscribers({ topicId, queries = [], search }: ListSubscribers) {
     if (search) {
       queries.push(Query.search('search', search))
     }
 
     const topic = await Authorization.skip(() =>
-      db.getDocument('topics', topicId),
+      this.db.getDocument('topics', topicId),
     )
 
     if (topic.empty()) {
@@ -130,21 +130,17 @@ export class SubscribersService {
     const { filters } = Query.groupByType(queries)
 
     queries.push(Query.equal('topicInternalId', [topic.getSequence()]))
-    const subscribers = await db.find('subscribers', queries)
-    const total = await db.count('subscribers', filters)
+    const subscribers = await this.db.find('subscribers', queries)
+    const total = await this.db.count('subscribers', filters)
 
     // Batch process subscribers to add target and userName
     const enrichedSubscribers = await Promise.all(
       subscribers.map(async subscriber => {
         const target = await Authorization.skip(() =>
-          db.withSchema(Schemas.Auth, () =>
-            db.getDocument('targets', subscriber.get('targetId')),
-          ),
+          this.db.getDocument('targets', subscriber.get('targetId')),
         )
         const user = await Authorization.skip(() =>
-          db.withSchema(Schemas.Auth, () =>
-            db.getDocument('users', target.get('userId')),
-          ),
+          this.db.getDocument('users', target.get('userId')),
         )
 
         return subscriber
@@ -162,30 +158,26 @@ export class SubscribersService {
   /**
    * Get Subscriber
    */
-  async getSubscriber(db: Database, topicId: string, subscriberId: string) {
+  async getSubscriber(topicId: string, subscriberId: string) {
     const topic = await Authorization.skip(() =>
-      db.getDocument('topics', topicId),
+      this.db.getDocument('topics', topicId),
     )
 
     if (topic.empty()) {
       throw new Exception(Exception.TOPIC_NOT_FOUND)
     }
 
-    const subscriber = await db.getDocument('subscribers', subscriberId)
+    const subscriber = await this.db.getDocument('subscribers', subscriberId)
 
     if (subscriber.empty() || subscriber.get('topicId') !== topicId) {
       throw new Exception(Exception.SUBSCRIBER_NOT_FOUND)
     }
 
     const target = await Authorization.skip(() =>
-      db.withSchema(Schemas.Auth, () =>
-        db.getDocument('targets', subscriber.get('targetId')),
-      ),
+      this.db.getDocument('targets', subscriber.get('targetId')),
     )
     const user = await Authorization.skip(() =>
-      db.withSchema(Schemas.Auth, () =>
-        db.getDocument('users', target.get('userId')),
-      ),
+      this.db.getDocument('users', target.get('userId')),
     )
 
     subscriber.set('target', target).set('userName', user.get('name'))
@@ -196,26 +188,27 @@ export class SubscribersService {
   /**
    * Deletes a subscriber.
    */
-  async deleteSubscriber(db: Database, topicId: string, subscriberId: string) {
+  async deleteSubscriber(topicId: string, subscriberId: string) {
     const topic = await Authorization.skip(() =>
-      db.getDocument('topics', topicId),
+      this.db.getDocument('topics', topicId),
     )
 
     if (topic.empty()) {
       throw new Exception(Exception.TOPIC_NOT_FOUND)
     }
 
-    const subscriber = await db.getDocument('subscribers', subscriberId)
+    const subscriber = await this.db.getDocument('subscribers', subscriberId)
 
     if (subscriber.empty() || subscriber.get('topicId') !== topicId) {
       throw new Exception(Exception.SUBSCRIBER_NOT_FOUND)
     }
 
-    const target = await db.withSchema(Schemas.Auth, () =>
-      db.getDocument('targets', subscriber.get('targetId')),
+    const target = await this.db.getDocument(
+      'targets',
+      subscriber.get('targetId'),
     )
 
-    await db.deleteDocument('subscribers', subscriberId)
+    await this.db.deleteDocument('subscribers', subscriberId)
 
     const totalAttribute = (() => {
       switch (target.get('providerType')) {
@@ -231,7 +224,7 @@ export class SubscribersService {
     })()
 
     await Authorization.skip(() =>
-      db.decreaseDocumentAttribute('topics', topicId, totalAttribute, 1),
+      this.db.decreaseDocumentAttribute('topics', topicId, totalAttribute, 1),
     )
   }
 }

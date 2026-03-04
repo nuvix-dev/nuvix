@@ -4,13 +4,14 @@ import { Exception } from '@nuvix/core/extend/exception'
 import { Database, Doc, ID, Permission, Query, Role } from '@nuvix/db'
 import { Platforms } from '@nuvix/utils/types'
 import { CreatePlatformDTO, UpdatePlatformDTO } from './DTO/platform.dto'
+import { Hostname } from '@nuvix/core/validators/network/hostname'
 
 @Injectable()
 export class PlatformsService {
   private readonly db: Database
 
   constructor(private coreService: CoreService) {
-    this.db = this.coreService.getPlatformDb()
+    this.db = this.coreService.getInternalDatabase()
   }
 
   /**
@@ -38,6 +39,16 @@ export class PlatformsService {
    * Create a platform for a project.
    */
   async createPlatform(id: string, input: CreatePlatformDTO) {
+    if (input.hostname) {
+      const validator = new Hostname()
+      if (!validator.$valid(input.hostname)) {
+        throw new Exception(
+          Exception.GENERAL_ARGUMENT_INVALID,
+          validator.$description,
+        )
+      }
+    }
+
     const project = await this.db.getDocument('projects', id)
 
     if (project.empty()) {
@@ -98,6 +109,15 @@ export class PlatformsService {
     input: UpdatePlatformDTO,
   ) {
     const project = await this.db.getDocument('projects', id)
+    if (input.hostname) {
+      const validator = new Hostname()
+      if (!validator.$valid(input.hostname)) {
+        throw new Exception(
+          Exception.GENERAL_ARGUMENT_INVALID,
+          validator.$description,
+        )
+      }
+    }
 
     if (project.empty()) {
       throw new Exception(Exception.PROJECT_NOT_FOUND)

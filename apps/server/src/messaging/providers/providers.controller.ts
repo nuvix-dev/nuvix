@@ -1,27 +1,16 @@
-import {
-  Body,
-  Controller,
-  Param,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Param, UseInterceptors } from '@nestjs/common'
 import { Delete, Get, Patch, Post } from '@nuvix/core'
 import {
   Auth,
   AuthType,
   Namespace,
-  ProjectDatabase,
   QueryFilter,
   QuerySearch,
 } from '@nuvix/core/decorators'
 import { Models } from '@nuvix/core/helpers'
 import { ProvidersQueryPipe } from '@nuvix/core/pipes/queries'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
-import { Database, Query as Queries } from '@nuvix/db'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
+import { Query as Queries } from '@nuvix/db'
 import { IListResponse, IResponse } from '@nuvix/utils'
 import { ProvidersDoc } from '@nuvix/utils/types'
 import { CreateApnsProviderDTO, UpdateApnsProviderDTO } from './DTO/apns.dto'
@@ -56,7 +45,6 @@ import {
 import { ProvidersService } from './providers.service'
 
 @Namespace('messaging')
-@UseGuards(ProjectGuard)
 @Auth([AuthType.ADMIN, AuthType.KEY])
 @Controller({ path: 'messaging/providers', version: ['1'] })
 @UseInterceptors(ApiInterceptor, ResponseInterceptor)
@@ -65,8 +53,9 @@ export class ProvidersController {
 
   @Post('mailgun', {
     summary: 'Create Mailgun provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -77,19 +66,18 @@ export class ProvidersController {
     },
   })
   async createMailgunProvider(
-    @ProjectDatabase() db: Database,
     @Body() input: CreateMailgunProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createMailgunProvider({
-      db,
       input,
     })
   }
 
   @Post('sendgrid', {
     summary: 'Create Sendgrid provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -100,19 +88,18 @@ export class ProvidersController {
     },
   })
   async createSendgridProvider(
-    @ProjectDatabase() db: Database,
     @Body() input: CreateSendgridProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createSendGridProvider({
-      db,
       input,
     })
   }
 
   @Post('smtp', {
     summary: 'Create SMTP provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -123,19 +110,18 @@ export class ProvidersController {
     },
   })
   async createSMTPProvider(
-    @ProjectDatabase() db: Database,
     @Body() input: CreateSMTPProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createSmtpProvider({
-      db,
       input,
     })
   }
 
   @Post('msg91', {
     summary: 'Create Msg91 provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -146,19 +132,18 @@ export class ProvidersController {
     },
   })
   async createMsg91Provider(
-    @ProjectDatabase() db: Database,
     @Body() input: CreateMsg91ProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createMsg91Provider({
-      db,
       input,
     })
   }
 
   @Post('telesign', {
     summary: 'Create Telesign provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -169,19 +154,18 @@ export class ProvidersController {
     },
   })
   async createTelesignProvider(
-    @ProjectDatabase() db: Database,
     @Body() input: CreateTelesignProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createTelesignProvider({
-      db,
       input,
     })
   }
 
   @Post('textmagic', {
     summary: 'Create Textmagic provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -192,19 +176,18 @@ export class ProvidersController {
     },
   })
   async createTextmagicProvider(
-    @ProjectDatabase() db: Database,
     @Body() input: CreateTextmagicProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createTextMagicProvider({
-      db,
       input,
     })
   }
 
   @Post('twilio', {
     summary: 'Create Twilio provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -215,19 +198,18 @@ export class ProvidersController {
     },
   })
   async createTwilioProvider(
-    @ProjectDatabase() db: Database,
     @Body() input: CreateTwilioProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createTwilioProvider({
-      db,
       input,
     })
   }
 
   @Post('vonage', {
     summary: 'Create Vonage provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -238,19 +220,18 @@ export class ProvidersController {
     },
   })
   async createVonageProvider(
-    @ProjectDatabase() db: Database,
     @Body() input: CreateVonageProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createVonageProvider({
-      db,
       input,
     })
   }
 
   @Post('fcm', {
     summary: 'Create FCM provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -261,19 +242,18 @@ export class ProvidersController {
     },
   })
   async createFcmProvider(
-    @ProjectDatabase() db: Database,
     @Body() input: CreateFcmProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createFcmProvider({
-      db,
       input,
     })
   }
 
   @Post('apns', {
     summary: 'Create APNS provider',
-    scopes: 'providers.create',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.create',
       resource: 'provider/{res.$id}',
@@ -284,11 +264,9 @@ export class ProvidersController {
     },
   })
   async createApnsProvider(
-    @ProjectDatabase() db: Database,
     @Body() input: CreateApnsProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.createApnsProvider({
-      db,
       input,
     })
   }
@@ -303,12 +281,10 @@ export class ProvidersController {
     },
   })
   async listProviders(
-    @ProjectDatabase() db: Database,
     @QueryFilter(ProvidersQueryPipe) queries: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<ProvidersDoc>> {
     return this.providersService.listProviders({
-      db,
       queries,
       search,
     })
@@ -318,6 +294,7 @@ export class ProvidersController {
     summary: 'Get provider',
     scopes: 'providers.read',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     sdk: {
       name: 'getProvider',
       descMd: '/docs/references/messaging/get-provider.md',
@@ -325,15 +302,15 @@ export class ProvidersController {
   })
   async getProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
   ): Promise<IResponse<ProvidersDoc>> {
-    return this.providersService.getProvider(db, providerId)
+    return this.providersService.getProvider(providerId)
   }
 
   @Patch('mailgun/:providerId', {
     summary: 'Update Mailgun provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -345,11 +322,10 @@ export class ProvidersController {
   })
   async updateMailgunProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateMailgunProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateMailgunProvider({
-      db,
       providerId,
       input,
     })
@@ -357,8 +333,9 @@ export class ProvidersController {
 
   @Patch('sendgrid/:providerId', {
     summary: 'Update Sendgrid provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -370,11 +347,10 @@ export class ProvidersController {
   })
   async updateSendgridProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateSendgridProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateSendGridProvider({
-      db,
       providerId,
       input,
     })
@@ -382,8 +358,9 @@ export class ProvidersController {
 
   @Patch('smtp/:providerId', {
     summary: 'Update SMTP provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -395,11 +372,10 @@ export class ProvidersController {
   })
   async updateSmtpProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateSMTPProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateSmtpProvider({
-      db,
       providerId,
       input,
     })
@@ -407,8 +383,9 @@ export class ProvidersController {
 
   @Patch('msg91/:providerId', {
     summary: 'Update Msg91 provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -420,11 +397,10 @@ export class ProvidersController {
   })
   async updateMsg91Provider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateMsg91ProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateMsg91Provider({
-      db,
       providerId,
       input,
     })
@@ -432,8 +408,9 @@ export class ProvidersController {
 
   @Patch('telesign/:providerId', {
     summary: 'Update Telesign provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -445,11 +422,10 @@ export class ProvidersController {
   })
   async updateTelesignProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateTelesignProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateTelesignProvider({
-      db,
       providerId,
       input,
     })
@@ -457,8 +433,9 @@ export class ProvidersController {
 
   @Patch('textmagic/:providerId', {
     summary: 'Update Textmagic provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -470,11 +447,10 @@ export class ProvidersController {
   })
   async updateTextmagicProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateTextmagicProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateTextMagicProvider({
-      db,
       providerId,
       input,
     })
@@ -482,8 +458,9 @@ export class ProvidersController {
 
   @Patch('twilio/:providerId', {
     summary: 'Update Twilio provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -495,11 +472,10 @@ export class ProvidersController {
   })
   async updateTwilioProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateTwilioProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateTwilioProvider({
-      db,
       providerId,
       input,
     })
@@ -507,8 +483,9 @@ export class ProvidersController {
 
   @Patch('vonage/:providerId', {
     summary: 'Update Vonage provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -520,11 +497,10 @@ export class ProvidersController {
   })
   async updateVonageProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateVonageProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateVonageProvider({
-      db,
       providerId,
       input,
     })
@@ -532,8 +508,9 @@ export class ProvidersController {
 
   @Patch('fcm/:providerId', {
     summary: 'Update FCM provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -545,11 +522,10 @@ export class ProvidersController {
   })
   async updateFcmProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateFcmProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateFcmProvider({
-      db,
       providerId,
       input,
     })
@@ -557,8 +533,9 @@ export class ProvidersController {
 
   @Patch('apns/:providerId', {
     summary: 'Update APNS provider',
-    scopes: 'providers.update',
+    scopes: 'providers.write',
     model: Models.PROVIDER,
+    sensitiveFields: ['credentials'],
     audit: {
       key: 'provider.update',
       resource: 'provider/{res.$id}',
@@ -570,11 +547,10 @@ export class ProvidersController {
   })
   async updateApnsProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
+
     @Body() input: UpdateApnsProviderDTO,
   ): Promise<IResponse<ProvidersDoc>> {
     return this.providersService.updateApnsProvider({
-      db,
       providerId,
       input,
     })
@@ -582,7 +558,7 @@ export class ProvidersController {
 
   @Delete(':providerId', {
     summary: 'Delete provider',
-    scopes: 'providers.delete',
+    scopes: 'providers.write',
     audit: {
       key: 'provider.delete',
       resource: 'provider/{res.$id}',
@@ -594,8 +570,7 @@ export class ProvidersController {
   })
   async deleteProvider(
     @Param() { providerId }: ProviderParamsDTO,
-    @ProjectDatabase() db: Database,
   ): Promise<void> {
-    return this.providersService.deleteProvider(db, providerId)
+    return this.providersService.deleteProvider(providerId)
   }
 }

@@ -1,36 +1,17 @@
-import {
-  Controller,
-  Param,
-  Req,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Controller, Param, Req, UseInterceptors } from '@nestjs/common'
 import { Delete, Get, Post } from '@nuvix/core'
-import {
-  Auth,
-  AuthDatabase,
-  AuthType,
-  Locale,
-  Namespace,
-  Project,
-} from '@nuvix/core/decorators'
+import { Auth, AuthType, Locale, Namespace } from '@nuvix/core/decorators'
 import type { LocaleTranslator } from '@nuvix/core/helpers'
 import { Models } from '@nuvix/core/helpers'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
-import type { Database } from '@nuvix/db'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import { IListResponse, IResponse } from '@nuvix/utils'
-import type { ProjectsDoc, SessionsDoc } from '@nuvix/utils/types'
+import type { SessionsDoc } from '@nuvix/utils/types'
 import { UserParamDTO } from '../DTO/user.dto'
 import { SessionParamDTO } from './DTO/session.dto'
 import { SessionsService } from './sessions.service'
 
 @Namespace('users')
 @Controller({ version: ['1'], path: 'users/:userId/sessions' })
-@UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.ADMIN, AuthType.KEY])
 export class SessionsController {
@@ -46,17 +27,17 @@ export class SessionsController {
     },
   })
   async getSessions(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
     @Locale() localeTranslater: LocaleTranslator,
   ): Promise<IListResponse<SessionsDoc>> {
-    return this.sessionsService.getSessions(db, userId, localeTranslater)
+    return this.sessionsService.getSessions(userId, localeTranslater)
   }
 
   @Post('', {
     summary: 'Create session',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.SESSION,
+    sensitiveFields: ['secret'],
     audit: {
       key: 'session.create',
       resource: 'user/{res.userId}',
@@ -67,25 +48,20 @@ export class SessionsController {
     },
   })
   async createSession(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
     @Req() req: NuvixRequest,
-    @Project() project: ProjectsDoc,
-    @Locale() localeTranslater: LocaleTranslator,
   ): Promise<IResponse<SessionsDoc>> {
     return this.sessionsService.createSession(
-      db,
       userId,
       req.headers['user-agent'] || 'UNKNOWN',
       req.ip,
-      project,
-      localeTranslater,
+      req.context,
     )
   }
 
   @Delete('', {
     summary: 'Delete user sessions',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.NONE,
     audit: {
       key: 'sessions.delete',
@@ -96,16 +72,13 @@ export class SessionsController {
       descMd: '/docs/references/users/delete-user-sessions.md',
     },
   })
-  async deleteSessions(
-    @AuthDatabase() db: Database,
-    @Param() { userId }: UserParamDTO,
-  ): Promise<void> {
-    return this.sessionsService.deleteSessions(db, userId)
+  async deleteSessions(@Param() { userId }: UserParamDTO): Promise<void> {
+    return this.sessionsService.deleteSessions(userId)
   }
 
   @Delete(':sessionId', {
     summary: 'Delete user session',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.NONE,
     audit: {
       key: 'session.delete',
@@ -117,10 +90,9 @@ export class SessionsController {
     },
   })
   async deleteSession(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
     @Param() { sessionId }: SessionParamDTO,
   ): Promise<void> {
-    return this.sessionsService.deleteSession(db, userId, sessionId)
+    return this.sessionsService.deleteSession(userId, sessionId)
   }
 }

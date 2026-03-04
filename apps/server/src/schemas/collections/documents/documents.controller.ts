@@ -8,19 +8,19 @@ import {
 import { Delete, Get, Patch, Post } from '@nuvix/core'
 import {
   AuthType,
+  Ctx,
   CurrentDatabase,
   CurrentSchemaType,
   Namespace,
   QueryFilter,
-  AuthUser as User,
+  User,
 } from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Models } from '@nuvix/core/helpers'
+import { Models, RequestContext } from '@nuvix/core/helpers'
 import { ParseQueryPipe } from '@nuvix/core/pipes'
 import { LogsQueryPipe } from '@nuvix/core/pipes/queries'
 import {
   ApiInterceptor,
-  ProjectGuard,
   ResponseInterceptor,
   SchemaGuard,
 } from '@nuvix/core/resolvers'
@@ -46,7 +46,7 @@ import { DocumentsService } from './documents.service'
   path: 'schemas/:schemaId/collections/:collectionId/documents',
 })
 @Namespace('schemas')
-@UseGuards(ProjectGuard, SchemaGuard)
+@UseGuards(SchemaGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @CurrentSchemaType(SchemaType.Document)
 export class DocumentsController {
@@ -63,19 +63,20 @@ export class DocumentsController {
   })
   async findDocuments(
     @CurrentDatabase() db: Database,
+    @Ctx() ctx: RequestContext,
     @Param() { collectionId }: CollectionParamsDTO,
     @QueryFilter(new ParseQueryPipe({ validate: false }))
     queries: Queries[],
   ): Promise<IListResponse<Doc>> {
-    return this.documentsService.getDocuments(db, collectionId, queries)
+    return this.documentsService.getDocuments(db, ctx, collectionId, queries)
   }
 
   @Post('', {
     summary: 'Create document',
-    scopes: ['documents.create'],
+    scopes: ['documents.write'],
     model: Models.DOCUMENT,
     throttle: {
-      key: ({ user, ip }) => [`ip:${ip}`, `userId:${user.getId()}`].join(','),
+      key: 'ip:{ip},method:{method},url:{url},userId:{userId}',
       limit: configuration.limits.writeRateDefault * 2,
       ttl: configuration.limits.writeRatePeriodDefault,
     },
@@ -90,6 +91,7 @@ export class DocumentsController {
   })
   async createDocument(
     @CurrentDatabase() db: Database,
+    @Ctx() ctx: RequestContext,
     @Param() { collectionId }: CollectionParamsDTO,
     @Body() document: CreateDocumentDTO,
     @User() user: UsersDoc,
@@ -99,6 +101,7 @@ export class DocumentsController {
       collectionId,
       document,
       user,
+      ctx,
     )
   }
 
@@ -113,12 +116,14 @@ export class DocumentsController {
   })
   async findDocument(
     @CurrentDatabase() db: Database,
+    @Ctx() ctx: RequestContext,
     @Param() { collectionId, documentId }: DocumentParamsDTO,
     @QueryFilter(new ParseQueryPipe({ validate: false }))
     queries?: Queries[],
   ): Promise<IResponse<Doc>> {
     return this.documentsService.getDocument(
       db,
+      ctx,
       collectionId,
       documentId,
       queries,
@@ -127,10 +132,10 @@ export class DocumentsController {
 
   @Patch(':documentId', {
     summary: 'Update document',
-    scopes: ['documents.update'],
+    scopes: ['documents.write'],
     model: Models.DOCUMENT,
     throttle: {
-      key: ({ user, ip }) => [`ip:${ip}`, `userId:${user.getId()}`].join(','),
+      key: 'ip:{ip},method:{method},url:{url},userId:{userId}',
       limit: configuration.limits.writeRateDefault * 2,
       ttl: configuration.limits.writeRatePeriodDefault,
     },
@@ -145,11 +150,13 @@ export class DocumentsController {
   })
   async updateDocument(
     @CurrentDatabase() db: Database,
+    @Ctx() ctx: RequestContext,
     @Param() { collectionId, documentId }: DocumentParamsDTO,
     @Body() document: UpdateDocumentDTO,
   ): Promise<IResponse<Doc>> {
     return this.documentsService.updateDocument(
       db,
+      ctx,
       collectionId,
       documentId,
       document,
@@ -158,9 +165,9 @@ export class DocumentsController {
 
   @Delete(':documentId', {
     summary: 'Delete document',
-    scopes: ['documents.delete'],
+    scopes: ['documents.write'],
     throttle: {
-      key: ({ user, ip }) => [`ip:${ip}`, `userId:${user.getId()}`].join(','),
+      key: 'ip:{ip},method:{method},url:{url},userId:{userId}',
       limit: configuration.limits.writeRateDefault,
       ttl: configuration.limits.writeRatePeriodDefault,
     },
@@ -175,9 +182,15 @@ export class DocumentsController {
   })
   async removeDocument(
     @CurrentDatabase() db: Database,
+    @Ctx() ctx: RequestContext,
     @Param() { collectionId, documentId }: DocumentParamsDTO,
   ): Promise<void> {
-    return this.documentsService.deleteDocument(db, collectionId, documentId)
+    return this.documentsService.deleteDocument(
+      db,
+      ctx,
+      collectionId,
+      documentId,
+    )
   }
 
   @Get(':documentId/logs', {
@@ -197,11 +210,10 @@ export class DocumentsController {
     @QueryFilter(LogsQueryPipe) queries?: Queries[],
   ): Promise<IListResponse<unknown>> {
     throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
-    return this.documentsService.getDocumentLogs(
-      db,
-      collectionId,
-      documentId,
-      queries,
-    )
+    // return this.documentsService.getDocumentLogs(
+    //   collectionId,
+    //   documentId,
+    //   queries,
+    // )
   }
 }

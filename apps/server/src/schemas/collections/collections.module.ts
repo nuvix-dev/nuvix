@@ -1,18 +1,9 @@
-import { BullModule } from '@nestjs/bullmq'
 import {
   type MiddlewareConsumer,
   Module,
   type NestModule,
 } from '@nestjs/common'
-import {
-  ApiHook,
-  AuditHook,
-  AuthHook,
-  CollectionsQueue,
-  SchemaHook,
-  StatsHook,
-} from '@nuvix/core/resolvers'
-import { QueueFor } from '@nuvix/utils'
+import { SchemaHook } from '@nuvix/core/resolvers'
 import { AttributesController } from './attributes/attributes.controller'
 import { AttributesService } from './attributes/attributes.service'
 import { CollectionsController } from './collections.controller'
@@ -23,11 +14,6 @@ import { IndexesController } from './indexes/indexes.controller'
 import { IndexesService } from './indexes/indexes.service'
 
 @Module({
-  imports: [
-    BullModule.registerQueue({
-      name: QueueFor.COLLECTIONS,
-    }),
-  ],
   controllers: [
     CollectionsController,
     AttributesController,
@@ -39,13 +25,12 @@ import { IndexesService } from './indexes/indexes.service'
     AttributesService,
     IndexesService,
     DocumentsService,
-    CollectionsQueue,
   ],
 })
 export class CollectionsModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(AuthHook, ApiHook, SchemaHook, StatsHook, AuditHook)
+      .apply(SchemaHook)
       .forRoutes(
         CollectionsController,
         AttributesController,

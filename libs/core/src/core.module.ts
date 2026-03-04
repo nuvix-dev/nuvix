@@ -1,32 +1,27 @@
 import { BullModule } from '@nestjs/bullmq'
 import { Global, Module, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
-import { ConfigModule } from '@nestjs/config'
 import { EventEmitterModule } from '@nestjs/event-emitter'
 import { Database, StructureValidator } from '@nuvix/db'
 import { configuration } from '@nuvix/utils'
 import { filters, formats } from '@nuvix/utils/database'
 import pg from 'pg'
 import { parse as parseArray } from 'postgres-array'
-import { AppConfigService } from './config.service.js'
 import { CoreService } from './core.service.js'
 import { RatelimitService } from './rate-limit.service.js'
 import { QueueModule } from './queue.module.js'
 import handlebars from 'handlebars'
+import { StatsHelper } from './helpers/stats.helper.js'
 
 @Global()
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
-      load: [() => configuration],
-    }),
     BullModule.forRootAsync({
-      useFactory(config: AppConfigService) {
-        const redisConfig = config.getRedisConfig()
+      useFactory() {
+        const { secure, ...redisConfig } = configuration.redis
         return {
           connection: {
             ...redisConfig,
-            tls: redisConfig.secure
+            tls: secure
               ? {
                   rejectUnauthorized: false,
                 }
@@ -40,25 +35,17 @@ import handlebars from 'handlebars'
             removeOnComplete: true,
             removeOnFail: 100,
           },
-          prefix: 'nuvix', // TODO: we have to include a instance key that should be unique per app instance
+          prefix: CoreService.isConsole() ? 'nuvix-console' : 'nuvix', // TODO: we have to include a instance key that should be unique per app instance
         }
       },
-      inject: [AppConfigService],
     }),
     QueueModule,
     EventEmitterModule.forRoot({
       global: true,
     }),
   ],
-  providers: [
-    {
-      provide: AppConfigService,
-      useClass: AppConfigService,
-    },
-    CoreService,
-    RatelimitService,
-  ],
-  exports: [AppConfigService, CoreService, RatelimitService, QueueModule],
+  providers: [CoreService, RatelimitService, StatsHelper],
+  exports: [QueueModule, CoreService, RatelimitService],
 })
 export class CoreModule implements OnModuleDestroy, OnModuleInit {
   constructor(private readonly coreService: CoreService) {}

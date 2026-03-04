@@ -1,9 +1,7 @@
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
-import { Context, configuration, MetricFor, QueueFor } from '@nuvix/utils'
-import type { ProjectsDoc } from '@nuvix/utils/types'
+import { configuration, MetricFor, QueueFor } from '@nuvix/utils'
 import { Queue } from 'bullmq'
-import { Auth } from '../../helpers'
 import { Hook } from '../../server'
 import { StatsQueueJob, StatsQueueOptions } from '../queues'
 
@@ -23,20 +21,14 @@ export class StatsHook implements Hook {
       return
     }
 
-    const project: ProjectsDoc = req[Context.Project]
-    if (
-      project.empty() ||
-      project.getId() === 'console' ||
-      Auth.isPlatformActor
-    ) {
+    if (req.context.isAdminUser) {
       return
     }
 
-    const reqBodySize: number = req.hooks_args.onRequest?.sizeRef?.() ?? 0
+    const reqBodySize: number = req.requestSize?.() || 0
     const resBodySize: number = Number(reply.getHeader('Content-Length')) || 0
 
     await this.statsQueue.add(StatsQueueJob.ADD_METRIC, {
-      project,
       metrics: [
         { key: MetricFor.REQUESTS, value: 1 },
         { key: MetricFor.INBOUND, value: reqBodySize },

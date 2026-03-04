@@ -1,32 +1,22 @@
-import {
-  Body,
-  Controller,
-  Param,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Param, UseInterceptors } from '@nestjs/common'
 import { AuditDoc } from '@nuvix/audit'
 import { Delete, Get, Post, Put } from '@nuvix/core'
 import {
   Auth,
-  AuthDatabase,
   AuthType,
+  Ctx,
   Namespace,
   QueryFilter,
   QuerySearch,
   User,
 } from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Models } from '@nuvix/core/helpers'
+import { Models, RequestContext } from '@nuvix/core/helpers'
 import { TeamsQueryPipe } from '@nuvix/core/pipes/queries'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
-import { Database, Query as Queries } from '@nuvix/db'
-import { IListResponse, IResponse } from '@nuvix/utils'
-import { TeamsDoc } from '@nuvix/utils/types'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
+import { Query as Queries } from '@nuvix/db'
+import type { IListResponse, IResponse } from '@nuvix/utils'
+import type { TeamsDoc, UsersDoc } from '@nuvix/utils/types'
 import {
   CreateTeamDTO,
   TeamsParamDTO,
@@ -36,7 +26,6 @@ import {
 import { TeamsService } from './teams.service'
 
 @Namespace('teams')
-@UseGuards(ProjectGuard)
 @Auth([AuthType.KEY, AuthType.SESSION, AuthType.JWT, AuthType.ADMIN])
 @Controller({ version: ['1'], path: 'teams' })
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
@@ -45,7 +34,7 @@ export class TeamsController {
 
   @Post('', {
     summary: 'Create team',
-    scopes: ['teams.create'],
+    scopes: ['teams.write'],
     model: Models.TEAM,
     audit: {
       key: 'teams.create',
@@ -57,11 +46,11 @@ export class TeamsController {
     },
   })
   async create(
-    @AuthDatabase() db: Database,
-    @User() user: any,
+    @User() user: UsersDoc,
     @Body() input: CreateTeamDTO,
+    @Ctx() ctx: RequestContext,
   ): Promise<IResponse<TeamsDoc>> {
-    return this.teamsService.create(db, user, input)
+    return this.teamsService.create(user, input, ctx)
   }
 
   @Get('', {
@@ -74,11 +63,10 @@ export class TeamsController {
     },
   })
   async findAll(
-    @AuthDatabase() db: Database,
     @QueryFilter(TeamsQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<TeamsDoc>> {
-    return this.teamsService.findAll(db, queries, search)
+    return this.teamsService.findAll(queries, search)
   }
 
   @Get(':teamId', {
@@ -91,15 +79,14 @@ export class TeamsController {
     },
   })
   async findOne(
-    @AuthDatabase() db: Database,
     @Param() { teamId }: TeamsParamDTO,
   ): Promise<IResponse<TeamsDoc>> {
-    return this.teamsService.findOne(db, teamId)
+    return this.teamsService.findOne(teamId)
   }
 
   @Put(':teamId', {
     summary: 'Update name',
-    scopes: ['teams.update'],
+    scopes: ['teams.write'],
     model: Models.TEAM,
     audit: {
       key: 'teams.update',
@@ -111,16 +98,15 @@ export class TeamsController {
     },
   })
   async update(
-    @AuthDatabase() db: Database,
     @Param() { teamId }: TeamsParamDTO,
     @Body() input: UpdateTeamDTO,
   ): Promise<IResponse<TeamsDoc>> {
-    return this.teamsService.update(db, teamId, input)
+    return this.teamsService.update(teamId, input)
   }
 
   @Delete(':teamId', {
     summary: 'Delete team',
-    scopes: ['teams.delete'],
+    scopes: ['teams.write'],
     model: Models.NONE,
     audit: {
       key: 'teams.delete',
@@ -132,11 +118,8 @@ export class TeamsController {
       descMd: '/docs/references/teams/delete-team.md',
     },
   })
-  async remove(
-    @AuthDatabase() db: Database,
-    @Param() { teamId }: TeamsParamDTO,
-  ): Promise<void> {
-    return this.teamsService.remove(db, teamId)
+  async remove(@Param() { teamId }: TeamsParamDTO): Promise<void> {
+    return this.teamsService.remove(teamId)
   }
 
   @Get(':teamId/prefs', {
@@ -149,15 +132,14 @@ export class TeamsController {
     },
   })
   async getPrefs(
-    @AuthDatabase() db: Database,
     @Param() { teamId }: TeamsParamDTO,
   ): Promise<IResponse<Record<string, unknown>>> {
-    return this.teamsService.getPrefs(db, teamId)
+    return this.teamsService.getPrefs(teamId)
   }
 
   @Put(':teamId/prefs', {
     summary: 'Update preferences',
-    scopes: ['teams.update'],
+    scopes: ['teams.write'],
     model: Models.PREFERENCES,
     auth: [AuthType.SESSION, AuthType.JWT],
     audit: {
@@ -171,11 +153,10 @@ export class TeamsController {
     },
   })
   async setPrefs(
-    @AuthDatabase() db: Database,
     @Param() { teamId }: TeamsParamDTO,
     @Body() input: UpdateTeamPrefsDTO,
   ): Promise<IResponse<Record<string, unknown>>> {
-    return this.teamsService.setPrefs(db, teamId, input)
+    return this.teamsService.setPrefs(teamId, input)
   }
 
   @Get(':teamId/logs', {
@@ -186,11 +167,10 @@ export class TeamsController {
       name: 'listLogs',
       descMd: '/docs/references/teams/get-team-logs.md',
     },
-    docs: false, // remove or set true after implementation
+    docs: false, // Hide from docs since not implemented yet
   })
   async teamLogs(
-    @AuthDatabase() _db: Database,
-    @Param() { teamId }: TeamsParamDTO,
+    // @Param() { teamId }: TeamsParamDTO,
   ): Promise<IListResponse<AuditDoc>> {
     throw new Exception(Exception.GENERAL_NOT_IMPLEMENTED)
   }

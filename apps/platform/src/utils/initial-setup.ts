@@ -1,7 +1,7 @@
 import { Logger } from '@nestjs/common'
 import { NestFastifyApplication } from '@nestjs/platform-fastify'
 import { Audit } from '@nuvix/audit'
-import { AppConfigService, CoreService } from '@nuvix/core'
+import { CoreService } from '@nuvix/core'
 import {
   Authorization,
   Database,
@@ -11,28 +11,25 @@ import {
   Permission,
   Role,
 } from '@nuvix/db'
-import { Schemas } from '@nuvix/utils'
+import { configuration } from '@nuvix/utils'
 import collections from '@nuvix/utils/collections'
 import { AccountService } from '../account/account.service'
 import { ProjectService } from '../projects/projects.service'
 
-export async function initSetup(
-  app: NestFastifyApplication,
-  config: AppConfigService,
-) {
+export async function initSetup(app: NestFastifyApplication) {
   const logger = new Logger('Setup')
   const coreService = app.get(CoreService)
   try {
     logger.log('🚀 Initializing Nuvix server setup...')
-    const pool = coreService.createProjectDbClient('initial-setup')
-    await pool
-      .query(`create schema if not exists ${Schemas.Internal};`)
-      .catch(e =>
-        logger.error('❌ Failed to create internal database schema', e),
-      )
-      .finally(() => pool.end())
+    const db = coreService.getInternalDatabase()
 
-    const db = coreService.getPlatformDb()
+    await db.create().catch(e => {
+      if (e instanceof DuplicateException) {
+        logger.log('✓ Database already exists, skipping creation')
+        return
+      }
+      throw e
+    })
 
     try {
       await db.getCache().flush()
@@ -188,12 +185,12 @@ export async function initSetup(
           }),
         )
 
-        const projectId = config.get('app').projectId
+        const projectId = configuration.app.projectId
         await projectService.create({
           projectId,
           teamId,
           name: 'My Project',
-          password: config.getDatabaseConfig().postgres.adminPassword || '',
+          password: '',
           region: 'local',
         })
         logger.log(`✓ Default project created with ID: ${projectId}`)

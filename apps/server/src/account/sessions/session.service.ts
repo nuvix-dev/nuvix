@@ -1,14 +1,11 @@
-import * as fs from 'node:fs/promises'
-import path from 'node:path'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
 import { JwtService } from '@nestjs/jwt'
-import { AppConfigService, CoreService } from '@nuvix/core'
-import type { SmtpConfig } from '@nuvix/core/config'
+import { CoreService } from '@nuvix/core'
 import { type OAuthProviders, type OAuthProviderType } from '@nuvix/core/config'
 import { Exception } from '@nuvix/core/extend/exception'
-import { Auth, Detector, LocaleTranslator, Models } from '@nuvix/core/helpers'
+import { Auth, EmailHelper, Models, RequestContext } from '@nuvix/core/helpers'
 import { getOAuth2Class, OAuth2 } from '@nuvix/core/OAuth2'
 import {
   DeletesJobData,
@@ -49,7 +46,6 @@ import type {
   UsersDoc,
 } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
-import Template from 'handlebars'
 import { CountryResponse, Reader } from 'maxmind'
 import {
   CreateEmailSessionDTO,
@@ -67,10 +63,11 @@ import {
 @Injectable()
 export class SessionService {
   private readonly geodb: Reader<CountryResponse>
+  private readonly db: Database
+  private readonly emailHelper = new EmailHelper()
 
   constructor(
     private readonly coreService: CoreService,
-    private readonly appConfig: AppConfigService,
     private eventEmitter: EventEmitter2,
     private readonly jwtService: JwtService,
     @InjectQueue(QueueFor.MAILS)
@@ -85,26 +82,29 @@ export class SessionService {
     >,
   ) {
     this.geodb = this.coreService.getGeoDb()
+    this.db = this.coreService.getDatabase()
   }
 
   private static readonly oauthDefaultSuccess = '/auth/oauth2/success'
   private static readonly oauthDefaultFailure = '/auth/oauth2/failure'
+  private static readonly magicAuthDefaultPath = '/auth/magic-url'
 
   /**
    * Get User's Sessions
    */
-  async getSessions(user: UsersDoc, locale: LocaleTranslator) {
+  async getSessions(user: UsersDoc, ctx: RequestContext) {
     const sessions = user.get('sessions', []) as SessionsDoc[]
-    const current = Auth.sessionVerify(sessions, Auth.secret)
+    const current = ctx.session
 
+    const locale = ctx.translator()
     const updatedSessions = sessions.map(session => {
-      const countryName = locale.getText(
-        `countries${session.get('countryCode', '')?.toLowerCase()}`,
-        locale.getText('locale.country.unknown'),
-      )
+      const key = countryKey(session.get('countryCode'))
+      const countryName = locale.has(key)
+        ? locale.getRaw(key)
+        : locale.t('locale.country.unknown')
 
       session.set('countryName', countryName)
-      session.set('current', current === session.getId())
+      session.set('current', current && current.getId() === session.getId())
       session.set('secret', session.get('secret', ''))
 
       return session
@@ -120,43 +120,43 @@ export class SessionService {
    * Delete User's Session
    */
   async deleteSessions(
-    db: Database,
     user: UsersDoc,
-    project: ProjectsDoc,
-    locale: LocaleTranslator,
     request: NuvixRequest,
     response: NuvixRes,
   ) {
+    const ctx = request.context
     const protocol = request.protocol
     const sessions = user.get('sessions', []) as SessionsDoc[]
 
     for (const session of sessions) {
-      await db.deleteDocument('sessions', session.getId())
+      await this.db.deleteDocument('sessions', session.getId())
 
-      if (!request.domainVerification) {
-        response.header('X-Fallback-Cookies', JSON.stringify([]))
+      if (configuration.server.fallbackCookies) {
+        response.header('X-Fallback-Cookies', '{}')
       }
+
+      const locale = ctx.translator()
+      const key = countryKey(session.get('countryCode'))
 
       session.set('current', false)
       session.set(
         'countryName',
-        locale.getText(
-          `countries${session.get('countryCode', '')?.toLowerCase()}`,
-          locale.getText('locale.country.unknown'),
-        ),
+        locale.has(key)
+          ? locale.getRaw(key)
+          : locale.t('locale.country.unknown'),
       )
 
-      if (session.get('secret') === Auth.hash(Auth.secret)) {
+      if (ctx.session && ctx.session.getId() === session.getId()) {
         session.set('current', true)
 
         // If current session, delete the cookies too
         response.cookie(Auth.cookieName, '', {
           expires: new Date(0),
           path: '/',
-          domain: Auth.cookieDomain,
+          domain: ctx.cookieDomain,
           secure: protocol === 'https',
           httpOnly: true,
-          sameSite: Auth.cookieSamesite,
+          sameSite: ctx.cookieSameSite,
         })
       }
     }
@@ -165,13 +165,12 @@ export class SessionService {
       [...sessions].map(s => ({
         name: DeleteType.SESSION_TARGETS,
         data: {
-          project,
           document: s,
         },
       })),
     )
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     this.eventEmitter.emit(AppEvents.SESSION_DELETE, {
       userId: user.getId(),
@@ -183,26 +182,25 @@ export class SessionService {
   /**
    * Get a Session
    */
-  async getSession(
-    user: UsersDoc,
-    sessionId: string,
-    locale: LocaleTranslator,
-  ) {
+  async getSession(user: UsersDoc, sessionId: string, ctx: RequestContext) {
     const sessions = user.get('sessions', []) as SessionsDoc[]
-    sessionId =
-      sessionId === 'current'
-        ? (Auth.sessionVerify(user.get('sessions'), Auth.secret) as string)
-        : sessionId
+    if (sessionId === 'current') {
+      sessionId = ctx.session ? ctx.session.getId() : ''
+    }
 
     for (const session of sessions) {
       if (sessionId === session.getId()) {
-        const countryName = locale.getText(
-          `countries${session.get('countryCode', '')?.toLowerCase()}`,
-          locale.getText('locale.country.unknown'),
-        )
+        const locale = ctx.translator()
+        const key = countryKey(session.get('countryCode'))
+        const countryName = locale.has(key)
+          ? locale.getRaw(key)
+          : locale.t('locale.country.unknown')
 
         session
-          .set('current', session.get('secret') === Auth.hash(Auth.secret))
+          .set(
+            'current',
+            ctx.session && ctx.session.getId() === session.getId(),
+          )
           .set('countryName', countryName)
           .set('secret', session.get('secret', ''))
 
@@ -217,49 +215,42 @@ export class SessionService {
    * Delete a Session
    */
   async deleteSession(
-    db: Database,
     user: UsersDoc,
-    project: ProjectsDoc,
     sessionId: string,
     request: NuvixRequest,
     response: NuvixRes,
-    locale: LocaleTranslator,
   ) {
     const protocol = request.protocol
+    const ctx = request.context
     const sessions = user.get('sessions', []) as SessionsDoc[]
+    if (sessionId === 'current') {
+      sessionId = ctx.session ? ctx.session.getId() : ''
+    }
 
     for (const session of sessions) {
       if (sessionId !== session.getId()) {
         continue
       }
 
-      await db.deleteDocument('sessions', session.getId())
-
+      await this.db.deleteDocument('sessions', session.getId())
       session.set('current', false)
 
-      if (session.get('secret') === Auth.hash(Auth.secret)) {
+      if (ctx.session && session.getId() === ctx.session.getId()) {
         session.set('current', true)
-        session.set(
-          'countryName',
-          locale.getText(
-            `countries${session.get('countryCode', '')?.toLowerCase()}`,
-            locale.getText('locale.country.unknown'),
-          ),
-        )
 
         response.cookie(Auth.cookieName, '', {
           expires: new Date(0),
           path: '/',
-          domain: Auth.cookieDomain,
+          domain: ctx.cookieDomain,
           secure: protocol === 'https',
           httpOnly: true,
-          sameSite: Auth.cookieSamesite,
+          sameSite: ctx.cookieSameSite,
         })
 
-        response.header('X-Fallback-Cookies', JSON.stringify({}))
+        if (configuration.server.fallbackCookies) {
+          response.header('X-Fallback-Cookies', '{}')
+        }
       }
-
-      await db.purgeCachedDocument('users', user.getId())
 
       this.eventEmitter.emit(AppEvents.SESSIONS_DELETE, {
         userId: user.getId(),
@@ -271,7 +262,6 @@ export class SessionService {
       })
 
       await this.deletesQueue.add(DeleteType.SESSION_TARGETS, {
-        project,
         document: session,
       })
 
@@ -284,19 +274,13 @@ export class SessionService {
   /**
    * Update a Session
    */
-  async updateSession(
-    db: Database,
-    user: UsersDoc,
-    sessionId: string,
-    project: ProjectsDoc,
-  ) {
-    sessionId =
-      sessionId === 'current'
-        ? (Auth.sessionVerify(user.get('sessions'), Auth.secret) as string)
-        : sessionId
+  async updateSession(user: UsersDoc, sessionId: string, ctx: RequestContext) {
+    if (sessionId === 'current') {
+      sessionId = ctx.session ? ctx.session.getId() : ''
+    }
 
     const sessions = user.get('sessions', []) as SessionsDoc[]
-    let session: SessionsDoc | null = null
+    let session: SessionsDoc | undefined
 
     for (const value of sessions) {
       if (sessionId === value.getId()) {
@@ -305,11 +289,11 @@ export class SessionService {
       }
     }
 
-    if (session === null) {
+    if (!session) {
       throw new Exception(Exception.USER_SESSION_NOT_FOUND)
     }
 
-    const auths = project.get('auths', {})
+    const auths = ctx.project.get('auths', {})
 
     const authDuration = auths.duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
     session.set('expire', new Date(Date.now() + authDuration * 1000))
@@ -317,13 +301,20 @@ export class SessionService {
     const provider: string = session.get('provider', '')
     const refreshToken = session.get('providerRefreshToken', '')
 
-    const OAuth2Class = await getOAuth2Class(provider)
     if (provider) {
-      const providerInfo = this.getProviderConfig(project, provider)
+      const providerInfo = this.getProviderConfig(ctx.project, provider)
       const appId = providerInfo.appId
       const appSecret = Auth.decryptIfDefined(providerInfo.secret)
 
-      const oauth2: OAuth2 = new OAuth2Class(appId, appSecret, '', [], [])
+      if (!appId || !appSecret) {
+        throw new Exception(
+          Exception.PROJECT_PROVIDER_DISABLED,
+          `This provider is disabled. Please configure the provider app ID and app secret key from your ${configuration.app.name} console to continue.`,
+        )
+      }
+
+      const OAuth2Class = await getOAuth2Class(provider)
+      const oauth2: OAuth2 = new OAuth2Class(appId, appSecret, '')
       await oauth2.refreshTokens(refreshToken)
       const accessToken = await oauth2.getAccessToken('')
 
@@ -336,8 +327,7 @@ export class SessionService {
         )
     }
 
-    await db.updateDocument('sessions', sessionId, session)
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.updateDocument('sessions', sessionId, session)
 
     this.eventEmitter.emit(AppEvents.SESSION_UPDATE, {
       userId: user.getId(),
@@ -355,21 +345,21 @@ export class SessionService {
    * Create a new session for the user using Email & Password
    */
   async createEmailSession(
-    db: Database,
     user: UsersDoc,
     input: CreateEmailSessionDTO,
     request: NuvixRequest,
     response: NuvixRes,
-    locale: LocaleTranslator,
-    project: ProjectsDoc,
   ) {
     const email = input.email.toLowerCase()
     const protocol = request.protocol
+    const ctx = request.context
 
-    const profile = await db.findOne('users', [Query.equal('email', [email])])
+    const profile = await this.db.findOne('users', [
+      Query.equal('email', [email]),
+    ])
 
     if (
-      !profile ||
+      profile.empty() ||
       !profile.get('passwordUpdate') ||
       !(await Auth.passwordVerify(
         input.password,
@@ -387,9 +377,9 @@ export class SessionService {
 
     user.setAll(profile.toObject())
 
-    const auths = project.get('auths', {})
+    const auths = ctx.project.get('auths', {})
     const duration = auths.duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
-    const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
+    const detector = ctx.detector(request.headers['user-agent'])
     const record = this.geodb.get(request.ip)
     const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
 
@@ -424,19 +414,19 @@ export class SessionService {
         )
         .set('hash', Auth.DEFAULT_ALGO)
         .set('hashOptions', Auth.DEFAULT_ALGO_OPTIONS)
-      await db.updateDocument('users', user.getId(), user)
+      await this.db.updateDocument('users', user.getId(), user)
     }
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     session.set('$permissions', [
       Permission.read(Role.user(user.getId())),
       Permission.update(Role.user(user.getId())),
       Permission.delete(Role.user(user.getId())),
     ])
-    const createdSession = await db.createDocument('sessions', session)
+    const createdSession = await this.db.createDocument('sessions', session)
 
-    if (!request.domainVerification) {
+    if (configuration.server.fallbackCookies) {
       response.header(
         'X-Fallback-Cookies',
         JSON.stringify({
@@ -451,21 +441,22 @@ export class SessionService {
         expires: expire,
         path: '/',
         secure: protocol === 'https',
-        domain: Auth.cookieDomain,
-        sameSite: Auth.cookieSamesite,
+        domain: ctx.cookieDomain,
+        sameSite: ctx.cookieSameSite,
         httpOnly: true,
       })
       .status(201)
 
-    const countryName = locale.getText(
-      `countries${createdSession.get('countryCode', '')?.toLowerCase()}`,
-      locale.getText('locale.country.unknown'),
-    )
+    const locale = ctx.translator()
+    const key = countryKey(createdSession.get('countryCode'))
+    const countryName = locale.has(key)
+      ? locale.getRaw(key)
+      : locale.get('locale.country.unknown')
 
     createdSession
       .set('current', true)
       .set('countryName', countryName)
-      .set('secret', Auth.encodeSession(user.getId(), secret))
+      .set('secret', secret)
 
     this.eventEmitter.emit(AppEvents.SESSION_CREATE, {
       userId: user.getId(),
@@ -476,13 +467,13 @@ export class SessionService {
       },
     })
 
-    if (project.get('auths', {}).sessionAlerts ?? false) {
-      const sessionCount = await db.count('sessions', [
-        Query.equal('userId', [user.getId()]),
-      ])
+    if (ctx.project.get('auths', {}).sessionAlerts ?? false) {
+      const sessionCount = await this.db.count('sessions', qb =>
+        qb.equal('userId', user.getId()),
+      )
 
       if (sessionCount !== 1) {
-        await this.sendSessionAlert(locale, user, project, createdSession)
+        await this.sendSessionAlert(user, createdSession, ctx)
       }
     }
 
@@ -492,24 +483,19 @@ export class SessionService {
   async createAnonymousSession({
     request,
     response,
-    locale,
     user,
-    project,
-    db,
   }: {
     request: NuvixRequest
     response: NuvixRes
-    locale: LocaleTranslator
     user: UsersDoc
-    project: ProjectsDoc
-    db: Database
   }) {
+    const ctx = request.context
     const protocol = request.protocol
-    const limit = project.get('auths', {}).limit ?? 0
-    const maxUsers = this.appConfig.appLimits.users
+    const limit = ctx.project.get('auths', {}).limit ?? 0
+    const maxUsers = configuration.limits.users
 
     if (limit !== 0) {
-      const total = await db.count('users', [], maxUsers)
+      const total = await this.db.count('users', [], maxUsers)
 
       if (total >= limit) {
         throw new Exception(Exception.USER_COUNT_EXCEEDED)
@@ -536,12 +522,12 @@ export class SessionService {
       accessedAt: new Date(),
     })
     user.delete('$sequence')
-    await Authorization.skip(() => db.createDocument('users', user))
+    await Authorization.skip(() => this.db.createDocument('users', user))
 
     // Create session token
     const duration =
-      project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
-    const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
+      ctx.project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
+    const detector = ctx.detector(request.headers['user-agent'])
     const record = this.geodb.get(request.ip)
     const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
 
@@ -568,16 +554,16 @@ export class SessionService {
       Permission.update(Role.user(user.getId())),
       Permission.delete(Role.user(user.getId())),
     ])
-    const createdSession = await db.createDocument('sessions', session)
+    const createdSession = await this.db.createDocument('sessions', session)
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     this.eventEmitter.emit(AppEvents.USER_CREATE, {
       userId: user.getId(),
       sessionId: createdSession.getId(),
     })
 
-    if (!request.domainVerification) {
+    if (configuration.server.fallbackCookies) {
       response.header(
         'X-Fallback-Cookies',
         JSON.stringify({
@@ -592,22 +578,23 @@ export class SessionService {
       .cookie(Auth.cookieName, Auth.encodeSession(user.getId(), secret), {
         expires: expire,
         path: '/',
-        domain: Auth.cookieDomain,
+        domain: ctx.cookieDomain,
         secure: protocol === 'https',
         httpOnly: true,
-        sameSite: Auth.cookieSamesite,
+        sameSite: ctx.cookieSameSite,
       })
       .status(201)
 
-    const countryName = locale.getText(
-      `countries.${createdSession.get('countryCode', '')?.toLowerCase()}`,
-      locale.getText('locale.country.unknown'),
-    )
+    const locale = ctx.translator()
+    const key = countryKey(createdSession.get('countryCode'))
+    const countryName = locale.has(key)
+      ? locale.getRaw(key)
+      : locale.get('locale.country.unknown')
 
     createdSession
       .set('current', true)
       .set('countryName', countryName)
-      .set('secret', Auth.encodeSession(user.getId(), secret))
+      .set('secret', secret)
 
     return createdSession
   }
@@ -618,29 +605,27 @@ export class SessionService {
   async createOAuth2Session({
     input,
     request,
-    response,
     provider,
-    project,
   }: {
     input: CreateOAuth2SessionDTO
     request: NuvixRequest
-    response: NuvixRes
-    project: ProjectsDoc
     provider: OAuthProviders
   }) {
+    const ctx = request.context
     const protocol = request.protocol
+
+    if (input.success) ctx.validateRedirectURL(input.success)
+    if (input.failure) ctx.validateRedirectURL(input.failure)
+
     const success = input.success || ''
     const failure = input.failure || ''
     const scopes = input.scopes || []
 
-    const callback = `${protocol}://${request.host}/v1/account/sessions/oauth2/callback/${provider}/${project.getId()}`
-    const providerInfo = this.getProviderConfig(project, provider)
+    const callback = `${protocol}://${request.host}/v1/account/sessions/oauth2/callback/${provider}`
+    const providerInfo = this.getProviderConfig(ctx.project, provider)
 
     if (!providerInfo.enabled) {
-      throw new Exception(
-        Exception.PROJECT_PROVIDER_DISABLED,
-        `This provider is disabled. Please enable the provider from your ${configuration.app.name} console to continue.`,
-      )
+      throw new Exception(Exception.PROJECT_PROVIDER_DISABLED)
     }
 
     const appId = providerInfo.appId
@@ -654,16 +639,12 @@ export class SessionService {
     }
 
     const AuthClass = await getOAuth2Class(provider)
-    const consoleDomain =
-      request.host.split('.').length === 3
-        ? `console.${request.host.split('.', 2)[1]}`
-        : request.host
     const finalSuccess =
       success ||
-      `${protocol}://${consoleDomain}${SessionService.oauthDefaultSuccess}`
+      `${protocol}://${request.host}${SessionService.oauthDefaultSuccess}`
     const finalFailure =
       failure ||
-      `${protocol}://${consoleDomain}${SessionService.oauthDefaultFailure}`
+      `${protocol}://${request.host}${SessionService.oauthDefaultFailure}`
 
     const oauth2 = new AuthClass(
       appId,
@@ -684,43 +665,44 @@ export class SessionService {
    * Handle OAuth2 Redirect.
    */
   async oAuth2Redirect({
-    db,
     user,
     input,
     provider,
     request,
     response,
-    project,
   }: {
-    db: Database
     user: UsersDoc
     input: OAuth2CallbackDTO
     provider: string
     request: NuvixRequest
     response: NuvixRes
-    project: ProjectsDoc
   }) {
+    const ctx = request.context
     const protocol = request.protocol
-    const callback = `${protocol}://${request.host}/v1/account/sessions/oauth2/callback/${provider}/${project.getId()}`
+    const callback = `${protocol}://${request.host}/v1/account/sessions/oauth2/callback/${provider}`
     const defaultState = {
-      success: project.get('url', ''),
+      success: '',
       failure: '',
     }
     const validateURL = new URLValidator()
-    const providerInfo = this.getProviderConfig(project, provider)
+    const providerInfo = this.getProviderConfig(ctx.project, provider)
+    const providerEnabled = providerInfo.enabled
     const appId = providerInfo.appId ?? ''
     const appSecret = Auth.decryptIfDefined(providerInfo.secret) ?? ''
-    const providerEnabled = providerInfo.enabled ?? false
     const AuthClass = await getOAuth2Class(provider)
     const oauth2 = new AuthClass(appId, appSecret, callback)
 
-    let state = defaultState
+    let state: {
+      success: string
+      failure: string
+      token?: string
+    } = defaultState
     if (input.state) {
       try {
         state = { ...defaultState, ...oauth2.parseState(input.state) }
       } catch (_error) {
         throw new Exception(
-          Exception.GENERAL_SERVER_ERROR,
+          Exception.GENERAL_BAD_REQUEST,
           'Failed to parse login state params as passed from OAuth2 provider',
         )
       }
@@ -821,7 +803,7 @@ export class SessionService {
     if (!user.empty()) {
       const userId = user.getId()
 
-      const identityWithMatchingEmail = await db.findOne('identities', [
+      const identityWithMatchingEmail = await this.db.findOne('identities', [
         Query.equal('providerEmail', [email]),
         Query.notEqual('userInternalId', user.getSequence()),
       ])
@@ -829,7 +811,7 @@ export class SessionService {
         return failureRedirect(Exception.USER_ALREADY_EXISTS)
       }
 
-      const userWithMatchingEmail = await db.find('users', [
+      const userWithMatchingEmail = await this.db.find('users', [
         Query.equal('email', [email]),
         Query.notEqual('$id', userId),
       ])
@@ -840,24 +822,25 @@ export class SessionService {
       sessionUpgrade = true
     }
 
-    const sessions = user.get('sessions', []) as SessionsDoc[]
-    const current = Auth.sessionVerify(sessions, Auth.secret)
-
+    const current = ctx.session?.getId()
     if (current) {
-      const currentDocument = await db.getDocument('sessions', current)
+      const currentDocument = await this.db.getDocument('sessions', current)
       if (!currentDocument.empty()) {
-        await db.deleteDocument('sessions', currentDocument.getId())
-        await db.purgeCachedDocument('users', user.getId())
+        await this.db.deleteDocument('sessions', currentDocument.getId())
+        await this.db.purgeCachedDocument('users', user.getId())
       }
     }
 
     if (user.empty()) {
-      const session = await db.findOne('sessions', [
+      const session = await this.db.findOne('sessions', [
         Query.equal('provider', [provider]),
         Query.equal('providerUid', [oauth2ID]),
       ])
       if (!session.empty()) {
-        const foundUser = await db.getDocument('users', session.get('userId'))
+        const foundUser = await this.db.getDocument(
+          'users',
+          session.get('userId'),
+        )
         user.setAll(foundUser.toObject())
       }
     }
@@ -870,7 +853,7 @@ export class SessionService {
         )
       }
 
-      const userWithEmail = await db.findOne('users', [
+      const userWithEmail = await this.db.findOne('users', [
         Query.equal('email', [email]),
       ])
       if (!userWithEmail.empty()) {
@@ -878,13 +861,13 @@ export class SessionService {
       }
 
       if (user.empty()) {
-        const identity = await db.findOne('identities', [
+        const identity = await this.db.findOne('identities', [
           Query.equal('provider', [provider]),
           Query.equal('providerUid', [oauth2ID]),
         ])
 
         if (!identity.empty()) {
-          const foundUser = await db.getDocument(
+          const foundUser = await this.db.getDocument(
             'users',
             identity.get('userId'),
           )
@@ -893,20 +876,23 @@ export class SessionService {
       }
 
       if (user.empty()) {
-        const limit = project.get('auths', {}).limit ?? 0
-        const maxUsers = this.appConfig.appLimits.users
+        const limit = ctx.project.get('auths', {}).limit ?? 0
+        const maxUsers = configuration.limits.users
 
         if (limit !== 0) {
-          const total = await db.count('users', [], maxUsers)
+          const total = await this.db.count('users', [], maxUsers)
           if (total >= limit) {
             return failureRedirect(Exception.USER_COUNT_EXCEEDED)
           }
         }
 
-        const identityWithMatchingEmail = await db.findOne('identities', [
+        const identityWithMatchingEmail = await this.db.findOne('identities', [
           Query.equal('providerEmail', [email]),
         ])
         if (!identityWithMatchingEmail.empty()) {
+          // This means an account with the same email already exists but with a different provider,
+          // we don't want to link them together automatically for security reasons,
+          // so we return an error instead of linking the new provider to the existing account
           return failureRedirect(Exception.GENERAL_BAD_REQUEST)
         }
 
@@ -935,10 +921,10 @@ export class SessionService {
           user.delete('$sequence')
 
           const userDoc = await Authorization.skip(() =>
-            db.createDocument('users', user),
+            this.db.createDocument('users', user),
           )
 
-          await db.createDocument(
+          await this.db.createDocument(
             'targets',
             new Doc({
               $permissions: [
@@ -968,22 +954,25 @@ export class SessionService {
       return failureRedirect(Exception.USER_BLOCKED)
     }
 
-    let identity = await db.findOne('identities', [
+    let identity = await this.db.findOne('identities', [
       Query.equal('userInternalId', [user.getSequence()]),
       Query.equal('provider', [provider]),
       Query.equal('providerUid', [oauth2ID]),
     ])
 
     if (identity.empty()) {
-      const identitiesWithMatchingEmail = await db.find('identities', [
+      const identitiesWithMatchingEmail = await this.db.find('identities', [
         Query.equal('providerEmail', [email]),
         Query.notEqual('userInternalId', user.getSequence()),
       ])
       if (identitiesWithMatchingEmail.length > 0) {
+        // This means an identity with the same email already exists but with a different provider,
+        // we don't want to link them together automatically for security reasons,
+        // so we return an error instead of linking the new provider to the existing account
         return failureRedirect(Exception.GENERAL_BAD_REQUEST)
       }
 
-      identity = (await db.createDocument(
+      identity = await this.db.createDocument(
         'identities',
         new Doc({
           $id: ID.unique(),
@@ -1003,7 +992,7 @@ export class SessionService {
             Date.now() + accessTokenExpiry * 1000,
           ),
         }),
-      )) as any
+      )
     } else {
       identity
         .set('providerAccessToken', accessToken)
@@ -1012,7 +1001,7 @@ export class SessionService {
           'providerAccessTokenExpiry',
           new Date(Date.now() + accessTokenExpiry * 1000),
         )
-      await db.updateDocument('identities', identity.getId(), identity)
+      await this.db.updateDocument('identities', identity.getId(), identity)
     }
 
     if (!user.get('email')) {
@@ -1024,17 +1013,17 @@ export class SessionService {
     }
 
     user.set('status', true)
-    await db.updateDocument('users', user.getId(), user)
+    await this.db.updateDocument('users', user.getId(), user)
 
     const duration =
-      project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
+      ctx.project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
     const expire = new Date(Date.now() + duration * 1000)
 
     const parsedState = new URL(state.success)
     const query = new URLSearchParams(parsedState.search)
 
     // If token param is set, return token in query string
-    if ((state as any).token) {
+    if (state.token) {
       const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_OAUTH2)
       const token = new Doc<Tokens>({
         $id: ID.unique(),
@@ -1047,7 +1036,7 @@ export class SessionService {
         ip: request.ip,
       })
 
-      await db.createDocument(
+      await this.db.createDocument(
         'tokens',
         token.set('$permissions', [
           Permission.read(Role.user(user.getId())),
@@ -1060,7 +1049,7 @@ export class SessionService {
       query.set('userId', user.getId())
     } else {
       // Create session
-      const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
+      const detector = ctx.detector(request.headers['user-agent'])
       const record = this.geodb.get(request.ip)
       const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
 
@@ -1086,7 +1075,7 @@ export class SessionService {
         ...detector.getDevice(),
       })
 
-      const createdSession = await db.createDocument(
+      const createdSession = await this.db.createDocument(
         'sessions',
         session.set('$permissions', [
           Permission.read(Role.user(user.getId())),
@@ -1095,7 +1084,7 @@ export class SessionService {
         ]),
       )
 
-      if (!request.domainVerification) {
+      if (configuration.server.fallbackCookies) {
         response.header(
           'X-Fallback-Cookies',
           JSON.stringify({
@@ -1104,9 +1093,9 @@ export class SessionService {
         )
       }
 
+      // todo: rethink...
       if (parsedState.pathname === SessionService.oauthDefaultSuccess) {
-        query.set('project', project.getId())
-        query.set('domain', Auth.cookieDomain)
+        query.set('domain', ctx.cookieDomain)
         query.set('key', Auth.cookieName)
         query.set('secret', Auth.encodeSession(user.getId(), secret))
       }
@@ -1117,10 +1106,10 @@ export class SessionService {
         {
           expires: expire,
           path: '/',
-          domain: Auth.cookieDomain,
+          domain: ctx.cookieDomain,
           secure: protocol === 'https',
           httpOnly: true,
-          sameSite: Auth.cookieSamesite,
+          sameSite: ctx.cookieSameSite,
         },
       )
 
@@ -1133,7 +1122,7 @@ export class SessionService {
           target
             .set('sessionId', createdSession.getId())
             .set('sessionInternalId', createdSession.getSequence())
-          await db.updateDocument('targets', target.getId(), target)
+          await this.db.updateDocument('targets', target.getId(), target)
         }
       }
 
@@ -1147,7 +1136,7 @@ export class SessionService {
       })
     }
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     parsedState.search = query.toString()
     const finalSuccessUrl = parsedState.toString()
@@ -1167,28 +1156,28 @@ export class SessionService {
     request,
     response,
     provider,
-    project,
   }: {
     input: CreateOAuth2TokenDTO
     request: NuvixRequest
     response: NuvixRes
     provider: OAuthProviders
-    project: ProjectsDoc
   }) {
+    const ctx = request.context
     const protocol = request.protocol
+
+    if (input.success) ctx.validateRedirectURL(input.success)
+    if (input.failure) ctx.validateRedirectURL(input.failure)
+
     const success = input.success || ''
     const failure = input.failure || ''
     const scopes = input.scopes || []
 
-    const callback = `${protocol}://${request.host}/v1/account/sessions/oauth2/callback/${provider}/${project.getId()}`
-    const providerInfo = this.getProviderConfig(project, provider)
+    const callback = `${protocol}://${request.host}/v1/account/sessions/oauth2/callback/${provider}`
+    const providerInfo = this.getProviderConfig(ctx.project, provider)
     const providerEnabled = providerInfo.enabled ?? false
 
     if (!providerEnabled) {
-      throw new Exception(
-        Exception.PROJECT_PROVIDER_DISABLED,
-        `This provider is disabled. Please enable the provider from your ${configuration.app.name} console to continue.`,
-      )
+      throw new Exception(Exception.PROJECT_PROVIDER_DISABLED)
     }
 
     const appId = providerInfo.appId
@@ -1206,16 +1195,12 @@ export class SessionService {
       throw new Exception(Exception.PROJECT_PROVIDER_UNSUPPORTED)
     }
 
-    const consoleDomain =
-      request.host.split('.').length === 3
-        ? `console.${request.host.split('.', 2)[1]}`
-        : request.host
     const finalSuccess =
       success ||
-      `${protocol}://${consoleDomain}${SessionService.oauthDefaultSuccess}`
+      `${protocol}://${request.host}${SessionService.oauthDefaultSuccess}`
     const finalFailure =
       failure ||
-      `${protocol}://${consoleDomain}${SessionService.oauthDefaultFailure}`
+      `${protocol}://${request.host}${SessionService.oauthDefaultFailure}`
 
     const oauth2 = new AuthClass(
       appId,
@@ -1240,48 +1225,46 @@ export class SessionService {
    * Create Magic-URL Token.
    */
   async createMagicURLToken({
-    db,
     user,
     input,
     request,
-    response,
-    locale,
-    project,
   }: {
-    db: Database
     user: UsersDoc
     input: CreateMagicURLTokenDTO
     request: NuvixRequest
-    response: NuvixRes
-    locale: LocaleTranslator
-    project: ProjectsDoc
   }) {
-    if (!this.appConfig.getSmtpConfig().host) {
-      throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP disabled')
+    if (!configuration.smtp.enabled()) {
+      throw new Exception(Exception.GENERAL_SMTP_DISABLED)
     }
 
+    const ctx = request.context
     const {
       userId,
       email,
       url: inputUrl = '',
       phrase: inputPhrase = false,
     } = input
+
+    if (inputUrl) ctx.validateRedirectURL(inputUrl)
+
     let url = inputUrl
-    let phrase: string
+    let phrase: string | undefined
 
     if (inputPhrase === true) {
       phrase = PhraseGenerator.generate()
     }
 
-    const result = await db.findOne('users', [Query.equal('email', [email])])
+    const result = await this.db.findOne('users', [
+      Query.equal('email', [email]),
+    ])
     if (!result.empty()) {
       user.setAll(result.toObject())
     } else {
-      const limit = project.get('auths', {}).limit ?? 0
-      const maxUsers = this.appConfig.appLimits.users
+      const limit = ctx.project.get('auths', {}).limit ?? 0
+      const maxUsers = configuration.limits.users
 
       if (limit !== 0) {
-        const total = await db.count('users', [], maxUsers)
+        const total = await this.db.count('users', [], maxUsers)
 
         if (total >= limit) {
           throw new Exception(Exception.USER_COUNT_EXCEEDED)
@@ -1289,7 +1272,7 @@ export class SessionService {
       }
 
       // Makes sure this email is not already used in another identity
-      const identityWithMatchingEmail = await db.findOne('identities', [
+      const identityWithMatchingEmail = await this.db.findOne('identities', [
         Query.equal('providerEmail', [email]),
       ])
       if (!identityWithMatchingEmail.empty()) {
@@ -1319,13 +1302,13 @@ export class SessionService {
       })
 
       user.delete('$sequence')
-      await Authorization.skip(() => db.createDocument('users', user))
+      await Authorization.skip(() => this.db.createDocument('users', user))
     }
 
     const tokenSecret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_MAGIC_URL)
     const expire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_CONFIRM * 1000)
 
-    const token = new Doc({
+    const token = new Doc<Tokens>({
       $id: ID.unique(),
       userId: user.getId(),
       userInternalId: user.getSequence(),
@@ -1338,19 +1321,17 @@ export class SessionService {
 
     Authorization.setRole(Role.user(user.getId()).toString())
 
-    const createdToken = await db.createDocument(
-      'tokens',
-      token.set('$permissions', [
-        Permission.read(Role.user(user.getId())),
-        Permission.update(Role.user(user.getId())),
-        Permission.delete(Role.user(user.getId())),
-      ]),
-    )
+    token.set('$permissions', [
+      Permission.read(Role.user(user.getId())),
+      Permission.update(Role.user(user.getId())),
+      Permission.delete(Role.user(user.getId())),
+    ])
+    const createdToken = await this.db.createDocument('tokens', token)
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     if (!url) {
-      url = `${request.protocol}://${request.host}/console/auth/magic-url`
+      url = `${request.protocol}://${request.host}${SessionService.magicAuthDefaultPath}`
     }
 
     // Parse and merge URL query parameters
@@ -1358,113 +1339,66 @@ export class SessionService {
     urlObj.searchParams.set('userId', user.getId())
     urlObj.searchParams.set('secret', tokenSecret)
     urlObj.searchParams.set('expire', expire.toISOString())
-    urlObj.searchParams.set('project', project.getId())
     url = urlObj.toString()
 
-    let subject = locale.getText('emails.magicSession.subject')
-    const customTemplate =
-      project.get('templates', {})[`email.magicSession-${locale.default}`] ?? {}
-
-    const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
+    const project = ctx.project
+    const locale = ctx.translator()
+    const detector = ctx.detector(request.headers['user-agent'])
     const agentOs = detector.getOS()
     const agentClient = detector.getClient()
     const agentDevice = detector.getDevice()
 
-    const templatePath = path.join(
-      this.appConfig.assetConfig.templates,
-      'email-magic-url.tpl',
-    )
-    const templateSource = await fs.readFile(templatePath, 'utf8')
-    const template = Template.compile(templateSource)
+    const projectName = project.get('name')
+    const payload = await this.emailHelper
+      .builder(project)
+      .to(email)
+      .withSubject(
+        locale.t('emails.magicSession.subject', { project: projectName }),
+      )
+      .usingTemplate(
+        'email-magic-url.tpl',
+        `magicSession-${locale.fallbackLocale}`,
+      )
+      .withData({
+        hello: locale.get('emails.magicSession.hello', {
+          user: user.get('name', 'User'),
+        }),
+        optionButton: locale.get('emails.magicSession.optionButton', {
+          project: projectName,
+        }),
+        buttonText: locale.get('emails.magicSession.buttonText', {
+          project: projectName,
+        }),
+        optionUrl: locale.get('emails.magicSession.optionUrl'),
+        clientInfo: locale.get('emails.magicSession.clientInfo', {
+          agentClient: agentClient.clientName || 'UNKNOWN',
+          agentDevice: agentDevice.deviceBrand || 'UNKNOWN',
+          agentOs: agentOs.osName || 'UNKNOWN',
+        }),
+        thanks: locale.get('emails.magicSession.thanks'),
+        signature: locale.get('emails.magicSession.signature', {
+          project: projectName,
+        }),
+        securityPhrase: phrase
+          ? locale.get('emails.magicSession.securityPhrase', { phrase })
+          : '',
+      })
+      .withVariables({
+        direction: locale.get('settings.direction'),
+        user: user.get('name', 'User'),
+        project: projectName,
+        redirect: url,
+      })
+      .build()
 
-    const emailData = {
-      hello: locale.getText('emails.magicSession.hello'),
-      optionButton: locale.getText('emails.magicSession.optionButton'),
-      buttonText: locale.getText('emails.magicSession.buttonText'),
-      optionUrl: locale.getText('emails.magicSession.optionUrl'),
-      clientInfo: locale.getText('emails.magicSession.clientInfo'),
-      thanks: locale.getText('emails.magicSession.thanks'),
-      signature: locale.getText('emails.magicSession.signature'),
-      securityPhrase: phrase!
-        ? locale.getText('emails.magicSession.securityPhrase')
-        : '',
-    }
-
-    let body = template(emailData)
-
-    const smtp = project.get('smtp', {}) as SmtpConfig
-    const smtpEnabled = smtp.enabled ?? false
-    const systemConfig = this.appConfig.get('system')
-
-    let senderEmail = systemConfig.emailAddress || configuration.app.emailTeam
-    let senderName =
-      systemConfig.emailName || `${configuration.app.name} Server`
-    let replyTo = ''
-
-    const smtpServer: SmtpConfig = {} as SmtpConfig
-    if (smtpEnabled) {
-      if (smtp.senderEmail) {
-        senderEmail = smtp.senderEmail
-      }
-      if (smtp.senderName) {
-        senderName = smtp.senderName
-      }
-      if (smtp.replyTo) {
-        replyTo = smtp.replyTo
-      }
-
-      smtpServer.host = smtp.host || ''
-      smtpServer.port = smtp.port
-      smtpServer.username = smtp.username || ''
-      smtpServer.password = smtp.password || ''
-      smtpServer.secure = smtp.secure ?? false
-
-      if (customTemplate) {
-        if (customTemplate.senderEmail) {
-          senderEmail = customTemplate.senderEmail
-        }
-        if (customTemplate.senderName) {
-          senderName = customTemplate.senderName
-        }
-        if (customTemplate.replyTo) {
-          replyTo = customTemplate.replyTo
-        }
-
-        body = customTemplate.message || body
-        subject = customTemplate.subject || subject
-      }
-
-      smtpServer.replyTo = replyTo
-      smtpServer.senderEmail = senderEmail
-      smtpServer.senderName = senderName
-    }
-
-    const emailVariables = {
-      direction: locale.getText('settings.direction'),
-      user: user.get('name'),
-      project: project.get('name'),
-      redirect: url,
-      agentDevice: agentDevice.deviceBrand || 'UNKNOWN',
-      agentClient: agentClient.clientName || 'UNKNOWN',
-      agentOs: agentOs.osName || 'UNKNOWN',
-      phrase: phrase! || '',
-    }
-
-    await this.mailsQueue.add(MailJob.SEND_EMAIL, {
-      email,
-      subject,
-      body,
-      server: smtpServer,
-      variables: emailVariables,
-    })
+    await this.mailsQueue.add(MailJob.SEND_EMAIL, payload)
 
     createdToken.set('secret', tokenSecret)
 
-    if (phrase!) {
+    if (phrase) {
       createdToken.set('phrase', phrase)
     }
 
-    response.status(201)
     return createdToken
   }
 
@@ -1472,42 +1406,37 @@ export class SessionService {
    * Create Email Token.
    */
   async createEmailToken({
-    db,
     user,
     input,
     request,
-    response,
-    locale,
-    project,
   }: {
-    db: Database
     user: UsersDoc
     input: CreateEmailTokenDTO
     request: NuvixRequest
-    response: NuvixRes
-    locale: LocaleTranslator
-    project: ProjectsDoc
   }) {
-    if (!this.appConfig.getSmtpConfig().host) {
-      throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP disabled')
+    if (!configuration.smtp.enabled()) {
+      throw new Exception(Exception.GENERAL_SMTP_DISABLED)
     }
 
+    const ctx = request.context
     const { userId, email, phrase: inputPhrase = false } = input
-    let phrase: string
+    let phrase: string | undefined
 
     if (inputPhrase === true) {
       phrase = PhraseGenerator.generate()
     }
 
-    const result = await db.findOne('users', [Query.equal('email', [email])])
+    const result = await this.db.findOne('users', [
+      Query.equal('email', [email]),
+    ])
     if (!result.empty()) {
       user.setAll(result.toObject())
     } else {
-      const limit = project.get('auths', {}).limit ?? 0
-      const maxUsers = this.appConfig.appLimits.users
+      const limit = ctx.project.get('auths', {}).limit ?? 0
+      const maxUsers = configuration.limits.users
 
       if (limit !== 0) {
-        const total = await db.count('users', [], maxUsers)
+        const total = await this.db.count('users', [], maxUsers)
 
         if (total >= limit) {
           throw new Exception(Exception.USER_COUNT_EXCEEDED)
@@ -1515,7 +1444,7 @@ export class SessionService {
       }
 
       // Makes sure this email is not already used in another identity
-      const identityWithMatchingEmail = await db.findOne('identities', [
+      const identityWithMatchingEmail = await this.db.findOne('identities', [
         Query.equal('providerEmail', [email]),
       ])
       if (!identityWithMatchingEmail.empty()) {
@@ -1544,13 +1473,13 @@ export class SessionService {
       })
 
       user.delete('$sequence')
-      await Authorization.skip(() => db.createDocument('users', user))
+      await Authorization.skip(() => this.db.createDocument('users', user))
     }
 
     const tokenSecret = Auth.codeGenerator(6)
     const expire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_OTP * 1000)
 
-    const token = new Doc({
+    const token = new Doc<Tokens>({
       $id: ID.unique(),
       userId: user.getId(),
       userInternalId: user.getSequence(),
@@ -1563,7 +1492,7 @@ export class SessionService {
 
     Authorization.setRole(Role.user(user.getId()).toString())
 
-    const createdToken = await db.createDocument(
+    const createdToken = await this.db.createDocument(
       'tokens',
       token.set('$permissions', [
         Permission.read(Role.user(user.getId())),
@@ -1572,111 +1501,59 @@ export class SessionService {
       ]),
     )
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
-    let subject = locale.getText('emails.otpSession.subject')
-    const customTemplate =
-      project.get('templates', {})[`email.otpSession-${locale.default}`] ?? {}
-
-    const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
+    const locale = ctx.translator()
+    const project = ctx.project
+    const detector = ctx.detector(request.headers['user-agent'])
     const agentOs = detector.getOS()
     const agentClient = detector.getClient()
     const agentDevice = detector.getDevice()
 
-    const templatePath = path.join(
-      this.appConfig.assetConfig.templates,
-      'email-otp.tpl',
-    )
-    const templateSource = await fs.readFile(templatePath, 'utf8')
-    const template = Template.compile(templateSource)
+    const projectName = project.get('name')
+    const payload = await this.emailHelper
+      .builder(project)
+      .to(email)
+      .usingTemplate('email-otp.tpl', `otpSession-${locale.fallbackLocale}`)
+      .withSubject(
+        locale.t('emails.otpSession.subject', { project: projectName }),
+      )
+      .withData({
+        hello: locale.t('emails.otpSession.hello', {
+          user: user.get('name', 'User'),
+        }),
+        description: locale.t('emails.otpSession.description', {
+          project: projectName,
+        }),
+        clientInfo: locale.t('emails.otpSession.clientInfo', {
+          agentClient: agentClient.clientName || 'UNKNOWN',
+          agentDevice: agentDevice.deviceBrand || 'UNKNOWN',
+          agentOs: agentOs.osName || 'UNKNOWN',
+        }),
+        thanks: locale.t('emails.otpSession.thanks'),
+        signature: locale.t('emails.otpSession.signature', {
+          project: projectName,
+        }),
+        securityPhrase: phrase
+          ? locale.t('emails.otpSession.securityPhrase', { phrase })
+          : '',
+      })
+      .withVariables({
+        direction: locale.t('settings.direction'),
+        user: user.get('name'),
+        project: project.get('name'),
+        otp: tokenSecret,
+      })
+      .build()
 
-    const emailData = {
-      hello: locale.getText('emails.otpSession.hello'),
-      description: locale.getText('emails.otpSession.description'),
-      clientInfo: locale.getText('emails.otpSession.clientInfo'),
-      thanks: locale.getText('emails.otpSession.thanks'),
-      signature: locale.getText('emails.otpSession.signature'),
-      securityPhrase: phrase!
-        ? locale.getText('emails.otpSession.securityPhrase')
-        : '',
-    }
-
-    let body = template(emailData)
-
-    const smtp = project.get('smtp', {}) as SmtpConfig
-    const smtpEnabled = smtp.enabled ?? false
-    const systemConfig = this.appConfig.get('system')
-
-    let senderEmail = systemConfig.emailAddress || configuration.app.emailTeam
-    let senderName =
-      systemConfig.emailName || `${configuration.app.name} Server`
-    let replyTo = ''
-
-    const smtpServer: any = {}
-
-    if (smtpEnabled) {
-      if (smtp.senderEmail) {
-        senderEmail = smtp.senderEmail
-      }
-      if (smtp.senderName) {
-        senderName = smtp.senderName
-      }
-      if (smtp.replyTo) {
-        replyTo = smtp.replyTo
-      }
-
-      smtpServer.host = smtp.host || ''
-      smtpServer.port = smtp.port || ''
-      smtpServer.username = smtp.username || ''
-      smtpServer.password = smtp.password || ''
-      smtpServer.secure = smtp.secure ?? false
-
-      if (customTemplate) {
-        if (customTemplate.senderEmail) {
-          senderEmail = customTemplate.senderEmail
-        }
-        if (customTemplate.senderName) {
-          senderName = customTemplate.senderName
-        }
-        if (customTemplate.replyTo) {
-          replyTo = customTemplate.replyTo
-        }
-
-        body = customTemplate.message || body
-        subject = customTemplate.subject || subject
-      }
-
-      smtpServer.replyTo = replyTo
-      smtpServer.senderEmail = senderEmail
-      smtpServer.senderName = senderName
-    }
-
-    const emailVariables = {
-      direction: locale.getText('settings.direction'),
-      user: user.get('name'),
-      project: project.get('name'),
-      otp: tokenSecret,
-      agentDevice: agentDevice.deviceBrand || 'UNKNOWN',
-      agentClient: agentClient.clientName || 'UNKNOWN',
-      agentOs: agentOs.osName || 'UNKNOWN',
-      phrase: phrase! || '',
-    }
-
-    await this.mailsQueue.add(MailJob.SEND_EMAIL, {
-      email,
-      subject,
-      body,
-      server: smtpServer,
-      variables: emailVariables,
-    })
+    await this.mailsQueue.add(MailJob.SEND_EMAIL, payload)
 
     createdToken.set('secret', tokenSecret)
 
-    if (phrase!) {
+    if (phrase) {
       createdToken.set('phrase', phrase)
     }
 
-    response.status(201)
     return createdToken
   }
 
@@ -1684,41 +1561,33 @@ export class SessionService {
    * Create Phone Token.
    */
   async createPhoneToken({
-    db,
     user,
     input,
     request,
-    response,
-    locale,
-    project,
   }: {
-    db: Database
     user: UsersDoc
     input: CreatePhoneTokenDTO
     request: NuvixRequest
-    response: NuvixRes
-    locale: LocaleTranslator
-    project: ProjectsDoc
   }) {
     // Check if SMS provider is configured
-    if (!this.appConfig.get('sms').enabled) {
-      throw new Exception(
-        Exception.GENERAL_PHONE_DISABLED,
-        'Phone provider not configured',
-      )
+    if (!configuration.sms.enabled) {
+      throw new Exception(Exception.GENERAL_PHONE_DISABLED)
     }
 
+    const ctx = request.context
     const { userId, phone } = input
-    const result = await db.findOne('users', [Query.equal('phone', [phone])])
+    const result = await this.db.findOne('users', [
+      Query.equal('phone', [phone]),
+    ])
 
     if (!result.empty()) {
       user.setAll(result.toObject())
     } else {
-      const limit = project.get('auths', {}).limit ?? 0
-      const maxUsers = this.appConfig.appLimits.users
+      const limit = ctx.project.get('auths', {}).limit ?? 0
+      const maxUsers = configuration.limits.users
 
       if (limit !== 0) {
-        const total = await db.count('users', [], maxUsers)
+        const total = await this.db.count('users', [], maxUsers)
 
         if (total >= limit) {
           throw new Exception(Exception.USER_COUNT_EXCEEDED)
@@ -1745,11 +1614,11 @@ export class SessionService {
       })
 
       user.delete('$sequence')
-      await Authorization.skip(() => db.createDocument('users', user))
+      await Authorization.skip(() => this.db.createDocument('users', user))
 
       try {
         const target = await Authorization.skip(() =>
-          db.createDocument(
+          this.db.createDocument(
             'targets',
             new Doc({
               $permissions: [
@@ -1767,7 +1636,7 @@ export class SessionService {
         user.set('targets', [...user.get('targets', []), target])
       } catch (error) {
         if (error instanceof DuplicateException) {
-          const existingTarget = await db.findOne('targets', [
+          const existingTarget = await this.db.findOne('targets', [
             Query.equal('identifier', [phone]),
           ])
           if (existingTarget && !existingTarget.empty()) {
@@ -1775,12 +1644,12 @@ export class SessionService {
           }
         }
       }
-      await db.purgeCachedDocument('users', user.getId())
+      await this.db.purgeCachedDocument('users', user.getId())
     }
 
     let secret: string | null = null
     let sendSMS = true
-    const mockNumbers = project.get('auths', {}).mockNumbers ?? []
+    const mockNumbers = ctx.project.get('auths', {}).mockNumbers ?? []
 
     for (const mockNumber of mockNumbers) {
       if (mockNumber.phone === phone) {
@@ -1806,7 +1675,7 @@ export class SessionService {
 
     Authorization.setRole(Role.user(user.getId()).toString())
 
-    const createdToken = await db.createDocument(
+    const createdToken = await this.db.createDocument(
       'tokens',
       token.set('$permissions', [
         Permission.read(Role.user(user.getId())),
@@ -1814,19 +1683,22 @@ export class SessionService {
         Permission.delete(Role.user(user.getId())),
       ]),
     )
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     if (sendSMS) {
+      const locale = ctx.translator()
       const customTemplate =
-        project.get('templates', {})[`sms.login-${locale.default}`] ?? {}
+        ctx.project.get('templates', {})[
+          `sms.login-${locale.fallbackLocale}`
+        ] ?? {}
 
-      let message = locale.getText('sms.verification.body')
+      let message = locale.get('sms.verification.body', { secret })
       if (customTemplate?.message) {
         message = customTemplate.message
       }
 
       const messageContent = message
-        .replace('{{project}}', project.get('name'))
+        .replace('{{project}}', ctx.project.get('name'))
         .replace('{{secret}}', secret)
 
       await this.messagingQueue.add(MessagingJob.INTERNAL, {
@@ -1839,25 +1711,16 @@ export class SessionService {
       })
     }
 
-    createdToken.set('secret', Auth.encodeSession(user.getId(), secret))
+    createdToken.set('secret', secret)
 
-    response.status(201)
     return createdToken
   }
 
   /**
    * Create JWT
    */
-  async createJWT(user: UsersDoc, response: NuvixRes) {
-    const sessions = user.get('sessions', []) as SessionsDoc[]
-    let current = new Doc<Sessions>()
-
-    for (const session of sessions) {
-      if (session.get('secret') === Auth.hash(Auth.secret)) {
-        current = session
-        break
-      }
-    }
+  async createJWT(user: UsersDoc, ctx: RequestContext) {
+    const current = ctx.session ?? new Doc()
 
     if (current.empty()) {
       throw new Exception(Exception.USER_SESSION_NOT_FOUND)
@@ -1872,7 +1735,6 @@ export class SessionService {
       expiresIn: '15m', // 900 seconds
     })
 
-    response.status(201)
     return new Doc({ jwt })
   }
 
@@ -1880,110 +1742,65 @@ export class SessionService {
    * Send Session Alert.
    */
   async sendSessionAlert(
-    locale: LocaleTranslator,
     user: UsersDoc,
-    project: ProjectsDoc,
     session: SessionsDoc,
+    ctx: RequestContext,
   ) {
-    let subject: string = locale.getText('emails.sessionAlert.subject')
-    const customTemplate =
-      project.get('templates', {})?.[`email.sessionAlert-${locale.default}`] ??
-      {}
-    const templatePath = path.join(
-      this.appConfig.assetConfig.templates,
-      'email-session-alert.tpl',
-    )
-    const templateSource = await fs.readFile(templatePath, 'utf8')
-    const template = Template.compile(templateSource)
+    const project = ctx.project
+    const locale = ctx.translator()
+    const projectName = project.get('name')
+    const key = countryKey(session.get('countryCode'))
+    const country = (
+      locale.has(key) ? locale.getRaw(key) : locale.t('locale.country.unknown')
+    ) as string
 
-    const emailData = {
-      hello: locale.getText('emails.sessionAlert.hello'),
-      body: locale.getText('emails.sessionAlert.body'),
-      listDevice: locale.getText('emails.sessionAlert.listDevice'),
-      listIpAddress: locale.getText('emails.sessionAlert.listIpAddress'),
-      listCountry: locale.getText('emails.sessionAlert.listCountry'),
-      footer: locale.getText('emails.sessionAlert.footer'),
-      thanks: locale.getText('emails.sessionAlert.thanks'),
-      signature: locale.getText('emails.sessionAlert.signature'),
-    }
+    const payload = await this.emailHelper
+      .builder(project)
+      .to(user.get('email'))
+      .usingTemplate(
+        'email-session-alert.tpl',
+        `sessionAlert-${locale.fallbackLocale}`,
+      )
+      .withSubject(
+        locale.t('emails.sessionAlert.subject', { project: projectName }),
+      )
+      .withData({
+        hello: locale.t('emails.sessionAlert.hello', {
+          user: user.get('name', 'User'),
+        }),
+        body: locale.t('emails.sessionAlert.body', {
+          project: projectName,
+          date: new Date().toLocaleDateString(locale.fallbackLocale, {
+            month: 'long',
+            day: 'numeric',
+            year: 'numeric',
+          }),
+          time: new Date().toLocaleTimeString(locale.fallbackLocale),
+          year: new Date().getFullYear().toString(),
+        }),
+        listDevice: locale.t('emails.sessionAlert.listDevice', {
+          device: session.get('clientName'),
+        }),
+        listIpAddress: locale.t('emails.sessionAlert.listIpAddress', {
+          ipAddress: session.get('ip'),
+        }),
+        listCountry: locale.t('emails.sessionAlert.listCountry', {
+          country,
+        }),
+        footer: locale.t('emails.sessionAlert.footer'),
+        thanks: locale.t('emails.sessionAlert.thanks'),
+        signature: locale.t('emails.sessionAlert.signature', {
+          project: projectName,
+        }),
+      })
+      .withVariables({
+        direction: locale.t('settings.direction'),
+        user: user.get('name', 'User'),
+        project: projectName,
+      })
+      .build()
 
-    const emailVariables = {
-      direction: locale.getText('settings.direction'),
-      date: new Date().toLocaleDateString(locale.default, {
-        month: 'long',
-        day: 'numeric',
-      }),
-      year: new Date().getFullYear(),
-      time: new Date().toLocaleTimeString(locale.default),
-      user: user.get('name'),
-      project: project.get('name'),
-      device: session.get('clientName'),
-      ipAddress: session.get('ip'),
-      country: locale.getText(
-        `countries.${session.get('countryCode')}`,
-        locale.getText('locale.country.unknown'),
-      ),
-    }
-
-    const smtpServer: SmtpConfig = {} as SmtpConfig
-
-    let body = template(emailData)
-
-    const smtp = project.get('smtp', {}) as SmtpConfig
-    const smtpEnabled = smtp.enabled ?? false
-    const systemConfig = this.appConfig.get('system')
-
-    let senderEmail = systemConfig.emailAddress || configuration.app.emailTeam
-    let senderName =
-      systemConfig.emailName || `${configuration.app.name} Server`
-    let replyTo = ''
-
-    if (smtpEnabled) {
-      if (smtp.senderEmail) {
-        senderEmail = smtp.senderEmail
-      }
-      if (smtp.senderName) {
-        senderName = smtp.senderName
-      }
-      if (smtp.replyTo) {
-        replyTo = smtp.replyTo
-      }
-
-      smtpServer.host = smtp.host
-      smtpServer.port = smtp.port
-      smtpServer.username = smtp.username
-      smtpServer.password = smtp.password
-      smtpServer.secure = smtp.secure ?? false
-
-      if (customTemplate) {
-        if (customTemplate.senderEmail) {
-          senderEmail = customTemplate.senderEmail
-        }
-        if (customTemplate.senderName) {
-          senderName = customTemplate.senderName
-        }
-        if (customTemplate.replyTo) {
-          replyTo = customTemplate.replyTo
-        }
-
-        body = customTemplate.message || body
-        subject = customTemplate.subject || subject
-      }
-
-      smtpServer.replyTo = replyTo
-      smtpServer.senderEmail = senderEmail
-      smtpServer.senderName = senderName
-    }
-
-    const email = user.get('email')
-
-    await this.mailsQueue.add(MailJob.SEND_EMAIL, {
-      email,
-      subject,
-      body,
-      server: smtpServer,
-      variables: emailVariables,
-    })
+    await this.mailsQueue.add(MailJob.SEND_EMAIL, payload)
   }
 
   /**
@@ -1994,20 +1811,14 @@ export class SessionService {
     input,
     request,
     response,
-    locale,
-    project,
-    db,
   }: {
     user: UsersDoc
     input: CreateSessionDTO
     request: NuvixRequest
     response: NuvixRes
-    locale: LocaleTranslator
-    project: ProjectsDoc
-    db: Database
   }) {
     const userFromRequest = await Authorization.skip(() =>
-      db.getDocument('users', input.userId),
+      this.db.getDocument('users', input.userId),
     )
 
     if (userFromRequest.empty()) {
@@ -2026,9 +1837,11 @@ export class SessionService {
 
     user.setAll(userFromRequest.toObject())
 
+    const ctx = request.context
+
     const duration =
-      project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
-    const detector = new Detector(request.headers['user-agent'] || 'UNKNOWN')
+      ctx.project.get('auths', {}).duration ?? Auth.TOKEN_EXPIRATION_LOGIN_LONG
+    const detector = ctx.detector(request.headers['user-agent'])
     const record = this.geodb.get(request.ip)
     const sessionSecret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
 
@@ -2074,12 +1887,12 @@ export class SessionService {
       Permission.update(Role.user(user.getId())),
       Permission.delete(Role.user(user.getId())),
     ])
-    const createdSession = await db.createDocument('sessions', session)
+    const createdSession = await this.db.createDocument('sessions', session)
 
     await Authorization.skip(() =>
-      db.deleteDocument('tokens', verifiedToken.getId()),
+      this.db.deleteDocument('tokens', verifiedToken.getId()),
     )
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     // Magic URL + Email OTP
     if (tokenType === TokenType.MAGIC_URL || tokenType === TokenType.EMAIL) {
@@ -2091,7 +1904,7 @@ export class SessionService {
     }
 
     try {
-      await db.updateDocument('users', user.getId(), user)
+      await this.db.updateDocument('users', user.getId(), user)
     } catch (_error) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
@@ -2103,9 +1916,9 @@ export class SessionService {
       tokenType !== TokenType.MAGIC_URL && tokenType !== TokenType.EMAIL
     const hasUserEmail = user.get('email', false) !== false
     const isSessionAlertsEnabled =
-      project.get('auths', {}).sessionAlerts ?? false
+      ctx.project.get('auths', {}).sessionAlerts ?? false
 
-    const sessionCount = await db.count('sessions', [
+    const sessionCount = await this.db.count('sessions', [
       Query.equal('userId', [user.getId()]),
     ])
     const isNotFirstSession = sessionCount !== 1
@@ -2116,19 +1929,19 @@ export class SessionService {
       isSessionAlertsEnabled &&
       isNotFirstSession
     ) {
-      await this.sendSessionAlert(locale, user, project, createdSession)
+      await this.sendSessionAlert(user, createdSession, ctx)
     }
 
-    await this.eventEmitter.emit(AppEvents.SESSION_CREATE, {
-      userId: user.getId(),
-      sessionId: createdSession.getId(),
-      payload: {
-        data: createdSession,
-        type: Models.SESSION,
-      },
-    })
+    // await this.eventEmitter.emitAsync(AppEvents.SESSION_CREATE, {
+    //   userId: user.getId(),
+    //   sessionId: createdSession.getId(),
+    //   payload: {
+    //     data: createdSession,
+    //     type: Models.SESSION,
+    //   },
+    // })
 
-    if (!request.domainVerification) {
+    if (configuration.server.fallbackCookies) {
       response.header(
         'X-Fallback-Cookies',
         JSON.stringify({
@@ -2147,24 +1960,25 @@ export class SessionService {
         {
           expires: expire,
           path: '/',
-          domain: Auth.cookieDomain,
+          domain: ctx.cookieDomain,
           secure: protocol === 'https',
           httpOnly: true,
-          sameSite: Auth.cookieSamesite,
+          sameSite: ctx.cookieSameSite,
         },
       )
       .status(201)
 
-    const countryName = locale.getText(
-      `countries.${createdSession.get('countryCode', '')?.toLowerCase()}`,
-      locale.getText('locale.country.unknown'),
-    )
+    const locale = ctx.translator()
+    const key = countryKey(createdSession.get('countryCode'))
+    const countryName = locale.has(key)
+      ? locale.getRaw(key)
+      : locale.t('locale.country.unknown')
 
     createdSession
       .set('current', true)
       .set('countryName', countryName)
       .set('expire', expire.toISOString())
-      .set('secret', Auth.encodeSession(user.getId(), sessionSecret))
+      .set('secret', sessionSecret)
 
     return createdSession
   }
@@ -2180,3 +1994,6 @@ export class SessionService {
     return _provider
   }
 }
+
+const countryKey = (code?: string | null) =>
+  `countries.${(code || '').toLowerCase()}`

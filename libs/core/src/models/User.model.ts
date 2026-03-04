@@ -1,6 +1,5 @@
 import { Exclude, Expose, Type } from 'class-transformer'
 import { BaseModel } from './base.model'
-
 import { TargetModel } from './Target.model'
 
 type Preferences = {
@@ -20,7 +19,7 @@ export class UserModel extends BaseModel {
   /**
    * Password hashing algorithm.
    */
-  @Expose() hash?: string = ''
+  @Expose() hash?: string
   /**
    * Password hashing algorithm configuration.
    */
@@ -48,7 +47,7 @@ export class UserModel extends BaseModel {
   /**
    * User phone number in E.164 format.
    */
-  @Expose() phone = ''
+  @Expose() phone: string | null = null
   /**
    * Email verification status.
    */
@@ -78,23 +77,6 @@ export class UserModel extends BaseModel {
 
   constructor(partial: Partial<UserModel | any>) {
     super()
-    Object.assign(this, partial)
-  }
-}
-
-export class UsersListModel {
-  /**
-   * Total number of Users.
-   */
-  total = 0
-
-  /**
-   * List of users.
-   */
-  @Type(() => UserModel)
-  users: UserModel[] = []
-
-  constructor(partial: Partial<UsersListModel>) {
     Object.assign(this, partial)
   }
 }

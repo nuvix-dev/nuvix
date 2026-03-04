@@ -44,7 +44,7 @@ export class ProjectService {
     private coreService: CoreService,
     private readonly jwtService: JwtService,
   ) {
-    this.db = this.coreService.getPlatformDb()
+    this.db = this.coreService.getInternalDatabase()
   }
 
   /**

@@ -46,7 +46,7 @@ export class PlatformsController {
 
   @Post('', {
     summary: 'Create platform',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PLATFORM,
     sdk: {
       name: 'createPlatform',
@@ -77,7 +77,7 @@ export class PlatformsController {
 
   @Put(':platformId', {
     summary: 'Update platform',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     model: Models.PLATFORM,
     sdk: {
       name: 'updatePlatform',
@@ -93,7 +93,7 @@ export class PlatformsController {
 
   @Delete(':platformId', {
     summary: 'Delete platform',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     sdk: {
       name: 'deletePlatform',
       descMd: '/docs/references/projects/delete-platform.md',

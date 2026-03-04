@@ -1,5 +1,5 @@
 import { Controller, Get, UseInterceptors } from '@nestjs/common'
-import { Public, ResponseInterceptor } from '@nuvix/core/resolvers'
+import { ResponseInterceptor } from '@nuvix/core/resolvers'
 import { AppService } from './app.service'
 
 @Controller()
@@ -8,7 +8,6 @@ export class AppController {
   constructor(readonly _appService: AppService) {}
 
   @Get()
-  @Public()
   main() {
     return {
       version: '1.0.0',
@@ -17,7 +16,6 @@ export class AppController {
   }
 
   @Get('health')
-  @Public()
   health() {
     return {
       status: 'ok',

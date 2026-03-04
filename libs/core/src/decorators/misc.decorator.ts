@@ -27,3 +27,5 @@ export const Auth = Reflector.createDecorator<AuthType | AuthType[]>()
 export const CurrentSchemaType = Reflector.createDecorator<
   SchemaType | SchemaType[]
 >()
+
+export const Sensitive = Reflector.createDecorator<string[]>()

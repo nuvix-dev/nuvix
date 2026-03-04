@@ -1,11 +1,21 @@
 import { createParamDecorator, ExecutionContext } from '@nestjs/common'
-import { Context } from '@nuvix/utils'
 import { UsersDoc } from '@nuvix/utils/types'
+import { CoreService } from '../core.service'
+import { Doc } from '@nuvix/db'
 
 export const User = createParamDecorator<any, UsersDoc | null>(
   (_data: unknown, ctx: ExecutionContext): UsersDoc => {
     const request: NuvixRequest = ctx.switchToHttp().getRequest()
+    const { context } = request
 
-    return request[Context.User]
+    if (CoreService.isConsole()) {
+      return context.user
+    }
+
+    if (!context.isAdminUser) {
+      return context.user
+    }
+
+    return new Doc()
   },
 )

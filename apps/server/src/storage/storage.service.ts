@@ -21,16 +21,20 @@ import {
   QueueFor,
 } from '@nuvix/utils'
 import collections from '@nuvix/utils/collections'
-import { ProjectsDoc } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
 import { CreateBucketDTO, UpdateBucketDTO } from './DTO/bucket.dto'
+import { CoreService } from '@nuvix/core/core.service'
 
 @Injectable()
 export class StorageService {
+  private readonly db: Database
   constructor(
+    private readonly coreService: CoreService,
     @InjectQueue(QueueFor.DELETES)
     private readonly deletesQueue: Queue<DeletesJobData, unknown, DeleteType>,
-  ) {}
+  ) {
+    this.db = this.coreService.getDatabase()
+  }
 
   private getCollectionName(s: number) {
     return `bucket_${s}`
@@ -39,15 +43,15 @@ export class StorageService {
   /**
    * Get buckets.
    */
-  async getBuckets(db: Database, queries: Query[] = [], search?: string) {
+  async getBuckets(queries: Query[] = [], search?: string) {
     if (search) {
       queries.push(Query.search('search', search))
     }
     const filterQueries = Query.groupByType(queries).filters
 
     return {
-      data: await db.find('buckets', queries),
-      total: await db.count(
+      data: await this.db.find('buckets', queries),
+      total: await this.db.count(
         'buckets',
         filterQueries,
         configuration.limits.limitCount,
@@ -58,10 +62,11 @@ export class StorageService {
   /**
    * Create bucket.
    */
-  async createBucket(
-    db: Database,
-    { bucketId, permissions: _perms, ...data }: CreateBucketDTO,
-  ) {
+  async createBucket({
+    bucketId,
+    permissions: _perms,
+    ...data
+  }: CreateBucketDTO) {
     bucketId = bucketId === 'unique()' ? ID.unique() : bucketId
     const permissions = Permission.aggregate(_perms ?? [])
 
@@ -79,7 +84,7 @@ export class StorageService {
       )
       const indexes = filesCollection.indexes?.map(index => new Doc(index))
 
-      await db.createDocument(
+      await this.db.createDocument(
         'buckets',
         new Doc({
           $id: bucketId,
@@ -97,8 +102,8 @@ export class StorageService {
         }),
       )
 
-      const bucket = await db.getDocument('buckets', bucketId)
-      await db.createCollection({
+      const bucket = await this.db.getDocument('buckets', bucketId)
+      await this.db.createCollection({
         id: this.getCollectionName(bucket.getSequence()),
         attributes,
         indexes,
@@ -118,8 +123,8 @@ export class StorageService {
   /**
    * Get a bucket.
    */
-  async getBucket(db: Database, id: string) {
-    const bucket = await db.getDocument('buckets', id)
+  async getBucket(id: string) {
+    const bucket = await this.db.getDocument('buckets', id)
 
     if (bucket.empty()) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
@@ -131,8 +136,8 @@ export class StorageService {
   /**
    * Update a bucket.
    */
-  async updateBucket(db: Database, id: string, input: UpdateBucketDTO) {
-    const bucket = await db.getDocument('buckets', id)
+  async updateBucket(id: string, input: UpdateBucketDTO) {
+    const bucket = await this.db.getDocument('buckets', id)
 
     if (bucket.empty()) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
@@ -150,7 +155,7 @@ export class StorageService {
     const encryption = input.encryption ?? bucket.get('encryption', true)
     const antivirus = input.antivirus ?? bucket.get('antivirus', true)
 
-    const updatedBucket = await db.updateDocument(
+    const updatedBucket = await this.db.updateDocument(
       'buckets',
       id,
       bucket
@@ -168,7 +173,7 @@ export class StorageService {
         .set('antivirus', antivirus),
     )
 
-    await db.updateCollection({
+    await this.db.updateCollection({
       id: this.getCollectionName(bucket.getSequence()),
       permissions,
       documentSecurity: input.fileSecurity ?? bucket.get('fileSecurity', false),
@@ -180,14 +185,14 @@ export class StorageService {
   /**
    * Delete a bucket.
    */
-  async deleteBucket(db: Database, id: string, project: ProjectsDoc) {
-    const bucket = await db.getDocument('buckets', id)
+  async deleteBucket(id: string) {
+    const bucket = await this.db.getDocument('buckets', id)
 
     if (bucket.empty()) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
     }
 
-    if (!(await db.deleteDocument('buckets', id))) {
+    if (!(await this.db.deleteDocument('buckets', id))) {
       throw new Exception(
         Exception.GENERAL_SERVER_ERROR,
         'Failed to remove bucket from DB',
@@ -196,7 +201,6 @@ export class StorageService {
 
     await this.deletesQueue.add(DeleteType.DOCUMENT, {
       document: bucket.clone(),
-      project,
     })
 
     return
@@ -205,7 +209,7 @@ export class StorageService {
   /**
    * Get Storage Usage.
    */
-  async getStorageUsage(db: Database, range = '7d') {
+  async getStorageUsage(range = '7d') {
     const periods = usageConfig
 
     const stats: Record<string, any> = {}
@@ -219,12 +223,12 @@ export class StorageService {
 
     await Authorization.skip(async () => {
       for (const metric of metrics) {
-        const result = await db.findOne('stats', qb =>
+        const result = await this.db.findOne('stats', qb =>
           qb.equal('metric', metric).equal('period', MetricPeriod.INF),
         )
 
         stats[metric] = { total: result.get('value') ?? 0, data: {} }
-        const results = await db.find('stats', qb =>
+        const results = await this.db.find('stats', qb =>
           qb
             .equal('metric', metric)
             .equal('period', days.period)
@@ -276,8 +280,8 @@ export class StorageService {
   /**
    * Get Storage Usage of bucket.
    */
-  async getBucketStorageUsage(db: Database, bucketId: string, range = '7d') {
-    const bucket = await db.getDocument('buckets', bucketId)
+  async getBucketStorageUsage(bucketId: string, range = '7d') {
+    const bucket = await this.db.getDocument('buckets', bucketId)
 
     if (bucket.empty()) {
       throw new Exception(Exception.STORAGE_BUCKET_NOT_FOUND)
@@ -301,12 +305,12 @@ export class StorageService {
 
     await Authorization.skip(async () => {
       for (const metric of metrics) {
-        const result = await db.findOne('stats', qb =>
+        const result = await this.db.findOne('stats', qb =>
           qb.equal('metric', metric).equal('period', MetricPeriod.INF),
         )
 
         stats[metric] = { total: result.get('value') ?? 0, data: {} }
-        const results = await db.find('stats', qb =>
+        const results = await this.db.find('stats', qb =>
           qb
             .equal('metric', metric)
             .equal('period', days.period)

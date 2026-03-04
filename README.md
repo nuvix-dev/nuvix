@@ -1,13 +1,6 @@
-> ⚠️ **Important Security Notice**
-> 
-> This project currently contains critical security vulnerabilities.  
-> **Do not deploy or use in production or any sensitive environment** until these issues have been resolved and an official update is released.
-> 
-> We are actively addressing these issues and will publish updates as soon as they become available.
-
 <div align="center">
 
-<img src="https://github.com/nuvix-dev/console/raw/main/apps/www/public/images/dashboard/hero_dark.png" width="100%" alt="Nuvix" />
+<img src="https://raw.githubusercontent.com/nuvix-dev/console/main/apps/www/public/images/dashboard/hero_dark.png" width="100%" alt="Nuvix" />
 
 # Nuvix
 
@@ -15,12 +8,7 @@
 
 Auth. Database. Storage. Messaging. One platform. Self-host anywhere.
 
-[![License](https://img.shields.io/badge/License-FSL%201.1%20Apache%202.0-blue.svg)](LICENSE)
-[![Discord](https://img.shields.io/badge/Discord-Join%20Community-5865F2?logo=discord&logoColor=white)](https://discord.gg/2fWv2T6RzK)
-[![X](https://img.shields.io/badge/Follow-@__nuvix-000?logo=x)](https://x.com/_nuvix)
-[![Docs](https://img.shields.io/badge/Docs-docs.nuvix.in-8b5cf6)](https://docs.nuvix.in)
-
-[Documentation](https://docs.nuvix.in) · [Discord](https://discord.gg/2fWv2T6RzK) · [Report Bug](https://github.com/nuvix-dev/nuvix/issues) · [Request Feature](https://github.com/nuvix-dev/nuvix/issues)
+[Documentation](https://nuvix-docs.vercel.app) · [Discord](https://discord.gg/2fWv2T6RzK) · [Report Bug](https://github.com/nuvix-dev/nuvix/issues) · [Request Feature](https://github.com/nuvix-dev/nuvix/issues)
 
 </div>
 
@@ -39,13 +27,15 @@ Whether you're building an **AI-powered SaaS**, a **mobile app**, or an **intern
 ## ✨ Features
 
 ### 🔐 Authentication & Security
+
 Multi-tenant auth with user accounts, sessions, teams, and role-based access. Security is not an afterthought; it's built into every layer. Managed schemas auto-generate Row-Level Security policies so your data is locked down from day one.
 
 ### 🗄️ Three-Schema Database
+
 PostgreSQL-powered. Pick the right model for each use case:
 
 | Schema | Best For | What You Get |
-|---|---|---|
+| --- | --- | --- |
 | **Document** | Rapid prototyping, MVPs | NoSQL-style flexibility, zero SQL needed |
 | **Managed** | Production apps at scale | Auto-generated CRUD policies, RLS, permission tables |
 | **Unmanaged** | Full control, custom logic | Raw SQL, your tables, your views, no restrictions |
@@ -53,13 +43,16 @@ PostgreSQL-powered. Pick the right model for each use case:
 Mix and match across a single project. All schemas share one unified API.
 
 ### 🤖 AI-Ready Infrastructure
+
 Build AI applications with confidence. Nuvix provides the secure data layer, auth, and storage that AI-powered products need. Store embeddings, manage user sessions, handle file uploads for ML pipelines, and enforce granular permissions on every request.
 
 ### 📦 Storage
+
 Permission-aware file system with S3-compatible drivers or local storage. Upload, serve, and manage files with the same permission rules as your database.
 
 ### 📬 Messaging
-Email, SMS, and push notifications through a single API. Built-in templates and provider integrations so you're not wiring up Sendgrid, Twilio, and Firebase separately.
+
+Email, SMS, and push notifications through a single API. Built-in templates and provider integrations so you're not wiring up SendGrid, Twilio, and Firebase separately.
 
 ---
 
@@ -72,6 +65,7 @@ git clone https://github.com/nuvix-dev/docker.git nuvix
 cd nuvix
 cp .env.example .env    # Configure your secrets
 docker compose up -d
+
 ```
 
 Open **[http://localhost:3000](http://localhost:3000)** and create your first project.
@@ -85,6 +79,7 @@ bun install        # Install dependencies
 bun run dev        # Start dev server
 bun run test       # Run tests
 bun run lint       # Lint with Biome
+
 ```
 
 **Requirements:** [Docker](https://docs.docker.com/get-docker/) + [Bun](https://bun.sh) ≥ 1.3.7
@@ -95,7 +90,7 @@ For detailed self-hosting instructions, see the **[Self-Hosting Guide](https://d
 
 ## 🏗️ Architecture
 
-```
+```text
 nuvix/
 ├── apps/
 │   ├── server          # Core API server
@@ -107,6 +102,7 @@ nuvix/
 ├── configs/            # Default configurations
 ├── docs/               # Documentation source
 └── scripts/            # Build & deployment scripts
+
 ```
 
 ---
@@ -115,23 +111,32 @@ nuvix/
 
 Nuvix is designed with a **zero-trust permission model**:
 
-- **Every request** passes through permission checks across database, storage, and messaging
-- **Managed schemas** auto-generate Row-Level Security policies, so you don't need to write them by hand
-- **Project isolation** keeps tenant data separated at the database level
-- **Self-hosted** means your data never leaves your infrastructure
+* **Every request** passes through permission checks across database, storage, and messaging.
+* **Managed schemas** auto-generate Row-Level Security policies, so you don't need to write them by hand.
+* **Project isolation** keeps tenant data separated at the database level.
+* **Self-hosted** means your data never leaves your infrastructure.
 
 You don't "enable" security in Nuvix. It's the default.
 
 ---
 
+## 🐞 Bugs & Vulnerabilities
+
+Building a secure, robust platform is a community effort. We actively welcome feedback and reports.
+
+* **Found a bug?** Please open an issue on our [GitHub Issues](https://github.com/nuvix-dev/nuvix/issues) page with steps to reproduce.
+* **Found a security vulnerability?** Please **do not** open a public issue. Instead, email us directly at [security@nuvix.in](mailto:security@nuvix.in). We take security reports seriously and will work with you to patch the exploit immediately before public disclosure.
+
+---
+
 ## 🔗 Resources
 
-| | |
-|---|---|
-| 📖 **[Documentation](https://docs.nuvix.in)** | Guides, API reference, and tutorials |
+|  |  |
+| --- | --- |
+| 📖 **[Documentation](https://nuvix-docs.vercel.app)** | Guides, API reference, and tutorials |
 | 🖥️ **[Console](https://github.com/nuvix-dev/console)** | Admin dashboard (separate repo) |
 | 💬 **[Discord](https://discord.gg/2fWv2T6RzK)** | Community, help, and discussion |
-| 📢 **[X / Twitter](https://x.com/nuvixtech)** | Updates and announcements |
+| 📢 **[X / Twitter](https://x.com/_nuvix)** | Updates and announcements |
 | 🐛 **[Issues](https://github.com/nuvix-dev/nuvix/issues)** | Bug reports and feature requests |
 
 ---
@@ -155,8 +160,6 @@ We welcome contributions of all kinds: code, docs, bug reports, and ideas.
 <div align="center">
 
 ## ⭐ Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=nuvix-dev/nuvix&type=Date)](https://star-history.com/#nuvix-dev/nuvix&Date)
 
 **If Nuvix saves you time, drop a star. It helps more than you think.** ⭐
 

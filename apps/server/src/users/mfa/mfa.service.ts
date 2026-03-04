@@ -1,16 +1,22 @@
 import { Injectable } from '@nestjs/common'
+import { CoreService } from '@nuvix/core/core.service'
 import { Exception } from '@nuvix/core/extend/exception'
 import { MfaType, TOTP } from '@nuvix/core/validators'
-
 import { Database, Doc } from '@nuvix/db'
 
 @Injectable()
 export class MfaService {
+  private readonly db: Database
+
+  constructor(private readonly coreService: CoreService) {
+    this.db = this.coreService.getDatabase()
+  }
+
   /**
    * Update Mfa Status
    */
-  async updateMfaStatus(db: Database, id: string, mfa: boolean) {
-    const user = await db.getDocument('users', id)
+  async updateMfaStatus(id: string, mfa: boolean) {
+    const user = await this.db.getDocument('users', id)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -18,9 +24,11 @@ export class MfaService {
 
     user.set('mfa', mfa)
 
-    const updatedUser = await db.updateDocument('users', user.getId(), user)
-
-    // TODO: Implement queue for events
+    const updatedUser = await this.db.updateDocument(
+      'users',
+      user.getId(),
+      user,
+    )
 
     return updatedUser
   }
@@ -28,8 +36,8 @@ export class MfaService {
   /**
    * Get Mfa factors
    */
-  async getMfaFactors(db: Database, userId: string) {
-    const user = await db.getDocument('users', userId)
+  async getMfaFactors(userId: string) {
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -49,8 +57,8 @@ export class MfaService {
   /**
    * Get Mfa Recovery Codes
    */
-  async getMfaRecoveryCodes(db: Database, userId: string) {
-    const user = await db.getDocument('users', userId)
+  async getMfaRecoveryCodes(userId: string) {
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -70,8 +78,8 @@ export class MfaService {
   /**
    * Generate Mfa Recovery Codes
    */
-  async generateMfaRecoveryCodes(db: Database, userId: string) {
-    const user = await db.getDocument('users', userId)
+  async generateMfaRecoveryCodes(userId: string) {
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -85,9 +93,7 @@ export class MfaService {
 
     const newRecoveryCodes = TOTP.generateBackupCodes()
     user.set('mfaRecoveryCodes', newRecoveryCodes)
-    await db.updateDocument('users', user.getId(), user)
-
-    // TODO: Implement queue for events
+    await this.db.updateDocument('users', user.getId(), user)
 
     return new Doc({
       recoveryCodes: newRecoveryCodes,
@@ -97,8 +103,8 @@ export class MfaService {
   /**
    * Regenerate Mfa Recovery Codes
    */
-  async regenerateMfaRecoveryCodes(db: Database, userId: string) {
-    const user = await db.getDocument('users', userId)
+  async regenerateMfaRecoveryCodes(userId: string) {
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -111,9 +117,7 @@ export class MfaService {
 
     const newRecoveryCodes = TOTP.generateBackupCodes()
     user.set('mfaRecoveryCodes', newRecoveryCodes)
-    await db.updateDocument('users', user.getId(), user)
-
-    // TODO: Implement queue for events
+    await this.db.updateDocument('users', user.getId(), user)
 
     return new Doc({
       recoveryCodes: newRecoveryCodes,
@@ -123,8 +127,8 @@ export class MfaService {
   /**
    * Delete Mfa Authenticator
    */
-  async deleteMfaAuthenticator(db: Database, userId: string, _type: string) {
-    const user = await db.getDocument('users', userId)
+  async deleteMfaAuthenticator(userId: string, _type: string) {
+    const user = await this.db.getDocument('users', userId)
 
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
@@ -136,9 +140,7 @@ export class MfaService {
       throw new Exception(Exception.USER_AUTHENTICATOR_NOT_FOUND)
     }
 
-    await db.deleteDocument('authenticators', authenticator.getId())
-    await db.purgeCachedDocument('users', user.getId())
-
-    // TODO: Implement queue for events
+    await this.db.deleteDocument('authenticators', authenticator.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
   }
 }

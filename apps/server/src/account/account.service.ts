@@ -1,13 +1,15 @@
-import * as fs from 'node:fs/promises'
-import path from 'node:path'
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
-import { AppConfigService } from '@nuvix/core'
-import type { SmtpConfig } from '@nuvix/core/config'
+
 import { Exception } from '@nuvix/core/extend/exception'
 import { Hooks } from '@nuvix/core/extend/hooks'
-import { Auth, LocaleTranslator } from '@nuvix/core/helpers'
+import {
+  Auth,
+  EmailHelper,
+  LocaleTranslator,
+  RequestContext,
+} from '@nuvix/core/helpers'
 import {
   DeletesJobData,
   MessagingJob,
@@ -36,20 +38,20 @@ import {
   TokenType,
 } from '@nuvix/utils'
 import type {
-  ProjectsDoc,
   TargetsDoc,
   Tokens,
   TokensDoc,
   UsersDoc,
 } from '@nuvix/utils/types'
 import { Queue } from 'bullmq'
-import Template from 'handlebars'
 import { UpdateEmailDTO } from './DTO/account.dto'
+import { CoreService } from '@nuvix/core/core.service'
 
 @Injectable()
 export class AccountService {
+  private readonly db: Database
+  private readonly emailHelper = new EmailHelper()
   constructor(
-    private readonly appConfig: AppConfigService,
     _eventEmitter: EventEmitter2,
     @InjectQueue(QueueFor.MAILS)
     private readonly mailsQueue: Queue<MailQueueOptions>,
@@ -61,35 +63,37 @@ export class AccountService {
       unknown,
       MessagingJob
     >,
-  ) {}
+    private readonly coreService: CoreService,
+  ) {
+    this.db = this.coreService.getDatabase()
+  }
 
   /**
    * Create a new account
    */
   async createAccount(
-    db: Database,
     userId: string,
     email: string,
     password: string,
     name: string | undefined,
     user: UsersDoc,
-    project: ProjectsDoc,
+    ctx: RequestContext,
   ): Promise<UsersDoc> {
     email = email.toLowerCase()
 
-    const auths = project.get('auths', {})
+    const auths = ctx.project.get('auths', {})
     const limit = auths.limit ?? 0
-    const maxUser = this.appConfig.appLimits.users
+    const maxUser = configuration.limits.users
 
     if (limit !== 0) {
-      const total = await db.count('users', [], maxUser)
+      const total = await this.db.count('users', [], maxUser)
       if (total >= limit) {
         throw new Exception(Exception.USER_COUNT_EXCEEDED)
       }
     }
 
     // Makes sure this email is not already used in another identity
-    const identityWithMatchingEmail = await db.findOne('identities', qb =>
+    const identityWithMatchingEmail = await this.db.findOne('identities', qb =>
       qb.equal('providerEmail', email),
     )
 
@@ -109,13 +113,7 @@ export class AccountService {
       }
     }
 
-    await Hooks.trigger('passwordValidator', [
-      db,
-      project,
-      password,
-      user,
-      true,
-    ])
+    await Hooks.trigger('passwordValidator', [password, user, true])
 
     const passwordHistory = auths.passwordHistory ?? 0
     const hashedPassword = await Auth.passwordHash(
@@ -152,11 +150,13 @@ export class AccountService {
         accessedAt: new Date(),
       })
       user.delete('$sequence')
-      user = await Authorization.skip(() => db.createDocument('users', user))
+      user = await Authorization.skip(() =>
+        this.db.createDocument('users', user),
+      )
 
       try {
         const target = await Authorization.skip(() =>
-          db.createDocument(
+          this.db.createDocument(
             'targets',
             new Doc({
               $permissions: [
@@ -174,7 +174,7 @@ export class AccountService {
         user.set('targets', [...user.get('targets', []), target])
       } catch (error) {
         if (error instanceof DuplicateException) {
-          const existingTarget = await db.findOne('targets', [
+          const existingTarget = await this.db.findOne('targets', [
             Query.equal('identifier', [email]),
           ])
           if (existingTarget) {
@@ -185,7 +185,7 @@ export class AccountService {
         }
       }
 
-      await db.purgeCachedDocument('users', user.getId())
+      await this.db.purgeCachedDocument('users', user.getId())
     } catch (error) {
       if (error instanceof DuplicateException) {
         throw new Exception(Exception.USER_ALREADY_EXISTS)
@@ -197,22 +197,21 @@ export class AccountService {
     Authorization.setRole(Role.user(user.getId()).toString())
     Authorization.setRole(Role.users().toString())
 
-    return db.getDocument('users', user.getId())
+    return this.db.getDocument('users', user.getId())
   }
 
   async updatePrefs(
-    db: Database,
     user: UsersDoc,
     prefs: Record<string, string | number | boolean>,
   ) {
     user.set('prefs', prefs)
 
-    user = await db.updateDocument('users', user.getId(), user)
+    user = await this.db.updateDocument('users', user.getId(), user)
 
     return user.get('prefs', {})
   }
 
-  async deleteAccount(db: Database, user: UsersDoc, project: ProjectsDoc) {
+  async deleteAccount(user: UsersDoc) {
     if (user.empty()) {
       throw new Exception(Exception.USER_NOT_FOUND)
     }
@@ -221,20 +220,17 @@ export class AccountService {
       throw new Exception(Exception.USER_BLOCKED)
     }
 
-    await db.deleteDocument('users', user.getId())
+    await this.db.deleteDocument('users', user.getId())
 
     await this.deletesQueue.add(DeleteType.DOCUMENT, {
       document: user.clone(),
-      project,
     })
-
-    return
   }
 
   /**
    * Update User's Email
    */
-  async updateEmail(db: Database, user: UsersDoc, input: UpdateEmailDTO) {
+  async updateEmail(user: UsersDoc, input: UpdateEmailDTO) {
     const passwordUpdate = user.get('passwordUpdate')
 
     if (
@@ -252,7 +248,7 @@ export class AccountService {
     const oldEmail = user.get('email')
     const email = input.email.toLowerCase()
 
-    const identityWithMatchingEmail = await db.findOne('identities', [
+    const identityWithMatchingEmail = await this.db.findOne('identities', [
       Query.equal('providerEmail', [email]),
       Query.notEqual('userInternalId', user.getSequence()),
     ])
@@ -277,7 +273,7 @@ export class AccountService {
     }
 
     const target = await Authorization.skip(() =>
-      db.findOne('targets', [Query.equal('identifier', [email])]),
+      this.db.findOne('targets', [Query.equal('identifier', [email])]),
     )
 
     if (target && !target.empty()) {
@@ -285,7 +281,7 @@ export class AccountService {
     }
 
     try {
-      user = await db.updateDocument('users', user.getId(), user)
+      user = await this.db.updateDocument('users', user.getId(), user)
       const oldTarget = user.findWhere(
         'targets',
         (t: TargetsDoc) => t.get('identifier') === oldEmail,
@@ -294,14 +290,14 @@ export class AccountService {
       if (oldTarget && !oldTarget.empty()) {
         await Authorization.skip(
           async () =>
-            await db.updateDocument(
+            await this.db.updateDocument(
               'targets',
               oldTarget.getId(),
               oldTarget.set('identifier', email),
             ),
         )
       }
-      await db.purgeCachedDocument('users', user.getId())
+      await this.db.purgeCachedDocument('users', user.getId())
 
       return user
     } catch (error) {
@@ -315,10 +311,10 @@ export class AccountService {
   /**
    * Update User Name.
    */
-  async updateName(db: Database, name: string, user: UsersDoc) {
+  async updateName(name: string, user: UsersDoc) {
     user.set('name', name)
 
-    user = await db.updateDocument('users', user.getId(), user)
+    user = await this.db.updateDocument('users', user.getId(), user)
 
     return user
   }
@@ -330,16 +326,14 @@ export class AccountService {
     password,
     oldPassword,
     user,
-    project,
-    db,
+    ctx,
   }: {
     password: string
     oldPassword: string
     user: UsersDoc
-    project: ProjectsDoc
-    db: Database
+    ctx: RequestContext
   }) {
-    // Check old password only if its an existing user.
+    // passwordUpdate will be empty if the user has never set a password
     if (
       user.get('passwordUpdate') &&
       !(await Auth.passwordVerify(
@@ -357,7 +351,7 @@ export class AccountService {
       Auth.DEFAULT_ALGO,
       Auth.DEFAULT_ALGO_OPTIONS,
     )
-    const historyLimit = project.get('auths', {}).passwordHistory ?? 0
+    const historyLimit = ctx.project.get('auths', {}).passwordHistory ?? 0
     const history = user.get('passwordHistory', [])
 
     if (newPassword && historyLimit > 0) {
@@ -374,7 +368,7 @@ export class AccountService {
       history.splice(0, Math.max(0, history.length - historyLimit))
     }
 
-    if (project.get('auths', {}).personalDataCheck ?? false) {
+    if (ctx.project.get('auths', {}).personalDataCheck ?? false) {
       const personalDataValidator = new PersonalDataValidator(
         user.getId(),
         user.get('email'),
@@ -386,13 +380,7 @@ export class AccountService {
       }
     }
 
-    await Hooks.trigger('passwordValidator', [
-      db,
-      project,
-      password,
-      user,
-      true,
-    ])
+    await Hooks.trigger('passwordValidator', [password, user, true])
 
     user
       .set('password', newPassword)
@@ -401,7 +389,7 @@ export class AccountService {
       .set('hash', Auth.DEFAULT_ALGO)
       .set('hashOptions', Auth.DEFAULT_ALGO_OPTIONS)
 
-    user = await db.updateDocument('users', user.getId(), user)
+    user = await this.db.updateDocument('users', user.getId(), user)
 
     return user
   }
@@ -413,14 +401,10 @@ export class AccountService {
     password,
     phone,
     user,
-    project,
-    db,
   }: {
     password: string
     phone: string
     user: UsersDoc
-    project: ProjectsDoc
-    db: Database
   }) {
     // passwordUpdate will be empty if the user has never set a password
     const passwordUpdate = user.get('passwordUpdate')
@@ -438,17 +422,11 @@ export class AccountService {
       throw new Exception(Exception.USER_INVALID_CREDENTIALS)
     }
 
-    await Hooks.trigger('passwordValidator', [
-      db,
-      project,
-      password,
-      user,
-      false,
-    ])
+    await Hooks.trigger('passwordValidator', [password, user, false])
 
     const target = await Authorization.skip(
       async () =>
-        await db.findOne('targets', [Query.equal('identifier', [phone])]),
+        await this.db.findOne('targets', [Query.equal('identifier', [phone])]),
     )
 
     if (!target.empty()) {
@@ -473,7 +451,7 @@ export class AccountService {
     }
 
     try {
-      user = await db.updateDocument('users', user.getId(), user)
+      user = await this.db.updateDocument('users', user.getId(), user)
       const oldTarget = user.findWhere(
         'targets',
         (t: TargetsDoc) => t.get('identifier') === oldPhone,
@@ -481,14 +459,14 @@ export class AccountService {
 
       if (oldTarget && !oldTarget.empty()) {
         await Authorization.skip(() =>
-          db.updateDocument(
+          this.db.updateDocument(
             'targets',
             oldTarget.getId(),
             oldTarget.set('identifier', phone),
           ),
         )
       }
-      await db.purgeCachedDocument('users', user.getId())
+      await this.db.purgeCachedDocument('users', user.getId())
     } catch (error) {
       if (error instanceof DuplicateException) {
         throw new Exception(Exception.USER_PHONE_ALREADY_EXISTS)
@@ -503,32 +481,30 @@ export class AccountService {
    * Update Status
    */
   async updateStatus({
-    db,
     user,
     request,
     response,
   }: {
-    db: Database
     user: UsersDoc
     request: NuvixRequest
     response: NuvixRes
   }) {
     user.set('status', false)
 
-    user = await db.updateDocument('users', user.getId(), user)
+    user = await this.db.updateDocument('users', user.getId(), user)
 
-    if (!request.domainVerification) {
-      response.header('X-Fallback-Cookies', JSON.stringify([]))
+    if (configuration.server.fallbackCookies) {
+      response.header('X-Fallback-Cookies', JSON.stringify({}))
     }
 
     const protocol = request.protocol
     response.cookie(Auth.cookieName, '', {
       expires: new Date(Date.now() - 3600000),
       path: '/',
-      domain: Auth.cookieDomain,
+      domain: request.context.cookieDomain,
       secure: protocol === 'https',
       httpOnly: true,
-      sameSite: Auth.cookieSamesite,
+      sameSite: request.context.cookieSameSite,
     })
 
     return user
@@ -538,16 +514,15 @@ export class AccountService {
    * Create email verification token
    */
   async createEmailVerification({
-    db,
     user,
     request,
-    response,
     locale,
-    project,
     url,
-  }: WithDB<WithReqRes<WithUser<WithProject<WithLocale<{ url?: string }>>>>>) {
-    if (!this.appConfig.getSmtpConfig().host) {
-      throw new Exception(Exception.GENERAL_SMTP_DISABLED, 'SMTP Disabled')
+  }: WithUser<WithLocale<{ url?: string; request: NuvixRequest }>>) {
+    if (url) request.context.validateRedirectURL(url)
+
+    if (!configuration.smtp.enabled()) {
+      throw new Exception(Exception.GENERAL_SMTP_DISABLED)
     }
 
     if (user.get('emailVerification')) {
@@ -577,110 +552,54 @@ export class AccountService {
       Permission.update(Role.user(user.getId())),
       Permission.delete(Role.user(user.getId())),
     ])
-    const createdVerification = await db.createDocument('tokens', verification)
+    const createdVerification = await this.db.createDocument(
+      'tokens',
+      verification,
+    )
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
     url ??= `${request.protocol}://${request.host}`
 
-    // Parse and merge URL query parameters
     const urlObj = new URL(url)
     urlObj.searchParams.set('userId', user.getId())
     urlObj.searchParams.set('secret', verificationSecret)
     urlObj.searchParams.set('expire', expire.toISOString())
     const finalUrl = urlObj.toString()
 
-    const projectName = project.empty()
-      ? 'Console'
-      : project.get('name', '[APP-NAME]')
-    let body = locale.getText('emails.verification.body')
-    let subject = locale.getText('emails.verification.subject')
-    const customTemplate =
-      project.get('templates', {})[`email.verification-${locale.default}`] ?? {}
+    const { project } = request.context
+    const payload = await this.emailHelper
+      .builder(project)
+      .to(user.get('email'))
+      .usingTemplate(
+        'email-verification.tpl',
+        `verification-${locale.fallbackLocale}`,
+      )
+      .withSubject(locale.get('emails.verification.subject'))
+      .withData({
+        body: locale.get('emails.verification.body', {
+          project: project.get('name'),
+        }),
+        hello: locale.get('emails.verification.hello', {
+          user: user.get('name', 'User'),
+        }),
+        footer: locale.get('emails.verification.footer'),
+        thanks: locale.get('emails.verification.thanks'),
+        signature: locale.get('emails.verification.signature', {
+          project: project.get('name'),
+        }),
+      })
+      .withVariables({
+        direction: locale.get('settings.direction'),
+        redirect: finalUrl,
+        project: project.get('name'),
+        team: '',
+      })
+      .build()
 
-    const templatePath = path.join(
-      this.appConfig.assetConfig.templates,
-      'email-inner-base.tpl',
-    )
-    const templateSource = await fs.readFile(templatePath, 'utf8')
-    const template = Template.compile(templateSource)
-
-    const emailData = {
-      body: body,
-      hello: locale.getText('emails.verification.hello'),
-      footer: locale.getText('emails.verification.footer'),
-      thanks: locale.getText('emails.verification.thanks'),
-      signature: locale.getText('emails.verification.signature'),
-    }
-
-    body = template(emailData)
-
-    const smtp = project.get('smtp', {}) as SmtpConfig
-    const smtpEnabled = smtp.enabled ?? false
-    const systemConfig = this.appConfig.get('system')
-
-    let senderEmail = systemConfig.emailAddress || configuration.app.emailTeam
-    let senderName =
-      systemConfig.emailName || `${configuration.app.name} Server`
-    let replyTo = ''
-
-    const smtpServer: SmtpConfig = {} as SmtpConfig
-
-    if (smtpEnabled) {
-      if (smtp.senderEmail) {
-        senderEmail = smtp.senderEmail
-      }
-      if (smtp.senderName) {
-        senderName = smtp.senderName
-      }
-      if (smtp.replyTo) {
-        replyTo = smtp.replyTo
-      }
-
-      smtpServer.host = smtp.host
-      smtpServer.port = smtp.port
-      smtpServer.username = smtp.username
-      smtpServer.password = smtp.password
-      smtpServer.secure = smtp.secure ?? false
-
-      if (customTemplate) {
-        if (customTemplate.senderEmail) {
-          senderEmail = customTemplate.senderEmail
-        }
-        if (customTemplate.senderName) {
-          senderName = customTemplate.senderName
-        }
-        if (customTemplate.replyTo) {
-          replyTo = customTemplate.replyTo
-        }
-
-        body = customTemplate.message || body
-        subject = customTemplate.subject || subject
-      }
-
-      smtpServer.replyTo = replyTo
-      smtpServer.senderEmail = senderEmail
-      smtpServer.senderName = senderName
-    }
-
-    const emailVariables = {
-      direction: locale.getText('settings.direction'),
-      user: user.get('name'),
-      redirect: finalUrl,
-      project: projectName,
-      team: '',
-    }
-
-    await this.mailsQueue.add(MailJob.SEND_EMAIL, {
-      email: user.get('email'),
-      subject,
-      body,
-      server: smtpServer,
-      variables: emailVariables,
-    })
+    await this.mailsQueue.add(MailJob.SEND_EMAIL, payload)
 
     createdVerification.set('secret', verificationSecret)
 
-    response.status(201)
     return createdVerification
   }
 
@@ -688,14 +607,12 @@ export class AccountService {
    * Verify email
    */
   async updateEmailVerification({
-    db,
     user,
-    response,
     userId,
     secret,
-  }: WithDB<WithUser<{ response: NuvixRes; userId: string; secret: string }>>) {
+  }: WithUser<{ userId: string; secret: string }>) {
     const profile = await Authorization.skip(() =>
-      db.getDocument('users', userId),
+      this.db.getDocument('users', userId),
     )
 
     if (profile.empty()) {
@@ -715,7 +632,7 @@ export class AccountService {
 
     Authorization.setRole(Role.user(profile.getId()).toString())
 
-    const updatedProfile = await db.updateDocument(
+    const updatedProfile = await this.db.updateDocument(
       'users',
       profile.getId(),
       profile.set('emailVerification', true),
@@ -723,14 +640,17 @@ export class AccountService {
 
     user.setAll(updatedProfile.toObject())
 
-    const verification = await db.getDocument('tokens', verifiedToken.getId())
+    const verification = await this.db.getDocument(
+      'tokens',
+      verifiedToken.getId(),
+    )
 
     /**
      * We act like we're updating and validating
      * the verification token but actually we don't need it anymore.
      */
-    await db.deleteDocument('tokens', verifiedToken.getId())
-    await db.purgeCachedDocument('users', profile.getId())
+    await this.db.deleteDocument('tokens', verifiedToken.getId())
+    await this.db.purgeCachedDocument('users', profile.getId())
 
     return verification
   }
@@ -739,19 +659,13 @@ export class AccountService {
    * Create phone verification token
    */
   async createPhoneVerification({
-    db,
     user,
     request,
-    response,
     locale,
-    project,
-  }: WithDB<WithReqRes<WithUser<WithProject<WithLocale<{}>>>>>) {
+  }: WithUser<WithLocale<{ request: NuvixRequest }>>) {
     // Check if SMS provider is configured
-    if (!this.appConfig.get('sms').enabled) {
-      throw new Exception(
-        Exception.GENERAL_PHONE_DISABLED,
-        'Phone provider not configured',
-      )
+    if (!configuration.sms.enabled) {
+      throw new Exception(Exception.GENERAL_PHONE_DISABLED)
     }
 
     const phone = user.get('phone')
@@ -765,7 +679,8 @@ export class AccountService {
 
     let secret: string | null = null
     let sendSMS = true
-    const mockNumbers = project.get('auths', {}).mockNumbers ?? []
+    const mockNumbers =
+      request.context.project.get('auths', {}).mockNumbers ?? []
 
     for (const mockNumber of mockNumbers) {
       if (mockNumber.phone === phone) {
@@ -776,14 +691,14 @@ export class AccountService {
     }
 
     secret = secret ?? Auth.codeGenerator(6)
-    const expire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_CONFIRM * 1000)
+    const expire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_OTP * 1000)
 
     const verification = new Doc<Tokens>({
       $id: ID.unique(),
       userId: user.getId(),
       userInternalId: user.getSequence(),
       type: TokenType.PHONE,
-      secret: Auth.hash(secret),
+      secret: Auth.hash(secret), // One way hash encryption to protect DB leak
       expire: expire,
       userAgent: request.headers['user-agent'] || 'UNKNOWN',
       ip: request.ip,
@@ -796,28 +711,23 @@ export class AccountService {
       Permission.update(Role.user(user.getId())),
       Permission.delete(Role.user(user.getId())),
     ])
-    const createdVerification = await db.createDocument('tokens', verification)
+    const createdVerification = await this.db.createDocument(
+      'tokens',
+      verification,
+    )
 
-    await db.purgeCachedDocument('users', user.getId())
+    await this.db.purgeCachedDocument('users', user.getId())
 
     if (sendSMS) {
-      const customTemplate =
-        project.get('templates', {})[`sms.verification-${locale.default}`] ?? {}
-
-      let message = locale.getText('sms.verification.body', '{{secret}}')
-      if (customTemplate?.message) {
-        message = customTemplate.message
-      }
-
-      const messageContent = message
-        .replace('{{project}}', project.get('name'))
-        .replace('{{secret}}', secret)
+      let message = locale.get('sms.verification.body', {
+        secret: secret,
+      })
 
       await this.messagingQueue.add(MessagingJob.INTERNAL, {
         message: {
           to: [phone],
           data: {
-            content: messageContent,
+            content: message,
           },
         },
       })
@@ -825,7 +735,6 @@ export class AccountService {
 
     createdVerification.set('secret', secret)
 
-    response.status(201)
     return createdVerification
   }
 
@@ -833,13 +742,12 @@ export class AccountService {
    * Verify phone number
    */
   async updatePhoneVerification({
-    db,
     user,
     userId,
     secret,
-  }: WithDB<WithUser<{ userId: string; secret: string }>>) {
+  }: WithUser<{ userId: string; secret: string }>) {
     const profile = await Authorization.skip(() =>
-      db.getDocument('users', userId),
+      this.db.getDocument('users', userId),
     )
 
     if (profile.empty()) {
@@ -855,7 +763,7 @@ export class AccountService {
 
     Authorization.setRole(Role.user(profile.getId()).toString())
 
-    const updatedProfile = await db.updateDocument(
+    const updatedProfile = await this.db.updateDocument(
       'users',
       profile.getId(),
       profile.set('phoneVerification', true),
@@ -863,7 +771,7 @@ export class AccountService {
 
     user.setAll(updatedProfile.toObject())
 
-    const verificationDocument = await db.getDocument(
+    const verificationDocument = await this.db.getDocument(
       'tokens',
       verifiedToken.getId(),
     )
@@ -871,18 +779,12 @@ export class AccountService {
     /**
      * We act like we're updating and validating the verification token but actually we don't need it anymore.
      */
-    await db.deleteDocument('tokens', verifiedToken.getId())
-    await db.purgeCachedDocument('users', profile.getId())
+    await this.db.deleteDocument('tokens', verifiedToken.getId())
+    await this.db.purgeCachedDocument('users', profile.getId())
 
     return verificationDocument
   }
 }
 
-type WithDB<T = unknown> = { db: Database } & T
-type WithReqRes<T = unknown> = {
-  request: NuvixRequest
-  response: NuvixRes
-} & T
 type WithUser<T = unknown> = { user: UsersDoc } & T
-type WithProject<T = unknown> = { project: ProjectsDoc } & T
 type WithLocale<T = unknown> = { locale: LocaleTranslator } & T

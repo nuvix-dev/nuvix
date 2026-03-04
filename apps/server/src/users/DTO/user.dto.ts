@@ -155,7 +155,7 @@ export class UpdateUserLabelDTO {
   labels?: string[]
 }
 
-export class UpdateUserPoneVerificationDTO {
+export class UpdateUserPhoneVerificationDTO {
   /**
    * User phone verification status.
    */

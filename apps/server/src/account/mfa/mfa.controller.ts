@@ -1,38 +1,19 @@
-import {
-  Body,
-  Controller,
-  Param,
-  Req,
-  Session,
-  UseGuards,
-  UseInterceptors,
-} from '@nestjs/common'
+import { Body, Controller, Param, Req, UseInterceptors } from '@nestjs/common'
 import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
 import {
   Auth,
-  AuthDatabase,
   AuthType,
-  Locale,
+  Ctx,
   Namespace,
-  Project,
   Scope,
   User,
 } from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
-import { LocaleTranslator, Models } from '@nuvix/core/helpers'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
-import { Database, type Doc } from '@nuvix/db'
+import { Models, RequestContext } from '@nuvix/core/helpers'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
+import { type Doc } from '@nuvix/db'
 import type { IResponse } from '@nuvix/utils'
-import type {
-  ChallengesDoc,
-  ProjectsDoc,
-  SessionsDoc,
-  UsersDoc,
-} from '@nuvix/utils/types'
+import type { ChallengesDoc, SessionsDoc, UsersDoc } from '@nuvix/utils/types'
 import {
   CreateMfaChallengeDTO,
   MfaAuthenticatorTypeParamDTO,
@@ -44,7 +25,6 @@ import { MfaService } from './mfa.service'
 
 @Controller({ version: ['1'], path: 'account/mfa' })
 @Namespace('account')
-@UseGuards(ProjectGuard)
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.SESSION, AuthType.JWT])
 @Scope('account')
@@ -67,14 +47,12 @@ export class MfaController {
   async updateMfa(
     @Body() { mfa }: UpdateAccountMfaDTO,
     @User() user: UsersDoc,
-    @Session() session: SessionsDoc,
-    @AuthDatabase() db: Database,
+    @Ctx() ctx: RequestContext,
   ): Promise<IResponse<UsersDoc>> {
     return this.mfaService.updateMfa({
       mfa,
-      session,
+      session: ctx.session,
       user,
-      db,
     })
   }
 
@@ -107,9 +85,8 @@ export class MfaController {
   })
   async createMfaAuthenticator(
     @Param() { type }: MfaAuthenticatorTypeParamDTO,
-    @Project() project: ProjectsDoc,
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
+    @Ctx() ctx: RequestContext,
   ): Promise<
     IResponse<
       Doc<{
@@ -120,9 +97,8 @@ export class MfaController {
   > {
     return this.mfaService.createMfaAuthenticator({
       type,
-      project,
+      ctx,
       user,
-      db,
     })
   }
 
@@ -143,21 +119,43 @@ export class MfaController {
     @Param() { type }: MfaAuthenticatorTypeParamDTO,
     @Body() { otp }: VerifyMfaAuthenticatorDTO,
     @User() user: UsersDoc,
-    @Session() session: SessionsDoc,
-    @AuthDatabase() db: Database,
+    @Ctx() { getSession }: RequestContext,
   ): Promise<IResponse<UsersDoc>> {
     return this.mfaService.verifyMfaAuthenticator({
       type,
       otp,
       user,
-      session,
-      db,
+      session: getSession(),
+    })
+  }
+
+  @Delete('authenticators/:type', {
+    summary: 'Delete authenticator',
+    model: Models.NONE,
+    audit: {
+      key: 'user.update',
+      resource: 'user/{res.$id}',
+      userId: '{res.$id}',
+    },
+    sdk: {
+      name: 'deleteMfaAuthenticator',
+      descMd: '/docs/references/account/delete-mfa-authenticator.md',
+    },
+  })
+  async deleteMfaAuthenticator(
+    @Param() { type }: MfaAuthenticatorTypeParamDTO,
+    @User() user: UsersDoc,
+  ): Promise<void> {
+    return this.mfaService.deleteMfaAuthenticator({
+      type,
+      user,
     })
   }
 
   @Post('recovery-codes', {
     summary: 'Create MFA recovery codes',
     model: Models.MFA_RECOVERY_CODES,
+    sensitiveFields: ['recoveryCodes'],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
@@ -168,22 +166,20 @@ export class MfaController {
       descMd: '/docs/references/account/create-mfa-recovery-codes.md',
     },
   })
-  async createMfaRecoveryCodes(
-    @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
-  ): Promise<
+  async createMfaRecoveryCodes(@User() user: UsersDoc): Promise<
     IResponse<
       Doc<{
         recoveryCodes: string[]
       }>
     >
   > {
-    return this.mfaService.createMfaRecoveryCodes({ user, db })
+    return this.mfaService.createMfaRecoveryCodes({ user })
   }
 
   @Patch('recovery-codes', {
     summary: 'Update MFA recovery codes (regenerate)',
     model: Models.MFA_RECOVERY_CODES,
+    sensitiveFields: ['recoveryCodes'],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
@@ -194,22 +190,20 @@ export class MfaController {
       descMd: '/docs/references/account/update-mfa-recovery-codes.md',
     },
   })
-  async updateMfaRecoveryCodes(
-    @AuthDatabase() db: Database,
-    @User() user: UsersDoc,
-  ): Promise<
+  async updateMfaRecoveryCodes(@User() user: UsersDoc): Promise<
     IResponse<
       Doc<{
         recoveryCodes: string[]
       }>
     >
   > {
-    return this.mfaService.updateMfaRecoveryCodes({ db, user })
+    return this.mfaService.updateMfaRecoveryCodes({ user })
   }
 
   @Get('recovery-codes', {
     summary: 'List MFA recovery codes',
     model: Models.MFA_RECOVERY_CODES,
+    sensitiveFields: ['recoveryCodes'],
     sdk: {
       name: 'getMfaRecoveryCodes',
       descMd: '/docs/references/account/get-mfa-recovery-codes.md',
@@ -231,37 +225,12 @@ export class MfaController {
     }
   }
 
-  @Delete('authenticators/:type', {
-    summary: 'Delete authenticator',
-    model: Models.NONE,
-    audit: {
-      key: 'user.update',
-      resource: 'user/{res.$id}',
-      userId: '{res.$id}',
-    },
-    sdk: {
-      name: 'deleteMfaAuthenticator',
-      descMd: '/docs/references/account/delete-mfa-authenticator.md',
-    },
-  })
-  async deleteMfaAuthenticator(
-    @Param() { type }: MfaAuthenticatorTypeParamDTO,
-    @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
-  ): Promise<void> {
-    return this.mfaService.deleteMfaAuthenticator({
-      type,
-      user,
-      db,
-    })
-  }
-
   @Post('challenge', {
     summary: 'Create MFA challenge',
     model: Models.MFA_CHALLENGE,
     throttle: {
       limit: 10,
-      key: 'ip:{ip},userId:{userId}',
+      key: 'url:{url},userId:{userId}',
     },
     audit: {
       key: 'challenge.create',
@@ -277,17 +246,12 @@ export class MfaController {
     @Body() { factor }: CreateMfaChallengeDTO,
     @Req() request: NuvixRequest,
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
-    @Project() project: ProjectsDoc,
-    @Locale() locale: LocaleTranslator,
   ): Promise<IResponse<ChallengesDoc>> {
     return this.mfaService.createMfaChallenge({
       factor,
       userAgent: request.headers['user-agent'] || 'UNKNOWN',
       user,
-      db,
-      project,
-      locale,
+      ctx: request.context,
     })
   }
 
@@ -296,7 +260,7 @@ export class MfaController {
     model: Models.SESSION,
     throttle: {
       limit: 10,
-      key: 'challengeId:{param-challengeId}',
+      key: 'url:{url},challengeId:{body-challengeId}',
     },
     audit: {
       key: 'challenge.update',
@@ -307,14 +271,12 @@ export class MfaController {
   async updateMfaChallenge(
     @Body() input: VerifyMfaChallengeDTO,
     @User() user: UsersDoc,
-    @AuthDatabase() db: Database,
-    @Session() session: SessionsDoc,
+    @Ctx() { getSession }: RequestContext,
   ): Promise<IResponse<SessionsDoc>> {
     return this.mfaService.updateMfaChallenge({
       ...input,
       user,
-      db,
-      session,
+      session: getSession(),
     })
   }
 }

@@ -4,20 +4,31 @@ import { Hostname } from './hostname'
 import { Platform } from './platform'
 
 export class Origin implements Validator {
-  private hostnames: string[] = []
-  private schemes: string[] = []
-  private scheme: string | undefined
-  private host: string | null = null
-  private origin = ''
+  protected hostnames: string[] = []
+  protected schemes: string[] = []
+  protected _scheme: string | undefined
+  protected _host: string | null = null
+  protected _origin = ''
 
   /**
    * Constructor
-   *
-   * @param platforms Array of platform documents
    */
-  constructor(platforms: PlatformsDoc[]) {
-    this.hostnames = Platform.getHostnames(platforms)
-    this.schemes = Platform.getSchemes(platforms)
+  constructor(platforms: PlatformsDoc[])
+  constructor(allowedHostnames: string[], allowedSchemas: string[])
+  constructor(
+    platformsOrHostnames: PlatformsDoc[] | string[],
+    allowedSchemas?: string[],
+  ) {
+    if (allowedSchemas === undefined) {
+      // Called with platforms overload
+      this.hostnames = Platform.getHostnames(
+        platformsOrHostnames as PlatformsDoc[],
+      )
+      this.schemes = Platform.getSchemes(platformsOrHostnames as PlatformsDoc[])
+    } else {
+      this.hostnames = platformsOrHostnames as string[]
+      this.schemes = allowedSchemas
+    }
   }
 
   /**
@@ -25,38 +36,38 @@ export class Origin implements Validator {
    * @param origin The Origin URI.
    * @return boolean
    */
+  private static readonly WEB_PLATFORMS = new Set([
+    Platform.SCHEME_HTTP,
+    Platform.SCHEME_HTTPS,
+    Platform.SCHEME_CHROME_EXTENSION,
+    Platform.SCHEME_FIREFOX_EXTENSION,
+    Platform.SCHEME_SAFARI_EXTENSION,
+    Platform.SCHEME_EDGE_EXTENSION,
+  ])
+
   public $valid(origin: any): boolean {
-    this.origin = origin
-    this.scheme = undefined
-    this.host = null
+    this._origin = origin
+    this._scheme = undefined
+    this._host = null
 
     if (typeof origin !== 'string' || !origin) {
       return false
     }
 
-    this.scheme = this.parseScheme(origin)
+    this._scheme = this.parseScheme(origin)
     try {
       const url = new URL(origin)
-      this.host = url.hostname.toLowerCase()
+      this._host = url.hostname.toLowerCase()
     } catch {
-      this.host = ''
+      this._host = ''
     }
 
-    const webPlatforms = [
-      Platform.SCHEME_HTTP,
-      Platform.SCHEME_HTTPS,
-      Platform.SCHEME_CHROME_EXTENSION,
-      Platform.SCHEME_FIREFOX_EXTENSION,
-      Platform.SCHEME_SAFARI_EXTENSION,
-      Platform.SCHEME_EDGE_EXTENSION,
-    ]
-
-    if (this.scheme && webPlatforms.includes(this.scheme)) {
+    if (this._scheme && Origin.WEB_PLATFORMS.has(this._scheme)) {
       const validator = new Hostname(this.hostnames)
-      return validator.$valid(this.host)
+      return validator.$valid(this._host)
     }
 
-    if (this.scheme && this.schemes.includes(this.scheme)) {
+    if (this._scheme && this.schemes.includes(this._scheme)) {
       return true
     }
 
@@ -68,15 +79,15 @@ export class Origin implements Validator {
    * @return string
    */
   public get $description(): string {
-    const platform = this.scheme ? Platform.getNameByScheme(this.scheme) : ''
-    const host = this.host ? `(${this.host})` : ''
+    const platform = this._scheme ? Platform.getNameByScheme(this._scheme) : ''
+    const host = this._host ? `(${this._host})` : ''
 
-    if (!this.host && !this.scheme) {
+    if (!this._host && !this._scheme) {
       return 'Invalid Origin.'
     }
 
     if (!platform) {
-      return `Invalid Scheme. The scheme used (${this.scheme}) in the Origin (${this.origin}) is not supported. If you are using a custom scheme, please change it to \`nuvix-callback-<PROJECT_ID>\``
+      return `Invalid Scheme. The scheme used (${this._scheme}) in the Origin (${this._origin}) is not supported. If you are using a custom scheme, please change it to \`nuvix-callback-<PROJECT_ID>\``
     }
 
     return `Invalid Origin. Register your new client ${host} as a new ${platform} platform on your project console dashboard`

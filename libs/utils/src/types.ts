@@ -37,16 +37,30 @@ export type KeyArgs = {
   req: NuvixRequest
 }
 
+type V = 'url' | 'ip' | 'userId' | 'method' | `body-${string}` | 'chunkId'
+
+type Segment = `${string}:{${V}}`
+
+type One = Segment
+type Two = `${One},${One}`
+type Three = `${Two},${One}`
+type Four = `${Three},${One}`
+type Five = `${Four},${One}`
+type Six = `${Five},${One}`
+
+type Key = One | Two | Three | Four | Five | Six
+
 export type ThrottleOptions = {
   limit: number
   ttl?: number // time to live in seconds
-  key?: string | ((args: KeyArgs) => string | string[])
+  key?: Key | Key[] | ((args: KeyArgs) => Key | Key[])
   /**
    * Get the throttle config from project configuration, if not set then use the default limit and ttl
    */
   configKey?: string
 }
-
+export type AbuseKey = string // Key
+export type AbuseKeyParam = V
 export type IResponse<T, E = unknown> = T & E
 
 export type IListResponse<T, E = unknown> = {

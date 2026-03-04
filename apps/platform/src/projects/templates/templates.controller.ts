@@ -38,7 +38,7 @@ export class TemplatesController {
 
   @Patch('sms/:type/:locale', {
     summary: 'Update custom SMS template',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     sdk: {
       name: 'updateSmsTemplate',
       descMd: '/docs/references/projects/update-sms-template.md',
@@ -51,7 +51,7 @@ export class TemplatesController {
 
   @Delete('sms/:type/:locale', {
     summary: 'Reset custom SMS template',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     sdk: {
       name: 'deleteSmsTemplate',
       descMd: '/docs/references/projects/delete-sms-template.md',
@@ -79,7 +79,7 @@ export class TemplatesController {
 
   @Patch('email/:type/:locale', {
     summary: 'Update custom email templates',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     sdk: {
       name: 'updateEmailTemplate',
       descMd: '/docs/references/projects/update-email-template.md',
@@ -92,7 +92,7 @@ export class TemplatesController {
 
   @Delete('email/:type/:locale', {
     summary: 'Delete custom email template',
-    scopes: 'projects.update',
+    scopes: 'projects.write',
     sdk: {
       name: 'deleteEmailTemplate',
       descMd: '/docs/references/projects/delete-email-template.md',

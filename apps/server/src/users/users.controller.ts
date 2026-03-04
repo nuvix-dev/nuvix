@@ -4,22 +4,20 @@ import {
   Param,
   Query,
   Req,
-  UseGuards,
   UseInterceptors,
 } from '@nestjs/common'
 import { AuditDoc } from '@nuvix/audit'
 import { Delete, Get, Patch, Post, Put } from '@nuvix/core'
 import {
   Auth,
-  AuthDatabase,
   AuthType,
+  Ctx,
   Locale,
   Namespace,
-  Project,
   QueryFilter,
   QuerySearch,
 } from '@nuvix/core/decorators'
-import type { LocaleTranslator } from '@nuvix/core/helpers'
+import type { LocaleTranslator, RequestContext } from '@nuvix/core/helpers'
 import { Models } from '@nuvix/core/helpers'
 import {
   IdentitiesQueryPipe,
@@ -27,17 +25,12 @@ import {
   MembershipsQueryPipe,
   UsersQueryPipe,
 } from '@nuvix/core/pipes/queries'
-import {
-  ApiInterceptor,
-  ProjectGuard,
-  ResponseInterceptor,
-} from '@nuvix/core/resolvers'
-import type { Database, Query as Queries } from '@nuvix/db'
+import { ApiInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
+import type { Query as Queries } from '@nuvix/db'
 import type { IListResponse, IResponse } from '@nuvix/utils'
 import type {
   IdentitiesDoc,
   MembershipsDoc,
-  ProjectsDoc,
   TokensDoc,
   UsersDoc,
 } from '@nuvix/utils/types'
@@ -56,7 +49,7 @@ import {
   UpdateUserNameDTO,
   UpdateUserPasswordDTO,
   UpdateUserPhoneDTO,
-  UpdateUserPoneVerificationDTO,
+  UpdateUserPhoneVerificationDTO,
   UpdateUserPrefsDTO,
   UpdateUserStatusDTO,
   UserParamDTO,
@@ -65,7 +58,7 @@ import { UsersService } from './users.service'
 
 @Namespace('users')
 @Controller({ version: ['1'], path: 'users' })
-@UseGuards(ProjectGuard)
+
 @UseInterceptors(ResponseInterceptor, ApiInterceptor)
 @Auth([AuthType.ADMIN, AuthType.KEY])
 export class UsersController {
@@ -73,8 +66,9 @@ export class UsersController {
 
   @Post('', {
     summary: 'Create user',
-    scopes: 'users.create',
+    scopes: 'users.write',
     model: Models.USER,
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.create',
       resource: 'user/{res.$id}',
@@ -85,17 +79,17 @@ export class UsersController {
     },
   })
   async create(
-    @AuthDatabase() db: Database,
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: ProjectsDoc,
+    @Ctx() { project }: RequestContext,
   ): Promise<IResponse<UsersDoc>> {
-    return this.usersService.create(db, createUserDTO, project)
+    return this.usersService.create(createUserDTO, project)
   }
 
   @Post('argon2', {
     summary: 'Create user with Argon2 password',
-    scopes: 'users.create',
+    scopes: 'users.write',
     model: Models.USER,
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.create',
       resource: 'user/{res.$id}',
@@ -106,17 +100,17 @@ export class UsersController {
     },
   })
   async createWithArgon2(
-    @AuthDatabase() db: Database,
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: ProjectsDoc,
+    @Ctx() { project }: RequestContext,
   ): Promise<IResponse<UsersDoc>> {
-    return this.usersService.createWithArgon2(db, createUserDTO, project)
+    return this.usersService.createWithArgon2(createUserDTO, project)
   }
 
   @Post('bcrypt', {
     summary: 'Create user with bcrypt password',
-    scopes: 'users.create',
+    scopes: 'users.write',
     model: Models.USER,
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.create',
       resource: 'user/{res.$id}',
@@ -127,17 +121,17 @@ export class UsersController {
     },
   })
   async createWithBcrypt(
-    @AuthDatabase() db: Database,
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: ProjectsDoc,
+    @Ctx() { project }: RequestContext,
   ): Promise<IResponse<UsersDoc>> {
-    return this.usersService.createWithBcrypt(db, createUserDTO, project)
+    return this.usersService.createWithBcrypt(createUserDTO, project)
   }
 
   @Post('md5', {
     summary: 'Create user with MD5 password',
-    scopes: 'users.create',
+    scopes: 'users.write',
     model: Models.USER,
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.create',
       resource: 'user/{res.$id}',
@@ -148,17 +142,17 @@ export class UsersController {
     },
   })
   async createWithMd5(
-    @AuthDatabase() db: Database,
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: ProjectsDoc,
+    @Ctx() { project }: RequestContext,
   ): Promise<IResponse<UsersDoc>> {
-    return this.usersService.createWithMd5(db, createUserDTO, project)
+    return this.usersService.createWithMd5(createUserDTO, project)
   }
 
   @Post('sha', {
     summary: 'Create user with SHA password',
-    scopes: 'users.create',
+    scopes: 'users.write',
     model: Models.USER,
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.create',
       resource: 'user/{res.$id}',
@@ -169,17 +163,17 @@ export class UsersController {
     },
   })
   async createWithSha(
-    @AuthDatabase() db: Database,
     @Body() createUserDTO: CreateUserWithShaDTO,
-    @Project() project: ProjectsDoc,
+    @Ctx() { project }: RequestContext,
   ): Promise<IResponse<UsersDoc>> {
-    return this.usersService.createWithSha(db, createUserDTO, project)
+    return this.usersService.createWithSha(createUserDTO, project)
   }
 
   @Post('phpass', {
     summary: 'Create user with PHPass password',
-    scopes: 'users.create',
+    scopes: 'users.write',
     model: Models.USER,
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.create',
       resource: 'user/{res.$id}',
@@ -187,21 +181,21 @@ export class UsersController {
     sdk: {
       name: 'createPHPassUser',
       descMd: '/docs/references/users/create-phpass-user.md',
-      deprecated: true, // -------
+      deprecated: true,
     },
   })
   async createWithPhpass(
-    @AuthDatabase() db: Database,
     @Body() createUserDTO: CreateUserDTO,
-    @Project() project: ProjectsDoc,
+    @Ctx() { project }: RequestContext,
   ): Promise<IResponse<UsersDoc>> {
-    return this.usersService.createWithPhpass(db, createUserDTO, project)
+    return this.usersService.createWithPhpass(createUserDTO, project)
   }
 
   @Post('scrypt', {
     summary: 'Create user with Scrypt password',
-    scopes: 'users.create',
+    scopes: 'users.write',
     model: Models.USER,
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.create',
       resource: 'user/{res.$id}',
@@ -212,17 +206,17 @@ export class UsersController {
     },
   })
   async createWithScrypt(
-    @AuthDatabase() db: Database,
     @Body() createUserDTO: CreateUserWithScryptDTO,
-    @Project() project: ProjectsDoc,
+    @Ctx() { project }: RequestContext,
   ): Promise<IResponse<UsersDoc>> {
-    return this.usersService.createWithScrypt(db, createUserDTO, project)
+    return this.usersService.createWithScrypt(createUserDTO, project)
   }
 
   @Post('scrypt-modified', {
     summary: 'Create user with Scrypt modified password',
-    scopes: 'users.create',
+    scopes: 'users.write',
     model: Models.USER,
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.create',
       resource: 'user/{res.$id}',
@@ -233,11 +227,10 @@ export class UsersController {
     },
   })
   async createWithScryptModified(
-    @AuthDatabase() db: Database,
     @Body() createUserDTO: CreateUserWithScryptModifedDTO,
-    @Project() project: ProjectsDoc,
+    @Ctx() { project }: RequestContext,
   ): Promise<IResponse<UsersDoc>> {
-    return this.usersService.createWithScryptMod(db, createUserDTO, project)
+    return this.usersService.createWithScryptMod(createUserDTO, project)
   }
 
   @Get('', {
@@ -253,11 +246,10 @@ export class UsersController {
     },
   })
   async findAll(
-    @AuthDatabase() db: Database,
     @QueryFilter(UsersQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<UsersDoc>> {
-    return this.usersService.findAll(db, queries, search)
+    return this.usersService.findAll(queries, search)
   }
 
   @Get('usage', {
@@ -271,10 +263,9 @@ export class UsersController {
     },
   })
   async getUsage(
-    @AuthDatabase() db: Database,
     @Query() { range }: RangeQueryDTO,
   ): Promise<IResponse<unknown>> {
-    return this.usersService.getUsage(db, range)
+    return this.usersService.getUsage(range)
   }
 
   @Get('identities', {
@@ -287,16 +278,15 @@ export class UsersController {
     },
   })
   async getIdentities(
-    @AuthDatabase() db: Database,
     @QueryFilter(IdentitiesQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<IdentitiesDoc>> {
-    return this.usersService.getIdentities(db, queries, search)
+    return this.usersService.getIdentities(queries, search)
   }
 
   @Delete('identities/:identityId', {
     summary: 'Delete identity',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.NONE,
     audit: {
       key: 'identity.delete',
@@ -308,10 +298,9 @@ export class UsersController {
     },
   })
   async deleteIdentity(
-    @AuthDatabase() db: Database,
     @Param() { identityId }: IdentityParamDTO,
   ): Promise<void> {
-    return this.usersService.deleteIdentity(db, identityId)
+    return this.usersService.deleteIdentity(identityId)
   }
 
   @Get(':userId', {
@@ -324,10 +313,9 @@ export class UsersController {
     },
   })
   async findOne(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
   ): Promise<IResponse<UsersDoc>> {
-    return this.usersService.findOne(db, userId)
+    return this.usersService.findOne(userId)
   }
 
   @Get(':userId/prefs', {
@@ -340,15 +328,14 @@ export class UsersController {
     },
   })
   async getPrefs(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
   ): Promise<IResponse<Record<string, unknown>>> {
-    return this.usersService.getPrefs(db, userId)
+    return this.usersService.getPrefs(userId)
   }
 
   @Patch(':userId/prefs', {
     summary: 'Update user preferences',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.PREFERENCES,
     sdk: {
       name: 'updatePrefs',
@@ -356,17 +343,17 @@ export class UsersController {
     },
   })
   async updatePrefs(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
     @Body() { prefs }: UpdateUserPrefsDTO,
   ): Promise<IResponse<Record<string, unknown>>> {
-    return this.usersService.updatePrefs(db, userId, prefs)
+    return this.usersService.updatePrefs(userId, prefs)
   }
 
   @Patch(':userId/status', {
     summary: 'Update user status',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.USER,
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
@@ -378,17 +365,17 @@ export class UsersController {
     },
   })
   async updateStatus(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
     @Body() status: UpdateUserStatusDTO,
   ): Promise<IResponse<UsersDoc>> {
-    return this.usersService.updateStatus(db, userId, status)
+    return this.usersService.updateStatus(userId, status)
   }
 
   @Put(':userId/labels', {
     summary: 'Update user labels',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.USER,
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
@@ -400,17 +387,17 @@ export class UsersController {
     },
   })
   async updateLabels(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserLabelDTO,
   ): Promise<IResponse<UsersDoc>> {
-    return this.usersService.updateLabels(db, userId, input)
+    return this.usersService.updateLabels(userId, input)
   }
 
   @Patch(':userId/name', {
     summary: 'Update name',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.USER,
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
@@ -422,17 +409,17 @@ export class UsersController {
     },
   })
   async updateName(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserNameDTO,
   ): Promise<IResponse<UsersDoc>> {
-    return this.usersService.updateName(db, userId, input)
+    return this.usersService.updateName(userId, input)
   }
 
   @Patch(':userId/password', {
     summary: 'Update password',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.USER,
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
@@ -444,18 +431,18 @@ export class UsersController {
     },
   })
   async updatePassword(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserPasswordDTO,
-    @Project() project: ProjectsDoc,
+    @Ctx() { project }: RequestContext,
   ): Promise<IResponse<UsersDoc>> {
-    return this.usersService.updatePassword(db, userId, input, project)
+    return this.usersService.updatePassword(userId, input, project)
   }
 
   @Patch(':userId/email', {
     summary: 'Update email',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.USER,
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
@@ -467,17 +454,17 @@ export class UsersController {
     },
   })
   async updateEmail(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
-    @Body() input: UpdateUserEmailDTO,
+    @Body() { email }: UpdateUserEmailDTO,
   ): Promise<IResponse<UsersDoc>> {
-    return this.usersService.updateEmail(db, userId, input.email)
+    return this.usersService.updateEmail(userId, email)
   }
 
   @Patch(':userId/phone', {
     summary: 'Update phone',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.USER,
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'user.update',
       resource: 'user/{res.$id}',
@@ -489,16 +476,15 @@ export class UsersController {
     },
   })
   async updatePhone(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
-    @Body() input: UpdateUserPhoneDTO,
+    @Body() { phone }: UpdateUserPhoneDTO,
   ): Promise<IResponse<UsersDoc>> {
-    return this.usersService.updatePhone(db, userId, input.phone)
+    return this.usersService.updatePhone(userId, phone)
   }
 
   @Post(':userId/jwts', {
     summary: 'Create user JWT',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.JWT,
     sdk: {
       name: 'createJWT',
@@ -506,11 +492,10 @@ export class UsersController {
     },
   })
   async createJwt(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
     @Body() input: CreateJwtDTO,
   ): Promise<IResponse<{ jwt: string }>> {
-    return this.usersService.createJwt(db, userId, input)
+    return this.usersService.createJwt(userId, input)
   }
 
   @Get(':userId/memberships', {
@@ -526,18 +511,18 @@ export class UsersController {
     },
   })
   async getMemberships(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
     @QueryFilter(MembershipsQueryPipe) queries?: Queries[],
     @QuerySearch() search?: string,
   ): Promise<IListResponse<MembershipsDoc>> {
-    return this.usersService.getMemberships(db, userId, queries, search)
+    return this.usersService.getMemberships(userId, queries, search)
   }
 
   @Post(':userId/tokens', {
     summary: 'Create token',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.TOKEN,
+    sensitiveFields: ['secret'],
     audit: {
       key: 'tokens.create',
       resource: 'user/{params.userId}',
@@ -548,13 +533,11 @@ export class UsersController {
     },
   })
   async createToken(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
     @Body() input: CreateTokenDTO,
     @Req() req: NuvixRequest,
   ): Promise<IResponse<TokensDoc>> {
     return this.usersService.createToken(
-      db,
       userId,
       input,
       req.headers['user-agent'] ?? 'UNKNOWN',
@@ -575,18 +558,18 @@ export class UsersController {
     },
   })
   async getLogs(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
     @Locale() locale: LocaleTranslator,
     @QueryFilter(LogsQueryPipe) queries?: Queries[],
   ): Promise<IListResponse<AuditDoc>> {
-    return this.usersService.getLogs(db, userId, locale, queries)
+    return this.usersService.getLogs(userId, locale, queries)
   }
 
-  @Patch(':userId/verification', {
+  @Patch([':userId/verification', ':userId/verifications/email'], {
     summary: 'Update phone verification',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.USER,
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'verification.update',
       resource: 'user/{res.$id}',
@@ -597,17 +580,17 @@ export class UsersController {
     },
   })
   async verify(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
     @Body() input: UpdateUserEmailVerificationDTO,
   ): Promise<IResponse<UsersDoc>> {
-    return this.usersService.updateEmailVerification(db, userId, input)
+    return this.usersService.updateEmailVerification(userId, input)
   }
 
-  @Patch(':userId/verification/phone', {
+  @Patch([':userId/verification/phone', ':userId/verifications/phone'], {
     summary: 'Update phone verification',
-    scopes: 'users.update',
+    scopes: 'users.write',
     model: Models.USER,
+    sensitiveFields: ['password', 'hashOptions'],
     audit: {
       key: 'verification.update',
       resource: 'user/{res.$id}',
@@ -618,16 +601,15 @@ export class UsersController {
     },
   })
   async verifyPhone(
-    @AuthDatabase() db: Database,
     @Param() { userId }: UserParamDTO,
-    @Body() input: UpdateUserPoneVerificationDTO,
+    @Body() input: UpdateUserPhoneVerificationDTO,
   ): Promise<IResponse<UsersDoc>> {
-    return this.usersService.updatePhoneVerification(db, userId, input)
+    return this.usersService.updatePhoneVerification(userId, input)
   }
 
   @Delete(':userId', {
     summary: 'Delete user',
-    scopes: 'users.delete',
+    scopes: 'users.write',
     audit: {
       key: 'user.delete',
       resource: 'user/{params.usersId}',
@@ -637,11 +619,7 @@ export class UsersController {
       descMd: '/docs/references/users/delete.md',
     },
   })
-  async remove(
-    @AuthDatabase() db: Database,
-    @Param() { userId }: UserParamDTO,
-    @Project() project: ProjectsDoc,
-  ): Promise<void> {
-    return this.usersService.remove(db, userId, project)
+  async remove(@Param() { userId }: UserParamDTO): Promise<void> {
+    return this.usersService.remove(userId)
   }
 }
