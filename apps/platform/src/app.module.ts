@@ -44,6 +44,6 @@ export class AppModule implements NestModule, OnModuleInit {
       .apply(CorsHook)
       .forRoutes('*')
       .apply(AuthHook, ApiHook)
-      .forRoutes(AccountController)
+      .forRoutes('*')
   }
 }

@@ -35,7 +35,7 @@ import { StatsHelper } from './helpers/stats.helper.js'
             removeOnComplete: true,
             removeOnFail: 100,
           },
-          prefix: 'nuvix', // TODO: we have to include a instance key that should be unique per app instance
+          prefix: CoreService.isConsole() ? 'nuvix-console' : 'nuvix', // TODO: we have to include a instance key that should be unique per app instance
         }
       },
     }),

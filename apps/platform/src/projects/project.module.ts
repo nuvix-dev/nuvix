@@ -1,6 +1,6 @@
 import { BullModule } from '@nestjs/bullmq'
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common'
-import { ApiHook, AuditHook, AuthHook } from '@nuvix/core/resolvers'
+import { AuditHook } from '@nuvix/core/resolvers'
 import { QueueFor } from '@nuvix/utils'
 import { AuthSettingsController } from './auth-settings/auth-settings.controller'
 import { AuthSettingsService } from './auth-settings/auth-settings.service'
@@ -56,7 +56,7 @@ import { WebhooksService } from './webhooks/webhooks.service'
 export class ProjectModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {
     consumer
-      .apply(AuthHook, ApiHook, AuditHook)
+      .apply(AuditHook)
       .forRoutes(
         ProjectsController,
         ProjectController,
