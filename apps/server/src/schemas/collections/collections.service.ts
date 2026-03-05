@@ -24,10 +24,14 @@ import type {
   UpdateCollectionDTO,
 } from './DTO/collection.dto'
 import { CollectionsHelper } from '@nuvix/core/helpers'
+import { CoreService } from '@nuvix/core/core.service'
 
 @Injectable()
 export class CollectionsService {
-  constructor(private readonly event: EventEmitter2) {}
+  constructor(
+    private readonly event: EventEmitter2,
+    private readonly coreService: CoreService,
+  ) {}
 
   /**
    * Create a new collection.
@@ -206,7 +210,11 @@ export class CollectionsService {
       )
     }
 
-    await CollectionsHelper.deleteCollection({ db, collection })
+    await CollectionsHelper.deleteCollection({
+      db,
+      collection,
+      coreDb: this.coreService.getDatabase(),
+    })
     await db.purgeCachedCollection(collection.getId())
   }
 

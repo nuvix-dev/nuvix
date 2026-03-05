@@ -324,9 +324,11 @@ export class CollectionsHelper {
   public static async deleteCollection({
     db,
     collection,
+    coreDb,
   }: {
     db: Database
     collection: CollectionsDoc
+    coreDb: Database
   }): Promise<void> {
     await Authorization.skip(async () => {
       const collectionId = collection.getId()
@@ -350,14 +352,17 @@ export class CollectionsHelper {
         )
       }
       await db.deleteCollection(collection.getId())
-      await db.deleteDocuments('attributes', qb =>
+      await db.deleteDocuments(SchemaMeta.attributes, qb =>
         qb.equal('collectionInternalId', collectionInternalId),
       )
-      await db.deleteDocuments('indexes', qb =>
+      await db.deleteDocuments(SchemaMeta.indexes, qb =>
         qb.equal('collectionInternalId', collectionInternalId),
       )
 
-      await this.deleteAuditLogsByResource(`/collection/${collectionId}`, db)
+      await this.deleteAuditLogsByResource(
+        `/collection/${collectionId}`,
+        coreDb,
+      )
     })
   }
 
