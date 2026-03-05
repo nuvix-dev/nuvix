@@ -159,7 +159,7 @@ We welcome contributions of all kinds: code, docs, bug reports, and ideas.
 
 <div align="center">
 
-## ⭐ Star History
+[![Star History Chart](https://api.star-history.com/svg?repos=nuvix-dev/nuvix&type=Date)](https://star-history.com/#nuvix-dev/nuvix&Date)
 
 **If Nuvix saves you time, drop a star. It helps more than you think.** ⭐
 
