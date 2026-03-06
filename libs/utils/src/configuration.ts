@@ -322,10 +322,6 @@ const VALIDATION_RULES: ValidationRule[] = [
     requiredIn: 'production',
   },
   {
-    key: 'NUVIX_DATABASE_ADMIN_PASSWORD',
-    requiredIn: 'production',
-  },
-  {
     key: 'NUVIX_DATABASE_PORT',
     validator: v =>
       !v || (Number.parseInt(v) > 0 && Number.parseInt(v) < 65536),
@@ -345,10 +341,6 @@ const VALIDATION_RULES: ValidationRule[] = [
   },
 
   // SMTP
-  {
-    key: 'NUVIX_SMTP_HOST',
-    requiredIn: 'production',
-  },
   {
     key: 'NUVIX_SMTP_EMAIL_FROM',
     format: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
