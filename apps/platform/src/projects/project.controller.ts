@@ -2,7 +2,6 @@ import {
   Controller,
   ParseDatePipe,
   Query,
-  Req,
   UseInterceptors,
   VERSION_NEUTRAL,
 } from '@nestjs/common'
@@ -15,8 +14,7 @@ import {
   ResponseInterceptor,
   StatsQueue,
 } from '@nuvix/core/resolvers'
-import { Authorization, type Database } from '@nuvix/db'
-import { DataSource } from '@nuvix/pg'
+import { Authorization } from '@nuvix/db'
 import { MetricFor, MetricPeriod, Schemas } from '@nuvix/utils'
 import {
   ASTToQueryBuilder,
@@ -28,6 +26,7 @@ import {
   SelectNode,
   SelectParser,
 } from '@nuvix/utils/query'
+import { LogsQueryDTO } from './DTO/logs.dto'
 
 @Controller({ version: ['1', VERSION_NEUTRAL], path: 'project' })
 @UseInterceptors(ResponseInterceptor, ConsoleInterceptor)
@@ -194,19 +193,22 @@ export class ProjectController {
     summary: 'Get Project Logs',
     scopes: 'project.read',
   })
-  async getLogs(@Req() req: NuvixRequest) {
+  async getLogs(@Query() query: LogsQueryDTO) {
+    const { filter, select, order, limit, offset } = this.parseQuery(
+      query,
+      'api_logs',
+    )
     const dataSource = this.coreService.getDataSourceWithMainPool()
     const qb = dataSource.qb('api_logs').withSchema(Schemas.System)
-    const astToQueryBuilder = new ASTToQueryBuilder(qb, dataSource)
+    const ast = new ASTToQueryBuilder(qb, dataSource)
 
-    const { filter, select, order } = this.getParamsFromUrl(req.url, 'api_logs')
-
-    astToQueryBuilder.applySelect(select)
-    astToQueryBuilder.applyFilters(filter, {
+    ast.applySelect(select)
+    ast.applyFilters(filter, {
       applyExtra: true,
       tableName: 'api_logs',
     })
-    astToQueryBuilder.applyOrder(order, 'api_logs')
+    ast.applyOrder(order, 'api_logs')
+    ast.applyLimitOffset({ limit, offset })
 
     try {
       return await qb
@@ -215,30 +217,34 @@ export class ProjectController {
     }
   }
 
-  private getParamsFromUrl(
-    url: string,
+  private parseQuery(
+    query: LogsQueryDTO,
     tableName: string,
   ): {
     filter?: Expression & ParserResult
     select?: SelectNode[]
     order?: ParsedOrdering[]
+    limit: number
+    offset?: number
   } {
-    const queryString = url.includes('?') ? url.split('?')[1] : ''
-    const urlParams = new URLSearchParams(queryString)
+    const { filter: _filter, select: _select, order: _order } = query
 
-    const _filter = urlParams.get('filter') || ''
     const filter = _filter
       ? Parser.create({ tableName }).parse(_filter)
       : undefined
 
-    const _select = urlParams.get('select') || ''
     const select = _select
       ? new SelectParser({ tableName }).parse(_select)
       : undefined
 
-    const _order = urlParams.get('order') || ''
     const order = _order ? OrderParser.parse(_order, tableName) : undefined
 
-    return { filter, select, order }
+    return {
+      filter,
+      select,
+      order,
+      limit: query.limit ?? 20,
+      offset: query.offset,
+    }
   }
 }
