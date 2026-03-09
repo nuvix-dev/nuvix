@@ -47,9 +47,9 @@ export class CoreService implements OnModuleDestroy {
    * In console mode: MAIN gets 70%, POSTGRES gets 30%
    */
   private static readonly POOL_BUDGET = {
-    MAIN: 0.7,
+    MAIN: CoreService.isConsole() ? 0.5 : 0.7,
     AUTHENTICATOR: 0.3,
-    POSTGRES: 0.3,
+    POSTGRES: CoreService.isConsole() ? 0.5 : 0,
     /** Absolute minimum connections any pool should have */
     MIN_PER_POOL: 2,
   } as const
@@ -94,6 +94,7 @@ export class CoreService implements OnModuleDestroy {
   }
 
   async onModuleDestroy() {
+    // todo: consider adding graceful shutdown with a timeout to ensure all connections are closed properly
     if (this.pool) {
       try {
         await this.pool.end()
@@ -113,6 +114,16 @@ export class CoreService implements OnModuleDestroy {
         await this.postgresPool.end()
       } catch (error) {
         this.logger.error('Failed to disconnect postgres database pool', error)
+      }
+    }
+    if (this.authenticatorPool) {
+      try {
+        await this.authenticatorPool.end()
+      } catch (error) {
+        this.logger.error(
+          'Failed to disconnect authenticator database pool',
+          error,
+        )
       }
     }
   }
@@ -196,7 +207,13 @@ export class CoreService implements OnModuleDestroy {
    * Ensures every pool gets at least MIN_PER_POOL connections.
    */
   private getMaxForPool(fraction: number): number {
-    const { maxConnections } = configuration.database.postgres
+    let maxConnections: number
+    if (this.isConsole()) {
+      maxConnections = 5
+    } else {
+      maxConnections = configuration.database.postgres.maxConnections
+    }
+
     return Math.max(
       CoreService.POOL_BUDGET.MIN_PER_POOL,
       Math.floor(maxConnections * fraction),
