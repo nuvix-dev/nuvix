@@ -76,7 +76,7 @@ export async function bootstrap() {
     AppModule,
     adapter,
     {
-      abortOnError: true,
+      abortOnError: false,
       logger,
       autoFlushLogs: true,
     },

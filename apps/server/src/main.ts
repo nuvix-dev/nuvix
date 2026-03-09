@@ -53,6 +53,7 @@ async function bootstrap() {
       },
     }),
     {
+      abortOnError: false,
       logger,
     },
   )
