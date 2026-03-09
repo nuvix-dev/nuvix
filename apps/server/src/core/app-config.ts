@@ -89,7 +89,7 @@ export const applyAppConfig = (app: NestFastifyApplication): void => {
       mode === AppMode.ADMIN ? AppMode.ADMIN : AppMode.DEFAULT
   })
 
-  fastify.addHook('onRequest', (request, _rep, done) => {
+  fastify.addHook('onRequest', (request, _, done) => {
     const req = request as unknown as NuvixRequest
     let size = 0
 

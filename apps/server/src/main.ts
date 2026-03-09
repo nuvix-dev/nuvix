@@ -1,9 +1,5 @@
 /**
- * Nuvix Server
- * Copyright (c) 2024 Nuvix Team
- *
- * This software is released under the MIT License.
- * See the LICENSE file in the project root for more details.
+ * Main entry point for the Nuvix server application.
  **/
 import fs from 'node:fs/promises'
 import { ConsoleLogger, LOG_LEVELS, LogLevel } from '@nestjs/common'
@@ -57,7 +53,6 @@ async function bootstrap() {
       },
     }),
     {
-      abortOnError: false,
       logger,
     },
   )

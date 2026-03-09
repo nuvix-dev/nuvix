@@ -16,6 +16,7 @@ import {
 } from '@nuvix/utils/types'
 import { hash, verify } from 'argon2'
 import { Exception } from '../extend/exception'
+import { CoreService } from '../core.service'
 
 const ALGO = 'aes-256-gcm'
 const IV_LENGTH = 12
@@ -300,7 +301,7 @@ export class Auth {
   ): string[] {
     const roles: string[] = []
 
-    if (!isAdmin && !isAPIUser) {
+    if (CoreService.isConsole() || (!isAdmin && !isAPIUser)) {
       if (user.getId()) {
         roles.push(Role.user(user.getId()).toString())
         roles.push(Role.users().toString())

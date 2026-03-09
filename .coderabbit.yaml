@@ -7,7 +7,7 @@ reviews:
     base_branches:
       - main
       - dev
-  high_level_summary: false
+  high_level_summary: true
   poem: false
   sequence_diagrams: false
   collapse_walkthrough: true

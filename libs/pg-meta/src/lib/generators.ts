@@ -109,8 +109,6 @@ export async function getGeneratorMetadata(
     return { data: null, error: typesError }
   }
 
-  await pgMeta.end()
-
   return {
     data: {
       schemas: schemas?.filter(
