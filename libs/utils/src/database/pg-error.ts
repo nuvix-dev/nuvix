@@ -27,8 +27,15 @@ interface PgTransformedError {
   }
 }
 
+const SQL_PREFIX_REGEX =
+  /^(select|insert|update|delete|create|drop|alter|truncate|with|explain)\s.+?\s-\s/i
+
 function safeMessage(defaultMessage: string, detail?: string): string {
   return detail || defaultMessage
+}
+
+function stripSqlFromMessage(message: string): string {
+  return message.replace(SQL_PREFIX_REGEX, '')
 }
 
 type ErrorMapEntry =
@@ -262,7 +269,7 @@ export function transformPgError(
     code,
     details: {
       message: error.message,
-      detail: error.detail,
+      detail: error.detail || stripSqlFromMessage(error.message),
       hint: error.hint,
       position: error.position,
       table: error.table,
