@@ -1,7 +1,6 @@
 import { InjectQueue } from '@nestjs/bullmq'
 import { Injectable, UseInterceptors } from '@nestjs/common'
 import { EventEmitter2 } from '@nestjs/event-emitter'
-import { JwtService } from '@nestjs/jwt'
 import { CoreService } from '@nuvix/core'
 import { Exception } from '@nuvix/core/extend/exception'
 import { Hooks } from '@nuvix/core/extend/hooks'
@@ -57,7 +56,6 @@ export class AccountService {
   constructor(
     private readonly coreService: CoreService,
     private readonly eventEmitter: EventEmitter2,
-    private readonly jwtService: JwtService,
     @InjectQueue(QueueFor.MAILS)
     private readonly mailsQueue: Queue<MailQueueOptions, MailJob>,
     @InjectQueue(QueueFor.DELETES)
@@ -427,7 +425,6 @@ export class AccountService {
    */
   async deleteSessions(
     user: UsersDoc,
-    locale: LocaleTranslator,
     request: NuvixRequest,
     response: NuvixRes,
   ) {

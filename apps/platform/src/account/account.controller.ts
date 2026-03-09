@@ -14,14 +14,13 @@ import {
 import {
   AuditEvent,
   Ctx,
-  Locale,
   ResModel,
   Scope,
   Throttle,
   User,
 } from '@nuvix/core/decorators'
 import { Exception } from '@nuvix/core/extend/exception'
-import { LocaleTranslator, Models, RequestContext } from '@nuvix/core/helpers'
+import { Models, RequestContext } from '@nuvix/core/helpers'
 import { ConsoleInterceptor, ResponseInterceptor } from '@nuvix/core/resolvers'
 import type { UsersDoc } from '@nuvix/utils/types'
 import { AccountService } from './account.service'
@@ -96,9 +95,8 @@ export class AccountController {
     @User() user: UsersDoc,
     @Req() request: NuvixRequest,
     @Res({ passthrough: true }) response: NuvixRes,
-    @Locale() locale: LocaleTranslator,
   ) {
-    return this.accountService.deleteSessions(user, locale, request, response)
+    return this.accountService.deleteSessions(user, request, response)
   }
 
   @Get('sessions/:id')
