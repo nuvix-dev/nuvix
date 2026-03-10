@@ -74,9 +74,6 @@ jobs:
             BUILD_DATE=${{ steps.meta.outputs.created }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          # Advanced Caching
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
           # Security Attestations (Best Practice 2026)
           sbom: true
           provenance: mode=max
