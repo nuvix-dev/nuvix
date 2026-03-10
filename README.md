@@ -53,7 +53,28 @@ Nuvix gives AI products what they actually need: secure data layers, granular pe
 
 ---
 
-## Quick Start
+## Getting Started
+
+The fastest way to get up and running with Nuvix is through the CLI.
+
+### Install the CLI
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/nuvix-dev/cli/main/install.sh | bash
+```
+
+### Self-Host in Seconds
+
+```bash
+nuvix local init
+nuvix local up
+```
+
+Open `http://localhost:3000` and start building!
+
+**Requirements:** [Docker](https://docs.docker.com/get-docker/)
+
+### Alternative: Docker Compose
 
 ```bash
 git clone https://github.com/nuvix-dev/docker.git nuvix
@@ -61,10 +82,6 @@ cd nuvix
 cp .env.example .env
 docker compose up -d
 ```
-
-Open `http://localhost:3000` and create your first project.
-
-**Requirements:** [Docker](https://docs.docker.com/get-docker/) + [Bun](https://bun.sh) >= 1.3.7
 
 For full self-hosting instructions, see the [Self-Hosting Guide](https://docs.nuvix.in/self-hosting).
 
