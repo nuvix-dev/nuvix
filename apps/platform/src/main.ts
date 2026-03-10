@@ -160,5 +160,16 @@ export async function bootstrap() {
     'Main',
   )
 }
+process.on('unhandledRejection', (reason: any) => {
+  // PostgreSQL driver errors
+  if (reason?.severity === 'ERROR' && reason?.code && reason?.routine) {
+    return
+  }
 
+  console.error('[UnhandledRejection]', reason)
+})
+
+process.on('uncaughtException', (error: Error) => {
+  console.error('[UncaughtException]', error)
+})
 bootstrap()

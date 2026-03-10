@@ -49,23 +49,19 @@ export class SchemasService {
       offset: offset ?? filter?.offset ?? 0,
     })
 
-    return this.handleQuery(context, async tx => {
-      qb.transacting(tx as any)
-      const result = await qb
-      return result
-    })
+    return this.handleQuery(context, qb)
   }
 
   private async handleQuery<T>(
     context: RestContext,
-    callback: (tx: Transaction) => Promise<T>,
+    qb: ReturnType<DataSource['queryBuilder']>,
   ) {
     return this.pg
       .transaction(async tx => {
         await this.preQuery(context, tx)
-        return callback(tx)
+        return qb.transacting(tx as any)
       })
-      .catch(this.processError) as Promise<T>
+      .catch(e => this.processError(e))
   }
 
   async insert({ table, input, schema, query, context }: Insert) {
@@ -111,11 +107,7 @@ export class SchemasService {
     ast.applyReturning(select)
     qb.insert(data)
 
-    return this.handleQuery(context, async tx => {
-      qb.transacting(tx as any)
-      const result = await qb
-      return result
-    })
+    return this.handleQuery(context, qb)
   }
 
   async update({ table, input, query, schema, context }: Update) {
@@ -161,11 +153,7 @@ export class SchemasService {
     })
     qb.update(data)
 
-    return this.handleQuery(context, async tx => {
-      qb.transacting(tx as any)
-      const result = await qb
-      return result
-    })
+    return this.handleQuery(context, qb)
   }
 
   async delete({
@@ -196,11 +184,7 @@ export class SchemasService {
     })
     qb.delete()
 
-    return this.handleQuery(context, async tx => {
-      qb.transacting(tx as any)
-      const result = await qb
-      return result
-    })
+    return this.handleQuery(context, qb)
   }
 
   async callFunction({
@@ -238,10 +222,7 @@ export class SchemasService {
       offset,
     })
 
-    const result = await this.handleQuery(context, async tx => {
-      qb.transacting(tx as any)
-      return qb
-    })
+    const result = await this.handleQuery(context, qb)
 
     if (
       Array.isArray(result) &&
@@ -254,7 +235,7 @@ export class SchemasService {
     return result
   }
 
-  private processError(e: unknown) {
+  private processError(e: unknown): never {
     const error = transformPgError(e)
     if (!error || error.status >= 500) {
       throw new Exception(
