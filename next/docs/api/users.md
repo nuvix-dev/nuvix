@@ -1,10 +1,8 @@
 # v2 Contract — Users
 
-> Status: PARTIALLY IMPLEMENTED — credentialless core identity/profile routes
-> live-verified; auth and extended administration deferred
+> Status: PROPOSED — review before implementation
 > Depends on: `_conventions.md` (D19, D26–D28), `_i18n.md`, D29 (password
-> hashing policy), `../architecture/integrations.md`,
-> `@nuvix/db@1.0.0-alpha.2`, `@nuvix/messaging@2.0.0`
+> hashing policy), `@nuvix/db`
 > Old code (reference only): root `apps/server/src/users/`
 
 User administration: lifecycle, profile fields, prefs/labels/status,
@@ -12,44 +10,33 @@ identities, password-hash imports, tokens/JWTs, sessions, MFA factors and
 recovery codes, push targets. Admin-facing surface (the end-user "account"
 surface lives in the future auth contract).
 
-Implemented: create/list/get plus name, email, phone, preferences,
-labels, status mutations, and user membership projection. It is API-key-only
-(`users.read` / `users.write`) until a trusted administrative session claim
-exists. Passwords, hash imports, identities, tokens/JWTs, sessions, MFA,
-targets, usage, logs, and deletion remain deferred. Preferences replace the
-stored object; they do not merge.
-
 ## Auth posture
 
-The implemented users surface is API-key-only. Keys require `users.read` or
-`users.write`; mode does not grant authority. Guest, ordinary session, and JWT
-contexts receive `403`. A trusted administrative-session claim may be added in
-Phase 4 without changing route/service boundaries.
+Admin/key/session/JWT union like teams; most write endpoints are admin/key
+only in practice via `users.write`. Scopes: `users.read`, `users.write`.
 
 ---
 
 ## Endpoints — Core
 
-| Method | Path                            | Purpose                                       |
-| ------ | ------------------------------- | --------------------------------------------- |
-| POST   | `/v2/users`                     | Create credentialless user profile            |
-| POST   | `/v2/users/argon2`              | Create user with Argon2id hash                |
-| POST   | `/v2/users/bcrypt`              | Create user with Bcrypt hash                  |
-| GET    | `/v2/users`                     | List users (portable exact filters)           |
-| GET    | `/v2/users/usage`               | Deferred to stats phase                       |
-| GET    | `/v2/users/:userId`             | Get user                                      |
-| DELETE | `/v2/users/:userId`             | Delete user with cascade                      |
-| PATCH  | `/v2/users/:userId/name`        | Update name                                   |
-| PATCH  | `/v2/users/:userId/password`    | Update password (admin)                       |
-| PATCH  | `/v2/users/:userId/email`       | Update email                                  |
-| PATCH  | `/v2/users/:userId/phone`       | Update phone                                  |
-| GET    | `/v2/users/:userId/prefs`       | Get prefs                                     |
-| PATCH  | `/v2/users/:userId/prefs`       | Replace prefs                                 |
-| PUT    | `/v2/users/:userId/labels`      | Replace labels                                |
-| PATCH  | `/v2/users/:userId/status`      | Activate/block                                |
-| GET    | `/v2/users/:userId/memberships` | List user memberships (with team projection)  |
-| POST   | `/v2/users/:userId/jwts`        | Issue JWT for user (admin)                    |
-| GET    | `/v2/users/:userId/logs`        | Deferred                                      |
+| Method | Path                            | Purpose                            |
+| ------ | ------------------------------- | ---------------------------------- |
+| POST   | `/v2/users`                     | Create user (server-side hashing)  |
+| POST   | `/v2/users/argon2`              | Create user with pre-hashed Argon2 |
+| POST   | `/v2/users/bcrypt`              | Create user with pre-hashed bcrypt |
+| GET    | `/v2/users`                     | List users (queries + search)      |
+| GET    | `/v2/users/usage`               | Aggregate usage stats              |
+| GET    | `/v2/users/:userId`             | Get user                           |
+| PATCH  | `/v2/users/:userId/name`        | Update name                        |
+| PATCH  | `/v2/users/:userId/password`    | Update password                    |
+| PATCH  | `/v2/users/:userId/email`       | Update email                       |
+| PATCH  | `/v2/users/:userId/phone`       | Update phone                       |
+| GET    | `/v2/users/:userId/prefs`       | Get prefs                          |
+| PATCH  | `/v2/users/:userId/prefs`       | Merge prefs                        |
+| PUT    | `/v2/users/:userId/labels`      | Replace labels                     |
+| PATCH  | `/v2/users/:userId/status`      | Activate/block                     |
+| GET    | `/v2/users/:userId/memberships` | Teams the user belongs to          |
+| GET    | `/v2/users/:userId/logs`        | Audit logs                         |
 
 ### Legacy hash variants — REMOVED (D29)
 
@@ -62,10 +49,13 @@ imports.
 
 ### Create user
 
-Implemented body: `{ userId?, email?, phone?, name? }`. At least one of
-`userId`, `email`, or `phone` is required. Omitted/`"unique()"` IDs are
-generated; emails are lowercased; phones use E.164. Password/hash fields are
-rejected by validation and land only with Phase 4 credential storage.
+Body (`POST /v2/users`): `{ userId?, email?, phone?, password?, name? }` —
+all optional except one identifier is required in practice. Server hashes
+`password` with the project default (bcrypt). The argon2/bcrypt variants
+accept an already-hashed `password` (+ `hashOptions` where applicable) so
+plaintext never crosses the wire during migrations.
+
+`password` and `hashOptions` are sensitive fields — never echoed back.
 
 ### Status
 
@@ -134,45 +124,14 @@ Body: `{ targetId?, providerType, identifier }`.
 
 ## Implementation notes
 
-- Resolve the tenant database centrally, map request auth to roles once, and
-  inject only the caller-scoped `Session` methods needed for user,
-  identity, target, and session documents. Routes do not call `Database`
-  document methods or create package clients.
-- Magic-link delivery uses the shared messaging gateway so every recipient's
-  result is retained and typed messaging failures use the common translator.
-- User JWT issuance remains on Nuvix's HS256/HS512 core helper.
-  `@nuvix/messaging` exposes asynchronous `JWT.sign` for RS256/ES256 provider
-  assertions and has no `JWT.encode`; it is not the access-token issuer.
-- Map DB/messaging failures through the shared translator to the existing
-  stable `user_*`/`identity_*` contract codes.
+- Depends on `@nuvix/db` for user docs + identities/targets collections.
 - Password update must invalidate other sessions (parity with v1 behavior)
   and re-hash with current default cost params.
 - Smoke cases without DB: guest 403s, 422 validation shapes, removed-route
   404s (`/v2/users/md5` etc.).
 
-## Live composed verification
+## Open questions for review
 
-From `next/`:
-
-```bash
-bun run test:integration:live
-```
-
-Every implemented Users core route runs through production composition for both
-PostgreSQL and real-file SQLite platform persistence, each resolving two
-isolated `nuvix/postgres:18.1` tenants. Real tenant-local read/write API keys
-verify create/list/get, profile updates, preference replacement, labels, status,
-same-ID tenant isolation, wrong-tenant credential rejection, and deficient-scope
-`403` responses.
-
-A `users.write`-only key has the document-read permission required for mutation
-preconditions but cannot call public read routes without `users.read`. User
-membership projection, identities, credentials, sessions, MFA, targets, usage,
-logs, and deletion remain deferred.
-
-## Deferred decisions
-
-1. `GET /v2/users/usage` waits for the shared stats pipeline.
-2. Preferences use replacement semantics, matching the actual v1 service.
-3. Passwords/hash imports, identities, JWTs, sessions, MFA, targets, logs,
-   deletion, and user membership projection remain outside this first slice.
+1. Keep `GET /v2/users/usage` in v2 or defer with DEFERRED_ROUTES?
+2. `PATCH prefs` merge semantics vs `PUT` replace — v1 uses PATCH-as-merge;
+   proposed keeping merge for parity.

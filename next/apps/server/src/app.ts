@@ -1,131 +1,85 @@
 import { openapi } from '@elysia/openapi'
 import { TranslationLoader } from '@nuvix/i18n'
+import { config } from '@nuvix/utils'
 import { Elysia, t } from 'elysia'
-import { accountRoutes } from './account/route'
 import { avatarRoutes } from './avatars/route'
-import { type AvatarService, createAvatarService } from './avatars/service'
-import { createGeoIP, type GeoIP } from './context/geoip'
+import { createAvatarService } from './avatars/service'
+import { authContext } from './context/auth'
+import { createGeoIP } from './context/geoip'
 import { getTranslator, localeContext } from './context/locale'
-import { schemaRoutes } from './database/route'
-import type { DatabaseRequestCapabilities } from './infrastructure/database-composition'
 import { localeRoutes } from './locale/route'
-import { createMessagingGateway, type MessagingGateway } from './messaging/gateway'
-import { messagingRoutes } from './messaging/route'
-import { type PlatformRouteDependencies, platformRoute } from './platform/route'
 import { cors } from './plugins/cors'
 import { problemErrors } from './plugins/errors'
 import { rateLimit } from './plugins/rate-limit'
 import { securityHeaders } from './plugins/security'
-import { ServiceUnavailableError } from './shared/errors'
-import { storageRoutes } from './storage/route'
-import { teamRoutes } from './teams/route'
-import { userRoutes } from './users/route'
-import { createWebhookDispatcher, type WebhookDispatcher } from './webhooks/dispatcher'
-import { webhookRoutes } from './webhooks/route'
 
-const DEFAULT_TRANSLATIONS = new URL('../../../assets/locale/translations', import.meta.url)
-  .pathname
+/**
+ * Framework glue — the ONLY place Elysia-specific wiring lives.
+ * Routes are composed as plugins and mounted here.
+ */
 
-export interface AppOptions {
-  readonly isProduction?: boolean
-  readonly translationsDir?: string
-  readonly geoip?: GeoIP
-  readonly avatars?: AvatarService
-  readonly uptime?: () => number
-  readonly projectRequests?: DatabaseRequestCapabilities
-  readonly messagingGateway?: MessagingGateway
-  readonly webhookDispatcher?: WebhookDispatcher
-  readonly platform?: PlatformRouteDependencies
-}
+// Translation assets live at the monorepo root (see docs/api/_i18n.md).
+const translationsDir = new URL('../../../assets/locale/translations', import.meta.url).pathname
+const i18nLoader = new TranslationLoader(translationsDir)
+const localeOptions = {
+  loader: i18nLoader,
+  available: await i18nLoader.availableLocales(),
+} as const
 
-const UNAVAILABLE_PROJECT_REQUESTS: DatabaseRequestCapabilities = {
-  withProject: async () => {
-    throw new ServiceUnavailableError('Project services are unavailable', {
-      code: 'project_unavailable',
-    })
+const health = new Elysia({ name: 'health' }).get(
+  '/health',
+  {
+    response: t.Object({
+      status: t.Literal('ok'),
+      version: t.String(),
+      uptime: t.Number(),
+    }),
   },
-}
+  () => ({
+    status: 'ok',
+    version: '2.0.0-alpha.1',
+    uptime: process.uptime(),
+  }),
+)
 
-/** Creates framework routing; the live process injects its database composition owner. */
-export async function createApp(options: AppOptions = {}) {
-  const loader = new TranslationLoader(options.translationsDir ?? DEFAULT_TRANSLATIONS)
-  const localeOptions = {
-    loader,
-    available: await loader.availableLocales(),
-  } as const
-  const geoip = options.geoip ?? (await createGeoIP())
-  const avatars = options.avatars ?? createAvatarService()
-  const uptime = options.uptime ?? (() => process.uptime())
-  const messagingGateway = options.messagingGateway ?? createMessagingGateway()
-  const webhookDispatcher = options.webhookDispatcher ?? createWebhookDispatcher()
+// Module services — constructed once at startup (graceful degradation built in).
+const geoip = await createGeoIP()
+const avatars = createAvatarService()
 
-  const health = new Elysia({ name: 'health' }).get(
-    '/health',
-    {
-      response: t.Object({
-        status: t.Literal('ok'),
-        version: t.String(),
-        uptime: t.Number(),
-      }),
-    },
-    () => ({ status: 'ok', version: '2.0.0-alpha.1', uptime: uptime() }),
+export const app = new Elysia({ prefix: '/v2' })
+  .use(
+    cors({
+      origin: config.isProd ? [] : true,
+      allowedHeaders: [
+        'content-type',
+        'authorization',
+        'x-nuvix-session',
+        'x-nuvix-jwt',
+        'x-nuvix-key',
+        'x-nuvix-mode',
+        'x-nuvix-locale',
+      ],
+    }),
   )
-
-  const app = new Elysia({ prefix: '/v2' })
-    .use(
-      cors({
-        origin: options.isProduction ? [] : true,
-        allowedHeaders: [
-          'content-type',
-          'authorization',
-          'x-nuvix-publishable-key',
-          'x-nuvix-session',
-          'x-nuvix-jwt',
-          'x-nuvix-key',
-          'x-nuvix-mode',
-          'x-nuvix-locale',
-        ],
-      }),
-    )
-    .use(securityHeaders)
-    .use(rateLimit({ max: 300, windowMs: 60_000 }))
-    .use(
-      problemErrors({
-        getTranslator: (headers) => getTranslator(headers, localeOptions),
-      }),
-    )
-    .use(
-      openapi({
-        documentation: { info: { title: 'Nuvix API', version: '2.0.0' } },
-      }),
-    )
-    .use(localeContext(localeOptions))
-    .use(localeRoutes(geoip, localeOptions))
-    .use(avatarRoutes(avatars))
-    .use(schemaRoutes(options.projectRequests ?? UNAVAILABLE_PROJECT_REQUESTS))
-    .use(teamRoutes(options.projectRequests ?? UNAVAILABLE_PROJECT_REQUESTS))
-    .use(userRoutes(options.projectRequests ?? UNAVAILABLE_PROJECT_REQUESTS))
-    .use(accountRoutes(options.projectRequests ?? UNAVAILABLE_PROJECT_REQUESTS))
-    .use(storageRoutes(options.projectRequests ?? UNAVAILABLE_PROJECT_REQUESTS))
-    .use(
-      messagingRoutes({
-        requests: options.projectRequests ?? UNAVAILABLE_PROJECT_REQUESTS,
-        gateway: messagingGateway,
-      }),
-    )
-    .use(
-      webhookRoutes({
-        requests: options.projectRequests ?? UNAVAILABLE_PROJECT_REQUESTS,
-        dispatcher: webhookDispatcher,
-      }),
-    )
-    .use(health)
-
-  if (options.platform) {
-    app.use(platformRoute(options.platform))
-  }
-
-  return app
-}
-
-export type NuvixApp = Awaited<ReturnType<typeof createApp>>
+  .use(securityHeaders)
+  .use(rateLimit({ max: 300, windowMs: 60_000 }))
+  .use(
+    problemErrors({
+      getTranslator: (headers) => getTranslator(headers, localeOptions),
+    }),
+  )
+  // Scalar UI at /v2/openapi, spec at /v2/openapi/json
+  .use(
+    openapi({
+      documentation: { info: { title: 'Nuvix API', version: '2.0.0' } },
+    }),
+  )
+  .use(authContext({ jwtSecret: config.jwtSecret }))
+  .use(localeContext(localeOptions))
+  .use(localeRoutes(geoip, localeOptions))
+  .use(avatarRoutes(avatars))
+  // Dev-only route exercising the context chain; removed once real modules land.
+  // NOTE: defined inline AFTER authContext so the derived `auth` type flows in
+  // ('plugin'-scoped derive types only reach routes registered downstream).
+  .get('/whoami', ({ auth }) => ({ auth }))
+  .use(health)

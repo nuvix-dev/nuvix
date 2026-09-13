@@ -57,17 +57,14 @@ export class BadRequestError extends AppError {
 }
 
 export class UnauthorizedError extends AppError {
-  constructor(detail = 'Authentication required', fields?: Omit<ProblemFields, 'type' | 'detail'>) {
-    super(401, { type: '/errors/unauthorized', detail, ...fields })
+  constructor(detail = 'Authentication required') {
+    super(401, { type: '/errors/unauthorized', detail })
   }
 }
 
 export class ForbiddenError extends AppError {
-  constructor(
-    detail = 'Insufficient permissions',
-    fields?: Omit<ProblemFields, 'type' | 'detail'>,
-  ) {
-    super(403, { type: '/errors/forbidden', detail, ...fields })
+  constructor(detail = 'Insufficient permissions') {
+    super(403, { type: '/errors/forbidden', detail })
   }
 }
 
@@ -84,11 +81,5 @@ export class NotFoundError extends AppError {
 export class ConflictError extends AppError {
   constructor(detail: string, fields?: Omit<ProblemFields, 'type' | 'detail'>) {
     super(409, { type: '/errors/conflict', detail, ...fields })
-  }
-}
-
-export class ServiceUnavailableError extends AppError {
-  constructor(detail = 'Service unavailable', fields?: Omit<ProblemFields, 'type' | 'detail'>) {
-    super(503, { type: '/errors/unavailable', detail, ...fields })
   }
 }

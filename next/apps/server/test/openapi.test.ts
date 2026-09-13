@@ -3,12 +3,9 @@ import { describe, expect, test } from 'bun:test'
 // app.ts loads config at import time — seed required env first
 process.env.NUVIX_INTERNAL_DATABASE_URL ||= 'postgres://x:x@localhost:5432/x'
 process.env.NUVIX_REDIS_URL ||= 'redis://localhost:6379'
+process.env.NUVIX_JWT_SECRET ||= 'test-secret'
 
-const { createApp } = await import('../src/app')
-const app = await createApp({
-  isProduction: false,
-  geoip: { lookup: () => null },
-})
+const { app } = await import('../src/app')
 
 describe('openapi', () => {
   test('serves spec including registered routes', async () => {
@@ -17,8 +14,6 @@ describe('openapi', () => {
 
     const spec = (await res.json()) as { paths: Record<string, unknown> }
     expect(Object.keys(spec.paths)).toContain('/v2/health')
-    expect(Object.keys(spec.paths)).toContain('/v2/teams')
-    expect(Object.keys(spec.paths)).toContain('/v2/users')
   })
 
   test('serves scalar UI', async () => {

@@ -1,17 +1,12 @@
 # v2 Contract — Teams
 
-> Status: PARTIALLY IMPLEMENTED — core team CRUD, preferences, and
-> membership administration live-verified; invites/logs deferred
-> Depends on: `_conventions.md` (D19, D26–D28), `_i18n.md`,
-> `../architecture/integrations.md`, `@nuvix/db@1.0.0-alpha.2`,
-> `@nuvix/messaging@2.0.0`
+> Status: PROPOSED — review before implementation
+> Depends on: `_conventions.md` (D19, D26–D28), `_i18n.md`, `@nuvix/db`
 > Old code (reference only): root `apps/server/src/teams/`
 
-Team management plus the membership invite/accept lifecycle. Teams and
-memberships live in `@nuvix/db` collections inside the project's document
-schema. Core team CRUD, preferences, and membership administration
-(list/get/update roles/delete) are implemented; invites and audit logs
-remain deferred to their named dependencies.
+Team management plus the membership invite/accept lifecycle. Backed by
+`@nuvix/db` collections (teams, memberships) inside the project's document
+schema — implementation waits on the new `@nuvix/db` package.
 
 ## Auth posture
 
@@ -57,21 +52,16 @@ JWTs — same union as v1. Scopes: `teams.read`, `teams.write`.
 
 ## Endpoints — Memberships
 
-> Membership listing, retrieval, role management, and removal are implemented.
-> Invitation dispatch (`POST`) and confirmation (`PATCH .../status`) remain deferred
-> to messaging/auth phases. Core team creation already creates an accepted owner
-> membership transactionally for session creators.
-
 Nested under `/v2/teams/:teamId/memberships`:
 
-| Method | Path                                                 | Purpose               | Status |
-| ------ | ---------------------------------------------------- | --------------------- | ------ |
-| POST   | `/v2/teams/:teamId/memberships`                      | Invite member         | Deferred to messaging |
-| GET    | `/v2/teams/:teamId/memberships`                      | List memberships      | Implemented |
-| GET    | `/v2/teams/:teamId/memberships/:membershipId`        | Get membership        | Implemented |
-| PATCH  | `/v2/teams/:teamId/memberships/:membershipId`        | Update roles          | Implemented |
-| PATCH  | `/v2/teams/:teamId/memberships/:membershipId/status` | Accept/decline invite | Deferred to messaging |
-| DELETE | `/v2/teams/:teamId/memberships/:membershipId`        | Remove member         | Implemented |
+| Method | Path                                                 | Purpose               |
+| ------ | ---------------------------------------------------- | --------------------- |
+| POST   | `/v2/teams/:teamId/memberships`                      | Invite member         |
+| GET    | `/v2/teams/:teamId/memberships`                      | List memberships      |
+| GET    | `/v2/teams/:teamId/memberships/:membershipId`        | Get membership        |
+| PATCH  | `/v2/teams/:teamId/memberships/:membershipId`        | Update roles          |
+| PATCH  | `/v2/teams/:teamId/memberships/:membershipId/status` | Accept/decline invite |
+| DELETE | `/v2/teams/:teamId/memberships/:membershipId`        | Remove member         |
 
 ### Membership object
 
@@ -135,39 +125,12 @@ Errors (`type` = coarse class, `code` = what SDKs branch on):
 
 ## Implementation notes
 
-- The request context maps verified auth to roles once and provides a
-  caller-scoped `db.for(...roles)` session. Team services receive only their
-  required `Session` methods; routes never create sessions or package clients.
-- Use the shared messaging gateway for email/SMS invites. It preserves
-  `@nuvix/messaging` per-recipient success/failure results and translates typed
-  package errors centrally.
+- Both services stay pure over `@nuvix/db` docs; route layer owns auth,
+  scopes, and session-type gating via hooks.
 - Secret hashing must reuse the same helper as auth tokens (v1:
   `Auth.hash`) — single source of truth for comparison logic.
-- Map DB not-found/conflict failures through the shared translator to the
-  existing `team_*` and `membership_*` public codes.
 - Smoke cases (no live DB): guest gets `403` on all endpoints; malformed
-  create bodies get `422`. Membership/invite lifecycle coverage remains deferred
-  with those endpoints.
-
-## Live composed verification
-
-From `next/`:
-
-```bash
-bun run test:integration:live
-```
-
-All seven implemented Teams routes run through production composition for both
-PostgreSQL and real-file SQLite platform persistence, each resolving two
-isolated `nuvix/postgres:18.1` tenants. Real tenant-local API keys and a
-verifier-backed user session verify CRUD, preference replacement, cross-tenant
-absence, wrong-tenant credential rejection, and deficient-scope `403` responses.
-
-A `teams.write`-only key may read a document only inside write preconditions;
-the public list/get/prefs routes still require `teams.read`. The same write-only
-key can delete a session-created team and its accepted owner membership without
-leaving an orphan. Membership administration, invites, and logs are not covered
-by this completed core gate and remain deferred.
+  create bodies get `422`. Full lifecycle cases need integration fixtures.
 
 ## Open questions for review
 

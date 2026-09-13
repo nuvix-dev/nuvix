@@ -4,7 +4,6 @@
  */
 
 export const HEADERS = {
-  publishableKey: 'x-nuvix-publishable-key',
   session: 'x-nuvix-session',
   jwt: 'x-nuvix-jwt',
   apiKey: 'x-nuvix-key',

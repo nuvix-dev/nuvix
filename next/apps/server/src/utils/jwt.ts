@@ -60,42 +60,26 @@ export async function signJwt(
   payload: JwtPayload,
   secret: string,
   ttlSeconds: number,
-  nowSeconds: number = Math.floor(Date.now() / 1000),
 ): Promise<string> {
-  const iat = typeof payload.iat === 'number' ? payload.iat : nowSeconds
-  const exp = typeof payload.exp === 'number' ? payload.exp : iat + ttlSeconds
-  const body = base64url(JSON.stringify({ ...payload, iat, exp }))
+  const iat = Math.floor(Date.now() / 1000)
+  const body = base64url(JSON.stringify({ ...payload, iat, exp: iat + ttlSeconds }))
   const head = base64url(JSON.stringify({ alg: ALG, typ: 'JWT' }))
   const signature = await signData(`${head}.${body}`, secret)
   return `${head}.${body}.${signature}`
 }
 
-export async function verifyJwt(
-  token: string,
-  secret: string,
-  nowSeconds: number = Math.floor(Date.now() / 1000),
-): Promise<JwtPayload | null> {
+/** Returns the verified payload, or null when invalid/expired/tampered. */
+export async function verifyJwt(token: string, secret: string): Promise<JwtPayload | null> {
   const parts = token.split('.')
   if (parts.length !== 3) return null
 
   const [head, body, signature] = parts as [string, string, string]
-
-  try {
-    const header = JSON.parse(fromBase64url(head)) as { alg?: string }
-    if (header.alg !== ALG) return null
-  } catch {
-    return null
-  }
-
   const expected = await signData(`${head}.${body}`, secret)
   if (!timingSafeEqual(signature, expected)) return null
 
   try {
     const payload = JSON.parse(fromBase64url(body)) as JwtPayload
-    if (typeof payload.exp === 'number' && payload.exp <= nowSeconds) {
-      return null
-    }
-    if (typeof payload.nbf === 'number' && payload.nbf > nowSeconds) {
+    if (typeof payload.exp === 'number' && payload.exp <= Date.now() / 1000) {
       return null
     }
     return payload

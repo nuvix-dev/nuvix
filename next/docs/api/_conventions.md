@@ -126,34 +126,24 @@ Allowed for small/admin datasets or when the client needs random access:
 - IDs appear in paths as `:userId`, `:schemaId`, … and in bodies as `id`.
 - `'unique()'` remains the accepted magic string on create endpoints.
 
-## 6. Project and Authentication Headers
+## 6. Authentication Headers
 
-Project selection always happens before authentication:
+Current inventory carried over from v1 (rename decision pending — Open
+Question #9, resolved at Phase 1 contract review):
 
-| Header                    | Purpose                                       |
-| ------------------------- | --------------------------------------------- |
-| `x-nuvix-publishable-key` | Public tenant locator (`pk_test_`/`pk_live_`) |
-| `x-nuvix-session`         | Tenant-local user session token               |
-| `x-nuvix-jwt`             | Tenant-local short-lived JWT                  |
-| `x-nuvix-key`             | Tenant-local **secret** API key               |
-| `x-nuvix-mode`            | `admin` / `console` mode flag                 |
-| `x-nuvix-id`              | chunked-upload continuation id                |
-| `x-nuvix-timestamp`       | webhook signature timestamp                   |
-| `x-nuvix-signature`       | webhook signature                             |
-| `x-nuvix-nonce`           | webhook signature nonce                       |
+| Header              | Purpose                        |
+| ------------------- | ------------------------------ |
+| `x-nuvix-session`   | user session token             |
+| `x-nuvix-jwt`       | short-lived JWT                |
+| `x-nuvix-key`       | API key (project / console)    |
+| `x-nuvix-mode`      | `admin` / `console` mode flag  |
+| `x-nuvix-id`        | chunked-upload continuation id |
+| `x-nuvix-timestamp` | webhook signature timestamp    |
+| `x-nuvix-signature` | webhook signature              |
+| `x-nuvix-nonce`     | webhook signature nonce        |
 
-The publishable key is a reversible public locator, never authorization. Its
-payload is base64url(`v1:<projectId>`). It is never accepted in a query
-parameter and remains distinct from the secret `x-nuvix-key` credential.
-
-Session, JWT, and secret API-key headers are mutually exclusive. Multiple
-credential mechanisms return `400 auth_credentials_conflict`; malformed,
-unknown, expired, revoked, or wrong-tenant credentials share the generic
-`401 credential_invalid` response. Tenant persistence outages return
-`503 authentication_unavailable` rather than silently degrading to guest.
-
-**Contract rule:** modules reference headers from the shared constants module;
-route handlers never inline names or authenticate before tenant selection.
+**Contract rule:** auth modules reference these by name from a single
+constants module — no inline header strings in route handlers.
 
 ## 7. Testing Convention (D30)
 

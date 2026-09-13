@@ -7,7 +7,6 @@
  */
 
 export type NuvixEnv = 'development' | 'production' | 'test'
-export type PlatformDatabaseDriver = 'postgresql' | 'sqlite'
 
 function required(name: string, fallback?: string): string {
   const value = Bun.env[name] ?? fallback
@@ -25,21 +24,10 @@ function parsePort(raw: string): number {
   return port
 }
 
-function platformDatabaseDriver(): PlatformDatabaseDriver {
-  const value =
-    Bun.env.NUVIX_INTERNAL_DATABASE_DRIVER ??
-    (Bun.env.NUVIX_INTERNAL_DATABASE_URL ? 'postgresql' : 'sqlite')
-  if (value !== 'postgresql' && value !== 'sqlite') {
-    throw new Error('NUVIX_INTERNAL_DATABASE_DRIVER must be postgresql | sqlite')
-  }
-  return value
-}
-
 const env = required('NUVIX_ENV', 'development')
 if (env !== 'development' && env !== 'production' && env !== 'test') {
   throw new Error(`NUVIX_ENV must be development | production | test, got: ${env}`)
 }
-const internalDatabaseDriver = platformDatabaseDriver()
 
 export const config = {
   /** `development` | `production` | `test` */
@@ -51,24 +39,14 @@ export const config = {
   host: required('NUVIX_HOST', '0.0.0.0'),
   port: parsePort(required('NUVIX_PORT', '4000')),
 
-  /** Adapter-neutral internal/platform database configuration. */
-  internalDatabase:
-    internalDatabaseDriver === 'postgresql'
-      ? {
-          driver: internalDatabaseDriver,
-          connectionString: required('NUVIX_INTERNAL_DATABASE_URL'),
-        }
-      : {
-          driver: internalDatabaseDriver,
-          filename: required('NUVIX_INTERNAL_DATABASE_FILE', './data/nuvix.sqlite'),
-        },
-
-  security: {
-    tenantTargetEncryptionKey: required('NUVIX_TENANT_TARGET_ENCRYPTION_KEY'),
-  },
+  /** PostgreSQL connection string for internal/platform tables. */
+  internalDatabaseUrl: required('NUVIX_INTERNAL_DATABASE_URL'),
 
   /** Redis connection string (queues/cache). */
   redisUrl: required('NUVIX_REDIS_URL'),
+
+  /** Secret used to sign JWTs / tokens. */
+  jwtSecret: required('NUVIX_JWT_SECRET'),
 
   storage: {
     uploadsDir: Bun.env.NUVIX_STORAGE_UPLOADS ?? './storage/uploads',

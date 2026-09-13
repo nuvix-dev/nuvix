@@ -21,7 +21,6 @@ const DEFAULTS: Required<Omit<CorsOptions, 'origin'>> = {
   allowedHeaders: [
     'content-type',
     'authorization',
-    'x-nuvix-publishable-key',
     'x-nuvix-session',
     'x-nuvix-jwt',
     'x-nuvix-key',
