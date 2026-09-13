@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@elysia/eden": "2.0.0-beta.5",
+    "@nuvix/cache": "file:../../../../cache",
+    "@nuvix/db": "file:../../../../database",
     "@nuvix/i18n": "workspace:*",
     "@nuvix/utils": "workspace:*",
     "elysia": "2.0.0-beta.6",

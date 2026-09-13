@@ -79,8 +79,8 @@ onError`), typed context via `derive`/`resolve`, `t` (TypeBox) schemas,
 | D8  | Runtime                     | **Bun-only**, Node dropped                                                                                                                                                                                | Unlocks all native APIs                                                                                       |
 | D9  | Templates                   | Keep Handlebars                                                                                                                                                                                           | Template-syntax compat for users                                                                              |
 | D10 | API docs                    | `@elysia/openapi` (official 2.x plugin, Scalar UI)                                                                                                                                                        | Spec at `/v2/openapi/json`, Scalar UI at `/v2/openapi`. Needs a small Bun patch (Phase 1 notes)               |
-| D11 | `@nuvix/db`, `@nuvix/cache` | Latest versions (already on `bun:sql`/`bun.redis`)                                                                                                                                                        | Done upstream                                                                                                 |
-| D12 | `@nuvix/pg`                 | Skip now; build locally in `next/packages/pg-meta`-adjacent work later                                                                                                                                    | See §6                                                                                                        |
+| D11 | `@nuvix/db`, `@nuvix/cache` | Sibling **source checkouts** linked from `@nuvix/server` via `file:../../../../database` and `file:../../../../cache` (not the npm packages)                                                            | The published `@nuvix/db@1.0.0-alpha.2` ships `types: "./dist/index.d.ts"` but the tarball never contains that file, so every import silently resolves to `any` under TS7's bundler resolution instead of erroring — a real, confirmed bug, not a config problem here. Fixed on the sibling's `main` (`fix: publish complete type declarations`) but never republished. Use the local checkout until a corrected version ships; re-evaluate switching back to the npm package once one is published with real declarations. |
+| D12 | `@nuvix/pg`                 | Deferred through Phase 7; use `Bun.sql` directly for the rare raw-DDL calls schemas work needs (e.g. `system.create_schema`) instead of pulling in the query-builder package early                       | See §6                                                                                                        |
 | D13 | **API surface**             | **Full v2 API redesign**                                                                                                                                                                                  | Paths, payloads, pagination may all change; documented per-module first                                       |
 | D14 | **Errors**                  | **New unified error format**                                                                                                                                                                              | Consistent codes, structured details, correct HTTP statuses                                                   |
 | D15 | **Code layout**             | Vertical slices (feature folders)                                                                                                                                                                         | Co-located route/schema/service/test                                                                          |
@@ -348,8 +348,14 @@ platform metadata.service.ts                           ← platform
 **Rules during Phases 1–7:**
 
 - No `@nuvix/pg` imports anywhere in `next/`.
-- Endpoints requiring it are excluded from their module's v2 contract and
-  tracked in `DEFERRED_ROUTES.md`.
+- A handful of call sites need raw DDL/SQL that has no `@nuvix/db` document-plane
+  equivalent (e.g. schema CRUD's `system.create_schema`/`drop schema` calls).
+  Use Bun's native `Bun.sql` tagged-template client directly for exactly those
+  calls rather than pulling `@nuvix/pg` in early — it's a query-builder, not a
+  driver, and D12 defers the builder, not raw SQL access.
+- Endpoints requiring the actual `@nuvix/pg` query builder (joins, dynamic
+  filters, etc.) are excluded from their module's v2 contract and tracked in
+  `DEFERRED_ROUTES.md`.
 - `packages/utils` query builders define a minimal `DataSource` interface so
   the future local implementation drops in without touching call sites.
 

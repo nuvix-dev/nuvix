@@ -2,7 +2,7 @@
   "name": "nuvix-next",
   "private": true,
   "type": "module",
-  "description": "Nuvix v2 \u2014 Bun-native backend platform",
+  "description": "Nuvix v2 — Bun-native backend platform",
   "engines": {
     "bun": ">=1.4.0"
   },
