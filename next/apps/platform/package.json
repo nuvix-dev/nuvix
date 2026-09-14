@@ -1,27 +1,20 @@
 {
-  "name": "@nuvix/server",
+  "name": "@nuvix/platform",
   "version": "2.0.0-alpha.1",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "bun --watch run src/index.ts",
     "start": "bun run src/index.ts",
-    "test": "bun test"
+    "test": "bun test",
+    "gen:types": "bun --bun nuvix-db"
   },
   "dependencies": {
     "@elysia/eden": "2.0.0-beta.5",
     "@nuvix/cache": "file:../../../../cache",
     "@nuvix/core": "workspace:*",
     "@nuvix/db": "file:../../../../database",
-    "@nuvix/i18n": "workspace:*",
     "@nuvix/utils": "workspace:*",
-    "elysia": "2.0.0-beta.6",
-    "maxmind": "^5.0.6",
-    "qrcode": "^1.5.4"
-  },
-  "devDependencies": {
-    "@resvg/resvg-js": "^2.6.2",
-    "@types/maxmind": "^2.0.5",
-    "@types/qrcode": "^1.5.6"
+    "elysia": "2.0.0-beta.6"
   }
 }

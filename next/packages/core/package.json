@@ -1,0 +1,18 @@
+{
+  "name": "@nuvix/core",
+  "version": "2.0.0-alpha.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./db": "./src/db/index.ts",
+    "./errors": "./src/errors.ts",
+    "./tenants": "./src/tenants/index.ts"
+  },
+  "scripts": {
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@nuvix/db": "file:../../../../database"
+  }
+}

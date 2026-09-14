@@ -1,8 +1,8 @@
 import { describe, expect, test } from 'bun:test'
 
-// app.ts loads config at import time — seed required env first
-process.env.NUVIX_INTERNAL_DATABASE_URL ||= 'postgres://x:x@localhost:5432/x'
-process.env.NUVIX_REDIS_URL ||= 'redis://localhost:6379'
+// app.ts reads config.jwtSecret at import time (config's other fields are
+// lazy getters — see packages/utils/src/config.ts — so only vars actually
+// read at import time need seeding here).
 process.env.NUVIX_JWT_SECRET ||= 'test-secret'
 
 const { app } = await import('../src/app')

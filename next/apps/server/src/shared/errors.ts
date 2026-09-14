@@ -6,80 +6,17 @@
  *
  *   { type, title, status, detail, code?, instance?, errors? }
  *
- * Two-layer error identity (Stripe-style):
- * - `type` — coarse class (`/errors/not-found`, `/errors/conflict`, …).
- *   Generic middleware, retry/backoff, and auth-flow logic key off this
- *   (or off `status`).
- * - `code` — stable, flat, snake_case machine code (`user_not_found`,
- *   `schema_already_exists`, …). THE public contract: SDKs and consoles
- *   branch on this. Additive changes only; never parse `detail`.
+ * The error classes themselves live in `@nuvix/core` so every v2 app
+ * (`apps/server`, `apps/platform`, …) shares one error-identity contract
+ * instead of redefining it per app; this module re-exports them so existing
+ * `../shared/errors` imports throughout `apps/server` keep working.
  */
-export interface ProblemFields {
-  /** Coarse problem class URI, e.g. `/errors/not-found`. */
-  type: string
-  /**
-   * Stable machine-readable error code (snake_case), e.g. `user_not_found`.
-   * This is what clients branch on — the public contract.
-   */
-  code?: string
-  /** Short human-readable summary (maps to HTTP status reason). */
-  title?: string
-  /** Human-readable explanation for this occurrence (English fallback). */
-  detail?: string
-  /**
-   * Translation key for a localized `detail` (e.g. `errors.project.notFound`).
-   * Translated at serialization time via the request locale; `detail` remains
-   * the English fallback when no translation exists.
-   */
-  messageKey?: string
-  /** Interpolation params for `messageKey` (ICU syntax). */
-  params?: Record<string, string | number | Date>
-  /** Per-field / per-item validation details. */
-  errors?: Array<{ field?: string; message: string }>
-}
-
-export class AppError extends Error {
-  readonly status: number
-  readonly fields: ProblemFields
-
-  constructor(status: number, fields: ProblemFields) {
-    super(fields.detail ?? fields.title ?? 'Unknown error')
-    this.name = new.target.name
-    this.status = status
-    this.fields = fields
-  }
-}
-
-export class BadRequestError extends AppError {
-  constructor(detail: string, fields?: Omit<ProblemFields, 'type' | 'detail'>) {
-    super(400, { type: '/errors/bad-request', detail, ...fields })
-  }
-}
-
-export class UnauthorizedError extends AppError {
-  constructor(detail = 'Authentication required') {
-    super(401, { type: '/errors/unauthorized', detail })
-  }
-}
-
-export class ForbiddenError extends AppError {
-  constructor(detail = 'Insufficient permissions') {
-    super(403, { type: '/errors/forbidden', detail })
-  }
-}
-
-export class NotFoundError extends AppError {
-  constructor(resource = 'Resource', fields?: Omit<ProblemFields, 'type' | 'detail'>) {
-    super(404, {
-      type: '/errors/not-found',
-      detail: `${resource} not found`,
-      ...fields,
-    })
-  }
-}
-
-export class ConflictError extends AppError {
-  constructor(detail: string, fields?: Omit<ProblemFields, 'type' | 'detail'>) {
-    super(409, { type: '/errors/conflict', detail, ...fields })
-  }
-}
+export type { ProblemFields } from '@nuvix/core/errors'
+export {
+  AppError,
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  UnauthorizedError,
+} from '@nuvix/core/errors'
