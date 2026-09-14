@@ -13,3 +13,7 @@ coverage/
 # bun / build artifacts
 bun.lockb.tmp_*
 *.tsbuildinfo
+
+# local sqlite data (platform app default persistence, D39)
+*.sqlite
+*.sqlite-journal

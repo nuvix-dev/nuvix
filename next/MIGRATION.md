@@ -105,6 +105,9 @@ onError`), typed context via `derive`/`resolve`, `t` (TypeBox) schemas,
 | D34 | **Locale resolution**       | `x-nuvix-locale` header > user pref (future hook) > `Accept-Language` (q-values) > `en`; exposed on context as `locale` via `'plugin'`-scoped derive; error `messageKey` translated at serialization time | English `detail` always present as fallback; translation failures never mask the original error               |
 | D35 | **GeoIP graceful degradation** | Bundled dbip `.mmdb`; missing asset → no-op provider (lookups `null`), `/v2/locale` serves unknown-IP shape, warn once at boot — never fails startup | Full DNS-pinned SSRF guards + Redis-cached lookups deferred to hardening pass |
 | D36 | **Avatar caching**          | Static avatars/QR: `Cache-Control: public, max-age=86400, immutable`; favicon proxy: `max-age=3600` NOT immutable (remote content changes); favicon gets SSRF guard (http(s) only, private-host literals rejected, image/* content-type required) — v1 had no cache header and no guard | QR `Content-Disposition: inline` by default, `attachment` with `download=true` |
+| D37 | **Tenant target encryption** | A project's tenant connection (`TenantTarget`: host/port/user/password) is stored via `@nuvix/db`'s `filters: ['json', 'encrypt']` (AES-256-GCM on `crypto.subtle`, key from `NUVIX_TENANT_ENCRYPTION_KEY`); never returned by the API | `packages/core/src/tenants/encryption.ts`; deprovision keeps the data volume by default, `purge` destroys it |
+| D38 | **`@nuvix/db` filter registry** | Shared filters (`json`, `encrypt`) registered once per process via `registerCoreDbFilters` — collections reference them by name instead of each service hand-rolling encode/decode | `packages/core/src/db/filters.ts`; replaces legacy `configureDbFiltersAndFormats` |
+| D39 | **Platform API prefix**     | No `/v2` prefix — D26 scopes that to the project-facing server. The platform app is versioned independently, on its own port (`config.platform.port`) | `docs/api/platform.md` |
 
 ### Elysia 2 API notes (code against THESE from day one)
 
@@ -315,7 +318,27 @@ next/
 
 ### Phase 7 — Platform app
 
-- [ ] Platform slices (projects, keys, templates, auth-settings, metadata)
+> Pulled forward ahead of Phase 3: Phase 3's database service needs a real
+> per-tenant Postgres to run schema CRUD against (D20), and that DB only
+> exists once the platform app can provision one — so tenant provisioning +
+> the platform's own control-plane persistence come first.
+
+- [x] Tenant provisioning primitives (D20, D37): `TenantProvisioner` interface,
+      `DockerTenantProvisioner` (real `nuvix/postgres:18.1` containers via
+      `Bun.spawn`, live-tested), `FakeTenantProvisioner` for unit/route tests
+      (`packages/core/src/tenants/`)
+- [x] Platform persistence bootstrap (D38): `@nuvix/db` filter registry,
+      `nuvix-db` generated types + `Entities` augmentation, schema-driven
+      bootstrap supporting SQLite (default) or PostgreSQL
+      (`apps/platform/src/registry/`)
+- [x] Projects vertical slice: contract (`docs/api/platform.md`), `ProjectService`
+      (create/list/get/delete wired to the provisioner), routes, unit + route
+      tests (`apps/platform/src/modules/projects/`)
+- [ ] Platform auth (operator accounts/keys) — blocking gap before any
+      non-local deployment, tracked in `docs/api/platform.md`'s open questions
+- [ ] Background provisioning (Phase 6 job infra) — project creation is
+      currently synchronous; tracked in `docs/api/platform.md`
+- [ ] Remaining platform slices (keys, templates, auth-settings, metadata)
 - [ ] pg-meta introspection over `Bun.sql`
 
 ### Phase 8 — Local `@nuvix/pg` replacement (D12)

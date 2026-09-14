@@ -1,0 +1,104 @@
+# v2 Contract — Platform: Projects
+
+> Status: PROPOSED — review before implementation
+> Depends on: `_conventions.md` (D19, D27–D28), `MIGRATION.md` §6b (D20), D37–D39
+> Old code (reference only): root `apps/platform/src/projects/` (`ProjectsController`/`ProjectService`)
+
+The platform app is the control plane that creates projects and provisions
+their dedicated tenant PostgreSQL containers (D20). This contract covers only
+the project lifecycle itself — team ownership, JWTs, OAuth2/SMTP config, and
+usage/logs are legacy features explicitly deferred until a project's core
+lifecycle is solid (`MIGRATION.md` §6b rule 6).
+
+## Auth posture
+
+**None yet.** Platform Phase 4-equivalent auth (operator accounts/sessions)
+hasn't been designed. Until it lands, this API MUST only be reachable from a
+trusted network (not exposed publicly) — it can create and destroy Docker
+containers. Tracked as a blocking gap before any non-local deployment.
+
+## Prefix (D39)
+
+No `/v2` prefix — D26 scopes that to the project-facing server. The platform
+app is versioned independently, runs on its own port (`config.platform.port`),
+and starts unprefixed at the root until a second platform API version exists.
+
+---
+
+## Endpoints
+
+| Method | Path                 | Purpose                                    |
+| ------ | -------------------- | ------------------------------------------- |
+| POST   | `/projects`          | Create a project and provision its tenant DB |
+| GET    | `/projects`          | List projects (paginated)                   |
+| GET    | `/projects/:id`      | Get a project                               |
+| DELETE | `/projects/:id`      | Delete a project and deprovision its tenant |
+
+### Project object
+
+```json
+{
+  "$id": "proj_abc123",
+  "name": "My Project",
+  "status": "active",
+  "containerName": "nuvix-tenant-proj_abc123",
+  "volumeName": "nuvix-tenant-proj_abc123-data",
+  "$createdAt": "2026-09-14T10:00:00.000Z",
+  "$updatedAt": "2026-09-14T10:00:05.000Z"
+}
+```
+
+- `status` ∈ `provisioning | active | error`. `errorMessage` is present only
+  when `status: "error"`.
+- The tenant's connection coordinates (`target`: host/port/user/password) are
+  **never returned** — stored encrypted at rest (D37) and used only
+  server-side to resolve a project's tenant connection. Same never-returned
+  posture as `teams.md`'s membership `secret`.
+- `containerName`/`volumeName` are not secrets (no credentials) and are
+  returned for operator debugging.
+
+### `POST /projects`
+
+Body: `{ "name": string, "id"?: string }`. `id` follows the standard ID
+convention (D28) — `'unique()'` (default) or a caller-supplied id.
+
+Provisioning is **synchronous** for this slice: the request blocks until the
+tenant container is running and accepts real connections (`waitUntilReady`),
+then returns the project with `status: "active"`. On provisioning failure the
+project is persisted with `status: "error"` and `errorMessage` set, and the
+request fails with `502`. Moving provisioning to a background job is deferred
+to Phase 6 (async jobs) — tracked as a follow-up, not a silent limitation.
+
+### `DELETE /projects/:id`
+
+Query: `?purge=true` (default `false`). Without `purge`, the tenant container
+is removed but its data volume is kept (D37's "keep by default" rule) —
+there is no separate undelete endpoint yet, so the volume is the only
+recovery path if a deletion was a mistake. `purge=true` also destroys the
+volume.
+
+### Errors
+
+| Status | Type                  | Code                    |
+| ------ | --------------------- | ------------------------ |
+| 404    | `/errors/not-found`   | `project_not_found`      |
+| 502    | `/errors/internal`    | `project_provision_failed` |
+
+---
+
+## v1 → v2 deviations
+
+1. Team ownership, JWTs, OAuth2/SMTP config, usage, and logs are dropped from
+   this slice entirely (D20 §6b rule 6) — not deviations so much as explicit
+   scope cuts, revisited once core provisioning is proven.
+2. One dedicated PostgreSQL container per project (D20) replaces v1's shared
+   schema-per-project model.
+3. Envelope/errors follow `_conventions.md` (problem+json, `meta` pagination)
+   instead of v1's shapes.
+
+## Open questions for review
+
+1. Confirm synchronous provisioning is acceptable for this slice (vs. an
+   immediate `202` + poll, which needs Phase 6's job infra to do properly).
+2. Platform auth model (operator accounts, API keys?) — needed before this
+   contract can be considered deployable outside a trusted network.
