@@ -14,6 +14,7 @@
 export type { ProblemFields } from '@nuvix/core/errors'
 export {
   AppError,
+  BadGatewayError,
   BadRequestError,
   ConflictError,
   ForbiddenError,

@@ -84,3 +84,10 @@ export class ConflictError extends AppError {
     super(409, { type: '/errors/conflict', detail, ...fields })
   }
 }
+
+/** An upstream dependency (e.g. the tenant provisioner's Docker host) failed or was unreachable. */
+export class BadGatewayError extends AppError {
+  constructor(detail: string, fields?: Omit<ProblemFields, 'type' | 'detail'>) {
+    super(502, { type: '/errors/bad-gateway', detail, ...fields })
+  }
+}

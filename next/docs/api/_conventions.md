@@ -67,6 +67,7 @@ discoverable without reading source.
 | `/errors/forbidden`    | 403    | `ForbiddenError`    |
 | `/errors/not-found`    | 404    | `NotFoundError`     |
 | `/errors/conflict`     | 409    | `ConflictError`     |
+| `/errors/bad-gateway`  | 502    | `BadGatewayError`   |
 | `/errors/internal`     | 500    | (never leaked)      |
 
 Framework-native errors (route-not-found, body parse, schema validation) also
