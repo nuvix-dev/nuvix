@@ -31,11 +31,17 @@ describe('createEncryptFilter', () => {
   test('round-trips a string through encode/decode', async () => {
     const encoded = await filter.encode('super-secret', document, undefined as never)
     expect(encoded).not.toBe('super-secret')
-    expect(await filter.decode(encoded as string, document, undefined as never)).toBe('super-secret')
+    expect(await filter.decode(encoded as string, document, undefined as never)).toBe(
+      'super-secret',
+    )
   })
 
   test('composes with jsonFilter to encrypt structured data (json → encrypt order)', async () => {
-    const stringified = jsonFilter.encode({ password: 'p@ss' }, document, undefined as never) as string
+    const stringified = jsonFilter.encode(
+      { password: 'p@ss' },
+      document,
+      undefined as never,
+    ) as string
     const encrypted = await filter.encode(stringified, document, undefined as never)
 
     const decrypted = await filter.decode(encrypted as string, document, undefined as never)

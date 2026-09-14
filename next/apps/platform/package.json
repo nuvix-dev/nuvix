@@ -7,7 +7,7 @@
     "dev": "bun --watch run src/index.ts",
     "start": "bun run src/index.ts",
     "test": "bun test",
-    "gen:types": "bun --bun nuvix-db"
+    "gen:types": "bun --bun nuvix-db --force && bunx biome check --write ./src/types/generated.ts"
   },
   "dependencies": {
     "@elysia/eden": "2.0.0-beta.5",

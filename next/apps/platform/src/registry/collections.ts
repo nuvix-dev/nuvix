@@ -15,7 +15,7 @@
  * (`libs/utils/src/collections/*.ts` → `libs/utils/nuvix-db.config.ts`).
  */
 
-import { AttributeType, Database, ID, type Collection } from '@nuvix/db'
+import { AttributeType, type Collection, Database, ID } from '@nuvix/db'
 
 /**
  * One document per provisioned project. Control-plane data only — the
