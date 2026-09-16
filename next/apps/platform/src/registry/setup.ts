@@ -13,7 +13,7 @@
 
 import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
-import { Memory } from '@nuvix/cache'
+import { Memory, Cache } from '@nuvix/cache'
 import { registerCoreDbFilters } from '@nuvix/core/db'
 import { decodeEncryptionKey } from '@nuvix/core/tenants'
 import { Adapter, Database, Doc, SQLiteAdapter } from '@nuvix/db'
@@ -64,7 +64,7 @@ export async function ensurePlatformSchema(db: Database): Promise<void> {
 export async function createPlatformDatabase(): Promise<Database> {
   registerCoreDbFilters(decodeEncryptionKey(config.platform.tenantEncryptionKey))
 
-  const db = new Database(await createAdapter(), new Memory())
+  const db = new Database(await createAdapter(), new Cache(new Memory()))
   await ensurePlatformSchema(db)
 
   return db

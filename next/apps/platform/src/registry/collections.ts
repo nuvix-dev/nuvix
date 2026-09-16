@@ -15,7 +15,7 @@
  * (`libs/utils/src/collections/*.ts` → `libs/utils/nuvix-db.config.ts`).
  */
 
-import { AttributeType, type Collection, Database, ID } from '@nuvix/db'
+import { AttributeType, type Collection, Database, ID, IndexEnum } from '@nuvix/db'
 
 /**
  * One document per provisioned project. Control-plane data only — the
@@ -45,6 +45,16 @@ const projects: Collection = {
       size: 32,
       required: true,
       default: 'provisioning',
+    },
+    {
+      // Selects a project on the project-facing server (D40); never
+      // authorizes access on its own, so unlike `target` it carries no
+      // encryption filter and IS part of the public `ProjectView`.
+      $id: ID.custom('publishableKey'),
+      key: 'publishableKey',
+      type: AttributeType.String,
+      size: Database.LENGTH_KEY,
+      required: true,
     },
     {
       $id: ID.custom('containerName'),
@@ -83,7 +93,14 @@ const projects: Collection = {
       default: null,
     },
   ],
-  indexes: [],
+  indexes: [
+    {
+      $id: ID.custom('publishableKey'),
+      key: 'idx_publishable_key',
+      type: IndexEnum.Unique,
+      attributes: ['publishableKey'],
+    },
+  ],
 }
 
 export const platformCollections: Collection[] = [projects]
