@@ -338,6 +338,10 @@ next/
 - [x] Publishable project selectors (D40): unique `publishableKey` generated
       during project creation, persisted/indexed by the platform registry, and
       returned to operators for project-facing API configuration
+- [x] Shared control-plane registry boundary (`@nuvix/core/platform`): one
+      platform schema/bootstrap source for both apps, plus narrow active-project
+      lookup by publishable key; tenant targets stay encrypted at rest and are
+      never exposed to routes
 - [ ] Platform auth (operator accounts/keys) — blocking gap before any
       non-local deployment, tracked in `docs/api/platform.md`'s open questions
 - [ ] Background provisioning (Phase 6 job infra) — project creation is
