@@ -7,15 +7,12 @@
     ".": "./src/index.ts",
     "./db": "./src/db/index.ts",
     "./errors": "./src/errors.ts",
-    "./platform": "./src/platform/index.ts",
     "./tenants": "./src/tenants/index.ts"
   },
   "scripts": {
     "test": "bun test"
   },
   "dependencies": {
-    "@nuvix/cache": "file:../../../../cache",
-    "@nuvix/db": "file:../../../../database",
-    "@nuvix/utils": "workspace:*"
+    "@nuvix/db": "file:../../../../database"
   }
 }

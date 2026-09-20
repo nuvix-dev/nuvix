@@ -13,7 +13,7 @@
 
 import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
-import { Memory, Cache } from '@nuvix/cache'
+import { Cache, Memory } from '@nuvix/cache'
 import { registerCoreDbFilters } from '@nuvix/core/db'
 import { decodeEncryptionKey } from '@nuvix/core/tenants'
 import { Adapter, Database, Doc, SQLiteAdapter } from '@nuvix/db'

@@ -23,6 +23,7 @@ export interface ProjectView {
   $id: string
   name: string
   status: ProjectStatus
+  publishableKey: string
   containerName: string
   volumeName: string
   errorMessage?: string
@@ -39,6 +40,7 @@ function toView(doc: Doc<Projects>): ProjectView {
     $id: doc.getId(),
     name: data.name,
     status: data.status as ProjectStatus,
+    publishableKey: data.publishableKey,
     containerName: data.containerName,
     volumeName: data.volumeName,
     ...(data.errorMessage ? { errorMessage: data.errorMessage } : {}),
@@ -62,6 +64,7 @@ export class ProjectService {
    */
   async create(input: CreateProjectInput): Promise<ProjectView> {
     const id = ID.auto(input.id)
+    const publishableKey = `pk_${crypto.randomUUID().replaceAll('-', '')}`
     const session = this.db.system()
 
     let handle: Awaited<ReturnType<TenantProvisioner['provision']>>['handle']
@@ -78,6 +81,7 @@ export class ProjectService {
     const createInput: ProjectsCreateInput = {
       name: input.name,
       status: 'provisioning',
+      publishableKey,
       containerName: handle.containerName,
       volumeName: handle.volumeName,
     }

@@ -13,6 +13,7 @@ const ProjectSchema = t.Object({
   $id: t.String(),
   name: t.String(),
   status: t.Union([t.Literal('provisioning'), t.Literal('active'), t.Literal('error')]),
+  publishableKey: t.String(),
   containerName: t.String(),
   volumeName: t.String(),
   errorMessage: t.Optional(t.String()),

@@ -35,6 +35,7 @@ describe('project routes', () => {
     expect(status).toBe(200)
     expect(data?.name).toBe('Acme')
     expect(data?.status).toBe('active')
+    expect(data?.publishableKey).toMatch(/^pk_[0-9a-f]{32}$/)
   })
 
   test('POST /projects rejects a missing name with 422', async () => {

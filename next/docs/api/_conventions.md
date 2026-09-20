@@ -134,6 +134,7 @@ Question #9, resolved at Phase 1 contract review):
 
 | Header              | Purpose                        |
 | ------------------- | ------------------------------ |
+| `x-nuvix-publishable-key` | project selector (not authorization) |
 | `x-nuvix-session`   | user session token             |
 | `x-nuvix-jwt`       | short-lived JWT                |
 | `x-nuvix-key`       | API key (project / console)    |
@@ -142,6 +143,10 @@ Question #9, resolved at Phase 1 contract review):
 | `x-nuvix-timestamp` | webhook signature timestamp    |
 | `x-nuvix-signature` | webhook signature              |
 | `x-nuvix-nonce`     | webhook signature nonce        |
+
+`x-nuvix-publishable-key` selects the project and therefore its dedicated
+tenant database. It is safe to embed in clients and **never authorizes access**.
+`x-nuvix-key` is a separate tenant-local secret API-key credential.
 
 **Contract rule:** auth modules reference these by name from a single
 constants module — no inline header strings in route handlers.

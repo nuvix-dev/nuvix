@@ -1,5 +1,5 @@
 // This file is auto-generated. Do not edit manually.
-// Generated on: 2026-09-14T02:35:53.147Z
+// Generated on: 2026-09-20T04:18:16.814Z
 
 import type { Doc } from '@nuvix/db'
 
@@ -22,6 +22,8 @@ export interface Projects extends IEntity {
    * @default "provisioning"
    */
   status: string
+  /** @required */
+  publishableKey: string
   /** @required */
   containerName: string
   /** @required */

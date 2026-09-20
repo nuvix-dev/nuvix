@@ -15,7 +15,7 @@
  * (`libs/utils/src/collections/*.ts` → `libs/utils/nuvix-db.config.ts`).
  */
 
-import { AttributeType, type Collection, Database, ID, IndexEnum } from '@nuvix/db'
+import { AttributeType, type Collection, Database, ID, IndexType } from '@nuvix/db'
 
 /**
  * One document per provisioned project. Control-plane data only — the
@@ -97,7 +97,7 @@ const projects: Collection = {
     {
       $id: ID.custom('publishableKey'),
       key: 'idx_publishable_key',
-      type: IndexEnum.Unique,
+      type: IndexType.Unique,
       attributes: ['publishableKey'],
     },
   ],

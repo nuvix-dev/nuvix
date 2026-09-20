@@ -23,10 +23,20 @@ describe('ProjectService', () => {
 
     expect(project.name).toBe('Demo')
     expect(project.status).toBe('active')
+    expect(project.publishableKey).toMatch(/^pk_[0-9a-f]{32}$/)
     expect(project.containerName).toBe(`fake-tenant-${project.$id}`)
     expect(provisioner.provisioned.has(project.$id)).toBe(true)
     // The tenant's connection secret is never part of the public view.
     expect(project).not.toHaveProperty('target')
+  })
+
+  test('create generates a distinct publishable selector for every project', async () => {
+    const service = new ProjectService(db, new FakeTenantProvisioner())
+
+    const first = await service.create({ name: 'First selector' })
+    const second = await service.create({ name: 'Second selector' })
+
+    expect(first.publishableKey).not.toBe(second.publishableKey)
   })
 
   test('create records status: error and rethrows when the tenant never becomes ready', async () => {
