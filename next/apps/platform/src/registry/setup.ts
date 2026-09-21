@@ -12,19 +12,19 @@
  */
 
 import {
-  createPlatformDatabase as createDatabase,
-  ensurePlatformSchema,
-} from '@nuvix/core/platform'
-import type { Database } from '@nuvix/db'
-import { config } from '@nuvix/utils'
+	createPlatformDatabase as createDatabase,
+	ensurePlatformSchema,
+} from "@nuvix/core/platform";
+import type { Database } from "@nuvix/db";
+import { config } from "@nuvix/utils";
 
-export { ensurePlatformSchema }
+export { ensurePlatformSchema };
 
 /** Builds the platform `Database` and ensures its schema exists. */
 export async function createPlatformDatabase(): Promise<Database> {
-  return createDatabase({
-    driver: config.platform.dbDriver,
-    url: config.platform.dbUrl,
-    encryptionKey: config.platform.tenantEncryptionKey,
-  })
+	return createDatabase({
+		driver: config.platform.dbDriver,
+		url: config.platform.dbUrl,
+		encryptionKey: config.platform.tenantEncryptionKey,
+	});
 }

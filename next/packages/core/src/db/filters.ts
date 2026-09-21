@@ -11,8 +11,8 @@
  * JSON.stringify/encrypt calls around field access.
  */
 
-import { Database, type Filter } from '@nuvix/db'
-import { decryptSecret, encryptSecret } from '../tenants/encryption'
+import { Database, type Filter } from "@nuvix/db";
+import { decryptSecret, encryptSecret } from "../tenants/encryption";
 
 /**
  * Stringifies non-null values on encode, parses them back on decode.
@@ -24,14 +24,14 @@ import { decryptSecret, encryptSecret } from '../tenants/encryption'
  * String-typed column hold an encrypted blob of arbitrary JSON.
  */
 export const jsonFilter: Filter = {
-  encode(value) {
-    return value === null || value === undefined ? null : JSON.stringify(value)
-  },
-  decode(value) {
-    if (typeof value !== 'string') return value
-    return JSON.parse(value)
-  },
-}
+	encode(value) {
+		return value === null || value === undefined ? null : JSON.stringify(value);
+	},
+	decode(value) {
+		if (typeof value !== "string") return value;
+		return JSON.parse(value);
+	},
+};
 
 /**
  * AES-256-GCM at-rest encryption for string-valued attributes (see
@@ -40,19 +40,19 @@ export const jsonFilter: Filter = {
  * helper it replaces.
  */
 export function createEncryptFilter(key: Uint8Array): Filter {
-  return {
-    async encode(value) {
-      if (typeof value !== 'string') return null
-      return encryptSecret(value, key)
-    },
-    async decode(value) {
-      if (typeof value !== 'string') return value
-      return decryptSecret(value, key)
-    },
-  }
+	return {
+		async encode(value) {
+			if (typeof value !== "string") return null;
+			return encryptSecret(value, key);
+		},
+		async decode(value) {
+			if (typeof value !== "string") return value;
+			return decryptSecret(value, key);
+		},
+	};
 }
 
-const ALREADY_REGISTERED = /already exists/i
+const ALREADY_REGISTERED = /already exists/i;
 
 /**
  * `Database.addFilter` throws if a name is registered twice in the same
@@ -61,14 +61,14 @@ const ALREADY_REGISTERED = /already exists/i
  * only a genuine error propagates.
  */
 function registerOnce(name: string, filter: Filter): void {
-  try {
-    Database.addFilter(name, filter)
-  } catch (error) {
-    if (error instanceof Error && ALREADY_REGISTERED.test(error.message)) {
-      return
-    }
-    throw error
-  }
+	try {
+		Database.addFilter(name, filter);
+	} catch (error) {
+		if (error instanceof Error && ALREADY_REGISTERED.test(error.message)) {
+			return;
+		}
+		throw error;
+	}
 }
 
 /**
@@ -77,6 +77,6 @@ function registerOnce(name: string, filter: Filter): void {
  * `Database` instance whose schema references either filter by name.
  */
 export function registerCoreDbFilters(encryptionKey: Uint8Array): void {
-  registerOnce('json', jsonFilter)
-  registerOnce('encrypt', createEncryptFilter(encryptionKey))
+	registerOnce("json", jsonFilter);
+	registerOnce("encrypt", createEncryptFilter(encryptionKey));
 }

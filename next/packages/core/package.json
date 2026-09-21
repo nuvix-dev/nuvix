@@ -1,20 +1,20 @@
 {
-  "name": "@nuvix/core",
-  "version": "2.0.0-alpha.1",
-  "private": true,
-  "type": "module",
-  "exports": {
-    ".": "./src/index.ts",
-    "./db": "./src/db/index.ts",
-    "./errors": "./src/errors.ts",
-    "./platform": "./src/platform/index.ts",
-    "./tenants": "./src/tenants/index.ts"
-  },
-  "scripts": {
-    "test": "bun test"
-  },
-  "dependencies": {
-    "@nuvix/cache": "file:../../../../cache",
-    "@nuvix/db": "file:../../../../database"
-  }
+	"name": "@nuvix/core",
+	"version": "2.0.0-alpha.1",
+	"private": true,
+	"type": "module",
+	"exports": {
+		".": "./src/index.ts",
+		"./db": "./src/db/index.ts",
+		"./errors": "./src/errors.ts",
+		"./platform": "./src/platform/index.ts",
+		"./tenants": "./src/tenants/index.ts"
+	},
+	"scripts": {
+		"test": "bun test"
+	},
+	"dependencies": {
+		"@nuvix/cache": "file:../../../../cache",
+		"@nuvix/db": "file:../../../../database"
+	}
 }

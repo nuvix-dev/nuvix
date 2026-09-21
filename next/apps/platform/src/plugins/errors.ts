@@ -1,5 +1,5 @@
-import { Elysia, problem } from 'elysia'
-import { AppError } from '../shared/errors'
+import { Elysia, problem } from "elysia";
+import { AppError } from "../shared/errors";
 
 /**
  * Maps `AppError` to RFC-9457 problem+json responses (D19).
@@ -11,15 +11,19 @@ import { AppError } from '../shared/errors'
  * the consuming instance's routes.
  */
 export function problemErrors() {
-  return new Elysia({ name: 'problem-errors' }).error('global', AppError, ({ error, set }) => {
-    set.status = error.status
-    return problem(error.status, {
-      type: error.fields.type,
-      title: error.fields.title,
-      detail: error.fields.detail,
-      ...(error.fields.code ? { code: error.fields.code } : {}),
-      instance: error.message,
-      errors: error.fields.errors,
-    })
-  })
+	return new Elysia({ name: "problem-errors" }).error(
+		"global",
+		AppError,
+		({ error, set }) => {
+			set.status = error.status;
+			return problem(error.status, {
+				type: error.fields.type,
+				title: error.fields.title,
+				detail: error.fields.detail,
+				...(error.fields.code ? { code: error.fields.code } : {}),
+				instance: error.message,
+				errors: error.fields.errors,
+			});
+		},
+	);
 }

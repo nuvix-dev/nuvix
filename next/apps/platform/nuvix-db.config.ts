@@ -1,5 +1,5 @@
-import type { NuvixDBConfig } from '@nuvix/db'
-import { platformCollections } from './src/registry/collections'
+import type { NuvixDBConfig } from "@nuvix/db";
+import { platformCollections } from "./src/registry/collections";
 
 /**
  * Drives `bun run gen:types` (the `nuvix-db` CLI — see package.json).
@@ -8,21 +8,21 @@ import { platformCollections } from './src/registry/collections'
  * bootstrap (`src/registry/setup.ts`) instead of duplicated here.
  */
 const config: NuvixDBConfig = {
-  collections: platformCollections,
+	collections: platformCollections,
 
-  typeGeneration: {
-    outputPath: './src/types/generated.ts',
-    packageName: '@nuvix/db',
-    includeDocTypes: true,
-    generateUtilityTypes: true,
-    generateInputTypes: true,
-    generateQueryTypes: false,
-  },
+	typeGeneration: {
+		outputPath: "./src/types/generated.ts",
+		packageName: "@nuvix/db",
+		includeDocTypes: true,
+		generateUtilityTypes: true,
+		generateInputTypes: true,
+		generateQueryTypes: false,
+	},
 
-  options: {
-    debug: false,
-    strict: true,
-  },
-}
+	options: {
+		debug: false,
+		strict: true,
+	},
+};
 
-export default config
+export default config;
