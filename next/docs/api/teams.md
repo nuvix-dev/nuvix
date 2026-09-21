@@ -60,8 +60,9 @@ Body: `{ teamId?, name, roles? }`. `teamId` follows the standard create-id
 convention (D28) — `'unique()'` (default) or a caller-supplied id (the
 previous draft omitted this field entirely).
 
-`roles` (array of strings, max `limits.arrayParamsSize` each ≤32 chars) are
-assigned to the **creating user**. `"owner"` is unconditionally added to that
+`roles` (array of strings, max the project's `limits.arrayParamsSize` —
+dynamic per-project config, D42, not a hardcoded number — each ≤32 chars)
+are assigned to the **creating user**. `"owner"` is unconditionally added to that
 list if missing — not merely a default applied when the array is empty (v1
 parity: `if (!roles.includes('owner')) roles.push('owner')`).
 

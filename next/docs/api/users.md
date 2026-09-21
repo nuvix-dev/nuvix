@@ -63,6 +63,54 @@ They directly set `emailVerification`/`phoneVerification` with no side
 effects (no re-send, no expiry check) — an admin override, distinct from
 the self-service verification flow in `account.md`.
 
+### User object
+
+```json
+{
+  "$id": "user_001",
+  "name": "Ada Lovelace",
+  "email": "ada@example.com",
+  "phone": "+15550001234",
+  "status": true,
+  "labels": ["vip"],
+  "emailVerification": true,
+  "phoneVerification": false,
+  "mfa": false,
+  "prefs": { "theme": "dark" },
+  "hash": "argon2",
+  "hashOptions": { "memoryCost": 65536, "timeCost": 3, "parallelism": 4 },
+  "targets": [
+    { "$id": "target_1", "name": "Ada's iPhone", "providerType": "push", "identifier": "expo-token-…" }
+  ],
+  "registration": "2026-08-26T10:00:00.000Z",
+  "$createdAt": "2026-08-26T10:00:00.000Z",
+  "$updatedAt": "2026-08-26T10:00:00.000Z"
+}
+```
+
+**Correction — this object shape wasn't documented at all in the previous
+draft**, and two things were missing that legacy's shared `UserModel`
+(base class for both this admin view and `docs/api/account.md`'s
+self-service `Account` object) includes:
+
+- **`targets`** — the account's push/email/sms targets, embedded inline as
+  full objects (same as `account.md`'s Account object) rather than
+  requiring a separate `GET .../targets` call for the common case.
+- **`hash`/`hashOptions`** — the password hashing algorithm and its cost
+  parameters (e.g. `argon2`/`{memoryCost, timeCost, parallelism}`). Legacy
+  exposes these unconditionally on the admin `UserModel` (this whole module
+  is admin/key-only already, unlike `account.md`'s self-service view, which
+  always excludes them via `AccountModel`'s explicit `@Exclude()`). v2 keeps
+  this — it's genuinely useful for migration/backup tooling (exporting a
+  user's current hash state to re-import elsewhere) — but the actual hashed
+  **password value itself** (legacy's confusingly-named `password` field,
+  which holds the hash, not plaintext) is renamed to `passwordHash` in v2
+  for clarity; same data, clearer name, not a capability change.
+
+Neither field is ever present on a **list** response (`GET /v2/users`) —
+same as v1, which only embeds them on single-resource reads, to avoid an
+N+1 targets lookup on every page of a user list.
+
 ### Legacy hash variants — REMOVED (D29)
 
 v1's `POST /users/md5 | sha | phpass | scrypt | scrypt-modified` are **not
@@ -84,9 +132,15 @@ guarantee worth keeping). Server hashes `password` with the project default
 `password` (+ `hashOptions` where applicable) so plaintext never crosses the
 wire during migrations.
 
-`password` and `hashOptions` are sensitive fields — never echoed back
-(explicit response serialization, not v1's blanket model-field exposure
-plus after-the-fact interceptor stripping).
+**Correction**: `password`/`hash`/`hashOptions` are not blanket-hidden —
+see the User object section above. What's true is narrower: the **plaintext
+password supplied in the request body** is of course never echoed back
+(nothing echoes request bodies in this API), and the pre-hashed-import
+variants' `password`/`hashOptions` request fields aren't specially secret
+either — they're exactly what gets stored, and are then visible on reads
+of that user the same as any other user's `hash`/`hashOptions`/`passwordHash`
+(admin/key-only module, so there's no lower-privilege caller to hide them
+from in the first place).
 
 ### Status
 
@@ -133,8 +187,12 @@ half-valid token.
 | DELETE | `…/sessions`            | Delete all sessions    |
 | DELETE | `…/sessions/:sessionId` | Delete one session     |
 
-Session object shape matches `docs/api/account.md`'s session object.
-`current` is always `false` here (an admin is never "the" session owner).
+Session object shape matches `docs/api/account.md`'s session object,
+including its field-visibility rule — since every caller here is
+admin/key by definition, `secret` and the OAuth2 provider token fields are
+always visible on these responses (this module never has a lower-privilege
+caller to hide them from). `current` is always `false` here (an admin is
+never "the" session owner).
 
 ## Endpoints — MFA (`/v2/users/:userId/mfa`)
 
@@ -219,8 +277,12 @@ providerId? }` (not just `identifier`). `providerType` ∈
 10. **`GET …/mfa/factors.recoveryCode` is now computed correctly** instead
     of v1's permanently-`false` field.
 11. **Labels**: v2 keeps v1's exact validation — each label
-    `^[a-zA-Z0-9]{1,36}$`, array capped at `limits.arrayParamsSize`,
-    deduplicated — none of which was documented in the previous draft.
+    `^[a-zA-Z0-9]{1,36}$`, array capped at the project's `limits.arrayParamsSize`
+    (dynamic per-project config, D42 — not a hardcoded `100`), deduplicated
+    — none of which was documented in the previous draft.
+13. **`targets`/`hash`/`hashOptions` embedded in the User object** (new to
+    this draft — see "User object" above); `password` value itself renamed
+    `passwordHash` for clarity.
 12. **`GET …/memberships` total is a real count in v2** — **correction**:
     v1's `total` is just `memberships.length` of whatever page was fetched,
     not a true count query (unlike every other list endpoint in this

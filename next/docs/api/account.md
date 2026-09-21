@@ -55,6 +55,50 @@ instead of primary/side-feature:**
 
 ---
 
+## Project configuration & limits (D42) — dynamic, not hardcoded
+
+Every feature gate and numeric limit referenced anywhere in this document
+(and in `docs/api/teams.md`/`users.md`) is resolved from the **calling
+project's own settings** at request time, never a hardcoded constant in
+service code. This mirrors legacy's `project.auths.*`/`project.limits.*`
+pattern exactly — v1 already designed these as per-project, so this isn't
+new behavior, it's a rule this contract makes explicit so no implementer
+accidentally bakes a default in as a constant. A project that never
+customizes a setting gets the documented default; one that does gets its
+override, resolved the same way `context/project.ts` already resolves the
+project itself (D40/D41) — one more thing hanging off the same resolved
+`ResolvedProject`, not a separate mechanism.
+
+Defaults (overridable per project, exact legacy values carried forward
+unless noted):
+
+| Setting | Default | Used by |
+| ------- | ------- | ------- |
+| `auths.emailPassword` | `true` | `POST /account`, `POST /account/sessions/email` |
+| `auths.anonymous` | `true` | `POST /account/sessions/anonymous` |
+| `auths.magicUrl` | `true` | `POST /account/tokens/magic-url` |
+| `auths.emailOtp` | `true` | `POST /account/tokens/email` |
+| `auths.phone` | `false` (needs an SMS provider configured) | `POST /account/tokens/phone` |
+| `auths.invites` | `true` | `docs/api/teams.md` invite creation |
+| `auths.duration` | `31536000` (1 year) | session `expire` |
+| `auths.limit` | `0` (unlimited) | `user_count_exceeded` gate |
+| `auths.passwordHistory` | `0` (disabled) | password-reuse check |
+| `auths.personalDataCheck` | `false` | personal-data-in-password check |
+| `auths.sessionAlerts` | `false` | new-session email notice |
+| `auths.mockNumbers` | `[]` | QA phone-OTP bypass |
+| `limits.userSessionsMax` | `100` | hard cap, v2 now enforces (see Sessions section) |
+| `limits.userSessionsDefault` | `10` | soft/expected cap before LRU eviction kicks in |
+| `limits.arrayParamsSize` | `100` | max array length for `roles`/`labels`/etc. across this doc and `teams.md`/`users.md` |
+
+A disabled gate fails with `501 user_auth_method_unsupported`, exactly as
+in v1. Implementation depends on the Phase 7 "auth-settings" platform slice
+for real per-project persistence; until it lands, services read these from
+a settings object with the table above as compiled-in defaults, structured
+so swapping in the real per-project lookup later is a one-line change, not
+a rewrite.
+
+---
+
 ## Auth posture
 
 Documented per endpoint below (mirrors v1 exactly: most mutation endpoints
@@ -95,11 +139,22 @@ existing API keys already assume).
   "labels": ["vip"],
   "mfa": false,
   "prefs": { "theme": "dark" },
+  "targets": [
+    { "$id": "target_1", "name": "Ada's iPhone", "providerType": "push", "identifier": "expo-token-…" }
+  ],
   "registration": "2026-08-26T10:00:00.000Z",
   "$createdAt": "2026-08-26T10:00:00.000Z",
   "$updatedAt": "2026-08-26T10:00:00.000Z"
 }
 ```
+
+**Correction — `targets` was missing from the object shape.** v1's
+`UserModel` (the shared base both `AccountModel` and `docs/api/users.md`'s
+admin `User` object extend) embeds the account's full `targets` array
+directly — not just a flat DB row. v2 keeps this: every account/user
+response is a **view**, not a 1:1 table dump, and includes the caller's
+push/email/sms targets inline so clients don't need a separate round-trip
+for the common case of "what targets does this account have."
 
 `password`/`hash`/`hashOptions`/`passwordHistory`/`mfaRecoveryCodes` are
 never present in any account response (explicit serialization, not v1's
@@ -339,16 +394,40 @@ duration 900s (15 min), caller may request 60–3600s.
 }
 ```
 
-`secret` is **never** included in list/get responses (only in the one-time
-creation response) — a stricter posture than v1, which re-exposes the
-stored hash under the `secret` field name on every read (harmless since
-it's a hash, not the raw token, but confusing/unnecessary; v2 just omits
-the field outside creation). OAuth2 provider token fields
-(`providerAccessToken` etc.) stay internal-only, never serialized to any
-response, matching the "target metadata never returned" posture already
-established for tenant connections (D37) — v1 exposes these on session
-create responses; v2 does not, since they're not needed by any legitimate
-client flow and are a needless exposure of upstream OAuth credentials.
+**Field visibility rule (corrected — matches v1's actual `class-transformer`
+`groups: ['admin']` mechanism, not the stricter rule an earlier draft of
+this contract proposed):**
+
+- `secret` — included in the response of whichever call **creates** the
+  session or token (self-service login, or an admin/API key minting one on
+  a user's behalf via `docs/api/users.md`), since that's the only channel
+  the caller has to receive their own credential (v1 additionally sets it
+  as an httpOnly cookie for browser clients at creation time — v2 has no
+  cookie mechanism, so the one-time JSON return is the sole delivery path;
+  this is a real, deliberate deviation, not a detail v1 already does this
+  way). On every subsequent `list`/`get` of an *existing* session or token,
+  `secret` is included **only for privileged (admin/API key) callers** —
+  exactly like v1's `@Expose({ groups: ['admin'] })` on `SessionModel`/
+  `TokenModel`. A non-privileged caller re-listing their own sessions never
+  sees it again (they already have it from creation); an admin/API key
+  inspecting a user's sessions does, same as v1.
+- **OAuth2 provider token fields** (`providerAccessToken`,
+  `providerAccessTokenExpiry`, `providerRefreshToken`) — **correction**: an
+  earlier draft of this contract said v2 hides these entirely. That would
+  have been a real feature reduction: v1's `SessionModel`/`IdentityModel`
+  expose these fields with **no** `groups` restriction at all — every
+  caller, including the session/identity owner themselves via
+  self-service `GET /account/sessions`/`GET /account/identities`, can read
+  their own linked provider's access/refresh token (useful for apps that
+  call the upstream provider's API directly using the same token). v2
+  restores full parity here: these fields are visible to the resource
+  owner, not just admin/API-key callers.
+
+This privilege-aware field-visibility mechanism (an explicit "admin can see
+more" rule, not a blanket strip) is the general pattern for every
+admin/self-service pair of endpoints in this document and in
+`docs/api/users.md` — see also `hash`/`hashOptions` visibility in
+`users.md`'s User object.
 
 ### `POST /v2/account/sessions/email`
 
@@ -484,8 +563,12 @@ See inline call-outs above for full detail; summarized here for review:
 7. **Recovery now also runs the personal-data check** (v1 only runs
    password-history on recovery).
 8. **OAuth2 callback/redirect collapsed to one hop** (routing simplification).
-9. **Session responses never include OAuth2 provider tokens or the secret
-   hash** outside the one-time creation response (stricter than v1).
+9. **Secret field visibility matches v1's actual privilege-gated rule**:
+   returned once on creation to whoever created it, then admin/API-key-only
+   on subsequent reads. OAuth2 provider tokens stay visible to the
+   resource owner too, same as v1 (an earlier draft of this contract
+   proposed hiding them entirely, which would have been a feature
+   reduction — corrected).
 10. **Concurrent session cap actually enforced** (LRU eviction, v1 defines
     but never checks it).
 11. **OAuth2 refresh-token rotation bug fixed** (v1 overwrites the wrong
