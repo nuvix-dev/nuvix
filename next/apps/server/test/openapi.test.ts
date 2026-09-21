@@ -1,9 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
-// app.ts reads config.jwtSecret at import time (config's other fields are
-// lazy getters — see packages/utils/src/config.ts — so only vars actually
-// read at import time need seeding here).
+// app.ts reads config.jwtSecret and the platform DB config at import time
+// (config's other fields are lazy getters — see packages/utils/src/config.ts —
+// so only vars actually read at import time need seeding here).
 process.env.NUVIX_JWT_SECRET ||= "test-secret";
+process.env.NUVIX_PLATFORM_DB_DRIVER ||= "sqlite";
+process.env.NUVIX_PLATFORM_DB_URL ||= ":memory:";
+process.env.NUVIX_TENANT_ENCRYPTION_KEY ||=
+	"+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo=";
 
 const { app } = await import("../src/app");
 

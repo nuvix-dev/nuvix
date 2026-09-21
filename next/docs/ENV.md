@@ -23,6 +23,11 @@ The platform app owns the project registry and tenant provisioning (D20,
 D37/D38). Its own persistence is pluggable via `@nuvix/db` — SQLite by
 default (zero infra for local dev), PostgreSQL for real deployments.
 
+The project-facing server app reads the SAME control-plane database (via the
+same `@nuvix/core/platform` bootstrap) to resolve `x-nuvix-publishable-key`
+headers into a project (`apps/server/src/context/project.ts`) — so these
+variables must point both apps at one shared registry, not one each.
+
 | Variable                       | Required | Default                    | Description                                                          |
 | ------------------------------- | -------- | --------------------------- | --------------------------------------------------------------------- |
 | `NUVIX_PLATFORM_HOST`           | yes      | `0.0.0.0`                   | Platform app HTTP bind address                                        |

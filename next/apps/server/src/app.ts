@@ -1,4 +1,5 @@
 import { openapi } from "@elysia/openapi";
+import { createPlatformDatabase, ProjectRegistry } from "@nuvix/core/platform";
 import { TranslationLoader } from "@nuvix/i18n";
 import { config } from "@nuvix/utils";
 import { Elysia, t } from "elysia";
@@ -7,6 +8,7 @@ import { createAvatarService } from "./avatars/service";
 import { authContext } from "./context/auth";
 import { createGeoIP } from "./context/geoip";
 import { getTranslator, localeContext } from "./context/locale";
+import { projectContext } from "./context/project";
 import { localeRoutes } from "./locale/route";
 import { cors } from "./plugins/cors";
 import { problemErrors } from "./plugins/errors";
@@ -49,6 +51,16 @@ const health = new Elysia({ name: "health" }).get(
 const geoip = await createGeoIP();
 const avatars = createAvatarService();
 
+// Shared control-plane registry boundary (D38/Phase 7): the server app reads
+// the SAME platform schema the platform app writes, through the one
+// `@nuvix/core/platform` bootstrap function — never a second definition.
+const platformDb = await createPlatformDatabase({
+	driver: config.platform.dbDriver,
+	url: config.platform.dbUrl,
+	encryptionKey: config.platform.tenantEncryptionKey,
+});
+const projectRegistry = new ProjectRegistry(platformDb);
+
 export const app = new Elysia({ prefix: "/v2" })
 	.use(
 		cors({
@@ -78,12 +90,18 @@ export const app = new Elysia({ prefix: "/v2" })
 			documentation: { info: { title: "Nuvix API", version: "2.0.0" } },
 		}),
 	)
+	// Request order (AGENTS.md): publishable key -> platform project -> ...
+	// -> tenant-local auth -> canonical roles -> caller-scoped Session. Only
+	// the first leg (project resolution) is wired so far; auth resolution
+	// stays independent of it until Phase 4 designs tenant-local auth.
+	.use(projectContext({ lookup: projectRegistry }))
 	.use(authContext({ jwtSecret: config.jwtSecret }))
 	.use(localeContext(localeOptions))
 	.use(localeRoutes(geoip, localeOptions))
 	.use(avatarRoutes(avatars))
 	// Dev-only route exercising the context chain; removed once real modules land.
-	// NOTE: defined inline AFTER authContext so the derived `auth` type flows in
-	// ('plugin'-scoped derive types only reach routes registered downstream).
-	.get("/whoami", ({ auth }) => ({ auth }))
+	// NOTE: defined inline AFTER authContext/projectContext so the derived
+	// types flow in ('plugin'-scoped derive types only reach routes registered
+	// downstream).
+	.get("/whoami", ({ auth, project }) => ({ auth, project }))
 	.use(health);
