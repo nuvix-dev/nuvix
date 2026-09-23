@@ -27,6 +27,16 @@ export {
 // Token types
 export { TokenType } from './token-types'
 
+// RFC-6238 TOTP (Web Crypto)
+export {
+  base32Decode,
+  base32Encode,
+  generateTotp,
+  generateTotpSecret,
+  generateTotpUri,
+  verifyTotp,
+} from './totp'
+
 // Password quality validators
 export {
   containsPersonalData,

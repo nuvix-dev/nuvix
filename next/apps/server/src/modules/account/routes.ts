@@ -74,6 +74,13 @@ export const IdentitySchema = t.Object({
   providerRefreshToken: t.String(),
 })
 
+export const MfaFactorsSchema = t.Object({
+  totp: t.Boolean(),
+  email: t.Boolean(),
+  phone: t.Boolean(),
+  recoveryCode: t.Boolean(),
+})
+
 export interface AuthUserContext {
   userId?: string
   sessionId?: string
@@ -519,6 +526,139 @@ export function accountRoutes(
         async ({ params, request }) => {
           const userId = requireUserId(getAuthUser(request))
           await service.deletePushTarget(userId, params.targetId)
+          return { ok: true }
+        },
+      )
+
+      // MFA
+      .patch(
+        '/account/mfa',
+        {
+          body: t.Object({ mfa: t.Boolean() }),
+          response: t.Object({ ok: t.Boolean() }),
+          detail: { summary: 'Enable or disable MFA', tags: ['account'] },
+        },
+        async ({ body, request }) => {
+          const caller = getAuthUser(request)
+          const userId = requireUserId(caller)
+          await service.updateMfa(userId, body.mfa, caller.sessionId)
+          return { ok: true }
+        },
+      )
+      .get(
+        '/account/mfa/factors',
+        {
+          response: MfaFactorsSchema,
+          detail: { summary: 'List MFA factors', tags: ['account'] },
+        },
+        ({ request }) => {
+          const userId = requireUserId(getAuthUser(request))
+          return service.getMfaFactors(userId)
+        },
+      )
+      .post(
+        '/account/mfa/authenticators/totp',
+        {
+          response: t.Object({ secret: t.String(), uri: t.String() }),
+          detail: { summary: 'Create TOTP authenticator', tags: ['account'] },
+        },
+        ({ request }) => {
+          const userId = requireUserId(getAuthUser(request))
+          return service.createTotpAuthenticator(userId)
+        },
+      )
+      .put(
+        '/account/mfa/authenticators/totp',
+        {
+          body: t.Object({ otp: t.String({ minLength: 6, maxLength: 6 }) }),
+          response: t.Object({ ok: t.Boolean() }),
+          detail: { summary: 'Verify TOTP authenticator', tags: ['account'] },
+        },
+        async ({ body, request }) => {
+          const caller = getAuthUser(request)
+          const userId = requireUserId(caller)
+          await service.verifyTotpAuthenticator(userId, body.otp, caller.sessionId)
+          return { ok: true }
+        },
+      )
+      .delete(
+        '/account/mfa/authenticators/totp',
+        {
+          response: t.Object({ ok: t.Boolean() }),
+          detail: { summary: 'Delete TOTP authenticator', tags: ['account'] },
+        },
+        async ({ request }) => {
+          const userId = requireUserId(getAuthUser(request))
+          await service.deleteTotpAuthenticator(userId)
+          return { ok: true }
+        },
+      )
+      .patch(
+        '/account/mfa/recovery-codes',
+        {
+          response: t.Object({ recoveryCodes: t.Array(t.String()) }),
+          detail: { summary: 'Create recovery codes', tags: ['account'] },
+        },
+        ({ request }) => {
+          const userId = requireUserId(getAuthUser(request))
+          return service.createRecoveryCodes(userId)
+        },
+      )
+      .put(
+        '/account/mfa/recovery-codes',
+        {
+          response: t.Object({ recoveryCodes: t.Array(t.String()) }),
+          detail: { summary: 'Regenerate recovery codes', tags: ['account'] },
+        },
+        ({ request }) => {
+          const userId = requireUserId(getAuthUser(request))
+          return service.updateRecoveryCodes(userId)
+        },
+      )
+      .get(
+        '/account/mfa/recovery-codes',
+        {
+          response: t.Object({ recoveryCodes: t.Array(t.String()) }),
+          detail: { summary: 'Get recovery codes', tags: ['account'] },
+        },
+        ({ request }) => {
+          const userId = requireUserId(getAuthUser(request))
+          return service.getRecoveryCodes(userId)
+        },
+      )
+      .post(
+        '/account/mfa/challenge',
+        {
+          body: t.Object({
+            factor: t.Union([
+              t.Literal('email'),
+              t.Literal('phone'),
+              t.Literal('totp'),
+              t.Literal('recoveryCode'),
+            ]),
+          }),
+          response: t.Object({ challengeId: t.String() }),
+          detail: { summary: 'Create MFA challenge', tags: ['account'] },
+        },
+        ({ body, request }) => {
+          const userId = requireUserId(getAuthUser(request))
+          return service.createMfaChallenge(userId, body.factor)
+        },
+      )
+      .put(
+        '/account/mfa/challenge',
+        {
+          body: t.Object({
+            challengeId: t.String(),
+            otp: t.String(),
+          }),
+          response: t.Object({ ok: t.Boolean() }),
+          detail: { summary: 'Verify MFA challenge', tags: ['account'] },
+        },
+        async ({ body, request }) => {
+          const caller = getAuthUser(request)
+          const userId = requireUserId(caller)
+          await service.verifyMfaChallenge(userId, body.challengeId, body.otp, caller.sessionId)
           return { ok: true }
         },
       )

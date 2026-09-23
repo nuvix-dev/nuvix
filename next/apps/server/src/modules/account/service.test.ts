@@ -480,4 +480,149 @@ describe('AccountService', () => {
     await service.deletePushTarget('usr_1', 'tgt_push_1')
     expect(deletedTargetId).toBe('tgt_push_1')
   })
+
+  it('updates MFA status and retrieves MFA factors', async () => {
+    const userDoc = new Doc({
+      $id: 'usr_mfa_1',
+      mfa: false,
+      email: 'mfa@example.com',
+      emailVerification: true,
+      phone: '+15551234567',
+      phoneVerification: false,
+      mfaRecoveryCodes: [],
+    })
+
+    const mockSession = {
+      getDocument: mock(() => Promise.resolve(userDoc)),
+      updateDocument: mock((_col: string, _id: string, doc: Doc<Record<string, unknown>>) =>
+        Promise.resolve(doc),
+      ),
+      findOne: mock(() => Promise.resolve(new Doc({}))), // no verified totp
+    } as unknown as Session
+
+    const service = new AccountService(mockSession)
+    await service.updateMfa('usr_mfa_1', true)
+    expect(userDoc.get('mfa')).toBe(true)
+
+    const factors = await service.getMfaFactors('usr_mfa_1')
+    expect(factors.totp).toBe(false)
+    expect(factors.email).toBe(true)
+    expect(factors.phone).toBe(false)
+    expect(factors.recoveryCode).toBe(false)
+  })
+
+  it('creates, verifies, and deletes TOTP authenticator', async () => {
+    let createdAuthDoc: Doc<Record<string, unknown>> = new Doc({})
+    let deletedAuthId = ''
+
+    const mockSession = {
+      getDocument: mock(() =>
+        Promise.resolve(
+          new Doc({
+            $id: 'usr_totp_1',
+            email: 'totp@example.com',
+          }),
+        ),
+      ),
+      findOne: mock(() => Promise.resolve(createdAuthDoc)),
+      createDocument: mock((_col: string, doc: Doc<Record<string, unknown>>) => {
+        createdAuthDoc = doc
+        return Promise.resolve(doc)
+      }),
+      updateDocument: mock((_col: string, _id: string, doc: Doc<Record<string, unknown>>) =>
+        Promise.resolve(doc),
+      ),
+      deleteDocument: mock((_col: string, id: string) => {
+        deletedAuthId = id
+        return Promise.resolve(true)
+      }),
+    } as unknown as Session
+
+    const service = new AccountService(mockSession)
+    const { secret, uri } = await service.createTotpAuthenticator('usr_totp_1')
+    expect(secret).toBeDefined()
+    expect(uri).toContain('otpauth://totp/')
+
+    // Compute actual TOTP code from secret
+    const { generateTotp } = await import('@nuvix/core/auth')
+    const otp = await generateTotp(secret)
+
+    await service.verifyTotpAuthenticator('usr_totp_1', otp)
+    expect(createdAuthDoc.get('verified')).toBe(true)
+
+    await service.deleteTotpAuthenticator('usr_totp_1')
+    expect(deletedAuthId).toBe(createdAuthDoc.getId())
+  })
+
+  it('manages recovery codes: create, regenerate, get', async () => {
+    const userDoc = new Doc({
+      $id: 'usr_rc_1',
+      mfaRecoveryCodes: [],
+    })
+
+    const mockSession = {
+      getDocument: mock(() => Promise.resolve(userDoc)),
+      updateDocument: mock((_col: string, _id: string, doc: Doc<Record<string, unknown>>) =>
+        Promise.resolve(doc),
+      ),
+    } as unknown as Session
+
+    const service = new AccountService(mockSession)
+
+    // First time create
+    const { recoveryCodes } = await service.createRecoveryCodes('usr_rc_1')
+    expect(recoveryCodes.length).toBe(6)
+
+    // Cannot create again if exists
+    await expect(service.createRecoveryCodes('usr_rc_1')).rejects.toThrow()
+
+    // Get codes
+    const got = await service.getRecoveryCodes('usr_rc_1')
+    expect(got.recoveryCodes).toEqual(recoveryCodes)
+
+    // Regenerate
+    const regenerated = await service.updateRecoveryCodes('usr_rc_1')
+    expect(regenerated.recoveryCodes.length).toBe(6)
+    expect(regenerated.recoveryCodes).not.toEqual(recoveryCodes)
+  })
+
+  it('creates and verifies an MFA challenge', async () => {
+    let createdChallengeDoc: Doc<Record<string, unknown>> = new Doc({})
+    let deletedChallengeId = ''
+
+    const mockSession = {
+      getDocument: mock((col: string, id: string) => {
+        if (col === 'users') {
+          return Promise.resolve(
+            new Doc({
+              $id: id,
+              email: 'chal@example.com',
+              emailVerification: true,
+            }),
+          )
+        }
+        if (col === 'challenges') {
+          return Promise.resolve(createdChallengeDoc)
+        }
+        return Promise.resolve(new Doc({}))
+      }),
+      createDocument: mock((_col: string, doc: Doc<Record<string, unknown>>) => {
+        createdChallengeDoc = doc
+        return Promise.resolve(doc)
+      }),
+      deleteDocument: mock((_col: string, id: string) => {
+        deletedChallengeId = id
+        return Promise.resolve(true)
+      }),
+    } as unknown as Session
+
+    const service = new AccountService(mockSession)
+    const { challengeId } = await service.createMfaChallenge('usr_chal_1', 'email')
+    expect(challengeId).toBeDefined()
+    expect(createdChallengeDoc.get('code')).toBeDefined()
+
+    const code = createdChallengeDoc.get('code') as string
+    await service.verifyMfaChallenge('usr_chal_1', challengeId, code)
+    expect(deletedChallengeId).toBe(challengeId)
+  })
 })

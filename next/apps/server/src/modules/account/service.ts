@@ -11,6 +11,20 @@ import {
 } from './operations/auth'
 import { deleteIdentity, type IdentityView, listIdentities } from './operations/identities'
 import {
+  createMfaChallenge,
+  createRecoveryCodes,
+  createTotpAuthenticator,
+  deleteTotpAuthenticator,
+  getMfaFactors,
+  getRecoveryCodes,
+  type MfaFactors,
+  type TotpAuthenticatorResult,
+  updateMfa,
+  updateRecoveryCodes,
+  verifyMfaChallenge,
+  verifyTotpAuthenticator,
+} from './operations/mfa'
+import {
   type AccountSettings,
   blockOwnAccount,
   type CreateAccountInput,
@@ -195,5 +209,57 @@ export class AccountService {
 
   async deletePushTarget(userId: string, targetId: string): Promise<void> {
     return deletePushTarget(this.session, userId, targetId)
+  }
+
+  async updateMfa(userId: string, mfa: boolean, currentSessionId?: string): Promise<void> {
+    await updateMfa(this.session, userId, mfa, currentSessionId)
+  }
+
+  async getMfaFactors(userId: string): Promise<MfaFactors> {
+    return getMfaFactors(this.session, userId)
+  }
+
+  async createTotpAuthenticator(userId: string, issuer?: string): Promise<TotpAuthenticatorResult> {
+    return createTotpAuthenticator(this.session, userId, issuer)
+  }
+
+  async verifyTotpAuthenticator(
+    userId: string,
+    otp: string,
+    currentSessionId?: string,
+  ): Promise<void> {
+    return verifyTotpAuthenticator(this.session, userId, otp, currentSessionId)
+  }
+
+  async deleteTotpAuthenticator(userId: string): Promise<void> {
+    return deleteTotpAuthenticator(this.session, userId)
+  }
+
+  async createRecoveryCodes(userId: string): Promise<{ recoveryCodes: string[] }> {
+    return createRecoveryCodes(this.session, userId)
+  }
+
+  async updateRecoveryCodes(userId: string): Promise<{ recoveryCodes: string[] }> {
+    return updateRecoveryCodes(this.session, userId)
+  }
+
+  async getRecoveryCodes(userId: string): Promise<{ recoveryCodes: string[] }> {
+    return getRecoveryCodes(this.session, userId)
+  }
+
+  async createMfaChallenge(
+    userId: string,
+    factor: 'email' | 'phone' | 'totp' | 'recoveryCode',
+  ): Promise<{ challengeId: string }> {
+    return createMfaChallenge(this.session, userId, factor)
+  }
+
+  async verifyMfaChallenge(
+    userId: string,
+    challengeId: string,
+    otp: string,
+    currentSessionId?: string,
+  ): Promise<void> {
+    return verifyMfaChallenge(this.session, userId, challengeId, otp, currentSessionId)
   }
 }

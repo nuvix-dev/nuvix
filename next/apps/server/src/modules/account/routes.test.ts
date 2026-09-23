@@ -59,6 +59,8 @@ describe('account routes', async () => {
   })
 
   const tokenStore = new Map<string, Doc<Record<string, unknown>>>()
+  const authenticatorStore = new Map<string, Doc<Record<string, unknown>>>()
+  const challengeStore = new Map<string, Doc<Record<string, unknown>>>()
 
   const mockSession = {
     getDocument: (col: string, id: string) => {
@@ -66,6 +68,7 @@ describe('account routes', async () => {
       if (col === 'sessions' && id === 'sess_acc_1') return Promise.resolve(sessionDoc)
       if (col === 'identities' && id === 'ident_test_1') return Promise.resolve(identityDoc)
       if (col === 'targets' && id === 'tgt_push_1') return Promise.resolve(targetDoc)
+      if (col === 'challenges') return Promise.resolve(challengeStore.get(id) ?? new Doc({}))
       return Promise.resolve(new Doc({}))
     },
     findOne: (col: string, queries?: unknown[]) => {
@@ -80,6 +83,9 @@ describe('account routes', async () => {
         return Promise.resolve(new Doc({}))
       }
       if (col === 'sessions') return Promise.resolve(sessionDoc)
+      if (col === 'authenticators') {
+        return Promise.resolve(authenticatorStore.get('totp') ?? new Doc({}))
+      }
       if (col === 'tokens') {
         const queryStr = JSON.stringify(queries ?? [])
         for (const [, doc] of tokenStore) {
@@ -101,22 +107,27 @@ describe('account routes', async () => {
     },
     count: () => Promise.resolve(1),
     createDocument: (col: string, doc: Doc<Record<string, unknown>>) => {
-      if (col === 'tokens') {
-        tokenStore.set(doc.getId(), doc)
-      }
+      if (col === 'tokens') tokenStore.set(doc.getId(), doc)
+      if (col === 'authenticators') authenticatorStore.set('totp', doc)
+      if (col === 'challenges') challengeStore.set(doc.getId(), doc)
       return Promise.resolve(doc)
     },
-    updateDocument: (_col: string, _id: string, doc: Doc<Record<string, unknown>>) =>
-      Promise.resolve(
+    updateDocument: (_col: string, _id: string, doc: Doc<Record<string, unknown>>) => {
+      if (_col === 'authenticators') {
+        authenticatorStore.set('totp', doc)
+        return Promise.resolve(doc)
+      }
+      return Promise.resolve(
         new Doc({
           ...userDoc.toObject(),
           ...doc.toObject(),
         }),
-      ),
+      )
+    },
     deleteDocument: (col: string, id: string) => {
-      if (col === 'tokens') {
-        tokenStore.delete(id)
-      }
+      if (col === 'tokens') tokenStore.delete(id)
+      if (col === 'authenticators') authenticatorStore.delete('totp')
+      if (col === 'challenges') challengeStore.delete(id)
       return Promise.resolve(true)
     },
     deleteDocuments: () => Promise.resolve(['id1']),
@@ -371,6 +382,68 @@ describe('account routes', async () => {
     const delRes = await client.account.targets({ targetId: 'tgt_push_1' }).push.delete()
     expect(delRes.status).toBe(200)
     expect(delRes.data?.ok).toBe(true)
+  })
+
+  test('MFA status and factors: PATCH /account/mfa and GET /account/mfa/factors', async () => {
+    const patchRes = await client.account.mfa.patch({ mfa: true })
+    expect(patchRes.status).toBe(200)
+    expect(patchRes.data?.ok).toBe(true)
+
+    const factorsRes = await client.account.mfa.factors.get()
+    expect(factorsRes.status).toBe(200)
+    expect(factorsRes.data?.totp).toBe(false)
+  })
+
+  test('TOTP lifecycle: POST, PUT, DELETE /account/mfa/authenticators/totp', async () => {
+    const createRes = await client.account.mfa.authenticators.totp.post()
+    expect(createRes.status).toBe(200)
+    expect(createRes.data?.secret).toBeDefined()
+    expect(createRes.data?.uri).toContain('otpauth://totp/')
+
+    const { generateTotp } = await import('@nuvix/core/auth')
+    const otp = await generateTotp(createRes.data?.secret ?? '')
+
+    const verifyRes = await client.account.mfa.authenticators.totp.put({ otp })
+    expect(verifyRes.status).toBe(200)
+    expect(verifyRes.data?.ok).toBe(true)
+
+    const delRes = await client.account.mfa.authenticators.totp.delete()
+    expect(delRes.status).toBe(200)
+    expect(delRes.data?.ok).toBe(true)
+  })
+
+  test('recovery codes: PATCH, GET, PUT /account/mfa/recovery-codes', async () => {
+    const createRes = await client.account.mfa['recovery-codes'].patch()
+    expect(createRes.status).toBe(200)
+    expect(createRes.data?.recoveryCodes.length).toBe(6)
+
+    const getRes = await client.account.mfa['recovery-codes'].get()
+    expect(getRes.status).toBe(200)
+    expect(getRes.data?.recoveryCodes.length).toBe(6)
+
+    const putRes = await client.account.mfa['recovery-codes'].put()
+    expect(putRes.status).toBe(200)
+    expect(putRes.data?.recoveryCodes.length).toBe(6)
+  })
+
+  test('MFA challenge: POST and PUT /account/mfa/challenge', async () => {
+    const challengeRes = await client.account.mfa.challenge.post({
+      factor: 'email',
+    })
+    expect(challengeRes.status).toBe(200)
+    expect(challengeRes.data?.challengeId).toBeDefined()
+
+    // challengeStore has the code
+    const challengeDoc = challengeStore.get(challengeRes.data?.challengeId ?? '')
+    const code = challengeDoc?.get('code') as string
+    expect(code).toBeDefined()
+
+    const verifyRes = await client.account.mfa.challenge.put({
+      challengeId: challengeRes.data?.challengeId ?? '',
+      otp: code,
+    })
+    expect(verifyRes.status).toBe(200)
+    expect(verifyRes.data?.ok).toBe(true)
   })
 
   test('DELETE /account deletes account', async () => {
