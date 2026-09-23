@@ -73,4 +73,11 @@ describe('composed server app', () => {
     const body = (await res.json()) as { code: string }
     expect(body.code).toBe('publishable_key_required')
   })
+
+  test('GET /v2/database/schemas requires publishable key', async () => {
+    const res = await app.handle(new Request('http://localhost/v2/database/schemas'))
+    expect(res.status).toBe(400)
+    const body = (await res.json()) as { code: string }
+    expect(body.code).toBe('publishable_key_required')
+  })
 })

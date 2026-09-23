@@ -12,6 +12,8 @@ import { getTenantRequestContext, requireTenantContext, tenantContext } from './
 import { localeRoutes } from './locale/route'
 import { accountRoutes } from './modules/account/routes'
 import { AccountService } from './modules/account/service'
+import { databaseRoutes } from './modules/database/routes'
+import { DatabaseService } from './modules/database/service'
 import { SessionsService } from './modules/sessions/service'
 import { teamRoutes } from './modules/teams/routes'
 import { TeamsService } from './modules/teams/service'
@@ -129,6 +131,22 @@ export const app = new Elysia({ prefix: '/v2' })
       (request) => {
         const { auth } = requireTenantContext(request)
         return { userId: auth.userId, roles: auth.roles }
+      },
+    ),
+  )
+  .use(
+    databaseRoutes(
+      (request) => new DatabaseService(requireTenantContext(request).resource.getSql()),
+      (request) => {
+        const { auth } = requireTenantContext(request)
+        return {
+          roles: auth.roles,
+          isAdmin:
+            auth.roles?.includes('admin') ||
+            auth.roles?.includes('role:admin') ||
+            auth.roles?.includes('owner'),
+          isApiKey: auth.type === 'apiKey',
+        }
       },
     ),
   )
