@@ -2,6 +2,7 @@ import { openapi } from '@elysia/openapi'
 import { createPlatformDatabase, ProjectRegistry } from '@nuvix/core/platform'
 import { TenantResourcePool } from '@nuvix/core/tenants'
 import { TranslationLoader } from '@nuvix/i18n'
+import { Local } from '@nuvix/storage'
 import { config } from '@nuvix/utils'
 import { Elysia, t } from 'elysia'
 import { avatarRoutes } from './avatars/route'
@@ -15,6 +16,8 @@ import { AccountService } from './modules/account/service'
 import { databaseRoutes } from './modules/database/routes'
 import { DatabaseService } from './modules/database/service'
 import { SessionsService } from './modules/sessions/service'
+import { storageRoutes } from './modules/storage/routes'
+import { StorageService } from './modules/storage/service'
 import { teamRoutes } from './modules/teams/routes'
 import { TeamsService } from './modules/teams/service'
 import { userRoutes } from './modules/users/routes'
@@ -56,6 +59,7 @@ const health = new Elysia({ name: 'health' }).get(
 // Module services — constructed once at startup (graceful degradation built in).
 const geoip = await createGeoIP()
 const avatars = createAvatarService()
+const storageDevice = new Local(config.storage.uploadsDir)
 
 // Shared control-plane registry boundary (D38/Phase 7): the server app reads
 // the SAME platform schema the platform app writes, through the one
@@ -141,6 +145,23 @@ export const app = new Elysia({ prefix: '/v2' })
         const { auth } = requireTenantContext(request)
         return {
           roles: auth.roles,
+          isAdmin:
+            auth.roles?.includes('admin') ||
+            auth.roles?.includes('role:admin') ||
+            auth.roles?.includes('owner'),
+          isApiKey: auth.type === 'apiKey',
+        }
+      },
+    ),
+  )
+  .use(
+    storageRoutes(
+      (request) => new StorageService(requireTenantContext(request).authSession, storageDevice),
+      (request) => {
+        const { auth } = requireTenantContext(request)
+        return {
+          roles: auth.roles,
+          userId: auth.userId,
           isAdmin:
             auth.roles?.includes('admin') ||
             auth.roles?.includes('role:admin') ||

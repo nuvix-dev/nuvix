@@ -311,7 +311,7 @@ next/
 
 ### Phase 5 — Storage + Messaging + Webhooks
 
-- [ ] Storage: buckets/files, `Bun.file` local driver + S3 driver, uploads via Elysia `t.File`
+- [x] Storage: buckets/files, Bun-native Local driver + S3 driver, uploads via Elysia `t.File`, native `Bun.Image` preview/resizing, contract in `docs/api/storage.md`, unit/route/integration tests
 - [ ] Messaging: topics/subscribers/providers, Handlebars templates kept
 - [ ] Webhooks
 
