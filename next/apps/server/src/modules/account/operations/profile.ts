@@ -1,10 +1,6 @@
 import { containsPersonalData, verifyPassword } from '@nuvix/core/auth'
 import { Query, type Session } from '@nuvix/db'
-import {
-  AppError,
-  BadRequestError,
-  UnauthorizedError,
-} from '../../../shared/errors'
+import { AppError, BadRequestError, UnauthorizedError } from '../../../shared/errors'
 import { formatSession, type SessionView } from '../../sessions/formatter'
 import type { RequestMetadata, SessionSettings } from '../../sessions/operations/create'
 import { createSession } from '../../sessions/operations/create'
