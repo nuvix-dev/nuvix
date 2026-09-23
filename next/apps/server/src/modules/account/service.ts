@@ -1,6 +1,7 @@
 import type { Session } from '@nuvix/db'
 import type { SessionView } from '../sessions/formatter'
 import type { RequestMetadata } from '../sessions/operations/create'
+import type { TargetView } from '../users/formatter'
 import type { AccountView } from './formatter'
 import {
   createAnonymousSession,
@@ -8,6 +9,7 @@ import {
   loginWithEmail,
   mintSessionJwt,
 } from './operations/auth'
+import { deleteIdentity, type IdentityView, listIdentities } from './operations/identities'
 import {
   type AccountSettings,
   blockOwnAccount,
@@ -21,6 +23,26 @@ import {
   updateAccountPhone,
   updateAccountPrefs,
 } from './operations/profile'
+import {
+  confirmPasswordRecovery,
+  createPasswordRecovery,
+  type RecoverySettings,
+  type RecoveryTokenResult,
+} from './operations/recovery'
+import {
+  type CreatePushTargetInput,
+  createPushTarget,
+  deletePushTarget,
+  updatePushTarget,
+} from './operations/targets'
+import {
+  confirmEmailVerification,
+  confirmPhoneVerification,
+  createEmailVerification,
+  createPhoneVerification,
+  type VerificationSettings,
+  type VerificationTokenResult,
+} from './operations/verifications'
 
 export class AccountService {
   constructor(private readonly session: Session) {}
@@ -102,5 +124,76 @@ export class AccountService {
     duration?: number,
   ): Promise<{ jwt: string }> {
     return mintSessionJwt(this.session, userId, sessionId, jwtSecret, duration)
+  }
+
+  async createEmailVerification(
+    userId: string,
+    url?: string,
+    reqMeta: RequestMetadata = {},
+    settings: VerificationSettings = {},
+  ): Promise<VerificationTokenResult> {
+    return createEmailVerification(this.session, userId, url, reqMeta, settings)
+  }
+
+  async confirmEmailVerification(userId: string, secret: string): Promise<AccountView> {
+    return confirmEmailVerification(this.session, userId, secret)
+  }
+
+  async createPhoneVerification(
+    userId: string,
+    reqMeta: RequestMetadata = {},
+    settings: VerificationSettings = {},
+  ): Promise<VerificationTokenResult> {
+    return createPhoneVerification(this.session, userId, reqMeta, settings)
+  }
+
+  async confirmPhoneVerification(userId: string, secret: string): Promise<AccountView> {
+    return confirmPhoneVerification(this.session, userId, secret)
+  }
+
+  async createPasswordRecovery(
+    email: string,
+    url: string,
+    reqMeta: RequestMetadata = {},
+    settings: RecoverySettings = {},
+  ): Promise<RecoveryTokenResult> {
+    return createPasswordRecovery(this.session, email, url, reqMeta, settings)
+  }
+
+  async confirmPasswordRecovery(
+    userId: string,
+    secret: string,
+    password: string,
+    settings: RecoverySettings = {},
+  ): Promise<AccountView> {
+    return confirmPasswordRecovery(this.session, userId, secret, password, settings)
+  }
+
+  async listIdentities(userId: string): Promise<IdentityView[]> {
+    return listIdentities(this.session, userId)
+  }
+
+  async deleteIdentity(userId: string, identityId: string): Promise<void> {
+    return deleteIdentity(this.session, userId, identityId)
+  }
+
+  async createPushTarget(
+    userId: string,
+    sessionId?: string,
+    input?: CreatePushTargetInput,
+  ): Promise<TargetView> {
+    return createPushTarget(this.session, userId, sessionId, input)
+  }
+
+  async updatePushTarget(
+    userId: string,
+    targetId: string,
+    input: { identifier: string },
+  ): Promise<TargetView> {
+    return updatePushTarget(this.session, userId, targetId, input)
+  }
+
+  async deletePushTarget(userId: string, targetId: string): Promise<void> {
+    return deletePushTarget(this.session, userId, targetId)
   }
 }

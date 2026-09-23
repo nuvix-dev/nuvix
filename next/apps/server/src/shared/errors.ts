@@ -11,13 +11,14 @@
  * instead of redefining it per app; this module re-exports them so existing
  * `../shared/errors` imports throughout `apps/server` keep working.
  */
-export type { ProblemFields } from "@nuvix/core/errors";
+export type { ProblemFields } from '@nuvix/core/errors'
 export {
-	AppError,
-	BadGatewayError,
-	BadRequestError,
-	ConflictError,
-	ForbiddenError,
-	NotFoundError,
-	UnauthorizedError,
-} from "@nuvix/core/errors";
+  AppError,
+  BadGatewayError,
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  ServiceUnavailableError,
+  UnauthorizedError,
+} from '@nuvix/core/errors'

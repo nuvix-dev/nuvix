@@ -4,7 +4,7 @@ import type { RequestMetadata } from '../sessions/operations/create'
 import type { SessionsService } from '../sessions/service'
 import type { AccountService } from './service'
 
-const TargetSchema = t.Object({
+export const TargetSchema = t.Object({
   $id: t.String(),
   providerType: t.String(),
   providerId: t.String(),
@@ -59,6 +59,19 @@ export const SessionResponseSchema = t.Object({
   current: t.Boolean(),
   factors: t.Array(t.String()),
   secret: t.Optional(t.String()),
+})
+
+export const IdentitySchema = t.Object({
+  $id: t.String(),
+  $createdAt: t.Optional(t.String()),
+  $updatedAt: t.Optional(t.String()),
+  userId: t.String(),
+  provider: t.String(),
+  providerUid: t.String(),
+  providerEmail: t.String(),
+  providerAccessToken: t.String(),
+  providerAccessTokenExpiry: t.String(),
+  providerRefreshToken: t.String(),
 })
 
 export interface AuthUserContext {
@@ -217,6 +230,7 @@ export function accountRoutes(
           return { ok: true }
         },
       )
+
       // Sessions
       .post(
         '/account/sessions/email',
@@ -309,6 +323,7 @@ export function accountRoutes(
           return { ok: true }
         },
       )
+
       // Tokens / JWT
       .post(
         '/account/tokens/jwt',
@@ -327,6 +342,184 @@ export function accountRoutes(
           const userId = requireUserId(caller)
           const targetSessionId = body?.sessionId ?? caller.sessionId ?? ''
           return service.mintJwt(userId, targetSessionId, jwtSecret, body?.duration)
+        },
+      )
+
+      // Verifications
+      .post(
+        '/account/verifications/email',
+        {
+          body: t.Optional(t.Object({ url: t.Optional(t.String()) })),
+          response: t.Object({
+            $id: t.String(),
+            secret: t.String(),
+            url: t.Optional(t.String()),
+          }),
+          detail: { summary: 'Create email verification token', tags: ['account'] },
+        },
+        async ({ body, request }) => {
+          const userId = requireUserId(getAuthUser(request))
+          const res = await service.createEmailVerification(userId, body?.url, getReqMeta(request))
+          return {
+            $id: res.token.getId(),
+            secret: res.secret,
+            url: res.url,
+          }
+        },
+      )
+      .put(
+        '/account/verifications/email',
+        {
+          body: t.Object({
+            userId: t.String(),
+            secret: t.String(),
+          }),
+          response: AccountSchema,
+          detail: { summary: 'Confirm email verification', tags: ['account'] },
+        },
+        ({ body }) => service.confirmEmailVerification(body.userId, body.secret),
+      )
+      .post(
+        '/account/verifications/phone',
+        {
+          response: t.Object({
+            $id: t.String(),
+            secret: t.String(),
+          }),
+          detail: { summary: 'Create phone verification token (OTP)', tags: ['account'] },
+        },
+        async ({ request }) => {
+          const userId = requireUserId(getAuthUser(request))
+          const res = await service.createPhoneVerification(userId, getReqMeta(request))
+          return {
+            $id: res.token.getId(),
+            secret: res.secret,
+          }
+        },
+      )
+      .put(
+        '/account/verifications/phone',
+        {
+          body: t.Object({
+            userId: t.String(),
+            secret: t.String(),
+          }),
+          response: AccountSchema,
+          detail: { summary: 'Confirm phone verification', tags: ['account'] },
+        },
+        ({ body }) => service.confirmPhoneVerification(body.userId, body.secret),
+      )
+
+      // Recovery
+      .post(
+        '/account/recovery',
+        {
+          body: t.Object({
+            email: t.String({ format: 'email' }),
+            url: t.String(),
+          }),
+          response: t.Object({
+            userId: t.String(),
+            secret: t.String(),
+            expire: t.String(),
+          }),
+          detail: { summary: 'Create password recovery token', tags: ['account'] },
+        },
+        async ({ body, request }) => {
+          const res = await service.createPasswordRecovery(
+            body.email,
+            body.url,
+            getReqMeta(request),
+          )
+          return {
+            userId: res.userId,
+            secret: res.secret,
+            expire: res.expire,
+          }
+        },
+      )
+      .put(
+        '/account/recovery',
+        {
+          body: t.Object({
+            userId: t.String(),
+            secret: t.String(),
+            password: t.String({ minLength: 8 }),
+          }),
+          response: AccountSchema,
+          detail: { summary: 'Confirm recovery (reset password)', tags: ['account'] },
+        },
+        ({ body }) => service.confirmPasswordRecovery(body.userId, body.secret, body.password),
+      )
+
+      // Identities
+      .get(
+        '/account/identities',
+        {
+          response: t.Array(IdentitySchema),
+          detail: { summary: 'List OAuth2 identities', tags: ['account'] },
+        },
+        ({ request }) => {
+          const userId = requireUserId(getAuthUser(request))
+          return service.listIdentities(userId)
+        },
+      )
+      .delete(
+        '/account/identities/:identityId',
+        {
+          params: t.Object({ identityId: t.String() }),
+          response: t.Object({ ok: t.Boolean() }),
+          detail: { summary: 'Unlink an identity', tags: ['account'] },
+        },
+        async ({ params, request }) => {
+          const userId = requireUserId(getAuthUser(request))
+          await service.deleteIdentity(userId, params.identityId)
+          return { ok: true }
+        },
+      )
+
+      // Targets
+      .post(
+        '/account/targets/push',
+        {
+          body: t.Object({
+            targetId: t.Optional(t.String()),
+            identifier: t.String(),
+            providerId: t.Optional(t.String()),
+          }),
+          response: TargetSchema,
+          detail: { summary: 'Register push target for current session', tags: ['account'] },
+        },
+        ({ body, request }) => {
+          const caller = getAuthUser(request)
+          const userId = requireUserId(caller)
+          return service.createPushTarget(userId, caller.sessionId, body)
+        },
+      )
+      .put(
+        '/account/targets/:targetId/push',
+        {
+          params: t.Object({ targetId: t.String() }),
+          body: t.Object({ identifier: t.String() }),
+          response: TargetSchema,
+          detail: { summary: 'Update push target identifier', tags: ['account'] },
+        },
+        ({ params, body, request }) => {
+          const userId = requireUserId(getAuthUser(request))
+          return service.updatePushTarget(userId, params.targetId, body)
+        },
+      )
+      .delete(
+        '/account/targets/:targetId/push',
+        {
+          params: t.Object({ targetId: t.String() }),
+          response: t.Object({ ok: t.Boolean() }),
+          detail: { summary: 'Delete push target', tags: ['account'] },
+        },
+        async ({ params, request }) => {
+          const userId = requireUserId(getAuthUser(request))
+          await service.deletePushTarget(userId, params.targetId)
+          return { ok: true }
         },
       )
   )
