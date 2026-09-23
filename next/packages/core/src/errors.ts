@@ -58,14 +58,20 @@ export class BadRequestError extends AppError {
 }
 
 export class UnauthorizedError extends AppError {
-	constructor(detail = "Authentication required") {
-		super(401, { type: "/errors/unauthorized", detail });
+	constructor(
+		detail = "Authentication required",
+		fields?: Omit<ProblemFields, "type" | "detail">,
+	) {
+		super(401, { type: "/errors/unauthorized", detail, ...fields });
 	}
 }
 
 export class ForbiddenError extends AppError {
-	constructor(detail = "Insufficient permissions") {
-		super(403, { type: "/errors/forbidden", detail });
+	constructor(
+		detail = "Insufficient permissions",
+		fields?: Omit<ProblemFields, "type" | "detail">,
+	) {
+		super(403, { type: "/errors/forbidden", detail, ...fields });
 	}
 }
 

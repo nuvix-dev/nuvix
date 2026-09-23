@@ -73,6 +73,17 @@ export const config = {
 		return required("NUVIX_REDIS_URL");
 	},
 
+	/**
+	 * Redis URL for the tenant document cache, resolved once at startup —
+	 * never re-checked per request. Falls back to `NUVIX_REDIS_URL` when set
+	 * so one Redis deployment covers both; `undefined` (neither set) means
+	 * every tenant gets an in-memory cache instead — optional by design, not
+	 * a required dependency like queues will be (Phase 6).
+	 */
+	get cacheRedisUrl(): string | undefined {
+		return Bun.env.NUVIX_CACHE_REDIS_URL ?? Bun.env.NUVIX_REDIS_URL;
+	},
+
 	/** Secret used to sign JWTs / tokens. */
 	get jwtSecret(): string {
 		return required("NUVIX_JWT_SECRET");
@@ -113,6 +124,20 @@ export const config = {
 		/** Tenant image pin (D24) — override only for local dev without the exact tag. */
 		get tenantPostgresImage(): string {
 			return Bun.env.NUVIX_TENANT_POSTGRES_IMAGE ?? "nuvix/postgres:18.1";
+		},
+	},
+
+	account: {
+		/**
+		 * Base64-encoded 32-byte AES-256-GCM key encrypting end-user account
+		 * secrets at rest inside each tenant database (password hashes, session
+		 * and token secrets, OAuth2 provider tokens). Deliberately separate from
+		 * `platform.tenantEncryptionKey` (D37, which protects the platform's own
+		 * connection secret to each tenant) — different threat models, different
+		 * key, so a leak of one never compromises the other.
+		 */
+		get encryptionKey(): string {
+			return required("NUVIX_ACCOUNT_ENCRYPTION_KEY");
 		},
 	},
 };

@@ -15,7 +15,15 @@ export interface PlatformDatabaseOptions {
 async function createAdapter(
 	options: PlatformDatabaseOptions,
 ): Promise<Adapter | SQLiteAdapter> {
-	if (options.driver === "postgres") return new Adapter(options.url);
+	if (options.driver === "postgres") {
+		const adapter = new Adapter(options.url);
+		// Required: `@nuvix/db` folds an unset namespace into table names as the
+		// literal string "undefined" on Postgres, which breaks its own internal
+		// metadata bookkeeping (surfaced as a "relation ...undefined... does not
+		// exist" error the first time a fresh schema is bootstrapped).
+		adapter.setMeta({ namespace: "platform" });
+		return adapter;
+	}
 
 	if (options.url !== ":memory:") {
 		await mkdir(path.dirname(options.url), { recursive: true });
