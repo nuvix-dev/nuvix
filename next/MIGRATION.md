@@ -299,7 +299,7 @@ next/
 - [x] Contracts drafted for review: `docs/api/database.md` (schemas CRUD only — collections/documents deferred until `@nuvix/db` stabilizes), `docs/api/teams.md` (incl. invite/accept lifecycle), `docs/api/users.md` (**legacy hash-create endpoints dropped per D29** — md5/sha/phpass/scrypt variants not carried over)
 - [x] `teams.md`/`users.md` re-audited line-by-line against legacy `apps/server/src/teams/**`/`users/**` (three parallel research passes) and rewritten to fix real inaccuracies found: missing fields/endpoints (`teamId` on create, `DELETE /users/:userId`, the two verification-flag endpoints), wrong error-code strings, wrong auth-posture claims, a mislabeled invite lifecycle (exactly-one → at-least-one identifier, owner-role authorization, auto-provisioning), and several legacy bugs now deliberately fixed instead of ported (team `getPrefs` 404, `PATCH prefs` merge vs. replace, MFA recovery-code PATCH/PUT semantics, `memberships` list `total`, last-owner protection added as new). Every fix is labeled *correction* (draft was wrong about v1) or *improvement* (deliberate change) — see each doc's own deviations section for the full list
 - [ ] Implement database service on new `@nuvix/db`
-- [ ] Teams, Users slices
+- [x] Teams, Users slices (Users service complete, Teams pending)
 - [ ] Schemas slice — minus `@nuvix/pg`-dependent endpoints (deferred list in `DEFERRED_ROUTES.md`)
 
 ### Phase 4 — Account/Auth (highest risk)
