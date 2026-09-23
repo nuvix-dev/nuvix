@@ -1,5 +1,5 @@
 import { Auth, generateSecret } from "@nuvix/core/auth";
-import { Doc, ID, Query, type Session } from "@nuvix/db";
+import { Doc, ID, Permission, Query, Role, type Session } from "@nuvix/db";
 import {
 	BadRequestError,
 	ConflictError,
@@ -188,8 +188,8 @@ export async function inviteMember(
 				confirm: true,
 				search: [membershipId, targetUserId].join(" "),
 				$permissions: [
-					`delete("user:${targetUserId}")`,
-					`update("team:${teamId}/owner")`,
+					Permission.delete(Role.user(targetUserId)).toString(),
+					Permission.update(Role.team(teamId, "owner")).toString(),
 				],
 			}),
 		);
@@ -220,8 +220,8 @@ export async function inviteMember(
 			secretHash,
 			search: [membershipId, targetUserId].join(" "),
 			$permissions: [
-				`delete("user:${targetUserId}")`,
-				`update("team:${teamId}/owner")`,
+				Permission.delete(Role.user(targetUserId)).toString(),
+				Permission.update(Role.team(teamId, "owner")).toString(),
 			],
 		}),
 	);

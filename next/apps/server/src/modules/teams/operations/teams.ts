@@ -1,4 +1,4 @@
-import { Doc, ID, Query, type Session } from "@nuvix/db";
+import { Doc, ID, Permission, Query, Role, type Session } from "@nuvix/db";
 import { ConflictError, NotFoundError } from "../../../shared/errors";
 import type { Memberships, Teams, TeamsDoc } from "../../../types/generated";
 
@@ -34,8 +34,8 @@ export async function createTeam(
 	const initialTotal = isUserCaller ? 1 : 0;
 	const search = [teamId, input.name].join(" ");
 	const permissions = [
-		`update("team:${teamId}/owner")`,
-		`delete("team:${teamId}/owner")`,
+		Permission.update(Role.team(teamId, "owner")).toString(),
+		Permission.delete(Role.team(teamId, "owner")).toString(),
 	];
 
 	const teamDoc = await session.createDocument(
@@ -69,8 +69,8 @@ export async function createTeam(
 				confirm: true,
 				search: [callerAuth.userId, teamId].join(" "),
 				$permissions: [
-					`delete("user:${callerAuth.userId}")`,
-					`update("team:${teamId}/owner")`,
+					Permission.delete(Role.user(callerAuth.userId)).toString(),
+					Permission.update(Role.team(teamId, "owner")).toString(),
 				],
 			}),
 		);
