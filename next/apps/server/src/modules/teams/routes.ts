@@ -30,8 +30,19 @@ export const MembershipSchema = t.Object({
   $updatedAt: t.Optional(t.String()),
 })
 
+export type TeamsServiceResolver =
+  | TeamsService
+  | ((request: Request) => Promise<TeamsService> | TeamsService)
+
+function getService(
+  service: TeamsServiceResolver,
+  request: Request,
+): Promise<TeamsService> | TeamsService {
+  return typeof service === 'function' ? service(request) : service
+}
+
 export function teamRoutes(
-  service: TeamsService,
+  service: TeamsServiceResolver,
   getCallerAuth: (request: Request) => CallerAuth = () => ({}),
 ) {
   return (
@@ -47,7 +58,8 @@ export function teamRoutes(
           response: TeamSchema,
           detail: { summary: 'Create team', tags: ['teams'] },
         },
-        ({ body, request }) => service.create(body, getCallerAuth(request)),
+        async ({ body, request }) =>
+          (await getService(service, request)).create(body, getCallerAuth(request)),
       )
       .get(
         '/teams',
@@ -67,10 +79,11 @@ export function teamRoutes(
           }),
           detail: { summary: 'List teams', tags: ['teams'] },
         },
-        async ({ query }) => {
+        async ({ query, request }) => {
           const limit = query.limit ?? 25
           const offset = query.offset ?? 0
-          const { teams, total } = await service.list({
+          const svc = await getService(service, request)
+          const { teams, total } = await svc.list({
             limit,
             offset,
             search: query.search,
@@ -88,7 +101,7 @@ export function teamRoutes(
           response: TeamSchema,
           detail: { summary: 'Get team', tags: ['teams'] },
         },
-        ({ params: { teamId } }) => service.get(teamId),
+        async ({ params: { teamId }, request }) => (await getService(service, request)).get(teamId),
       )
       .put(
         '/teams/:teamId',
@@ -98,7 +111,8 @@ export function teamRoutes(
           response: TeamSchema,
           detail: { summary: 'Update team name', tags: ['teams'] },
         },
-        ({ params: { teamId }, body }) => service.update(teamId, body),
+        async ({ params: { teamId }, body, request }) =>
+          (await getService(service, request)).update(teamId, body),
       )
       .delete(
         '/teams/:teamId',
@@ -107,8 +121,8 @@ export function teamRoutes(
           response: t.Object({ ok: t.Boolean() }),
           detail: { summary: 'Delete team', tags: ['teams'] },
         },
-        async ({ params: { teamId } }) => {
-          await service.delete(teamId)
+        async ({ params: { teamId }, request }) => {
+          await (await getService(service, request)).delete(teamId)
           return { ok: true }
         },
       )
@@ -119,7 +133,8 @@ export function teamRoutes(
           response: t.Record(t.String(), t.Any()),
           detail: { summary: 'Get team preferences', tags: ['teams'] },
         },
-        ({ params: { teamId } }) => service.getPrefs(teamId),
+        async ({ params: { teamId }, request }) =>
+          (await getService(service, request)).getPrefs(teamId),
       )
       .put(
         '/teams/:teamId/prefs',
@@ -129,7 +144,8 @@ export function teamRoutes(
           response: t.Record(t.String(), t.Any()),
           detail: { summary: 'Replace team preferences', tags: ['teams'] },
         },
-        ({ params: { teamId }, body }) => service.updatePrefs(teamId, body),
+        async ({ params: { teamId }, body, request }) =>
+          (await getService(service, request)).updatePrefs(teamId, body),
       )
       // Membership endpoints
       .post(
@@ -146,8 +162,8 @@ export function teamRoutes(
           response: MembershipSchema,
           detail: { summary: 'Invite team member', tags: ['teams'] },
         },
-        ({ params: { teamId }, body, request }) =>
-          service.inviteMember(teamId, body, getCallerAuth(request)),
+        async ({ params: { teamId }, body, request }) =>
+          (await getService(service, request)).inviteMember(teamId, body, getCallerAuth(request)),
       )
       .get(
         '/teams/:teamId/memberships',
@@ -168,10 +184,11 @@ export function teamRoutes(
           }),
           detail: { summary: 'List team memberships', tags: ['teams'] },
         },
-        async ({ params: { teamId }, query }) => {
+        async ({ params: { teamId }, query, request }) => {
           const limit = query.limit ?? 25
           const offset = query.offset ?? 0
-          const { memberships, total } = await service.listMemberships(teamId, {
+          const svc = await getService(service, request)
+          const { memberships, total } = await svc.listMemberships(teamId, {
             limit,
             offset,
             search: query.search,
@@ -189,7 +206,8 @@ export function teamRoutes(
           response: MembershipSchema,
           detail: { summary: 'Get team membership', tags: ['teams'] },
         },
-        ({ params: { teamId, membershipId } }) => service.getMembership(teamId, membershipId),
+        async ({ params: { teamId, membershipId }, request }) =>
+          (await getService(service, request)).getMembership(teamId, membershipId),
       )
       .patch(
         '/teams/:teamId/memberships/:membershipId',
@@ -199,8 +217,13 @@ export function teamRoutes(
           response: MembershipSchema,
           detail: { summary: 'Update membership roles', tags: ['teams'] },
         },
-        ({ params: { teamId, membershipId }, body, request }) =>
-          service.updateMembershipRoles(teamId, membershipId, body.roles, getCallerAuth(request)),
+        async ({ params: { teamId, membershipId }, body, request }) =>
+          (await getService(service, request)).updateMembershipRoles(
+            teamId,
+            membershipId,
+            body.roles,
+            getCallerAuth(request),
+          ),
       )
       .patch(
         '/teams/:teamId/memberships/:membershipId/status',
@@ -213,8 +236,8 @@ export function teamRoutes(
           response: MembershipSchema,
           detail: { summary: 'Accept team invite', tags: ['teams'] },
         },
-        ({ params: { teamId, membershipId }, body }) =>
-          service.acceptInvite(teamId, membershipId, body),
+        async ({ params: { teamId, membershipId }, body, request }) =>
+          (await getService(service, request)).acceptInvite(teamId, membershipId, body),
       )
       .delete(
         '/teams/:teamId/memberships/:membershipId',
@@ -224,7 +247,11 @@ export function teamRoutes(
           detail: { summary: 'Delete team membership', tags: ['teams'] },
         },
         async ({ params: { teamId, membershipId }, request }) => {
-          await service.deleteMembership(teamId, membershipId, getCallerAuth(request))
+          await (await getService(service, request)).deleteMembership(
+            teamId,
+            membershipId,
+            getCallerAuth(request),
+          )
           return { ok: true }
         },
       )

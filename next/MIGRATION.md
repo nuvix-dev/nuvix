@@ -299,15 +299,15 @@ next/
 - [x] Contracts drafted for review: `docs/api/database.md` (schemas CRUD only — collections/documents deferred until `@nuvix/db` stabilizes), `docs/api/teams.md` (incl. invite/accept lifecycle), `docs/api/users.md` (**legacy hash-create endpoints dropped per D29** — md5/sha/phpass/scrypt variants not carried over)
 - [x] `teams.md`/`users.md` re-audited line-by-line against legacy `apps/server/src/teams/**`/`users/**` (three parallel research passes) and rewritten to fix real inaccuracies found: missing fields/endpoints (`teamId` on create, `DELETE /users/:userId`, the two verification-flag endpoints), wrong error-code strings, wrong auth-posture claims, a mislabeled invite lifecycle (exactly-one → at-least-one identifier, owner-role authorization, auto-provisioning), and several legacy bugs now deliberately fixed instead of ported (team `getPrefs` 404, `PATCH prefs` merge vs. replace, MFA recovery-code PATCH/PUT semantics, `memberships` list `total`, last-owner protection added as new). Every fix is labeled *correction* (draft was wrong about v1) or *improvement* (deliberate change) — see each doc's own deviations section for the full list
 - [ ] Implement database service on new `@nuvix/db`
-- [x] Teams, Users slices (Users and Teams services complete with unit tests)
+- [x] Teams, Users slices: services, route plugins, unit + route treaty tests completed and wired into `app.ts` via tenant context
 - [ ] Schemas slice — minus `@nuvix/pg`-dependent endpoints (deferred list in `DEFERRED_ROUTES.md`)
 
 ### Phase 4 — Account/Auth (highest risk)
 
 - [x] Contract first: `docs/api/account.md` written from scratch (previously nonexistent) via an exhaustive line-by-line read of legacy `account/**` (account, sessions, mfa, recovery, identities, targets) — covers sessions, MFA (TOTP + recovery codes + challenge flow), recovery, OAuth2, identities, push targets, and JWT/access-token issuance. D23 resolved: DB session = long-lived revocable refresh credential (`x-nuvix-session`), short-lived JWT minted from it via `POST /v2/account/tokens/jwt` = the access token (`x-nuvix-jwt`) — formalizes machinery v1 already had (`/account/jwts`) rather than inventing new primitives. Several legacy bugs fixed rather than ported (MFA challenge chicken-and-egg gate, OAuth2 session-refresh field bug, identity-delete missing ownership check, recovery skipping the personal-data check) — all itemized in the contract's deviations section, pending review
 - [x] Password hashing: bcrypt/argon2 only (`@nuvix/core/auth`) — legacy algos (MD5 etc.) NOT supported per D29
-- [ ] MFA: decide otplib vs hand-rolled RFC-6238 (gate: validated against real factors)
-- [x] Implement account/sessions services on `@nuvix/db` (MFA/recovery/identities in progress)
+- [x] MFA: RFC-6238 TOTP on `crypto.subtle` (zero-dependency pure Web Crypto HMAC-SHA1 in `packages/core/src/auth/totp.ts`, verified against RFC-6238 Appendix B test vectors; `otplib` dropped)
+- [x] Implement account/sessions services on `@nuvix/db`: profile, sessions, email/phone verification, password recovery, OAuth2 identities, push targets, MFA factors/challenges/recovery codes complete with unit and route treaty tests, wired into `app.ts` via tenant context
 
 ### Phase 5 — Storage + Messaging + Webhooks
 

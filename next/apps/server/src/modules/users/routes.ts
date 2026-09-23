@@ -32,7 +32,18 @@ export const UserSchema = t.Object({
   $updatedAt: t.Optional(t.String()),
 })
 
-export function userRoutes(service: UserService) {
+export type UserServiceResolver =
+  | UserService
+  | ((request: Request) => Promise<UserService> | UserService)
+
+function getService(
+  service: UserServiceResolver,
+  request: Request,
+): Promise<UserService> | UserService {
+  return typeof service === 'function' ? service(request) : service
+}
+
+export function userRoutes(service: UserServiceResolver) {
   return new Elysia({ name: 'user-routes' })
     .post(
       '/users',
@@ -47,7 +58,7 @@ export function userRoutes(service: UserService) {
         response: UserSchema,
         detail: { summary: 'Create user', tags: ['users'] },
       },
-      ({ body }) => service.create(body),
+      async ({ body, request }) => (await getService(service, request)).create(body),
     )
     .post(
       '/users/argon2',
@@ -63,7 +74,7 @@ export function userRoutes(service: UserService) {
         response: UserSchema,
         detail: { summary: 'Create user with Argon2 hash', tags: ['users'] },
       },
-      ({ body }) => service.createArgon2(body),
+      async ({ body, request }) => (await getService(service, request)).createArgon2(body),
     )
     .post(
       '/users/bcrypt',
@@ -78,7 +89,7 @@ export function userRoutes(service: UserService) {
         response: UserSchema,
         detail: { summary: 'Create user with Bcrypt hash', tags: ['users'] },
       },
-      ({ body }) => service.createBcrypt(body),
+      async ({ body, request }) => (await getService(service, request)).createBcrypt(body),
     )
     .get(
       '/users',
@@ -98,10 +109,11 @@ export function userRoutes(service: UserService) {
         }),
         detail: { summary: 'List users', tags: ['users'] },
       },
-      async ({ query }) => {
+      async ({ query, request }) => {
         const limit = query.limit ?? 25
         const offset = query.offset ?? 0
-        const { users, total } = await service.list({
+        const svc = await getService(service, request)
+        const { users, total } = await svc.list({
           limit,
           offset,
           search: query.search,
@@ -119,7 +131,7 @@ export function userRoutes(service: UserService) {
         response: UserSchema,
         detail: { summary: 'Get user', tags: ['users'] },
       },
-      ({ params: { userId } }) => service.get(userId),
+      async ({ params: { userId }, request }) => (await getService(service, request)).get(userId),
     )
     .delete(
       '/users/:userId',
@@ -128,8 +140,8 @@ export function userRoutes(service: UserService) {
         response: t.Object({ ok: t.Boolean() }),
         detail: { summary: 'Delete user', tags: ['users'] },
       },
-      async ({ params: { userId } }) => {
-        await service.delete(userId)
+      async ({ params: { userId }, request }) => {
+        await (await getService(service, request)).delete(userId)
         return { ok: true }
       },
     )
@@ -141,7 +153,8 @@ export function userRoutes(service: UserService) {
         response: UserSchema,
         detail: { summary: 'Update user name', tags: ['users'] },
       },
-      ({ params: { userId }, body }) => service.updateName(userId, body.name),
+      async ({ params: { userId }, body, request }) =>
+        (await getService(service, request)).updateName(userId, body.name),
     )
     .patch(
       '/users/:userId/password',
@@ -151,7 +164,8 @@ export function userRoutes(service: UserService) {
         response: UserSchema,
         detail: { summary: 'Update user password', tags: ['users'] },
       },
-      ({ params: { userId }, body }) => service.updatePassword(userId, body.password),
+      async ({ params: { userId }, body, request }) =>
+        (await getService(service, request)).updatePassword(userId, body.password),
     )
     .patch(
       '/users/:userId/email',
@@ -161,7 +175,8 @@ export function userRoutes(service: UserService) {
         response: UserSchema,
         detail: { summary: 'Update user email', tags: ['users'] },
       },
-      ({ params: { userId }, body }) => service.updateEmail(userId, body.email),
+      async ({ params: { userId }, body, request }) =>
+        (await getService(service, request)).updateEmail(userId, body.email),
     )
     .patch(
       '/users/:userId/phone',
@@ -171,7 +186,8 @@ export function userRoutes(service: UserService) {
         response: UserSchema,
         detail: { summary: 'Update user phone', tags: ['users'] },
       },
-      ({ params: { userId }, body }) => service.updatePhone(userId, body.phone),
+      async ({ params: { userId }, body, request }) =>
+        (await getService(service, request)).updatePhone(userId, body.phone),
     )
     .patch(
       '/users/:userId/verification',
@@ -181,7 +197,8 @@ export function userRoutes(service: UserService) {
         response: UserSchema,
         detail: { summary: 'Update email verification flag', tags: ['users'] },
       },
-      ({ params: { userId }, body }) => service.updateVerification(userId, body.emailVerification),
+      async ({ params: { userId }, body, request }) =>
+        (await getService(service, request)).updateVerification(userId, body.emailVerification),
     )
     .patch(
       '/users/:userId/verification/phone',
@@ -191,8 +208,11 @@ export function userRoutes(service: UserService) {
         response: UserSchema,
         detail: { summary: 'Update phone verification flag', tags: ['users'] },
       },
-      ({ params: { userId }, body }) =>
-        service.updatePhoneVerification(userId, body.phoneVerification),
+      async ({ params: { userId }, body, request }) =>
+        (await getService(service, request)).updatePhoneVerification(
+          userId,
+          body.phoneVerification,
+        ),
     )
     .get(
       '/users/:userId/prefs',
@@ -201,7 +221,8 @@ export function userRoutes(service: UserService) {
         response: t.Record(t.String(), t.Any()),
         detail: { summary: 'Get user preferences', tags: ['users'] },
       },
-      ({ params: { userId } }) => service.getPrefs(userId),
+      async ({ params: { userId }, request }) =>
+        (await getService(service, request)).getPrefs(userId),
     )
     .patch(
       '/users/:userId/prefs',
@@ -211,7 +232,8 @@ export function userRoutes(service: UserService) {
         response: t.Record(t.String(), t.Any()),
         detail: { summary: 'Merge user preferences', tags: ['users'] },
       },
-      ({ params: { userId }, body }) => service.updatePrefs(userId, body),
+      async ({ params: { userId }, body, request }) =>
+        (await getService(service, request)).updatePrefs(userId, body),
     )
     .put(
       '/users/:userId/labels',
@@ -221,7 +243,8 @@ export function userRoutes(service: UserService) {
         response: UserSchema,
         detail: { summary: 'Replace user labels', tags: ['users'] },
       },
-      ({ params: { userId }, body }) => service.updateLabels(userId, body.labels),
+      async ({ params: { userId }, body, request }) =>
+        (await getService(service, request)).updateLabels(userId, body.labels),
     )
     .patch(
       '/users/:userId/status',
@@ -231,6 +254,7 @@ export function userRoutes(service: UserService) {
         response: UserSchema,
         detail: { summary: 'Update user status', tags: ['users'] },
       },
-      ({ params: { userId }, body }) => service.updateStatus(userId, body.status),
+      async ({ params: { userId }, body, request }) =>
+        (await getService(service, request)).updateStatus(userId, body.status),
     )
 }

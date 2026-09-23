@@ -93,12 +93,35 @@ function requireUserId(caller: AuthUserContext): string {
   return caller.userId
 }
 
+export type AccountServiceResolver =
+  | AccountService
+  | ((request: Request) => Promise<AccountService> | AccountService)
+
+export type SessionsServiceResolver =
+  | SessionsService
+  | ((request: Request) => Promise<SessionsService> | SessionsService)
+
+function getAccountService(
+  service: AccountServiceResolver,
+  request: Request,
+): Promise<AccountService> | AccountService {
+  return typeof service === 'function' ? service(request) : service
+}
+
+function getSessionsService(
+  service?: SessionsServiceResolver,
+  request?: Request,
+): Promise<SessionsService | undefined> | SessionsService | undefined {
+  if (!service || !request) return undefined
+  return typeof service === 'function' ? service(request) : service
+}
+
 export function accountRoutes(
-  service: AccountService,
+  service: AccountServiceResolver,
   jwtSecret: string,
   getAuthUser: (request: Request) => AuthUserContext = () => ({}),
   getReqMeta: (request: Request) => RequestMetadata = () => ({}),
-  sessionsService?: SessionsService,
+  sessionsService?: SessionsServiceResolver,
 ) {
   return (
     new Elysia({ name: 'account-routes' })
@@ -117,7 +140,8 @@ export function accountRoutes(
           }),
           detail: { summary: 'Create account', tags: ['account'] },
         },
-        ({ body, request }) => service.create(body, getReqMeta(request)),
+        async ({ body, request }) =>
+          (await getAccountService(service, request)).create(body, getReqMeta(request)),
       )
       .get(
         '/account',
@@ -125,9 +149,9 @@ export function accountRoutes(
           response: AccountSchema,
           detail: { summary: 'Get current account', tags: ['account'] },
         },
-        ({ request }) => {
+        async ({ request }) => {
           const userId = requireUserId(getAuthUser(request))
-          return service.get(userId)
+          return (await getAccountService(service, request)).get(userId)
         },
       )
       .delete(
@@ -138,7 +162,7 @@ export function accountRoutes(
         },
         async ({ request }) => {
           const userId = requireUserId(getAuthUser(request))
-          await service.delete(userId)
+          await (await getAccountService(service, request)).delete(userId)
           return { ok: true }
         },
       )
@@ -150,7 +174,7 @@ export function accountRoutes(
         },
         async ({ request }) => {
           const userId = requireUserId(getAuthUser(request))
-          const account = await service.get(userId)
+          const account = await (await getAccountService(service, request)).get(userId)
           return account.prefs
         },
       )
@@ -161,9 +185,9 @@ export function accountRoutes(
           response: t.Record(t.String(), t.Any()),
           detail: { summary: 'Update account preferences', tags: ['account'] },
         },
-        ({ body, request }) => {
+        async ({ body, request }) => {
           const userId = requireUserId(getAuthUser(request))
-          return service.updatePrefs(userId, body)
+          return (await getAccountService(service, request)).updatePrefs(userId, body)
         },
       )
       .patch(
@@ -173,9 +197,9 @@ export function accountRoutes(
           response: AccountSchema,
           detail: { summary: 'Update account name', tags: ['account'] },
         },
-        ({ body, request }) => {
+        async ({ body, request }) => {
           const userId = requireUserId(getAuthUser(request))
-          return service.updateName(userId, body.name)
+          return (await getAccountService(service, request)).updateName(userId, body.name)
         },
       )
       .patch(
@@ -188,10 +212,14 @@ export function accountRoutes(
           response: AccountSchema,
           detail: { summary: 'Update account password', tags: ['account'] },
         },
-        ({ body, request }) => {
+        async ({ body, request }) => {
           const caller = getAuthUser(request)
           const userId = requireUserId(caller)
-          return service.updatePassword(userId, caller.sessionId, body)
+          return (await getAccountService(service, request)).updatePassword(
+            userId,
+            caller.sessionId,
+            body,
+          )
         },
       )
       .patch(
@@ -204,9 +232,9 @@ export function accountRoutes(
           response: AccountSchema,
           detail: { summary: 'Update account email', tags: ['account'] },
         },
-        ({ body, request }) => {
+        async ({ body, request }) => {
           const userId = requireUserId(getAuthUser(request))
-          return service.updateEmail(userId, body)
+          return (await getAccountService(service, request)).updateEmail(userId, body)
         },
       )
       .patch(
@@ -219,9 +247,9 @@ export function accountRoutes(
           response: AccountSchema,
           detail: { summary: 'Update account phone', tags: ['account'] },
         },
-        ({ body, request }) => {
+        async ({ body, request }) => {
           const userId = requireUserId(getAuthUser(request))
-          return service.updatePhone(userId, body)
+          return (await getAccountService(service, request)).updatePhone(userId, body)
         },
       )
       .patch(
@@ -233,7 +261,7 @@ export function accountRoutes(
         async ({ request }) => {
           const caller = getAuthUser(request)
           const userId = requireUserId(caller)
-          await service.blockOwn(userId, caller.sessionId)
+          await (await getAccountService(service, request)).blockOwn(userId, caller.sessionId)
           return { ok: true }
         },
       )
@@ -249,7 +277,12 @@ export function accountRoutes(
           response: SessionResponseSchema,
           detail: { summary: 'Create session with email', tags: ['account'] },
         },
-        ({ body, request }) => service.loginEmail(body.email, body.password, getReqMeta(request)),
+        async ({ body, request }) =>
+          (await getAccountService(service, request)).loginEmail(
+            body.email,
+            body.password,
+            getReqMeta(request),
+          ),
       )
       .post(
         '/account/sessions/anonymous',
@@ -257,7 +290,8 @@ export function accountRoutes(
           response: SessionResponseSchema,
           detail: { summary: 'Create anonymous session', tags: ['account'] },
         },
-        ({ request }) => service.loginAnonymous(getReqMeta(request)),
+        async ({ request }) =>
+          (await getAccountService(service, request)).loginAnonymous(getReqMeta(request)),
       )
       .get(
         '/account/sessions',
@@ -268,8 +302,9 @@ export function accountRoutes(
         async ({ request }) => {
           const caller = getAuthUser(request)
           const userId = requireUserId(caller)
-          if (!sessionsService) return []
-          return sessionsService.list(userId, caller.sessionId)
+          const sessSvc = await getSessionsService(sessionsService, request)
+          if (!sessSvc) return []
+          return sessSvc.list(userId, caller.sessionId)
         },
       )
       .delete(
@@ -281,8 +316,9 @@ export function accountRoutes(
         async ({ request }) => {
           const caller = getAuthUser(request)
           const userId = requireUserId(caller)
-          if (sessionsService) {
-            await sessionsService.deleteAll(userId)
+          const sessSvc = await getSessionsService(sessionsService, request)
+          if (sessSvc) {
+            await sessSvc.deleteAll(userId)
           }
           return { ok: true }
         },
@@ -298,10 +334,11 @@ export function accountRoutes(
           const caller = getAuthUser(request)
           const userId = requireUserId(caller)
           const targetId = params.sessionId === 'current' ? caller.sessionId : params.sessionId
-          if (!targetId || !sessionsService) {
+          const sessSvc = await getSessionsService(sessionsService, request)
+          if (!targetId || !sessSvc) {
             throw new NotFoundError('Session not found', { code: 'user_session_not_found' })
           }
-          const sess = await sessionsService.get(targetId, caller.sessionId)
+          const sess = await sessSvc.get(targetId, caller.sessionId)
           if (sess.userId !== userId) {
             throw new NotFoundError('Session not found', { code: 'user_session_not_found' })
           }
@@ -319,14 +356,15 @@ export function accountRoutes(
           const caller = getAuthUser(request)
           const userId = requireUserId(caller)
           const targetId = params.sessionId === 'current' ? caller.sessionId : params.sessionId
-          if (!targetId || !sessionsService) {
+          const sessSvc = await getSessionsService(sessionsService, request)
+          if (!targetId || !sessSvc) {
             throw new NotFoundError('Session not found', { code: 'user_session_not_found' })
           }
-          const sess = await sessionsService.get(targetId, caller.sessionId)
+          const sess = await sessSvc.get(targetId, caller.sessionId)
           if (sess.userId !== userId) {
             throw new NotFoundError('Session not found', { code: 'user_session_not_found' })
           }
-          await sessionsService.delete(targetId)
+          await sessSvc.delete(targetId)
           return { ok: true }
         },
       )
@@ -344,11 +382,16 @@ export function accountRoutes(
           response: t.Object({ jwt: t.String() }),
           detail: { summary: 'Mint short-lived JWT', tags: ['account'] },
         },
-        ({ body, request }) => {
+        async ({ body, request }) => {
           const caller = getAuthUser(request)
           const userId = requireUserId(caller)
           const targetSessionId = body?.sessionId ?? caller.sessionId ?? ''
-          return service.mintJwt(userId, targetSessionId, jwtSecret, body?.duration)
+          return (await getAccountService(service, request)).mintJwt(
+            userId,
+            targetSessionId,
+            jwtSecret,
+            body?.duration,
+          )
         },
       )
 
@@ -366,7 +409,11 @@ export function accountRoutes(
         },
         async ({ body, request }) => {
           const userId = requireUserId(getAuthUser(request))
-          const res = await service.createEmailVerification(userId, body?.url, getReqMeta(request))
+          const res = await (await getAccountService(service, request)).createEmailVerification(
+            userId,
+            body?.url,
+            getReqMeta(request),
+          )
           return {
             $id: res.token.getId(),
             secret: res.secret,
@@ -384,7 +431,11 @@ export function accountRoutes(
           response: AccountSchema,
           detail: { summary: 'Confirm email verification', tags: ['account'] },
         },
-        ({ body }) => service.confirmEmailVerification(body.userId, body.secret),
+        async ({ body, request }) =>
+          (await getAccountService(service, request)).confirmEmailVerification(
+            body.userId,
+            body.secret,
+          ),
       )
       .post(
         '/account/verifications/phone',
@@ -397,7 +448,10 @@ export function accountRoutes(
         },
         async ({ request }) => {
           const userId = requireUserId(getAuthUser(request))
-          const res = await service.createPhoneVerification(userId, getReqMeta(request))
+          const res = await (await getAccountService(service, request)).createPhoneVerification(
+            userId,
+            getReqMeta(request),
+          )
           return {
             $id: res.token.getId(),
             secret: res.secret,
@@ -414,7 +468,11 @@ export function accountRoutes(
           response: AccountSchema,
           detail: { summary: 'Confirm phone verification', tags: ['account'] },
         },
-        ({ body }) => service.confirmPhoneVerification(body.userId, body.secret),
+        async ({ body, request }) =>
+          (await getAccountService(service, request)).confirmPhoneVerification(
+            body.userId,
+            body.secret,
+          ),
       )
 
       // Recovery
@@ -433,7 +491,7 @@ export function accountRoutes(
           detail: { summary: 'Create password recovery token', tags: ['account'] },
         },
         async ({ body, request }) => {
-          const res = await service.createPasswordRecovery(
+          const res = await (await getAccountService(service, request)).createPasswordRecovery(
             body.email,
             body.url,
             getReqMeta(request),
@@ -456,7 +514,12 @@ export function accountRoutes(
           response: AccountSchema,
           detail: { summary: 'Confirm recovery (reset password)', tags: ['account'] },
         },
-        ({ body }) => service.confirmPasswordRecovery(body.userId, body.secret, body.password),
+        async ({ body, request }) =>
+          (await getAccountService(service, request)).confirmPasswordRecovery(
+            body.userId,
+            body.secret,
+            body.password,
+          ),
       )
 
       // Identities
@@ -466,9 +529,9 @@ export function accountRoutes(
           response: t.Array(IdentitySchema),
           detail: { summary: 'List OAuth2 identities', tags: ['account'] },
         },
-        ({ request }) => {
+        async ({ request }) => {
           const userId = requireUserId(getAuthUser(request))
-          return service.listIdentities(userId)
+          return (await getAccountService(service, request)).listIdentities(userId)
         },
       )
       .delete(
@@ -480,7 +543,10 @@ export function accountRoutes(
         },
         async ({ params, request }) => {
           const userId = requireUserId(getAuthUser(request))
-          await service.deleteIdentity(userId, params.identityId)
+          await (await getAccountService(service, request)).deleteIdentity(
+            userId,
+            params.identityId,
+          )
           return { ok: true }
         },
       )
@@ -497,10 +563,14 @@ export function accountRoutes(
           response: TargetSchema,
           detail: { summary: 'Register push target for current session', tags: ['account'] },
         },
-        ({ body, request }) => {
+        async ({ body, request }) => {
           const caller = getAuthUser(request)
           const userId = requireUserId(caller)
-          return service.createPushTarget(userId, caller.sessionId, body)
+          return (await getAccountService(service, request)).createPushTarget(
+            userId,
+            caller.sessionId,
+            body,
+          )
         },
       )
       .put(
@@ -511,9 +581,13 @@ export function accountRoutes(
           response: TargetSchema,
           detail: { summary: 'Update push target identifier', tags: ['account'] },
         },
-        ({ params, body, request }) => {
+        async ({ params, body, request }) => {
           const userId = requireUserId(getAuthUser(request))
-          return service.updatePushTarget(userId, params.targetId, body)
+          return (await getAccountService(service, request)).updatePushTarget(
+            userId,
+            params.targetId,
+            body,
+          )
         },
       )
       .delete(
@@ -525,7 +599,10 @@ export function accountRoutes(
         },
         async ({ params, request }) => {
           const userId = requireUserId(getAuthUser(request))
-          await service.deletePushTarget(userId, params.targetId)
+          await (await getAccountService(service, request)).deletePushTarget(
+            userId,
+            params.targetId,
+          )
           return { ok: true }
         },
       )
@@ -541,7 +618,11 @@ export function accountRoutes(
         async ({ body, request }) => {
           const caller = getAuthUser(request)
           const userId = requireUserId(caller)
-          await service.updateMfa(userId, body.mfa, caller.sessionId)
+          await (await getAccountService(service, request)).updateMfa(
+            userId,
+            body.mfa,
+            caller.sessionId,
+          )
           return { ok: true }
         },
       )
@@ -551,9 +632,9 @@ export function accountRoutes(
           response: MfaFactorsSchema,
           detail: { summary: 'List MFA factors', tags: ['account'] },
         },
-        ({ request }) => {
+        async ({ request }) => {
           const userId = requireUserId(getAuthUser(request))
-          return service.getMfaFactors(userId)
+          return (await getAccountService(service, request)).getMfaFactors(userId)
         },
       )
       .post(
@@ -562,9 +643,9 @@ export function accountRoutes(
           response: t.Object({ secret: t.String(), uri: t.String() }),
           detail: { summary: 'Create TOTP authenticator', tags: ['account'] },
         },
-        ({ request }) => {
+        async ({ request }) => {
           const userId = requireUserId(getAuthUser(request))
-          return service.createTotpAuthenticator(userId)
+          return (await getAccountService(service, request)).createTotpAuthenticator(userId)
         },
       )
       .put(
@@ -577,7 +658,11 @@ export function accountRoutes(
         async ({ body, request }) => {
           const caller = getAuthUser(request)
           const userId = requireUserId(caller)
-          await service.verifyTotpAuthenticator(userId, body.otp, caller.sessionId)
+          await (await getAccountService(service, request)).verifyTotpAuthenticator(
+            userId,
+            body.otp,
+            caller.sessionId,
+          )
           return { ok: true }
         },
       )
@@ -589,7 +674,7 @@ export function accountRoutes(
         },
         async ({ request }) => {
           const userId = requireUserId(getAuthUser(request))
-          await service.deleteTotpAuthenticator(userId)
+          await (await getAccountService(service, request)).deleteTotpAuthenticator(userId)
           return { ok: true }
         },
       )
@@ -599,9 +684,9 @@ export function accountRoutes(
           response: t.Object({ recoveryCodes: t.Array(t.String()) }),
           detail: { summary: 'Create recovery codes', tags: ['account'] },
         },
-        ({ request }) => {
+        async ({ request }) => {
           const userId = requireUserId(getAuthUser(request))
-          return service.createRecoveryCodes(userId)
+          return (await getAccountService(service, request)).createRecoveryCodes(userId)
         },
       )
       .put(
@@ -610,9 +695,9 @@ export function accountRoutes(
           response: t.Object({ recoveryCodes: t.Array(t.String()) }),
           detail: { summary: 'Regenerate recovery codes', tags: ['account'] },
         },
-        ({ request }) => {
+        async ({ request }) => {
           const userId = requireUserId(getAuthUser(request))
-          return service.updateRecoveryCodes(userId)
+          return (await getAccountService(service, request)).updateRecoveryCodes(userId)
         },
       )
       .get(
@@ -621,9 +706,9 @@ export function accountRoutes(
           response: t.Object({ recoveryCodes: t.Array(t.String()) }),
           detail: { summary: 'Get recovery codes', tags: ['account'] },
         },
-        ({ request }) => {
+        async ({ request }) => {
           const userId = requireUserId(getAuthUser(request))
-          return service.getRecoveryCodes(userId)
+          return (await getAccountService(service, request)).getRecoveryCodes(userId)
         },
       )
       .post(
@@ -640,9 +725,9 @@ export function accountRoutes(
           response: t.Object({ challengeId: t.String() }),
           detail: { summary: 'Create MFA challenge', tags: ['account'] },
         },
-        ({ body, request }) => {
+        async ({ body, request }) => {
           const userId = requireUserId(getAuthUser(request))
-          return service.createMfaChallenge(userId, body.factor)
+          return (await getAccountService(service, request)).createMfaChallenge(userId, body.factor)
         },
       )
       .put(
@@ -658,7 +743,12 @@ export function accountRoutes(
         async ({ body, request }) => {
           const caller = getAuthUser(request)
           const userId = requireUserId(caller)
-          await service.verifyMfaChallenge(userId, body.challengeId, body.otp, caller.sessionId)
+          await (await getAccountService(service, request)).verifyMfaChallenge(
+            userId,
+            body.challengeId,
+            body.otp,
+            caller.sessionId,
+          )
           return { ok: true }
         },
       )

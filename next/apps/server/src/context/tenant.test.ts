@@ -1,10 +1,11 @@
 import { describe, expect, it, mock } from 'bun:test'
 import type { TenantResource, TenantResourcePool } from '@nuvix/core/tenants'
 import { Doc, type Session } from '@nuvix/db'
+import { Elysia } from 'elysia'
 import { HEADERS } from '../shared/constants'
 import { signJwt } from '../utils/jwt'
 import type { ProjectContext } from './project'
-import { resolveTenantContext } from './tenant'
+import { requireTenantContext, resolveTenantContext, tenantContext } from './tenant'
 
 describe('resolveTenantContext', () => {
   it('returns guest roles when project is not resolved', async () => {
@@ -143,5 +144,52 @@ describe('resolveTenantContext', () => {
     expect(auth.type).toBe('guest')
     expect(auth.roles).toEqual(['any', 'guests'])
     expect(tenant.roles).toEqual(['any', 'guests'])
+  })
+
+  it('requireTenantContext throws BadRequestError when project is absent', () => {
+    const req = new Request('http://localhost/v2/users')
+    expect(() => requireTenantContext(req)).toThrow()
+  })
+
+  it('tenantContext plugin sets requestContextStore and allows requireTenantContext', async () => {
+    const dummySession = {} as unknown as Session
+    const mockResource = {
+      authSession: mock(() => dummySession),
+      session: mock(() => dummySession),
+    } as unknown as TenantResource
+    const mockPool = {
+      get: mock(() => Promise.resolve(mockResource)),
+    } as unknown as TenantResourcePool
+    const mockLookup = {
+      resolve: mock((key: string) =>
+        key === 'valid-key'
+          ? Promise.resolve({
+              id: 'proj_1',
+              target: {
+                host: 'localhost',
+                port: 5432,
+                database: 'db_1',
+                user: 'u',
+                password: 'p',
+              },
+            })
+          : Promise.resolve(null),
+      ),
+    }
+
+    const plugin = tenantContext({ lookup: mockLookup, pool: mockPool })
+    const app = new Elysia().use(plugin).get('/test', ({ request }) => {
+      const tenantCtx = requireTenantContext(request)
+      return { ok: true, projectId: tenantCtx.project.id }
+    })
+
+    const res = await app.handle(
+      new Request('http://localhost/test', {
+        headers: { [HEADERS.publishableKey]: 'valid-key' },
+      }),
+    )
+    expect(res.status).toBe(200)
+    const body = (await res.json()) as { ok: boolean; projectId: string }
+    expect(body.projectId).toBe('proj_1')
   })
 })
