@@ -1,3 +1,8 @@
+export {
+	createTenantCacheFactory,
+	type TenantCacheFactory,
+	type TenantCacheFactoryOptions,
+} from "./cache";
 export type { DockerTenantProvisionerOptions } from "./docker-provisioner";
 export { DockerTenantProvisioner } from "./docker-provisioner";
 export {

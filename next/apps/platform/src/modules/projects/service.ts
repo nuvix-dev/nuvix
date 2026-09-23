@@ -6,7 +6,8 @@
 
 import { ID } from "@nuvix/core";
 import { BadGatewayError, NotFoundError } from "@nuvix/core/errors";
-import type { TenantProvisioner } from "@nuvix/core/tenants";
+import { bootstrapAuthSchema } from "@nuvix/core/tenant-auth";
+import type { TenantProvisioner, TenantTarget } from "@nuvix/core/tenants";
 import { type Database, Doc } from "@nuvix/db";
 import type { Projects, ProjectsCreateInput } from "../../types/generated";
 
@@ -53,6 +54,16 @@ export class ProjectService {
 	constructor(
 		private readonly db: Database,
 		private readonly provisioner: TenantProvisioner,
+		/**
+		 * Bootstraps the tenant's `auth` schema (users/sessions/teams/…) exactly
+		 * once, right here at creation time — never lazily per-request from the
+		 * server app (`TenantResource.authSession` assumes it already exists).
+		 * Injected so tests can fake it instead of opening a real connection to
+		 * `FakeTenantProvisioner`'s made-up target.
+		 */
+		private readonly bootstrapTenantAuth: (
+			target: TenantTarget,
+		) => Promise<void> = bootstrapAuthSchema,
 	) {}
 
 	/**
@@ -92,15 +103,16 @@ export class ProjectService {
 		};
 		let project = await session.createDocument(
 			"projects",
-			new Doc<Projects>({ $id: id, $permissions: [], ...createInput }),
+			new Doc({ $id: id, $permissions: [], ...createInput }),
 		);
 
 		try {
 			await this.provisioner.waitUntilReady(target);
+			await this.bootstrapTenantAuth(target);
 			project = await session.updateDocument(
 				"projects",
 				id,
-				new Doc<Projects>({ status: "active", target }),
+				new Doc({ status: "active", target }),
 			);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);

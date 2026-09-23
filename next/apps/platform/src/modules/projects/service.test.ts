@@ -11,6 +11,9 @@ import { ProjectService } from "./service";
 
 let db: Database;
 
+/** `FakeTenantProvisioner`'s target isn't a real Postgres instance — never attempt a real bootstrap connection against it in unit tests. */
+const noopBootstrap = async () => {};
+
 beforeAll(async () => {
 	db = await createPlatformDatabase();
 });
@@ -18,7 +21,7 @@ beforeAll(async () => {
 describe("ProjectService", () => {
 	test("create provisions a tenant and persists an active project", async () => {
 		const provisioner = new FakeTenantProvisioner();
-		const service = new ProjectService(db, provisioner);
+		const service = new ProjectService(db, provisioner, noopBootstrap);
 
 		const project = await service.create({ name: "Demo" });
 
@@ -32,7 +35,11 @@ describe("ProjectService", () => {
 	});
 
 	test("create generates a distinct publishable selector for every project", async () => {
-		const service = new ProjectService(db, new FakeTenantProvisioner());
+		const service = new ProjectService(
+			db,
+			new FakeTenantProvisioner(),
+			noopBootstrap,
+		);
 
 		const first = await service.create({ name: "First selector" });
 		const second = await service.create({ name: "Second selector" });
@@ -45,7 +52,7 @@ describe("ProjectService", () => {
 		provisioner.waitUntilReady = async () => {
 			throw new Error("connection refused");
 		};
-		const service = new ProjectService(db, provisioner);
+		const service = new ProjectService(db, provisioner, noopBootstrap);
 
 		await expect(service.create({ name: "Broken" })).rejects.toThrow(
 			/Failed to provision tenant database/,
@@ -58,7 +65,11 @@ describe("ProjectService", () => {
 	});
 
 	test("get throws NotFoundError for an unknown id", async () => {
-		const service = new ProjectService(db, new FakeTenantProvisioner());
+		const service = new ProjectService(
+			db,
+			new FakeTenantProvisioner(),
+			noopBootstrap,
+		);
 		await expect(service.get("does-not-exist")).rejects.toThrow(
 			"Project not found",
 		);
@@ -66,7 +77,7 @@ describe("ProjectService", () => {
 
 	test("delete deprovisions the tenant and removes the record", async () => {
 		const provisioner = new FakeTenantProvisioner();
-		const service = new ProjectService(db, provisioner);
+		const service = new ProjectService(db, provisioner, noopBootstrap);
 		const project = await service.create({ name: "ToDelete" });
 
 		await service.delete(project.$id);
@@ -76,7 +87,11 @@ describe("ProjectService", () => {
 	});
 
 	test("list paginates with limit/offset and reports total", async () => {
-		const service = new ProjectService(db, new FakeTenantProvisioner());
+		const service = new ProjectService(
+			db,
+			new FakeTenantProvisioner(),
+			noopBootstrap,
+		);
 		for (let i = 0; i < 3; i++) {
 			await service.create({ name: `Page-${i}` });
 		}

@@ -19,7 +19,13 @@ import { ProjectService } from "./service";
  */
 async function buildApp() {
 	const db = await createPlatformDatabase();
-	const service = new ProjectService(db, new FakeTenantProvisioner());
+	// FakeTenantProvisioner's target isn't a real Postgres instance — never
+	// attempt a real bootstrap connection against it in route tests.
+	const service = new ProjectService(
+		db,
+		new FakeTenantProvisioner(),
+		async () => {},
+	);
 	const app = new Elysia().use(problemErrors()).use(projectRoutes(service));
 	return treaty(app);
 }

@@ -36,4 +36,23 @@ describe("TenantResource", () => {
 		await Promise.all([resource.close(), resource.close()]);
 		expect(closeCalls).toBe(1);
 	});
+
+	test("authSession builds a second database once and reuses it, without any per-call schema check", () => {
+		const authSession = {} as Session;
+		let authDatabaseCalls = 0;
+
+		const resource = new TenantResource("project-2", target, {
+			createSql: () => ({ close: async () => {} }) as unknown as SQL,
+			createDatabase: () =>
+				({ for: () => ({}) as Session }) as unknown as Database,
+			createAuthDatabase: () => {
+				authDatabaseCalls++;
+				return { for: () => authSession } as unknown as Database;
+			},
+		});
+
+		expect(resource.authSession(["user:1"])).toBe(authSession);
+		expect(resource.authSession(["guest"])).toBe(authSession);
+		expect(authDatabaseCalls).toBe(1);
+	});
 });
