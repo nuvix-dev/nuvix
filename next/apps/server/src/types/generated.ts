@@ -456,6 +456,75 @@ export type FilesInput = Omit<
 export type FilesCreateInput = FilesInput
 export type FilesUpdateInput = Partial<FilesInput>
 
+export interface Providers extends IEntity {
+  name: string
+  provider: string
+  type: string
+  enabled: boolean
+  credentials?: Record<string, unknown>
+  options?: Record<string, unknown>
+}
+
+export type ProvidersDoc = Doc<Providers>
+export type ProvidersInput = Omit<
+  Providers,
+  '$id' | '$createdAt' | '$updatedAt' | '$permissions' | '$sequence' | '$collection' | '$tenant'
+>
+export type ProvidersCreateInput = ProvidersInput
+export type ProvidersUpdateInput = Partial<ProvidersInput>
+
+export interface Topics extends IEntity {
+  name: string
+  subscribe?: string[]
+  emailTotal?: number
+  smsTotal?: number
+  pushTotal?: number
+}
+
+export type TopicsDoc = Doc<Topics>
+export type TopicsInput = Omit<
+  Topics,
+  '$id' | '$createdAt' | '$updatedAt' | '$permissions' | '$sequence' | '$collection' | '$tenant'
+>
+export type TopicsCreateInput = TopicsInput
+export type TopicsUpdateInput = Partial<TopicsInput>
+
+export interface Subscribers extends IEntity {
+  topicId: string
+  targetId: string
+  userId: string
+  providerType: string
+}
+
+export type SubscribersDoc = Doc<Subscribers>
+export type SubscribersInput = Omit<
+  Subscribers,
+  '$id' | '$createdAt' | '$updatedAt' | '$permissions' | '$sequence' | '$collection' | '$tenant'
+>
+export type SubscribersCreateInput = SubscribersInput
+export type SubscribersUpdateInput = Partial<SubscribersInput>
+
+export interface Messages extends IEntity {
+  providerType: string
+  status: string
+  data: Record<string, unknown>
+  topics?: string[]
+  users?: string[]
+  targets?: string[]
+  scheduledAt?: string | Date
+  deliveredAt?: string | Date
+  deliveryErrors?: string[]
+  deliveredTotal?: number
+}
+
+export type MessagesDoc = Doc<Messages>
+export type MessagesInput = Omit<
+  Messages,
+  '$id' | '$createdAt' | '$updatedAt' | '$permissions' | '$sequence' | '$collection' | '$tenant'
+>
+export type MessagesCreateInput = MessagesInput
+export type MessagesUpdateInput = Partial<MessagesInput>
+
 export interface Entities {
   users: Users
   sessions: Sessions
@@ -468,6 +537,10 @@ export interface Entities {
   memberships: Memberships
   buckets: Buckets
   files: Files
+  providers: Providers
+  topics: Topics
+  subscribers: Subscribers
+  messages: Messages
 }
 
 type GeneratedEntitiesRegistry = Entities

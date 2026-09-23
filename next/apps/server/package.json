@@ -15,14 +15,17 @@
 		"@nuvix/core": "workspace:*",
 		"@nuvix/db": "file:../../../../database",
 		"@nuvix/i18n": "workspace:*",
+		"@nuvix/messaging": "file:../../../../messaging",
 		"@nuvix/storage": "file:../../../../storage",
 		"@nuvix/utils": "workspace:*",
 		"elysia": "2.0.0-beta.6",
+		"handlebars": "^4.7.8",
 		"maxmind": "^5.0.6",
 		"qrcode": "^1.5.4"
 	},
 	"devDependencies": {
 		"@resvg/resvg-js": "^2.6.2",
+		"@types/handlebars": "^4.1.0",
 		"@types/maxmind": "^2.0.5",
 		"@types/qrcode": "^1.5.6"
 	}

@@ -312,7 +312,7 @@ next/
 ### Phase 5 — Storage + Messaging + Webhooks
 
 - [x] Storage: buckets/files, Bun-native Local driver + S3 driver, uploads via Elysia `t.File`, native `Bun.Image` preview/resizing, contract in `docs/api/storage.md`, unit/route/integration tests
-- [ ] Messaging: topics/subscribers/providers, Handlebars templates kept
+- [x] Messaging: providers (Mailgun, Sendgrid, SMTP, Twilio, Vonage, Msg91, Telesign, Textmagic, FCM, APNS), topics/subscribers with subscribe-role authorization, email/SMS/push messages with draft/scheduled/processing lifecycle. No queue dispatch in Phase 5 (Phase 6). Contract in `docs/api/messaging.md`. 34 unit/route tests. Collections in `packages/core/src/tenant-auth/collections.ts`; generated types in `apps/server/src/types/generated.ts`; services in `apps/server/src/modules/messaging/{providers,topics,subscribers,messages}.service.ts`; routes in `apps/server/src/modules/messaging/routes.ts`.
 - [ ] Webhooks
 
 ### Phase 6 — Async jobs

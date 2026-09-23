@@ -15,6 +15,11 @@ import { accountRoutes } from './modules/account/routes'
 import { AccountService } from './modules/account/service'
 import { databaseRoutes } from './modules/database/routes'
 import { DatabaseService } from './modules/database/service'
+import { MessagesService } from './modules/messaging/messages.service'
+import { ProvidersService } from './modules/messaging/providers.service'
+import { messagingRoutes } from './modules/messaging/routes'
+import { SubscribersService } from './modules/messaging/subscribers.service'
+import { TopicsService } from './modules/messaging/topics.service'
 import { SessionsService } from './modules/sessions/service'
 import { storageRoutes } from './modules/storage/routes'
 import { StorageService } from './modules/storage/service'
@@ -170,6 +175,27 @@ export const app = new Elysia({ prefix: '/v2' })
         }
       },
     ),
+  )
+  .use(
+    messagingRoutes({
+      providers: (request) => new ProvidersService(requireTenantContext(request).authSession),
+      topics: (request) => new TopicsService(requireTenantContext(request).authSession),
+      subscribers: (request) => new SubscribersService(requireTenantContext(request).authSession),
+      messages: (request) => new MessagesService(requireTenantContext(request).authSession),
+      getCallerAuth: (request) => {
+        const { auth } = requireTenantContext(request)
+        return {
+          isAdmin:
+            auth.roles?.includes('admin') ||
+            auth.roles?.includes('role:admin') ||
+            auth.roles?.includes('owner') ||
+            false,
+          isKey: auth.type === 'apiKey',
+          userId: auth.userId,
+          roles: auth.roles ?? [],
+        }
+      },
+    }),
   )
   // Dev-only route exercising the context chain; removed once real modules land.
   .get('/whoami', ({ request }) => {

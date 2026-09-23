@@ -1009,6 +1009,284 @@ const files: Collection = {
   ],
 }
 
+const providers: Collection = {
+  $collection: Database.METADATA,
+  $id: ID.custom('providers'),
+  name: 'Providers',
+  documentSecurity: false,
+  enabled: true,
+  attributes: [
+    {
+      $id: ID.custom('name'),
+      key: 'name',
+      type: AttributeType.String,
+      size: 128,
+      required: true,
+    },
+    {
+      $id: ID.custom('provider'),
+      key: 'provider',
+      type: AttributeType.String,
+      size: 128,
+      required: true,
+    },
+    {
+      $id: ID.custom('type'),
+      key: 'type',
+      type: AttributeType.String,
+      size: 128,
+      required: true,
+    },
+    {
+      $id: ID.custom('enabled'),
+      key: 'enabled',
+      type: AttributeType.Boolean,
+      required: true,
+      default: true,
+    },
+    {
+      $id: ID.custom('credentials'),
+      key: 'credentials',
+      type: AttributeType.Json,
+      default: {},
+    },
+    {
+      $id: ID.custom('options'),
+      key: 'options',
+      type: AttributeType.Json,
+      default: {},
+    },
+  ],
+  indexes: [
+    {
+      $id: ID.custom('idx_providers_provider'),
+      key: 'idx_providers_provider',
+      type: IndexType.Key,
+      attributes: ['provider'],
+    },
+    {
+      $id: ID.custom('idx_providers_type'),
+      key: 'idx_providers_type',
+      type: IndexType.Key,
+      attributes: ['type'],
+    },
+    {
+      $id: ID.custom('idx_providers_enabled_type'),
+      key: 'idx_providers_enabled_type',
+      type: IndexType.Key,
+      attributes: ['enabled', 'type'],
+    },
+  ],
+}
+
+const topics: Collection = {
+  $collection: Database.METADATA,
+  $id: ID.custom('topics'),
+  name: 'Topics',
+  documentSecurity: false,
+  enabled: true,
+  attributes: [
+    {
+      $id: ID.custom('name'),
+      key: 'name',
+      type: AttributeType.String,
+      size: 128,
+      required: true,
+    },
+    {
+      $id: ID.custom('subscribe'),
+      key: 'subscribe',
+      type: AttributeType.String,
+      size: 128,
+      array: true,
+      default: [],
+    },
+    {
+      $id: ID.custom('emailTotal'),
+      key: 'emailTotal',
+      type: AttributeType.Integer,
+      default: 0,
+    },
+    {
+      $id: ID.custom('smsTotal'),
+      key: 'smsTotal',
+      type: AttributeType.Integer,
+      default: 0,
+    },
+    {
+      $id: ID.custom('pushTotal'),
+      key: 'pushTotal',
+      type: AttributeType.Integer,
+      default: 0,
+    },
+  ],
+  indexes: [
+    {
+      $id: ID.custom('idx_topics_name'),
+      key: 'idx_topics_name',
+      type: IndexType.Key,
+      attributes: ['name'],
+    },
+  ],
+}
+
+const subscribers: Collection = {
+  $collection: Database.METADATA,
+  $id: ID.custom('subscribers'),
+  name: 'Subscribers',
+  documentSecurity: true,
+  enabled: true,
+  attributes: [
+    {
+      $id: ID.custom('topicId'),
+      key: 'topicId',
+      type: AttributeType.String,
+      size: Database.LENGTH_KEY,
+      required: true,
+    },
+    {
+      $id: ID.custom('targetId'),
+      key: 'targetId',
+      type: AttributeType.String,
+      size: Database.LENGTH_KEY,
+      required: true,
+    },
+    {
+      $id: ID.custom('userId'),
+      key: 'userId',
+      type: AttributeType.String,
+      size: Database.LENGTH_KEY,
+      required: true,
+    },
+    {
+      $id: ID.custom('providerType'),
+      key: 'providerType',
+      type: AttributeType.String,
+      size: 128,
+      required: true,
+    },
+  ],
+  indexes: [
+    {
+      $id: ID.custom('idx_subscribers_topic'),
+      key: 'idx_subscribers_topic',
+      type: IndexType.Key,
+      attributes: ['topicId'],
+    },
+    {
+      $id: ID.custom('idx_subscribers_target'),
+      key: 'idx_subscribers_target',
+      type: IndexType.Key,
+      attributes: ['targetId'],
+    },
+    {
+      $id: ID.custom('idx_subscribers_user'),
+      key: 'idx_subscribers_user',
+      type: IndexType.Key,
+      attributes: ['userId'],
+    },
+    {
+      $id: ID.custom('idx_subscribers_unique'),
+      key: 'idx_subscribers_unique',
+      type: IndexType.Unique,
+      attributes: ['topicId', 'targetId'],
+    },
+  ],
+}
+
+const messages: Collection = {
+  $collection: Database.METADATA,
+  $id: ID.custom('messages'),
+  name: 'Messages',
+  documentSecurity: false,
+  enabled: true,
+  attributes: [
+    {
+      $id: ID.custom('providerType'),
+      key: 'providerType',
+      type: AttributeType.String,
+      size: 128,
+      required: true,
+    },
+    {
+      $id: ID.custom('status'),
+      key: 'status',
+      type: AttributeType.String,
+      size: 128,
+      required: true,
+      default: 'draft',
+    },
+    {
+      $id: ID.custom('data'),
+      key: 'data',
+      type: AttributeType.Json,
+      required: true,
+    },
+    {
+      $id: ID.custom('topics'),
+      key: 'topics',
+      type: AttributeType.String,
+      size: Database.LENGTH_KEY,
+      array: true,
+      default: [],
+    },
+    {
+      $id: ID.custom('users'),
+      key: 'users',
+      type: AttributeType.String,
+      size: Database.LENGTH_KEY,
+      array: true,
+      default: [],
+    },
+    {
+      $id: ID.custom('targets'),
+      key: 'targets',
+      type: AttributeType.String,
+      size: Database.LENGTH_KEY,
+      array: true,
+      default: [],
+    },
+    {
+      $id: ID.custom('scheduledAt'),
+      key: 'scheduledAt',
+      type: AttributeType.Timestamptz,
+    },
+    {
+      $id: ID.custom('deliveredAt'),
+      key: 'deliveredAt',
+      type: AttributeType.Timestamptz,
+    },
+    {
+      $id: ID.custom('deliveryErrors'),
+      key: 'deliveryErrors',
+      type: AttributeType.String,
+      size: 4096,
+      array: true,
+      default: [],
+    },
+    {
+      $id: ID.custom('deliveredTotal'),
+      key: 'deliveredTotal',
+      type: AttributeType.Integer,
+      default: 0,
+    },
+  ],
+  indexes: [
+    {
+      $id: ID.custom('idx_messages_status'),
+      key: 'idx_messages_status',
+      type: IndexType.Key,
+      attributes: ['status'],
+    },
+    {
+      $id: ID.custom('idx_messages_provider_type'),
+      key: 'idx_messages_provider_type',
+      type: IndexType.Key,
+      attributes: ['providerType'],
+    },
+  ],
+}
+
 /**
  * All core collections, bootstrapped together by `ensureAuthSchema`.
  * Order matters only for readability — `@nuvix/db` collections here have no
@@ -1027,4 +1305,8 @@ export const authCollections: Collection[] = [
   memberships,
   buckets,
   files,
+  providers,
+  topics,
+  subscribers,
+  messages,
 ]
