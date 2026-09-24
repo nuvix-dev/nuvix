@@ -187,4 +187,88 @@ const webhooks: Collection = {
   ],
 }
 
-export const platformCollections: Collection[] = [projects, webhooks]
+const keys: Collection = {
+  $collection: Database.METADATA,
+  $id: ID.custom('keys'),
+  name: 'Keys',
+  documentSecurity: false,
+  enabled: true,
+  attributes: [
+    {
+      $id: ID.custom('projectInternalId'),
+      key: 'projectInternalId',
+      type: AttributeType.Integer,
+      size: Database.LENGTH_KEY,
+      required: true,
+    },
+    {
+      $id: ID.custom('projectId'),
+      key: 'projectId',
+      type: AttributeType.String,
+      size: Database.LENGTH_KEY,
+      required: true,
+    },
+    {
+      $id: ID.custom('name'),
+      key: 'name',
+      type: AttributeType.String,
+      size: 128,
+      required: true,
+    },
+    {
+      $id: ID.custom('scopes'),
+      key: 'scopes',
+      type: AttributeType.String,
+      size: 128,
+      required: true,
+      array: true,
+    },
+    {
+      $id: ID.custom('secret'),
+      key: 'secret',
+      type: AttributeType.String,
+      size: 1600,
+      required: true,
+      filters: ['encrypt'],
+    },
+    {
+      $id: ID.custom('expire'),
+      key: 'expire',
+      type: AttributeType.Timestamptz,
+      required: false,
+      default: null,
+    },
+    {
+      $id: ID.custom('accessedAt'),
+      key: 'accessedAt',
+      type: AttributeType.Timestamptz,
+      required: false,
+      default: null,
+    },
+    {
+      $id: ID.custom('sdks'),
+      key: 'sdks',
+      type: AttributeType.String,
+      size: 128,
+      required: false,
+      array: true,
+      default: [],
+    },
+  ],
+  indexes: [
+    {
+      $id: ID.custom('projectInternalId'),
+      key: 'idx_key_project_internal_id',
+      type: IndexType.Key,
+      attributes: ['projectInternalId'],
+    },
+    {
+      $id: ID.custom('projectId'),
+      key: 'idx_key_project_id',
+      type: IndexType.Key,
+      attributes: ['projectId'],
+    },
+  ],
+}
+
+export const platformCollections: Collection[] = [projects, webhooks, keys]

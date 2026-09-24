@@ -355,7 +355,8 @@ next/
       non-local deployment, tracked in `docs/api/platform.md`'s open questions
 - [ ] Background provisioning (Phase 6 job infra) — project creation is
       currently synchronous; tracked in `docs/api/platform.md`
-- [ ] Remaining platform slices (keys, templates, auth-settings, metadata)
+- [x] Platform API keys slice: CRUD routes (`/projects/:projectId/keys`), 1:1 legacy schema with secret generation `standard_<hex>`
+- [ ] Remaining platform slices (templates, auth-settings, metadata)
 - [ ] pg-meta introspection over `Bun.sql`
 
 ### Phase 8 — Local `@nuvix/pg` replacement (D12)
