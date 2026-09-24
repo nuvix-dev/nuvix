@@ -313,7 +313,7 @@ next/
 
 - [x] Storage: buckets/files, `@nuvix/storage` Device drivers, native `Bun.Image` for image preview/transformations (no sharp), single and resumable chunked upload support via Content-Range, bucket & file CRUD, storage usage stats
 - [x] Messaging: topics, subscribers (target linking + total tracking), providers (Email: Mailgun/SendGrid/SMTP, SMS: Twilio/TextMagic/Vonage/Msg91/Telesign, Push: FCM/APNS), messages (Email/SMS/Push delivery requests, target resolution, status tracking)
-- [ ] Webhooks
+- [x] Webhooks: platform CRUD (`/projects/:projectId/webhooks`), signature rotation (`/projects/:projectId/webhooks/:webhookId/signature`), attempts tracking and reset on enable, 1:1 legacy schema and behavior
 
 ### Phase 6 — Async jobs
 

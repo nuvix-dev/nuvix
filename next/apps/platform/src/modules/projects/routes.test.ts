@@ -56,20 +56,20 @@ describe('project routes', () => {
     expect(data?.meta.total).toBeGreaterThanOrEqual(1)
   })
 
-  test('GET /projects/:id returns 404 as problem+json for an unknown id', async () => {
-    const { status, error } = await client.projects({ id: 'missing' }).get()
+  test('GET /projects/:projectId returns 404 as problem+json for an unknown id', async () => {
+    const { status, error } = await client.projects({ projectId: 'missing' }).get()
     expect(status).toBe(404)
     expect(error?.value).toMatchObject({ code: 'project_not_found' })
   })
 
-  test('DELETE /projects/:id removes the project', async () => {
+  test('DELETE /projects/:projectId removes the project', async () => {
     const created = await client.projects.post({ name: 'ToRemove' })
     const id = created.data!.$id
 
-    const del = await client.projects({ id }).delete()
+    const del = await client.projects({ projectId: id }).delete()
     expect(del.status).toBe(204)
 
-    const after = await client.projects({ id }).get()
+    const after = await client.projects({ projectId: id }).get()
     expect(after.status).toBe(404)
   })
 })

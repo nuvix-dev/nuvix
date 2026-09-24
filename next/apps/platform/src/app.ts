@@ -3,6 +3,8 @@ import { config } from '@nuvix/utils'
 import { Elysia, t } from 'elysia'
 import { projectRoutes } from './modules/projects/routes'
 import { ProjectService } from './modules/projects/service'
+import { webhookRoutes } from './modules/webhooks/routes'
+import { WebhooksService } from './modules/webhooks/service'
 import { problemErrors } from './plugins/errors'
 import { createPlatformDatabase } from './registry/setup'
 
@@ -34,5 +36,10 @@ const provisioner = new DockerTenantProvisioner({
   image: config.platform.tenantPostgresImage,
 })
 const projects = new ProjectService(db, provisioner)
+const webhooks = new WebhooksService(db)
 
-export const app = new Elysia().use(problemErrors()).use(projectRoutes(projects)).use(health)
+export const app = new Elysia()
+  .use(problemErrors())
+  .use(projectRoutes(projects))
+  .use(webhookRoutes(webhooks))
+  .use(health)

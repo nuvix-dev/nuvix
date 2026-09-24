@@ -60,22 +60,24 @@ export function projectRoutes(service: ProjectService) {
       },
     )
     .get(
-      '/projects/:id',
+      '/projects/:projectId',
       {
+        params: t.Object({ projectId: t.String() }),
         response: ProjectSchema,
         detail: { summary: 'Get a project', tags: ['projects'] },
       },
-      ({ params }) => service.get(params.id),
+      ({ params }) => service.get(params.projectId),
     )
     .delete(
-      '/projects/:id',
+      '/projects/:projectId',
       {
+        params: t.Object({ projectId: t.String() }),
         query: t.Object({ purge: t.Optional(t.Boolean({ default: false })) }),
         response: t.Void(),
         detail: { summary: 'Delete a project', tags: ['projects'] },
       },
       async ({ params, query, set }) => {
-        await service.delete(params.id, { purge: query.purge })
+        await service.delete(params.projectId, { purge: query.purge })
         set.status = 204
       },
     )

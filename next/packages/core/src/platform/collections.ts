@@ -72,4 +72,119 @@ const projects: Collection = {
   ],
 }
 
-export const platformCollections: Collection[] = [projects]
+const webhooks: Collection = {
+  $collection: Database.METADATA,
+  $id: ID.custom('webhooks'),
+  name: 'Webhooks',
+  documentSecurity: false,
+  enabled: true,
+  attributes: [
+    {
+      $id: ID.custom('projectInternalId'),
+      key: 'projectInternalId',
+      type: AttributeType.Integer,
+      size: Database.LENGTH_KEY,
+      required: true,
+    },
+    {
+      $id: ID.custom('projectId'),
+      key: 'projectId',
+      type: AttributeType.String,
+      size: Database.LENGTH_KEY,
+      required: true,
+    },
+    {
+      $id: ID.custom('name'),
+      key: 'name',
+      type: AttributeType.String,
+      size: 128,
+      required: true,
+    },
+    {
+      $id: ID.custom('url'),
+      key: 'url',
+      type: AttributeType.String,
+      size: 2048,
+      required: true,
+    },
+    {
+      $id: ID.custom('httpUser'),
+      key: 'httpUser',
+      type: AttributeType.String,
+      size: 128,
+      required: false,
+      default: null,
+    },
+    {
+      $id: ID.custom('httpPass'),
+      key: 'httpPass',
+      type: AttributeType.String,
+      size: 256,
+      required: false,
+      default: null,
+      filters: ['encrypt'],
+    },
+    {
+      $id: ID.custom('security'),
+      key: 'security',
+      type: AttributeType.Boolean,
+      required: true,
+      default: true,
+    },
+    {
+      $id: ID.custom('events'),
+      key: 'events',
+      type: AttributeType.String,
+      size: 128,
+      required: true,
+      array: true,
+    },
+    {
+      $id: ID.custom('signatureKey'),
+      key: 'signatureKey',
+      type: AttributeType.String,
+      size: 2048,
+      required: false,
+      default: null,
+    },
+    {
+      $id: ID.custom('enabled'),
+      key: 'enabled',
+      type: AttributeType.Boolean,
+      required: true,
+      default: true,
+    },
+    {
+      $id: ID.custom('logs'),
+      key: 'logs',
+      type: AttributeType.String,
+      size: 1000000,
+      required: false,
+      default: '',
+    },
+    {
+      $id: ID.custom('attempts'),
+      key: 'attempts',
+      type: AttributeType.Integer,
+      size: 4,
+      required: false,
+      default: 0,
+    },
+  ],
+  indexes: [
+    {
+      $id: ID.custom('projectInternalId'),
+      key: 'idx_webhook_project_internal_id',
+      type: IndexType.Key,
+      attributes: ['projectInternalId'],
+    },
+    {
+      $id: ID.custom('projectId'),
+      key: 'idx_webhook_project_id',
+      type: IndexType.Key,
+      attributes: ['projectId'],
+    },
+  ],
+}
+
+export const platformCollections: Collection[] = [projects, webhooks]
