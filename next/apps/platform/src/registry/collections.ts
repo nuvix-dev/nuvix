@@ -15,4 +15,4 @@
  * (`libs/utils/src/collections/*.ts` → `libs/utils/nuvix-db.config.ts`).
  */
 
-export { platformCollections } from "@nuvix/core/platform";
+export { platformCollections } from '@nuvix/core/platform'

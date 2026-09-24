@@ -1,5 +1,5 @@
 export {
-	createEncryptFilter,
-	jsonFilter,
-	registerCoreDbFilters,
-} from "./filters";
+  createEncryptFilter,
+  jsonFilter,
+  registerCoreDbFilters,
+} from './filters'

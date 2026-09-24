@@ -1,7 +1,7 @@
-export { authCollections } from "./collections";
+export { authCollections } from './collections'
 export {
-	AUTH_SCHEMA,
-	bootstrapAuthSchema,
-	createAuthDatabase,
-	ensureAuthSchema,
-} from "./schema";
+  AUTH_SCHEMA,
+  bootstrapAuthSchema,
+  createAuthDatabase,
+  ensureAuthSchema,
+} from './schema'

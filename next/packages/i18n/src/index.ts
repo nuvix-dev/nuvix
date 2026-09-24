@@ -1,10 +1,10 @@
-import type { TranslationLoader } from "./loader";
-import { Translator } from "./translator";
+import type { TranslationLoader } from './loader'
+import { Translator } from './translator'
 
-export { TranslationLoader } from "./loader";
-export { parseAcceptLanguage, resolveLocale } from "./resolve";
-export { Translator } from "./translator";
-export type { MessageParams, TranslationFile } from "./types";
+export { TranslationLoader } from './loader'
+export { parseAcceptLanguage, resolveLocale } from './resolve'
+export { Translator } from './translator'
+export type { MessageParams, TranslationFile } from './types'
 
 /**
  * Build a ready-to-use `Translator`, priming the translation tables for the
@@ -12,16 +12,15 @@ export type { MessageParams, TranslationFile } from "./types";
  * request: file reads and ICU compiles are cached.
  */
 export async function createTranslator(options: {
-	loader: TranslationLoader;
-	locale: string;
-	fallback?: string;
+  loader: TranslationLoader
+  locale: string
+  fallback?: string
 }): Promise<Translator> {
-	const { loader, locale } = options;
-	const fallback = options.fallback ?? "en";
+  const { loader, locale } = options
+  const fallback = options.fallback ?? 'en'
 
-	const primary = (await loader.load(locale)) ?? {};
-	const fallbackTable =
-		fallback !== locale ? ((await loader.load(fallback)) ?? null) : null;
+  const primary = (await loader.load(locale)) ?? {}
+  const fallbackTable = fallback !== locale ? ((await loader.load(fallback)) ?? null) : null
 
-	return new Translator(locale, fallback, { primary, fallback: fallbackTable });
+  return new Translator(locale, fallback, { primary, fallback: fallbackTable })
 }

@@ -1,5 +1,5 @@
-import { Cache, Memory, Redis } from "@nuvix/cache";
-import { RedisClient } from "bun";
+import { Cache, Memory, Redis } from '@nuvix/cache'
+import { RedisClient } from 'bun'
 
 /**
  * Resolves the tenant document-cache backend exactly ONCE per process —
@@ -13,29 +13,27 @@ import { RedisClient } from "bun";
  * own in-memory cache instead (dev/test default, zero external deps).
  */
 export interface TenantCacheFactory {
-	forTenant(namespace: string): Cache;
-	close(): Promise<void>;
+  forTenant(namespace: string): Cache
+  close(): Promise<void>
 }
 
 export interface TenantCacheFactoryOptions {
-	/** Omit to use an in-memory cache per tenant instead of Redis. */
-	redisUrl?: string;
+  /** Omit to use an in-memory cache per tenant instead of Redis. */
+  redisUrl?: string
 }
 
 export function createTenantCacheFactory(
-	options: TenantCacheFactoryOptions = {},
+  options: TenantCacheFactoryOptions = {},
 ): TenantCacheFactory {
-	const client = options.redisUrl
-		? new RedisClient(options.redisUrl)
-		: undefined;
+  const client = options.redisUrl ? new RedisClient(options.redisUrl) : undefined
 
-	return {
-		forTenant(namespace: string): Cache {
-			if (!client) return new Cache(new Memory());
-			return new Cache(new Redis({ client, namespace }));
-		},
-		async close(): Promise<void> {
-			client?.close();
-		},
-	};
+  return {
+    forTenant(namespace: string): Cache {
+      if (!client) return new Cache(new Memory())
+      return new Cache(new Redis({ client, namespace }))
+    },
+    async close(): Promise<void> {
+      client?.close()
+    },
+  }
 }

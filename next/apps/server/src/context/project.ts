@@ -1,7 +1,7 @@
-import type { ResolvedProject } from "@nuvix/core/platform";
-import { Elysia } from "elysia";
-import { HEADERS } from "../shared/constants";
-import { BadRequestError, NotFoundError } from "../shared/errors";
+import type { ResolvedProject } from '@nuvix/core/platform'
+import { Elysia } from 'elysia'
+import { HEADERS } from '../shared/constants'
+import { BadRequestError, NotFoundError } from '../shared/errors'
 
 /**
  * Project context resolution — publishable key → platform project → tenant
@@ -17,23 +17,23 @@ import { BadRequestError, NotFoundError } from "../shared/errors";
 
 /** Narrow read boundary this module depends on — satisfied by `ProjectRegistry`. */
 export interface ProjectLookup {
-	resolve(publishableKey: string): Promise<ResolvedProject | null>;
+  resolve(publishableKey: string): Promise<ResolvedProject | null>
 }
 
 export type ProjectContext =
-	| { status: "absent" }
-	| { status: "invalid" }
-	| { status: "resolved"; project: ResolvedProject };
+  | { status: 'absent' }
+  | { status: 'invalid' }
+  | { status: 'resolved'; project: ResolvedProject }
 
 export async function resolveProjectContext(
-	headers: Headers,
-	lookup: ProjectLookup,
+  headers: Headers,
+  lookup: ProjectLookup,
 ): Promise<ProjectContext> {
-	const key = headers.get(HEADERS.publishableKey);
-	if (!key) return { status: "absent" };
+  const key = headers.get(HEADERS.publishableKey)
+  if (!key) return { status: 'absent' }
 
-	const project = await lookup.resolve(key);
-	return project ? { status: "resolved", project } : { status: "invalid" };
+  const project = await lookup.resolve(key)
+  return project ? { status: 'resolved', project } : { status: 'invalid' }
 }
 
 /**
@@ -44,21 +44,21 @@ export async function resolveProjectContext(
  * apart the way there would be for an actual credential.
  */
 export function requireProject(context: ProjectContext): ResolvedProject {
-	if (context.status === "resolved") return context.project;
-	if (context.status === "absent") {
-		throw new BadRequestError("Publishable key is required", {
-			code: "publishable_key_required",
-		});
-	}
-	throw new NotFoundError("Project", { code: "project_not_found" });
+  if (context.status === 'resolved') return context.project
+  if (context.status === 'absent') {
+    throw new BadRequestError('Publishable key is required', {
+      code: 'publishable_key_required',
+    })
+  }
+  throw new NotFoundError('Project', { code: 'project_not_found' })
 }
 
 export function projectContext(options: { lookup: ProjectLookup }) {
-	return new Elysia({ name: "project-context" }).derive(
-		// NOTE: scope required — local-scoped derive does not cross .use() boundaries
-		"plugin",
-		async ({ request }) => ({
-			project: await resolveProjectContext(request.headers, options.lookup),
-		}),
-	);
+  return new Elysia({ name: 'project-context' }).derive(
+    // NOTE: scope required — local-scoped derive does not cross .use() boundaries
+    'plugin',
+    async ({ request }) => ({
+      project: await resolveProjectContext(request.headers, options.lookup),
+    }),
+  )
 }
