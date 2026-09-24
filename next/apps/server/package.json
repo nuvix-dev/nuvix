@@ -15,6 +15,7 @@
     "@nuvix/core": "workspace:*",
     "@nuvix/db": "file:../../../../database",
     "@nuvix/i18n": "workspace:*",
+    "@nuvix/messaging": "file:../../../../messaging",
     "@nuvix/storage": "file:../../../../storage",
     "@nuvix/utils": "workspace:*",
     "bullmq": "^6.3.8",

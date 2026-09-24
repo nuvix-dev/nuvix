@@ -312,7 +312,7 @@ next/
 ### Phase 5 — Storage + Messaging + Webhooks
 
 - [x] Storage: buckets/files, `@nuvix/storage` Device drivers, native `Bun.Image` for image preview/transformations (no sharp), single and resumable chunked upload support via Content-Range, bucket & file CRUD, storage usage stats
-- [ ] Messaging: topics/subscribers/providers, Handlebars templates kept
+- [x] Messaging: topics, subscribers (target linking + total tracking), providers (Email: Mailgun/SendGrid/SMTP, SMS: Twilio/TextMagic/Vonage/Msg91/Telesign, Push: FCM/APNS), messages (Email/SMS/Push delivery requests, target resolution, status tracking)
 - [ ] Webhooks
 
 ### Phase 6 — Async jobs

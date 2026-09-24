@@ -35,6 +35,7 @@
         "@nuvix/core": "workspace:*",
         "@nuvix/db": "file:../../../../database",
         "@nuvix/i18n": "workspace:*",
+        "@nuvix/messaging": "file:../../../../messaging",
         "@nuvix/storage": "file:../../../../storage",
         "@nuvix/utils": "workspace:*",
         "bullmq": "^6.3.8",
@@ -224,6 +225,8 @@
     "@types/maxmind": ["@types/maxmind@2.0.5", "", { "dependencies": { "maxmind": "*" } }, "sha512-fGqeOLsZI189WqKrAvaGfLzaLg5T8NNenAHrvmRuIg6lLfQCMICw4kg9wxyxzLAJnxwN89CJhTq6DZQ/w1K5hw=="],
 
     "@types/node": ["@types/node@26.3.0", "", { "dependencies": { "undici-types": "~8.3.0" } }, "sha512-L3fgrnchriRC2ExBflb8j4uZZURHZfQsmQeyVzhjcHW4kkwVyo8/0h1B2MVzMTrYUJYu6G7EWs14hW/L9putqw=="],
+
+    "@types/nodemailer": ["@types/nodemailer@6.4.24", "", { "dependencies": { "@types/node": "*" } }, "sha512-Ww4u0rT9wQNXh4JiQaIwx3QWdcOFXzOjQA2zc+jtFYNmQiT4mIUqcDin51bDFdkzKubFnQCZNK7FIHlPKQ/q9w=="],
 
     "@types/qrcode": ["@types/qrcode@1.5.6", "", { "dependencies": { "@types/node": "*" } }, "sha512-te7NQcV2BOvdj2b1hCAHzAoMNuj65kNBMz0KBaxM6c3VGBOhU0dURQKOtH8CFNI/dsKkwlv32p26qYQTWoB5bw=="],
 
@@ -473,6 +476,8 @@
 
     "@nuvix/server/@nuvix/db": ["@nuvix/db@file:../../database", { "devDependencies": { "@nuvix/cache": "^2.0.0", "@types/bun": "^1.4.0", "tsc-alias": "1.9.2", "typescript": "^5.8.3" }, "bin": { "nuvix-db": "dist/cli/generate-types.js" } }],
 
+    "@nuvix/server/@nuvix/messaging": ["@nuvix/messaging@file:../../messaging", { "devDependencies": { "@types/bun": "^1.1.42", "@types/nodemailer": "^6.4.17", "oxlint": "^1.0.0", "typescript": "^5.7.2" }, "peerDependencies": { "nodemailer": "^7.0.3" }, "optionalPeers": ["nodemailer"] }],
+
     "@nuvix/server/@nuvix/storage": ["@nuvix/storage@file:../../storage", { "devDependencies": { "@types/bun": "^1.2.0", "oxlint": "^1.0.0", "typescript": "^5.6.0" } }],
 
     "@opentelemetry/sdk-metrics/@opentelemetry/core": ["@opentelemetry/core@2.11.0", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-7YP44XH0tV6+Mb54x2YGf84i7yi+31MBZlE8JwvozkxyTvXbSp10X7cI7YE49ChJ3shMJoBmCJF3+1QFBJctGA=="],
@@ -496,6 +501,8 @@
     "@nuvix/server/@nuvix/db/@nuvix/cache": ["@nuvix/cache@2.0.0", "", { "peerDependencies": { "@nuvix/telemetry": "*" }, "optionalPeers": ["@nuvix/telemetry"] }, "sha512-BAchHatoo7BN9r5icXog4sTkaEB27I6u82TxVUgntJ66TGw3o/KAAUlbJOk9+BlcrhX/ZWPBR4+b6uRZK4lwWw=="],
 
     "@nuvix/server/@nuvix/db/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "@nuvix/server/@nuvix/messaging/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@nuvix/server/@nuvix/storage/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
