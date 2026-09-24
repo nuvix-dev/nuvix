@@ -11,6 +11,8 @@
  * and vice versa.
  */
 
+import path from 'node:path'
+
 export type NuvixEnv = 'development' | 'production' | 'test'
 
 function required(name: string, fallback?: string): string {
@@ -76,7 +78,8 @@ export const config = {
 
   storage: {
     get uploadsDir(): string {
-      return Bun.env.NUVIX_STORAGE_UPLOADS ?? './storage/uploads'
+      const raw = Bun.env.NUVIX_STORAGE_UPLOADS ?? './storage/uploads'
+      return path.isAbsolute(raw) ? raw : path.resolve(process.cwd(), raw)
     },
   },
 

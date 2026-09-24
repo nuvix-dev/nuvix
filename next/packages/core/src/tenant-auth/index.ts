@@ -1,4 +1,4 @@
-export { authCollections } from './collections'
+export { authCollections, filesCollection } from './collections'
 export {
   AUTH_SCHEMA,
   bootstrapAuthSchema,

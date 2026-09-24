@@ -35,6 +35,7 @@
         "@nuvix/core": "workspace:*",
         "@nuvix/db": "file:../../../../database",
         "@nuvix/i18n": "workspace:*",
+        "@nuvix/storage": "file:../../../../storage",
         "@nuvix/utils": "workspace:*",
         "bullmq": "^6.3.8",
         "elysia": "2.0.0-beta.6",
@@ -472,6 +473,8 @@
 
     "@nuvix/server/@nuvix/db": ["@nuvix/db@file:../../database", { "devDependencies": { "@nuvix/cache": "^2.0.0", "@types/bun": "^1.4.0", "tsc-alias": "1.9.2", "typescript": "^5.8.3" }, "bin": { "nuvix-db": "dist/cli/generate-types.js" } }],
 
+    "@nuvix/server/@nuvix/storage": ["@nuvix/storage@file:../../storage", { "devDependencies": { "@types/bun": "^1.2.0", "oxlint": "^1.0.0", "typescript": "^5.6.0" } }],
+
     "@opentelemetry/sdk-metrics/@opentelemetry/core": ["@opentelemetry/core@2.11.0", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-7YP44XH0tV6+Mb54x2YGf84i7yi+31MBZlE8JwvozkxyTvXbSp10X7cI7YE49ChJ3shMJoBmCJF3+1QFBJctGA=="],
 
     "@opentelemetry/sdk-metrics/@opentelemetry/resources": ["@opentelemetry/resources@2.11.0", "", { "dependencies": { "@opentelemetry/core": "2.11.0", "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.3.0 <1.10.0" } }, "sha512-Ie7+8q8MDF4FAEQCKVMTx3ReUvxiIAgIiiW3c9JdmP8+HMcDy20puT+AHjexnExgnbvBxjQ9fjkFDWrikJ2jQA=="],
@@ -493,6 +496,8 @@
     "@nuvix/server/@nuvix/db/@nuvix/cache": ["@nuvix/cache@2.0.0", "", { "peerDependencies": { "@nuvix/telemetry": "*" }, "optionalPeers": ["@nuvix/telemetry"] }, "sha512-BAchHatoo7BN9r5icXog4sTkaEB27I6u82TxVUgntJ66TGw3o/KAAUlbJOk9+BlcrhX/ZWPBR4+b6uRZK4lwWw=="],
 
     "@nuvix/server/@nuvix/db/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "@nuvix/server/@nuvix/storage/typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
 
     "@opentelemetry/sdk-metrics/@opentelemetry/core/@opentelemetry/semantic-conventions": ["@opentelemetry/semantic-conventions@1.43.0", "", {}, "sha512-eSYWTm620tTk45EKSedaUL8MFYI8hW164hIXsgIHyxu3VobUB3fFCu5t0hQby6OoWRPsG1KkKUG2M5UadiLiVg=="],
 

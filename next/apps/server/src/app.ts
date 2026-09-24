@@ -13,6 +13,7 @@ import { projectContext } from './context/project'
 import { tenantContext } from './context/tenant'
 import { localeRoutes } from './locale/route'
 import { accountRoutes } from './modules/account/route'
+import { storageRoutes } from './modules/storage/route'
 import { teamRoutes } from './modules/teams/route'
 import { userRoutes } from './modules/users/route'
 import { cors } from './plugins/cors'
@@ -110,7 +111,8 @@ export const app = new Elysia({ prefix: '/v2' })
       .use(tenantPlugin)
       .use(userRoutes({ jwtSecret: config.jwtSecret }))
       .use(accountRoutes({ jwtSecret: config.jwtSecret }))
-      .use(teamRoutes()),
+      .use(teamRoutes())
+      .use(storageRoutes()),
   )
   // Dev-only route exercising the context chain; removed once real modules land.
   // NOTE: defined inline AFTER authContext/projectContext so the derived

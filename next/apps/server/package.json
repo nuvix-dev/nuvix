@@ -15,6 +15,7 @@
     "@nuvix/core": "workspace:*",
     "@nuvix/db": "file:../../../../database",
     "@nuvix/i18n": "workspace:*",
+    "@nuvix/storage": "file:../../../../storage",
     "@nuvix/utils": "workspace:*",
     "bullmq": "^6.3.8",
     "elysia": "2.0.0-beta.6",

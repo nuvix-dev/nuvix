@@ -1,5 +1,5 @@
 // This file is auto-generated. Do not edit manually.
-// Generated on: 2026-09-24T02:47:22.374Z
+// Generated on: 2026-09-24T04:33:51.694Z
 
 import type { Doc } from '@nuvix/db'
 
@@ -391,12 +391,35 @@ export interface Files extends IEntity {
   signature?: string
   /** @optional */
   mimeType?: string
+  /**
+   * @filter json
+   * @optional
+   * @default {}
+   */
+  metadata?: Record<string, unknown>
   /** @required */
   sizeOriginal: number
+  /**
+   * @optional
+   * @default 0
+   */
+  sizeActual?: number | 0
+  /** @optional */
+  algorithm?: string
+  /** @optional */
+  comment?: string
+  /**
+   * @filter json
+   * @optional
+   * @default {}
+   */
+  encryptionOptions?: Record<string, unknown>
   /** @optional */
   chunksTotal?: number
   /** @optional */
   chunksUploaded?: number
+  /** @optional */
+  search?: string
 }
 
 export interface Stats extends IEntity {

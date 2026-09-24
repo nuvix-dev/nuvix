@@ -311,7 +311,7 @@ next/
 
 ### Phase 5 — Storage + Messaging + Webhooks
 
-- [ ] Storage: buckets/files, `Bun.file` local driver + S3 driver, uploads via Elysia `t.File`
+- [x] Storage: buckets/files, `@nuvix/storage` Device drivers, native `Bun.Image` for image preview/transformations (no sharp), single and resumable chunked upload support via Content-Range, bucket & file CRUD, storage usage stats
 - [ ] Messaging: topics/subscribers/providers, Handlebars templates kept
 - [ ] Webhooks
 

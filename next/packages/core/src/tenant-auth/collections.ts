@@ -1096,11 +1096,46 @@ const files: Collection = {
       size: 255,
     },
     {
+      $id: ID.custom('metadata'),
+      key: 'metadata',
+      type: AttributeType.Json,
+      default: {},
+      filters: ['json'],
+      __type: 'Record<string, unknown>',
+    },
+    {
       $id: ID.custom('sizeOriginal'),
       key: 'sizeOriginal',
       type: AttributeType.Integer,
       size: 8,
       required: true,
+    },
+    {
+      $id: ID.custom('sizeActual'),
+      key: 'sizeActual',
+      type: AttributeType.Integer,
+      size: 8,
+      default: 0,
+    },
+    {
+      $id: ID.custom('algorithm'),
+      key: 'algorithm',
+      type: AttributeType.String,
+      size: 255,
+    },
+    {
+      $id: ID.custom('comment'),
+      key: 'comment',
+      type: AttributeType.String,
+      size: 2048,
+    },
+    {
+      $id: ID.custom('encryptionOptions'),
+      key: 'encryptionOptions',
+      type: AttributeType.Json,
+      default: {},
+      filters: ['json'],
+      __type: 'Record<string, unknown>',
     },
     {
       $id: ID.custom('chunksTotal'),
@@ -1113,6 +1148,12 @@ const files: Collection = {
       key: 'chunksUploaded',
       type: AttributeType.Integer,
       size: 8,
+    },
+    {
+      $id: ID.custom('search'),
+      key: 'search',
+      type: AttributeType.String,
+      size: 16384,
     },
   ],
   indexes: [
@@ -1134,8 +1175,22 @@ const files: Collection = {
       type: IndexType.Key,
       attributes: ['signature'],
     },
+    {
+      $id: ID.custom('idx_name'),
+      key: 'idx_name',
+      type: IndexType.Key,
+      attributes: ['name'],
+    },
+    {
+      $id: ID.custom('idx_search'),
+      key: 'idx_search',
+      type: IndexType.FullText,
+      attributes: ['search'],
+    },
   ],
 }
+
+export { files as filesCollection }
 
 const stats: Collection = {
   $collection: Database.METADATA,
