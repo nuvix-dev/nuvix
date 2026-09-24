@@ -1,14 +1,19 @@
-import { DockerTenantProvisioner } from '@nuvix/core/tenants'
+import { bootstrapAuthSchema } from '@nuvix/core/tenant-auth'
+import { DockerTenantProvisioner, decodeEncryptionKey } from '@nuvix/core/tenants'
 import { config } from '@nuvix/utils'
 import { Elysia, t } from 'elysia'
 import { authSettingsRoutes } from './modules/auth-settings/routes'
 import { AuthSettingsService } from './modules/auth-settings/service'
 import { keyRoutes } from './modules/keys/routes'
 import { KeysService } from './modules/keys/service'
+import { metadataRoutes } from './modules/metadata/routes'
+import { MetadataService } from './modules/metadata/service'
 import { platformRoutes } from './modules/platforms/routes'
 import { PlatformsService } from './modules/platforms/service'
 import { projectRoutes } from './modules/projects/routes'
 import { ProjectService } from './modules/projects/service'
+import { templatesRoutes } from './modules/templates/routes'
+import { TemplatesService } from './modules/templates/service'
 import { webhookRoutes } from './modules/webhooks/routes'
 import { WebhooksService } from './modules/webhooks/service'
 import { problemErrors } from './plugins/errors'
@@ -41,11 +46,28 @@ const db = await createPlatformDatabase()
 const provisioner = new DockerTenantProvisioner({
   image: config.platform.tenantPostgresImage,
 })
-const projects = new ProjectService(db, provisioner)
+
+let encryptionKey: Uint8Array | undefined
+try {
+  encryptionKey = decodeEncryptionKey(config.platform.tenantEncryptionKey)
+} catch {
+  // Optional in environments where key is not yet set
+}
+
+let jwtSecret: string | undefined
+try {
+  jwtSecret = config.jwtSecret
+} catch {
+  // Optional in environments where secret is not yet set
+}
+
+const projects = new ProjectService(db, provisioner, bootstrapAuthSchema, jwtSecret, encryptionKey)
 const webhooks = new WebhooksService(db)
 const keys = new KeysService(db)
 const platforms = new PlatformsService(db)
 const authSettings = new AuthSettingsService(db)
+const metadata = new MetadataService(db)
+const templates = new TemplatesService(db)
 
 export const app = new Elysia()
   .use(problemErrors())
@@ -54,4 +76,6 @@ export const app = new Elysia()
   .use(keyRoutes(keys))
   .use(platformRoutes(platforms))
   .use(authSettingsRoutes(authSettings))
+  .use(metadataRoutes(metadata))
+  .use(templatesRoutes(templates))
   .use(health)

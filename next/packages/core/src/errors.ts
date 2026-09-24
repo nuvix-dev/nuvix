@@ -94,3 +94,9 @@ export class BadGatewayError extends AppError {
     super(502, { type: '/errors/bad-gateway', detail, ...fields })
   }
 }
+
+export class NotImplementedError extends AppError {
+  constructor(detail = 'Not implemented', fields?: Omit<ProblemFields, 'type' | 'detail'>) {
+    super(501, { type: '/errors/not-implemented', detail, code: 'not_implemented', ...fields })
+  }
+}

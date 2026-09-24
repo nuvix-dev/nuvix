@@ -11,6 +11,8 @@ import { createPlatformDatabase } from '../../registry/setup'
 import { projectRoutes } from './routes'
 import { ProjectService } from './service'
 
+const jwtSecret = 'test-jwt-secret-routes'
+
 /**
  * Composed the same way as `app.ts`, but with `FakeTenantProvisioner` in
  * place of `DockerTenantProvisioner` — route/composition coverage should
@@ -20,7 +22,7 @@ async function buildApp() {
   const db = await createPlatformDatabase()
   // FakeTenantProvisioner's target isn't a real Postgres instance — never
   // attempt a real bootstrap connection against it in route tests.
-  const service = new ProjectService(db, new FakeTenantProvisioner(), async () => {})
+  const service = new ProjectService(db, new FakeTenantProvisioner(), async () => {}, jwtSecret)
   const app = new Elysia().use(problemErrors()).use(projectRoutes(service))
   return treaty(app)
 }
@@ -60,6 +62,95 @@ describe('project routes', () => {
     const { status, error } = await client.projects({ projectId: 'missing' }).get()
     expect(status).toBe(404)
     expect(error?.value).toMatchObject({ code: 'project_not_found' })
+  })
+
+  test('PATCH /projects/:projectId updates project', async () => {
+    const created = await client.projects.post({ name: 'Before Patch' })
+    const id = created.data!.$id
+
+    const { data, status } = await client
+      .projects({ projectId: id })
+      .patch({ name: 'After Patch', description: 'Updated desc' })
+    expect(status).toBe(200)
+    expect(data?.name).toBe('After Patch')
+    expect(data?.description).toBe('Updated desc')
+  })
+
+  test('PATCH /projects/:projectId/service and /service/all updates service status', async () => {
+    const created = await client.projects.post({ name: 'Service Route Test' })
+    const id = created.data!.$id
+
+    const res1 = await client
+      .projects({ projectId: id })
+      .service.patch({ service: 'storage', status: false })
+    expect(res1.status).toBe(200)
+    expect(res1.data?.services?.storage).toBe(false)
+
+    const res2 = await client.projects({ projectId: id }).service.all.patch({ status: false })
+    expect(res2.status).toBe(200)
+    expect(res2.data?.services?.storage).toBe(false)
+  })
+
+  test('PATCH /projects/:projectId/api and /api/all updates api status', async () => {
+    const created = await client.projects.post({ name: 'API Route Test' })
+    const id = created.data!.$id
+
+    const res1 = await client.projects({ projectId: id }).api.patch({ api: 'rest', status: false })
+    expect(res1.status).toBe(200)
+    expect(res1.data?.apis?.rest).toBe(false)
+
+    const res2 = await client.projects({ projectId: id }).api.all.patch({ status: true })
+    expect(res2.status).toBe(200)
+    expect(res2.data?.apis?.rest).toBe(true)
+  })
+
+  test('PATCH /projects/:projectId/oauth2 updates oauth provider', async () => {
+    const created = await client.projects.post({ name: 'OAuth Route Test' })
+    const id = created.data!.$id
+
+    const res = await client.projects({ projectId: id }).oauth2.patch({
+      provider: 'google',
+      appId: 'google-app-id',
+      secret: 'google-secret',
+      enabled: true,
+    })
+    expect(res.status).toBe(200)
+  })
+
+  test('PATCH /projects/:projectId/smtp updates smtp', async () => {
+    const created = await client.projects.post({ name: 'SMTP Route Test' })
+    const id = created.data!.$id
+
+    const res = await client.projects({ projectId: id }).smtp.patch({
+      enabled: true,
+      senderName: 'Nuvix Support',
+      senderEmail: 'support@nuvix.io',
+      host: 'smtp.nuvix.io',
+      port: 587,
+    })
+    expect(res.status).toBe(200)
+    expect(res.data?.smtp?.enabled).toBe(true)
+  })
+
+  test('POST /projects/:projectId/jwts creates JWT token', async () => {
+    const created = await client.projects.post({ name: 'JWT Route Test' })
+    const id = created.data!.$id
+
+    const res = await client
+      .projects({ projectId: id })
+      .jwts.post({ scopes: ['projects.read'], duration: 1800 })
+    expect(res.status).toBe(200)
+    expect(res.data?.jwt.startsWith('dynamic_')).toBe(true)
+  })
+
+  test('POST /projects/:projectId/smtp/tests returns 501 not implemented', async () => {
+    const created = await client.projects.post({ name: 'SMTP Test Route' })
+    const id = created.data!.$id
+
+    const res = await client
+      .projects({ projectId: id })
+      .smtp.tests.post({ emails: ['test@example.com'], senderName: 'Admin' })
+    expect(res.status).toBe(501)
   })
 
   test('DELETE /projects/:projectId removes the project', async () => {

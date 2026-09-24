@@ -1,5 +1,5 @@
 // This file is auto-generated. Do not edit manually.
-// Generated on: 2026-09-24T11:45:14.542Z
+// Generated on: 2026-09-24T15:36:37.634Z
 
 import type { Doc } from '@nuvix/db'
 
@@ -40,6 +40,42 @@ export interface Projects extends IEntity {
    * @default {}
    */
   auths?: Record<string, unknown>
+  /** @optional */
+  description?: string
+  /**
+   * @optional
+   * @default {}
+   */
+  services?: Record<string, unknown>
+  /**
+   * @optional
+   * @default {}
+   */
+  apis?: Record<string, unknown>
+  /**
+   * @optional
+   * @default {}
+   */
+  oAuthProviders?: Record<string, unknown>
+  /**
+   * @optional
+   * @default {}
+   */
+  smtp?: Record<string, unknown>
+  /**
+   * @optional
+   * @default {}
+   */
+  metadata?: Record<string, unknown>
+  /** @optional */
+  logo?: string
+  /** @optional */
+  url?: string
+  /**
+   * @optional
+   * @default {}
+   */
+  templates?: Record<string, unknown>
 }
 
 export interface Webhooks extends IEntity {
