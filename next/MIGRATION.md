@@ -317,9 +317,9 @@ next/
 
 ### Phase 6 — Async jobs
 
-- [ ] BullMQ over Bun adapter: audits, batch, deletes, logs, mails, messaging, stats
-- [ ] Cron scheduler on `Bun.sleep` loop
-- [ ] Typed event emitter
+- [x] BullMQ over external worker files: audits, batch, deletes, logs, mails, messaging, stats, webhooks (`apps/server/src/workers/*.processor.ts`)
+- [x] Cron scheduler on `Bun.cron` native (D22) (`packages/core/src/scheduler/cron.ts`)
+- [x] Typed event emitter on Web standards (`packages/core/src/events/emitter.ts`)
 
 ### Phase 7 — Platform app
 

@@ -1,4 +1,6 @@
 export * from './auth'
 export * from './errors'
+export * from './events/emitter'
 export * from './id'
+export * from './scheduler/cron'
 export * from './tenants'
