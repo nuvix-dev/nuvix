@@ -12,6 +12,7 @@ import { getTranslator, localeContext } from './context/locale'
 import { projectContext } from './context/project'
 import { tenantContext } from './context/tenant'
 import { localeRoutes } from './locale/route'
+import { accountRoutes } from './modules/account/route'
 import { userRoutes } from './modules/users/route'
 import { cors } from './plugins/cors'
 import { problemErrors } from './plugins/errors'
@@ -103,7 +104,12 @@ export const app = new Elysia({ prefix: '/v2' })
   .use(localeContext(localeOptions))
   .use(localeRoutes(geoip, localeOptions))
   .use(avatarRoutes(avatars))
-  .use(new Elysia().use(tenantPlugin).use(userRoutes({ jwtSecret: config.jwtSecret })))
+  .use(
+    new Elysia()
+      .use(tenantPlugin)
+      .use(userRoutes({ jwtSecret: config.jwtSecret }))
+      .use(accountRoutes({ jwtSecret: config.jwtSecret })),
+  )
   // Dev-only route exercising the context chain; removed once real modules land.
   // NOTE: defined inline AFTER authContext/projectContext so the derived
   // types flow in ('plugin'-scoped derive types only reach routes registered

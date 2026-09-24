@@ -91,6 +91,7 @@ export interface TokenView {
   type: number | string
   expire: string
   phrase: string
+  secret?: string
 }
 
 export function formatTarget(doc: TargetsDoc): TargetView {

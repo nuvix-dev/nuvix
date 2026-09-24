@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'bun:test'
 import { Doc, Role, UserDimension } from '@nuvix/db'
-import { Auth, HashAlgorithm } from './auth.helper'
+import { Auth, HashAlgorithm, validatePasswordHistory, validatePersonalData } from './auth.helper'
 
 describe('Auth helper', () => {
   test('hashes and verifies password using Argon2id', async () => {
@@ -107,5 +107,30 @@ describe('Auth helper', () => {
     expect(roles).toContain(Role.team('team_abc', 'admin').toString())
     expect(roles).toContain('label:premium')
     expect(roles).toContain('label:beta')
+  })
+
+  test('validatePersonalData detects user personal information in password', () => {
+    const data = {
+      userId: 'user123',
+      email: 'john.doe@example.com',
+      name: 'John Doe',
+      phone: '+1234567890',
+    }
+
+    expect(validatePersonalData('SafePassword!2026', data)).toBe(true)
+    expect(validatePersonalData('PassUser123Word', data)).toBe(false)
+    expect(validatePersonalData('Passjohn.doeWord', data)).toBe(false)
+    expect(validatePersonalData('PassJohnWord', data)).toBe(false)
+    expect(validatePersonalData('Pass1234567890Word', data)).toBe(false)
+  })
+
+  test('validatePasswordHistory rejects passwords present in history', async () => {
+    const password = 'my-old-password'
+    const hash = await Auth.passwordHash(password, HashAlgorithm.ARGON2ID)
+
+    expect(await validatePasswordHistory(password, [hash], HashAlgorithm.ARGON2ID)).toBe(false)
+    expect(
+      await validatePasswordHistory('brand-new-password', [hash], HashAlgorithm.ARGON2ID),
+    ).toBe(true)
   })
 })

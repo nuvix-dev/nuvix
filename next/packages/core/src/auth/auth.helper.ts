@@ -321,3 +321,48 @@ export async function verifyPassword(
   const algo = algorithm === 'bcrypt' ? HashAlgorithm.BCRYPT : HashAlgorithm.ARGON2ID
   return Auth.passwordVerify(password, hash, algo)
 }
+
+export function validatePersonalData(
+  password: string,
+  data: {
+    userId?: string | null
+    email?: string | null
+    name?: string | null
+    phone?: string | null
+  },
+): boolean {
+  const p = password.toLowerCase()
+  if (data.userId && p.includes(data.userId.toLowerCase())) return false
+  if (data.email) {
+    const em = data.email.toLowerCase()
+    if (p.includes(em)) return false
+    const username = em.split('@')[0]
+    if (username && p.includes(username)) return false
+  }
+  if (data.name) {
+    const n = data.name.toLowerCase()
+    if (p.includes(n)) return false
+    for (const part of n.split(/\s+/)) {
+      if (part.length >= 3 && p.includes(part)) return false
+    }
+  }
+  if (data.phone) {
+    const ph = data.phone.toLowerCase()
+    if (p.includes(ph)) return false
+    if (p.includes(ph.replace('+', ''))) return false
+  }
+  return true
+}
+
+export async function validatePasswordHistory(
+  password: string,
+  history: string[],
+  algo: HashAlgorithm = Auth.DEFAULT_ALGO,
+): Promise<boolean> {
+  for (const hash of history) {
+    if (hash && (await Auth.passwordVerify(password, hash, algo))) {
+      return false
+    }
+  }
+  return true
+}
