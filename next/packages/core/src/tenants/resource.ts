@@ -44,6 +44,7 @@ export class TenantResource {
   private readonly sql: SQL
   private readonly db: Database
   private authDb?: Database
+  private readonly schemaDbs = new Map<string, Database>()
   private closePromise?: Promise<void>
   private readonly dependencies: TenantResourceDependencies
 
@@ -61,9 +62,57 @@ export class TenantResource {
     )
   }
 
+  /** Returns the underlying Bun SQL instance for raw tenant DDL/maintenance. */
+  getSql(): SQL {
+    return this.sql
+  }
+
   /** Creates a caller-scoped document session without exposing `Database.system()`. */
   session(roles: readonly string[]): Session {
     return this.db.for([...roles])
+  }
+
+  /**
+   * Returns a Database instance bound to the specified Postgres schema.
+   */
+  databaseForSchema(schema?: string): Database {
+    if (!schema || schema === 'public' || schema === 'default') {
+      return this.db
+    }
+    if (schema === 'auth') {
+      const cacheFactory = this.dependencies.cacheFactory ?? defaultCacheFactory
+      this.authDb ??= (this.dependencies.createAuthDatabase ?? createAuthDatabase)(
+        this.sql,
+        cacheFactory.forTenant(`tenant:${this.projectId}:auth`),
+      )
+      return this.authDb
+    }
+    let schemaDb = this.schemaDbs.get(schema)
+    if (!schemaDb) {
+      const cacheFactory = this.dependencies.cacheFactory ?? defaultCacheFactory
+      const adapter = new Adapter(this.sql)
+      adapter.setMeta({ schema, namespace: schema })
+      schemaDb = (this.dependencies.createDatabase ?? createDatabase)(
+        this.sql,
+        cacheFactory.forTenant(`tenant:${this.projectId}:${schema}`),
+      )
+      this.schemaDbs.set(schema, schemaDb)
+    }
+    return schemaDb
+  }
+
+  /**
+   * Caller-scoped session for a specific schema.
+   */
+  sessionForSchema(schema: string, roles: readonly string[]): Session {
+    return this.databaseForSchema(schema).for([...roles])
+  }
+
+  /**
+   * Privileged system session for a specific schema.
+   */
+  systemSessionForSchema(schema: string): Session {
+    return this.databaseForSchema(schema).system()
   }
 
   /**
