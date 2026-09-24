@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'bun:test'
 import { Doc, type Session } from '@nuvix/db'
-import { BadRequestError, ConflictError, NotFoundError } from '../../shared/errors'
+import {
+  BadRequestError,
+  ConflictError,
+  NotFoundError,
+  NotImplementedError,
+} from '../../shared/errors'
 import { MembershipsService } from './memberships.service'
 import { TeamsService } from './service'
 
@@ -143,6 +148,12 @@ describe('Teams Module Services', () => {
 
       await teamsService.remove(team.$id)
       await expect(teamsService.findOne(team.$id)).rejects.toThrow(NotFoundError)
+    })
+
+    it('throws NotImplementedError for getLogs', async () => {
+      const { session } = createInMemorySession()
+      const teamsService = new TeamsService(session)
+      await expect(teamsService.getLogs('team_123')).rejects.toThrow(NotImplementedError)
     })
   })
 

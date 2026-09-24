@@ -34,4 +34,19 @@ describe('UsersService', () => {
 
     await expect(service.create({ email: 'test@example.com' })).rejects.toThrow(ConflictError)
   })
+
+  it('should return usage statistics', async () => {
+    const mockSession = {
+      count: mock(() => Promise.resolve(5)),
+    } as unknown as Session
+
+    const service = new UsersService(mockSession)
+    const usage = await service.getUsage('30d')
+
+    expect(usage.range).toBe('30d')
+    expect(usage.usersTotal).toBe(5)
+    expect(usage.sessionsTotal).toBe(5)
+    expect(usage.users.length).toBe(1)
+    expect(usage.sessions.length).toBe(1)
+  })
 })

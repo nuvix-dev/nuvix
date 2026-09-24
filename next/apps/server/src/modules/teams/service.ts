@@ -1,5 +1,5 @@
 import { Doc, ID, Permission, Query, Role, type Session } from '@nuvix/db'
-import { ConflictError, NotFoundError } from '../../shared/errors'
+import { ConflictError, NotFoundError, NotImplementedError } from '../../shared/errors'
 import type { Memberships, Teams, TeamsDoc, UsersDoc } from '../../types/generated'
 import { formatTeam, type TeamView } from './formatter'
 
@@ -143,5 +143,11 @@ export class TeamsService {
     doc.set('prefs', prefs)
     await this.session.updateDocument('teams', teamId, doc)
     return prefs
+  }
+
+  async getLogs(_teamId: string): Promise<never> {
+    throw new NotImplementedError('Team logs are not implemented', {
+      code: 'general_not_implemented',
+    })
   }
 }

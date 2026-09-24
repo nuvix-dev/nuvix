@@ -153,6 +153,16 @@ describe('project routes', () => {
     expect(res.status).toBe(501)
   })
 
+  test('GET /projects/:projectId/usage returns project usage', async () => {
+    const created = await client.projects.post({ name: 'Usage Route Project' })
+    const id = created.data!.$id
+
+    const res = await client.projects({ projectId: id }).usage.get()
+    expect(res.status).toBe(200)
+    expect(res.data?.documentsTotal).toBe(0)
+    expect(res.data?.usersTotal).toBe(0)
+  })
+
   test('DELETE /projects/:projectId removes the project', async () => {
     const created = await client.projects.post({ name: 'ToRemove' })
     const id = created.data!.$id

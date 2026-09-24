@@ -180,6 +180,20 @@ export const userRoutes = (options: { jwtSecret?: string } = {}) =>
       },
     )
 
+    // Usage stats
+    .get(
+      '/usage',
+      {
+        query: t.Object({
+          range: t.Optional(t.String()),
+        }),
+      },
+      async ({ db, query }) => {
+        const service = new UsersService(db, options.jwtSecret)
+        return service.getUsage(query.range)
+      },
+    )
+
     // 11. Update password
     .patch(
       '/:userId/password',

@@ -211,4 +211,12 @@ describe('Users Routes', () => {
     const getRes = await testApp.handle(new Request('http://localhost/users/user_test_1'))
     expect(getRes.status).toBe(404)
   })
+
+  it('returns user usage statistics via GET /users/usage', async () => {
+    const res = await testApp.handle(new Request('http://localhost/users/usage?range=30d'))
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as { range: string; usersTotal: number }
+    expect(data.range).toBe('30d')
+    expect(data.usersTotal).toBeDefined()
+  })
 })

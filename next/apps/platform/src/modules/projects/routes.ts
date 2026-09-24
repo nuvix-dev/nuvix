@@ -31,6 +31,23 @@ export const ProjectSchema = t.Object({
   $updatedAt: t.Any(),
 })
 
+export const ProjectUsageSchema = t.Object({
+  requests: t.Array(t.Object({ date: t.String(), value: t.Number() })),
+  network: t.Array(t.Object({ date: t.String(), value: t.Number() })),
+  users: t.Array(t.Object({ date: t.String(), value: t.Number() })),
+  documentsTotal: t.Number(),
+  usersTotal: t.Number(),
+  bucketsTotal: t.Number(),
+  filesStorageTotal: t.Number(),
+  bucketsBreakdown: t.Array(
+    t.Object({
+      resourceId: t.String(),
+      name: t.String(),
+      value: t.Number(),
+    }),
+  ),
+})
+
 export function projectRoutes(service: ProjectService) {
   return new Elysia({ name: 'project-routes' })
     .post(
@@ -80,6 +97,16 @@ export function projectRoutes(service: ProjectService) {
         detail: { summary: 'Get a project', tags: ['projects'] },
       },
       ({ params }) => service.get(params.projectId),
+    )
+    .get(
+      '/projects/:projectId/usage',
+      {
+        params: t.Object({ projectId: t.String() }),
+        query: t.Optional(t.Object({ range: t.Optional(t.String()) })),
+        response: ProjectUsageSchema,
+        detail: { summary: 'Get project usage stats', tags: ['projects'] },
+      },
+      ({ params, query }) => service.getUsage(params.projectId, query?.range),
     )
     .patch(
       '/projects/:projectId',

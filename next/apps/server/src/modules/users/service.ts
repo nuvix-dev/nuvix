@@ -502,4 +502,26 @@ export class UsersService {
       memberships: docs.map(formatMembership),
     }
   }
+
+  async getUsage(range = '30d'): Promise<{
+    range: string
+    usersTotal: number
+    sessionsTotal: number
+    users: Array<{ date: string; value: number }>
+    sessions: Array<{ date: string; value: number }>
+  }> {
+    const [usersTotal, sessionsTotal] = await Promise.all([
+      this.session.count('users', []),
+      this.session.count('sessions', []),
+    ])
+
+    const now = new Date().toISOString()
+    return {
+      range,
+      usersTotal,
+      sessionsTotal,
+      users: [{ date: now, value: usersTotal }],
+      sessions: [{ date: now, value: sessionsTotal }],
+    }
+  }
 }

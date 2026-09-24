@@ -19,5 +19,6 @@ export {
   ConflictError,
   ForbiddenError,
   NotFoundError,
+  NotImplementedError,
   UnauthorizedError,
 } from '@nuvix/core/errors'

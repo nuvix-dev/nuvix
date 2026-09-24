@@ -200,4 +200,9 @@ describe('Teams Routes', () => {
     const getRes = await testApp.handle(new Request(`http://localhost/teams/${createdTeamId}`))
     expect(getRes.status).toBe(404)
   })
+
+  it('returns 501 for GET /teams/:teamId/logs', async () => {
+    const res = await testApp.handle(new Request('http://localhost/teams/team_123/logs'))
+    expect(res.status).toBe(501)
+  })
 })

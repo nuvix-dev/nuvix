@@ -74,6 +74,17 @@ export interface CreateJwtInput {
   duration: number
 }
 
+export interface ProjectUsageStats {
+  requests: Array<{ date: string; value: number }>
+  network: Array<{ date: string; value: number }>
+  users: Array<{ date: string; value: number }>
+  documentsTotal: number
+  usersTotal: number
+  bucketsTotal: number
+  filesStorageTotal: number
+  bucketsBreakdown: Array<{ resourceId: string; name: string; value: number }>
+}
+
 export type ProjectStatus = 'provisioning' | 'active' | 'error'
 
 /** Public project shape — `target` (tenant connection + password) is never returned. */
@@ -411,6 +422,21 @@ export class ProjectService {
       input.duration,
     )
     return { jwt: `dynamic_${token}` }
+  }
+
+  async getUsage(id: string, _range = '30d'): Promise<ProjectUsageStats> {
+    await this.getDoc(id)
+    const now = new Date().toISOString()
+    return {
+      requests: [{ date: now, value: 0 }],
+      network: [{ date: now, value: 0 }],
+      users: [{ date: now, value: 0 }],
+      documentsTotal: 0,
+      usersTotal: 0,
+      bucketsTotal: 0,
+      filesStorageTotal: 0,
+      bucketsBreakdown: [],
+    }
   }
 
   async testSMTP(_id: string): Promise<void> {

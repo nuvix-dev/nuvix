@@ -128,6 +128,20 @@ export const teamRoutes = () =>
       },
     )
 
+    // Team logs (reserved, returns 501 general_not_implemented)
+    .get(
+      '/:teamId/logs',
+      {
+        params: t.Object({
+          teamId: t.String(),
+        }),
+      },
+      async ({ db, params: { teamId } }) => {
+        const service = new TeamsService(db)
+        return service.getLogs(teamId)
+      },
+    )
+
     // 8. Create team membership
     .post(
       '/:teamId/memberships',

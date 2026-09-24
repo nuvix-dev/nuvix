@@ -205,6 +205,21 @@ describe('ProjectService', () => {
     await expect(service.testSMTP(project.$id)).rejects.toThrow('SMTP test is not implemented')
   })
 
+  test('getUsage returns project usage statistics', async () => {
+    const service = new ProjectService(db, new FakeTenantProvisioner(), noopBootstrap)
+    const project = await service.create({ name: 'Usage Project' })
+    const usage = await service.getUsage(project.$id, '30d')
+
+    expect(usage.requests).toBeDefined()
+    expect(usage.network).toBeDefined()
+    expect(usage.users).toBeDefined()
+    expect(usage.documentsTotal).toBe(0)
+    expect(usage.usersTotal).toBe(0)
+    expect(usage.bucketsTotal).toBe(0)
+    expect(usage.filesStorageTotal).toBe(0)
+    expect(Array.isArray(usage.bucketsBreakdown)).toBe(true)
+  })
+
   test('get throws NotFoundError for an unknown id', async () => {
     const service = new ProjectService(db, new FakeTenantProvisioner(), noopBootstrap)
     await expect(service.get('does-not-exist')).rejects.toThrow('Project not found')
