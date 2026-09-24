@@ -61,6 +61,13 @@ const projects: Collection = {
       required: false,
       default: null,
     },
+    {
+      $id: ID.custom('auths'),
+      key: 'auths',
+      type: AttributeType.Json,
+      required: false,
+      default: {},
+    },
   ],
   indexes: [
     {
@@ -271,4 +278,80 @@ const keys: Collection = {
   ],
 }
 
-export const platformCollections: Collection[] = [projects, webhooks, keys]
+const platforms: Collection = {
+  $collection: Database.METADATA,
+  $id: ID.custom('platforms'),
+  name: 'Platforms',
+  documentSecurity: false,
+  enabled: true,
+  attributes: [
+    {
+      $id: ID.custom('projectInternalId'),
+      key: 'projectInternalId',
+      type: AttributeType.Integer,
+      size: Database.LENGTH_KEY,
+      required: true,
+    },
+    {
+      $id: ID.custom('projectId'),
+      key: 'projectId',
+      type: AttributeType.String,
+      size: Database.LENGTH_KEY,
+      required: true,
+    },
+    {
+      $id: ID.custom('type'),
+      key: 'type',
+      type: AttributeType.String,
+      size: 32,
+      required: true,
+    },
+    {
+      $id: ID.custom('name'),
+      key: 'name',
+      type: AttributeType.String,
+      size: 128,
+      required: true,
+    },
+    {
+      $id: ID.custom('key'),
+      key: 'key',
+      type: AttributeType.String,
+      size: 256,
+      required: false,
+      default: null,
+    },
+    {
+      $id: ID.custom('store'),
+      key: 'store',
+      type: AttributeType.String,
+      size: 256,
+      required: false,
+      default: null,
+    },
+    {
+      $id: ID.custom('hostname'),
+      key: 'hostname',
+      type: AttributeType.String,
+      size: 256,
+      required: false,
+      default: null,
+    },
+  ],
+  indexes: [
+    {
+      $id: ID.custom('projectInternalId'),
+      key: 'idx_platform_project_internal_id',
+      type: IndexType.Key,
+      attributes: ['projectInternalId'],
+    },
+    {
+      $id: ID.custom('projectId'),
+      key: 'idx_platform_project_id',
+      type: IndexType.Key,
+      attributes: ['projectId'],
+    },
+  ],
+}
+
+export const platformCollections: Collection[] = [projects, webhooks, keys, platforms]

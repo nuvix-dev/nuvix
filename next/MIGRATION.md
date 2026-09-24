@@ -356,7 +356,9 @@ next/
 - [ ] Background provisioning (Phase 6 job infra) — project creation is
       currently synchronous; tracked in `docs/api/platform.md`
 - [x] Platform API keys slice: CRUD routes (`/projects/:projectId/keys`), 1:1 legacy schema with secret generation `standard_<hex>`
-- [ ] Remaining platform slices (templates, auth-settings, metadata)
+- [x] Client platforms slice: CRUD routes (`/projects/:projectId/platforms`), 1:1 legacy schema supporting web, flutter, android, apple
+- [x] Auth settings slice: routes under `/projects/:projectId/auth` (session-alerts, limit, duration, password-history, password-dictionary, personal-data, max-sessions, mock-numbers, memberships-privacy, auth methods)
+- [ ] Remaining platform slices (templates, metadata)
 - [ ] pg-meta introspection over `Bun.sql`
 
 ### Phase 8 — Local `@nuvix/pg` replacement (D12)

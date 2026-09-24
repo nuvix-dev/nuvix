@@ -1,8 +1,12 @@
 import { DockerTenantProvisioner } from '@nuvix/core/tenants'
 import { config } from '@nuvix/utils'
 import { Elysia, t } from 'elysia'
+import { authSettingsRoutes } from './modules/auth-settings/routes'
+import { AuthSettingsService } from './modules/auth-settings/service'
 import { keyRoutes } from './modules/keys/routes'
 import { KeysService } from './modules/keys/service'
+import { platformRoutes } from './modules/platforms/routes'
+import { PlatformsService } from './modules/platforms/service'
 import { projectRoutes } from './modules/projects/routes'
 import { ProjectService } from './modules/projects/service'
 import { webhookRoutes } from './modules/webhooks/routes'
@@ -40,10 +44,14 @@ const provisioner = new DockerTenantProvisioner({
 const projects = new ProjectService(db, provisioner)
 const webhooks = new WebhooksService(db)
 const keys = new KeysService(db)
+const platforms = new PlatformsService(db)
+const authSettings = new AuthSettingsService(db)
 
 export const app = new Elysia()
   .use(problemErrors())
   .use(projectRoutes(projects))
   .use(webhookRoutes(webhooks))
   .use(keyRoutes(keys))
+  .use(platformRoutes(platforms))
+  .use(authSettingsRoutes(authSettings))
   .use(health)

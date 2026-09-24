@@ -1,5 +1,5 @@
 // This file is auto-generated. Do not edit manually.
-// Generated on: 2026-09-24T11:41:28.411Z
+// Generated on: 2026-09-24T11:45:14.542Z
 
 import type { Doc } from '@nuvix/db'
 
@@ -35,6 +35,11 @@ export interface Projects extends IEntity {
   target?: string
   /** @optional */
   errorMessage?: string
+  /**
+   * @optional
+   * @default {}
+   */
+  auths?: Record<string, unknown>
 }
 
 export interface Webhooks extends IEntity {
@@ -111,10 +116,28 @@ export interface Keys extends IEntity {
   sdks?: string[]
 }
 
+export interface Platforms extends IEntity {
+  /** @required */
+  projectInternalId: number
+  /** @required */
+  projectId: string
+  /** @required */
+  type: string
+  /** @required */
+  name: string
+  /** @optional */
+  key?: string
+  /** @optional */
+  store?: string
+  /** @optional */
+  hostname?: string
+}
+
 // Document Types
 export type ProjectsDoc = Doc<Projects>
 export type WebhooksDoc = Doc<Webhooks>
 export type KeysDoc = Doc<Keys>
+export type PlatformsDoc = Doc<Platforms>
 
 // Utility Types
 
@@ -166,6 +189,22 @@ export type KeysUpdate = Partial<KeysCreate>
 export type KeysKeys = keyof Keys
 export type KeysValues = Keys[KeysKeys]
 
+// Utility types for Platforms
+export type PlatformsCreate = Omit<
+  Platforms,
+  | '$id'
+  | '$createdAt'
+  | '$updatedAt'
+  | '$permissions'
+  | '$sequence'
+  | '$collection'
+  | '$tenant'
+  | '$schema'
+>
+export type PlatformsUpdate = Partial<PlatformsCreate>
+export type PlatformsKeys = keyof Platforms
+export type PlatformsValues = Platforms[PlatformsKeys]
+
 // Input Types
 
 // Input types for Projects
@@ -183,10 +222,16 @@ export type KeysInput = KeysCreate
 export type KeysCreateInput = KeysCreate
 export type KeysUpdateInput = KeysUpdate
 
+// Input types for Platforms
+export type PlatformsInput = PlatformsCreate
+export type PlatformsCreateInput = PlatformsCreate
+export type PlatformsUpdateInput = PlatformsUpdate
+
 export interface Entities {
   projects: Projects
   webhooks: Webhooks
   keys: Keys
+  platforms: Platforms
 }
 
 type GeneratedEntitiesRegistry = Entities
