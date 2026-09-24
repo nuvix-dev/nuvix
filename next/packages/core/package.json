@@ -5,12 +5,9 @@
 	"type": "module",
 	"exports": {
 		".": "./src/index.ts",
-		"./auth": "./src/auth/index.ts",
 		"./db": "./src/db/index.ts",
 		"./errors": "./src/errors.ts",
 		"./platform": "./src/platform/index.ts",
-		"./settings": "./src/settings/index.ts",
-		"./tenant-auth": "./src/tenant-auth/index.ts",
 		"./tenants": "./src/tenants/index.ts"
 	},
 	"scripts": {

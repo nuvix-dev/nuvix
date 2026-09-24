@@ -80,14 +80,3 @@ export function registerCoreDbFilters(encryptionKey: Uint8Array): void {
 	registerOnce("json", jsonFilter);
 	registerOnce("encrypt", createEncryptFilter(encryptionKey));
 }
-
-/**
- * Registers `accountEncrypt` under its own key, distinct from `encrypt`
- * (D37's tenant-target key). Tenant-local account secrets (password hashes,
- * session/token secrets, OAuth2 provider tokens) are encrypted with this
- * key instead, so a leak of one key never exposes data protected by the
- * other. Same idempotency guarantee as `registerCoreDbFilters`.
- */
-export function registerAccountDbFilters(encryptionKey: Uint8Array): void {
-	registerOnce("accountEncrypt", createEncryptFilter(encryptionKey));
-}

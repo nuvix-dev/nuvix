@@ -298,21 +298,21 @@ next/
 
 - [x] Contracts drafted for review: `docs/api/database.md` (schemas CRUD only — collections/documents deferred until `@nuvix/db` stabilizes), `docs/api/teams.md` (incl. invite/accept lifecycle), `docs/api/users.md` (**legacy hash-create endpoints dropped per D29** — md5/sha/phpass/scrypt variants not carried over)
 - [x] `teams.md`/`users.md` re-audited line-by-line against legacy `apps/server/src/teams/**`/`users/**` (three parallel research passes) and rewritten to fix real inaccuracies found: missing fields/endpoints (`teamId` on create, `DELETE /users/:userId`, the two verification-flag endpoints), wrong error-code strings, wrong auth-posture claims, a mislabeled invite lifecycle (exactly-one → at-least-one identifier, owner-role authorization, auto-provisioning), and several legacy bugs now deliberately fixed instead of ported (team `getPrefs` 404, `PATCH prefs` merge vs. replace, MFA recovery-code PATCH/PUT semantics, `memberships` list `total`, last-owner protection added as new). Every fix is labeled *correction* (draft was wrong about v1) or *improvement* (deliberate change) — see each doc's own deviations section for the full list
-- [x] Teams, Users slices: services, route plugins, unit + route treaty tests completed and wired into `app.ts` via tenant context
-- [x] Schemas slice: `DatabaseService` (schemas CRUD for document/managed/unmanaged, name validation, reserved schemas filtering, metadata initialization for document schemas with rollback), route plugin with admin auth, unit tests, Eden treaty tests, live `nuvix/postgres:18.1` integration tests, and wired into `app.ts` via tenant context
-- [ ] Collection / attribute / document data plane endpoints on `@nuvix/db` (minus `@nuvix/pg`-dependent endpoints in `DEFERRED_ROUTES.md`)
+- [ ] Implement database service on new `@nuvix/db`
+- [x] Teams, Users slices (Users service complete, Teams pending)
+- [ ] Schemas slice — minus `@nuvix/pg`-dependent endpoints (deferred list in `DEFERRED_ROUTES.md`)
 
 ### Phase 4 — Account/Auth (highest risk)
 
 - [x] Contract first: `docs/api/account.md` written from scratch (previously nonexistent) via an exhaustive line-by-line read of legacy `account/**` (account, sessions, mfa, recovery, identities, targets) — covers sessions, MFA (TOTP + recovery codes + challenge flow), recovery, OAuth2, identities, push targets, and JWT/access-token issuance. D23 resolved: DB session = long-lived revocable refresh credential (`x-nuvix-session`), short-lived JWT minted from it via `POST /v2/account/tokens/jwt` = the access token (`x-nuvix-jwt`) — formalizes machinery v1 already had (`/account/jwts`) rather than inventing new primitives. Several legacy bugs fixed rather than ported (MFA challenge chicken-and-egg gate, OAuth2 session-refresh field bug, identity-delete missing ownership check, recovery skipping the personal-data check) — all itemized in the contract's deviations section, pending review
-- [x] Password hashing: bcrypt/argon2 only (`@nuvix/core/auth`) — legacy algos (MD5 etc.) NOT supported per D29
-- [x] MFA: RFC-6238 TOTP on `crypto.subtle` (zero-dependency pure Web Crypto HMAC-SHA1 in `packages/core/src/auth/totp.ts`, verified against RFC-6238 Appendix B test vectors; `otplib` dropped)
-- [x] Implement account/sessions services on `@nuvix/db`: profile, sessions, email/phone verification, password recovery, OAuth2 identities, push targets, MFA factors/challenges/recovery codes complete with unit and route treaty tests, wired into `app.ts` via tenant context
+- [ ] Password hashing: bcrypt/argon2 only — legacy algos (MD5 etc.) NOT supported per D29
+- [ ] MFA: decide otplib vs hand-rolled RFC-6238 (gate: validated against real factors)
+- [ ] Implement account/sessions/mfa/recovery/identities/targets services on `@nuvix/db`, sharing the users/sessions/tokens/authenticators/challenges/identities/targets collection family with the Users slice (Phase 3)
 
 ### Phase 5 — Storage + Messaging + Webhooks
 
-- [x] Storage: buckets/files, Bun-native Local driver + S3 driver, uploads via Elysia `t.File`, native `Bun.Image` preview/resizing, contract in `docs/api/storage.md`, unit/route/integration tests
-- [x] Messaging: providers (Mailgun, Sendgrid, SMTP, Twilio, Vonage, Msg91, Telesign, Textmagic, FCM, APNS), topics/subscribers with subscribe-role authorization, email/SMS/push messages with draft/scheduled/processing lifecycle. No queue dispatch in Phase 5 (Phase 6). Contract in `docs/api/messaging.md`. 34 unit/route tests. Collections in `packages/core/src/tenant-auth/collections.ts`; generated types in `apps/server/src/types/generated.ts`; services in `apps/server/src/modules/messaging/{providers,topics,subscribers,messages}.service.ts`; routes in `apps/server/src/modules/messaging/routes.ts`.
+- [ ] Storage: buckets/files, `Bun.file` local driver + S3 driver, uploads via Elysia `t.File`
+- [ ] Messaging: topics/subscribers/providers, Handlebars templates kept
 - [ ] Webhooks
 
 ### Phase 6 — Async jobs

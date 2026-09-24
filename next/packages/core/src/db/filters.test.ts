@@ -3,7 +3,6 @@ import { Doc } from "@nuvix/db";
 import {
 	createEncryptFilter,
 	jsonFilter,
-	registerAccountDbFilters,
 	registerCoreDbFilters,
 } from "./filters";
 
@@ -90,16 +89,6 @@ describe("registerCoreDbFilters", () => {
 		expect(() => {
 			registerCoreDbFilters(key);
 			registerCoreDbFilters(key);
-		}).not.toThrow();
-	});
-});
-
-describe("registerAccountDbFilters", () => {
-	test("registers accountEncrypt under a separate key from registerCoreDbFilters, idempotently", () => {
-		const key = crypto.getRandomValues(new Uint8Array(32));
-		expect(() => {
-			registerAccountDbFilters(key);
-			registerAccountDbFilters(key);
 		}).not.toThrow();
 	});
 });

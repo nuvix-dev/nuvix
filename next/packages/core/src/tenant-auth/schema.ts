@@ -1,11 +1,11 @@
-import { Cache, Memory } from '@nuvix/cache'
-import { Adapter, Database, Doc, Permission, Role } from '@nuvix/db'
-import { SQL } from 'bun'
-import type { TenantTarget } from '../tenants/types'
-import { authCollections } from './collections'
+import { Cache, Memory } from "@nuvix/cache";
+import { Adapter, Database, Doc } from "@nuvix/db";
+import { SQL } from "bun";
+import type { TenantTarget } from "../tenants/types";
+import { authCollections } from "./collections";
 
 /** Dedicated Postgres schema for core auth collections — never a user-created schema name. */
-export const AUTH_SCHEMA = 'auth'
+export const AUTH_SCHEMA = "auth";
 
 /**
  * Builds a `Database` bound permanently to the `auth` schema on the given
@@ -19,9 +19,9 @@ export const AUTH_SCHEMA = 'auth'
  * tenant, per `AGENTS.md`).
  */
 export function createAuthDatabase(sql: SQL, cache: Cache): Database {
-  const adapter = new Adapter(sql)
-  adapter.setMeta({ schema: AUTH_SCHEMA, namespace: AUTH_SCHEMA })
-  return new Database(adapter, cache)
+	const adapter = new Adapter(sql);
+	adapter.setMeta({ schema: AUTH_SCHEMA, namespace: AUTH_SCHEMA });
+	return new Database(adapter, cache);
 }
 
 /**
@@ -41,24 +41,19 @@ export function createAuthDatabase(sql: SQL, cache: Cache): Database {
  * cases: a schema `@nuvix/db` created itself, and one the image pre-created.
  */
 export async function ensureAuthSchema(db: Database): Promise<void> {
-  if (!(await db.exists(undefined, Database.METADATA))) await db.create()
+	if (!(await db.exists(undefined, Database.METADATA))) await db.create();
 
-  for (const collection of authCollections) {
-    if (await db.exists(undefined, collection.$id)) continue
-    await db.createCollection({
-      id: collection.$id,
-      attributes: collection.attributes.map((attribute) => new Doc(attribute)),
-      indexes: collection.indexes.map((index) => new Doc(index)),
-      permissions: [
-        Permission.create(Role.any()),
-        Permission.read(Role.any()),
-        Permission.update(Role.any()),
-        Permission.delete(Role.any()),
-      ],
-      documentSecurity: collection.documentSecurity,
-      enabled: collection.enabled,
-    })
-  }
+	for (const collection of authCollections) {
+		if (await db.exists(undefined, collection.$id)) continue;
+		await db.createCollection({
+			id: collection.$id,
+			attributes: collection.attributes.map((attribute) => new Doc(attribute)),
+			indexes: collection.indexes.map((index) => new Doc(index)),
+			permissions: [],
+			documentSecurity: collection.documentSecurity,
+			enabled: collection.enabled,
+		});
+	}
 }
 
 /**
@@ -69,18 +64,18 @@ export async function ensureAuthSchema(db: Database): Promise<void> {
  * closes the connection before returning.
  */
 export async function bootstrapAuthSchema(target: TenantTarget): Promise<void> {
-  const sql = new SQL({
-    hostname: target.host,
-    port: target.port,
-    database: target.database,
-    username: target.user,
-    password: target.password,
-  })
-  try {
-    // A one-shot connection has nothing worth caching against Redis — a
-    // plain in-memory cache is fine for a bootstrap that runs exactly once.
-    await ensureAuthSchema(createAuthDatabase(sql, new Cache(new Memory())))
-  } finally {
-    await sql.close()
-  }
+	const sql = new SQL({
+		hostname: target.host,
+		port: target.port,
+		database: target.database,
+		username: target.user,
+		password: target.password,
+	});
+	try {
+		// A one-shot connection has nothing worth caching against Redis — a
+		// plain in-memory cache is fine for a bootstrap that runs exactly once.
+		await ensureAuthSchema(createAuthDatabase(sql, new Cache(new Memory())));
+	} finally {
+		await sql.close();
+	}
 }
