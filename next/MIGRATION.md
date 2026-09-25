@@ -371,7 +371,7 @@ next/
 ### Phase 9 — Tests & cutover
 
 - [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 359 tests across 61 files)
-- [ ] Perf baseline vs old app
+- [x] Perf baseline vs old app (`test/bench/perf.ts`, `docs/perf-baseline.md`)
 - [x] Docker/deploy artifacts for Bun-only runtime (`Dockerfile`, `docker-compose.yml`, `.dockerignore`, `docs/deployment.md`)
 - [ ] Delete root monorepo (**explicit approval gate**)
 
