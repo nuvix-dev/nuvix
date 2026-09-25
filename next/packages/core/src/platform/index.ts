@@ -4,4 +4,9 @@ export {
   ensurePlatformSchema,
   type PlatformDatabaseOptions,
 } from './database'
-export { ProjectRegistry, type ResolvedProject } from './registry'
+export {
+  KeyRegistry,
+  ProjectRegistry,
+  type ResolvedApiKey,
+  type ResolvedProject,
+} from './registry'

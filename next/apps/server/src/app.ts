@@ -1,5 +1,5 @@
 import { openapi } from '@elysia/openapi'
-import { createPlatformDatabase, ProjectRegistry } from '@nuvix/core/platform'
+import { createPlatformDatabase, KeyRegistry, ProjectRegistry } from '@nuvix/core/platform'
 import { TenantResourcePool } from '@nuvix/core/tenants'
 import { TranslationLoader } from '@nuvix/i18n'
 import { config } from '@nuvix/utils'
@@ -66,9 +66,11 @@ const platformDb = await createPlatformDatabase({
   encryptionKey: config.platform.tenantEncryptionKey,
 })
 const projectRegistry = new ProjectRegistry(platformDb)
+const keyRegistry = new KeyRegistry(platformDb)
 const tenantPool = new TenantResourcePool()
 const tenantPlugin = tenantContext({
   projectLookup: projectRegistry,
+  keyLookup: keyRegistry,
   tenantPool,
   jwtSecret: config.jwtSecret,
 })

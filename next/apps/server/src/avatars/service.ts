@@ -207,23 +207,39 @@ export function createAvatarService() {
       })
     }
 
-    if (
-      (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') ||
-      PRIVATE_HOST_RE.test(parsed.hostname)
-    ) {
-      throw new NotFoundError('Favicon unavailable', {
-        code: 'favicon_unavailable',
-        messageKey: 'errors.avatars.faviconUnavailable',
-      })
-    }
-
+    let currentUrl = parsed
     let response: Response
+    const MAX_REDIRECTS = 3
     try {
-      response = await fetch(parsed, {
-        redirect: 'follow',
-        signal: AbortSignal.timeout(10_000),
-        headers: { accept: 'image/*' },
-      })
+      let hops = 0
+      while (true) {
+        if (
+          (currentUrl.protocol !== 'http:' && currentUrl.protocol !== 'https:') ||
+          PRIVATE_HOST_RE.test(currentUrl.hostname)
+        ) {
+          throw new Error('SSRF blocked')
+        }
+
+        response = await fetch(currentUrl, {
+          redirect: 'manual',
+          signal: AbortSignal.timeout(10_000),
+          headers: { accept: 'image/*' },
+        })
+
+        if ([301, 302, 303, 307, 308].includes(response.status)) {
+          if (hops >= MAX_REDIRECTS) {
+            throw new Error('Too many redirects')
+          }
+          const location = response.headers.get('location')
+          if (!location) {
+            throw new Error('Missing redirect location')
+          }
+          currentUrl = new URL(location, currentUrl)
+          hops++
+          continue
+        }
+        break
+      }
     } catch {
       throw new NotFoundError('Favicon unavailable', {
         code: 'favicon_unavailable',

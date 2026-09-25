@@ -4,7 +4,7 @@ import { AppError } from '../shared/errors'
 
 export interface ProblemErrorsOptions {
   /** Resolves the request's translator for localized error details. */
-  getTranslator: (headers: Headers) => Promise<Translator>
+  getTranslator?: (headers: Headers) => Promise<Translator>
 }
 
 /**
@@ -18,13 +18,13 @@ export interface ProblemErrorsOptions {
  * - Error handlers registered inside a plugin MUST use `global` scope,
  *   otherwise they do not propagate to the consuming instance's routes.
  */
-export function problemErrors(options: ProblemErrorsOptions) {
+export function problemErrors(options: ProblemErrorsOptions = {}) {
   return new Elysia({ name: 'problem-errors' }).error(
     'global',
     AppError,
     async ({ error, set, request }) => {
       let detail = error.fields.detail
-      if (error.fields.messageKey) {
+      if (error.fields.messageKey && options.getTranslator) {
         try {
           const translator = await options.getTranslator(request.headers)
           detail = translator.format(error.fields.messageKey, error.fields.params)

@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, test } from 'bun:test'
 import { type Database, Doc } from '@nuvix/db'
 import type { TenantTarget } from '../tenants'
 import { createPlatformDatabase } from './database'
-import { ProjectRegistry } from './registry'
+import { KeyRegistry, ProjectRegistry } from './registry'
 
 const encryptionKey = '+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo='
 const target: TenantTarget = {
@@ -15,6 +15,7 @@ const target: TenantTarget = {
 
 let db: Database
 let registry: ProjectRegistry
+let keyRegistry: KeyRegistry
 
 beforeAll(async () => {
   db = await createPlatformDatabase({
@@ -23,6 +24,7 @@ beforeAll(async () => {
     encryptionKey,
   })
   registry = new ProjectRegistry(db)
+  keyRegistry = new KeyRegistry(db)
 })
 
 describe('ProjectRegistry', () => {
@@ -63,5 +65,55 @@ describe('ProjectRegistry', () => {
 
     expect(await registry.resolve('pk_missing')).toBeNull()
     expect(await registry.resolve('pk_provisioning')).toBeNull()
+  })
+})
+
+describe('KeyRegistry', () => {
+  test('resolves a valid API key for a project', async () => {
+    await db.system().createDocument(
+      'keys',
+      new Doc({
+        $id: 'key-1',
+        $permissions: [],
+        projectInternalId: 1,
+        projectId: 'active-project',
+        name: 'Standard Key',
+        scopes: ['users.read', 'users.write'],
+        secret: 'standard_secret_abc123',
+        expire: null,
+      }),
+    )
+
+    const resolved = await keyRegistry.resolve('active-project', 'standard_secret_abc123')
+    expect(resolved).toEqual({
+      id: 'key-1',
+      projectId: 'active-project',
+      name: 'Standard Key',
+      scopes: ['users.read', 'users.write'],
+      expire: null,
+    })
+  })
+
+  test('does not resolve an unknown key or wrong project', async () => {
+    expect(await keyRegistry.resolve('active-project', 'unknown_secret')).toBeNull()
+    expect(await keyRegistry.resolve('other-project', 'standard_secret_abc123')).toBeNull()
+  })
+
+  test('does not resolve an expired key', async () => {
+    await db.system().createDocument(
+      'keys',
+      new Doc({
+        $id: 'expired-key',
+        $permissions: [],
+        projectInternalId: 1,
+        projectId: 'active-project',
+        name: 'Expired Key',
+        scopes: ['users.read'],
+        secret: 'standard_secret_expired',
+        expire: new Date(Date.now() - 60_000).toISOString(),
+      }),
+    )
+
+    expect(await keyRegistry.resolve('active-project', 'standard_secret_expired')).toBeNull()
   })
 })

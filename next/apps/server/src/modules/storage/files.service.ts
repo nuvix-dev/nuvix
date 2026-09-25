@@ -141,7 +141,7 @@ export class FilesService {
     const { filepath, filename, mimetype } = upload
     const stats = await fs.stat(filepath)
     const fileSize = stats.size
-    const fileExt = filename.split('.').pop()?.toLowerCase() ?? ''
+    const fileExt = filename.includes('.') ? (filename.split('.').pop()?.toLowerCase() ?? '') : ''
 
     if (!fileSize || fileSize <= 0) {
       throw new BadRequestError('File size is zero', { code: 'storage_file_empty' })

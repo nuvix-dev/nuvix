@@ -1,5 +1,5 @@
 import { Auth } from '@nuvix/core/auth'
-import type { ResolvedProject } from '@nuvix/core/platform'
+import type { ResolvedApiKey, ResolvedProject } from '@nuvix/core/platform'
 import type { TenantResource, TenantResourcePool } from '@nuvix/core/tenants'
 import { Doc, type Session } from '@nuvix/db'
 import { Elysia } from 'elysia'
@@ -8,6 +8,10 @@ import { BadRequestError, NotFoundError, UnauthorizedError } from '../shared/err
 import type { Sessions, Users } from '../types/generated'
 import { verifyJwt } from '../utils/jwt'
 import type { ProjectLookup } from './project'
+
+export interface KeyLookup {
+  resolve(projectId: string, secret: string): Promise<ResolvedApiKey | null>
+}
 
 export interface TenantContext {
   [key: string]: unknown
@@ -24,6 +28,7 @@ export interface TenantContext {
 export interface TenantContextOptions {
   projectLookup: ProjectLookup
   tenantPool: TenantResourcePool
+  keyLookup?: KeyLookup
   jwtSecret?: string
 }
 
@@ -58,6 +63,18 @@ export async function resolveTenantContext(
   let isAdmin = false
 
   if (apiKeyHeader) {
+    if (!options.keyLookup) {
+      throw new UnauthorizedError('Invalid or expired API key', {
+        code: 'user_unauthorized',
+      })
+    }
+    const resolvedKey = await options.keyLookup.resolve(project.id, apiKeyHeader)
+    if (!resolvedKey) {
+      throw new UnauthorizedError('Invalid or expired API key', {
+        code: 'user_unauthorized',
+      })
+    }
+
     isAPIUser = true
     isAdmin = true
     const user = new Doc<Users>({})
