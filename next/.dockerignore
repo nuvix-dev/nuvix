@@ -1,0 +1,16 @@
+.git
+.gitignore
+.tmp
+thoughts
+node_modules
+dist
+build
+coverage
+*.log
+*.sqlite
+*.sqlite-journal
+*.tsbuildinfo
+.DS_Store
+.env
+.env.*
+!.env.example

@@ -1,0 +1,111 @@
+# Nuvix v2 — Bun-native Docker Compose
+# Architecture:
+# - postgres: platform / system database container (nuvix/postgres:18.1)
+# - redis: queue / cache container (redis:8)
+# - platform: control plane (port 4100), mounts docker socket for tenant provisioning
+# - server: project-facing v2 API (port 4000)
+
+name: nuvix-v2
+
+services:
+  postgres:
+    image: nuvix/postgres:18.1
+    container_name: nuvix-v2-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${NUVIX_DATABASE_PASSWORD:-postgres}
+      POSTGRES_DB: nuvix
+    ports:
+      - "${NUVIX_POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nuvix-network
+
+  redis:
+    image: redis:8
+    container_name: nuvix-v2-redis
+    restart: unless-stopped
+    ports:
+      - "${NUVIX_REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nuvix-network
+
+  platform:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        - APP_NAME=platform
+    container_name: nuvix-v2-platform
+    restart: unless-stopped
+    ports:
+      - "${NUVIX_PLATFORM_PORT:-4100}:4100"
+    environment:
+      NUVIX_ENV: ${NUVIX_ENV:-production}
+      NUVIX_PLATFORM_HOST: 0.0.0.0
+      NUVIX_PLATFORM_PORT: 4100
+      NUVIX_PLATFORM_DB_DRIVER: ${NUVIX_PLATFORM_DB_DRIVER:-sqlite}
+      NUVIX_PLATFORM_DB_URL: ${NUVIX_PLATFORM_DB_URL:-./data/platform.sqlite}
+      NUVIX_TENANT_ENCRYPTION_KEY: ${NUVIX_TENANT_ENCRYPTION_KEY:-+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo=}
+      NUVIX_TENANT_POSTGRES_IMAGE: ${NUVIX_TENANT_POSTGRES_IMAGE:-nuvix/postgres:18.1}
+      NUVIX_JWT_SECRET: ${NUVIX_JWT_SECRET:-nuvix-default-jwt-secret-change-in-prod}
+    volumes:
+      - platform_data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - nuvix-network
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+      args:
+        - APP_NAME=server
+    container_name: nuvix-v2-server
+    restart: unless-stopped
+    ports:
+      - "${NUVIX_PORT:-4000}:4000"
+    environment:
+      NUVIX_ENV: ${NUVIX_ENV:-production}
+      NUVIX_HOST: 0.0.0.0
+      NUVIX_PORT: 4000
+      NUVIX_INTERNAL_DATABASE_URL: ${NUVIX_INTERNAL_DATABASE_URL:-postgres://postgres:postgres@postgres:5432/nuvix}
+      NUVIX_REDIS_URL: ${NUVIX_REDIS_URL:-redis://redis:6379}
+      NUVIX_JWT_SECRET: ${NUVIX_JWT_SECRET:-nuvix-default-jwt-secret-change-in-prod}
+      NUVIX_TENANT_ENCRYPTION_KEY: ${NUVIX_TENANT_ENCRYPTION_KEY:-+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo=}
+      NUVIX_STORAGE_UPLOADS: /app/storage/uploads
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - storage_data:/app/storage
+    networks:
+      - nuvix-network
+
+volumes:
+  postgres_data:
+  redis_data:
+  platform_data:
+  storage_data:
+
+networks:
+  nuvix-network:
+    driver: bridge

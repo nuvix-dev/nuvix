@@ -372,7 +372,7 @@ next/
 
 - [ ] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`)
 - [ ] Perf baseline vs old app
-- [ ] Docker/deploy artifacts for Bun-only runtime
+- [x] Docker/deploy artifacts for Bun-only runtime (`Dockerfile`, `docker-compose.yml`, `.dockerignore`, `docs/deployment.md`)
 - [ ] Delete root monorepo (**explicit approval gate**)
 
 ---
