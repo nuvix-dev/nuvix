@@ -60,6 +60,8 @@
         "@nuvix/db": "file:../../../../database",
         "@nuvix/pg": "file:../../../../pg-ts",
         "@nuvix/pg-meta": "workspace:*",
+        "@nuvix/utils": "workspace:*",
+        "bullmq": "^6.3.8",
       },
     },
     "packages/i18n": {

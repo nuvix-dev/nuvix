@@ -1,0 +1,1 @@
+process.env.MSGPACKR_NATIVE_ACCELERATION_DISABLED ??= 'true'

@@ -159,12 +159,43 @@ describe('Schemas Routes (Collections, Attributes, Indexes, Documents)', () => {
     },
   } as unknown as Session
 
+  const rowsMap = new Map<string, unknown>()
+
+  const mockSql = {
+    unsafe: async (q: string, p: unknown[] = []) => {
+      if (q.includes('COUNT(*)')) return [{ count: rowsMap.size }]
+      if (q.includes('INSERT INTO')) {
+        const item = {
+          id: 1,
+          name: (p[0] as string) ?? 'Alice',
+          email: (p[1] as string) ?? 'alice@example.com',
+        }
+        rowsMap.set('1', item)
+        return [item]
+      }
+      if (q.includes('WHERE id::text = $1')) {
+        const item = rowsMap.get(String(p[0]))
+        return item ? [item] : []
+      }
+      if (q.includes('DELETE FROM')) {
+        rowsMap.clear()
+        return [{ id: 1 }]
+      }
+      if (q.includes('calculate_total')) {
+        return [{ sum: 42 }]
+      }
+      return Array.from(rowsMap.values())
+    },
+  }
+
   const fakeTenantResource = {
     databaseForSchema: () => mockDb,
     sessionForSchema: () => mockSession,
+    getSql: () => mockSql,
   } as unknown as TenantResource
 
   const app = new Elysia()
+
     .use(
       problemErrors({
         getTranslator: async () => new Translator('en', 'en', { primary: {}, fallback: {} }),
@@ -376,5 +407,81 @@ describe('Schemas Routes (Collections, Attributes, Indexes, Documents)', () => {
       .collections({ collectionId: 'todos' })
       .delete()
     expect(delCol.status).toBe(204)
+  })
+
+  it('runs tables lifecycle via Eden Treaty on schemas/:schemaId/tables', async () => {
+    // 1. Insert row
+    const insertRes = await client
+      .schemas({ schemaId: 'public' })
+      .tables({ tableId: 'users' })
+      .post({ name: 'Bob', email: 'bob@example.com' })
+    expect(insertRes.status).toBe(200)
+
+    // 2. Query table
+    const listRes = await client.schemas({ schemaId: 'public' }).tables({ tableId: 'users' }).get()
+    expect(listRes.status).toBe(200)
+    expect(Array.isArray(listRes.data)).toBe(true)
+
+    // 3. Count table
+    const countRes = await client
+      .schemas({ schemaId: 'public' })
+      .tables({ tableId: 'users' })
+      .count.get()
+    expect(countRes.status).toBe(200)
+    expect(countRes.data?.count).toBeGreaterThanOrEqual(1)
+
+    // 4. Get single row
+    const rowRes = await client
+      .schemas({ schemaId: 'public' })
+      .tables({ tableId: 'users' })({ rowId: '1' })
+      .get()
+    expect(rowRes.status).toBe(200)
+    expect((rowRes.data as { id: number })?.id).toBe(1)
+
+    // 5. Update row
+    const patchRes = await client
+      .schemas({ schemaId: 'public' })
+      .tables({ tableId: 'users' })({ rowId: '1' })
+      .patch({ name: 'Robert' })
+    expect(patchRes.status).toBe(200)
+
+    // 6. Delete row
+    const delRes = await client
+      .schemas({ schemaId: 'public' })
+      .tables({ tableId: 'users' })({ rowId: '1' })
+      .delete()
+    expect(delRes.status).toBe(200)
+
+    // 7. Call RPC
+    const rpcRes = await client
+      .schemas({ schemaId: 'public' })
+      .rpc({ functionId: 'calculate_total' })
+      .post([10, 32])
+    expect(rpcRes.status).toBe(200)
+  })
+
+  it('runs public tables and rpc shorthand via Eden Treaty on public/*', async () => {
+    // 1. Public insert
+    const insertRes = await client.public.tables({ tableId: 'users' }).post({
+      name: 'Charlie',
+      email: 'charlie@example.com',
+    })
+    expect(insertRes.status).toBe(200)
+
+    // 2. Public query
+    const listRes = await client.public.tables({ tableId: 'users' }).get()
+    expect(listRes.status).toBe(200)
+
+    // 3. Public count
+    const countRes = await client.public.tables({ tableId: 'users' }).count.get()
+    expect(countRes.status).toBe(200)
+
+    // 4. Public single row
+    const rowRes = await client.public.tables({ tableId: 'users' })({ rowId: '1' }).get()
+    expect(rowRes.status).toBe(200)
+
+    // 5. Public RPC
+    const rpcRes = await client.public.rpc({ functionId: 'calculate_total' }).post([5, 5])
+    expect(rpcRes.status).toBe(200)
   })
 })

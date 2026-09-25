@@ -10,6 +10,7 @@
     "./db": "./src/db/index.ts",
     "./errors": "./src/errors.ts",
     "./platform": "./src/platform/index.ts",
+    "./queues": "./src/queues/index.ts",
     "./tenant-auth": "./src/tenant-auth/index.ts",
     "./tenants": "./src/tenants/index.ts"
   },
@@ -20,6 +21,8 @@
     "@nuvix/cache": "file:../../../../cache",
     "@nuvix/db": "file:../../../../database",
     "@nuvix/pg": "file:../../../../pg-ts",
-    "@nuvix/pg-meta": "workspace:*"
+    "@nuvix/pg-meta": "workspace:*",
+    "@nuvix/utils": "workspace:*",
+    "bullmq": "^6.3.8"
   }
 }
