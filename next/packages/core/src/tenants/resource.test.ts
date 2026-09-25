@@ -54,4 +54,26 @@ describe('TenantResource', () => {
     expect(resource.authSession(['guest'])).toBe(authSession)
     expect(authDatabaseCalls).toBe(1)
   })
+
+  test('pg() shares the same SQL client and caches the facade', () => {
+    let pgSql: SQL | undefined
+    let pgCalls = 0
+    const sql = { close: async () => {} } as unknown as SQL
+    const mockFacade = {} as ReturnType<TenantResource['pg']>
+
+    const resource = new TenantResource('project-3', target, {
+      createSql: () => sql,
+      createDatabase: () => ({ for: () => ({}) as Session }) as unknown as Database,
+      createPgDatabase: (input) => {
+        pgSql = input as unknown as SQL
+        pgCalls++
+        return mockFacade
+      },
+    })
+
+    expect(resource.pg()).toBe(mockFacade)
+    expect(resource.pg()).toBe(mockFacade)
+    expect(pgSql).toBe(sql)
+    expect(pgCalls).toBe(1)
+  })
 })

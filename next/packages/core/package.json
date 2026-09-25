@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@nuvix/cache": "file:../../../../cache",
-    "@nuvix/db": "file:../../../../database"
+    "@nuvix/db": "file:../../../../database",
+    "@nuvix/pg": "file:../../../../pg-ts"
   }
 }

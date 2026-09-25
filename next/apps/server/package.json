@@ -16,6 +16,7 @@
     "@nuvix/db": "file:../../../../database",
     "@nuvix/i18n": "workspace:*",
     "@nuvix/messaging": "file:../../../../messaging",
+    "@nuvix/pg": "file:../../../../pg-ts",
     "@nuvix/storage": "file:../../../../storage",
     "@nuvix/utils": "workspace:*",
     "bullmq": "^6.3.8",

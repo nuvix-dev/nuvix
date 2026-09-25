@@ -363,8 +363,9 @@ next/
 
 ### Phase 8 — Local `@nuvix/pg` replacement (D12)
 
-- [ ] Design `DataSource` surface from ACTUAL usage (query builder, joins, raw SQL, metadata, logs)
-- [ ] Implement on `Bun.sql` in `packages/` ; re-enable deferred endpoints
+- [x] `@nuvix/pg` (Bun-native query builder on caller-owned Bun `SQL`, `/home/ubuntu/pg-ts`) integrated into monorepo (`packages/core`, `apps/server`)
+- [x] `TenantResource.pg()` facade wired: shares the tenant's single Bun `SQL` client with `@nuvix/db`, closed exactly once on resource disposal (D41)
+- [x] Data services schema storage (`PostgresSchemaStorage`) migrated to `@nuvix/pg` query builder
 - [ ] Full API surface audit vs `docs/api/*`
 
 ### Phase 9 — Tests & cutover

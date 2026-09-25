@@ -2,7 +2,12 @@ import { describe, expect, test } from 'bun:test'
 import type { TenantResource } from '@nuvix/core/tenants'
 import type { Database } from '@nuvix/db'
 import { ConflictError, NotFoundError } from '../../shared/errors'
-import { DatabaseService, type SchemaItem, type SchemaStorage } from './service'
+import {
+  DatabaseService,
+  PostgresSchemaStorage,
+  type SchemaItem,
+  type SchemaStorage,
+} from './service'
 
 class MemorySchemaStorage implements SchemaStorage {
   private readonly schemas = new Map<string, SchemaItem>()
@@ -151,5 +156,41 @@ describe('DatabaseService', () => {
     expect(await storage.get('tenant_db')).toBeNull()
 
     await expect(service.deleteSchema('tenant_db')).rejects.toThrow(NotFoundError)
+  })
+
+  test('PostgresSchemaStorage queries system.schemas via tenantResource.pg()', async () => {
+    const fakeRows = [{ name: 'custom_schema', description: 'Custom', type: 'managed' }]
+    const fakeQueryBuilder = Object.assign(Promise.resolve(fakeRows), {
+      select: () => fakeQueryBuilder,
+      whereNotIn: () => fakeQueryBuilder,
+      where: () => fakeQueryBuilder,
+      orderBy: () => fakeQueryBuilder,
+      first: async () => fakeRows[0],
+      update: async () => {},
+      delete: async () => {},
+    })
+    const fakePg = {
+      table: () => fakeQueryBuilder,
+    } as unknown as ReturnType<TenantResource['pg']>
+
+    const mockResource = {
+      pg: () => fakePg,
+      getSql: () => {
+        const sqlFn = () => Promise.resolve([])
+        sqlFn.unsafe = () => Promise.resolve([])
+        return sqlFn as unknown as ReturnType<TenantResource['getSql']>
+      },
+    } as unknown as TenantResource
+
+    const pgStorage = new PostgresSchemaStorage(mockResource)
+    const list = await pgStorage.find('managed')
+    expect(list.length).toBe(1)
+    expect(list[0]?.name).toBe('custom_schema')
+
+    const item = await pgStorage.get('custom_schema')
+    expect(item?.name).toBe('custom_schema')
+
+    await pgStorage.update('custom_schema', 'Updated')
+    await pgStorage.delete('custom_schema')
   })
 })

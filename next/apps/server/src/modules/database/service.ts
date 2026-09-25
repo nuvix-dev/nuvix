@@ -16,11 +16,16 @@ export interface SchemaStorage {
   delete(name: string): Promise<void>
 }
 
+interface SystemSchemaRow {
+  name: string
+  description: string | null
+  type: string
+}
+
 export class PostgresSchemaStorage implements SchemaStorage {
   constructor(private readonly tenantResource: TenantResource) {}
 
   async find(type?: string): Promise<SchemaItem[]> {
-    const sql = this.tenantResource.getSql()
     const reserved = [
       Schemas.Core,
       Schemas.System,
@@ -31,20 +36,18 @@ export class PostgresSchemaStorage implements SchemaStorage {
       'realtime',
     ]
 
-    let rows: Array<{ name: string; description: string | null; type: string }>
+    let builder = this.tenantResource
+      .pg()
+      .table('system.schemas')
+      .select('name', 'description', 'type')
+      .whereNotIn('name', reserved)
+      .orderBy('name', 'asc')
+
     if (type) {
-      rows = await sql`
-        SELECT name, description, type FROM system.schemas
-        WHERE name NOT IN ${sql(reserved)} AND type = ${type}
-        ORDER BY name ASC
-      `
-    } else {
-      rows = await sql`
-        SELECT name, description, type FROM system.schemas
-        WHERE name NOT IN ${sql(reserved)}
-        ORDER BY name ASC
-      `
+      builder = builder.where('type', '=', type)
     }
+
+    const rows = (await builder) as SystemSchemaRow[]
 
     return rows.map((r) => ({
       name: r.name,
@@ -54,17 +57,18 @@ export class PostgresSchemaStorage implements SchemaStorage {
   }
 
   async get(name: string): Promise<SchemaItem | null> {
-    const sql = this.tenantResource.getSql()
-    const rows = await sql<Array<{ name: string; description: string | null; type: string }>>`
-      SELECT name, description, type FROM system.schemas
-      WHERE name = ${name}
-      LIMIT 1
-    `
-    if (!rows || rows.length === 0 || !rows[0]) return null
+    const row = (await this.tenantResource
+      .pg()
+      .table('system.schemas')
+      .select('name', 'description', 'type')
+      .where('name', '=', name)
+      .first()) as SystemSchemaRow | undefined
+
+    if (!row) return null
     return {
-      name: rows[0].name,
-      description: rows[0].description,
-      type: rows[0].type as SchemaItem['type'],
+      name: row.name,
+      description: row.description,
+      type: row.type as SchemaItem['type'],
     }
   }
 
@@ -76,12 +80,12 @@ export class PostgresSchemaStorage implements SchemaStorage {
   }
 
   async update(name: string, description?: string | null): Promise<SchemaItem> {
-    const sql = this.tenantResource.getSql()
-    await sql`
-      UPDATE system.schemas
-      SET description = ${description ?? null}
-      WHERE name = ${name}
-    `
+    await this.tenantResource
+      .pg()
+      .table('system.schemas')
+      .where('name', '=', name)
+      .update({ description: description ?? null })
+
     const updated = await this.get(name)
     if (!updated) {
       throw new NotFoundError('Schema not found', { code: 'schema_not_found' })
@@ -93,7 +97,7 @@ export class PostgresSchemaStorage implements SchemaStorage {
     const sql = this.tenantResource.getSql()
     await sql.unsafe(`DROP SCHEMA IF EXISTS "${name.replace(/"/g, '""')}" CASCADE`)
     // Also remove from system.schemas in case DDL trigger was not triggered
-    await sql`DELETE FROM system.schemas WHERE name = ${name}`
+    await this.tenantResource.pg().table('system.schemas').where('name', '=', name).delete()
   }
 }
 

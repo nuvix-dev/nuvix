@@ -1,4 +1,5 @@
 import { Adapter, Database, type Session } from '@nuvix/db'
+import { createDatabase as createPgDatabase, type DatabaseFacade } from '@nuvix/pg'
 import { SQL } from 'bun'
 import { createAuthDatabase } from '../tenant-auth'
 import { createTenantCacheFactory, type TenantCacheFactory } from './cache'
@@ -8,6 +9,7 @@ export interface TenantResourceDependencies {
   createSql?: (target: TenantTarget) => SQL
   createDatabase?: (sql: SQL, cache: ReturnType<TenantCacheFactory['forTenant']>) => Database
   createAuthDatabase?: (sql: SQL, cache: ReturnType<TenantCacheFactory['forTenant']>) => Database
+  createPgDatabase?: (sql: SQL) => DatabaseFacade
   /** Shared across every `TenantResource` a pool constructs — resolved once, not per tenant. */
   cacheFactory?: TenantCacheFactory
 }
@@ -44,6 +46,7 @@ export class TenantResource {
   private readonly sql: SQL
   private readonly db: Database
   private authDb?: Database
+  private pgDb?: DatabaseFacade
   private readonly schemaDbs = new Map<string, Database>()
   private closePromise?: Promise<void>
   private readonly dependencies: TenantResourceDependencies
@@ -65,6 +68,15 @@ export class TenantResource {
   /** Returns the underlying Bun SQL instance for raw tenant DDL/maintenance. */
   getSql(): SQL {
     return this.sql
+  }
+
+  /**
+   * Returns the @nuvix/pg query builder facade sharing this resource's
+   * underlying Bun SQL client.
+   */
+  pg(): DatabaseFacade {
+    this.pgDb ??= (this.dependencies.createPgDatabase ?? createPgDatabase)(this.sql)
+    return this.pgDb
   }
 
   /** Creates a caller-scoped document session without exposing `Database.system()`. */
