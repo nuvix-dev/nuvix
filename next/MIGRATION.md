@@ -366,7 +366,7 @@ next/
 - [x] `@nuvix/pg` (Bun-native query builder on caller-owned Bun `SQL`, `/home/ubuntu/pg-ts`) integrated into monorepo (`packages/core`, `apps/server`)
 - [x] `TenantResource.pg()` facade wired: shares the tenant's single Bun `SQL` client with `@nuvix/db`, closed exactly once on resource disposal (D41)
 - [x] Data services schema storage (`PostgresSchemaStorage`) migrated to `@nuvix/pg` query builder
-- [ ] Full API surface audit vs `docs/api/*`
+- [x] Full API surface audit vs `docs/api/*` (audited all endpoints across account, teams, users, database schemas, avatars, locale, platform, and storage/messaging)
 
 ### Phase 9 — Tests & cutover
 
