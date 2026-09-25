@@ -359,7 +359,7 @@ next/
 - [x] Client platforms slice: CRUD routes (`/projects/:projectId/platforms`), 1:1 legacy schema supporting web, flutter, android, apple
 - [x] Auth settings slice: routes under `/projects/:projectId/auth` (session-alerts, limit, duration, password-history, password-dictionary, personal-data, max-sessions, mock-numbers, memberships-privacy, auth methods)
 - [x] Remaining platform slices: extended project configuration (services, APIs, OAuth2, SMTP, JWTs), metadata (`/projects/:projectId/metadata/exposed-schemas`), templates, and project usage stats (`/projects/:projectId/usage`)
-- [ ] pg-meta introspection over `Bun.sql`
+- [x] pg-meta introspection over `Bun.sql` (`@nuvix/pg-meta`, wired via `TenantResource.meta()`, platform `/projects/:projectId/database/*` routes)
 
 ### Phase 8 — Local `@nuvix/pg` replacement (D12)
 

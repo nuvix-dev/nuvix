@@ -14,6 +14,7 @@
     "@nuvix/cache": "file:../../../../cache",
     "@nuvix/core": "workspace:*",
     "@nuvix/db": "file:../../../../database",
+    "@nuvix/pg-meta": "workspace:*",
     "@nuvix/utils": "workspace:*",
     "elysia": "2.0.0-beta.6"
   }

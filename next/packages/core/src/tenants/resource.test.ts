@@ -76,4 +76,26 @@ describe('TenantResource', () => {
     expect(pgSql).toBe(sql)
     expect(pgCalls).toBe(1)
   })
+
+  test('meta() shares the same SQL client and caches the PgMeta facade', () => {
+    let metaSql: SQL | undefined
+    let metaCalls = 0
+    const sql = { close: async () => {} } as unknown as SQL
+    const mockMeta = {} as ReturnType<TenantResource['meta']>
+
+    const resource = new TenantResource('project-4', target, {
+      createSql: () => sql,
+      createDatabase: () => ({ for: () => ({}) as Session }) as unknown as Database,
+      createPgMeta: (input) => {
+        metaSql = input
+        metaCalls++
+        return mockMeta
+      },
+    })
+
+    expect(resource.meta()).toBe(mockMeta)
+    expect(resource.meta()).toBe(mockMeta)
+    expect(metaSql).toBe(sql)
+    expect(metaCalls).toBe(1)
+  })
 })

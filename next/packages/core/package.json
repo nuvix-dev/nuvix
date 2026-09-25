@@ -19,6 +19,7 @@
   "dependencies": {
     "@nuvix/cache": "file:../../../../cache",
     "@nuvix/db": "file:../../../../database",
-    "@nuvix/pg": "file:../../../../pg-ts"
+    "@nuvix/pg": "file:../../../../pg-ts",
+    "@nuvix/pg-meta": "workspace:*"
   }
 }

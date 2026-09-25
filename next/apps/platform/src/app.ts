@@ -1,9 +1,15 @@
 import { bootstrapAuthSchema } from '@nuvix/core/tenant-auth'
-import { DockerTenantProvisioner, decodeEncryptionKey } from '@nuvix/core/tenants'
+import {
+  DockerTenantProvisioner,
+  decodeEncryptionKey,
+  TenantResourcePool,
+} from '@nuvix/core/tenants'
 import { config } from '@nuvix/utils'
 import { Elysia, t } from 'elysia'
 import { authSettingsRoutes } from './modules/auth-settings/routes'
 import { AuthSettingsService } from './modules/auth-settings/service'
+import { databaseRoutes } from './modules/database/routes'
+import { DatabaseService } from './modules/database/service'
 import { keyRoutes } from './modules/keys/routes'
 import { KeysService } from './modules/keys/service'
 import { metadataRoutes } from './modules/metadata/routes'
@@ -69,9 +75,13 @@ const authSettings = new AuthSettingsService(db)
 const metadata = new MetadataService(db)
 const templates = new TemplatesService(db)
 
+const tenantPool = new TenantResourcePool()
+const database = new DatabaseService(db, tenantPool)
+
 export const app = new Elysia()
   .use(problemErrors())
   .use(projectRoutes(projects))
+  .use(databaseRoutes(database))
   .use(webhookRoutes(webhooks))
   .use(keyRoutes(keys))
   .use(platformRoutes(platforms))
