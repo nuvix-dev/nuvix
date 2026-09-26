@@ -368,8 +368,9 @@ next/
 - [x] `TenantResource.pg()` facade wired: shares the tenant's single Bun `SQL` client with `@nuvix/db`, closed exactly once on resource disposal (D41)
 - [x] Data services schema storage (`PostgresSchemaStorage`) migrated to `@nuvix/pg` query builder
 - [x] Full production query engine implemented in `@nuvix/utils/query` (`Tokenizer`, `Parser`, `SelectParser`, `OrderParser`, `ASTToQueryBuilder`, `JoinBuilder`), matching 1:1 legacy query syntax, embedded lateral joins, JSON extractors, and `@nuvix/pg` query generation
-- [x] Tables service migrated in `apps/server/src/modules/schemas/tables/service.ts`: full PostgreSQL RLS transaction context injection (`set_config`), table & row permissions management (`${tableId}_perms`), `force` deletion/update protection, and error mapping via `transformPgError`
+- [x] Tables service migrated in `apps/server/src/schemas/tables/service.ts`: full PostgreSQL RLS transaction context injection (`set_config`), table & row permissions management (`${tableId}_perms`), `force` deletion/update protection, and error mapping via `transformPgError`
 - [x] Managed & unmanaged schema routes (`/schemas/:schemaId/tables/*`, `/public/tables/*`, `/schemas/:schemaId/rpc/*`, `/public/rpc/*`, permissions endpoints) fully wired with request context and verified via Eden Treaty
+- [x] Decomposed domain route architecture: all domain modules promoted to `apps/server/src/` top level (`account/`, `users/`, `teams/`, `storage/`, `messaging/`, `database/`, `schemas/`), broken down into granular subdomain routes with complete OpenAPI schema detail metadata (`summary`, `description`, `tags`, parameter & query documentation)
 - [x] Full API surface audit vs `docs/api/*` (audited all endpoints across account, teams, users, database schemas, avatars, locale, platform, and storage/messaging)
 
 ### Phase 9 — Tests & cutover
