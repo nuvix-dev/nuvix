@@ -12,6 +12,7 @@ import {
   type Session,
 } from '@nuvix/db'
 import { Translator } from '@nuvix/i18n'
+import type { SQL } from 'bun'
 import { Elysia } from 'elysia'
 import { problemErrors } from '../../plugins/errors'
 import { schemasRoutes } from './route'
@@ -161,32 +162,35 @@ describe('Schemas Routes (Collections, Attributes, Indexes, Documents)', () => {
 
   const rowsMap = new Map<string, unknown>()
 
-  const mockSql = {
+  const mockSql = Object.assign(async () => [], {
     unsafe: async (q: string, p: unknown[] = []) => {
-      if (q.includes('COUNT(*)')) return [{ count: rowsMap.size }]
-      if (q.includes('INSERT INTO')) {
+      const qLower = q.toLowerCase()
+      if (qLower.includes('set_config(')) return [{ set_config: '' }]
+      if (qLower.includes('count(')) return [{ count: rowsMap.size }]
+      if (qLower.includes('insert into')) {
         const item = {
           id: 1,
-          name: (p[0] as string) ?? 'Alice',
-          email: (p[1] as string) ?? 'alice@example.com',
+          name: 'Alice',
+          email: 'alice@example.com',
         }
         rowsMap.set('1', item)
         return [item]
       }
-      if (q.includes('WHERE id::text = $1')) {
-        const item = rowsMap.get(String(p[0]))
+      if (qLower.includes('id::text') || qLower.includes('"id" =')) {
+        const item = rowsMap.get(String(p[0] ?? 1))
         return item ? [item] : []
       }
-      if (q.includes('DELETE FROM')) {
+      if (qLower.includes('delete from')) {
         rowsMap.clear()
         return [{ id: 1 }]
       }
-      if (q.includes('calculate_total')) {
+      if (qLower.includes('calculate_total')) {
         return [{ sum: 42 }]
       }
       return Array.from(rowsMap.values())
     },
-  }
+    begin: async (cb: (scoped: any) => any) => cb(mockSql),
+  }) as unknown as SQL
 
   const fakeTenantResource = {
     databaseForSchema: () => mockDb,

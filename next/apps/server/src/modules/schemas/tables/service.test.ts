@@ -74,14 +74,14 @@ describe('TablesService - SQL Operations', () => {
       schema: 'public',
       table: 'users',
       select: 'id, name',
-      filter: 'status.eq.active',
+      filter: 'status.eq(active)',
       order: 'id.desc',
       limit: 10,
       offset: 20,
     })
 
     expect(capturedQuery).toBe(
-      'SELECT "id", "name" FROM "public"."users" WHERE "status" = $1 ORDER BY "id" DESC LIMIT $2 OFFSET $3',
+      'select "users"."id", "users"."name" from "public"."users" where "users"."status" = $1 order by "users"."id" desc limit $2 offset $3',
     )
     expect(capturedParams).toEqual(['active', 10, 20])
     expect(rows).toEqual([{ id: 1, name: 'Alice' }])
@@ -100,7 +100,7 @@ describe('TablesService - SQL Operations', () => {
     const service = new TablesService(() => mockSql)
     const result = await service.count({ schema: 'public', table: 'users' })
 
-    expect(capturedQuery).toBe('SELECT COUNT(*)::int AS count FROM "public"."users"')
+    expect(capturedQuery).toBe('select count(*) as "count" from "public"."users"')
     expect(result).toEqual({ count: 42 })
   })
 
@@ -142,10 +142,10 @@ describe('TablesService - SQL Operations', () => {
       input: { name: 'Alice', age: 30 },
     })
 
-    expect(capturedQuery).toContain(
-      'INSERT INTO "public"."users" ("name", "age") VALUES ($1, $2) RETURNING *',
+    expect(capturedQuery).toBe(
+      'insert into "public"."users" ("age", "name") values ($1, $2) returning *',
     )
-    expect(capturedParams).toEqual(['Alice', 30])
+    expect(capturedParams).toEqual([30, 'Alice'])
     expect(inserted).toEqual({ id: 1, name: 'Alice', age: 30 })
   })
 
@@ -169,7 +169,9 @@ describe('TablesService - SQL Operations', () => {
       ignoreDuplicates: true,
     })
 
-    expect(capturedQuery).toContain('ON CONFLICT ("email") DO NOTHING')
+    expect(capturedQuery).toBe(
+      'insert into "public"."users" ("email") values ($1) on conflict ("email") do nothing returning *',
+    )
   })
 
   it('update modifies rows matching filter', async () => {
@@ -190,14 +192,29 @@ describe('TablesService - SQL Operations', () => {
       schema: 'public',
       table: 'users',
       input: { status: 'inactive' },
-      filter: 'id.eq.1',
+      filter: 'id.eq(1)',
     })
 
-    expect(capturedQuery).toContain(
-      'UPDATE "public"."users" SET "status" = $1 WHERE "id" = $2 RETURNING *',
+    expect(capturedQuery).toBe(
+      'update "public"."users" set "status" = $1 where "users"."id" = $2 returning *',
     )
-    expect(capturedParams).toEqual(['inactive', '1'])
+    expect(capturedParams).toEqual(['inactive', 1])
     expect(updated).toEqual([{ id: 1, status: 'inactive' }])
+  })
+
+  it('update throws error when no filter and force is not true', async () => {
+    const mockSql = {
+      unsafe: async () => [],
+    } as unknown as SQL
+    const service = new TablesService(() => mockSql)
+
+    await expect(
+      service.update({
+        schema: 'public',
+        table: 'users',
+        input: { status: 'inactive' },
+      }),
+    ).rejects.toThrow(BadRequestError)
   })
 
   it('delete removes rows matching filter', async () => {
@@ -215,11 +232,27 @@ describe('TablesService - SQL Operations', () => {
     const res = await service.delete({
       schema: 'public',
       table: 'users',
-      filter: 'status.eq.deleted',
+      filter: 'status.eq(deleted)',
     })
 
-    expect(capturedQuery).toBe('DELETE FROM "public"."users" WHERE "status" = $1 RETURNING *')
+    expect(capturedQuery).toBe(
+      'delete from "public"."users" where "users"."status" = $1 returning *',
+    )
     expect(res).toEqual({ deleted: 2 })
+  })
+
+  it('delete throws error when no filter and force is not true', async () => {
+    const mockSql = {
+      unsafe: async () => [],
+    } as unknown as SQL
+    const service = new TablesService(() => mockSql)
+
+    await expect(
+      service.delete({
+        schema: 'public',
+        table: 'users',
+      }),
+    ).rejects.toThrow(BadRequestError)
   })
 
   it('callFunction executes stored procedure', async () => {
@@ -242,8 +275,46 @@ describe('TablesService - SQL Operations', () => {
       args: [10, 32],
     })
 
-    expect(capturedQuery).toBe('SELECT * FROM "public"."calculate_total"($1, $2)')
+    expect(capturedQuery).toBe('select * from "public"."calculate_total"($1, $2)')
     expect(capturedParams).toEqual([10, 32])
     expect(result).toEqual([{ sum: 42 }])
+  })
+
+  it('getPermissions returns formatted permission strings', async () => {
+    const mockSql = {
+      unsafe: async () => [
+        { permission: 'read', roles: ['any', 'users'] },
+        { permission: 'delete', roles: ['admin'] },
+      ],
+    } as unknown as SQL
+
+    const service = new TablesService(() => mockSql)
+    const perms = await service.getPermissions({
+      schema: 'public',
+      tableId: 'posts',
+    })
+
+    expect(perms).toEqual(['read("any")', 'read("users")', 'delete("admin")'])
+  })
+
+  it('updatePermissions validates permissions and updates database', async () => {
+    let queriesRun: string[] = []
+
+    const mockSql = {
+      unsafe: async (q: string) => {
+        queriesRun.push(q)
+        return []
+      },
+    } as unknown as SQL
+
+    const service = new TablesService(() => mockSql)
+    const updated = await service.updatePermissions({
+      schema: 'public',
+      tableId: 'posts',
+      permissions: ['read("any")', 'create("users")'],
+    })
+
+    expect(updated).toEqual(['read("any")', 'create("users")'])
+    expect(queriesRun.length).toBeGreaterThan(0)
   })
 })

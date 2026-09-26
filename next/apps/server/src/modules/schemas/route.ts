@@ -7,7 +7,7 @@ import { CollectionsService } from './collections/service'
 import { DocumentsService } from './documents/service'
 import { formatAttribute, formatCollection, formatDocument, formatIndex } from './formatter'
 import { IndexesService } from './indexes/service'
-import { TablesService } from './tables/service'
+import { type RequestContext, TablesService } from './tables/service'
 
 export interface SchemasRouteServices {
   collections?: CollectionsService
@@ -15,6 +15,20 @@ export interface SchemasRouteServices {
   indexes?: IndexesService
   documents?: DocumentsService
   tables?: TablesService
+}
+
+function extractRequestContext(tenant: TenantContext, req: Request): RequestContext {
+  return {
+    method: req.method,
+    url: req.url,
+    id: req.headers.get('x-request-id') ?? undefined,
+    headers: Object.fromEntries(req.headers.entries()),
+    ip: req.headers.get('x-forwarded-for') ?? undefined,
+    user: tenant.user,
+    session: tenant.session,
+    roles: tenant.roles,
+    allowedSchemas: ((tenant.project as any)?.metadata as any)?.allowedSchemas ?? [],
+  }
 }
 
 export const schemasRoutes = (services?: SchemasRouteServices) => {
@@ -32,8 +46,7 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
       const tenantSession =
         tenant.tenantResource?.sessionForSchema(schemaId, tenant.roles ?? ['guest']) ??
         (tenant.db as unknown as Session)
-      const tablesService =
-        services?.tables ?? new TablesService(() => tenant.tenantResource?.getSql())
+      const tablesService = services?.tables ?? new TablesService(() => tenant.tenantResource)
 
       return {
         tenant,
@@ -660,7 +673,7 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
           }),
         ),
       },
-      async ({ tablesService, params: { schemaId, tableId }, query }) => {
+      async ({ tenant, tablesService, params: { schemaId, tableId }, query, request }) => {
         return tablesService.select({
           schema: schemaId,
           table: tableId,
@@ -669,6 +682,7 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
           order: query?.order,
           limit: query?.limit ? Number(query.limit) : undefined,
           offset: query?.offset ? Number(query.offset) : undefined,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -683,11 +697,12 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
           }),
         ),
       },
-      async ({ tablesService, params: { schemaId, tableId }, query }) => {
+      async ({ tenant, tablesService, params: { schemaId, tableId }, query, request }) => {
         return tablesService.count({
           schema: schemaId,
           table: tableId,
           filter: query?.filter,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -696,12 +711,21 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
       '/tables/:tableId/:rowId',
       {
         params: t.Object({ schemaId: t.String(), tableId: t.String(), rowId: t.String() }),
+        query: t.Optional(
+          t.Object({
+            select: t.Optional(t.String()),
+            filter: t.Optional(t.String()),
+          }),
+        ),
       },
-      async ({ tablesService, params: { schemaId, tableId, rowId } }) => {
+      async ({ tenant, tablesService, params: { schemaId, tableId, rowId }, query, request }) => {
         return tablesService.getRow({
           schema: schemaId,
           table: tableId,
           rowId,
+          select: query?.select,
+          filter: query?.filter,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -712,6 +736,7 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
         params: t.Object({ schemaId: t.String(), tableId: t.String() }),
         query: t.Optional(
           t.Object({
+            columns: t.Optional(t.String()),
             on_conflict: t.Optional(t.String()),
             ignore_duplicates: t.Optional(t.Boolean()),
             select: t.Optional(t.String()),
@@ -719,14 +744,16 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
         ),
         body: t.Union([t.Record(t.String(), t.Any()), t.Array(t.Record(t.String(), t.Any()))]),
       },
-      async ({ tablesService, params: { schemaId, tableId }, query, body }) => {
+      async ({ tenant, tablesService, params: { schemaId, tableId }, query, body, request }) => {
         return tablesService.insert({
           schema: schemaId,
           table: tableId,
           input: body,
+          columns: query?.columns ? query.columns.split(',').map((c) => c.trim()) : undefined,
           onConflict: query?.on_conflict,
           ignoreDuplicates: query?.ignore_duplicates,
           select: query?.select,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -736,18 +763,21 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
       {
         params: t.Object({ schemaId: t.String(), tableId: t.String() }),
         query: t.Object({
+          columns: t.Optional(t.String()),
           on_conflict: t.String(),
           select: t.Optional(t.String()),
         }),
         body: t.Union([t.Record(t.String(), t.Any()), t.Array(t.Record(t.String(), t.Any()))]),
       },
-      async ({ tablesService, params: { schemaId, tableId }, query, body }) => {
+      async ({ tenant, tablesService, params: { schemaId, tableId }, query, body, request }) => {
         return tablesService.upsert({
           schema: schemaId,
           table: tableId,
           input: body,
+          columns: query?.columns ? query.columns.split(',').map((c) => c.trim()) : undefined,
           onConflict: query.on_conflict,
           select: query?.select,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -758,17 +788,30 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
         params: t.Object({ schemaId: t.String(), tableId: t.String() }),
         query: t.Optional(
           t.Object({
+            columns: t.Optional(t.String()),
+            select: t.Optional(t.String()),
             filter: t.Optional(t.String()),
+            order: t.Optional(t.String()),
+            limit: t.Optional(t.String()),
+            offset: t.Optional(t.String()),
+            force: t.Optional(t.Union([t.String(), t.Boolean()])),
           }),
         ),
         body: t.Record(t.String(), t.Any()),
       },
-      async ({ tablesService, params: { schemaId, tableId }, query, body }) => {
+      async ({ tenant, tablesService, params: { schemaId, tableId }, query, body, request }) => {
         return tablesService.update({
           schema: schemaId,
           table: tableId,
           input: body,
+          columns: query?.columns ? query.columns.split(',').map((c) => c.trim()) : undefined,
+          select: query?.select,
           filter: query?.filter,
+          order: query?.order,
+          limit: query?.limit ? Number(query.limit) : undefined,
+          offset: query?.offset ? Number(query.offset) : undefined,
+          force: query?.force ? String(query.force).toLowerCase() === 'true' : false,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -777,14 +820,30 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
       '/tables/:tableId/:rowId',
       {
         params: t.Object({ schemaId: t.String(), tableId: t.String(), rowId: t.String() }),
+        query: t.Optional(
+          t.Object({
+            select: t.Optional(t.String()),
+            filter: t.Optional(t.String()),
+          }),
+        ),
         body: t.Record(t.String(), t.Any()),
       },
-      async ({ tablesService, params: { schemaId, tableId, rowId }, body }) => {
+      async ({
+        tenant,
+        tablesService,
+        params: { schemaId, tableId, rowId },
+        query,
+        body,
+        request,
+      }) => {
         return tablesService.updateRow({
           schema: schemaId,
           table: tableId,
           rowId,
           input: body,
+          filter: query?.filter,
+          select: query?.select,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -795,15 +854,26 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
         params: t.Object({ schemaId: t.String(), tableId: t.String() }),
         query: t.Optional(
           t.Object({
+            select: t.Optional(t.String()),
             filter: t.Optional(t.String()),
+            order: t.Optional(t.String()),
+            limit: t.Optional(t.String()),
+            offset: t.Optional(t.String()),
+            force: t.Optional(t.Union([t.String(), t.Boolean()])),
           }),
         ),
       },
-      async ({ tablesService, params: { schemaId, tableId }, query }) => {
+      async ({ tenant, tablesService, params: { schemaId, tableId }, query, request }) => {
         return tablesService.delete({
           schema: schemaId,
           table: tableId,
+          select: query?.select,
           filter: query?.filter,
+          order: query?.order,
+          limit: query?.limit ? Number(query.limit) : undefined,
+          offset: query?.offset ? Number(query.offset) : undefined,
+          force: query?.force ? String(query.force).toLowerCase() === 'true' : false,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -812,12 +882,95 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
       '/tables/:tableId/:rowId',
       {
         params: t.Object({ schemaId: t.String(), tableId: t.String(), rowId: t.String() }),
+        query: t.Optional(
+          t.Object({
+            select: t.Optional(t.String()),
+            filter: t.Optional(t.String()),
+          }),
+        ),
       },
-      async ({ tablesService, params: { schemaId, tableId, rowId } }) => {
+      async ({ tenant, tablesService, params: { schemaId, tableId, rowId }, query, request }) => {
         return tablesService.deleteRow({
           schema: schemaId,
           table: tableId,
           rowId,
+          filter: query?.filter,
+          select: query?.select,
+          context: extractRequestContext(tenant, request),
+        })
+      },
+    )
+
+    .get(
+      '/tables/:tableId/permissions',
+      {
+        params: t.Object({ schemaId: t.String(), tableId: t.String() }),
+      },
+      async ({ tenant, tablesService, params: { schemaId, tableId } }) => {
+        if (!tenant.isAdmin && !tenant.isAPIUser) {
+          throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+        }
+        return tablesService.getPermissions({
+          schema: schemaId,
+          tableId,
+        })
+      },
+    )
+
+    .put(
+      '/tables/:tableId/permissions',
+      {
+        params: t.Object({ schemaId: t.String(), tableId: t.String() }),
+        body: t.Object({
+          permissions: t.Array(t.String()),
+        }),
+      },
+      async ({ tenant, tablesService, params: { schemaId, tableId }, body }) => {
+        if (!tenant.isAdmin && !tenant.isAPIUser) {
+          throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+        }
+        return tablesService.updatePermissions({
+          schema: schemaId,
+          tableId,
+          permissions: body.permissions,
+        })
+      },
+    )
+
+    .get(
+      '/tables/:tableId/:rowId/permissions',
+      {
+        params: t.Object({ schemaId: t.String(), tableId: t.String(), rowId: t.String() }),
+      },
+      async ({ tenant, tablesService, params: { schemaId, tableId, rowId } }) => {
+        if (!tenant.isAdmin && !tenant.isAPIUser) {
+          throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+        }
+        return tablesService.getPermissions({
+          schema: schemaId,
+          tableId,
+          rowId,
+        })
+      },
+    )
+
+    .put(
+      '/tables/:tableId/:rowId/permissions',
+      {
+        params: t.Object({ schemaId: t.String(), tableId: t.String(), rowId: t.String() }),
+        body: t.Object({
+          permissions: t.Array(t.String()),
+        }),
+      },
+      async ({ tenant, tablesService, params: { schemaId, tableId, rowId }, body }) => {
+        if (!tenant.isAdmin && !tenant.isAPIUser) {
+          throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+        }
+        return tablesService.updatePermissions({
+          schema: schemaId,
+          tableId,
+          rowId,
+          permissions: body.permissions,
         })
       },
     )
@@ -829,13 +982,28 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
       '/rpc/:functionId',
       {
         params: t.Object({ schemaId: t.String(), functionId: t.String() }),
+        query: t.Optional(
+          t.Object({
+            select: t.Optional(t.String()),
+            filter: t.Optional(t.String()),
+            order: t.Optional(t.String()),
+            limit: t.Optional(t.String()),
+            offset: t.Optional(t.String()),
+          }),
+        ),
         body: t.Optional(t.Union([t.Record(t.String(), t.Any()), t.Array(t.Any())])),
       },
-      async ({ tablesService, params: { schemaId, functionId }, body }) => {
+      async ({ tenant, tablesService, params: { schemaId, functionId }, query, body, request }) => {
         return tablesService.callFunction({
           schema: schemaId,
           functionName: functionId,
           args: (body ?? undefined) as Record<string, unknown> | unknown[] | undefined,
+          select: query?.select,
+          filter: query?.filter,
+          order: query?.order,
+          limit: query?.limit ? Number(query.limit) : undefined,
+          offset: query?.offset ? Number(query.offset) : undefined,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -844,13 +1012,28 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
       '/fn/:functionId',
       {
         params: t.Object({ schemaId: t.String(), functionId: t.String() }),
+        query: t.Optional(
+          t.Object({
+            select: t.Optional(t.String()),
+            filter: t.Optional(t.String()),
+            order: t.Optional(t.String()),
+            limit: t.Optional(t.String()),
+            offset: t.Optional(t.String()),
+          }),
+        ),
         body: t.Optional(t.Union([t.Record(t.String(), t.Any()), t.Array(t.Any())])),
       },
-      async ({ tablesService, params: { schemaId, functionId }, body }) => {
+      async ({ tenant, tablesService, params: { schemaId, functionId }, query, body, request }) => {
         return tablesService.callFunction({
           schema: schemaId,
           functionName: functionId,
           args: (body ?? undefined) as Record<string, unknown> | unknown[] | undefined,
+          select: query?.select,
+          filter: query?.filter,
+          order: query?.order,
+          limit: query?.limit ? Number(query.limit) : undefined,
+          offset: query?.offset ? Number(query.offset) : undefined,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -859,12 +1042,10 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
   // Public Tables / RPC Shorthand (/public/tables/*, /public/rpc/*)
   // =========================================================================
   const publicRoutes = new Elysia({ prefix: '/public' })
-
     .derive('plugin', (ctx) => {
       const tenant = ctx as unknown as TenantContext
-      const tablesService =
-        services?.tables ?? new TablesService(() => tenant.tenantResource?.getSql())
-      return { tablesService }
+      const tablesService = services?.tables ?? new TablesService(() => tenant.tenantResource)
+      return { tenant, tablesService }
     })
     .get(
       '/tables/:tableId',
@@ -880,7 +1061,7 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
           }),
         ),
       },
-      async ({ tablesService, params: { tableId }, query }) => {
+      async ({ tenant, tablesService, params: { tableId }, query, request }) => {
         return tablesService.select({
           schema: 'public',
           table: tableId,
@@ -889,6 +1070,7 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
           order: query?.order,
           limit: query?.limit ? Number(query.limit) : undefined,
           offset: query?.offset ? Number(query.offset) : undefined,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -902,11 +1084,12 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
           }),
         ),
       },
-      async ({ tablesService, params: { tableId }, query }) => {
+      async ({ tenant, tablesService, params: { tableId }, query, request }) => {
         return tablesService.count({
           schema: 'public',
           table: tableId,
           filter: query?.filter,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -914,12 +1097,21 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
       '/tables/:tableId/:rowId',
       {
         params: t.Object({ tableId: t.String(), rowId: t.String() }),
+        query: t.Optional(
+          t.Object({
+            select: t.Optional(t.String()),
+            filter: t.Optional(t.String()),
+          }),
+        ),
       },
-      async ({ tablesService, params: { tableId, rowId } }) => {
+      async ({ tenant, tablesService, params: { tableId, rowId }, query, request }) => {
         return tablesService.getRow({
           schema: 'public',
           table: tableId,
           rowId,
+          select: query?.select,
+          filter: query?.filter,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -929,6 +1121,7 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
         params: t.Object({ tableId: t.String() }),
         query: t.Optional(
           t.Object({
+            columns: t.Optional(t.String()),
             on_conflict: t.Optional(t.String()),
             ignore_duplicates: t.Optional(t.Boolean()),
             select: t.Optional(t.String()),
@@ -936,14 +1129,16 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
         ),
         body: t.Union([t.Record(t.String(), t.Any()), t.Array(t.Record(t.String(), t.Any()))]),
       },
-      async ({ tablesService, params: { tableId }, query, body }) => {
+      async ({ tenant, tablesService, params: { tableId }, query, body, request }) => {
         return tablesService.insert({
           schema: 'public',
           table: tableId,
           input: body,
+          columns: query?.columns ? query.columns.split(',').map((c) => c.trim()) : undefined,
           onConflict: query?.on_conflict,
           ignoreDuplicates: query?.ignore_duplicates,
           select: query?.select,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -952,18 +1147,21 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
       {
         params: t.Object({ tableId: t.String() }),
         query: t.Object({
+          columns: t.Optional(t.String()),
           on_conflict: t.String(),
           select: t.Optional(t.String()),
         }),
         body: t.Union([t.Record(t.String(), t.Any()), t.Array(t.Record(t.String(), t.Any()))]),
       },
-      async ({ tablesService, params: { tableId }, query, body }) => {
+      async ({ tenant, tablesService, params: { tableId }, query, body, request }) => {
         return tablesService.upsert({
           schema: 'public',
           table: tableId,
           input: body,
+          columns: query?.columns ? query.columns.split(',').map((c) => c.trim()) : undefined,
           onConflict: query.on_conflict,
           select: query?.select,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -973,17 +1171,30 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
         params: t.Object({ tableId: t.String() }),
         query: t.Optional(
           t.Object({
+            columns: t.Optional(t.String()),
+            select: t.Optional(t.String()),
             filter: t.Optional(t.String()),
+            order: t.Optional(t.String()),
+            limit: t.Optional(t.String()),
+            offset: t.Optional(t.String()),
+            force: t.Optional(t.Union([t.String(), t.Boolean()])),
           }),
         ),
         body: t.Record(t.String(), t.Any()),
       },
-      async ({ tablesService, params: { tableId }, query, body }) => {
+      async ({ tenant, tablesService, params: { tableId }, query, body, request }) => {
         return tablesService.update({
           schema: 'public',
           table: tableId,
           input: body,
+          columns: query?.columns ? query.columns.split(',').map((c) => c.trim()) : undefined,
+          select: query?.select,
           filter: query?.filter,
+          order: query?.order,
+          limit: query?.limit ? Number(query.limit) : undefined,
+          offset: query?.offset ? Number(query.offset) : undefined,
+          force: query?.force ? String(query.force).toLowerCase() === 'true' : false,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -991,14 +1202,23 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
       '/tables/:tableId/:rowId',
       {
         params: t.Object({ tableId: t.String(), rowId: t.String() }),
+        query: t.Optional(
+          t.Object({
+            select: t.Optional(t.String()),
+            filter: t.Optional(t.String()),
+          }),
+        ),
         body: t.Record(t.String(), t.Any()),
       },
-      async ({ tablesService, params: { tableId, rowId }, body }) => {
+      async ({ tenant, tablesService, params: { tableId, rowId }, query, body, request }) => {
         return tablesService.updateRow({
           schema: 'public',
           table: tableId,
           rowId,
           input: body,
+          filter: query?.filter,
+          select: query?.select,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -1008,15 +1228,26 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
         params: t.Object({ tableId: t.String() }),
         query: t.Optional(
           t.Object({
+            select: t.Optional(t.String()),
             filter: t.Optional(t.String()),
+            order: t.Optional(t.String()),
+            limit: t.Optional(t.String()),
+            offset: t.Optional(t.String()),
+            force: t.Optional(t.Union([t.String(), t.Boolean()])),
           }),
         ),
       },
-      async ({ tablesService, params: { tableId }, query }) => {
+      async ({ tenant, tablesService, params: { tableId }, query, request }) => {
         return tablesService.delete({
           schema: 'public',
           table: tableId,
+          select: query?.select,
           filter: query?.filter,
+          order: query?.order,
+          limit: query?.limit ? Number(query.limit) : undefined,
+          offset: query?.offset ? Number(query.offset) : undefined,
+          force: query?.force ? String(query.force).toLowerCase() === 'true' : false,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -1024,12 +1255,91 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
       '/tables/:tableId/:rowId',
       {
         params: t.Object({ tableId: t.String(), rowId: t.String() }),
+        query: t.Optional(
+          t.Object({
+            select: t.Optional(t.String()),
+            filter: t.Optional(t.String()),
+          }),
+        ),
       },
-      async ({ tablesService, params: { tableId, rowId } }) => {
+      async ({ tenant, tablesService, params: { tableId, rowId }, query, request }) => {
         return tablesService.deleteRow({
           schema: 'public',
           table: tableId,
           rowId,
+          filter: query?.filter,
+          select: query?.select,
+          context: extractRequestContext(tenant, request),
+        })
+      },
+    )
+    .get(
+      '/tables/:tableId/permissions',
+      {
+        params: t.Object({ tableId: t.String() }),
+      },
+      async ({ tenant, tablesService, params: { tableId } }) => {
+        if (!tenant.isAdmin && !tenant.isAPIUser) {
+          throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+        }
+        return tablesService.getPermissions({
+          schema: 'public',
+          tableId,
+        })
+      },
+    )
+    .put(
+      '/tables/:tableId/permissions',
+      {
+        params: t.Object({ tableId: t.String() }),
+        body: t.Object({
+          permissions: t.Array(t.String()),
+        }),
+      },
+      async ({ tenant, tablesService, params: { tableId }, body }) => {
+        if (!tenant.isAdmin && !tenant.isAPIUser) {
+          throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+        }
+        return tablesService.updatePermissions({
+          schema: 'public',
+          tableId,
+          permissions: body.permissions,
+        })
+      },
+    )
+    .get(
+      '/tables/:tableId/:rowId/permissions',
+      {
+        params: t.Object({ tableId: t.String(), rowId: t.String() }),
+      },
+      async ({ tenant, tablesService, params: { tableId, rowId } }) => {
+        if (!tenant.isAdmin && !tenant.isAPIUser) {
+          throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+        }
+        return tablesService.getPermissions({
+          schema: 'public',
+          tableId,
+          rowId,
+        })
+      },
+    )
+    .put(
+      '/tables/:tableId/:rowId/permissions',
+      {
+        params: t.Object({ tableId: t.String(), rowId: t.String() }),
+        body: t.Object({
+          permissions: t.Array(t.String()),
+        }),
+      },
+      async ({ tenant, tablesService, params: { tableId, rowId }, body }) => {
+        if (!tenant.isAdmin && !tenant.isAPIUser) {
+          throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+        }
+        return tablesService.updatePermissions({
+          schema: 'public',
+          tableId,
+          rowId,
+          permissions: body.permissions,
         })
       },
     )
@@ -1037,13 +1347,28 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
       '/rpc/:functionId',
       {
         params: t.Object({ functionId: t.String() }),
+        query: t.Optional(
+          t.Object({
+            select: t.Optional(t.String()),
+            filter: t.Optional(t.String()),
+            order: t.Optional(t.String()),
+            limit: t.Optional(t.String()),
+            offset: t.Optional(t.String()),
+          }),
+        ),
         body: t.Optional(t.Union([t.Record(t.String(), t.Any()), t.Array(t.Any())])),
       },
-      async ({ tablesService, params: { functionId }, body }) => {
+      async ({ tenant, tablesService, params: { functionId }, query, body, request }) => {
         return tablesService.callFunction({
           schema: 'public',
           functionName: functionId,
           args: (body ?? undefined) as Record<string, unknown> | unknown[] | undefined,
+          select: query?.select,
+          filter: query?.filter,
+          order: query?.order,
+          limit: query?.limit ? Number(query.limit) : undefined,
+          offset: query?.offset ? Number(query.offset) : undefined,
+          context: extractRequestContext(tenant, request),
         })
       },
     )
@@ -1051,13 +1376,28 @@ export const schemasRoutes = (services?: SchemasRouteServices) => {
       '/fn/:functionId',
       {
         params: t.Object({ functionId: t.String() }),
+        query: t.Optional(
+          t.Object({
+            select: t.Optional(t.String()),
+            filter: t.Optional(t.String()),
+            order: t.Optional(t.String()),
+            limit: t.Optional(t.String()),
+            offset: t.Optional(t.String()),
+          }),
+        ),
         body: t.Optional(t.Union([t.Record(t.String(), t.Any()), t.Array(t.Any())])),
       },
-      async ({ tablesService, params: { functionId }, body }) => {
+      async ({ tenant, tablesService, params: { functionId }, query, body, request }) => {
         return tablesService.callFunction({
           schema: 'public',
           functionName: functionId,
           args: (body ?? undefined) as Record<string, unknown> | unknown[] | undefined,
+          select: query?.select,
+          filter: query?.filter,
+          order: query?.order,
+          limit: query?.limit ? Number(query.limit) : undefined,
+          offset: query?.offset ? Number(query.offset) : undefined,
+          context: extractRequestContext(tenant, request),
         })
       },
     )

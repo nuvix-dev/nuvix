@@ -363,14 +363,17 @@ next/
 
 ### Phase 8 — Local `@nuvix/pg` replacement (D12)
 
-- [x] `@nuvix/pg` (Bun-native query builder on caller-owned Bun `SQL`, `/home/ubuntu/pg-ts`) integrated into monorepo (`packages/core`, `apps/server`)
+- [x] `@nuvix/pg` (Bun-native query builder on caller-owned Bun `SQL`, `/home/ubuntu/pg-ts`) integrated into monorepo (`packages/core`, `packages/utils`, `apps/server`)
 - [x] `TenantResource.pg()` facade wired: shares the tenant's single Bun `SQL` client with `@nuvix/db`, closed exactly once on resource disposal (D41)
 - [x] Data services schema storage (`PostgresSchemaStorage`) migrated to `@nuvix/pg` query builder
+- [x] Full production query engine implemented in `@nuvix/utils/query` (`Tokenizer`, `Parser`, `SelectParser`, `OrderParser`, `ASTToQueryBuilder`, `JoinBuilder`), matching 1:1 legacy query syntax, embedded lateral joins, JSON extractors, and `@nuvix/pg` query generation
+- [x] Tables service migrated in `apps/server/src/modules/schemas/tables/service.ts`: full PostgreSQL RLS transaction context injection (`set_config`), table & row permissions management (`${tableId}_perms`), `force` deletion/update protection, and error mapping via `transformPgError`
+- [x] Managed & unmanaged schema routes (`/schemas/:schemaId/tables/*`, `/public/tables/*`, `/schemas/:schemaId/rpc/*`, `/public/rpc/*`, permissions endpoints) fully wired with request context and verified via Eden Treaty
 - [x] Full API surface audit vs `docs/api/*` (audited all endpoints across account, teams, users, database schemas, avatars, locale, platform, and storage/messaging)
 
 ### Phase 9 — Tests & cutover
 
-- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 359 tests across 61 files)
+- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 403 tests across 65 files)
 - [x] Perf baseline vs old app (`test/bench/perf.ts`, `docs/perf-baseline.md`)
 - [x] Docker/deploy artifacts for Bun-only runtime (`Dockerfile`, `docker-compose.yml`, `.dockerignore`, `docs/deployment.md`)
 - [ ] Delete root monorepo (**explicit approval gate**)

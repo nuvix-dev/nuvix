@@ -85,6 +85,9 @@
     "packages/utils": {
       "name": "@nuvix/utils",
       "version": "2.0.0-alpha.1",
+      "dependencies": {
+        "@nuvix/pg": "file:../../../../pg-ts",
+      },
     },
   },
   "patchedDependencies": {
@@ -502,6 +505,8 @@
     "@nuvix/server/@nuvix/pg": ["@nuvix/pg@file:../../pg-ts", { "devDependencies": { "@types/bun": "1.4.0", "typescript": "7.0.2" } }],
 
     "@nuvix/server/@nuvix/storage": ["@nuvix/storage@file:../../storage", { "devDependencies": { "@types/bun": "^1.2.0", "oxlint": "^1.0.0", "typescript": "^5.6.0" } }],
+
+    "@nuvix/utils/@nuvix/pg": ["@nuvix/pg@file:../../pg-ts", { "devDependencies": { "@types/bun": "1.4.0", "typescript": "7.0.2" } }],
 
     "@opentelemetry/sdk-metrics/@opentelemetry/core": ["@opentelemetry/core@2.11.0", "", { "dependencies": { "@opentelemetry/semantic-conventions": "^1.29.0" }, "peerDependencies": { "@opentelemetry/api": ">=1.0.0 <1.10.0" } }, "sha512-7YP44XH0tV6+Mb54x2YGf84i7yi+31MBZlE8JwvozkxyTvXbSp10X7cI7YE49ChJ3shMJoBmCJF3+1QFBJctGA=="],
 
