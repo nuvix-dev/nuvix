@@ -206,14 +206,15 @@ next/
 │   │       ├── context/          ← project resolution, auth, api key, mode
 │   │       │                     (built with derive/resolve, fully typed)
 │   │       ├── shared/           ← error envelope, security headers, pagination utils
-│   │       └── modules/          ← VERTICAL SLICES (D15):
-│   │           ├── locale/
-│   │           │   ├── routes.ts      ← Elysia plugin: paths + t schemas + handlers
-│   │           │   ├── service.ts     ← business logic (pure where possible)
-│   │           │   └── routes.test.ts ← bun test, co-located
-│   │           ├── avatars/
-│   │           ├── account/  users/  teams/  database/
-│   │           ├── schemas/  storage/  messaging/  webhooks/
+│   │       ├── account/          ← Domain: profile/, sessions/, tokens/, identities/, targets/, mfa/, recovery/
+│   │       ├── avatars/          ← Domain: avatars and image generation
+│   │       ├── database/         ← Domain: schemas/ management
+│   │       ├── locale/           ← Domain: i18n and geoip routing
+│   │       ├── messaging/        ← Domain: topics/, subscribers/, providers/, messages/
+│   │       ├── schemas/          ← Domain: collections/, attributes/, indexes/, documents/, tables/
+│   │       ├── storage/          ← Domain: buckets/, files/, usage/
+│   │       ├── teams/            ← Domain: memberships/, prefs, teams core
+│   │       └── users/            ← Domain: sessions/, targets/, users core
 │   └── platform/                 ← admin/console API (same slice layout)
 │       └── src/modules/ projects/ keys/ templates/ auth-settings/ metadata/
 └── packages/
