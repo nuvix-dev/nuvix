@@ -214,6 +214,69 @@ export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
       },
     )
 
+    // 5b. List identities (admin) — must precede /:userId (v1 parity)
+    .get(
+      '/identities',
+      {
+        detail: {
+          summary: 'List identities',
+          description: "List all OAuth2 identities linked across the project's users.",
+          tags: ['Users Core'],
+        },
+        query: t.Object({
+          search: t.Optional(t.String({ description: 'Search term' })),
+          limit: t.Optional(
+            t.String({
+              description: 'Maximum number of identities to return',
+              pattern: '^[0-9]+$',
+            }),
+          ),
+          offset: t.Optional(
+            t.String({
+              description: 'Number of identities to skip',
+              pattern: '^[0-9]+$',
+            }),
+          ),
+          cursor: t.Optional(t.String({ description: 'Cursor pagination token' })),
+        }),
+      },
+      async ({ db, query }) => {
+        const service = new UsersService(db, options.jwtSecret)
+        const queries: Query[] = []
+        if (query.limit) queries.push(Query.limit(Number(query.limit)))
+        if (query.offset) queries.push(Query.offset(Number(query.offset)))
+        if (query.cursor) queries.push(Query.cursorAfter(query.cursor))
+        return service.getIdentities(queries, query.search)
+      },
+    )
+
+    // 5c. Delete identity (admin) — must precede /:userId (v1 parity)
+    .delete(
+      '/identities/:identityId',
+      {
+        detail: {
+          summary: 'Delete identity',
+          description: 'Delete an OAuth2 identity by its unique ID.',
+          tags: ['Users Core'],
+        },
+        params: t.Object({
+          identityId: t.String({ description: 'Unique identity identifier' }),
+        }),
+        response: {
+          200: t.Object({
+            status: t.Literal('success', {
+              description: 'Operation status confirmation',
+            }),
+          }),
+        },
+      },
+      async ({ db, params: { identityId } }) => {
+        const service = new UsersService(db, options.jwtSecret)
+        await service.deleteIdentity(identityId)
+        return { status: 'success' as const }
+      },
+    )
+
     // 6. Get user by ID
     .get(
       '/:userId',
@@ -248,7 +311,9 @@ export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
         }),
         response: {
           200: t.Object({
-            status: t.Literal('success', { description: 'Status confirmation string' }),
+            status: t.Literal('success', {
+              description: 'Status confirmation string',
+            }),
           }),
         },
       },

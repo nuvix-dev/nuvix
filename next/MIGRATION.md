@@ -389,6 +389,10 @@ next/
 - [x] Managed & unmanaged schema routes (`/schemas/:schemaId/tables/*`, `/public/tables/*`, `/schemas/:schemaId/rpc/*`, `/public/rpc/*`, permissions endpoints) fully wired with request context and verified via Eden Treaty
 - [x] Decomposed domain route architecture: all domain modules promoted to `apps/server/src/` top level (`account/`, `users/`, `teams/`, `storage/`, `messaging/`, `database/`, `schemas/`), broken down into granular subdomain routes with complete OpenAPI schema detail metadata (`summary`, `description`, `tags`, parameter & query documentation)
 - [x] Full API surface audit vs `docs/api/*` (audited all endpoints across account, teams, users, database schemas, avatars, locale, platform, and storage/messaging)
+- [x] Parity batch (post-audit): admin identities endpoints
+      (`GET /users/identities`, `DELETE /users/identities/:identityId` —
+      v1 parity, contract §users.md already specified them) and the
+      `timestamptz` attribute-create alias (v1 path parity)
 
 ### Phase 9 — Tests & cutover
 

@@ -1,7 +1,9 @@
 import { hashPassword } from '@nuvix/core/auth'
 import { Doc, ID, Permission, Query, Role, type Session } from '@nuvix/db'
+import { formatIdentity, type IdentityView } from '../account/formatter'
 import { ConflictError, NotFoundError } from '../shared/errors'
 import type {
+  IdentitiesDoc,
   MembershipsDoc,
   Targets,
   TargetsDoc,
@@ -63,6 +65,41 @@ export class UsersService {
     ])) as TargetsDoc[]
 
     return formatUser(userDoc, targets)
+  }
+
+  /**
+   * List all identities in the project (admin) — v1 parity.
+   */
+  async getIdentities(
+    queries: Query[] = [],
+    search?: string,
+  ): Promise<{ total: number; identities: IdentityView[] }> {
+    const q = [...queries]
+    if (search) {
+      q.push(Query.search('search', search))
+    }
+    const filterQueries = Query.groupByType(q).filters
+
+    const docs = (await this.session.find('identities', q)) as IdentitiesDoc[]
+    const total = await this.session.count('identities', filterQueries)
+
+    return {
+      total,
+      identities: docs.map(formatIdentity),
+    }
+  }
+
+  /**
+   * Delete an identity (admin) — v1 parity.
+   */
+  async deleteIdentity(identityId: string): Promise<void> {
+    const identity = (await this.session.getDocument('identities', identityId)) as IdentitiesDoc
+    if (identity.empty()) {
+      throw new NotFoundError('Identity not found', {
+        code: 'user_identity_not_found',
+      })
+    }
+    await this.session.deleteDocument('identities', identityId)
   }
 
   async create(input: CreateUserInput): Promise<UserView> {

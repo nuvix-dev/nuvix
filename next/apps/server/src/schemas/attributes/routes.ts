@@ -43,7 +43,9 @@ export const attributesRoutes = (services?: AttributesRouteServices) => {
         },
         async ({ tenant, tenantDb, attributesService, params: { collectionId } }) => {
           if (!tenant.isAdmin && !tenant.isAPIUser) {
-            throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+            throw new ForbiddenError('Access forbidden', {
+              code: 'user_forbidden',
+            })
           }
           const res = await attributesService.getAttributes(tenantDb, collectionId)
           return {
@@ -72,16 +74,22 @@ export const attributesRoutes = (services?: AttributesRouteServices) => {
             required: t.Optional(t.Boolean({ description: 'Whether this field is non-nullable' })),
             default: t.Optional(t.Nullable(t.String({ description: 'Default string value' }))),
             array: t.Optional(
-              t.Boolean({ description: 'Whether this attribute stores an array of strings' }),
+              t.Boolean({
+                description: 'Whether this attribute stores an array of strings',
+              }),
             ),
             encrypt: t.Optional(
-              t.Boolean({ description: 'Whether this string is encrypted at rest' }),
+              t.Boolean({
+                description: 'Whether this string is encrypted at rest',
+              }),
             ),
           }),
         },
         async ({ tenant, tenantDb, attributesService, params: { collectionId }, body }) => {
           if (!tenant.isAdmin && !tenant.isAPIUser) {
-            throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+            throw new ForbiddenError('Access forbidden', {
+              code: 'user_forbidden',
+            })
           }
           const attr = await attributesService.createStringAttribute(tenantDb, collectionId, body)
           return formatAttribute(attr)
@@ -112,7 +120,9 @@ export const attributesRoutes = (services?: AttributesRouteServices) => {
         },
         async ({ tenant, tenantDb, attributesService, params: { collectionId }, body }) => {
           if (!tenant.isAdmin && !tenant.isAPIUser) {
-            throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+            throw new ForbiddenError('Access forbidden', {
+              code: 'user_forbidden',
+            })
           }
           const attr = await attributesService.createEmailAttribute(tenantDb, collectionId, body)
           return formatAttribute(attr)
@@ -144,7 +154,9 @@ export const attributesRoutes = (services?: AttributesRouteServices) => {
         },
         async ({ tenant, tenantDb, attributesService, params: { collectionId }, body }) => {
           if (!tenant.isAdmin && !tenant.isAPIUser) {
-            throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+            throw new ForbiddenError('Access forbidden', {
+              code: 'user_forbidden',
+            })
           }
           const attr = await attributesService.createEnumAttribute(tenantDb, collectionId, body)
           return formatAttribute(attr)
@@ -173,7 +185,9 @@ export const attributesRoutes = (services?: AttributesRouteServices) => {
         },
         async ({ tenant, tenantDb, attributesService, params: { collectionId }, body }) => {
           if (!tenant.isAdmin && !tenant.isAPIUser) {
-            throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+            throw new ForbiddenError('Access forbidden', {
+              code: 'user_forbidden',
+            })
           }
           const attr = await attributesService.createIPAttribute(tenantDb, collectionId, body)
           return formatAttribute(attr)
@@ -202,7 +216,9 @@ export const attributesRoutes = (services?: AttributesRouteServices) => {
         },
         async ({ tenant, tenantDb, attributesService, params: { collectionId }, body }) => {
           if (!tenant.isAdmin && !tenant.isAPIUser) {
-            throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+            throw new ForbiddenError('Access forbidden', {
+              code: 'user_forbidden',
+            })
           }
           const attr = await attributesService.createURLAttribute(tenantDb, collectionId, body)
           return formatAttribute(attr)
@@ -233,7 +249,9 @@ export const attributesRoutes = (services?: AttributesRouteServices) => {
         },
         async ({ tenant, tenantDb, attributesService, params: { collectionId }, body }) => {
           if (!tenant.isAdmin && !tenant.isAPIUser) {
-            throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+            throw new ForbiddenError('Access forbidden', {
+              code: 'user_forbidden',
+            })
           }
           const attr = await attributesService.createIntegerAttribute(tenantDb, collectionId, body)
           return formatAttribute(attr)
@@ -264,7 +282,9 @@ export const attributesRoutes = (services?: AttributesRouteServices) => {
         },
         async ({ tenant, tenantDb, attributesService, params: { collectionId }, body }) => {
           if (!tenant.isAdmin && !tenant.isAPIUser) {
-            throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+            throw new ForbiddenError('Access forbidden', {
+              code: 'user_forbidden',
+            })
           }
           const attr = await attributesService.createFloatAttribute(tenantDb, collectionId, body)
           return formatAttribute(attr)
@@ -293,7 +313,9 @@ export const attributesRoutes = (services?: AttributesRouteServices) => {
         },
         async ({ tenant, tenantDb, attributesService, params: { collectionId }, body }) => {
           if (!tenant.isAdmin && !tenant.isAPIUser) {
-            throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+            throw new ForbiddenError('Access forbidden', {
+              code: 'user_forbidden',
+            })
           }
           const attr = await attributesService.createBooleanAttribute(tenantDb, collectionId, body)
           return formatAttribute(attr)
@@ -322,7 +344,41 @@ export const attributesRoutes = (services?: AttributesRouteServices) => {
         },
         async ({ tenant, tenantDb, attributesService, params: { collectionId }, body }) => {
           if (!tenant.isAdmin && !tenant.isAPIUser) {
-            throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+            throw new ForbiddenError('Access forbidden', {
+              code: 'user_forbidden',
+            })
+          }
+          const attr = await attributesService.createDateAttribute(tenantDb, collectionId, body)
+          return formatAttribute(attr)
+        },
+      )
+
+      // 10b. Create Timestamptz attribute (v1 alias of datetime)
+      .post(
+        '/collections/:collectionId/attributes/timestamptz',
+        {
+          detail: {
+            summary: 'Create timestamptz attribute',
+            description:
+              'Alias of the datetime attribute (v1 path parity) — adds a timezone-aware timestamp column.',
+            tags: ['Schemas Attributes'],
+          },
+          params: t.Object({
+            schemaId: t.String({ description: 'Schema identifier' }),
+            collectionId: t.String({ description: 'Collection identifier' }),
+          }),
+          body: t.Object({
+            key: t.String({ description: 'Attribute key' }),
+            required: t.Optional(t.Boolean({ description: 'Required flag' })),
+            default: t.Optional(t.Nullable(t.String({ description: 'Default ISO date string' }))),
+            array: t.Optional(t.Boolean({ description: 'Array flag' })),
+          }),
+        },
+        async ({ tenant, tenantDb, attributesService, params: { collectionId }, body }) => {
+          if (!tenant.isAdmin && !tenant.isAPIUser) {
+            throw new ForbiddenError('Access forbidden', {
+              code: 'user_forbidden',
+            })
           }
           const attr = await attributesService.createDateAttribute(tenantDb, collectionId, body)
           return formatAttribute(attr)
@@ -345,24 +401,32 @@ export const attributesRoutes = (services?: AttributesRouteServices) => {
           }),
           body: t.Object({
             key: t.String({ description: 'Attribute key' }),
-            relatedCollection: t.String({ description: 'Target collection ID being referenced' }),
+            relatedCollection: t.String({
+              description: 'Target collection ID being referenced',
+            }),
             relationType: t.Enum(RelationType, {
               description: 'oneToOne, oneToMany, manyToOne, or manyToMany',
             }),
             twoWay: t.Optional(
-              t.Boolean({ description: 'Whether to create a bidirectional back-reference' }),
+              t.Boolean({
+                description: 'Whether to create a bidirectional back-reference',
+              }),
             ),
             twoWayKey: t.Optional(
               t.String({ description: 'Attribute key for the back-reference' }),
             ),
             onDelete: t.Optional(
-              t.Enum(OnDelete, { description: 'Cascade action: cascade, restrict, or setNull' }),
+              t.Enum(OnDelete, {
+                description: 'Cascade action: cascade, restrict, or setNull',
+              }),
             ),
           }),
         },
         async ({ tenant, tenantDb, attributesService, params: { collectionId }, body }) => {
           if (!tenant.isAdmin && !tenant.isAPIUser) {
-            throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+            throw new ForbiddenError('Access forbidden', {
+              code: 'user_forbidden',
+            })
           }
           const attr = await attributesService.createRelationshipAttribute(
             tenantDb,
@@ -390,7 +454,9 @@ export const attributesRoutes = (services?: AttributesRouteServices) => {
         },
         async ({ tenant, tenantDb, attributesService, params: { collectionId, key } }) => {
           if (!tenant.isAdmin && !tenant.isAPIUser) {
-            throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+            throw new ForbiddenError('Access forbidden', {
+              code: 'user_forbidden',
+            })
           }
           const attr = await attributesService.getAttribute(tenantDb, collectionId, key)
           return formatAttribute(attr)
@@ -422,7 +488,9 @@ export const attributesRoutes = (services?: AttributesRouteServices) => {
         },
         async ({ tenant, tenantDb, attributesService, params: { collectionId, key }, body }) => {
           if (!tenant.isAdmin && !tenant.isAPIUser) {
-            throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+            throw new ForbiddenError('Access forbidden', {
+              code: 'user_forbidden',
+            })
           }
           const attr = await attributesService.updateAttribute(tenantDb, collectionId, key, body)
           return formatAttribute(attr)
@@ -444,12 +512,16 @@ export const attributesRoutes = (services?: AttributesRouteServices) => {
             key: t.String({ description: 'Attribute name/key' }),
           }),
           response: {
-            204: t.Null({ description: 'Attribute deleted successfully (no content)' }),
+            204: t.Null({
+              description: 'Attribute deleted successfully (no content)',
+            }),
           },
         },
         async ({ tenant, tenantDb, attributesService, params: { collectionId, key }, set }) => {
           if (!tenant.isAdmin && !tenant.isAPIUser) {
-            throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+            throw new ForbiddenError('Access forbidden', {
+              code: 'user_forbidden',
+            })
           }
           await attributesService.deleteAttribute(tenantDb, collectionId, key)
           set.status = 204

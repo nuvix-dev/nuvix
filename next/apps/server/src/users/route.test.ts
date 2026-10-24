@@ -38,12 +38,14 @@ describe('Users Routes', () => {
   const usersMap = new Map<string, Doc>()
   const targetsMap = new Map<string, Doc>()
   const sessionsMap = new Map<string, Doc>()
+  const identitiesMap = new Map<string, Doc>()
 
   const mockSession = {
     find: async (collection: string, _queries: unknown[] = []) => {
       if (collection === 'users') return [...usersMap.values()]
       if (collection === 'targets') return [...targetsMap.values()]
       if (collection === 'sessions') return [...sessionsMap.values()]
+      if (collection === 'identities') return [...identitiesMap.values()]
       return []
     },
     findOne: async (collection: string, queries: Array<{ values?: string[] }> = []) => {
@@ -63,12 +65,14 @@ describe('Users Routes', () => {
       if (collection === 'users') return usersMap.get(id) ?? new Doc({})
       if (collection === 'targets') return targetsMap.get(id) ?? new Doc({})
       if (collection === 'sessions') return sessionsMap.get(id) ?? new Doc({})
+      if (collection === 'identities') return identitiesMap.get(id) ?? new Doc({})
       return new Doc({})
     },
     createDocument: async (collection: string, doc: Doc) => {
       if (collection === 'users') usersMap.set(doc.getId(), doc)
       if (collection === 'targets') targetsMap.set(doc.getId(), doc)
       if (collection === 'sessions') sessionsMap.set(doc.getId(), doc)
+      if (collection === 'identities') identitiesMap.set(doc.getId(), doc)
       return doc
     },
     updateDocument: async (collection: string, id: string, doc: Doc) => {
@@ -81,12 +85,14 @@ describe('Users Routes', () => {
       if (collection === 'users') usersMap.delete(id)
       if (collection === 'targets') targetsMap.delete(id)
       if (collection === 'sessions') sessionsMap.delete(id)
+      if (collection === 'identities') identitiesMap.delete(id)
       return true
     },
     count: async (collection: string) => {
       if (collection === 'users') return usersMap.size
       if (collection === 'targets') return targetsMap.size
       if (collection === 'sessions') return sessionsMap.size
+      if (collection === 'identities') return identitiesMap.size
       return 0
     },
   } as unknown as Session
@@ -218,5 +224,47 @@ describe('Users Routes', () => {
     const data = (await res.json()) as { range: string; usersTotal: number }
     expect(data.range).toBe('30d')
     expect(data.usersTotal).toBeDefined()
+  })
+
+  it('lists project identities via GET /users/identities (v1 parity)', async () => {
+    await mockSession.createDocument(
+      'identities',
+      new Doc({
+        $id: 'identity_1',
+        userId: 'user_x',
+        provider: 'google',
+        providerUid: 'g-1',
+        providerEmail: 'g@example.com',
+      }),
+    )
+
+    const res = await testApp.handle(new Request('http://localhost/users/identities'))
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as {
+      total: number
+      identities: Array<{ $id: string; provider: string }>
+    }
+    expect(data.total).toBe(1)
+    expect(data.identities[0]!.$id).toBe('identity_1')
+    expect(data.identities[0]!.provider).toBe('google')
+  })
+
+  it('deletes an identity via DELETE /users/identities/:identityId (v1 parity)', async () => {
+    const res = await testApp.handle(
+      new Request('http://localhost/users/identities/identity_1', {
+        method: 'DELETE',
+      }),
+    )
+    expect(res.status).toBe(200)
+    expect(identitiesMap.has('identity_1')).toBe(false)
+
+    const missing = await testApp.handle(
+      new Request('http://localhost/users/identities/identity_1', {
+        method: 'DELETE',
+      }),
+    )
+    expect(missing.status).toBe(404)
+    const body = (await missing.json()) as { code?: string }
+    expect(body.code).toBe('user_identity_not_found')
   })
 })
