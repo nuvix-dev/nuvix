@@ -15,6 +15,7 @@ import type {
   UsersDoc,
 } from '../../types/generated'
 import { signJwt } from '../../utils/jwt'
+import { sessionDetectorFields } from '../../utils/session-intel'
 import { formatSession, formatToken, type SessionView, type TokenView } from '../formatter'
 
 /**
@@ -72,6 +73,12 @@ export interface SessionResult {
   session: SessionView
   secret: string
   userId: string
+}
+
+/** Request-bound session metadata (ip/user-agent) recorded on the session doc. */
+export interface SessionIntel {
+  ip?: string
+  userAgent?: string
 }
 
 export interface AccountSessionsOptions {
@@ -191,7 +198,10 @@ export class AccountSessionsService {
     return view
   }
 
-  async createEmailSession(input: CreateEmailSessionInput): Promise<SessionResult> {
+  async createEmailSession(
+    input: CreateEmailSessionInput,
+    intel?: SessionIntel,
+  ): Promise<SessionResult> {
     const email = input.email.toLowerCase()
     const user = (await this.session.findOne('users', [Query.equal('email', [email])])) as UsersDoc
 
@@ -241,9 +251,10 @@ export class AccountSessionsService {
       providerUid: email,
       secret: Auth.hash(secret),
       expire,
-      userAgent: input.userAgent ?? 'UNKNOWN',
-      ip: input.ip ?? '127.0.0.1',
+      userAgent: intel?.userAgent ?? input.userAgent ?? 'UNKNOWN',
+      ip: intel?.ip ?? input.ip ?? '127.0.0.1',
       factors: ['password'],
+      ...sessionDetectorFields(intel?.userAgent ?? input.userAgent),
     })
 
     const created = (await this.session.createDocument('sessions', sessionDoc)) as SessionsDoc
@@ -257,7 +268,10 @@ export class AccountSessionsService {
     }
   }
 
-  async createAnonymousSession(input: { ip?: string; userAgent?: string }): Promise<SessionResult> {
+  async createAnonymousSession(
+    input: { ip?: string; userAgent?: string } = {},
+    intel?: SessionIntel,
+  ): Promise<SessionResult> {
     const userId = ID.unique()
     const userDoc = new Doc<Users>({
       $id: userId,
@@ -296,9 +310,10 @@ export class AccountSessionsService {
       provider: 'anonymous',
       secret: Auth.hash(secret),
       expire,
-      userAgent: input.userAgent ?? 'UNKNOWN',
-      ip: input.ip ?? '127.0.0.1',
+      userAgent: intel?.userAgent ?? input.userAgent ?? 'UNKNOWN',
+      ip: intel?.ip ?? input.ip ?? '127.0.0.1',
       factors: ['anonymous'],
+      ...sessionDetectorFields(intel?.userAgent ?? input.userAgent),
     })
 
     const createdSession = (await this.session.createDocument(
@@ -315,7 +330,10 @@ export class AccountSessionsService {
     }
   }
 
-  async createSessionWithToken(input: CreateSessionTokenInput): Promise<SessionResult> {
+  async createSessionWithToken(
+    input: CreateSessionTokenInput,
+    intel?: SessionIntel,
+  ): Promise<SessionResult> {
     const user = (await this.session.getDocument('users', input.userId)) as UsersDoc
     if (user.empty()) {
       throw new NotFoundError('User not found', { code: 'user_not_found' })
@@ -366,8 +384,9 @@ export class AccountSessionsService {
       provider,
       secret: Auth.hash(secret),
       expire,
-      userAgent: input.userAgent ?? 'UNKNOWN',
-      ip: input.ip ?? '127.0.0.1',
+      userAgent: intel?.userAgent ?? input.userAgent ?? 'UNKNOWN',
+      ip: intel?.ip ?? input.ip ?? '127.0.0.1',
+      ...sessionDetectorFields(intel?.userAgent ?? input.userAgent),
       factors: [factor],
     })
 

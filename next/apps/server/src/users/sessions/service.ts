@@ -2,6 +2,7 @@ import { Auth } from '@nuvix/core/auth'
 import { Doc, ID, Permission, Query, Role, type Session } from '@nuvix/db'
 import { NotFoundError } from '../../shared/errors'
 import type { Sessions, SessionsDoc, UsersDoc } from '../../types/generated'
+import { sessionDetectorFields } from '../../utils/session-intel'
 import { formatSession, type SessionView } from '../formatter'
 
 export class UserSessionsService {
@@ -56,10 +57,12 @@ export class UserSessionsService {
         userId,
         userInternalId: userDoc.getSequence(),
         provider: options.provider ?? 'email',
+        userAgent: options.userAgent ?? 'UNKNOWN',
         secret,
         expire,
         ip: options.ip ?? '',
         factors: ['password'],
+        ...sessionDetectorFields(options.userAgent),
       }),
     )) as SessionsDoc
 

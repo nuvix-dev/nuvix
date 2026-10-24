@@ -2,6 +2,7 @@ import type { Doc, Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
 import { auditAfter } from '../../plugins/audit'
 import type { Sessions, Users } from '../../types/generated'
+import { requestIp, requestUserAgent } from '../../utils/request'
 import { requireAuth } from '../auth'
 import type { OAuth2RouteDeps } from '../oauth2/routes'
 import { createOAuth2Refresher } from '../oauth2/service'
@@ -179,9 +180,12 @@ export const accountSessionsRoutes = (
           userId: '{res.userId}',
         }),
       },
-      async ({ db, body }) => {
+      async ({ db, body, request, server }) => {
         const service = new AccountSessionsService(db, options.jwtSecret)
-        const res = await service.createEmailSession(body)
+        const res = await service.createEmailSession(body, {
+          ip: requestIp(request, server),
+          userAgent: requestUserAgent(request),
+        })
         return res.session
       },
     )
@@ -206,9 +210,12 @@ export const accountSessionsRoutes = (
           userId: '{res.userId}',
         }),
       },
-      async ({ db, body }) => {
+      async ({ db, body, request, server }) => {
         const service = new AccountSessionsService(db, options.jwtSecret)
-        const res = await service.createEmailSession(body)
+        const res = await service.createEmailSession(body, {
+          ip: requestIp(request, server),
+          userAgent: requestUserAgent(request),
+        })
         return res.session
       },
     )
@@ -228,9 +235,12 @@ export const accountSessionsRoutes = (
           userId: '{res.userId}',
         }),
       },
-      async ({ db }) => {
+      async ({ db, request, server }) => {
         const service = new AccountSessionsService(db, options.jwtSecret)
-        const res = await service.createAnonymousSession({})
+        const res = await service.createAnonymousSession({
+          ip: requestIp(request, server),
+          userAgent: requestUserAgent(request),
+        })
         return res.session
       },
     )
@@ -256,9 +266,12 @@ export const accountSessionsRoutes = (
           userId: '{res.userId}',
         }),
       },
-      async ({ db, body }) => {
+      async ({ db, body, request, server }) => {
         const service = new AccountSessionsService(db, options.jwtSecret)
-        const res = await service.createSessionWithToken(body)
+        const res = await service.createSessionWithToken(body, {
+          ip: requestIp(request, server),
+          userAgent: requestUserAgent(request),
+        })
         return res.session
       },
     )
@@ -284,9 +297,12 @@ export const accountSessionsRoutes = (
           userId: '{res.userId}',
         }),
       },
-      async ({ db, body }) => {
+      async ({ db, body, request, server }) => {
         const service = new AccountSessionsService(db, options.jwtSecret)
-        const res = await service.createSessionWithToken(body)
+        const res = await service.createSessionWithToken(body, {
+          ip: requestIp(request, server),
+          userAgent: requestUserAgent(request),
+        })
         return res.session
       },
     )
@@ -312,9 +328,12 @@ export const accountSessionsRoutes = (
           userId: '{res.userId}',
         }),
       },
-      async ({ db, body }) => {
+      async ({ db, body, request, server }) => {
         const service = new AccountSessionsService(db, options.jwtSecret)
-        const res = await service.createSessionWithToken(body)
+        const res = await service.createSessionWithToken(body, {
+          ip: requestIp(request, server),
+          userAgent: requestUserAgent(request),
+        })
         return res.session
       },
     )

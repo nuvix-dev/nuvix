@@ -393,6 +393,13 @@ next/
       (`GET /users/identities`, `DELETE /users/identities/:identityId` —
       v1 parity, contract §users.md already specified them) and the
       `timestamptz` attribute-create alias (v1 path parity)
+- [x] Session metadata parity: every session-creation path (email,
+      anonymous, token, admin-created) now records the caller IP
+      (proxy-aware `requestIp`) and UA-derived detector fields
+      (`osCode/osName/osVersion`, `client*`, `device*` — v1 recorded these;
+      v2 sessions were missing them entirely). Shared `Detector` port
+      (`utils/detector.ts` on `ua-parser-js`) + `sessionDetectorFields`
+      helper.
 - [x] Audit subsystem (Phase 6 follow-through): `audit` collection added to
       the tenant auth schema (1:1 with `@nuvix/audit`), Bun-native
       `AuditService` (`packages/core/src/audit`), real audits worker
