@@ -23,7 +23,8 @@
     "elysia": "2.0.0-beta.6",
     "ioredis": "^6.0.0",
     "maxmind": "^5.0.6",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "handlebars": "^4.7.8"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",

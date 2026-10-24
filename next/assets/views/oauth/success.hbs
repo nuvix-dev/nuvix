@@ -1,0 +1,32 @@
+<!-- success.hbs -->
+<div class="dots">
+    <span></span><span></span><span></span><span></span>
+</div>
+
+<div class="icon-ring success">
+    <svg viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="11" stroke="#34a853" stroke-width="1.5" />
+        <path d="M7 12.5l3.5 3.5 6-7" stroke="#34a853" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round" />
+    </svg>
+</div>
+
+<div class="progress-track">
+    <div class="progress-fill"></div>
+</div>
+
+<h1 class="heading">You're signed in</h1>
+<p class="subtext">Authentication was successful. This window will close automatically.</p>
+
+<div class="divider"></div>
+
+<div class="actions">
+    <button class="btn btn-ghost" onclick="window.close()">Close window</button>
+</div>
+
+<script>
+    if (window.opener) {
+        window.opener.postMessage({ type: "oauth-success" }, "*");
+        setTimeout(() => window.close(), 850);
+    }
+</script>

@@ -15,6 +15,7 @@ import { tenantContext } from './context/tenant'
 import { databaseRoutes } from './database/route'
 import { localeRoutes } from './locale/route'
 import { messagingRoutes } from './messaging/route'
+import { oauthPages } from './oauth-pages'
 import { cors } from './plugins/cors'
 import { problemErrors } from './plugins/errors'
 import { rateLimit } from './plugins/rate-limit'
@@ -75,7 +76,7 @@ const tenantPlugin = tenantContext({
   jwtSecret: config.jwtSecret,
 })
 
-export const app = new Elysia({ prefix: '/v2' })
+const v2 = new Elysia({ prefix: '/v2' })
   .use(
     cors({
       origin: config.isProd ? [] : true,
@@ -114,8 +115,20 @@ export const app = new Elysia({ prefix: '/v2' })
   .use(
     new Elysia()
       .use(tenantPlugin)
-      .use(userRoutes({ jwtSecret: config.jwtSecret }))
-      .use(accountRoutes({ jwtSecret: config.jwtSecret }))
+      .use(
+        userRoutes({
+          jwtSecret: config.jwtSecret,
+        }),
+      )
+      .use(
+        accountRoutes({
+          jwtSecret: config.jwtSecret,
+          oauth2: {
+            registry: projectRegistry,
+            encryptionKey: config.platform.tenantEncryptionKey,
+          },
+        }),
+      )
       .use(teamRoutes())
       .use(storageRoutes())
       .use(messagingRoutes())
@@ -128,3 +141,10 @@ export const app = new Elysia({ prefix: '/v2' })
   // downstream).
   .get('/whoami', ({ auth, project }) => ({ auth, project }))
   .use(health)
+
+/**
+ * Root app — unversioned routes (OAuth2 relay pages) + the /v2 API.
+ * The legacy app served the relay pages unversioned; providers redirect the
+ * browser there directly, outside the /v2 prefix.
+ */
+export const app = new Elysia().use(oauthPages()).use(v2)

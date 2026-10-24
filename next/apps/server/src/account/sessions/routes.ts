@@ -2,14 +2,21 @@ import type { Doc, Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
 import type { Sessions, Users } from '../../types/generated'
 import { requireAuth } from '../auth'
+import type { OAuth2RouteDeps } from '../oauth2/routes'
+import { createOAuth2Refresher } from '../oauth2/service'
 import { AccountSessionsService } from './service'
 
-export const accountSessionsRoutes = (options: { jwtSecret?: string } = {}) =>
+export const accountSessionsRoutes = (
+  options: { jwtSecret?: string; oauth2?: OAuth2RouteDeps } = {},
+) =>
   new Elysia()
     .derive('plugin', (ctx) => ({
       db: ('db' in ctx ? ctx.db : undefined) as unknown as Session,
       user: ('user' in ctx ? ctx.user : undefined) as unknown as Doc<Users>,
       session: ('session' in ctx ? ctx.session : undefined) as unknown as Doc<Sessions>,
+      project: ('project' in ctx ? ctx.project : undefined) as unknown as {
+        id: string
+      },
     }))
 
     // 17. List sessions
@@ -40,7 +47,9 @@ export const accountSessionsRoutes = (options: { jwtSecret?: string } = {}) =>
         },
         response: {
           200: t.Object({
-            status: t.Literal('ok', { description: 'Operation status confirmation' }),
+            status: t.Literal('ok', {
+              description: 'Operation status confirmation',
+            }),
           }),
         },
       },
@@ -83,11 +92,15 @@ export const accountSessionsRoutes = (options: { jwtSecret?: string } = {}) =>
           tags: ['Account Sessions'],
         },
         params: t.Object({
-          sessionId: t.String({ description: 'Unique session identifier to revoke' }),
+          sessionId: t.String({
+            description: 'Unique session identifier to revoke',
+          }),
         }),
         response: {
           200: t.Object({
-            status: t.Literal('ok', { description: 'Operation status confirmation' }),
+            status: t.Literal('ok', {
+              description: 'Operation status confirmation',
+            }),
           }),
         },
       },
@@ -112,9 +125,18 @@ export const accountSessionsRoutes = (options: { jwtSecret?: string } = {}) =>
           sessionId: t.String({ description: 'Unique session identifier' }),
         }),
       },
-      async ({ db, user, session, params: { sessionId } }) => {
+      async ({ db, user, session, params: { sessionId }, project }) => {
         const userId = requireAuth(user)
-        const service = new AccountSessionsService(db, options.jwtSecret)
+        const service = new AccountSessionsService(db, options.jwtSecret, {
+          refreshOAuth2: options.oauth2
+            ? createOAuth2Refresher({
+                registry: options.oauth2.registry,
+                encryptionKey: options.oauth2.encryptionKey,
+                projectId: project.id,
+                db,
+              })
+            : undefined,
+        })
         return service.updateSession(userId, sessionId, session?.getId())
       },
     )
@@ -129,7 +151,10 @@ export const accountSessionsRoutes = (options: { jwtSecret?: string } = {}) =>
           tags: ['Account Sessions'],
         },
         body: t.Object({
-          email: t.String({ format: 'email', description: 'User account email address' }),
+          email: t.String({
+            format: 'email',
+            description: 'User account email address',
+          }),
           password: t.String({ description: 'User account password' }),
         }),
       },
@@ -148,7 +173,10 @@ export const accountSessionsRoutes = (options: { jwtSecret?: string } = {}) =>
           tags: ['Account Sessions'],
         },
         body: t.Object({
-          email: t.String({ format: 'email', description: 'User account email address' }),
+          email: t.String({
+            format: 'email',
+            description: 'User account email address',
+          }),
           password: t.String({ description: 'User account password' }),
         }),
       },
@@ -186,7 +214,9 @@ export const accountSessionsRoutes = (options: { jwtSecret?: string } = {}) =>
           tags: ['Account Sessions'],
         },
         body: t.Object({
-          userId: t.String({ description: 'User ID associated with the token' }),
+          userId: t.String({
+            description: 'User ID associated with the token',
+          }),
           secret: t.String({ description: 'One-time login secret token' }),
         }),
       },
@@ -207,7 +237,9 @@ export const accountSessionsRoutes = (options: { jwtSecret?: string } = {}) =>
           tags: ['Account Sessions'],
         },
         body: t.Object({
-          userId: t.String({ description: 'User ID associated with magic URL token' }),
+          userId: t.String({
+            description: 'User ID associated with magic URL token',
+          }),
           secret: t.String({ description: 'Secret token from magic URL link' }),
         }),
       },
@@ -228,7 +260,9 @@ export const accountSessionsRoutes = (options: { jwtSecret?: string } = {}) =>
           tags: ['Account Sessions'],
         },
         body: t.Object({
-          userId: t.String({ description: 'User ID associated with phone OTP' }),
+          userId: t.String({
+            description: 'User ID associated with phone OTP',
+          }),
           secret: t.String({ description: 'SMS OTP verification code' }),
         }),
       },

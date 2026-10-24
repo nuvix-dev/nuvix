@@ -76,6 +76,40 @@ export const config = {
     return required('NUVIX_JWT_SECRET')
   },
 
+  /**
+   * Cookie settings for browser-facing flows (OAuth2 sessions, magic URL).
+   * Legacy names: NUVIX_COOKIE_DOMAIN / NUVIX_COOKIE_SAMESITE /
+   * NUVIX_COOKIE_NAME / NUVIX_CONSOLE_URL.
+   */
+  get consoleURL(): string {
+    return Bun.env.NUVIX_CONSOLE_URL ?? 'http://localhost:3000'
+  },
+  cookie: {
+    get domain(): string | undefined {
+      return Bun.env.NUVIX_COOKIE_DOMAIN || undefined
+    },
+    /** 'lax' | 'none' | 'strict' — legacy defaulted to 'none'. */
+    get sameSite(): 'lax' | 'none' | 'strict' {
+      const raw = (Bun.env.NUVIX_COOKIE_SAMESITE ?? 'none').toLowerCase()
+      return raw === 'lax' || raw === 'strict' ? raw : 'none'
+    },
+    get name(): string {
+      return Bun.env.NUVIX_COOKIE_NAME ?? 'session'
+    },
+    /** Legacy `NUVIX_DEBUG_FALLBACK_COOKIES` — X-Fallback-Cookies header. */
+    get fallback(): boolean {
+      return (Bun.env.NUVIX_DEBUG_FALLBACK_COOKIES ?? '').toLowerCase() === 'true'
+    },
+  },
+
+  limits: {
+    /** Max users per project — legacy `NUVIX_LIMIT_USERS` (0 = unlimited). */
+    get users(): number {
+      const raw = Number.parseInt(Bun.env.NUVIX_LIMIT_USERS ?? '10000', 10)
+      return Number.isFinite(raw) && raw >= 0 ? raw : 10000
+    },
+  },
+
   storage: {
     get uploadsDir(): string {
       const raw = Bun.env.NUVIX_STORAGE_UPLOADS ?? './storage/uploads'

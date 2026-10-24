@@ -30,7 +30,7 @@ instead of primary/side-feature:**
 - **Session** = the long-lived, DB-backed, revocable credential (v1's
   `sessions` collection, unchanged in spirit). Returned once as a plaintext
   `secret` on creation; every subsequent presentation is via the
-  `x-nuvix-session` header. This *is* the refresh token in Clerk's model —
+  `x-nuvix-session` header. This _is_ the refresh token in Clerk's model —
   it's what proves "this device is still logged in" and what mints new
   access tokens.
 - **Access token** = a short-lived JWT (default 15 min, caller may request
@@ -72,23 +72,23 @@ project itself (D40/D41) — one more thing hanging off the same resolved
 Defaults (overridable per project, exact legacy values carried forward
 unless noted):
 
-| Setting | Default | Used by |
-| ------- | ------- | ------- |
-| `auths.emailPassword` | `true` | `POST /account`, `POST /account/sessions/email` |
-| `auths.anonymous` | `true` | `POST /account/sessions/anonymous` |
-| `auths.magicUrl` | `true` | `POST /account/tokens/magic-url` |
-| `auths.emailOtp` | `true` | `POST /account/tokens/email` |
-| `auths.phone` | `false` (needs an SMS provider configured) | `POST /account/tokens/phone` |
-| `auths.invites` | `true` | `docs/api/teams.md` invite creation |
-| `auths.duration` | `31536000` (1 year) | session `expire` |
-| `auths.limit` | `0` (unlimited) | `user_count_exceeded` gate |
-| `auths.passwordHistory` | `0` (disabled) | password-reuse check |
-| `auths.personalDataCheck` | `false` | personal-data-in-password check |
-| `auths.sessionAlerts` | `false` | new-session email notice |
-| `auths.mockNumbers` | `[]` | QA phone-OTP bypass |
-| `limits.userSessionsMax` | `100` | hard cap, v2 now enforces (see Sessions section) |
-| `limits.userSessionsDefault` | `10` | soft/expected cap before LRU eviction kicks in |
-| `limits.arrayParamsSize` | `100` | max array length for `roles`/`labels`/etc. across this doc and `teams.md`/`users.md` |
+| Setting                      | Default                                    | Used by                                                                              |
+| ---------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------ |
+| `auths.emailPassword`        | `true`                                     | `POST /account`, `POST /account/sessions/email`                                      |
+| `auths.anonymous`            | `true`                                     | `POST /account/sessions/anonymous`                                                   |
+| `auths.magicUrl`             | `true`                                     | `POST /account/tokens/magic-url`                                                     |
+| `auths.emailOtp`             | `true`                                     | `POST /account/tokens/email`                                                         |
+| `auths.phone`                | `false` (needs an SMS provider configured) | `POST /account/tokens/phone`                                                         |
+| `auths.invites`              | `true`                                     | `docs/api/teams.md` invite creation                                                  |
+| `auths.duration`             | `31536000` (1 year)                        | session `expire`                                                                     |
+| `auths.limit`                | `0` (unlimited)                            | `user_count_exceeded` gate                                                           |
+| `auths.passwordHistory`      | `0` (disabled)                             | password-reuse check                                                                 |
+| `auths.personalDataCheck`    | `false`                                    | personal-data-in-password check                                                      |
+| `auths.sessionAlerts`        | `false`                                    | new-session email notice                                                             |
+| `auths.mockNumbers`          | `[]`                                       | QA phone-OTP bypass                                                                  |
+| `limits.userSessionsMax`     | `100`                                      | hard cap, v2 now enforces (see Sessions section)                                     |
+| `limits.userSessionsDefault` | `10`                                       | soft/expected cap before LRU eviction kicks in                                       |
+| `limits.arrayParamsSize`     | `100`                                      | max array length for `roles`/`labels`/etc. across this doc and `teams.md`/`users.md` |
 
 A disabled gate fails with `501 user_auth_method_unsupported`, exactly as
 in v1. Implementation depends on the Phase 7 "auth-settings" platform slice
@@ -102,7 +102,7 @@ a rewrite.
 ## Auth posture
 
 Documented per endpoint below (mirrors v1 exactly: most mutation endpoints
-require `SESSION | JWT`; session-*creation* endpoints are guest-accessible;
+require `SESSION | JWT`; session-_creation_ endpoints are guest-accessible;
 a few are gated by project-level feature flags via `AllowSessionType`).
 Scope: `account` for self-service profile/session endpoints, `sessions.write`
 for session/token-creation endpoints (matches v1's scope split, which
@@ -112,18 +112,18 @@ existing API keys already assume).
 
 ## Endpoints — Account core (`/v2/account`)
 
-| Method | Path                  | Purpose                                   | Auth        | Gate |
-| ------ | --------------------- | ------------------------------------------ | ----------- | ---- |
-| POST   | `/v2/account`         | Create account (email + password)           | guest       | `auths.emailPassword` |
-| GET    | `/v2/account`         | Get current account                          | SESSION\|JWT | — |
-| DELETE | `/v2/account`         | Delete own account                           | SESSION\|JWT | — |
-| GET    | `/v2/account/prefs`   | Get prefs                                    | SESSION\|JWT | — |
-| PATCH  | `/v2/account/prefs`   | Merge prefs                                  | SESSION\|JWT | — |
-| PATCH  | `/v2/account/name`    | Update name                                  | SESSION\|JWT | — |
-| PATCH  | `/v2/account/password`| Update password                              | SESSION\|JWT | — |
-| PATCH  | `/v2/account/email`   | Update email                                 | SESSION\|JWT | — |
-| PATCH  | `/v2/account/phone`   | Update phone                                 | SESSION\|JWT | — |
-| PATCH  | `/v2/account/status`  | Block own account + clear session credential | SESSION\|JWT | — |
+| Method | Path                   | Purpose                                      | Auth         | Gate                  |
+| ------ | ---------------------- | -------------------------------------------- | ------------ | --------------------- |
+| POST   | `/v2/account`          | Create account (email + password)            | guest        | `auths.emailPassword` |
+| GET    | `/v2/account`          | Get current account                          | SESSION\|JWT | —                     |
+| DELETE | `/v2/account`          | Delete own account                           | SESSION\|JWT | —                     |
+| GET    | `/v2/account/prefs`    | Get prefs                                    | SESSION\|JWT | —                     |
+| PATCH  | `/v2/account/prefs`    | Merge prefs                                  | SESSION\|JWT | —                     |
+| PATCH  | `/v2/account/name`     | Update name                                  | SESSION\|JWT | —                     |
+| PATCH  | `/v2/account/password` | Update password                              | SESSION\|JWT | —                     |
+| PATCH  | `/v2/account/email`    | Update email                                 | SESSION\|JWT | —                     |
+| PATCH  | `/v2/account/phone`    | Update phone                                 | SESSION\|JWT | —                     |
+| PATCH  | `/v2/account/status`   | Block own account + clear session credential | SESSION\|JWT | —                     |
 
 ### Account object
 
@@ -140,7 +140,12 @@ existing API keys already assume).
   "mfa": false,
   "prefs": { "theme": "dark" },
   "targets": [
-    { "$id": "target_1", "name": "Ada's iPhone", "providerType": "push", "identifier": "expo-token-…" }
+    {
+      "$id": "target_1",
+      "name": "Ada's iPhone",
+      "providerType": "push",
+      "identifier": "expo-token-…"
+    }
   ],
   "registration": "2026-08-26T10:00:00.000Z",
   "$createdAt": "2026-08-26T10:00:00.000Z",
@@ -222,12 +227,12 @@ v1 and v2 doesn't add one either — reactivation is an admin action via
 
 ## Endpoints — Verification (`/v2/account/verifications`)
 
-| Method | Path                          | Purpose                       |
-| ------ | ------------------------------ | ------------------------------ |
-| POST   | `/v2/account/verifications/email` | Create email verification token |
-| PUT    | `/v2/account/verifications/email` | Confirm email verification      |
+| Method | Path                              | Purpose                               |
+| ------ | --------------------------------- | ------------------------------------- |
+| POST   | `/v2/account/verifications/email` | Create email verification token       |
+| PUT    | `/v2/account/verifications/email` | Confirm email verification            |
 | POST   | `/v2/account/verifications/phone` | Create phone verification token (OTP) |
-| PUT    | `/v2/account/verifications/phone` | Confirm phone verification      |
+| PUT    | `/v2/account/verifications/phone` | Confirm phone verification            |
 
 **Path correction**: v1 exposes both `/verification` (singular, legacy) and
 `/verifications/email` (current) as aliases for the same route. v2 keeps
@@ -246,10 +251,10 @@ Invalid/expired/reused secret → `401 user_invalid_token`.
 
 ## Endpoints — Identities (`/v2/account/identities`)
 
-| Method | Path                                | Purpose                          |
-| ------ | ------------------------------------- | ---------------------------------- |
-| GET    | `/v2/account/identities`              | List OAuth2 identities linked to current user |
-| DELETE | `/v2/account/identities/:identityId`  | Unlink an identity                 |
+| Method | Path                                 | Purpose                                       |
+| ------ | ------------------------------------ | --------------------------------------------- |
+| GET    | `/v2/account/identities`             | List OAuth2 identities linked to current user |
+| DELETE | `/v2/account/identities/:identityId` | Unlink an identity                            |
 
 **v2 improvement**: v1's delete has no ownership check against the caller
 (any authenticated user could pass any `identityId` — confirmed by reading
@@ -263,18 +268,18 @@ identity).
 
 ## Endpoints — MFA (`/v2/account/mfa`)
 
-| Method | Path                              | Purpose                                                       |
-| ------ | ----------------------------------- | ---------------------------------------------------------------- |
-| PATCH  | `/v2/account/mfa`                   | Enable/disable MFA                                                |
-| GET    | `/v2/account/mfa/factors`            | List available factors (totp/email/phone/recoveryCode booleans) |
+| Method | Path                                  | Purpose                                                         |
+| ------ | ------------------------------------- | --------------------------------------------------------------- |
+| PATCH  | `/v2/account/mfa`                     | Enable/disable MFA                                              |
+| GET    | `/v2/account/mfa/factors`             | List available factors (totp/email/phone/recoveryCode booleans) |
 | POST   | `/v2/account/mfa/authenticators/totp` | Create TOTP authenticator (secret + provisioning URI)           |
 | PUT    | `/v2/account/mfa/authenticators/totp` | Verify/confirm TOTP authenticator via OTP                       |
 | DELETE | `/v2/account/mfa/authenticators/totp` | Delete TOTP authenticator                                       |
-| PATCH  | `/v2/account/mfa/recovery-codes`     | Generate recovery codes (first time only — 409 if they exist)   |
-| PUT    | `/v2/account/mfa/recovery-codes`     | Regenerate/replace existing codes (404 if none exist)            |
-| GET    | `/v2/account/mfa/recovery-codes`     | View remaining recovery codes                                    |
-| POST   | `/v2/account/mfa/challenge`          | Create MFA challenge (email/phone/totp/recoveryCode)             |
-| PUT    | `/v2/account/mfa/challenge`          | Confirm MFA challenge, adds the factor to the current session    |
+| PATCH  | `/v2/account/mfa/recovery-codes`      | Generate recovery codes (first time only — 409 if they exist)   |
+| PUT    | `/v2/account/mfa/recovery-codes`      | Regenerate/replace existing codes (404 if none exist)           |
+| GET    | `/v2/account/mfa/recovery-codes`      | View remaining recovery codes                                   |
+| POST   | `/v2/account/mfa/challenge`           | Create MFA challenge (email/phone/totp/recoveryCode)            |
+| PUT    | `/v2/account/mfa/challenge`           | Confirm MFA challenge, adds the factor to the current session   |
 
 `type` on authenticator routes is fixed to `totp` in the path (v1 accepts a
 `:type` param validated `IsIn(['totp'])` — since TOTP is the only supported
@@ -295,7 +300,7 @@ nothing (client already holds the generator/codes). Confirm body:
 session's `factors` and the challenge is deleted (one-time use).
 
 **v2 fix — the MFA chicken-and-egg bug is closed.** v1's global
-minimum-factors gate (`ApiInterceptor`) blocks *every* request — including
+minimum-factors gate (`ApiInterceptor`) blocks _every_ request — including
 calls to the MFA challenge endpoints themselves — once
 `session.factors.length < minimumFactors`, with no carve-out for the very
 endpoints meant to satisfy that gate (the only escape hatch is an unused
@@ -313,16 +318,16 @@ convention), just never wired up.
 
 ## Endpoints — Recovery (`/v2/account/recovery`)
 
-| Method | Path                     | Purpose                                  |
-| ------ | -------------------------- | ------------------------------------------- |
-| POST   | `/v2/account/recovery`    | Create password-recovery token, email it     |
-| PUT    | `/v2/account/recovery`    | Confirm recovery (reset password)             |
+| Method | Path                   | Purpose                                  |
+| ------ | ---------------------- | ---------------------------------------- |
+| POST   | `/v2/account/recovery` | Create password-recovery token, email it |
+| PUT    | `/v2/account/recovery` | Confirm recovery (reset password)        |
 
 Guest-accessible (v1 parity). Create body: `{ email, url }` (`url`
 validated against allowed redirect hostnames). Blocked account →
 `401 user_blocked`. Confirm body: `{ userId, secret, password }`.
 
-**v2 fix**: v1 runs the password-history check on recovery-reset but *not*
+**v2 fix**: v1 runs the password-history check on recovery-reset but _not_
 the personal-data check (an inconsistency vs. `updatePassword`, which runs
 both) — v2 runs both checks on every password set, recovery included.
 **v2 fix, minor**: recovery confirm setting `emailVerification: true` as a
@@ -337,23 +342,24 @@ existence via response shape, only via timing which is out of scope here).
 
 ## Endpoints — Sessions & Tokens (`/v2/account/sessions`, `/v2/account/tokens`)
 
-| Method | Path                                   | Purpose                                          | Auth  |
-| ------ | ----------------------------------------- | --------------------------------------------------- | ----- |
-| GET    | `/v2/account/sessions`                    | List current user's sessions                          | SESSION\|JWT |
-| DELETE | `/v2/account/sessions`                    | Delete all sessions (logout everywhere)               | SESSION\|JWT |
-| GET    | `/v2/account/sessions/:sessionId`         | Get a session (`current` keyword supported)            | SESSION\|JWT |
-| DELETE | `/v2/account/sessions/:sessionId`         | Delete one session                                     | SESSION\|JWT |
-| PATCH  | `/v2/account/sessions/:sessionId`         | Refresh session (extend expiry; rotate OAuth2 token)   | SESSION\|JWT |
-| POST   | `/v2/account/sessions/email`              | Create session via email + password                    | guest, gate `emailPassword` |
-| POST   | `/v2/account/sessions/anonymous`          | Create anonymous session                                | guest, gate `anonymous` |
-| POST   | `/v2/account/sessions/token`              | Exchange a secret (magic-url/email-otp/phone-otp/oauth2/generic) for a session | guest |
-| GET    | `/v2/account/sessions/oauth2/:provider`   | Begin OAuth2 login (302 to provider)                    | guest |
-| GET    | `/v2/account/sessions/oauth2/:provider/callback` | OAuth2 token exchange + session/account creation | guest |
-| GET    | `/v2/account/tokens/oauth2/:provider`     | Begin OAuth2 login for a **token** (non-cookie) flow    | guest |
-| POST   | `/v2/account/tokens/magic-url`            | Create magic-URL login token, email it                  | guest, gate `magicUrl` |
-| POST   | `/v2/account/tokens/email`                | Create email-OTP login token                             | guest, gate `emailOtp` |
-| POST   | `/v2/account/tokens/phone`                | Create phone-OTP login token, send SMS                   | guest, gate `phone` |
-| POST   | `/v2/account/tokens/jwt`                  | **Mint a short-lived access token from the current session** | SESSION\|JWT |
+| Method | Path                                             | Purpose                                                                        | Auth                        |
+| ------ | ------------------------------------------------ | ------------------------------------------------------------------------------ | --------------------------- |
+| GET    | `/v2/account/sessions`                           | List current user's sessions                                                   | SESSION\|JWT                |
+| DELETE | `/v2/account/sessions`                           | Delete all sessions (logout everywhere)                                        | SESSION\|JWT                |
+| GET    | `/v2/account/sessions/:sessionId`                | Get a session (`current` keyword supported)                                    | SESSION\|JWT                |
+| DELETE | `/v2/account/sessions/:sessionId`                | Delete one session                                                             | SESSION\|JWT                |
+| PATCH  | `/v2/account/sessions/:sessionId`                | Refresh session (extend expiry; rotate OAuth2 token)                           | SESSION\|JWT                |
+| POST   | `/v2/account/sessions/email`                     | Create session via email + password                                            | guest, gate `emailPassword` |
+| POST   | `/v2/account/sessions/anonymous`                 | Create anonymous session                                                       | guest, gate `anonymous`     |
+| POST   | `/v2/account/sessions/token`                     | Exchange a secret (magic-url/email-otp/phone-otp/oauth2/generic) for a session | guest                       |
+| GET    | `/v2/account/sessions/oauth2/:provider`          | Begin OAuth2 login (302 to provider)                                           | guest                       |
+| GET    | `/v2/account/sessions/oauth2/:provider/callback` | OAuth2 token exchange + session/account creation                               | guest                       |
+| POST   | `/v2/account/sessions/oauth2/:provider/callback` | OAuth2 callback, form-encoded variant (Apple `response_mode=form_post`)        | guest                       |
+| GET    | `/v2/account/tokens/oauth2/:provider`            | Begin OAuth2 login for a **token** (non-cookie) flow                           | guest                       |
+| POST   | `/v2/account/tokens/magic-url`                   | Create magic-URL login token, email it                                         | guest, gate `magicUrl`      |
+| POST   | `/v2/account/tokens/email`                       | Create email-OTP login token                                                   | guest, gate `emailOtp`      |
+| POST   | `/v2/account/tokens/phone`                       | Create phone-OTP login token, send SMS                                         | guest, gate `phone`         |
+| POST   | `/v2/account/tokens/jwt`                         | **Mint a short-lived access token from the current session**                   | SESSION\|JWT                |
 
 **v2 simplification**: v1's OAuth2 flow has a callback endpoint that does
 nothing but 302-redirect to a second "redirect" endpoint with the same
@@ -361,10 +367,32 @@ params, because v1's per-project routing needed the extra hop. v2's routing
 is publishable-key-based, not path/subdomain-per-project, so the second hop
 serves no purpose — v2 collapses `callback` and `redirect` into one
 endpoint. No functional OAuth2 behavior changes; this is routing plumbing,
-not protocol behavior. `POST` on the callback path is dropped too (v1 kept
-it only in case a provider posts a form back instead of a query-string
-redirect — if a real provider integration needs it during implementation,
-it's re-added then, not sight-unseen here).
+not protocol behavior. The contract anticipated re-adding `POST` on the
+callback path "if a real provider integration needs it" — **it did**: Apple
+uses `response_mode=form_post`, so `POST /sessions/oauth2/:provider/callback`
+is implemented (query params and form body are merged, body wins).
+
+**v2 fix (v1 bug — default relay URLs failed validation)**: v1 validated the
+`state.success` URL against registered client platforms on the callback even
+when that URL was its own hosted relay page (`/auth/oauth2/success`) — which
+fails whenever the API host itself is not a registered _client_ platform.
+v2 exempts its own relay pages from the platform allow-list (custom
+success/failure URLs are still strictly validated against the project's
+platforms, as in v1).
+
+**Cookie + relay pages (v2 implementation note — supersedes the "no cookie
+mechanism" note below)**: the OAuth2 session flow sets the httpOnly session
+cookie (`nx_<NUVIX_COOKIE_NAME>`, domain/same-site/secure from
+`NUVIX_COOKIE_*` env) on the success redirect — the tenant context chain
+already parsed `nx_session`/`nc_session` cookies, so browser flows work
+without ever reading the JSON body. When no custom success URL is given, the
+browser lands on v2's own relay pages (unversioned, v1 parity):
+`GET /auth/oauth2/success` (postMessage `oauth-success` + auto-close) and
+`GET /auth/oauth2/failure` (renders the provider error). On the default
+success page v2 also appends `domain`/`key`/`secret` query params (v1
+parity) so the opener window can relay the credential cross-origin. The
+one-time JSON `secret` return (documented below) remains for non-browser
+clients.
 
 **v2 rename**: `POST /account/jwts` → `POST /v2/account/tokens/jwt`, grouped
 with the other `tokens/*` endpoints for consistency (they're all "exchange
@@ -405,12 +433,18 @@ this contract proposed):**
   as an httpOnly cookie for browser clients at creation time — v2 has no
   cookie mechanism, so the one-time JSON return is the sole delivery path;
   this is a real, deliberate deviation, not a detail v1 already does this
-  way). On every subsequent `list`/`get` of an *existing* session or token,
+  way). On every subsequent `list`/`get` of an _existing_ session or token,
   `secret` is included **only for privileged (admin/API key) callers** —
   exactly like v1's `@Expose({ groups: ['admin'] })` on `SessionModel`/
   `TokenModel`. A non-privileged caller re-listing their own sessions never
   sees it again (they already have it from creation); an admin/API key
   inspecting a user's sessions does, same as v1.
+  > **Update (OAuth2 slice)**: v2 does set the httpOnly session cookie for
+  > browser-facing OAuth2 flows now — see the OAuth2 section above (the
+  > tenant context chain already parsed `nx_session` cookies). The one-time
+  > JSON return remains the delivery path for non-browser clients, since
+  > session-create responses are JSON (not 302s) where no cookie side
+  > channel applies.
 - **OAuth2 provider token fields** (`providerAccessToken`,
   `providerAccessTokenExpiry`, `providerRefreshToken`) — **correction**: an
   earlier draft of this contract said v2 hides these entirely. That would
@@ -465,8 +499,7 @@ than silently minting an orphan anonymous session alongside a real login.
 ### `GET/PATCH/DELETE /v2/account/sessions/:sessionId`
 
 `:sessionId` accepts the literal `current` (v1 parity). **v2 improvement —
-concurrent session cap**: `project.limits.userSessionsMax` (default 10, cap
-100) is now actually enforced (v1 defines these config values but never
+concurrent session cap**: `project.limits.userSessionsMax` (default 10, cap 100) is now actually enforced (v1 defines these config values but never
 checks them anywhere). Creating a session beyond the cap evicts the
 **oldest** session for that user (LRU, same pattern as
 `packages/core/src/tenants/pool.ts`'s `TenantResourcePool`) rather than
@@ -475,7 +508,7 @@ bounding unbounded session growth.
 
 `PATCH` (refresh) extends `expire` and, for OAuth2-provider sessions,
 refreshes the provider's access token. **v2 fix**: v1 has a bug here — it
-overwrites *both* `providerAccessToken` and `providerRefreshToken` with the
+overwrites _both_ `providerAccessToken` and `providerRefreshToken` with the
 new access token (the real refresh token is silently dropped and never
 updated). v2 fixes this to update only the access token field and rotate
 the refresh token correctly when the provider returns one.
@@ -484,11 +517,11 @@ the refresh token correctly when the provider returns one.
 
 ## Endpoints — Targets (`/v2/account/targets`)
 
-| Method | Path                              | Purpose                    |
-| ------ | ----------------------------------- | ----------------------------- |
-| POST   | `/v2/account/targets/push`          | Register a push target for the current session |
-| PUT    | `/v2/account/targets/:targetId/push`| Update a push target's identifier                |
-| DELETE | `/v2/account/targets/:targetId/push`| Delete a push target                             |
+| Method | Path                                 | Purpose                                        |
+| ------ | ------------------------------------ | ---------------------------------------------- |
+| POST   | `/v2/account/targets/push`           | Register a push target for the current session |
+| PUT    | `/v2/account/targets/:targetId/push` | Update a push target's identifier              |
+| DELETE | `/v2/account/targets/:targetId/push` | Delete a push target                           |
 
 Session-only auth (v1 parity — JWT is not accepted here, since a push
 target is tied to a specific device/session, and a bare JWT carries no
@@ -505,44 +538,45 @@ required body field since there's no "current session" to derive it from).
 All errors are `AppError` subclasses per `_conventions.md` §3. Every code
 below is verified against what legacy actually throws (not assumed):
 
-| Status | Code | Trigger |
-| ------ | ---- | ------- |
-| 400 | `general_bad_request` | Identity/email conflicts requiring a generic (non-enumerating) response |
-| 422 | (validation) | malformed body/query — framework-native |
-| 503 | `general_smtp_disabled` | SMTP not configured for email verification/recovery/magic-url/email-OTP/email-MFA-challenge |
-| 503 | `general_phone_disabled` | SMS not configured for phone verification/phone-OTP/phone-MFA-challenge |
-| 429 | `general_rate_limit_exceeded` | email/password login lockout (5 failures / 10 min → 15 min lock) |
-| 404 | `user_not_found` | account/session/recovery/verification target missing |
-| 400 | `user_count_exceeded` | project user-count limit reached |
-| 409 | `user_already_exists` | duplicate account, or OAuth2 identity/email tied to a different account during session-upgrade linking |
-| 409 | `user_email_already_exists` | duplicate email (create, update-email, magic-url/email-otp signup) |
-| 409 | `user_phone_already_exists` | duplicate phone |
-| 401 | `user_blocked` | blocked account used for login, recovery, or self-delete |
-| 401 | `user_invalid_credentials` | wrong password |
-| 401 | `user_invalid_token` | expired/invalid/reused verification, recovery, magic-url, email-otp, phone-otp, or generic token |
-| 400 | `user_password_recently_used` | password matches `passwordHistory` |
-| 400 | `user_password_personal_data` | password contains id/email/name/phone |
-| 404 | `user_session_not_found` | unknown session id, or JWT minting with no resolvable session |
-| 404 | `user_identity_not_found` | unknown identity, or one not owned by the caller (v2 fix) |
-| 401 | `user_unauthorized` | OAuth2 provider returned no email and there's no session to match against |
-| 501 | `user_auth_method_unsupported` | the specific auth method is disabled at the project level |
-| 409 | `user_target_already_exists` | duplicate target identifier |
-| 404 | `user_target_not_found` | target missing or not owned by caller |
-| 400 | `user_phone_not_found` | phone verification/challenge with no phone set |
-| 401 | `user_phone_not_verified` | phone MFA challenge with unverified phone |
-| 409 | `user_phone_already_verified` | re-verifying an already-verified phone |
-| 400 | `user_email_not_found` | email MFA challenge with no email set |
-| 401 | `user_email_not_verified` | email MFA challenge with unverified email |
-| 409 | `user_email_already_verified` | re-verifying an already-verified email |
-| 404 | `user_authenticator_not_found` | unknown TOTP authenticator |
-| 409 | `user_authenticator_already_verified` | authenticator already verified |
-| 409 | `user_recovery_codes_already_exists` | generating codes when some exist |
-| 404 | `user_recovery_codes_not_found` | reading/regenerating when none exist |
-| 401 | `user_more_factors_required` | MFA gate — insufficient factors on the current session (challenge endpoints exempted, v2 fix) |
-| 424 | `user_oauth2_provider_error` | provider error, missing code, or token exchange failure |
-| 412 | `project_provider_disabled` | OAuth2 provider disabled/misconfigured at the project level |
-| 400 | `project_provider_unsupported` | provider not in the project's configured list |
-| 400 | `project_invalid_success_url` / `project_invalid_failure_url` | OAuth2 redirect URL fails the allow-list |
+| Status | Code                                                          | Trigger                                                                                                |
+| ------ | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 400    | `general_bad_request`                                         | Identity/email conflicts requiring a generic (non-enumerating) response                                |
+| 422    | (validation)                                                  | malformed body/query — framework-native                                                                |
+| 503    | `general_smtp_disabled`                                       | SMTP not configured for email verification/recovery/magic-url/email-OTP/email-MFA-challenge            |
+| 503    | `general_phone_disabled`                                      | SMS not configured for phone verification/phone-OTP/phone-MFA-challenge                                |
+| 429    | `general_rate_limit_exceeded`                                 | email/password login lockout (5 failures / 10 min → 15 min lock)                                       |
+| 404    | `user_not_found`                                              | account/session/recovery/verification target missing                                                   |
+| 400    | `user_count_exceeded`                                         | project user-count limit reached                                                                       |
+| 409    | `user_already_exists`                                         | duplicate account, or OAuth2 identity/email tied to a different account during session-upgrade linking |
+| 409    | `user_email_already_exists`                                   | duplicate email (create, update-email, magic-url/email-otp signup)                                     |
+| 409    | `user_phone_already_exists`                                   | duplicate phone                                                                                        |
+| 401    | `user_blocked`                                                | blocked account used for login, recovery, or self-delete                                               |
+| 401    | `user_invalid_credentials`                                    | wrong password                                                                                         |
+| 401    | `user_invalid_token`                                          | expired/invalid/reused verification, recovery, magic-url, email-otp, phone-otp, or generic token       |
+| 400    | `user_password_recently_used`                                 | password matches `passwordHistory`                                                                     |
+| 400    | `user_password_personal_data`                                 | password contains id/email/name/phone                                                                  |
+| 404    | `user_session_not_found`                                      | unknown session id, or JWT minting with no resolvable session                                          |
+| 404    | `user_identity_not_found`                                     | unknown identity, or one not owned by the caller (v2 fix)                                              |
+| 401    | `user_unauthorized`                                           | OAuth2 provider returned no email and there's no session to match against                              |
+| 400    | `user_missing_id`                                             | OAuth2 provider returned no user ID on the callback                                                    |
+| 501    | `user_auth_method_unsupported`                                | the specific auth method is disabled at the project level                                              |
+| 409    | `user_target_already_exists`                                  | duplicate target identifier                                                                            |
+| 404    | `user_target_not_found`                                       | target missing or not owned by caller                                                                  |
+| 400    | `user_phone_not_found`                                        | phone verification/challenge with no phone set                                                         |
+| 401    | `user_phone_not_verified`                                     | phone MFA challenge with unverified phone                                                              |
+| 409    | `user_phone_already_verified`                                 | re-verifying an already-verified phone                                                                 |
+| 400    | `user_email_not_found`                                        | email MFA challenge with no email set                                                                  |
+| 401    | `user_email_not_verified`                                     | email MFA challenge with unverified email                                                              |
+| 409    | `user_email_already_verified`                                 | re-verifying an already-verified email                                                                 |
+| 404    | `user_authenticator_not_found`                                | unknown TOTP authenticator                                                                             |
+| 409    | `user_authenticator_already_verified`                         | authenticator already verified                                                                         |
+| 409    | `user_recovery_codes_already_exists`                          | generating codes when some exist                                                                       |
+| 404    | `user_recovery_codes_not_found`                               | reading/regenerating when none exist                                                                   |
+| 401    | `user_more_factors_required`                                  | MFA gate — insufficient factors on the current session (challenge endpoints exempted, v2 fix)          |
+| 424    | `user_oauth2_provider_error`                                  | provider error, missing code, or token exchange failure                                                |
+| 412    | `project_provider_disabled`                                   | OAuth2 provider disabled/misconfigured at the project level                                            |
+| 400    | `project_provider_unsupported`                                | provider not in the project's configured list                                                          |
+| 400    | `project_invalid_success_url` / `project_invalid_failure_url` | OAuth2 redirect URL fails the allow-list                                                               |
 
 ---
 
@@ -590,10 +624,10 @@ See inline call-outs above for full detail; summarized here for review:
   document and in `users.md` — do not reimplement per endpoint.
 - OAuth2 provider integrations (Google/Apple/etc.) are themselves a
   separate, per-provider implementation slice — this contract fixes the
-  *shape* of the flow (begin/callback, linking rules, anti-hijack rule
+  _shape_ of the flow (begin/callback, linking rules, anti-hijack rule
   below) independent of which providers ship first.
 - **Anti-hijack rule preserved (v1 parity)**: if an OAuth2 email matches an
-  `identities.providerEmail` already tied to a *different* provider,
+  `identities.providerEmail` already tied to a _different_ provider,
   linking is refused with a generic `400 general_bad_request` (not
   `user_already_exists`) — deliberately non-specific to avoid confirming
   which case applies to an unauthenticated caller.

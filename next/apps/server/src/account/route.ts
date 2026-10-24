@@ -1,6 +1,7 @@
 import { Elysia } from 'elysia'
 import { accountIdentitiesRoutes } from './identities/routes'
 import { accountMfaRoutes } from './mfa/routes'
+import { type OAuth2RouteDeps, oauth2Routes } from './oauth2/routes'
 import { accountProfileRoutes } from './profile/routes'
 import { accountRecoveryRoutes } from './recovery/routes'
 import { accountSessionsRoutes } from './sessions/routes'
@@ -9,6 +10,8 @@ import { accountTokensRoutes } from './tokens/routes'
 
 export interface AccountRoutesOptions {
   jwtSecret?: string
+  /** OAuth2 flow dependencies (control-plane registry + encryption key). */
+  oauth2?: OAuth2RouteDeps
 }
 
 export const accountRoutes = (options: AccountRoutesOptions = {}) =>
@@ -20,3 +23,8 @@ export const accountRoutes = (options: AccountRoutesOptions = {}) =>
     .use(accountIdentitiesRoutes())
     .use(accountTargetsRoutes())
     .use(accountMfaRoutes())
+    .use(
+      options.oauth2
+        ? oauth2Routes(options.oauth2)
+        : new Elysia({ name: 'account-oauth2-disabled' }),
+    )

@@ -9,6 +9,7 @@
     "./config": "./src/config/index.ts",
     "./db": "./src/db/index.ts",
     "./errors": "./src/errors.ts",
+    "./oauth": "./src/oauth/index.ts",
     "./platform": "./src/platform/index.ts",
     "./queues": "./src/queues/index.ts",
     "./tenant-auth": "./src/tenant-auth/index.ts",

@@ -1,4 +1,5 @@
 import type { Database, Doc } from '@nuvix/db'
+import { Query } from '@nuvix/db'
 import type { TenantTarget } from '../tenants'
 
 interface ProjectRecord {
@@ -7,9 +8,32 @@ interface ProjectRecord {
   target?: TenantTarget
 }
 
+export interface OAuthProviderInfo {
+  /** Stable provider key (e.g. `google`, `apple`). */
+  key: string
+  appId?: string
+  /** Secret blob as stored (may be encrypted at rest; decrypted by callers). */
+  secret?: string
+  enabled?: boolean
+}
+
+export interface PlatformInfo {
+  type?: string
+  hostname?: string | null
+  key?: string | null
+}
+
 export interface ResolvedProject {
   id: string
   target: TenantTarget
+  /**
+   * Control-plane extras the project-facing server needs per request:
+   * OAuth provider credentials (secrets stay as stored — decrypt with the
+   * platform encryption key before use) and registered client platforms
+   * (redirect/origin validation). Kept narrow on purpose.
+   */
+  providers?: OAuthProviderInfo[]
+  platforms?: PlatformInfo[]
 }
 
 interface KeyRecord {
@@ -44,6 +68,74 @@ export class ProjectRegistry {
     const data = project.toObject()
     if (data.status !== 'active' || !data.target) return null
     return { id: project.getId(), target: data.target }
+  }
+
+  /**
+   * OAuth2 provider credentials configured for a project (control-plane
+   * read). Secrets are returned as stored — decrypt with the platform
+   * encryption key before use. Only the account OAuth2 flow reads this.
+   */
+  async getOAuthProviders(projectId: string): Promise<OAuthProviderInfo[]> {
+    try {
+      const project = await this.db.system().getDocument('projects', projectId)
+      if (project.empty()) return []
+      return this.resolveProviders(project.toObject())
+    } catch {
+      return []
+    }
+  }
+
+  /**
+   * Registered client platforms for a project (control-plane read), used for
+   * redirect/origin validation. Best-effort: a missing collection (older
+   * control-plane databases) degrades to an empty list instead of failing.
+   */
+  async getPlatforms(projectId: string): Promise<PlatformInfo[]> {
+    try {
+      const project = await this.db.system().getDocument('projects', projectId)
+      if (project.empty()) return []
+      const sequence = project.getSequence()
+      if (!sequence) return []
+      const rows = await this.db
+        .system()
+        .find('platforms', [Query.equal('projectInternalId', [sequence])])
+      return rows.map((row) => ({
+        type: row.get('type') ? String(row.get('type')) : undefined,
+        hostname: row.get('hostname') ? String(row.get('hostname')) : null,
+        key: row.get('key') ? String(row.get('key')) : null,
+      }))
+    } catch {
+      return []
+    }
+  }
+
+  /**
+   * Per-project auth settings (`projects.auths` record) — session duration,
+   * user-count limit, feature gates. Narrow read for account flows.
+   */
+  async getAuthSettings(projectId: string): Promise<Record<string, unknown> | undefined> {
+    try {
+      const project = await this.db.system().getDocument('projects', projectId)
+      if (project.empty()) return undefined
+      const auths = project.get('auths')
+      return auths && typeof auths === 'object' ? (auths as Record<string, unknown>) : undefined
+    } catch {
+      return undefined
+    }
+  }
+
+  private resolveProviders(data: { oAuthProviders?: unknown }): OAuthProviderInfo[] {
+    const raw = data.oAuthProviders
+    if (!Array.isArray(raw)) return []
+    return raw.map((entry) => {
+      const p = entry as Record<string, unknown>
+      return {
+        key: String(p.key ?? ''),
+        appId: p.appId ? String(p.appId) : undefined,
+        secret: p.secret ? String(p.secret) : undefined,
+        enabled: Boolean(p.enabled),
+      }
+    })
   }
 }
 

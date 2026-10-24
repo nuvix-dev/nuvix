@@ -1,0 +1,15 @@
+<!-- error.hbs -->
+<div class="icon-ring error">
+    <svg viewBox="0 0 24 24" fill="none">
+        <circle cx="12" cy="12" r="11" stroke="#ea4335" stroke-width="1.5" />
+        <path d="M8 8l8 8M16 8l-8 8" stroke="#ea4335" stroke-width="2" stroke-linecap="round" />
+    </svg>
+</div>
+
+<h1 class="heading">Sign-in failed</h1>
+{{#if error}}
+<p class="subtext">{{error.message}}</p>
+<p class="subtext small">Type: <strong>{{error.type}}</strong>, Code: <strong>{{error.code}}</strong></p>
+{{else}}
+<p class="subtext">Unknown error</p>
+{{/if}}

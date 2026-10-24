@@ -17,12 +17,19 @@ import type {
 import { signJwt } from '../../utils/jwt'
 import { formatSession, formatToken, type SessionView, type TokenView } from '../formatter'
 
+/**
+ * Token type codes — 1:1 with legacy `TokenType` enum (public API surface:
+ * the `type` field appears in token responses, so values must not drift).
+ */
 export const TokenType = {
-  VERIFICATION: 1,
-  PHONE: 2,
+  VERIFICATION: 2,
   RECOVERY: 3,
-  MAGIC_URL: 4,
-  EMAIL_OTP: 5,
+  INVITE: 4,
+  MAGIC_URL: 5,
+  PHONE: 6,
+  OAUTH2: 7,
+  GENERIC: 8,
+  EMAIL: 9,
 } as const
 
 export interface CreateEmailSessionInput {
@@ -67,10 +74,16 @@ export interface SessionResult {
   userId: string
 }
 
+export interface AccountSessionsOptions {
+  /** Rotates upstream provider tokens on OAuth2 sessions during PATCH. */
+  refreshOAuth2?: (session: SessionsDoc) => Promise<void>
+}
+
 export class AccountSessionsService {
   constructor(
     private readonly session: Session,
     private readonly jwtSecret?: string,
+    private readonly options?: AccountSessionsOptions,
   ) {}
 
   async getSessions(
@@ -98,12 +111,16 @@ export class AccountSessionsService {
   ): Promise<SessionView> {
     const targetId = sessionId === 'current' ? currentSessionId : sessionId
     if (!targetId) {
-      throw new NotFoundError('Session not found', { code: 'user_session_not_found' })
+      throw new NotFoundError('Session not found', {
+        code: 'user_session_not_found',
+      })
     }
 
     const doc = (await this.session.getDocument('sessions', targetId)) as SessionsDoc
     if (doc.empty() || doc.get('userId') !== userId) {
-      throw new NotFoundError('Session not found', { code: 'user_session_not_found' })
+      throw new NotFoundError('Session not found', {
+        code: 'user_session_not_found',
+      })
     }
 
     const view = formatSession(doc)
@@ -114,12 +131,16 @@ export class AccountSessionsService {
   async deleteSession(userId: string, sessionId: string, currentSessionId?: string): Promise<void> {
     const targetId = sessionId === 'current' ? currentSessionId : sessionId
     if (!targetId) {
-      throw new NotFoundError('Session not found', { code: 'user_session_not_found' })
+      throw new NotFoundError('Session not found', {
+        code: 'user_session_not_found',
+      })
     }
 
     const doc = (await this.session.getDocument('sessions', targetId)) as SessionsDoc
     if (doc.empty() || doc.get('userId') !== userId) {
-      throw new NotFoundError('Session not found', { code: 'user_session_not_found' })
+      throw new NotFoundError('Session not found', {
+        code: 'user_session_not_found',
+      })
     }
 
     await this.session.deleteDocument('sessions', targetId)
@@ -142,16 +163,27 @@ export class AccountSessionsService {
   ): Promise<SessionView> {
     const targetId = sessionId === 'current' ? currentSessionId : sessionId
     if (!targetId) {
-      throw new NotFoundError('Session not found', { code: 'user_session_not_found' })
+      throw new NotFoundError('Session not found', {
+        code: 'user_session_not_found',
+      })
     }
 
     const doc = (await this.session.getDocument('sessions', targetId)) as SessionsDoc
     if (doc.empty() || doc.get('userId') !== userId) {
-      throw new NotFoundError('Session not found', { code: 'user_session_not_found' })
+      throw new NotFoundError('Session not found', {
+        code: 'user_session_not_found',
+      })
     }
 
     const newExpire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_LOGIN_LONG * 1000)
     doc.set('expire', newExpire)
+
+    // OAuth2 sessions: rotate the upstream provider tokens while refreshing
+    // (contract §PATCH — v2 fix for v1's refresh-token overwrite bug).
+    if (this.options?.refreshOAuth2) {
+      await this.options.refreshOAuth2(doc)
+    }
+
     const updated = (await this.session.updateDocument('sessions', targetId, doc)) as SessionsDoc
 
     const view = formatSession(updated)
@@ -295,11 +327,13 @@ export class AccountSessionsService {
 
     const verified = Auth.tokenVerify(tokens, null, input.secret)
     if (!verified) {
-      throw new BadRequestError('Invalid token', { code: 'user_invalid_token' })
+      throw new BadRequestError('Invalid token', {
+        code: 'user_invalid_token',
+      })
     }
 
     const tokenType = verified.get('type')
-    if (tokenType === TokenType.MAGIC_URL || tokenType === TokenType.EMAIL_OTP) {
+    if (tokenType === TokenType.MAGIC_URL || tokenType === TokenType.EMAIL) {
       user.set('emailVerification', true)
       await this.session.updateDocument('users', user.getId(), user)
     } else if (tokenType === TokenType.PHONE) {
@@ -453,7 +487,7 @@ export class AccountSessionsService {
         ],
         userId: user.getId(),
         userInternalId: user.getSequence(),
-        type: TokenType.EMAIL_OTP,
+        type: TokenType.EMAIL,
         secret: Auth.hash(secret),
         expire,
         userAgent: input.userAgent ?? 'UNKNOWN',
@@ -528,7 +562,9 @@ export class AccountSessionsService {
 
   async createJWT(userId: string, sessionId?: string): Promise<{ jwt: string }> {
     if (!this.jwtSecret) {
-      throw new BadRequestError('JWT is not configured', { code: 'jwt_disabled' })
+      throw new BadRequestError('JWT is not configured', {
+        code: 'jwt_disabled',
+      })
     }
     const token = await signJwt({ sub: userId, sid: sessionId }, this.jwtSecret, 900)
     return { jwt: token }

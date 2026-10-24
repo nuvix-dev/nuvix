@@ -6,6 +6,8 @@ export {
 } from './database'
 export {
   KeyRegistry,
+  type OAuthProviderInfo,
+  type PlatformInfo,
   ProjectRegistry,
   type ResolvedApiKey,
   type ResolvedProject,
