@@ -39,6 +39,7 @@ describe('Users Routes', () => {
   const targetsMap = new Map<string, Doc>()
   const sessionsMap = new Map<string, Doc>()
   const identitiesMap = new Map<string, Doc>()
+  const auditMap = new Map<string, Doc>()
 
   const mockSession = {
     find: async (collection: string, _queries: unknown[] = []) => {
@@ -46,6 +47,7 @@ describe('Users Routes', () => {
       if (collection === 'targets') return [...targetsMap.values()]
       if (collection === 'sessions') return [...sessionsMap.values()]
       if (collection === 'identities') return [...identitiesMap.values()]
+      if (collection === 'audit') return [...auditMap.values()].reverse()
       return []
     },
     findOne: async (collection: string, queries: Array<{ values?: string[] }> = []) => {
@@ -66,13 +68,17 @@ describe('Users Routes', () => {
       if (collection === 'targets') return targetsMap.get(id) ?? new Doc({})
       if (collection === 'sessions') return sessionsMap.get(id) ?? new Doc({})
       if (collection === 'identities') return identitiesMap.get(id) ?? new Doc({})
+      if (collection === 'audit') return auditMap.get(id) ?? new Doc({})
       return new Doc({})
     },
     createDocument: async (collection: string, doc: Doc) => {
+      if (collection === 'users' && doc.get('$sequence') === undefined)
+        doc.set('$sequence', usersMap.size + 1)
       if (collection === 'users') usersMap.set(doc.getId(), doc)
       if (collection === 'targets') targetsMap.set(doc.getId(), doc)
       if (collection === 'sessions') sessionsMap.set(doc.getId(), doc)
       if (collection === 'identities') identitiesMap.set(doc.getId(), doc)
+      if (collection === 'audit') auditMap.set(doc.getId(), doc)
       return doc
     },
     updateDocument: async (collection: string, id: string, doc: Doc) => {
@@ -93,6 +99,7 @@ describe('Users Routes', () => {
       if (collection === 'targets') return targetsMap.size
       if (collection === 'sessions') return sessionsMap.size
       if (collection === 'identities') return identitiesMap.size
+      if (collection === 'audit') return auditMap.size
       return 0
     },
   } as unknown as Session
@@ -216,6 +223,52 @@ describe('Users Routes', () => {
 
     const getRes = await testApp.handle(new Request('http://localhost/users/user_test_1'))
     expect(getRes.status).toBe(404)
+  })
+
+  it('lists user activity logs via GET /users/:userId/logs (v1 parity)', async () => {
+    await mockSession.createDocument(
+      'users',
+      new Doc({ $id: 'user_logs_1', email: 'logs@example.com' }),
+    )
+    await mockSession.createDocument(
+      'audit',
+      new Doc({
+        $id: 'log_1',
+        userId: 5,
+        event: 'session.create',
+        resource: 'user/user_logs_1',
+        userAgent: 'Mozilla/5.0 (Macintosh) Chrome/128.0',
+        ip: '203.0.113.4',
+        time: new Date().toISOString(),
+        data: { userId: 'user_logs_1', userEmail: 'logs@example.com', userName: 'Logger' },
+      }),
+    )
+
+    const res = await testApp.handle(new Request('http://localhost/users/user_logs_1/logs'))
+    expect(res.status).toBe(200)
+    const data = (await res.json()) as {
+      total: number
+      logs: Array<{
+        event: string
+        osName: string
+        clientName: string
+        countryName: string
+      }>
+    }
+    expect(data.total).toBe(1)
+    expect(data.logs[0]!.event).toBe('session.create')
+    // UA detection applied (Detector on the stored user-agent)
+    expect(data.logs[0]!.osName).toBe('macOS')
+    expect(data.logs[0]!.clientName).toBe('Chrome')
+    // No geoip provider wired in tests → country degrades gracefully
+    expect(data.logs[0]!.countryName).toBe('Unknown')
+  })
+
+  it('returns 404 user_not_found for logs of an unknown user', async () => {
+    const res = await testApp.handle(new Request('http://localhost/users/user_missing/logs'))
+    expect(res.status).toBe(404)
+    const body = (await res.json()) as { code?: string }
+    expect(body.code).toBe('user_not_found')
   })
 
   it('returns user usage statistics via GET /users/usage', async () => {

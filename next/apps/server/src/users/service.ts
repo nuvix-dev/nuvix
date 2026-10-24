@@ -1,3 +1,4 @@
+import { AuditService } from '@nuvix/core/audit'
 import { hashPassword } from '@nuvix/core/auth'
 import { Doc, ID, Permission, Query, Role, type Session } from '@nuvix/db'
 import { formatIdentity, type IdentityView } from '../account/formatter'
@@ -12,6 +13,7 @@ import type {
   Users,
   UsersDoc,
 } from '../types/generated'
+import { Detector } from '../utils/detector'
 import { signJwt } from '../utils/jwt'
 import {
   formatMembership,
@@ -21,6 +23,7 @@ import {
   type TokenView,
   type UserView,
 } from './formatter'
+import type { LogView } from './logs-view'
 
 export interface CreateUserInput {
   userId?: string
@@ -466,6 +469,71 @@ export class UsersService {
     }
 
     return { status: 'success' }
+  }
+
+  /**
+   * Activity logs for a user (admin) — v1 parity: reads the `audit`
+   * collection by the user's internal sequence and decorates each log with
+   * detected UA fields + geoip country + localized country name.
+   */
+  async getLogs(
+    userId: string,
+    locale: { raw(key: string): string | null; format(key: string): string },
+    queries: Query[] = [],
+    geoip?: { lookup(ip: string): { countryCode?: string } | null },
+  ): Promise<{ total: number; logs: LogView[] }> {
+    const userDoc = (await this.session.getDocument('users', userId)) as UsersDoc
+    if (userDoc.empty()) {
+      throw new NotFoundError('User not found', { code: 'user_not_found' })
+    }
+
+    const audit = new AuditService(this.session)
+    const logs = await audit.getLogsByUser(userDoc.getSequence(), queries)
+    const total = await audit.countLogsByUser(userDoc.getSequence())
+
+    const output: LogView[] = logs.map((log) => {
+      const data = (log.get('data') ?? {}) as Record<string, unknown>
+      const userAgent = String(log.get('userAgent') ?? 'UNKNOWN')
+      const detector = new Detector(userAgent)
+      const os = detector.getOS()
+      const client = detector.getClient()
+      const device = detector.getDevice()
+
+      const ip = String(log.get('ip') ?? '')
+      const countryCode = geoip?.lookup(ip)?.countryCode
+      const key = `countries.${(countryCode ?? '').toLowerCase()}`
+      const countryName =
+        countryCode && locale.raw(key) !== null
+          ? locale.format(key)
+          : locale.raw('locale.country.unknown') !== null
+            ? locale.format('locale.country.unknown')
+            : 'Unknown'
+
+      return {
+        event: String(log.get('event') ?? ''),
+        userId: String(data.userId ?? ''),
+        userEmail: data.userEmail ? String(data.userEmail) : null,
+        userName: data.userName ? String(data.userName) : null,
+        ip,
+        time: log.get('time') ? String(log.get('time')) : '',
+        osCode: os.osCode,
+        osName: os.osName,
+        osVersion: os.osVersion,
+        clientType: client.clientType,
+        clientCode: client.clientCode,
+        clientName: client.clientName,
+        clientVersion: client.clientVersion,
+        clientEngine: client.clientEngine,
+        clientEngineVersion: client.clientEngineVersion,
+        deviceName: device.deviceName,
+        deviceBrand: device.deviceBrand,
+        deviceModel: device.deviceModel,
+        countryCode,
+        countryName,
+      }
+    })
+
+    return { total, logs: output }
   }
 
   async createJwt(

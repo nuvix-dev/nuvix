@@ -1,7 +1,9 @@
 import type { Doc, Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
+import { auditAfter } from '../../plugins/audit'
 import type { Users } from '../../types/generated'
 import { requireAuth } from '../auth'
+
 import { AccountService } from './service'
 
 export const accountProfileRoutes = () =>
@@ -28,6 +30,7 @@ export const accountProfileRoutes = () =>
           password: t.String({ minLength: 8, description: 'User password (minimum 8 characters)' }),
           name: t.Optional(t.String({ maxLength: 128, description: 'User display name' })),
         }),
+        afterHandle: auditAfter({ event: 'user.create', resource: 'user/{res.$id}' }),
       },
       async ({ db, body }) => {
         const service = new AccountService(db)
@@ -67,6 +70,7 @@ export const accountProfileRoutes = () =>
             status: t.Literal('ok', { description: 'Operation status confirmation' }),
           }),
         },
+        afterHandle: auditAfter({ event: 'user.delete', resource: 'user/{user.$id}' }),
       },
       async ({ db, user }) => {
         const userId = requireAuth(user)
@@ -107,6 +111,7 @@ export const accountProfileRoutes = () =>
             description: 'Custom key-value user preferences',
           }),
         }),
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, user, body }) => {
         const userId = requireAuth(user)
@@ -127,6 +132,7 @@ export const accountProfileRoutes = () =>
         body: t.Object({
           name: t.String({ minLength: 1, maxLength: 128, description: 'New user display name' }),
         }),
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, user, body }) => {
         const userId = requireAuth(user)
@@ -152,6 +158,7 @@ export const accountProfileRoutes = () =>
             }),
           ),
         }),
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, user, body }) => {
         const userId = requireAuth(user)
@@ -173,6 +180,7 @@ export const accountProfileRoutes = () =>
           email: t.String({ format: 'email', description: 'New user email address' }),
           password: t.Optional(t.String({ description: 'Current password for verification' })),
         }),
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, user, body }) => {
         const userId = requireAuth(user)
@@ -194,6 +202,7 @@ export const accountProfileRoutes = () =>
           phone: t.String({ description: 'New phone number in E.164 format' }),
           password: t.Optional(t.String({ description: 'Current password for verification' })),
         }),
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, user, body }) => {
         const userId = requireAuth(user)
@@ -211,6 +220,7 @@ export const accountProfileRoutes = () =>
           description: 'Block or unblock the user account.',
           tags: ['Account Profile'],
         },
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, user }) => {
         const userId = requireAuth(user)
@@ -235,6 +245,7 @@ export const accountProfileRoutes = () =>
             ),
           }),
         ),
+        afterHandle: auditAfter({ event: 'verification.create', resource: 'user/{res.$id}' }),
       },
       async ({ db, user, body }) => {
         const userId = requireAuth(user)
@@ -257,6 +268,7 @@ export const accountProfileRoutes = () =>
             ),
           }),
         ),
+        afterHandle: auditAfter({ event: 'verification.create', resource: 'user/{res.$id}' }),
       },
       async ({ db, user, body }) => {
         const userId = requireAuth(user)
@@ -278,6 +290,7 @@ export const accountProfileRoutes = () =>
           userId: t.String({ description: 'User ID associated with the token' }),
           secret: t.String({ description: 'Verification secret token' }),
         }),
+        afterHandle: auditAfter({ event: 'verification.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, body }) => {
         const service = new AccountService(db)
@@ -296,6 +309,7 @@ export const accountProfileRoutes = () =>
           userId: t.String({ description: 'User ID associated with the token' }),
           secret: t.String({ description: 'Verification secret token' }),
         }),
+        afterHandle: auditAfter({ event: 'verification.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, body }) => {
         const service = new AccountService(db)
@@ -312,6 +326,7 @@ export const accountProfileRoutes = () =>
           description: 'Generate SMS verification OTP and send to user phone.',
           tags: ['Account Verification'],
         },
+        afterHandle: auditAfter({ event: 'verification.create', resource: 'user/{res.$id}' }),
       },
       async ({ db, user }) => {
         const userId = requireAuth(user)
@@ -327,6 +342,7 @@ export const accountProfileRoutes = () =>
           description: 'Alias for POST /account/verification/phone.',
           tags: ['Account Verification'],
         },
+        afterHandle: auditAfter({ event: 'verification.create', resource: 'user/{res.$id}' }),
       },
       async ({ db, user }) => {
         const userId = requireAuth(user)
@@ -348,6 +364,7 @@ export const accountProfileRoutes = () =>
           userId: t.String({ description: 'User ID associated with the OTP' }),
           secret: t.String({ description: 'SMS OTP verification secret' }),
         }),
+        afterHandle: auditAfter({ event: 'verification.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, body }) => {
         const service = new AccountService(db)
@@ -366,6 +383,7 @@ export const accountProfileRoutes = () =>
           userId: t.String({ description: 'User ID associated with the OTP' }),
           secret: t.String({ description: 'SMS OTP verification secret' }),
         }),
+        afterHandle: auditAfter({ event: 'verification.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, body }) => {
         const service = new AccountService(db)

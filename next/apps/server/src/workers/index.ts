@@ -1,6 +1,28 @@
 import { QueueFor } from '@nuvix/utils'
 import { type ConnectionOptions, Worker } from 'bullmq'
 
+/**
+ * Parses a Redis URL (`redis://[:password@]host[:port][/db]`) into BullMQ
+ * connection options. Missing/invalid input yields no port/host overrides —
+ * BullMQ defaults apply (localhost:6379, db 0).
+ */
+export function parseRedisUrl(raw: string): ConnectionOptions {
+  try {
+    const url = new URL(raw)
+    const options: ConnectionOptions = {
+      host: url.hostname || undefined,
+      port: url.port ? Number(url.port) : undefined,
+    }
+    if (url.username && url.username !== 'default') options.username = url.username
+    if (url.password) options.password = url.password
+    const db = Number(url.pathname.replace('/', ''))
+    if (Number.isInteger(db) && db >= 0) options.db = db
+    return options
+  } catch {
+    return {}
+  }
+}
+
 export interface QueueWorkers {
   deletesWorker: Worker
   mailsWorker: Worker

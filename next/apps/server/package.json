@@ -24,7 +24,8 @@
     "ioredis": "^6.0.0",
     "maxmind": "^5.0.6",
     "qrcode": "^1.5.4",
-    "handlebars": "^4.7.8"
+    "handlebars": "^4.7.8",
+    "ua-parser-js": "^2.0.5"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",

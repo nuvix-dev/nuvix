@@ -1,5 +1,6 @@
 import type { Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
+import { auditAfter } from '../../plugins/audit'
 import { AccountRecoveryService } from './service'
 
 export const accountRecoveryRoutes = () =>
@@ -30,6 +31,10 @@ export const accountRecoveryRoutes = () =>
             }),
           ),
         }),
+        afterHandle: auditAfter({
+          event: 'recovery.create',
+          resource: 'user/{res.userId}',
+        }),
       },
       async ({ db, body }) => {
         const service = new AccountRecoveryService(db)
@@ -47,9 +52,18 @@ export const accountRecoveryRoutes = () =>
           tags: ['Account Recovery'],
         },
         body: t.Object({
-          userId: t.String({ description: 'User ID associated with the recovery token' }),
+          userId: t.String({
+            description: 'User ID associated with the recovery token',
+          }),
           secret: t.String({ description: 'Recovery token secret' }),
-          password: t.String({ minLength: 8, description: 'New password for the account' }),
+          password: t.String({
+            minLength: 8,
+            description: 'New password for the account',
+          }),
+        }),
+        afterHandle: auditAfter({
+          event: 'recovery.update',
+          resource: 'user/{res.userId}',
         }),
       },
       async ({ db, body }) => {

@@ -124,6 +124,24 @@ export class ProjectRegistry {
     }
   }
 
+  /**
+   * Tenant connection target for a project id — queue workers resolve
+   * tenant databases from job payloads carrying only a project id.
+   */
+  async getProjectTarget(projectId: string): Promise<{ id: string; target: TenantTarget } | null> {
+    try {
+      const project = await this.db.system().getDocument('projects', projectId)
+      if (project.empty()) return null
+      const data = project.toObject() as ProjectRecord & {
+        target?: TenantTarget
+      }
+      if (!data.target) return null
+      return { id: project.getId(), target: data.target }
+    } catch {
+      return null
+    }
+  }
+
   private resolveProviders(data: { oAuthProviders?: unknown }): OAuthProviderInfo[] {
     const raw = data.oAuthProviders
     if (!Array.isArray(raw)) return []

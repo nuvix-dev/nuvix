@@ -1,5 +1,6 @@
 import type { Doc, Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
+import { auditAfter } from '../../plugins/audit'
 import type { Sessions, Users } from '../../types/generated'
 import { requireAuth } from '../auth'
 import { AccountSessionsService } from '../sessions/service'
@@ -28,6 +29,7 @@ export const accountTokensRoutes = (options: { jwtSecret?: string } = {}) =>
             t.String({ format: 'uri', description: 'Redirect URL callback containing token' }),
           ),
         }),
+        afterHandle: auditAfter({ event: 'session.create', resource: 'user/{res.userId}' }),
       },
       async ({ db, body }) => {
         const service = new AccountSessionsService(db, options.jwtSecret)
@@ -48,6 +50,7 @@ export const accountTokensRoutes = (options: { jwtSecret?: string } = {}) =>
           userId: t.Optional(t.String({ description: 'User ID if pre-determined' })),
           email: t.String({ format: 'email', description: 'Destination user email address' }),
         }),
+        afterHandle: auditAfter({ event: 'session.create', resource: 'user/{res.userId}' }),
       },
       async ({ db, body }) => {
         const service = new AccountSessionsService(db, options.jwtSecret)
@@ -68,6 +71,7 @@ export const accountTokensRoutes = (options: { jwtSecret?: string } = {}) =>
           userId: t.Optional(t.String({ description: 'User ID if pre-determined' })),
           phone: t.String({ description: 'Phone number in E.164 format' }),
         }),
+        afterHandle: auditAfter({ event: 'session.create', resource: 'user/{res.userId}' }),
       },
       async ({ db, body }) => {
         const service = new AccountSessionsService(db, options.jwtSecret)

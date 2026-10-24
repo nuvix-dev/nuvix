@@ -1,11 +1,15 @@
 import { Query, type Session } from '@nuvix/db'
+import type { Translator } from '@nuvix/i18n'
 import { Elysia, t } from 'elysia'
+import { auditAfter } from '../plugins/audit'
+import type { UserRoutesOptions } from './route'
 import { UsersService } from './service'
 
-export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
+export const userCoreRoutes = (options: UserRoutesOptions = {}) =>
   new Elysia()
     .derive('plugin', (ctx) => ({
       db: ('db' in ctx ? ctx.db : undefined) as unknown as Session,
+      locale: ('locale' in ctx ? ctx.locale : undefined) as unknown as Translator | undefined,
     }))
 
     // 1. List users
@@ -92,6 +96,7 @@ export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
             }),
           ),
         }),
+        afterHandle: auditAfter({ event: 'user.create', resource: 'user/{res.$id}' }),
       },
       async ({ db, body }) => {
         const service = new UsersService(db, options.jwtSecret)
@@ -137,6 +142,7 @@ export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
             }),
           ),
         }),
+        afterHandle: auditAfter({ event: 'user.create', resource: 'user/{res.$id}' }),
       },
       async ({ db, body }) => {
         const service = new UsersService(db, options.jwtSecret)
@@ -182,6 +188,7 @@ export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
             }),
           ),
         }),
+        afterHandle: auditAfter({ event: 'user.create', resource: 'user/{res.$id}' }),
       },
       async ({ db, body }) => {
         const service = new UsersService(db, options.jwtSecret)
@@ -269,11 +276,57 @@ export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
             }),
           }),
         },
+        afterHandle: auditAfter({ event: 'identity.delete', resource: 'user/{user.$id}' }),
       },
       async ({ db, params: { identityId } }) => {
         const service = new UsersService(db, options.jwtSecret)
         await service.deleteIdentity(identityId)
         return { status: 'success' as const }
+      },
+    )
+
+    // 5d. User activity logs (admin) — must precede /:userId (v1 parity)
+    .get(
+      '/:userId/logs',
+      {
+        detail: {
+          summary: 'List user activity logs',
+          description:
+            "Retrieve the user's audit trail (account and session events) with detected client/OS/device info and country.",
+          tags: ['Users Core'],
+        },
+        params: t.Object({
+          userId: t.String({ description: 'Unique user identifier' }),
+        }),
+        query: t.Object({
+          limit: t.Optional(
+            t.String({
+              description: 'Maximum number of logs to return',
+              pattern: '^[0-9]+$',
+            }),
+          ),
+          offset: t.Optional(
+            t.String({
+              description: 'Number of logs to skip',
+              pattern: '^[0-9]+$',
+            }),
+          ),
+        }),
+      },
+      async ({ db, locale: translator, params: { userId }, query }) => {
+        const service = new UsersService(db, options.jwtSecret)
+        const queries: Query[] = []
+        if (query.limit) queries.push(Query.limit(Number(query.limit)))
+        if (query.offset) queries.push(Query.offset(Number(query.offset)))
+        return service.getLogs(
+          userId,
+          translator ?? {
+            raw: () => null,
+            format: () => 'Unknown',
+          },
+          queries,
+          options.geoip,
+        )
       },
     )
 
@@ -316,6 +369,7 @@ export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
             }),
           }),
         },
+        afterHandle: auditAfter({ event: 'user.delete', resource: 'user/{params.userId}' }),
       },
       async ({ db, params: { userId } }) => {
         const service = new UsersService(db, options.jwtSecret)
@@ -340,6 +394,7 @@ export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
             description: 'User active status: true to activate/enable, false to suspend/block',
           }),
         }),
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, params: { userId }, body }) => {
         const service = new UsersService(db, options.jwtSecret)
@@ -364,6 +419,7 @@ export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
             description: 'New full display name for the user',
           }),
         }),
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, params: { userId }, body }) => {
         const service = new UsersService(db, options.jwtSecret)
@@ -390,6 +446,7 @@ export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
             format: 'email',
           }),
         }),
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, params: { userId }, body }) => {
         const service = new UsersService(db, options.jwtSecret)
@@ -415,6 +472,7 @@ export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
             description: 'New phone number in international E.164 format',
           }),
         }),
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, params: { userId }, body }) => {
         const service = new UsersService(db, options.jwtSecret)
@@ -440,6 +498,7 @@ export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
             minLength: 8,
           }),
         }),
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, params: { userId }, body }) => {
         const service = new UsersService(db, options.jwtSecret)
@@ -470,6 +529,7 @@ export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
             },
           ),
         }),
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, params: { userId }, body }) => {
         const service = new UsersService(db, options.jwtSecret)
@@ -495,6 +555,7 @@ export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
             description: 'Whether the email is verified (true) or unverified (false)',
           }),
         }),
+        afterHandle: auditAfter({ event: 'verification.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, params: { userId }, body }) => {
         const service = new UsersService(db, options.jwtSecret)
@@ -520,6 +581,7 @@ export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
             description: 'Whether the phone number is verified (true) or unverified (false)',
           }),
         }),
+        afterHandle: auditAfter({ event: 'verification.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, params: { userId }, body }) => {
         const service = new UsersService(db, options.jwtSecret)
@@ -563,6 +625,7 @@ export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
             description: 'JSON object with custom user preference settings',
           }),
         }),
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
       },
       async ({ db, params: { userId }, body }) => {
         const service = new UsersService(db, options.jwtSecret)
@@ -638,6 +701,7 @@ export const userCoreRoutes = (options: { jwtSecret?: string } = {}) =>
             }),
           ),
         }),
+        afterHandle: auditAfter({ event: 'verification.create', resource: 'user/{res.userId}' }),
       },
       async ({ db, params: { userId }, body }) => {
         const service = new UsersService(db, options.jwtSecret)

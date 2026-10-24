@@ -1,5 +1,6 @@
 import { type Doc, Query, type Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
+import { auditAfter } from '../../plugins/audit'
 import type { Users } from '../../types/generated'
 import { requireAuth } from '../auth'
 import { AccountIdentitiesService } from './service'
@@ -56,6 +57,11 @@ export const accountIdentitiesRoutes = () =>
             status: t.Literal('ok', { description: 'Operation status confirmation' }),
           }),
         },
+        afterHandle: auditAfter({
+          event: 'identity.delete',
+          resource: 'user/{user.$id}',
+          userId: 'user/{user.$id}',
+        }),
       },
       async ({ db, user, params: { identityId } }) => {
         const userId = requireAuth(user)

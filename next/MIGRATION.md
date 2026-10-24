@@ -393,6 +393,22 @@ next/
       (`GET /users/identities`, `DELETE /users/identities/:identityId` —
       v1 parity, contract §users.md already specified them) and the
       `timestamptz` attribute-create alias (v1 path parity)
+- [x] Audit subsystem (Phase 6 follow-through): `audit` collection added to
+      the tenant auth schema (1:1 with `@nuvix/audit`), Bun-native
+      `AuditService` (`packages/core/src/audit`), real audits worker
+      (batched writes: 5000 items / 3s, tenant resolution via
+      `ProjectRegistry.getProjectTarget` + `TenantResourcePool`), the
+      `auditAfter()` per-route emission hook (v1 `AuditHook` parity: resource
+      templates, sensitive-field stripping, actor extraction), queue runtime
+      activation (`QueueManager` + workers wired into composition/index with
+      graceful shutdown; Redis-optional in tests, fail-fast in prod), `GET
+    /users/:userId/logs` (v1 parity with UA detection via a Detector port
+      on `ua-parser-js`, geoip country, locale country names). Auth-domain
+      routes now emit v1's audit events (user.create/update/delete,
+      session.create/update/delete(s), identity.delete, verification._,
+      recovery._, challenge._, target._). Known v1 template bugs fixed
+      (delete routes audited `{res.$id}` against status-only responses →
+      `Unknown`; v2 uses `{user.$id}`/`{params.userId}`)
 
 ### Phase 9 — Tests & cutover
 

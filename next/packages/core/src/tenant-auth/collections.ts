@@ -1606,6 +1606,97 @@ const subscribers: Collection = {
 }
 
 /**
+ * Audit trail (v1 parity: `@nuvix/audit` collection — attributes and
+ * indexes ported 1:1). Written by the audits worker; read by the log
+ * endpoints (users/:id/logs and friends).
+ */
+const audit: Collection = {
+  $collection: Database.METADATA,
+  $id: ID.custom('audit'),
+  name: 'Audit',
+  documentSecurity: false,
+  enabled: true,
+  attributes: [
+    {
+      $id: ID.custom('userId'),
+      key: 'userId',
+      type: AttributeType.Integer,
+      size: Database.LENGTH_KEY,
+      required: true,
+    },
+    {
+      $id: ID.custom('event'),
+      key: 'event',
+      type: AttributeType.String,
+      size: Database.LENGTH_KEY,
+      required: true,
+    },
+    {
+      $id: ID.custom('resource'),
+      key: 'resource',
+      type: AttributeType.String,
+      size: Database.LENGTH_KEY,
+    },
+    {
+      $id: ID.custom('userAgent'),
+      key: 'userAgent',
+      type: AttributeType.String,
+      size: 65534,
+      required: true,
+    },
+    {
+      $id: ID.custom('ip'),
+      key: 'ip',
+      type: AttributeType.String,
+      size: 45,
+      required: true,
+    },
+    {
+      $id: ID.custom('location'),
+      key: 'location',
+      type: AttributeType.String,
+      size: 45,
+    },
+    {
+      $id: ID.custom('time'),
+      key: 'time',
+      type: AttributeType.Timestamptz,
+    },
+    {
+      $id: ID.custom('data'),
+      key: 'data',
+      type: AttributeType.Json,
+    },
+  ],
+  indexes: [
+    {
+      $id: ID.custom('index_event'),
+      key: 'index_event',
+      type: IndexType.Key,
+      attributes: ['event'],
+    },
+    {
+      $id: ID.custom('index_user_event'),
+      key: 'index_user_event',
+      type: IndexType.Key,
+      attributes: ['userId', 'event'],
+    },
+    {
+      $id: ID.custom('index_resource_event'),
+      key: 'index_resource_event',
+      type: IndexType.Key,
+      attributes: ['resource', 'event'],
+    },
+    {
+      $id: ID.custom('index_time'),
+      key: 'index_time',
+      type: IndexType.Key,
+      attributes: ['time'],
+    },
+  ],
+}
+
+/**
  * All core tenant project collections (1:1 with legacy authCollections and commonCollections).
  */
 export const authCollections: Collection[] = [
@@ -1625,4 +1716,5 @@ export const authCollections: Collection[] = [
   messages,
   topics,
   subscribers,
+  audit,
 ]

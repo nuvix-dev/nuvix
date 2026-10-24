@@ -1,5 +1,6 @@
 import type { Doc, Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
+import { auditAfter } from '../../plugins/audit'
 import type { Sessions, Users } from '../../types/generated'
 import { requireAuth } from '../auth'
 import { AccountMfaService } from './service'
@@ -24,6 +25,7 @@ export const accountMfaRoutes = () =>
         body: t.Object({
           mfa: t.Boolean({ description: 'True to enforce MFA on login; false to disable' }),
         }),
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{user.$id}' }),
       },
       async ({ db, user, session, body }) => {
         const userId = requireAuth(user)
@@ -63,6 +65,7 @@ export const accountMfaRoutes = () =>
         params: t.Object({
           type: t.String({ description: 'Factor type: "totp"' }),
         }),
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{user.$id}' }),
       },
       async ({ db, user, params: { type } }) => {
         const userId = requireAuth(user)
@@ -90,6 +93,7 @@ export const accountMfaRoutes = () =>
             description: 'One-time passcode from authenticator app',
           }),
         }),
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{user.$id}' }),
       },
       async ({ db, user, session, params: { type }, body }) => {
         const userId = requireAuth(user)
@@ -115,6 +119,7 @@ export const accountMfaRoutes = () =>
             status: t.Literal('ok', { description: 'Operation status confirmation' }),
           }),
         },
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{user.$id}' }),
       },
       async ({ db, user, params: { type } }) => {
         const userId = requireAuth(user)
@@ -133,6 +138,7 @@ export const accountMfaRoutes = () =>
           description: 'Generate a new set of single-use backup recovery codes for MFA.',
           tags: ['Account MFA'],
         },
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{user.$id}' }),
       },
       async ({ db, user }) => {
         const userId = requireAuth(user)
@@ -150,6 +156,7 @@ export const accountMfaRoutes = () =>
           description: 'Invalidate old recovery codes and generate fresh single-use backup codes.',
           tags: ['Account MFA'],
         },
+        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{user.$id}' }),
       },
       async ({ db, user }) => {
         const userId = requireAuth(user)
@@ -189,6 +196,7 @@ export const accountMfaRoutes = () =>
             description: 'Factor to challenge: "totp", "recovery-code", "email", or "phone"',
           }),
         }),
+        afterHandle: auditAfter({ event: 'challenge.create', resource: 'user/{user.$id}' }),
       },
       async ({ db, user, body }) => {
         const userId = requireAuth(user)
@@ -219,6 +227,7 @@ export const accountMfaRoutes = () =>
             status: t.Literal('ok', { description: 'Operation status confirmation' }),
           }),
         },
+        afterHandle: auditAfter({ event: 'challenge.update', resource: 'user/{user.$id}' }),
       },
       async ({ db, user, session, body }) => {
         const userId = requireAuth(user)

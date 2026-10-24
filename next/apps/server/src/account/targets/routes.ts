@@ -1,5 +1,6 @@
 import type { Doc, Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
+import { auditAfter } from '../../plugins/audit'
 import type { Sessions, Users } from '../../types/generated'
 import { requireAuth } from '../auth'
 import { AccountTargetsService } from './service'
@@ -27,6 +28,10 @@ export const accountTargetsRoutes = () =>
           identifier: t.String({ description: 'Device push notification token (FCM/APNS)' }),
           providerId: t.Optional(t.String({ description: 'Provider ID for messaging routing' })),
           name: t.Optional(t.String({ description: 'User-friendly device name' })),
+        }),
+        afterHandle: auditAfter({
+          event: 'target.create',
+          resource: 'user/{user.$id}/target/{res.$id}',
         }),
       },
       async ({ db, user, session, body }) => {
@@ -59,6 +64,10 @@ export const accountTargetsRoutes = () =>
           ),
           name: t.Optional(t.String({ description: 'Updated device name' })),
         }),
+        afterHandle: auditAfter({
+          event: 'target.update',
+          resource: 'user/{user.$id}/target/{params.targetId}',
+        }),
       },
       async ({ db, user, params: { targetId }, body }) => {
         const userId = requireAuth(user)
@@ -88,6 +97,10 @@ export const accountTargetsRoutes = () =>
             status: t.Literal('ok', { description: 'Operation status confirmation' }),
           }),
         },
+        afterHandle: auditAfter({
+          event: 'target.delete',
+          resource: 'user/{user.$id}/target/{params.targetId}',
+        }),
       },
       async ({ db, user, params: { targetId } }) => {
         const userId = requireAuth(user)

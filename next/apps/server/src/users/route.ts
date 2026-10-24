@@ -1,10 +1,13 @@
 import { Elysia } from 'elysia'
+import type { GeoIP } from '../context/geoip'
 import { userCoreRoutes } from './routes'
 import { userSessionsRoutes } from './sessions/routes'
 import { userTargetsRoutes } from './targets/routes'
 
 export interface UserRoutesOptions {
   jwtSecret?: string
+  /** GeoIP provider for log decoration (optional; degrades to unknown). */
+  geoip?: GeoIP
 }
 
 export const userRoutes = (options: UserRoutesOptions = {}) =>

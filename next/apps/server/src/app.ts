@@ -1,5 +1,6 @@
 import { openapi } from '@elysia/openapi'
 import { createPlatformDatabase, KeyRegistry, ProjectRegistry } from '@nuvix/core/platform'
+import { QueueManager } from '@nuvix/core/queues'
 import { TenantResourcePool } from '@nuvix/core/tenants'
 import { TranslationLoader } from '@nuvix/i18n'
 import { config } from '@nuvix/utils'
@@ -16,6 +17,7 @@ import { databaseRoutes } from './database/route'
 import { localeRoutes } from './locale/route'
 import { messagingRoutes } from './messaging/route'
 import { oauthPages } from './oauth-pages'
+import { auditEnqueuerFrom, initAuditEmitter } from './plugins/audit'
 import { cors } from './plugins/cors'
 import { problemErrors } from './plugins/errors'
 import { rateLimit } from './plugins/rate-limit'
@@ -24,6 +26,7 @@ import { schemasRoutes } from './schemas/route'
 import { storageRoutes } from './storage/route'
 import { teamRoutes } from './teams/route'
 import { userRoutes } from './users/route'
+import { parseRedisUrl } from './workers'
 
 /**
  * Framework glue — the ONLY place Elysia-specific wiring lives.
@@ -141,6 +144,15 @@ const v2 = new Elysia({ prefix: '/v2' })
   // downstream).
   .get('/whoami', ({ auth, project }) => ({ auth, project }))
   .use(health)
+
+// Queue runtime — audits (and later mails/messaging/webhooks) enqueue here.
+// Without a Redis connection the manager degrades to in-memory test mode.
+export const queues = new QueueManager({
+  // Tolerant at import time (tests compose the app without Redis); the
+  // runtime entry (index.ts) enforces `NUVIX_REDIS_URL` outside tests.
+  connection: Bun.env.NUVIX_REDIS_URL ? parseRedisUrl(Bun.env.NUVIX_REDIS_URL) : undefined,
+})
+initAuditEmitter(auditEnqueuerFrom(queues))
 
 /**
  * Root app — unversioned routes (OAuth2 relay pages) + the /v2 API.

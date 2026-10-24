@@ -1,5 +1,6 @@
 import type { Doc, Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
+import { auditAfter } from '../../plugins/audit'
 import type { Sessions, Users } from '../../types/generated'
 import { requireAuth } from '../auth'
 import type { OAuth2RouteDeps } from '../oauth2/routes'
@@ -52,6 +53,11 @@ export const accountSessionsRoutes = (
             }),
           }),
         },
+        afterHandle: auditAfter({
+          event: 'sessions.delete',
+          resource: 'user/{user.$id}',
+          userId: '{user.$id}',
+        }),
       },
       async ({ db, user }) => {
         const userId = requireAuth(user)
@@ -103,6 +109,11 @@ export const accountSessionsRoutes = (
             }),
           }),
         },
+        afterHandle: auditAfter({
+          event: 'session.delete',
+          resource: 'user/{user.$id}',
+          userId: '{user.$id}',
+        }),
       },
       async ({ db, user, session, params: { sessionId } }) => {
         const userId = requireAuth(user)
@@ -123,6 +134,11 @@ export const accountSessionsRoutes = (
         },
         params: t.Object({
           sessionId: t.String({ description: 'Unique session identifier' }),
+        }),
+        afterHandle: auditAfter({
+          event: 'session.update',
+          resource: 'user/{res.userId}',
+          userId: '{res.userId}',
         }),
       },
       async ({ db, user, session, params: { sessionId }, project }) => {
@@ -157,6 +173,11 @@ export const accountSessionsRoutes = (
           }),
           password: t.String({ description: 'User account password' }),
         }),
+        afterHandle: auditAfter({
+          event: 'session.create',
+          resource: 'user/{res.userId}',
+          userId: '{res.userId}',
+        }),
       },
       async ({ db, body }) => {
         const service = new AccountSessionsService(db, options.jwtSecret)
@@ -179,6 +200,11 @@ export const accountSessionsRoutes = (
           }),
           password: t.String({ description: 'User account password' }),
         }),
+        afterHandle: auditAfter({
+          event: 'session.create',
+          resource: 'user/{res.userId}',
+          userId: '{res.userId}',
+        }),
       },
       async ({ db, body }) => {
         const service = new AccountSessionsService(db, options.jwtSecret)
@@ -196,6 +222,11 @@ export const accountSessionsRoutes = (
           description: 'Create an anonymous guest user account and authenticated session.',
           tags: ['Account Sessions'],
         },
+        afterHandle: auditAfter({
+          event: 'session.create',
+          resource: 'user/{res.userId}',
+          userId: '{res.userId}',
+        }),
       },
       async ({ db }) => {
         const service = new AccountSessionsService(db, options.jwtSecret)
@@ -218,6 +249,11 @@ export const accountSessionsRoutes = (
             description: 'User ID associated with the token',
           }),
           secret: t.String({ description: 'One-time login secret token' }),
+        }),
+        afterHandle: auditAfter({
+          event: 'session.create',
+          resource: 'user/{res.userId}',
+          userId: '{res.userId}',
         }),
       },
       async ({ db, body }) => {
@@ -242,6 +278,11 @@ export const accountSessionsRoutes = (
           }),
           secret: t.String({ description: 'Secret token from magic URL link' }),
         }),
+        afterHandle: auditAfter({
+          event: 'session.create',
+          resource: 'user/{res.userId}',
+          userId: '{res.userId}',
+        }),
       },
       async ({ db, body }) => {
         const service = new AccountSessionsService(db, options.jwtSecret)
@@ -265,6 +306,11 @@ export const accountSessionsRoutes = (
           }),
           secret: t.String({ description: 'SMS OTP verification code' }),
         }),
+        afterHandle: auditAfter({
+          event: 'session.create',
+          resource: 'user/{res.userId}',
+          userId: '{res.userId}',
+        }),
       },
       async ({ db, body }) => {
         const service = new AccountSessionsService(db, options.jwtSecret)
@@ -285,6 +331,11 @@ export const accountSessionsRoutes = (
         body: t.Object({
           userId: t.Optional(t.String({ description: 'User ID if known' })),
           phone: t.String({ description: 'User phone number in E.164 format' }),
+        }),
+        afterHandle: auditAfter({
+          event: 'session.create',
+          resource: 'user/{res.userId}',
+          userId: '{res.userId}',
         }),
       },
       async ({ db, body }) => {

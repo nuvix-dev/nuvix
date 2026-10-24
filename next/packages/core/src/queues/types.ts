@@ -17,6 +17,8 @@ export interface MessagingJobData {
 
 export interface AuditJobData {
   event: string
+  /** Platform project id — workers resolve the tenant database from it. */
+  projectId?: string
   userId?: string
   resource?: string
   ip?: string
