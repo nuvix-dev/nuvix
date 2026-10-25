@@ -9,7 +9,11 @@ import processLogs from './logs.processor'
 import processMails, { setMailSender } from './mails.processor'
 import processMessaging, { setMessagingSessionResolver } from './messaging.processor'
 import processStats from './stats.processor'
-import processWebhooks from './webhooks.processor'
+import processWebhooks, {
+  setWebhookStore,
+  type WebhookDeliveryLog,
+  type WebhookStore,
+} from './webhooks.processor'
 
 describe('Queue Worker Processors', () => {
   it('verifies all processor files exist on disk for BullMQ external workers', () => {
@@ -30,9 +34,27 @@ describe('Queue Worker Processors', () => {
     }
   })
 
-  it('processWebhooks sends webhook payload with HMAC-SHA256 signature', async () => {
+  it('processWebhooks re-reads the record and sends with HMAC-SHA256 signature', async () => {
     let capturedHeaders: Headers | undefined
     let capturedBody: string | undefined
+    const logs: WebhookDeliveryLog[] = []
+
+    const store: WebhookStore = {
+      read: async (_projectId, webhookId) => ({
+        id: webhookId,
+        internalId: 42,
+        enabled: true,
+        url: 'https://example.com/receiver',
+        signatureKey: 'supersecretkey',
+        security: true,
+        httpUser: 'webhookUser',
+        httpPass: 'webhookPass',
+      }),
+      log: async (entry) => {
+        logs.push(entry)
+      },
+    }
+    setWebhookStore(store)
 
     const originalFetch = globalThis.fetch
     globalThis.fetch = (async (_input: string | URL | Request, init?: RequestInit) => {
@@ -42,16 +64,16 @@ describe('Queue Worker Processors', () => {
     }) as unknown as typeof fetch
 
     try {
+      // v2 job payloads carry ids only — delivery credentials come from the
+      // platform record re-read.
       const mockJob = {
         data: {
           webhookId: 'hook_123',
+          webhookInternalId: 42,
           projectId: 'proj_456',
           event: 'users.create',
           payload: { userId: 'u_1', name: 'Alice' },
-          url: 'https://example.com/receiver',
-          signatureKey: 'supersecretkey',
-          httpUser: 'webhookUser',
-          httpPass: 'webhookPass',
+          attempts: 0,
         },
       } as Job
 
@@ -70,12 +92,35 @@ describe('Queue Worker Processors', () => {
       const parsedBody = JSON.parse(capturedBody!)
       expect(parsedBody.event).toBe('users.create')
       expect(parsedBody.data).toEqual({ userId: 'u_1', name: 'Alice' })
+
+      // v1 logDelivery parity: one webhook_logs row on success.
+      expect(logs).toHaveLength(1)
+      expect(logs[0]!.success).toBe(true)
+      expect(logs[0]!.statusCode).toBe(200)
+      expect(logs[0]!.webhookInternalId).toBe(42)
     } finally {
       globalThis.fetch = originalFetch
     }
   })
 
   it('processWebhooks throws on failed HTTP status to trigger BullMQ retry', async () => {
+    const logs: WebhookDeliveryLog[] = []
+    setWebhookStore({
+      read: async (_projectId, webhookId) => ({
+        id: webhookId,
+        internalId: 7,
+        enabled: true,
+        url: 'https://example.com/fail',
+        signatureKey: undefined,
+        security: true,
+        httpUser: null,
+        httpPass: null,
+      }),
+      log: async (entry) => {
+        logs.push(entry)
+      },
+    })
+
     const originalFetch = globalThis.fetch
     globalThis.fetch = (async () => {
       return new Response('Server Error', { status: 500 })
@@ -88,14 +133,74 @@ describe('Queue Worker Processors', () => {
           projectId: 'proj_1',
           event: 'test',
           payload: {},
-          url: 'https://example.com/fail',
         },
       } as Job
 
       await expect(processWebhooks(mockJob)).rejects.toThrow('HTTP 500')
+
+      // v1 logDelivery parity: failure row records the error.
+      expect(logs).toHaveLength(1)
+      expect(logs[0]!.success).toBe(false)
+      expect(String(logs[0]!.error)).toContain('HTTP 500')
     } finally {
       globalThis.fetch = originalFetch
     }
+  })
+
+  it('processWebhooks skips deleted webhooks without retrying (no error thrown)', async () => {
+    const logs: WebhookDeliveryLog[] = []
+    setWebhookStore({
+      read: async () => null,
+      log: async (entry) => {
+        logs.push(entry)
+      },
+    })
+
+    const mockJob = {
+      data: {
+        webhookId: 'hook_gone',
+        projectId: 'proj_1',
+        event: 'test',
+        payload: {},
+      },
+    } as Job
+
+    const result = await processWebhooks(mockJob)
+    expect(result.success).toBe(true)
+    expect(result.skipped).toBe(true)
+    expect(logs).toHaveLength(0)
+  })
+
+  it('processWebhooks skips disabled webhooks without retrying', async () => {
+    const logs: WebhookDeliveryLog[] = []
+    setWebhookStore({
+      read: async (_projectId, webhookId) => ({
+        id: webhookId,
+        enabled: false,
+        url: 'https://example.com/disabled',
+        signatureKey: undefined,
+        security: true,
+        httpUser: null,
+        httpPass: null,
+      }),
+      log: async (entry) => {
+        logs.push(entry)
+      },
+    })
+
+    const mockJob = {
+      data: {
+        webhookId: 'hook_off',
+        projectId: 'proj_1',
+        event: 'test',
+        payload: {},
+      },
+    } as Job
+
+    const result = await processWebhooks(mockJob)
+    expect(result.success).toBe(true)
+    expect(result.skipped).toBe(true)
+    expect(logs).toHaveLength(0)
   })
 
   it('processLogs sanitizes sensitive headers and records log data', async () => {

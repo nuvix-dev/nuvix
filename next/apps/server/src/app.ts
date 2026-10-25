@@ -18,7 +18,7 @@ import { localeRoutes } from './locale/route'
 import { createMailComposer } from './mail/composer'
 import { messagingRoutes } from './messaging/route'
 import { oauthPages } from './oauth-pages'
-import { auditEnqueuerFrom, initAuditEmitter } from './plugins/audit'
+import { auditEnqueuerFrom, initAuditEmitter, initWebhookFanout } from './plugins/audit'
 import { cors } from './plugins/cors'
 import { problemErrors } from './plugins/errors'
 import { rateLimit } from './plugins/rate-limit'
@@ -27,6 +27,7 @@ import { schemasRoutes } from './schemas/route'
 import { storageRoutes } from './storage/route'
 import { teamRoutes } from './teams/route'
 import { userRoutes } from './users/route'
+import { createWebhookFanout } from './webhooks/dispatch'
 import { parseRedisUrl } from './workers'
 
 /**
@@ -88,6 +89,8 @@ export const queues = new QueueManager({
   connection: Bun.env.NUVIX_REDIS_URL ? parseRedisUrl(Bun.env.NUVIX_REDIS_URL) : undefined,
 })
 initAuditEmitter(auditEnqueuerFrom(queues))
+// Webhook fan-out shares the audit pipeline (post-success afterHandle).
+initWebhookFanout(createWebhookFanout({ registry: projectRegistry, queues }))
 
 /** Mail composer — account services build/send system emails through it. */
 export const mailComposer = createMailComposer({

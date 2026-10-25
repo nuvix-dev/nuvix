@@ -54,6 +54,15 @@ export interface ResolvedApiKey {
   expire?: Date | string | null
 }
 
+/** Minimal webhook descriptor for event fan-out reads. */
+export interface WebhookInfo {
+  id: string
+  /** Internal sequence — keys subsequent webhook_logs rows. */
+  internalId?: number
+  enabled: boolean
+  events: string[]
+}
+
 /** Narrow read boundary used by the project-facing server. */
 export class ProjectRegistry {
   constructor(private readonly db: Database) {}
@@ -159,6 +168,31 @@ export class ProjectRegistry {
       return { id: project.getId(), target: data.target }
     } catch {
       return null
+    }
+  }
+
+  /**
+   * Enabled webhooks registered for a project (control-plane read) — the
+   * dispatch boundary filters by event pattern and enqueues delivery jobs.
+   * Best-effort: a missing collection degrades to an empty list.
+   */
+  async getWebhooks(projectId: string): Promise<WebhookInfo[]> {
+    try {
+      const project = await this.db.system().getDocument('projects', projectId)
+      if (project.empty()) return []
+      const sequence = project.getSequence()
+      if (!sequence) return []
+      const rows = await this.db
+        .system()
+        .find('webhooks', [Query.equal('projectInternalId', [sequence])])
+      return rows.map((row) => ({
+        id: row.getId(),
+        internalId: row.getSequence() ?? undefined,
+        enabled: Boolean(row.get('enabled')),
+        events: Array.isArray(row.get('events')) ? (row.get('events') as string[]) : [],
+      }))
+    } catch {
+      return []
     }
   }
 

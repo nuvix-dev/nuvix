@@ -26,7 +26,6 @@ describe('QueueManager', () => {
       projectId: 'proj_1',
       event: 'users.create',
       payload: { id: 'u_1' },
-      url: 'https://example.com/webhook',
     })
     expect(webhookJobId).toMatch(/^job_/)
 
@@ -83,7 +82,6 @@ describe('QueueManager', () => {
       projectId: 'proj_1',
       event: 'users.create',
       payload: { id: 'u_1' },
-      url: 'https://example.com/webhook',
     })
 
     await manager.close()

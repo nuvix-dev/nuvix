@@ -57,14 +57,15 @@ export interface StatsJobData {
 }
 
 export interface WebhookJobData {
-  webhookId: string
+  /** Platform project id (jobs resolve through the platform registry). */
   projectId: string
+  webhookId: string
+  /** Internal sequence — keys subsequent webhook_logs rows. */
+  webhookInternalId?: number
   event: string
   payload: Record<string, unknown>
-  url: string
-  signatureKey?: string
-  httpUser?: string
-  httpPass?: string
+  /** Delivery attempt counter at enqueue/processing time (v1 parity). */
+  attempts?: number
 }
 
 export interface DeleteJobData {

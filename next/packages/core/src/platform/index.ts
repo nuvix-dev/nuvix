@@ -11,4 +11,5 @@ export {
   ProjectRegistry,
   type ResolvedApiKey,
   type ResolvedProject,
+  type WebhookInfo,
 } from './registry'

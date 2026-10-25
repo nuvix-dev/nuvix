@@ -348,8 +348,7 @@ next/
 
 - [x] Tenant provisioning primitives (D20, D37): `TenantProvisioner` interface,
       `DockerTenantProvisioner` (real `nuvix/postgres:18.1` containers via
-      `Bun.spawn`, live-tested), `FakeTenantProvisioner` for unit/route tests
-      (`packages/core/src/tenants/`)
+      `Bun.spawn`, live-tested), `FakeTenantProvisioner` for unit/route tests (`packages/core/src/tenants/`)
 - [x] Platform persistence bootstrap (D38): `@nuvix/db` filter registry,
       `nuvix-db` generated types + `Entities` augmentation, schema-driven
       bootstrap supporting SQLite (default) or PostgreSQL
@@ -409,7 +408,7 @@ next/
       templates, sensitive-field stripping, actor extraction), queue runtime
       activation (`QueueManager` + workers wired into composition/index with
       graceful shutdown; Redis-optional in tests, fail-fast in prod), `GET
-    /users/:userId/logs` (v1 parity with UA detection via a Detector port
+/users/:userId/logs` (v1 parity with UA detection via a Detector port
       on `ua-parser-js`, geoip country, locale country names). Auth-domain
       routes now emit v1's audit events (user.create/update/delete,
       session.create/update/delete(s), identity.delete, verification._,
@@ -459,10 +458,34 @@ next/
       auth-system session (messages live in the `auth` schema); email
       cc/bcc target-id resolution ported; storage-backed attachments are
       deferred (payload carries the references; boundary hook exists).
+- [x] Webhooks dispatch (Phase 6 follow-through): delivery end-to-end —
+      fan-out (`apps/server/src/webhooks/dispatch.ts` porting v1
+      `queueWebhookDelivery`/`eventMatchesPattern`: wildcard matcher with
+      v1's regex-escaping semantics, enabled-webhook filter, 5-attempt
+      exponential-backoff BullMQ jobs, remove-on-complete 1h / fail 24h)
+      and the delivery worker (v1 `deliverWebhook` + `logDelivery`
+      parity: platform-DB re-read of the webhook before every delivery —
+      fresh URL/signatureKey/Basic auth, deleted/disabled webhooks skip
+      without retrying; POST `{event, timestamp, data}` with HMAC-SHA256
+      `X-Webhook-Signature`, `X-Webhook-Event`, `X-Webhook-ID`, Basic
+      auth, 10s timeout, TLS-skip when `security=false`; one
+      `webhook_logs` row per attempt + `attempts` counter reset-on-success/
+      increment-with-truncated-`logs`-on-failure). `WebhookJobData`
+      reshaped to v1's id-only payload (credentials live in the webhook
+      record, never in the job). The fan-out shares the audit emission
+      pipeline via an injectable `WebhookFanout` boundary in
+      `plugins/audit.ts` (replaces v1's `@OnEvent('*')` listener — Elysia
+      has no equivalent global emitter), so every audited domain event
+      fans out to subscribed webhooks automatically. Fixed en route: audit
+      job payloads carried no `projectId` at all → the audits worker
+      silently dropped every row in production; `auditAfter` now extracts
+      the platform project from the request context and both audit rows
+      and webhook fan-out are tenant-correct. `webhook_logs` added to the
+      platform schema (`ensurePlatformSchema` creates it on next run).
 
 ### Phase 9 — Tests & cutover
 
-- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 460 tests across 73 files)
+- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 469 tests across 74 files)
 - [x] Perf baseline vs old app (`test/bench/perf.ts`, `docs/perf-baseline.md`)
 - [x] Docker/deploy artifacts for Bun-only runtime (`Dockerfile`, `docker-compose.yml`, `.dockerignore`, `docs/deployment.md`)
 - [ ] Delete root monorepo (**explicit approval gate**)

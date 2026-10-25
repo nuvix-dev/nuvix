@@ -260,6 +260,78 @@ const webhooks: Collection = {
   ],
 }
 
+/**
+ * Webhook delivery log (v1 `webhook_logs` internal collection parity) —
+ * one row per delivery attempt, trimmed to the last delivery on reads.
+ */
+const webhookLogs: Collection = {
+  $collection: Database.METADATA,
+  $id: ID.custom('webhook_logs'),
+  name: 'Webhook Logs',
+  documentSecurity: false,
+  enabled: true,
+  attributes: [
+    {
+      $id: ID.custom('webhookInternalId'),
+      key: 'webhookInternalId',
+      type: AttributeType.Integer,
+      size: Database.LENGTH_KEY,
+      required: true,
+    },
+    {
+      $id: ID.custom('timestamp'),
+      key: 'timestamp',
+      type: AttributeType.Timestamptz,
+      required: true,
+    },
+    {
+      $id: ID.custom('success'),
+      key: 'success',
+      type: AttributeType.Boolean,
+      required: true,
+    },
+    {
+      $id: ID.custom('statusCode'),
+      key: 'statusCode',
+      type: AttributeType.Integer,
+      size: 4,
+      required: false,
+      default: null,
+    },
+    {
+      $id: ID.custom('response'),
+      key: 'response',
+      type: AttributeType.String,
+      size: 1000,
+      required: false,
+      default: null,
+    },
+    {
+      $id: ID.custom('error'),
+      key: 'error',
+      type: AttributeType.String,
+      size: 1000,
+      required: false,
+      default: null,
+    },
+  ],
+  indexes: [
+    {
+      $id: ID.custom('webhookInternalId'),
+      key: 'idx_webhook_log_webhook',
+      type: IndexType.Key,
+      attributes: ['webhookInternalId'],
+    },
+    {
+      $id: ID.custom('timestamp'),
+      key: 'idx_webhook_log_timestamp',
+      type: IndexType.Key,
+      attributes: ['timestamp'],
+      orders: ['DESC'],
+    },
+  ],
+}
+
 const keys: Collection = {
   $collection: Database.METADATA,
   $id: ID.custom('keys'),
@@ -420,4 +492,4 @@ const platforms: Collection = {
   ],
 }
 
-export const platformCollections: Collection[] = [projects, webhooks, keys, platforms]
+export const platformCollections: Collection[] = [projects, webhooks, webhookLogs, keys, platforms]

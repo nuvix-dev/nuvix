@@ -26,6 +26,8 @@ export interface AuditMeta {
 
 export interface AuditEnqueueInput {
   event: string
+  /** Platform project id — workers resolve the tenant database from it. */
+  projectId?: string
   resource?: string
   /** Acting user id (public). */
   userId?: string
@@ -46,9 +48,27 @@ let enqueueAudit: AuditEnqueuer = async () => {
   // Not initialized (unit-test composition) — audits are dropped silently.
 }
 
+/**
+ * Webhook fan-out boundary — injectable so audit emission and webhook
+ * dispatch share one request-path hook (v2 replaces v1's separate
+ * `@OnEvent('*')` listener). Uninitialized (unit-test composition) = no-op.
+ */
+export type WebhookFanout = (
+  projectId: string,
+  event: string,
+  payload: Record<string, unknown>,
+) => Promise<void>
+
+let webhookFanout: WebhookFanout = async () => {}
+
 /** Initializes the audit emitter (called once from app composition). */
 export function initAuditEmitter(enqueuer: AuditEnqueuer): void {
   enqueueAudit = enqueuer
+}
+
+/** Initializes the webhook fan-out boundary (called once from composition). */
+export function initWebhookFanout(fanout: WebhookFanout): void {
+  webhookFanout = fanout
 }
 
 /** Creates the production emitter from a QueueManager. */
@@ -153,6 +173,12 @@ export interface AuditedHookContext {
   query?: Record<string, string>
   body?: unknown
   user?: unknown
+  /**
+   * Project context as derived by `projectContext` — the `ProjectContext`
+   * union (`{ status: 'resolved', project }`) or, in test composition, a
+   * bare `{ id }` carrier.
+   */
+  project?: unknown
 }
 
 interface ExtractedUser {
@@ -187,6 +213,21 @@ function extractUser(user: unknown): ExtractedUser {
 }
 
 /**
+ * Resolves the platform project id from the derived project context —
+ * either the `projectContext` union (`{ status: 'resolved', project: { id } }`)
+ * or a bare `{ id }` carrier (unit-test composition).
+ */
+function extractProjectId(project: unknown): string | undefined {
+  if (!isRecord(project)) return undefined
+  if (typeof project.id === 'string' && project.id) return project.id
+  if (isRecord(project.project)) {
+    const nested = project.project
+    if (typeof nested.id === 'string' && nested.id) return nested.id
+  }
+  return undefined
+}
+
+/**
  * Builds a per-route `afterHandle` hook that emits the audit event for the
  * route. Usage (v1 decorator parity):
  *
@@ -217,8 +258,12 @@ export function auditAfter(meta: AuditMeta) {
 
       const forwarded =
         ctx.request?.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined
+      const projectId = extractProjectId(ctx.project)
+      const auditPayload = response ? stripSensitive(response) : undefined
+
       void enqueueAudit({
         event: meta.event,
+        projectId,
         resource,
         userId: userIdTemplate ?? user.id,
         userSequence: user.sequence,
@@ -227,10 +272,18 @@ export function auditAfter(meta: AuditMeta) {
         userType: user.type,
         ip: forwarded || undefined,
         userAgent: ctx.request?.headers.get('user-agent') ?? undefined,
-        data: response ? stripSensitive(response) : undefined,
+        data: auditPayload,
       }).catch(() => {
         // Audit emission must never break the request path.
       })
+
+      // Webhook fan-out shares the emission pipeline (v1 `@OnEvent('*')`
+      // parity); sensitive fields are already stripped from the payload.
+      if (projectId) {
+        void webhookFanout(projectId, meta.event, auditPayload ?? {}).catch(() => {
+          // Fan-out failures must never break the request path either.
+        })
+      }
     } catch {
       // Same guarantee: mapping/enqueue errors are swallowed.
     }
