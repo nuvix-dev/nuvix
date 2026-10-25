@@ -1,8 +1,10 @@
 import { AuditService } from '@nuvix/core/audit'
 import { hashPassword } from '@nuvix/core/auth'
 import { Doc, ID, Permission, Query, Role, type Session } from '@nuvix/db'
+import { MetricFor } from '@nuvix/utils'
 import { formatIdentity, type IdentityView } from '../account/formatter'
 import { ConflictError, NotFoundError } from '../shared/errors'
+import { parseUsageRange, readUsageSeries } from '../stats/usage'
 import type {
   IdentitiesDoc,
   MembershipsDoc,
@@ -615,18 +617,21 @@ export class UsersService {
     users: Array<{ date: string; value: number }>
     sessions: Array<{ date: string; value: number }>
   }> {
-    const [usersTotal, sessionsTotal] = await Promise.all([
-      this.session.count('users', []),
-      this.session.count('sessions', []),
-    ])
+    // v1 parity: usage reads the recorded `stats` rows (INF totals + the
+    // period-bucketed series), not live counts.
+    const usageRange = parseUsageRange(range)
+    const usage = await readUsageSeries(
+      this.session,
+      [MetricFor.USERS, MetricFor.SESSIONS],
+      usageRange,
+    )
 
-    const now = new Date().toISOString()
     return {
-      range,
-      usersTotal,
-      sessionsTotal,
-      users: [{ date: now, value: usersTotal }],
-      sessions: [{ date: now, value: sessionsTotal }],
+      range: usageRange,
+      usersTotal: usage[MetricFor.USERS]?.total ?? 0,
+      sessionsTotal: usage[MetricFor.SESSIONS]?.total ?? 0,
+      users: usage[MetricFor.USERS]?.data ?? [],
+      sessions: usage[MetricFor.SESSIONS]?.data ?? [],
     }
   }
 }

@@ -169,16 +169,49 @@ describe('Storage Module Services', () => {
       await expect(service.getBucket(created.$id)).rejects.toThrow(NotFoundError)
     })
 
-    it('returns storage usage stats', async () => {
-      const { session } = createInMemorySession()
-      const service = new StorageService(session, mockDevice)
+    it('returns storage usage stats from recorded stats rows', async () => {
+      // v1 parity: INF rows carry totals; the window is zero-filled.
+      const infTotals: Record<string, number> = {
+        buckets: 2,
+        files: 3,
+        'files.storage': 512,
+      }
+      const mockSession = {
+        findOne: async (
+          _collection: string,
+          query: (qb: { equal: (a: string, v: unknown) => unknown }) => unknown,
+        ) => {
+          const builder = {
+            metric: undefined as string | undefined,
+            period: undefined as string | undefined,
+            equal(a: string, v: unknown) {
+              if (a === 'metric') this.metric = v as string
+              if (a === 'period') this.period = v as string
+              return this
+            },
+          }
+          query(builder as never)
+          if (builder.metric && builder.period === 'inf') {
+            const value = infTotals[builder.metric]
+            return value === undefined
+              ? new Doc({})
+              : new Doc({ $id: 'inf', metric: builder.metric, period: 'inf', value })
+          }
+          return new Doc({})
+        },
+        find: async () => [] as Doc[],
+      } as unknown as Session
 
-      await service.createBucket({ bucketId: 'b1', name: 'Bucket 1' })
+      const service = new StorageService(mockSession, mockDevice)
       const usage = await service.getStorageUsage('30d')
 
       expect(usage.range).toBe('30d')
-      expect(usage.bucketsTotal).toBe(1)
-      expect(usage.filesTotal).toBe(0)
+      expect(usage.bucketsTotal).toBe(2)
+      expect(usage.filesTotal).toBe(3)
+      expect(usage.filesStorageTotal).toBe(512)
+      expect(usage.buckets).toHaveLength(30)
+      expect(usage.files).toHaveLength(30)
+      expect(usage.storage).toHaveLength(30)
     })
   })
 

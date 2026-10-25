@@ -1,6 +1,8 @@
 import { Doc, ID, KeyValidator, Permission, Query, type Session } from '@nuvix/db'
 import type { Device } from '@nuvix/storage'
+import { MetricFor } from '@nuvix/utils'
 import { BadRequestError, ConflictError, NotFoundError } from '../../shared/errors'
+import { parseUsageRange, readUsageSeries } from '../../stats/usage'
 import type { Buckets } from '../../types/generated'
 import {
   type BucketUsageView,
@@ -70,7 +72,9 @@ export class StorageService {
 
     const validator = new KeyValidator(false)
     if (!validator.$valid(bucketId)) {
-      throw new BadRequestError('Invalid bucket ID format', { code: 'invalid_params' })
+      throw new BadRequestError('Invalid bucket ID format', {
+        code: 'invalid_params',
+      })
     }
 
     const existing = await this.session.getDocument('buckets', bucketId)
@@ -188,21 +192,22 @@ export class StorageService {
    * Get global storage usage stats.
    */
   async getStorageUsage(range = '30d'): Promise<StorageUsageView> {
-    const [bucketsTotal, filesTotal, filesStorageTotal] = await Promise.all([
-      this.session.count('buckets', []),
-      this.session.count('files', []),
-      this.session.sum('files', 'sizeOriginal', []),
-    ])
+    // v1 parity: usage reads the recorded `stats` rows, not live counts.
+    const usageRange = parseUsageRange(range)
+    const usage = await readUsageSeries(
+      this.session,
+      [MetricFor.BUCKETS, MetricFor.FILES, MetricFor.FILES_STORAGE],
+      usageRange,
+    )
 
-    const now = new Date().toISOString()
     return {
-      range,
-      bucketsTotal,
-      filesTotal,
-      filesStorageTotal,
-      buckets: [{ value: bucketsTotal, date: now }],
-      files: [{ value: filesTotal, date: now }],
-      storage: [{ value: filesStorageTotal, date: now }],
+      range: usageRange,
+      bucketsTotal: usage[MetricFor.BUCKETS]?.total ?? 0,
+      filesTotal: usage[MetricFor.FILES]?.total ?? 0,
+      filesStorageTotal: usage[MetricFor.FILES_STORAGE]?.total ?? 0,
+      buckets: usage[MetricFor.BUCKETS]?.data ?? [],
+      files: usage[MetricFor.FILES]?.data ?? [],
+      storage: usage[MetricFor.FILES_STORAGE]?.data ?? [],
     }
   }
 
@@ -217,19 +222,22 @@ export class StorageService {
       })
     }
 
-    const q = [Query.equal('bucketId', [bucketId])]
-    const [filesTotal, filesStorageTotal] = await Promise.all([
-      this.session.count('files', q),
-      this.session.sum('files', 'sizeOriginal', q),
-    ])
+    // v1 parity: per-bucket metrics recorded under the
+    // `{bucketInternalId}.files[.storage]` keys.
+    const usageRange = parseUsageRange(range)
+    const bucketInternalId = String(bucket.getSequence() ?? '')
+    const metrics = [
+      MetricFor.BUCKET_ID_FILES.replace('{bucketInternalId}', bucketInternalId),
+      MetricFor.BUCKET_ID_FILES_STORAGE.replace('{bucketInternalId}', bucketInternalId),
+    ]
+    const usage = await readUsageSeries(this.session, metrics, usageRange)
 
-    const now = new Date().toISOString()
     return {
-      range,
-      filesTotal,
-      filesStorageTotal,
-      files: [{ value: filesTotal, date: now }],
-      storage: [{ value: filesStorageTotal, date: now }],
+      range: usageRange,
+      filesTotal: usage[metrics[0]!]?.total ?? 0,
+      filesStorageTotal: usage[metrics[1]!]?.total ?? 0,
+      files: usage[metrics[0]!]?.data ?? [],
+      storage: usage[metrics[1]!]?.data ?? [],
     }
   }
 }

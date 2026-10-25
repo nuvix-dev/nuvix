@@ -57,6 +57,10 @@ describe('wireStatsDatabase (v1 StatsHelper parity)', () => {
     remove(fakeDoc('files', { sizeOriginal: 512 }))
     create(fakeDoc('stats')) // unmatched collection → no metrics
 
+    // Files carrying a bucketInternalId also record per-bucket metrics
+    // (v1 `{bucketInternalId}.files[.storage]` key parity).
+    create(fakeDoc('files', { sizeOriginal: 2048, bucketInternalId: 9 }))
+
     expect(enqueued).toEqual([
       { projectId: 'proj_1', metrics: [{ key: MetricFor.USERS, value: 1 }] },
       {
@@ -79,6 +83,22 @@ describe('wireStatsDatabase (v1 StatsHelper parity)', () => {
           { key: MetricFor.FILES_STORAGE, value: -512 },
         ],
       },
+      {
+        projectId: 'proj_1',
+        metrics: [
+          { key: MetricFor.FILES, value: 1 },
+          { key: MetricFor.FILES_STORAGE, value: 2048 },
+          { key: '9.files', value: 1 },
+          { key: '9.files.storage', value: 2048 },
+        ],
+      },
+    ])
+
+    expect(enqueued.at(-1)!.metrics).toEqual([
+      { key: MetricFor.FILES, value: 1 },
+      { key: MetricFor.FILES_STORAGE, value: 2048 },
+      { key: '9.files', value: 1 },
+      { key: '9.files.storage', value: 2048 },
     ])
 
     // Batch creates count the batch size (v1 DocumentsCreate parity).

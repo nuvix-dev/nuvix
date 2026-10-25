@@ -94,14 +94,28 @@ function collectionMetrics(
       return [{ key: MetricFor.SESSIONS, value }]
     case 'buckets':
       return [{ key: MetricFor.BUCKETS, value }]
-    case 'files':
-      return [
+    case 'files': {
+      const size = Number(document?.get?.('sizeOriginal') ?? 0) * value
+      const metrics: Array<{ key: string; value: number }> = [
         { key: MetricFor.FILES, value },
-        {
-          key: MetricFor.FILES_STORAGE,
-          value: Number(document?.get?.('sizeOriginal') ?? 0) * value,
-        },
+        { key: MetricFor.FILES_STORAGE, value: size },
       ]
+      // Per-bucket metrics (v1 `{bucketInternalId}.files[.storage]` keys —
+      // v2 files carry bucketInternalId on the document).
+      const bucketInternalId = document?.get?.('bucketInternalId')
+      if (bucketInternalId !== undefined && bucketInternalId !== null) {
+        const bucketKey = String(bucketInternalId)
+        metrics.push({
+          key: MetricFor.BUCKET_ID_FILES.replace('{bucketInternalId}', bucketKey),
+          value,
+        })
+        metrics.push({
+          key: MetricFor.BUCKET_ID_FILES_STORAGE.replace('{bucketInternalId}', bucketKey),
+          value: size,
+        })
+      }
+      return metrics
+    }
     default:
       return []
   }

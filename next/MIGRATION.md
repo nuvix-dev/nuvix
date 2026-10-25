@@ -495,19 +495,28 @@ next/
       the shared-instance derive chain) and usage document events (v1
       `StatsHelper.connect` — `calculate-usage` listeners wired onto
       every tenant `Database` via a new `TenantResourceDependencies.
-  onDatabaseCreated` composition hook). Redesigns over v1 recorded:
-      the per-bucket `{bucketInternalId}.files` metrics and the
-      user/bucket delete `reduce` compensations are dropped — v2 keeps a
-      single `files` collection (bucketId attribute) and deletes
-      sessions/files row-by-row, so per-row DocumentDelete events
+onDatabaseCreated` composition hook). Redesigns over v1 recorded:
+      the user/bucket delete `reduce` compensations are dropped — v2
+      deletes sessions/files row-by-row, so per-row DocumentDelete events
       already decrement the aggregate metrics (v1's compensation existed
       because bucket files lived in per-bucket collections deleted
-      wholesale). Usage/usage-range endpoints still read live counts;
-      pointing them at the recorded stats rows is a follow-up.
+      wholesale). Per-bucket metrics are KEPT (v1
+      `{bucketInternalId}.files[.storage]` keys — v2 file docs carry
+      `bucketInternalId`).
+- [x] Usage reads (Phase 6 follow-through): `GET /users/usage`,
+      `GET /storage/usage`, and `GET /storage/buckets/:bucketId/usage`
+      now read the recorded `stats` rows (v1 parity) instead of live
+      counts — `apps/server/src/stats/usage.ts` ports the v1
+      `usageConfig` buckets (24h hourly, 7d/30d/90d daily), INF totals +
+      period series with the v1 zero-filled window loop, and the
+      `RangeQueryDTO` validation (`parseUsageRange`; v1's own service
+      default `'1d'` was not a config key — latent v1 crash, v2 defaults
+      `'30d'`). v1's `Authorization.skip` parity is structural: the
+      usage routes run on the tenant auth-system session.
 
 ### Phase 9 — Tests & cutover
 
-- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 485 tests across 77 files)
+- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 489 tests across 78 files)
 - [x] Perf baseline vs old app (`test/bench/perf.ts`, `docs/perf-baseline.md`)
 - [x] Docker/deploy artifacts for Bun-only runtime (`Dockerfile`, `docker-compose.yml`, `.dockerignore`, `docs/deployment.md`)
 - [ ] Delete root monorepo (**explicit approval gate**)

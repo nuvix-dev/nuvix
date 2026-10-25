@@ -66,6 +66,26 @@ describe('Storage Routes', () => {
       }
       return total
     },
+    findOne: async (
+      collection: string,
+      query: (qb: { equal: (a: string, v: unknown) => unknown }) => unknown,
+    ) => {
+      // Usage stats reads: return recorded INF totals for the metric.
+      const builder = {
+        metric: undefined as string | undefined,
+        period: undefined as string | undefined,
+        equal(a: string, v: unknown) {
+          if (a === 'metric') this.metric = v as string
+          if (a === 'period') this.period = v as string
+          return this
+        },
+      }
+      query(builder as never)
+      if (collection === 'stats' && builder.metric && builder.period === 'inf') {
+        return new Doc({ $id: 'inf', metric: builder.metric, period: 'inf', value: 1 })
+      }
+      return new Doc({})
+    },
   } as unknown as Session
 
   const mockTenantResource = {
