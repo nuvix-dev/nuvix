@@ -439,10 +439,30 @@ next/
       recovery/verification/magic email (v2 merges variables into the inner
       render). `PhraseGenerator` ported (`@nuvix/utils/phrase`) restoring
       v1's magic-URL `phrase` toggle.
+- [x] Messaging delivery (Phase 6 follow-through): real messaging worker —
+      v1 `sendExternalMessage` parity (target resolution from topics →
+      users → direct targets filtered by `providerType`; default enabled
+      provider fallback; per-`providerId` identifier grouping;
+      per-adapter batch chunking; expired push tokens mark their target;
+      v1 finalization semantics incl. `Unknown error` on zero deliveries;
+      deliveredTotal/deliveredAt + provider-tagged search index). Vendor
+      adapters constructed from provider credentials 1:1 with the current
+      `@nuvix/messaging` signatures (SMTP/Mailgun/Sendgrid, Twilio/
+      Telesign/TextMagic/Vonage/Msg91, FCM/APNS); per-vendor batch limits
+      mirrored from the adapter implementations. `MessagingJobData`
+      reshaped to v1's `{ projectId, message, scheduleId? }`; message
+      create/update now enqueue (`processing` → immediate, `scheduled` →
+      delayed BullMQ job with delay = scheduledAt − now; v1's internal
+      `schedules` collection + SchedulesHelper hook replaced by
+      BullMQ-native delayed jobs — same delivery semantics, one less
+      moving part, noted for the records). Worker runs on the tenant
+      auth-system session (messages live in the `auth` schema); email
+      cc/bcc target-id resolution ported; storage-backed attachments are
+      deferred (payload carries the references; boundary hook exists).
 
 ### Phase 9 — Tests & cutover
 
-- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 454 tests across 72 files)
+- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 460 tests across 73 files)
 - [x] Perf baseline vs old app (`test/bench/perf.ts`, `docs/perf-baseline.md`)
 - [x] Docker/deploy artifacts for Bun-only runtime (`Dockerfile`, `docker-compose.yml`, `.dockerignore`, `docs/deployment.md`)
 - [ ] Delete root monorepo (**explicit approval gate**)

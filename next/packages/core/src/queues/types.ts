@@ -27,10 +27,15 @@ export interface MailJobData {
 }
 
 export interface MessagingJobData {
-  provider: string
-  to: string
-  message: string
-  data?: Record<string, unknown>
+  /** Platform project id — resolves the tenant database. */
+  projectId: string
+  /**
+   * Message id (scheduled jobs) or the full message record (inline
+   * enqueue at create, v1 `MessagingJob.EXTERNAL` parity).
+   */
+  message: string | Record<string, unknown>
+  /** Schedule document id — deleted after a scheduled message delivers. */
+  scheduleId?: string
 }
 
 export interface AuditJobData {

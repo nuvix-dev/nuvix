@@ -151,7 +151,7 @@ const v2 = new Elysia({ prefix: '/v2' })
       )
       .use(teamRoutes())
       .use(storageRoutes())
-      .use(messagingRoutes())
+      .use(messagingRoutes({ queues }))
       .use(databaseRoutes())
       .use(schemasRoutes()),
   )

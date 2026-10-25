@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'bun:test'
 import { existsSync } from 'node:fs'
+import { Doc } from '@nuvix/db'
 import type { Job } from 'bullmq'
 import processAudits from './audits.processor'
 import processBatch from './batch.processor'
 import processDeletes from './deletes.processor'
 import processLogs from './logs.processor'
 import processMails, { setMailSender } from './mails.processor'
-import processMessaging from './messaging.processor'
+import processMessaging, { setMessagingSessionResolver } from './messaging.processor'
 import processStats from './stats.processor'
 import processWebhooks from './webhooks.processor'
 
@@ -182,16 +183,17 @@ describe('Queue Worker Processors', () => {
     expect(sent).toEqual(['user@example.com'])
   })
 
-  it('processMessaging executes message delivery job', async () => {
+  it('processMessaging skips when the message is missing (scheduled job)', async () => {
+    setMessagingSessionResolver(async () => emptyStubSession() as never)
     const mockJob = {
       data: {
-        messageId: 'msg_1',
-        providerId: 'prov_1',
+        projectId: 'proj_1',
+        message: 'msg_missing',
       },
     } as Job
 
     const result = await processMessaging(mockJob)
-    expect(result.success).toBe(true)
+    expect(result.status).toBe('skipped')
   })
 
   it('processStats executes stat recording job', async () => {
@@ -220,3 +222,14 @@ describe('Queue Worker Processors', () => {
     expect(result.failedCount).toBe(0)
   })
 })
+
+/** Empty tenant-session stub: every lookup misses. */
+function emptyStubSession() {
+  const empty = () => new Doc()
+  return {
+    getDocument: async () => empty(),
+    findOne: async () => empty(),
+    find: async () => [],
+    updateDocument: async (_c: string, _id: string, doc: unknown) => doc,
+  }
+}

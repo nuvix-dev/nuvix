@@ -48,9 +48,8 @@ describe('QueueManager', () => {
     expect(logJobId).toMatch(/^job_/)
 
     const messagingJobId = await manager.enqueueMessaging({
-      provider: 'smtp',
-      to: 'bob@example.com',
-      message: 'Hello Bob',
+      projectId: 'proj_1',
+      message: 'msg_1',
     })
     expect(messagingJobId).toMatch(/^job_/)
 

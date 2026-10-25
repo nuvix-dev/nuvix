@@ -3,6 +3,24 @@ import { BadRequestError, ConflictError, NotFoundError } from '../../shared/erro
 import type { Messages, Targets } from '../../types/generated'
 import { formatMessage, type MessageView } from '../formatter'
 
+/**
+ * Delivery wiring — creates/updates that leave draft enqueue a messaging
+ * job (v1 `MessagingJob.EXTERNAL` parity). Optional so unit tests can
+ * exercise the persistence-only surface.
+ */
+export interface MessagingDeliveryDeps {
+  /** Platform project id — carried in job payloads for tenant routing. */
+  projectId: string
+  enqueue: (
+    data: {
+      projectId: string
+      message: string | Record<string, unknown>
+      scheduleId?: string
+    },
+    opts?: { delay?: number },
+  ) => Promise<string>
+}
+
 export interface BaseMessageInput {
   messageId?: string
   topics?: string[]
@@ -65,7 +83,10 @@ export interface UpdatePushMessageInput extends Partial<BaseMessageInput> {
 }
 
 export class MessagingService {
-  constructor(private readonly session: Session) {}
+  constructor(
+    private readonly session: Session,
+    private readonly delivery?: MessagingDeliveryDeps,
+  ) {}
 
   /**
    * Create an email message.
@@ -131,6 +152,7 @@ export class MessagingService {
     })
 
     const created = await this.session.createDocument('messages', doc)
+    await this.enqueueDelivery(created, String(doc.get('status') ?? 'draft'))
     return formatMessage(created)
   }
 
@@ -188,6 +210,7 @@ export class MessagingService {
     })
 
     const created = await this.session.createDocument('messages', doc)
+    await this.enqueueDelivery(created, String(doc.get('status') ?? 'draft'))
     return formatMessage(created)
   }
 
@@ -263,7 +286,36 @@ export class MessagingService {
     })
 
     const created = await this.session.createDocument('messages', doc)
+    await this.enqueueDelivery(created, String(doc.get('status') ?? 'draft'))
     return formatMessage(created)
+  }
+
+  /**
+   * Enqueues delivery for a fresh record that will actually send
+   * (v1: `processing` → immediate; `scheduled` → delayed BullMQ job).
+   */
+  private async enqueueDelivery(created: Doc<Messages>, status: string): Promise<void> {
+    if (!this.delivery || status === 'draft') return
+    if (['processing', 'scheduled'].includes(status) === false) return
+
+    if (status === 'scheduled') {
+      const scheduledAt = created.get('scheduledAt')
+      const when = scheduledAt ? new Date(scheduledAt as unknown as string) : null
+      const delay = when ? Math.max(when.getTime() - Date.now(), 0) : 0
+      await this.delivery.enqueue(
+        {
+          projectId: this.delivery.projectId,
+          message: created.toObject() as unknown as Record<string, unknown>,
+        },
+        { delay },
+      )
+      return
+    }
+
+    await this.delivery.enqueue({
+      projectId: this.delivery.projectId,
+      message: created.toObject() as unknown as Record<string, unknown>,
+    })
   }
 
   /**
