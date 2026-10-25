@@ -7,7 +7,8 @@ describe('QueueManager', () => {
     const manager = createQueueManager({ isTest: true })
 
     const mailJobId = await manager.enqueueMail({
-      to: 'alice@example.com',
+      projectId: 'proj_1',
+      email: 'alice@example.com',
       subject: 'Welcome',
       body: 'Hello Alice',
     })
@@ -70,7 +71,8 @@ describe('QueueManager', () => {
     const mailJobs = manager.getInMemoryJobs(QueueFor.MAILS)
     expect(mailJobs.length).toBe(1)
     expect(mailJobs[0]?.data).toEqual({
-      to: 'alice@example.com',
+      projectId: 'proj_1',
+      email: 'alice@example.com',
       subject: 'Welcome',
       body: 'Hello Alice',
     })

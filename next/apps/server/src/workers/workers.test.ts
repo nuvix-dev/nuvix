@@ -5,7 +5,7 @@ import processAudits from './audits.processor'
 import processBatch from './batch.processor'
 import processDeletes from './deletes.processor'
 import processLogs from './logs.processor'
-import processMails from './mails.processor'
+import processMails, { setMailSender } from './mails.processor'
 import processMessaging from './messaging.processor'
 import processStats from './stats.processor'
 import processWebhooks from './webhooks.processor'
@@ -149,17 +149,37 @@ describe('Queue Worker Processors', () => {
     expect(result.success).toBe(true)
   })
 
-  it('processMails executes email sending job', async () => {
+  it('processMails sends via the injected sender and reports results', async () => {
+    const sent: string[] = []
+    setMailSender(async (params) => {
+      sent.push(params.to)
+      return 'msg-id-1'
+    })
+
     const mockJob = {
       data: {
-        to: 'user@example.com',
+        projectId: 'proj_1',
+        email: 'user@example.com',
         subject: 'Welcome',
         body: 'Hello world',
+        server: {
+          host: 'smtp.test',
+          port: 587,
+          username: 'u',
+          password: 'p',
+          secure: false,
+          senderEmail: 'no-reply@test',
+          senderName: 'Test',
+          replyTo: '',
+        },
       },
     } as Job
 
     const result = await processMails(mockJob)
-    expect(result.success).toBe(true)
+    expect(result.status).toBe('success')
+    expect(result.sent).toBe(1)
+    expect(result.failed).toBe(0)
+    expect(sent).toEqual(['user@example.com'])
   })
 
   it('processMessaging executes message delivery job', async () => {

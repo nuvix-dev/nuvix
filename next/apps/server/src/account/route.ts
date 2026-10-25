@@ -1,4 +1,5 @@
 import { Elysia } from 'elysia'
+import type { MailComposer } from '../mail/composer'
 import { accountIdentitiesRoutes } from './identities/routes'
 import { accountMfaRoutes } from './mfa/routes'
 import { type OAuth2RouteDeps, oauth2Routes } from './oauth2/routes'
@@ -12,12 +13,14 @@ export interface AccountRoutesOptions {
   jwtSecret?: string
   /** OAuth2 flow dependencies (control-plane registry + encryption key). */
   oauth2?: OAuth2RouteDeps
+  /** System-email composer (verification/recovery/magic/OTP mail). */
+  mail?: MailComposer
 }
 
 export const accountRoutes = (options: AccountRoutesOptions = {}) =>
   new Elysia({ prefix: '/account' })
-    .use(accountProfileRoutes())
-    .use(accountRecoveryRoutes())
+    .use(accountProfileRoutes({ mail: options.mail }))
+    .use(accountRecoveryRoutes({ mail: options.mail }))
     .use(accountSessionsRoutes(options))
     .use(accountTokensRoutes(options))
     .use(accountIdentitiesRoutes())

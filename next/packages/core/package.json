@@ -14,7 +14,8 @@
     "./queues": "./src/queues/index.ts",
     "./tenant-auth": "./src/tenant-auth/index.ts",
     "./tenants": "./src/tenants/index.ts",
-    "./audit": "./src/audit/index.ts"
+    "./audit": "./src/audit/index.ts",
+    "./mail": "./src/mail/index.ts"
   },
   "scripts": {
     "test": "bun test"

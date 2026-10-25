@@ -4,8 +4,16 @@ import {
   validatePasswordHistory,
   validatePersonalData,
 } from '@nuvix/core/auth'
+import { validateRedirectURL } from '@nuvix/core/oauth'
 import { Doc, ID, Permission, Query, Role, type Session } from '@nuvix/db'
-import { BadRequestError, ForbiddenError, NotFoundError } from '../../shared/errors'
+import type { Translator } from '@nuvix/i18n'
+import type { MailCapability, MailDelivery } from '../../mail/composer'
+import {
+  BadRequestError,
+  ForbiddenError,
+  NotFoundError,
+  ServiceUnavailableError,
+} from '../../shared/errors'
 import type { Tokens, TokensDoc, UsersDoc } from '../../types/generated'
 import { formatToken, type TokenView } from '../formatter'
 import { TokenType } from '../sessions/service'
@@ -23,10 +31,67 @@ export interface UpdateRecoveryInput {
   password: string
 }
 
+/**
+ * Per-request delivery deps the route composes from the project context
+ * (`MailDelivery` — `rules` back the redirect validation, v1
+ * `ctx.validateRedirectURL` parity).
+ */
+export type RecoveryDelivery = MailDelivery
+
 export class AccountRecoveryService {
   constructor(private readonly session: Session) {}
 
-  async createRecovery(input: CreateRecoveryInput): Promise<TokenView> {
+  /**
+   * Sends the password-recovery email (v1 `recovery.create` parity —
+   * inner template + localized strings, redirect URL with
+   * userId/secret/expire params).
+   */
+  private async sendRecoveryEmail(input: {
+    mail: MailCapability
+    locale: Translator
+    email: string
+    userName: string
+    userId: string
+    secret: string
+    expire: Date
+    redirectUrl: string
+  }): Promise<void> {
+    const { locale } = input
+    const projectName = await input.mail.projectName()
+    const url = new URL(input.redirectUrl)
+    url.searchParams.set('userId', input.userId)
+    url.searchParams.set('secret', input.secret)
+    url.searchParams.set('expire', input.expire.toISOString())
+    const redirect = url.toString()
+
+    const userName = input.userName || 'User'
+    await input.mail.build({
+      to: input.email,
+      templateFile: 'email-inner-base.tpl',
+      templateKey: `recovery-${locale.locale}`,
+      subject: locale.format('emails.recovery.subject'),
+      data: {
+        body: locale.format('emails.recovery.body', { project: projectName }),
+        hello: locale.format('emails.recovery.hello', { user: userName }),
+        footer: locale.format('emails.recovery.footer'),
+        thanks: locale.format('emails.recovery.thanks'),
+        signature: locale.format('emails.recovery.signature', {
+          project: projectName,
+        }),
+      },
+      variables: {
+        direction: locale.format('settings.direction'),
+        user: userName,
+        redirect,
+        project: projectName,
+      },
+    })
+  }
+
+  async createRecovery(
+    input: CreateRecoveryInput,
+    delivery?: RecoveryDelivery,
+  ): Promise<TokenView> {
     const email = input.email.toLowerCase()
     const user = (await this.session.findOne('users', [Query.equal('email', [email])])) as UsersDoc
 
@@ -60,6 +125,38 @@ export class AccountRecoveryService {
       }),
     )) as TokensDoc
 
+    // Send the recovery email when delivery deps are present (production
+    // routes always pass them; unit tests exercise the token path alone).
+    // Disabled SMTP surfaces 503 `general_smtp_disabled` (v1 parity), and
+    // the redirect URL is validated against the project's platforms.
+    if (delivery) {
+      const { mail, locale, rules } = delivery
+      if (!mail.enabled) {
+        throw new ServiceUnavailableError('SMTP is not configured', {
+          code: 'general_smtp_disabled',
+        })
+      }
+      if (!input.url) {
+        throw new BadRequestError('URL is required', {
+          code: 'general_bad_request',
+        })
+      }
+      const invalid = validateRedirectURL(input.url, rules)
+      if (invalid) {
+        throw new BadRequestError(invalid, { code: 'general_bad_request' })
+      }
+      await this.sendRecoveryEmail({
+        mail,
+        locale,
+        email,
+        userName: String(user.get('name') ?? ''),
+        userId: user.getId(),
+        secret,
+        expire,
+        redirectUrl: input.url,
+      })
+    }
+
     const formatted = formatToken(tokenDoc)
     formatted.secret = secret
     return formatted
@@ -78,7 +175,9 @@ export class AccountRecoveryService {
 
     const verified = Auth.tokenVerify(tokens, TokenType.RECOVERY, input.secret)
     if (!verified) {
-      throw new BadRequestError('Invalid token', { code: 'user_invalid_token' })
+      throw new BadRequestError('Invalid token', {
+        code: 'user_invalid_token',
+      })
     }
 
     const validPersonal = validatePersonalData(input.password, {

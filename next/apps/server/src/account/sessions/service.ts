@@ -1,9 +1,13 @@
 import { Auth, type HashAlgorithm } from '@nuvix/core/auth'
+import { validateRedirectURL } from '@nuvix/core/oauth'
 import { Doc, ID, Permission, Query, Role, type Session } from '@nuvix/db'
+import { generatePhrase } from '@nuvix/utils/phrase'
+import type { MailDelivery } from '../../mail/composer'
 import {
   BadRequestError,
   ForbiddenError,
   NotFoundError,
+  ServiceUnavailableError,
   UnauthorizedError,
 } from '../../shared/errors'
 import type {
@@ -51,6 +55,8 @@ export interface CreateMagicURLTokenInput {
   userId?: string
   email: string
   url?: string
+  /** Enable the security phrase (v1 parity: shown in email + response). */
+  phrase?: boolean
   ip?: string
   userAgent?: string
 }
@@ -401,7 +407,10 @@ export class AccountSessionsService {
     }
   }
 
-  async createMagicURLToken(input: CreateMagicURLTokenInput): Promise<TokenView> {
+  async createMagicURLToken(
+    input: CreateMagicURLTokenInput,
+    delivery?: MailDelivery & { origin: string },
+  ): Promise<TokenView> {
     const email = input.email.toLowerCase()
     let user = (await this.session.findOne('users', [Query.equal('email', [email])])) as UsersDoc
 
@@ -436,6 +445,20 @@ export class AccountSessionsService {
     const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_MAGIC_URL)
     const expire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_CONFIRM * 1000)
 
+    let phrase: string | undefined
+    if (input.phrase === true) {
+      phrase = generatePhrase()
+    }
+
+    // Validate the redirect against project platforms before spending the
+    // token (v1 validates at entry; delivery is required to use this flow).
+    if (delivery && input.url) {
+      const invalid = validateRedirectURL(input.url, delivery.rules)
+      if (invalid) {
+        throw new BadRequestError(invalid, { code: 'general_bad_request' })
+      }
+    }
+
     const tokenDoc = (await this.session.createDocument(
       'tokens',
       new Doc<Tokens>({
@@ -455,12 +478,30 @@ export class AccountSessionsService {
       }),
     )) as TokensDoc
 
+    if (delivery) {
+      await sendMagicUrlEmail({
+        delivery,
+        email,
+        userName: String(user.get('name') || 'User'),
+        userId: user.getId(),
+        secret,
+        expire,
+        phrase,
+        redirectUrl: input.url,
+        userAgent: input.userAgent ?? 'UNKNOWN',
+      })
+    }
+
     const formatted = formatToken(tokenDoc)
     formatted.secret = secret
+    if (phrase) formatted.phrase = phrase
     return formatted
   }
 
-  async createEmailToken(input: CreateEmailTokenInput): Promise<TokenView> {
+  async createEmailToken(
+    input: CreateEmailTokenInput,
+    delivery?: MailDelivery & { origin: string },
+  ): Promise<TokenView> {
     const email = input.email.toLowerCase()
     let user = (await this.session.findOne('users', [Query.equal('email', [email])])) as UsersDoc
 
@@ -513,6 +554,16 @@ export class AccountSessionsService {
         ip: input.ip ?? '127.0.0.1',
       }),
     )) as TokensDoc
+
+    if (delivery) {
+      await sendOtpEmail({
+        delivery,
+        email,
+        userName: String(user.get('name') || 'User'),
+        secret,
+        userAgent: input.userAgent,
+      })
+    }
 
     const formatted = formatToken(tokenDoc)
     formatted.secret = secret
@@ -588,4 +639,133 @@ export class AccountSessionsService {
     const token = await signJwt({ sub: userId, sid: sessionId }, this.jwtSecret, 900)
     return { jwt: token }
   }
+}
+
+/**
+ * Magic-URL login email (v1 `createMagicURLSession` parity): subject and
+ * copy localized, redirect URL carries userId/secret/expire, and the
+ * optional security phrase renders in `securityPhrase`.
+ */
+async function sendMagicUrlEmail(input: {
+  delivery: MailDelivery & { origin: string }
+  userAgent: string
+  email: string
+  userName: string
+  userId: string
+  secret: string
+  expire: Date
+  phrase?: string
+  redirectUrl?: string
+}): Promise<void> {
+  const { mail, locale } = input.delivery
+  if (!mail.enabled) {
+    throw new ServiceUnavailableError('SMTP is not configured', {
+      code: 'general_smtp_disabled',
+    })
+  }
+
+  // v1 `magicAuthDefaultPath` fallback when the caller omitted `url`.
+  const base = input.redirectUrl || `${input.delivery.origin}/auth/magic-url`
+  const url = new URL(base)
+  url.searchParams.set('userId', input.userId)
+  url.searchParams.set('secret', input.secret)
+  url.searchParams.set('expire', input.expire.toISOString())
+
+  const projectName = await mail.projectName()
+  const userName = input.userName || 'User'
+  const detector = sessionDetectorFields(input.userAgent)
+  const agentClient = String(detector.clientName ?? 'UNKNOWN')
+  const agentDevice = String(detector.deviceBrand ?? 'UNKNOWN')
+  const agentOs = String(detector.osName ?? 'UNKNOWN')
+
+  await mail.build({
+    to: input.email,
+    templateFile: 'email-magic-url.tpl',
+    templateKey: `magicSession-${locale.locale}`,
+    subject: locale.format('emails.magicSession.subject', { project: projectName }),
+    data: {
+      hello: locale.format('emails.magicSession.hello', { user: userName }),
+      optionButton: locale.format('emails.magicSession.optionButton', {
+        project: projectName,
+      }),
+      buttonText: locale.format('emails.magicSession.buttonText', {
+        project: projectName,
+      }),
+      optionUrl: locale.format('emails.magicSession.optionUrl'),
+      clientInfo: locale.format('emails.magicSession.clientInfo', {
+        agentClient,
+        agentDevice,
+        agentOs,
+      }),
+      thanks: locale.format('emails.magicSession.thanks'),
+      signature: locale.format('emails.magicSession.signature', {
+        project: projectName,
+      }),
+      securityPhrase: input.phrase
+        ? locale.format('emails.magicSession.securityPhrase', { phrase: input.phrase })
+        : '',
+    },
+    variables: {
+      direction: locale.format('settings.direction'),
+      user: userName,
+      project: projectName,
+      redirect: url.toString(),
+    },
+  })
+}
+
+/**
+ * Email OTP message (v1 `createEmailToken` parity): 6-digit code in the
+ * `email-otp.tpl` layout with client info from the request user-agent.
+ */
+async function sendOtpEmail(input: {
+  delivery: MailDelivery & { origin: string }
+  email: string
+  userName: string
+  secret: string
+  userAgent?: string
+}): Promise<void> {
+  const { locale } = input.delivery
+  const mail = input.delivery.mail
+  if (!mail.enabled) {
+    throw new ServiceUnavailableError('SMTP is not configured', {
+      code: 'general_smtp_disabled',
+    })
+  }
+
+  const projectName = await mail.projectName()
+  const userName = input.userName || 'User'
+  const detector = sessionDetectorFields(input.userAgent)
+  const agentClient = String(detector.clientName ?? 'UNKNOWN')
+  const agentDevice = String(detector.deviceBrand ?? 'UNKNOWN')
+  const agentOs = String(detector.osName ?? 'UNKNOWN')
+
+  await mail.build({
+    to: input.email,
+    templateFile: 'email-otp.tpl',
+    templateKey: `otpSession-${locale.locale}`,
+    subject: locale.format('emails.otpSession.subject', { project: projectName }),
+    data: {
+      hello: locale.format('emails.otpSession.hello', { user: userName }),
+      description: locale.format('emails.otpSession.description', {
+        project: projectName,
+      }),
+      clientInfo: locale.format('emails.otpSession.clientInfo', {
+        agentClient,
+        agentDevice,
+        agentOs,
+      }),
+      thanks: locale.format('emails.otpSession.thanks'),
+      signature: locale.format('emails.otpSession.signature', {
+        project: projectName,
+      }),
+      securityPhrase: '',
+    },
+    variables: {
+      direction: locale.format('settings.direction'),
+      user: userName,
+      project: projectName,
+      otp: input.secret,
+    },
+  })
 }

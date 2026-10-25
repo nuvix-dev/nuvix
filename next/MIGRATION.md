@@ -416,10 +416,33 @@ next/
       recovery._, challenge._, target._). Known v1 template bugs fixed
       (delete routes audited `{res.$id}` against status-only responses →
       `Unknown`; v2 uses `{user.$id}`/`{params.userId}`)
+- [x] Mails delivery (Phase 6 follow-through): real mails worker
+      (SMTP via `@nuvix/messaging`'s adapter over nodemailer — 3-attempt
+      exponential-backoff retry, permanent-failure short-circuit, batched
+      recipients, per-project `server` override → system `NUVIX_SMTP_*`
+      fallback), `EmailHelper`/`EmailBuilder` port
+      (`packages/core/src/mail`, cached Handlebars compile, project SMTP
+      resolution + custom `email.<templateKey>` overrides), mail composer
+      per-request capability (`apps/server/src/mail/composer.ts`:
+      `MailComposer.capabilityFor/redirectRulesFor`, injectable → disabled
+      in test composition), copy of v1 email templates
+      (`assets/locale/templates`), and the recovery / verification /
+      magic-URL / email-OTP flows actually sending mail (503
+      `general_smtp_disabled` off, redirect validation on). v1 bugs fixed
+      en route: recovery `url` is required (v1 DTO `@IsNotEmpty @IsUrl` —
+      v2 contract drift to optional corrected); verification tokens used
+      raw `type: 1` instead of the legacy `TokenType.VERIFICATION = 2`;
+      verification emails rendered `email-verification.tpl` (absent from
+      assets — latent v1 crash) → generic `email-inner-base.tpl`; inner
+      templates got `withData` only while `{{redirect}}` lives in
+      `withVariables` → empty `<a href>` links in every mailed
+      recovery/verification/magic email (v2 merges variables into the inner
+      render). `PhraseGenerator` ported (`@nuvix/utils/phrase`) restoring
+      v1's magic-URL `phrase` toggle.
 
 ### Phase 9 — Tests & cutover
 
-- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 403 tests across 65 files)
+- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 454 tests across 72 files)
 - [x] Perf baseline vs old app (`test/bench/perf.ts`, `docs/perf-baseline.md`)
 - [x] Docker/deploy artifacts for Bun-only runtime (`Dockerfile`, `docker-compose.yml`, `.dockerignore`, `docs/deployment.md`)
 - [ ] Delete root monorepo (**explicit approval gate**)

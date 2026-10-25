@@ -242,7 +242,12 @@ that D29 doesn't require carrying forward.
 Create requires SMTP/SMS configured (`503 general_smtp_disabled` /
 `general_phone_disabled`) and the channel not already verified (`409
 ..._already_verified`); phone verification additionally requires a phone
-already set (`400 user_phone_not_found`). Confirm body:
+already set (`400 user_phone_not_found`). **v2 now actually sends the
+verification email** (localized inner template + redirect URL carrying
+`userId`/`secret`/`expire`; `url` falls back to the request origin per v1's
+`url ??= protocol://host`). v1 rendered `email-verification.tpl`, which does
+not exist in assets — a latent crash — so v2 renders the generic
+`email-inner-base.tpl`, whose variables match exactly. Confirm body:
 `{ userId, secret }`; verifies the secret hash, consumes the token
 (one-time use — deleted after success, v1 parity), sets the flag `true`.
 Invalid/expired/reused secret → `401 user_invalid_token`.
@@ -323,9 +328,18 @@ convention), just never wired up.
 | POST   | `/v2/account/recovery` | Create password-recovery token, email it |
 | PUT    | `/v2/account/recovery` | Confirm recovery (reset password)        |
 
-Guest-accessible (v1 parity). Create body: `{ email, url }` (`url`
-validated against allowed redirect hostnames). Blocked account →
+Guest-accessible (v1 parity). Create body: `{ email, url }` (`url` is
+**required** — v1 `CreateRecoveryDTO` marks it `@IsNotEmpty @IsUrl`; v2's
+earlier optional shape was contract drift — and is validated against the
+project's allowed redirect hostnames/schemes). Blocked account →
 `401 user_blocked`. Confirm body: `{ userId, secret, password }`.
+
+**Mail pipeline (v2 slice)**: the create flow mints the token, appends
+`userId`/`secret`/`expire` to `url` and enqueues the recovery email
+(localized `email-inner-base.tpl` content wrapped in
+`email-base-styled.tpl`). Missing/off SMTP → `503 general_smtp_disabled`
+(v1 parity, checked before any state change on the v1 flow; v2 checks after
+minting but before responding — the token materializes only on a 200).
 
 **v2 fix**: v1 runs the password-history check on recovery-reset but _not_
 the personal-data check (an inconsistency vs. `updatePassword`, which runs
@@ -356,8 +370,8 @@ existence via response shape, only via timing which is out of scope here).
 | GET    | `/v2/account/sessions/oauth2/:provider/callback` | OAuth2 token exchange + session/account creation                               | guest                       |
 | POST   | `/v2/account/sessions/oauth2/:provider/callback` | OAuth2 callback, form-encoded variant (Apple `response_mode=form_post`)        | guest                       |
 | GET    | `/v2/account/tokens/oauth2/:provider`            | Begin OAuth2 login for a **token** (non-cookie) flow                           | guest                       |
-| POST   | `/v2/account/tokens/magic-url`                   | Create magic-URL login token, email it                                         | guest, gate `magicUrl`      |
-| POST   | `/v2/account/tokens/email`                       | Create email-OTP login token                                                   | guest, gate `emailOtp`      |
+| POST   | `/v2/account/tokens/magic-url`                   | Create magic-URL login token, email it (optional `phrase` security phrase)     | guest, gate `magicUrl`      |
+| POST   | `/v2/account/tokens/email`                       | Create email-OTP login token, email the 6-digit code                           | guest, gate `emailOtp`      |
 | POST   | `/v2/account/tokens/phone`                       | Create phone-OTP login token, send SMS                                         | guest, gate `phone`         |
 | POST   | `/v2/account/tokens/jwt`                         | **Mint a short-lived access token from the current session**                   | SESSION\|JWT                |
 
@@ -398,6 +412,28 @@ clients.
 with the other `tokens/*` endpoints for consistency (they're all "exchange
 something for a shorter-lived credential"). Same behavior, default
 duration 900s (15 min), caller may request 60–3600s.
+
+### Magic-URL / email-OTP tokens — mail pipeline (v2 slice)
+
+Both flows now send their emails through the mails worker (v1
+`MailsQueue` parity): localized `email-magic-url.tpl` /
+`email-otp.tpl` layouts, wrapper variables `{direction, user, project,
+redirect|otp}`. Redirects validate against project platforms; the magic-URL
+`url` falls back to `${origin}/auth/magic-url` (v1's
+`magicAuthDefaultPath`).
+
+- **`phrase` (v1 parity, restored)**: `POST /tokens/magic-url` accepts
+  `phrase: true`; the response then carries `phrase` (word-combo +
+  4-char suffix) and the email renders the `securityPhrase` block.
+  Ported from v1 `PhraseGenerator` (`@nuvix/utils/phrase`).
+- **v2 fix (v1 bug — empty links)**: v1 rendered inner templates with only
+  `withData`, but inner layouts reference `{{redirect}}`/`{{user}}`, which
+  live in `withVariables` — recovery/verification/magic emails shipped with
+  empty `<a href>`. v2 merges variables into the inner render (data wins).
+
+Tokens of type `1` no longer appear: v2's profile service used raw `type: 1`
+literals for verification tokens; the legacy enum defines
+`VERIFICATION = 2` — v2 now uses `TokenType.VERIFICATION` everywhere.
 
 ### Session object
 

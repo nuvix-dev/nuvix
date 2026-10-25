@@ -15,6 +15,7 @@ import { projectContext } from './context/project'
 import { tenantContext } from './context/tenant'
 import { databaseRoutes } from './database/route'
 import { localeRoutes } from './locale/route'
+import { createMailComposer } from './mail/composer'
 import { messagingRoutes } from './messaging/route'
 import { oauthPages } from './oauth-pages'
 import { auditEnqueuerFrom, initAuditEmitter } from './plugins/audit'
@@ -79,6 +80,21 @@ const tenantPlugin = tenantContext({
   jwtSecret: config.jwtSecret,
 })
 
+// Queue runtime — audits (and later mails/messaging/webhooks) enqueue here.
+// Without a Redis connection the manager degrades to in-memory test mode.
+export const queues = new QueueManager({
+  // Tolerant at import time (tests compose the app without Redis); the
+  // runtime entry (index.ts) enforces `NUVIX_REDIS_URL` outside tests.
+  connection: Bun.env.NUVIX_REDIS_URL ? parseRedisUrl(Bun.env.NUVIX_REDIS_URL) : undefined,
+})
+initAuditEmitter(auditEnqueuerFrom(queues))
+
+/** Mail composer — account services build/send system emails through it. */
+export const mailComposer = createMailComposer({
+  registry: projectRegistry,
+  queues,
+})
+
 const v2 = new Elysia({ prefix: '/v2' })
   .use(
     cors({
@@ -130,6 +146,7 @@ const v2 = new Elysia({ prefix: '/v2' })
             registry: projectRegistry,
             encryptionKey: config.platform.tenantEncryptionKey,
           },
+          mail: mailComposer,
         }),
       )
       .use(teamRoutes())
@@ -144,15 +161,6 @@ const v2 = new Elysia({ prefix: '/v2' })
   // downstream).
   .get('/whoami', ({ auth, project }) => ({ auth, project }))
   .use(health)
-
-// Queue runtime — audits (and later mails/messaging/webhooks) enqueue here.
-// Without a Redis connection the manager degrades to in-memory test mode.
-export const queues = new QueueManager({
-  // Tolerant at import time (tests compose the app without Redis); the
-  // runtime entry (index.ts) enforces `NUVIX_REDIS_URL` outside tests.
-  connection: Bun.env.NUVIX_REDIS_URL ? parseRedisUrl(Bun.env.NUVIX_REDIS_URL) : undefined,
-})
-initAuditEmitter(auditEnqueuerFrom(queues))
 
 /**
  * Root app — unversioned routes (OAuth2 relay pages) + the /v2 API.

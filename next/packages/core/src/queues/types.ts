@@ -1,11 +1,29 @@
 import type { ConnectionOptions, JobsOptions } from 'bullmq'
 
 export interface MailJobData {
-  to: string
+  /** Platform project id — resolves the project's SMTP override/profile. */
+  projectId: string
+  /** Recipient address (single) — bulk sends pass `emails` instead. */
+  email?: string
+  emails?: string[]
   subject: string
-  body?: string
-  template?: string
-  data?: Record<string, unknown>
+  /** Inner-rendered email content (wrapped by the base template). */
+  body: string
+  /** Variables for the base wrapper template (project, redirect, otp, …). */
+  variables?: Record<string, unknown>
+  /** Per-project SMTP override (project record). */
+  server?: {
+    host: string
+    port: number
+    username: string
+    password: string
+    secure: boolean
+    senderEmail: string
+    senderName: string
+    replyTo: string
+  }
+  /** Base wrapper template path override (absolute). */
+  bodyTemplate?: string
 }
 
 export interface MessagingJobData {

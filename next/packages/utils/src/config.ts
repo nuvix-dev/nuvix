@@ -102,6 +102,46 @@ export const config = {
     },
   },
 
+  /**
+   * Global SMTP settings for system emails (verification, recovery,
+   * magic URL, OTP, MFA challenges). All optional — mail sending is
+   * enabled when `host` is set (legacy `configuration.smtp.enabled()`
+   * semantics). Projects override via their own `smtp` record.
+   */
+  smtp: {
+    get host(): string {
+      return Bun.env.NUVIX_SMTP_HOST ?? ''
+    },
+    get port(): number {
+      const raw = Number.parseInt(Bun.env.NUVIX_SMTP_PORT ?? '587', 10)
+      return Number.isInteger(raw) && raw > 0 ? raw : 587
+    },
+    get user(): string {
+      return Bun.env.NUVIX_SMTP_USER ?? ''
+    },
+    get password(): string {
+      return Bun.env.NUVIX_SMTP_PASSWORD ?? ''
+    },
+    get secure(): boolean {
+      return (Bun.env.NUVIX_SMTP_SECURE ?? '').toLowerCase() === 'true'
+    },
+    /** System sender address (fallback when the project has none). */
+    get emailFrom(): string {
+      return Bun.env.NUVIX_SMTP_EMAIL_FROM ?? ''
+    },
+    /** System sender display name (fallback when the project has none). */
+    get sender(): string {
+      return Bun.env.NUVIX_SMTP_SENDER ?? 'Nuvix'
+    },
+    get replyTo(): string {
+      return Bun.env.NUVIX_SMTP_REPLY_TO ?? ''
+    },
+    /** Mail sending is enabled when an SMTP host is configured. */
+    get enabled(): boolean {
+      return Boolean(Bun.env.NUVIX_SMTP_HOST)
+    },
+  },
+
   limits: {
     /** Max users per project — legacy `NUVIX_LIMIT_USERS` (0 = unlimited). */
     get users(): number {

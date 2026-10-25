@@ -1,16 +1,26 @@
 import type { Doc, Session } from '@nuvix/db'
+import type { Translator } from '@nuvix/i18n'
 import { Elysia, t } from 'elysia'
+import type { MailComposer } from '../../mail/composer'
 import { auditAfter } from '../../plugins/audit'
 import type { Users } from '../../types/generated'
 import { requireAuth } from '../auth'
-
 import { AccountService } from './service'
 
-export const accountProfileRoutes = () =>
-  new Elysia()
+export interface ProfileRouteDeps {
+  /** System-email composer (undefined in test composition → no email). */
+  mail?: MailComposer
+}
+
+export const accountProfileRoutes = ({ mail }: ProfileRouteDeps = {}) =>
+  new Elysia({ name: 'account-profile' })
     .derive('plugin', (ctx) => ({
       db: ('db' in ctx ? ctx.db : undefined) as unknown as Session,
       user: ('user' in ctx ? ctx.user : undefined) as unknown as Doc<Users>,
+      project: ('project' in ctx ? ctx.project : undefined) as unknown as
+        | { id: string }
+        | undefined,
+      locale: ('locale' in ctx ? ctx.locale : undefined) as unknown as Translator | undefined,
     }))
 
     // 1. Create account
@@ -24,13 +34,24 @@ export const accountProfileRoutes = () =>
         },
         body: t.Object({
           userId: t.Optional(
-            t.String({ description: 'Custom unique user ID (alphanumeric, max 36 chars)' }),
+            t.String({
+              description: 'Custom unique user ID (alphanumeric, max 36 chars)',
+            }),
           ),
-          email: t.String({ format: 'email', description: 'User email address' }),
-          password: t.String({ minLength: 8, description: 'User password (minimum 8 characters)' }),
+          email: t.String({
+            format: 'email',
+            description: 'User email address',
+          }),
+          password: t.String({
+            minLength: 8,
+            description: 'User password (minimum 8 characters)',
+          }),
           name: t.Optional(t.String({ maxLength: 128, description: 'User display name' })),
         }),
-        afterHandle: auditAfter({ event: 'user.create', resource: 'user/{res.$id}' }),
+        afterHandle: auditAfter({
+          event: 'user.create',
+          resource: 'user/{res.$id}',
+        }),
       },
       async ({ db, body }) => {
         const service = new AccountService(db)
@@ -67,10 +88,15 @@ export const accountProfileRoutes = () =>
         },
         response: {
           200: t.Object({
-            status: t.Literal('ok', { description: 'Operation status confirmation' }),
+            status: t.Literal('ok', {
+              description: 'Operation status confirmation',
+            }),
           }),
         },
-        afterHandle: auditAfter({ event: 'user.delete', resource: 'user/{user.$id}' }),
+        afterHandle: auditAfter({
+          event: 'user.delete',
+          resource: 'user/{user.$id}',
+        }),
       },
       async ({ db, user }) => {
         const userId = requireAuth(user)
@@ -111,7 +137,10 @@ export const accountProfileRoutes = () =>
             description: 'Custom key-value user preferences',
           }),
         }),
-        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
+        afterHandle: auditAfter({
+          event: 'user.update',
+          resource: 'user/{res.$id}',
+        }),
       },
       async ({ db, user, body }) => {
         const userId = requireAuth(user)
@@ -130,9 +159,16 @@ export const accountProfileRoutes = () =>
           tags: ['Account Profile'],
         },
         body: t.Object({
-          name: t.String({ minLength: 1, maxLength: 128, description: 'New user display name' }),
+          name: t.String({
+            minLength: 1,
+            maxLength: 128,
+            description: 'New user display name',
+          }),
         }),
-        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
+        afterHandle: auditAfter({
+          event: 'user.update',
+          resource: 'user/{res.$id}',
+        }),
       },
       async ({ db, user, body }) => {
         const userId = requireAuth(user)
@@ -151,14 +187,20 @@ export const accountProfileRoutes = () =>
           tags: ['Account Profile'],
         },
         body: t.Object({
-          password: t.String({ minLength: 8, description: 'New user password' }),
+          password: t.String({
+            minLength: 8,
+            description: 'New user password',
+          }),
           oldPassword: t.Optional(
             t.String({
               description: 'Current user password (required if account already has a password)',
             }),
           ),
         }),
-        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
+        afterHandle: auditAfter({
+          event: 'user.update',
+          resource: 'user/{res.$id}',
+        }),
       },
       async ({ db, user, body }) => {
         const userId = requireAuth(user)
@@ -177,10 +219,16 @@ export const accountProfileRoutes = () =>
           tags: ['Account Profile'],
         },
         body: t.Object({
-          email: t.String({ format: 'email', description: 'New user email address' }),
+          email: t.String({
+            format: 'email',
+            description: 'New user email address',
+          }),
           password: t.Optional(t.String({ description: 'Current password for verification' })),
         }),
-        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
+        afterHandle: auditAfter({
+          event: 'user.update',
+          resource: 'user/{res.$id}',
+        }),
       },
       async ({ db, user, body }) => {
         const userId = requireAuth(user)
@@ -202,7 +250,10 @@ export const accountProfileRoutes = () =>
           phone: t.String({ description: 'New phone number in E.164 format' }),
           password: t.Optional(t.String({ description: 'Current password for verification' })),
         }),
-        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
+        afterHandle: auditAfter({
+          event: 'user.update',
+          resource: 'user/{res.$id}',
+        }),
       },
       async ({ db, user, body }) => {
         const userId = requireAuth(user)
@@ -220,7 +271,10 @@ export const accountProfileRoutes = () =>
           description: 'Block or unblock the user account.',
           tags: ['Account Profile'],
         },
-        afterHandle: auditAfter({ event: 'user.update', resource: 'user/{res.$id}' }),
+        afterHandle: auditAfter({
+          event: 'user.update',
+          resource: 'user/{res.$id}',
+        }),
       },
       async ({ db, user }) => {
         const userId = requireAuth(user)
@@ -241,16 +295,30 @@ export const accountProfileRoutes = () =>
         body: t.Optional(
           t.Object({
             url: t.Optional(
-              t.String({ format: 'uri', description: 'Redirect URL with secret query param' }),
+              t.String({
+                format: 'uri',
+                description: 'Redirect URL with secret query param',
+              }),
             ),
           }),
         ),
-        afterHandle: auditAfter({ event: 'verification.create', resource: 'user/{res.$id}' }),
+        afterHandle: auditAfter({
+          event: 'verification.create',
+          resource: 'user/{res.$id}',
+        }),
       },
-      async ({ db, user, body }) => {
+      async ({ db, user, body, locale, project, request }) => {
         const userId = requireAuth(user)
         const service = new AccountService(db)
-        return service.createEmailVerification(userId, body?.url)
+        if (!mail || !project || !locale) {
+          return service.createEmailVerification(userId, body?.url)
+        }
+        return service.createEmailVerification(userId, body?.url, 'UNKNOWN', '127.0.0.1', {
+          mail: mail.capabilityFor(project.id),
+          locale,
+          rules: await mail.redirectRulesFor(project.id),
+          origin: new URL(request.url).origin,
+        })
       },
     )
     .post(
@@ -264,16 +332,30 @@ export const accountProfileRoutes = () =>
         body: t.Optional(
           t.Object({
             url: t.Optional(
-              t.String({ format: 'uri', description: 'Redirect URL with secret query param' }),
+              t.String({
+                format: 'uri',
+                description: 'Redirect URL with secret query param',
+              }),
             ),
           }),
         ),
-        afterHandle: auditAfter({ event: 'verification.create', resource: 'user/{res.$id}' }),
+        afterHandle: auditAfter({
+          event: 'verification.create',
+          resource: 'user/{res.$id}',
+        }),
       },
-      async ({ db, user, body }) => {
+      async ({ db, user, body, locale, project, request }) => {
         const userId = requireAuth(user)
         const service = new AccountService(db)
-        return service.createEmailVerification(userId, body?.url)
+        if (!mail || !project || !locale) {
+          return service.createEmailVerification(userId, body?.url)
+        }
+        return service.createEmailVerification(userId, body?.url, 'UNKNOWN', '127.0.0.1', {
+          mail: mail.capabilityFor(project.id),
+          locale,
+          rules: await mail.redirectRulesFor(project.id),
+          origin: new URL(request.url).origin,
+        })
       },
     )
 
@@ -287,10 +369,15 @@ export const accountProfileRoutes = () =>
           tags: ['Account Verification'],
         },
         body: t.Object({
-          userId: t.String({ description: 'User ID associated with the token' }),
+          userId: t.String({
+            description: 'User ID associated with the token',
+          }),
           secret: t.String({ description: 'Verification secret token' }),
         }),
-        afterHandle: auditAfter({ event: 'verification.update', resource: 'user/{res.$id}' }),
+        afterHandle: auditAfter({
+          event: 'verification.update',
+          resource: 'user/{res.$id}',
+        }),
       },
       async ({ db, body }) => {
         const service = new AccountService(db)
@@ -306,10 +393,15 @@ export const accountProfileRoutes = () =>
           tags: ['Account Verification'],
         },
         body: t.Object({
-          userId: t.String({ description: 'User ID associated with the token' }),
+          userId: t.String({
+            description: 'User ID associated with the token',
+          }),
           secret: t.String({ description: 'Verification secret token' }),
         }),
-        afterHandle: auditAfter({ event: 'verification.update', resource: 'user/{res.$id}' }),
+        afterHandle: auditAfter({
+          event: 'verification.update',
+          resource: 'user/{res.$id}',
+        }),
       },
       async ({ db, body }) => {
         const service = new AccountService(db)
@@ -326,7 +418,10 @@ export const accountProfileRoutes = () =>
           description: 'Generate SMS verification OTP and send to user phone.',
           tags: ['Account Verification'],
         },
-        afterHandle: auditAfter({ event: 'verification.create', resource: 'user/{res.$id}' }),
+        afterHandle: auditAfter({
+          event: 'verification.create',
+          resource: 'user/{res.$id}',
+        }),
       },
       async ({ db, user }) => {
         const userId = requireAuth(user)
@@ -342,7 +437,10 @@ export const accountProfileRoutes = () =>
           description: 'Alias for POST /account/verification/phone.',
           tags: ['Account Verification'],
         },
-        afterHandle: auditAfter({ event: 'verification.create', resource: 'user/{res.$id}' }),
+        afterHandle: auditAfter({
+          event: 'verification.create',
+          resource: 'user/{res.$id}',
+        }),
       },
       async ({ db, user }) => {
         const userId = requireAuth(user)
@@ -364,7 +462,10 @@ export const accountProfileRoutes = () =>
           userId: t.String({ description: 'User ID associated with the OTP' }),
           secret: t.String({ description: 'SMS OTP verification secret' }),
         }),
-        afterHandle: auditAfter({ event: 'verification.update', resource: 'user/{res.$id}' }),
+        afterHandle: auditAfter({
+          event: 'verification.update',
+          resource: 'user/{res.$id}',
+        }),
       },
       async ({ db, body }) => {
         const service = new AccountService(db)
@@ -383,7 +484,10 @@ export const accountProfileRoutes = () =>
           userId: t.String({ description: 'User ID associated with the OTP' }),
           secret: t.String({ description: 'SMS OTP verification secret' }),
         }),
-        afterHandle: auditAfter({ event: 'verification.update', resource: 'user/{res.$id}' }),
+        afterHandle: auditAfter({
+          event: 'verification.update',
+          resource: 'user/{res.$id}',
+        }),
       },
       async ({ db, body }) => {
         const service = new AccountService(db)

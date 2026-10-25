@@ -4,16 +4,21 @@ import {
   validatePasswordHistory,
   validatePersonalData,
 } from '@nuvix/core/auth'
+import { validateRedirectURL } from '@nuvix/core/oauth'
 import { Doc, ID, Permission, Query, Role, type Session } from '@nuvix/db'
+import type { Translator } from '@nuvix/i18n'
+import type { MailDelivery } from '../../mail/composer'
 import {
   BadRequestError,
   ConflictError,
   ForbiddenError,
   NotFoundError,
+  ServiceUnavailableError,
   UnauthorizedError,
 } from '../../shared/errors'
 import type { Targets, TargetsDoc, Tokens, TokensDoc, Users, UsersDoc } from '../../types/generated'
 import { type AccountView, formatAccount, formatToken, type TokenView } from '../formatter'
+import { TokenType } from '../sessions/service'
 
 export interface CreateAccountInput {
   userId?: string
@@ -412,11 +417,26 @@ export class AccountService {
     return formatAccount(updated, targets)
   }
 
+  /**
+   * Sends the verification email when delivery deps are present (v1
+   * `account.createVerification` parity — redirect URL with
+   * userId/secret/expire, inner-base template, 503 `general_smtp_disabled`
+   * when project SMTP is off). Legacy rendered `email-verification.tpl`,
+   * which does not exist in assets (latent v1 crash); v2 uses the generic
+   * `email-inner-base.tpl`, whose variables match exactly.
+   */
   async createEmailVerification(
     userId: string,
-    _url?: string,
+    url?: string,
     userAgent = 'UNKNOWN',
     ip = '127.0.0.1',
+    delivery?: {
+      mail: MailDelivery['mail']
+      locale: Translator
+      rules: MailDelivery['rules']
+      /** Request origin — the v1 `url ??= protocol://host` fallback. */
+      origin: string
+    },
   ): Promise<TokenView> {
     const user = (await this.session.getDocument('users', userId)) as UsersDoc
     if (user.empty()) {
@@ -441,13 +461,55 @@ export class AccountService {
         ],
         userId,
         userInternalId: user.getSequence(),
-        type: 1, // Verification
+        type: TokenType.VERIFICATION,
         secret: Auth.hash(secret),
         expire,
         userAgent,
         ip,
       }),
     )) as TokensDoc
+
+    if (delivery) {
+      const { mail, locale, rules, origin } = delivery
+      if (!mail.enabled) {
+        throw new ServiceUnavailableError('SMTP is not configured', {
+          code: 'general_smtp_disabled',
+        })
+      }
+      const base = url ?? origin
+      const invalid = validateRedirectURL(base, rules)
+      if (invalid) {
+        throw new BadRequestError(invalid, { code: 'general_bad_request' })
+      }
+      const redirectUrl = new URL(base)
+      redirectUrl.searchParams.set('userId', user.getId())
+      redirectUrl.searchParams.set('secret', secret)
+      redirectUrl.searchParams.set('expire', expire.toISOString())
+
+      const projectName = await mail.projectName()
+      const userName = String(user.get('name') || 'User')
+      await mail.build({
+        to: String(user.get('email')),
+        templateFile: 'email-inner-base.tpl',
+        templateKey: `verification-${locale.locale}`,
+        subject: locale.format('emails.verification.subject'),
+        data: {
+          body: locale.format('emails.verification.body', { project: projectName }),
+          hello: locale.format('emails.verification.hello', { user: userName }),
+          footer: locale.format('emails.verification.footer'),
+          thanks: locale.format('emails.verification.thanks'),
+          signature: locale.format('emails.verification.signature', {
+            project: projectName,
+          }),
+        },
+        variables: {
+          direction: locale.format('settings.direction'),
+          redirect: redirectUrl.toString(),
+          project: projectName,
+          team: '',
+        },
+      })
+    }
 
     const formatted = formatToken(tokenDoc)
     formatted.secret = secret
@@ -461,10 +523,10 @@ export class AccountService {
     }
     const tokens = (await this.session.find('tokens', [
       Query.equal('userId', [userId]),
-      Query.equal('type', [1]),
+      Query.equal('type', [TokenType.VERIFICATION]),
     ])) as TokensDoc[]
 
-    const verified = Auth.tokenVerify(tokens, 1, secret)
+    const verified = Auth.tokenVerify(tokens, TokenType.VERIFICATION, secret)
     if (!verified) {
       throw new BadRequestError('Invalid token', { code: 'user_invalid_token' })
     }

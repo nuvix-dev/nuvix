@@ -1,5 +1,6 @@
 import type { Database, Doc } from '@nuvix/db'
 import { Query } from '@nuvix/db'
+import type { ProjectMailInfo } from '../mail'
 import type { TenantTarget } from '../tenants'
 
 interface ProjectRecord {
@@ -125,6 +126,25 @@ export class ProjectRegistry {
   }
 
   /**
+   * Per-project mail profile (`name`, `smtp`, `templates`) — the narrow
+   * read the mail composer needs to build/brand system emails.
+   */
+  async getProjectProfile(projectId: string): Promise<ProjectMailInfo | undefined> {
+    try {
+      const project = await this.db.system().getDocument('projects', projectId)
+      if (project.empty()) return undefined
+      const data = project.toObject() as unknown as Record<string, unknown>
+      return {
+        name: data.name ? String(data.name) : undefined,
+        smtp: isPlainRecord(data.smtp) ? data.smtp : undefined,
+        templates: isPlainRecord(data.templates) ? data.templates : undefined,
+      }
+    } catch {
+      return undefined
+    }
+  }
+
+  /**
    * Tenant connection target for a project id — queue workers resolve
    * tenant databases from job payloads carrying only a project id.
    */
@@ -191,4 +211,8 @@ export class KeyRegistry {
       expire: data.expire ?? null,
     }
   }
+}
+
+function isPlainRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
