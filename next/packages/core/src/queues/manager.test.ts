@@ -53,9 +53,8 @@ describe('QueueManager', () => {
     expect(messagingJobId).toMatch(/^job_/)
 
     const statsJobId = await manager.enqueueStats({
-      metric: 'requests.count',
-      value: 1,
       projectId: 'proj_1',
+      metrics: [{ key: 'network.requests', value: 1 }],
     })
     expect(statsJobId).toMatch(/^job_/)
 

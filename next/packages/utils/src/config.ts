@@ -142,6 +142,14 @@ export const config = {
     },
   },
 
+  /** Usage-metrics recording (network + document events) — v1 enableStats. */
+  stats: {
+    /** Opt-out via `NUVIX_ENABLE_STATS=false`. */
+    get enabled(): boolean {
+      return Bun.env.NUVIX_ENABLE_STATS !== 'false'
+    },
+  },
+
   limits: {
     /** Max users per project — legacy `NUVIX_LIMIT_USERS` (0 = unlimited). */
     get users(): number {

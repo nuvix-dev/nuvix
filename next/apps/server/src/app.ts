@@ -24,6 +24,7 @@ import { problemErrors } from './plugins/errors'
 import { rateLimit } from './plugins/rate-limit'
 import { securityHeaders } from './plugins/security'
 import { schemasRoutes } from './schemas/route'
+import { type StatsEnqueuer, statsRequestSource, wireStatsDatabase } from './stats/source'
 import { storageRoutes } from './storage/route'
 import { teamRoutes } from './teams/route'
 import { userRoutes } from './users/route'
@@ -73,15 +74,8 @@ const platformDb = await createPlatformDatabase({
 })
 const projectRegistry = new ProjectRegistry(platformDb)
 const keyRegistry = new KeyRegistry(platformDb)
-const tenantPool = new TenantResourcePool()
-const tenantPlugin = tenantContext({
-  projectLookup: projectRegistry,
-  keyLookup: keyRegistry,
-  tenantPool,
-  jwtSecret: config.jwtSecret,
-})
 
-// Queue runtime — audits (and later mails/messaging/webhooks) enqueue here.
+// Queue runtime — audits/mails/messaging/stats/webhooks enqueue here.
 // Without a Redis connection the manager degrades to in-memory test mode.
 export const queues = new QueueManager({
   // Tolerant at import time (tests compose the app without Redis); the
@@ -91,6 +85,27 @@ export const queues = new QueueManager({
 initAuditEmitter(auditEnqueuerFrom(queues))
 // Webhook fan-out shares the audit pipeline (post-success afterHandle).
 initWebhookFanout(createWebhookFanout({ registry: projectRegistry, queues }))
+
+// Usage metrics enqueue boundary (stats worker persists per tenant).
+const statsEnqueuer: StatsEnqueuer = async (projectId, metrics) => {
+  await queues.enqueueStats({ projectId, metrics })
+}
+
+// Tenant resources notify composition of their Database facades so the
+// stats usage listeners attach (v1 `StatsHelper.connect` parity).
+const tenantPool = new TenantResourcePool({
+  dependencies: {
+    onDatabaseCreated: ({ projectId, database }) => {
+      wireStatsDatabase({ projectId, database, enqueue: statsEnqueuer })
+    },
+  },
+})
+const tenantPlugin = tenantContext({
+  projectLookup: projectRegistry,
+  keyLookup: keyRegistry,
+  tenantPool,
+  jwtSecret: config.jwtSecret,
+})
 
 /** Mail composer — account services build/send system emails through it. */
 export const mailComposer = createMailComposer({
@@ -131,6 +146,8 @@ const v2 = new Elysia({ prefix: '/v2' })
   // -> tenant-local auth -> canonical roles -> caller-scoped Session.
   .use(projectContext({ lookup: projectRegistry }))
   .use(authContext({ jwtSecret: config.jwtSecret }))
+  // Network usage metrics (requests + bytes) — every project response.
+  .use(statsRequestSource({ enqueue: statsEnqueuer, enabled: () => config.stats.enabled }))
   .use(localeContext(localeOptions))
   .use(localeRoutes(geoip, localeOptions))
   .use(avatarRoutes(avatars))

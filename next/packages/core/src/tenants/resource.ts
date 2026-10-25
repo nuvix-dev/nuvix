@@ -14,6 +14,14 @@ export interface TenantResourceDependencies {
   createPgMeta?: (sql: SQL) => PgMeta
   /** Shared across every `TenantResource` a pool constructs — resolved once, not per tenant. */
   cacheFactory?: TenantCacheFactory
+  /**
+   * Notified whenever this resource constructs a `Database` facade
+   * (default schema at construction, `auth`/custom schemas lazily).
+   * Composition hooks (stats usage listeners) register here; thrown
+   * errors are swallowed — observability wiring must never break the
+   * resource.
+   */
+  onDatabaseCreated?: (tenant: { projectId: string; schema: string; database: Database }) => void
 }
 
 function createSql(target: TenantTarget): SQL {
@@ -66,6 +74,20 @@ export class TenantResource {
       this.sql,
       cacheFactory.forTenant(`tenant:${projectId}:default`),
     )
+    this.notifyCreated('default', this.db)
+  }
+
+  /** Best-effort composition notification (stats listeners et al). */
+  private notifyCreated(schema: string, database: Database): void {
+    try {
+      this.dependencies.onDatabaseCreated?.({
+        projectId: this.projectId,
+        schema,
+        database,
+      })
+    } catch {
+      // Observability wiring must never break the resource.
+    }
   }
 
   /** Returns the underlying Bun SQL instance for raw tenant DDL/maintenance. */
@@ -105,10 +127,13 @@ export class TenantResource {
     }
     if (schema === 'auth') {
       const cacheFactory = this.dependencies.cacheFactory ?? defaultCacheFactory
-      this.authDb ??= (this.dependencies.createAuthDatabase ?? createAuthDatabase)(
-        this.sql,
-        cacheFactory.forTenant(`tenant:${this.projectId}:auth`),
-      )
+      if (!this.authDb) {
+        this.authDb = (this.dependencies.createAuthDatabase ?? createAuthDatabase)(
+          this.sql,
+          cacheFactory.forTenant(`tenant:${this.projectId}:auth`),
+        )
+        this.notifyCreated('auth', this.authDb)
+      }
       return this.authDb
     }
     let schemaDb = this.schemaDbs.get(schema)
@@ -121,6 +146,7 @@ export class TenantResource {
         cacheFactory.forTenant(`tenant:${this.projectId}:${schema}`),
       )
       this.schemaDbs.set(schema, schemaDb)
+      this.notifyCreated(schema, schemaDb)
     }
     return schemaDb
   }
@@ -150,10 +176,13 @@ export class TenantResource {
    */
   authSession(roles: readonly string[]): Session {
     const cacheFactory = this.dependencies.cacheFactory ?? defaultCacheFactory
-    this.authDb ??= (this.dependencies.createAuthDatabase ?? createAuthDatabase)(
-      this.sql,
-      cacheFactory.forTenant(`tenant:${this.projectId}:auth`),
-    )
+    if (!this.authDb) {
+      this.authDb = (this.dependencies.createAuthDatabase ?? createAuthDatabase)(
+        this.sql,
+        cacheFactory.forTenant(`tenant:${this.projectId}:auth`),
+      )
+      this.notifyCreated('auth', this.authDb)
+    }
     return this.authDb.for([...roles])
   }
 
@@ -165,10 +194,13 @@ export class TenantResource {
   /** Privileged system session over the dedicated auth schema, for internal lookup/verification. */
   authSystemSession(): Session {
     const cacheFactory = this.dependencies.cacheFactory ?? defaultCacheFactory
-    this.authDb ??= (this.dependencies.createAuthDatabase ?? createAuthDatabase)(
-      this.sql,
-      cacheFactory.forTenant(`tenant:${this.projectId}:auth`),
-    )
+    if (!this.authDb) {
+      this.authDb = (this.dependencies.createAuthDatabase ?? createAuthDatabase)(
+        this.sql,
+        cacheFactory.forTenant(`tenant:${this.projectId}:auth`),
+      )
+      this.notifyCreated('auth', this.authDb)
+    }
     return this.authDb.system()
   }
 

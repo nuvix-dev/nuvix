@@ -9,3 +9,4 @@ export {
   SchemaType,
   Status,
 } from './constants'
+export { fnv1a128, MetricFor, MetricPeriod } from './metrics'

@@ -8,7 +8,7 @@ import processDeletes from './deletes.processor'
 import processLogs from './logs.processor'
 import processMails, { setMailSender } from './mails.processor'
 import processMessaging, { setMessagingSessionResolver } from './messaging.processor'
-import processStats from './stats.processor'
+import processStats, { flushStats, setStatsPersister } from './stats.processor'
 import processWebhooks, {
   setWebhookStore,
   type WebhookDeliveryLog,
@@ -301,16 +301,37 @@ describe('Queue Worker Processors', () => {
     expect(result.status).toBe('skipped')
   })
 
-  it('processStats executes stat recording job', async () => {
+  it('processStats buffers metric batches and flushes aggregated rows', async () => {
+    const persisted: Array<{
+      projectId: string
+      metrics: Array<{ key: string; value: number }>
+    }> = []
+    setStatsPersister(async (projectId, metrics) => {
+      persisted.push({ projectId, metrics })
+    })
+
     const mockJob = {
       data: {
-        metric: 'requests.count',
-        value: 1,
+        projectId: 'proj_1',
+        metrics: [
+          { key: 'network.requests', value: 1 },
+          { key: 'network.inbound', value: 120 },
+          { key: 'network.outbound', value: 340 },
+        ],
       },
     } as Job
 
     const result = await processStats(mockJob)
     expect(result.success).toBe(true)
+    expect(result.buffered).toBeGreaterThan(0)
+
+    // Buffered only — nothing persisted before the flush interval.
+    expect(persisted).toHaveLength(0)
+
+    await flushStats()
+    expect(persisted).toHaveLength(1)
+    expect(persisted[0]!.projectId).toBe('proj_1')
+    expect(persisted[0]!.metrics).toHaveLength(3)
   })
 
   it('processBatch processes batch items', async () => {

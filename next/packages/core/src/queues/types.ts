@@ -50,10 +50,10 @@ export interface AuditJobData {
 }
 
 export interface StatsJobData {
-  metric: string
-  value: number
-  timestamp?: number
-  projectId?: string
+  /** Platform project id — resolves the tenant database (auth schema). */
+  projectId: string
+  /** One job carries the metrics of a single event (v1 parity). */
+  metrics: Array<{ key: string; value: number }>
 }
 
 export interface WebhookJobData {

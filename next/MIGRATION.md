@@ -482,10 +482,32 @@ next/
       the platform project from the request context and both audit rows
       and webhook fan-out are tenant-correct. `webhook_logs` added to the
       platform schema (`ensurePlatformSchema` creates it on next run).
+- [x] Stats recording (Phase 6 follow-through): real stats pipeline —
+      metric primitives ported (`@nuvix/utils/metrics`: v1 `MetricFor`/
+      `MetricPeriod` enums + `fnv1a128` deterministic stat-row id hash),
+      real stats worker (batched flush 5000/3s, per-tenant aggregation,
+      one `stats` row per (inf/1h/1d) × metric with create-or-update-
+      with-increase on the tenant auth-system session — v1
+      `StatsQueue.persist` parity), and both v1 sources: network metrics
+      (requests + inbound/outbound bytes per response — v1 `StatsHook`,
+      skipping API-key callers, opt-out via `NUVIX_ENABLE_STATS=false`;
+      Elysia beta.6's minimal afterResponse context is bridged through
+      the shared-instance derive chain) and usage document events (v1
+      `StatsHelper.connect` — `calculate-usage` listeners wired onto
+      every tenant `Database` via a new `TenantResourceDependencies.
+  onDatabaseCreated` composition hook). Redesigns over v1 recorded:
+      the per-bucket `{bucketInternalId}.files` metrics and the
+      user/bucket delete `reduce` compensations are dropped — v2 keeps a
+      single `files` collection (bucketId attribute) and deletes
+      sessions/files row-by-row, so per-row DocumentDelete events
+      already decrement the aggregate metrics (v1's compensation existed
+      because bucket files lived in per-bucket collections deleted
+      wholesale). Usage/usage-range endpoints still read live counts;
+      pointing them at the recorded stats rows is a follow-up.
 
 ### Phase 9 — Tests & cutover
 
-- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 469 tests across 74 files)
+- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 485 tests across 77 files)
 - [x] Perf baseline vs old app (`test/bench/perf.ts`, `docs/perf-baseline.md`)
 - [x] Docker/deploy artifacts for Bun-only runtime (`Dockerfile`, `docker-compose.yml`, `.dockerignore`, `docs/deployment.md`)
 - [ ] Delete root monorepo (**explicit approval gate**)

@@ -89,7 +89,7 @@ export class QueueManager {
   }
 
   async enqueueStats(data: StatsJobData, opts?: JobsOptions): Promise<string> {
-    return this.addJob(QueueFor.STATS, data.metric, data, opts)
+    return this.addJob(QueueFor.STATS, 'add-metric', data, opts)
   }
 
   async enqueueWebhook(data: WebhookJobData, opts?: JobsOptions): Promise<string> {
