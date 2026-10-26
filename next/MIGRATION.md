@@ -513,10 +513,27 @@ onDatabaseCreated` composition hook). Redesigns over v1 recorded:
       default `'1d'` was not a config key — latent v1 crash, v2 defaults
       `'30d'`). v1's `Authorization.skip` parity is structural: the
       usage routes run on the tenant auth-system session.
+- [x] Push assets (Phase 6 follow-through): storage-backed push
+      notifications end-to-end — `GET
+  /storage/buckets/:bucketId/files/:fileId/push` (v1
+      `getFileForPushNotification` parity: short-lived JWT entitlement
+      with projectId/bucketId/fileId claims, disabled buckets hidden,
+      inline disposition + 45-day Expires + range requests; streaming
+      tail shared with `serveFile`), create/update-time image-ref
+      validation on push messages (v1 parity: bucket exists, file in
+      bucket, png/jpeg only), and delivery-time URL signing in the
+      messaging worker (v1 `processedImage`: 15-day JWT →
+      `/v2/storage/...` push URL; `image` refs stay raw in the message
+      doc and resolve at delivery so tokens never sit stale in the
+      database — v1 signed at create and stored the URL). v1 bug fixed
+      en route: v1 signed the push JWT without the `projectId` claim its
+      own verifier demanded — every vendor fetch failed; v2 signs and
+      verifies all three claims. Vendor-facing base URL comes from
+      `NUVIX_ENDPOINT` (falls back to `http://localhost:$NUVIX_PORT`).
 
 ### Phase 9 — Tests & cutover
 
-- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 489 tests across 78 files)
+- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 494 tests across 78 files)
 - [x] Perf baseline vs old app (`test/bench/perf.ts`, `docs/perf-baseline.md`)
 - [x] Docker/deploy artifacts for Bun-only runtime (`Dockerfile`, `docker-compose.yml`, `.dockerignore`, `docs/deployment.md`)
 - [ ] Delete root monorepo (**explicit approval gate**)

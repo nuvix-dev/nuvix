@@ -56,6 +56,37 @@ export interface UpdateSmsMessageInput extends Partial<BaseMessageInput> {
   content?: string
 }
 
+/**
+ * Validates a push-message image reference (`bucketId:fileId`) — v1
+ * create-time parity (bucket exists, file exists in that bucket, mime
+ * png/jpeg). Storage-backed push assets are streamed through
+ * `/storage/buckets/:bucketId/files/:fileId/push` at delivery time.
+ */
+async function validatePushImageRef(session: Session, image: string): Promise<void> {
+  if (!image.includes(':')) return // absolute URL or external asset — not ours
+  const [bucketId, fileId] = image.split(':') as [string, string]
+  if (!bucketId || !fileId) return
+
+  const bucket = await session.getDocument('buckets', bucketId)
+  if (bucket.empty()) {
+    throw new NotFoundError('Storage bucket not found', {
+      code: 'storage_bucket_not_found',
+    })
+  }
+
+  const file = await session.getDocument('files', fileId)
+  if (file.empty() || file.get('bucketId') !== bucketId) {
+    throw new NotFoundError('File not found', { code: 'storage_file_not_found' })
+  }
+
+  const allowedMimeTypes = ['image/png', 'image/jpeg']
+  if (!allowedMimeTypes.includes(String(file.get('mimeType') ?? ''))) {
+    throw new BadRequestError('Unsupported image type', {
+      code: 'storage_file_type_unsupported',
+    })
+  }
+}
+
 export interface CreatePushMessageInput extends BaseMessageInput {
   title?: string
   body?: string
@@ -259,6 +290,10 @@ export class MessagingService {
       throw new BadRequestError('Message missing schedule', {
         code: 'messaging_missing_schedule',
       })
+    }
+
+    if (image) {
+      await validatePushImageRef(this.session, image)
     }
 
     const doc = new Doc<Messages>({
@@ -473,7 +508,10 @@ export class MessagingService {
     if (input.body !== undefined) currentData.body = input.body
     if (input.data !== undefined) currentData.data = input.data
     if (input.action !== undefined) currentData.action = input.action
-    if (input.image !== undefined) currentData.image = input.image
+    if (input.image !== undefined) {
+      if (input.image) await validatePushImageRef(this.session, input.image)
+      currentData.image = input.image
+    }
     if (input.icon !== undefined) currentData.icon = input.icon
     if (input.sound !== undefined) currentData.sound = input.sound
     if (input.color !== undefined) currentData.color = input.color

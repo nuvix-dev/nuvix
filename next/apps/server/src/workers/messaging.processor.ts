@@ -215,14 +215,20 @@ async function prodSend(params: {
   }
 
   const d = params.payload.data
-  const image = d.image as { url?: string } | null | undefined
+  // Image arrives as a resolved URL string (refs resolved in
+  // `deliverExternalMessage`); object carriers pass their `.url`.
+  const rawImage: unknown = d.image
+  const imageUrl =
+    typeof rawImage === 'string'
+      ? rawImage
+      : ((rawImage as { url?: string } | null | undefined)?.url ?? undefined)
   const push = new messaging.Push({
     to: params.payload.to,
     title: strOpt(d.title),
     body: strOpt(d.body),
     data: (d.data as Record<string, unknown> | undefined) ?? undefined,
     action: strOpt(d.action),
-    image: image?.url ?? undefined,
+    image: imageUrl,
     icon: strOpt(d.icon),
     sound: strOpt(d.sound),
     color: strOpt(d.color),
@@ -278,6 +284,8 @@ function chunk<T>(items: T[], size: number): T[][] {
 
 export interface MessagingDeps {
   session: Session
+  /** Platform project id — resolves push-image signed URLs. */
+  projectId?: string
 }
 
 /** Tenant session resolver boundary (overridable in tests). */
@@ -394,6 +402,36 @@ async function buildEmailExtras(
   }
 }
 
+/**
+ * Resolves a push message's `image` to a vendor-fetchable URL (v1
+ * `processedImage` parity): `bucketId:fileId` references are signed with
+ * a 15-day JWT against the push-asset stream endpoint
+ * (`/storage/buckets/:bucketId/files/:fileId/push`); absolute URLs pass
+ * through. v1 signed at create time and stored the URL in the message —
+ * v2 signs at delivery so tokens never sit stale in the database.
+ */
+async function resolvePushImage(
+  projectId: string | undefined,
+  image: unknown,
+): Promise<string | undefined> {
+  if (image && typeof image === 'object') {
+    return ((image as { url?: unknown }).url as string | undefined) ?? undefined
+  }
+  if (typeof image !== 'string' || image.length === 0) return undefined
+  // Absolute URLs and plain strings pass through.
+  if (image.includes('://') || !image.includes(':')) return image
+
+  if (!projectId) return image
+  const [bucketId, fileId] = image.split(':') as [string, string]
+  if (!bucketId || !fileId) return image
+
+  const { signJwt } = await import('@nuvix/core/auth')
+  const { config } = await import('@nuvix/utils')
+  const jwt = await signJwt({ projectId, bucketId, fileId }, config.jwtSecret, 15 * 24 * 60 * 60)
+  const endpoint = Bun.env.NUVIX_ENDPOINT ?? `http://localhost:${config.port}`
+  return `${endpoint}/v2/storage/buckets/${bucketId}/files/${fileId}/push?jwt=${jwt}`
+}
+
 /** Plain snapshot of the provider record for the send boundary. */
 function providerSnapshot(provider: AnyDoc): ProviderSnapshot {
   return {
@@ -481,6 +519,12 @@ export async function deliverExternalMessage(
     if (providerType === 'email') {
       const extras = await buildEmailExtras(deps.session, data)
       data = { ...data, cc: extras.cc, bcc: extras.bcc }
+    }
+    if (providerType === 'push' && data.image !== undefined) {
+      data = {
+        ...data,
+        image: await resolvePushImage(deps.projectId, data.image),
+      }
     }
 
     const limit = await sender.batchLimit({

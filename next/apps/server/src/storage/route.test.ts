@@ -88,7 +88,9 @@ describe('Storage Routes', () => {
     },
   } as unknown as Session
 
+  process.env.NUVIX_JWT_SECRET ??= 'test-jwt-secret'
   const mockTenantResource = {
+    projectId: 'proj_test',
     authSystemSession: () => mockSession,
     authSession: () => mockSession,
   }
@@ -177,6 +179,108 @@ describe('Storage Routes', () => {
     expect(res.status).toBe(200)
     const json = (await res.json()) as BucketView
     expect(json.name).toBe('Updated Read Bucket')
+  })
+
+  it('streams push assets for a valid signed JWT (v1 parity)', async () => {
+    const { signJwt } = await import('@nuvix/core/auth')
+    const fs = await import('node:fs/promises')
+    const assetPath = '/tmp/opencode/push-asset-test.png'
+    await fs.writeFile(assetPath, Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x01]))
+
+    await mockSession.createDocument(
+      'buckets',
+      new Doc({
+        $id: 'b_push',
+        name: 'Push Bucket',
+        enabled: true,
+        $permissions: [],
+      }),
+    )
+    await mockSession.createDocument(
+      'files',
+      new Doc({
+        $id: 'push_file',
+        bucketId: 'b_push',
+        name: 'asset.png',
+        path: assetPath,
+        mimeType: 'image/png',
+        sizeOriginal: 5,
+        $permissions: [],
+      }),
+    )
+
+    const jwt = await signJwt(
+      { projectId: 'proj_test', bucketId: 'b_push', fileId: 'push_file' },
+      process.env.NUVIX_JWT_SECRET!,
+      3600,
+    )
+
+    const res = await testApp.handle(
+      new Request(`http://localhost/storage/buckets/b_push/files/push_file/push?jwt=${jwt}`),
+    )
+
+    expect(res.status).toBe(200)
+    expect(res.headers.get('Content-Type')).toBe('image/png')
+    expect(res.headers.get('Content-Disposition')).toContain('inline')
+    expect(res.headers.get('Expires')).toBeDefined()
+    const body = new Uint8Array(await res.arrayBuffer())
+    expect([...body]).toEqual([0x89, 0x50, 0x4e, 0x47, 0x01])
+  })
+
+  it('rejects push asset requests with an invalid JWT (401)', async () => {
+    const res = await testApp.handle(
+      new Request('http://localhost/storage/buckets/b_push/files/push_file/push?jwt=bogus'),
+    )
+    expect(res.status).toBe(401)
+  })
+
+  it('rejects push asset requests whose claims do not match (401)', async () => {
+    const { signJwt } = await import('@nuvix/core/auth')
+    const jwt = await signJwt(
+      { projectId: 'proj_test', bucketId: 'b_push', fileId: 'OTHER_file' },
+      process.env.NUVIX_JWT_SECRET!,
+      3600,
+    )
+    const res = await testApp.handle(
+      new Request(`http://localhost/storage/buckets/b_push/files/push_file/push?jwt=${jwt}`),
+    )
+    expect(res.status).toBe(401)
+  })
+
+  it('hides push assets of disabled buckets (404)', async () => {
+    const { signJwt } = await import('@nuvix/core/auth')
+    await mockSession.createDocument(
+      'buckets',
+      new Doc({
+        $id: 'b_push_off',
+        name: 'Disabled Push Bucket',
+        enabled: false,
+        $permissions: [],
+      }),
+    )
+    await mockSession.createDocument(
+      'files',
+      new Doc({
+        $id: 'push_file_off',
+        bucketId: 'b_push_off',
+        name: 'asset.png',
+        path: '/tmp/opencode/push-asset-test.png',
+        mimeType: 'image/png',
+        sizeOriginal: 5,
+        $permissions: [],
+      }),
+    )
+    const jwt = await signJwt(
+      { projectId: 'proj_test', bucketId: 'b_push_off', fileId: 'push_file_off' },
+      process.env.NUVIX_JWT_SECRET!,
+      3600,
+    )
+    const res = await testApp.handle(
+      new Request(
+        `http://localhost/storage/buckets/b_push_off/files/push_file_off/push?jwt=${jwt}`,
+      ),
+    )
+    expect(res.status).toBe(404)
   })
 
   it('returns storage usage via GET /storage/usage', async () => {

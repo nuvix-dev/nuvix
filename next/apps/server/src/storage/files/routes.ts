@@ -211,7 +211,9 @@ export const storageFilesRoutes = () =>
             rotation: t.Optional(t.String({ description: 'Clockwise rotation in degrees' })),
             background: t.Optional(t.String({ description: 'Background hex color' })),
             output: t.Optional(
-              t.String({ description: 'Output format conversion (jpg, png, webp)' }),
+              t.String({
+                description: 'Output format conversion (jpg, png, webp)',
+              }),
             ),
           }),
         ),
@@ -269,7 +271,9 @@ export const storageFilesRoutes = () =>
         headers: t.Optional(
           t.Object({
             range: t.Optional(
-              t.String({ description: 'HTTP range request header (e.g. bytes=0-1023)' }),
+              t.String({
+                description: 'HTTP range request header (e.g. bytes=0-1023)',
+              }),
             ),
           }),
         ),
@@ -362,6 +366,63 @@ export const storageFilesRoutes = () =>
       },
     )
 
+    // 6b. Push-notification asset (internal; v1 parity)
+    .get(
+      '/buckets/:bucketId/files/:fileId/push',
+      {
+        detail: {
+          summary: 'Get file for push notification',
+          description:
+            'Streams a file for push-notification rich media. Entitlement comes from a short-lived signed JWT (projectId/bucketId/fileId claims) — push vendors fetch this URL without caller credentials.',
+          tags: ['Storage Files'],
+        },
+        params: t.Object({
+          bucketId: t.String({ description: 'Unique bucket identifier' }),
+          fileId: t.String({ description: 'Unique file identifier' }),
+        }),
+        query: t.Object({
+          jwt: t.String({ description: 'Signed push-asset token' }),
+        }),
+        headers: t.Optional(
+          t.Object({
+            range: t.Optional(t.String({ description: 'HTTP range request header' })),
+          }),
+        ),
+      },
+      async ({
+        db,
+        tenantResource,
+        params: { bucketId, fileId },
+        query: { jwt },
+        headers,
+        set,
+      }) => {
+        const systemSession = tenantResource?.authSystemSession() ?? db
+        const device = new Local(config.storage.uploadsDir)
+        const service = new FilesService(db, systemSession, device)
+        const projectId = tenantResource?.projectId ?? ''
+        const result = await service.serveFileForPush(
+          bucketId,
+          fileId,
+          jwt,
+          projectId,
+          headers?.range,
+        )
+        set.headers['Content-Type'] = result.mimeType
+        set.headers['Content-Disposition'] = `inline; filename="${result.fileName}"`
+        set.headers.Expires = new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toUTCString()
+        if (result.partial) {
+          set.headers['Content-Range'] = `bytes ${result.start}-${result.end}/${result.size}`
+          set.headers['Accept-Ranges'] = 'bytes'
+          set.headers['Content-Length'] = String(result.end - result.start + 1)
+          set.status = 206
+        } else {
+          set.headers['Content-Length'] = String(result.size)
+        }
+        return result.buffer
+      },
+    )
+
     // 7. Update file metadata
     .put(
       '/buckets/:bucketId/files/:fileId',
@@ -397,7 +458,10 @@ export const storageFilesRoutes = () =>
         const systemSession = tenantResource?.authSystemSession() ?? db
         const device = new Local(config.storage.uploadsDir)
         const service = new FilesService(db, systemSession, device)
-        return service.updateFile(bucketId, fileId, body, { isAPIUser, isAdmin })
+        return service.updateFile(bucketId, fileId, body, {
+          isAPIUser,
+          isAdmin,
+        })
       },
     )
 
@@ -416,7 +480,9 @@ export const storageFilesRoutes = () =>
         }),
         response: {
           200: t.Object({
-            status: t.Literal('ok', { description: 'Status confirmation string' }),
+            status: t.Literal('ok', {
+              description: 'Status confirmation string',
+            }),
           }),
         },
       },

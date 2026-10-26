@@ -88,6 +88,7 @@ function recordingSender(
     messageType: string
     provider: string
     to: string[]
+    data?: Record<string, unknown>
   }> = []
   const sender: MessageSender = {
     async batchLimit() {
@@ -98,6 +99,7 @@ function recordingSender(
         messageType: params.messageType,
         provider: params.provider.provider,
         to: params.payload.to,
+        data: params.payload.data,
       })
       return { deliveredTo: deliveredPerBatch, results }
     },
@@ -219,6 +221,56 @@ describe('messaging delivery (v1 sendExternalMessage parity)', () => {
       'Failed sending to target a@test with error: bounce',
     )
     expect(message.get('status')).toBe('sent')
+  })
+
+  it('signs push image refs into vendor-fetchable URLs (v1 processedImage parity)', async () => {
+    const { sender, batches } = recordingSender()
+    setMessageSender(sender)
+
+    const session = stubSession({
+      messages: [],
+      providers: [
+        {
+          $id: 'prov_push',
+          name: 'FCM',
+          provider: 'fcm',
+          type: 'push',
+          enabled: true,
+          credentials: { serviceAccountJSON: {} },
+          options: {},
+        },
+      ],
+      targets: [{ $id: 't1', identifier: 'token-1', providerType: 'push', providerId: '' }],
+    })
+    const message = fixtureMessage({
+      $id: 'msg_push',
+      providerType: 'push',
+      targets: ['t1'],
+      data: {
+        title: 'Hello',
+        body: 'Body',
+        image: 'bucket_1:file_1',
+      },
+    })
+
+    process.env.NUVIX_JWT_SECRET ??= 'test-jwt-secret'
+    const result = await deliverExternalMessage(message, {
+      session: session as never,
+      projectId: 'proj_1',
+    })
+
+    expect(result.status).toBe('sent')
+    const data = batches[0]!.data as { image?: string }
+    expect(data.image).toMatch(/\/v2\/storage\/buckets\/bucket_1\/files\/file_1\/push\?jwt=/)
+    // The signed JWT carries all three claims (v1 signed without projectId —
+    // its own verifier rejected every request; v2 signs and verifies all).
+    const token = new URL(data.image!).searchParams.get('jwt')!
+    const { verifyJwt } = await import('@nuvix/core/auth')
+    const payload = await verifyJwt(token, process.env.NUVIX_JWT_SECRET!)
+    expect(payload).not.toBeNull()
+    expect(payload!.projectId).toBe('proj_1')
+    expect(payload!.bucketId).toBe('bucket_1')
+    expect(payload!.fileId).toBe('file_1')
   })
 
   it('fails the message when delivery errors leave zero deliveries', async () => {

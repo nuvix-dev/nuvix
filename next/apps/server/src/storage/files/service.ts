@@ -651,7 +651,99 @@ export class FilesService {
     const mimeType = file.get('mimeType') ?? ''
     const fileName = file.get('name') ?? ''
     const size = file.get('sizeOriginal') ?? 0
+    return this.readForStream(
+      filePath,
+      mimeType,
+      fileName,
+      size,
+      rangeHeader,
+      readBufferLimit,
+      maxOutputChunkSize,
+    )
+  }
 
+  /**
+   * Stream a file for push-notification rich media (v1
+   * `getFileForPushNotification` parity): entitlement comes from a
+   * short-lived signed JWT (projectId/bucketId/fileId claims), bucket
+   * permissions are not consulted, and disabled buckets stay hidden.
+   * v1 bug fixed en route: v1 signed the JWT without the `projectId`
+   * claim its own verifier demanded — every push fetch failed; v2 signs
+   * and verifies all three claims.
+   */
+  async serveFileForPush(
+    bucketId: string,
+    fileId: string,
+    jwt: string,
+    projectId: string,
+    rangeHeader?: string,
+  ): Promise<{
+    buffer: Buffer
+    mimeType: string
+    fileName: string
+    size: number
+    start: number
+    end: number
+    partial: boolean
+  }> {
+    const { verifyJwt } = await import('@nuvix/core/auth')
+    const { config } = await import('@nuvix/utils')
+
+    const decoded = await verifyJwt(jwt, config.jwtSecret)
+    if (
+      !decoded ||
+      decoded.projectId !== projectId ||
+      decoded.bucketId !== bucketId ||
+      decoded.fileId !== fileId
+    ) {
+      throw new UnauthorizedError('Unauthorized', { code: 'user_unauthorized' })
+    }
+
+    const bucket = await this.systemSession.getDocument('buckets', bucketId)
+    if (bucket.empty() || !bucket.get('enabled')) {
+      throw new NotFoundError('Storage bucket not found', {
+        code: 'storage_bucket_not_found',
+      })
+    }
+
+    const file = await this.systemSession.getDocument('files', fileId)
+    if (file.empty()) {
+      throw new NotFoundError('File not found', { code: 'storage_file_not_found' })
+    }
+
+    const filePath = file.get('path') ?? ''
+    try {
+      await this.device.exists(filePath)
+    } catch {
+      throw new NotFoundError(`File not found in ${filePath}`, {
+        code: 'storage_file_not_found',
+      })
+    }
+
+    const mimeType = file.get('mimeType') ?? ''
+    const fileName = file.get('name') ?? ''
+    const size = file.get('sizeOriginal') ?? 0
+    return this.readForStream(filePath, mimeType, fileName, size, rangeHeader)
+  }
+
+  /** Shared range/streaming reader (v1 serve tail parity). */
+  private async readForStream(
+    filePath: string,
+    mimeType: string,
+    fileName: string,
+    size: number,
+    rangeHeader?: string,
+    readBufferLimit = 10 * 1024 * 1024,
+    maxOutputChunkSize = 1024 * 1024,
+  ): Promise<{
+    buffer: Buffer
+    mimeType: string
+    fileName: string
+    size: number
+    start: number
+    end: number
+    partial: boolean
+  }> {
     let start = 0
     let end = size - 1
     let partial = false
