@@ -39,10 +39,12 @@ describe('QueueManager', () => {
 
     const logJobId = await manager.enqueueLog({
       projectId: 'proj_1',
+      request_id: 'req_1',
       method: 'GET',
       path: '/v2/health',
-      statusCode: 200,
-      durationMs: 5,
+      status: 200,
+      timestamp: new Date().toISOString(),
+      latency_ms: 5,
     })
     expect(logJobId).toMatch(/^job_/)
 

@@ -101,7 +101,7 @@ export class QueueManager {
   }
 
   async enqueueLog(data: LogJobData, opts?: JobsOptions): Promise<string> {
-    return this.addJob(QueueFor.LOGS, 'request_log', data, opts)
+    return this.addJob(QueueFor.LOGS, 'log', data, opts)
   }
 
   async enqueueBatch(data: BatchJobData, opts?: JobsOptions): Promise<string> {

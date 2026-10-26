@@ -368,7 +368,7 @@ next/
       (bounded LRU keyed by `ResolvedProject`) — the per-tenant connection
       layer the server app's context chain and Phase 3's database service
       will resolve through (`packages/core/src/tenants/resource.ts`, `pool.ts`)
-- [ ] Platform auth (operator accounts/keys) — blocking gap before any
+- [x] Platform auth (operator accounts/keys) — blocking gap before any
       non-local deployment, tracked in `docs/api/platform.md`'s open questions
 - [ ] Background provisioning (Phase 6 job infra) — project creation is
       currently synchronous; tracked in `docs/api/platform.md`
@@ -549,17 +549,36 @@ onDatabaseCreated` composition hook). Redesigns over v1 recorded:
       platform route via `plugins/auth.ts` (public exceptions:
       `/health`, `/console/auth*`; audience-separated from tenant JWTs);
       no API keys on the platform surface. Endpoints: `POST
-  /console/auth` (login), `/console/auth/refresh` (rotating),
+/console/auth` (login), `/console/auth/refresh` (rotating),
       `/console/auth/logout` (revoking), `GET /console/me` (CLI
       whoami); refresh token also set as httpOnly cookie for the
       browser console. First operator seeded idempotently from
       `NUVIX_CONSOLE_EMAIL`/`NUVIX_CONSOLE_PASSWORD` at startup (no
       public registration). Contract: `docs/api/console.md`; platform.md
       auth-posture updated (was flagged as a blocking deployment gap).
+- [x] API request logs (Phase 6 follow-through): end-to-end —
+      request-log source (v1 `LogsHook`: afterResponse emit; API-key
+      callers, /health and the OpenAPI surface skipped), batched LOGS
+      worker (v1 `ApiLogsQueue`: 5000/3s flush, v1's DEEP recursive
+      metadata redaction moved to buffer time), and a server-side
+      `GET /v2/logs` admin route (v1's platform `getLogs` with the AST
+      filter DSL replaced by simple query params — limit/offset/method/
+      status/path/resource/since/until, newest first). Storage redesign
+      per user decision: logs live in EACH project's tenant database
+      (`api_logs` collection in the `auth` schema — additive via
+      `ensureAuthSchema`; tenants provisioned before it need
+      re-provisioning or a one-off ensure) instead of v1's platform
+      main-pool `system` schema — v1 was not truly multi-tenant, so its
+      main-pool logs table mixed projects. Read auth: tenant-local API
+      key OR console operator JWT (aud 'console') — the console UI
+      reads project logs straight from the server API. Audience
+      separation enforced in the server's authContext (console JWTs
+      never authenticate as tenant users; vice versa on the platform).
+      Contract: `docs/api/logs.md`.
 
 ### Phase 9 — Tests & cutover
 
-- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 508 tests across 80 files)
+- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 513 tests across 81 files)
 - [x] Perf baseline vs old app (`test/bench/perf.ts`, `docs/perf-baseline.md`)
 - [x] Docker/deploy artifacts for Bun-only runtime (`Dockerfile`, `docker-compose.yml`, `.dockerignore`, `docs/deployment.md`)
 - [ ] Delete root monorepo (**explicit approval gate**)

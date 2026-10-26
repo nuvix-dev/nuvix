@@ -46,6 +46,9 @@ export async function resolveAuth(
   const token = headers.get(HEADERS.jwt)
   if (token && jwtSecret) {
     const payload = await verifyJwt(token, jwtSecret)
+    // Audience separation: console (platform) JWTs must never
+    // authenticate as tenant users on the project-facing server.
+    if (payload?.aud === 'console') return { type: 'guest' }
     if (payload?.sub) {
       return {
         type: 'jwt',

@@ -76,13 +76,20 @@ export interface DeleteJobData {
 }
 
 export interface LogJobData {
+  /** Platform project id — resolves the tenant database. */
   projectId: string
+  request_id: string
   method: string
   path: string
-  statusCode: number
-  durationMs: number
-  headers?: Record<string, unknown>
-  userId?: string
+  status: number
+  timestamp: string
+  client_ip?: string
+  user_agent?: string
+  resource?: string
+  latency_ms?: number
+  region?: string
+  error?: string
+  metadata?: Record<string, unknown>
 }
 
 export interface BatchJobData {

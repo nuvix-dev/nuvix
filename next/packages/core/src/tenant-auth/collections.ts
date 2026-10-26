@@ -728,6 +728,129 @@ const identities: Collection = {
   ],
 }
 
+/**
+ * API request logs — one row per served request (v1 `ApiLog` parity,
+ * snake_case columns). Written by the LOGS worker (batched, redacted);
+ * read by the server's admin logs route. Lives in the tenant `auth`
+ * schema — logs are per-project data (v1 stored them in the platform
+ * main pool's system schema because v1 was not truly multi-tenant).
+ */
+const apiLogs: Collection = {
+  $collection: Database.METADATA,
+  $id: ID.custom('api_logs'),
+  name: 'API Logs',
+  documentSecurity: false,
+  enabled: true,
+  attributes: [
+    {
+      $id: ID.custom('request_id'),
+      key: 'request_id',
+      type: AttributeType.String,
+      size: 255,
+      required: true,
+    },
+    {
+      $id: ID.custom('method'),
+      key: 'method',
+      type: AttributeType.String,
+      size: 16,
+      required: true,
+    },
+    {
+      $id: ID.custom('path'),
+      key: 'path',
+      type: AttributeType.String,
+      size: 512,
+      required: true,
+    },
+    {
+      $id: ID.custom('status'),
+      key: 'status',
+      type: AttributeType.Integer,
+      size: 4,
+      required: true,
+    },
+    {
+      $id: ID.custom('timestamp'),
+      key: 'timestamp',
+      type: AttributeType.Timestamptz,
+      required: true,
+    },
+    {
+      $id: ID.custom('client_ip'),
+      key: 'client_ip',
+      type: AttributeType.String,
+      size: 64,
+      required: false,
+      default: null,
+    },
+    {
+      $id: ID.custom('user_agent'),
+      key: 'user_agent',
+      type: AttributeType.String,
+      size: 255,
+      required: false,
+      default: null,
+    },
+    {
+      $id: ID.custom('resource'),
+      key: 'resource',
+      type: AttributeType.String,
+      size: 128,
+      required: false,
+      default: null,
+    },
+    {
+      $id: ID.custom('latency_ms'),
+      key: 'latency_ms',
+      type: AttributeType.Integer,
+      size: 8,
+      required: false,
+      default: null,
+    },
+    {
+      $id: ID.custom('region'),
+      key: 'region',
+      type: AttributeType.String,
+      size: 64,
+      required: false,
+      default: null,
+    },
+    {
+      $id: ID.custom('error'),
+      key: 'error',
+      type: AttributeType.String,
+      size: 1000,
+      required: false,
+      default: null,
+    },
+    {
+      $id: ID.custom('metadata'),
+      key: 'metadata',
+      type: AttributeType.Json,
+      filters: ['json'],
+      __type: 'Record<string, unknown>',
+      required: false,
+      default: null,
+    },
+  ],
+  indexes: [
+    {
+      $id: ID.custom('idx_api_logs_timestamp'),
+      key: 'idx_api_logs_timestamp',
+      type: IndexType.Key,
+      attributes: ['timestamp'],
+      orders: ['DESC'],
+    },
+    {
+      $id: ID.custom('idx_api_logs_status'),
+      key: 'idx_api_logs_status',
+      type: IndexType.Key,
+      attributes: ['status'],
+    },
+  ],
+}
+
 const targets: Collection = {
   $collection: Database.METADATA,
   $id: ID.custom('targets'),
@@ -1717,4 +1840,5 @@ export const authCollections: Collection[] = [
   topics,
   subscribers,
   audit,
+  apiLogs,
 ]

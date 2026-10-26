@@ -5,7 +5,7 @@ import type { Job } from 'bullmq'
 import processAudits from './audits.processor'
 import processBatch from './batch.processor'
 import processDeletes from './deletes.processor'
-import processLogs from './logs.processor'
+import processLogs, { type ApiLogJobData, flushLogs, setLogsPersister } from './logs.processor'
 import processMails, { setMailSender } from './mails.processor'
 import processMessaging, { setMessagingSessionResolver } from './messaging.processor'
 import processStats, { flushStats, setStatsPersister } from './stats.processor'
@@ -203,32 +203,58 @@ describe('Queue Worker Processors', () => {
     expect(logs).toHaveLength(0)
   })
 
-  it('processLogs sanitizes sensitive headers and records log data', async () => {
+  it('processLogs buffers tenant rows and flushes deep-redacted batches', async () => {
+    const persisted: Array<{
+      projectId: string
+      rows: ApiLogJobData[]
+    }> = []
+    setLogsPersister(async (projectId, rows) => {
+      persisted.push({ projectId, rows })
+    })
+
     const mockJob = {
       data: {
         projectId: 'proj_1',
+        request_id: 'req_1',
         method: 'POST',
-        path: '/v1/account',
-        statusCode: 201,
-        durationMs: 42,
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer secret_token',
-          'x-nuvix-key': 'secret_api_key',
-          'User-Agent': 'bun-test',
+        path: '/v2/account',
+        status: 201,
+        timestamp: new Date().toISOString(),
+        latency_ms: 42,
+        region: 'default',
+        metadata: {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer secret_token',
+            'x-nuvix-key': 'secret_api_key',
+            'User-Agent': 'bun-test',
+            'nested-token': { value: 'x' },
+          },
+          query: { limit: '5' },
         },
-        userId: 'u_1',
       },
     } as Job
 
     const result = await processLogs(mockJob)
-
     expect(result.success).toBe(true)
-    expect(result.log.headers?.['Content-Type']).toBe('application/json')
-    expect(result.log.headers?.['User-Agent']).toBe('bun-test')
-    expect(result.log.headers?.Authorization).toBe('[REDACTED]')
-    expect(result.log.headers?.['x-nuvix-key']).toBe('[REDACTED]')
-    expect(result.log.timestamp).toBeDefined()
+    expect(result.buffered).toBeGreaterThan(0)
+    // Buffered only — nothing persisted before the flush interval.
+    expect(persisted).toHaveLength(0)
+
+    await flushLogs()
+    expect(persisted).toHaveLength(1)
+    expect(persisted[0]!.projectId).toBe('proj_1')
+
+    const row = persisted[0]!.rows[0] as unknown as {
+      metadata?: Record<string, unknown>
+    }
+    const headers = (row.metadata?.headers ?? {}) as Record<string, unknown>
+    expect(headers['Content-Type']).toBe('application/json')
+    expect(headers['User-Agent']).toBe('bun-test')
+    // v1 deep-redaction parity: sensitive keys at ANY nesting level.
+    expect(headers.Authorization).toBe('[REDACTED]')
+    expect(headers['x-nuvix-key']).toBe('[REDACTED]')
+    expect(headers['nested-token']).toBe('[REDACTED]')
   })
 
   it('processAudits executes audit log job', async () => {

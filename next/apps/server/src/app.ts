@@ -23,6 +23,8 @@ import { cors } from './plugins/cors'
 import { problemErrors } from './plugins/errors'
 import { rateLimit } from './plugins/rate-limit'
 import { securityHeaders } from './plugins/security'
+import { logsRoutes } from './request-logs/route'
+import { type LogsEnqueuer, logsRequestSource } from './request-logs/source'
 import { schemasRoutes } from './schemas/route'
 import { type StatsEnqueuer, statsRequestSource, wireStatsDatabase } from './stats/source'
 import { storageRoutes } from './storage/route'
@@ -91,6 +93,11 @@ const statsEnqueuer: StatsEnqueuer = async (projectId, metrics) => {
   await queues.enqueueStats({ projectId, metrics })
 }
 
+// API request-log enqueue boundary (logs worker persists per tenant).
+const logsEnqueuer: LogsEnqueuer = async (projectId, row) => {
+  await queues.enqueueLog({ projectId, ...row })
+}
+
 // Tenant resources notify composition of their Database facades so the
 // stats usage listeners attach (v1 `StatsHelper.connect` parity).
 const tenantPool = new TenantResourcePool({
@@ -148,12 +155,15 @@ const v2 = new Elysia({ prefix: '/v2' })
   .use(authContext({ jwtSecret: config.jwtSecret }))
   // Network usage metrics (requests + bytes) — every project response.
   .use(statsRequestSource({ enqueue: statsEnqueuer, enabled: () => config.stats.enabled }))
+  // API request logs — every project response (admin traffic skipped).
+  .use(logsRequestSource({ enqueue: logsEnqueuer }))
   .use(localeContext(localeOptions))
   .use(localeRoutes(geoip, localeOptions))
   .use(avatarRoutes(avatars))
   .use(
     new Elysia()
       .use(tenantPlugin)
+      .use(logsRoutes({ jwtSecret: config.jwtSecret }))
       .use(
         userRoutes({
           jwtSecret: config.jwtSecret,
