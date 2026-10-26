@@ -1,14 +1,18 @@
-# v2 Contract — Platform: Projects
+# v2 Contract — Platform
 
-> Status: PROPOSED — review before implementation
-> Depends on: `_conventions.md` (D19, D27–D28), `MIGRATION.md` §6b (D20), D37–D39
-> Old code (reference only): root `apps/platform/src/projects/` (`ProjectsController`/`ProjectService`)
+> Status: IMPLEMENTED — `apps/platform/src/app.ts` composition,
+> `apps/platform/src/modules/*/routes.ts` (projects, auth, keys, platforms,
+> auth-settings, metadata, templates, database, webhooks), tenant
+> provisioning in `apps/platform/src/workers/projects.processor.ts`
+> Depends on: `_conventions.md` (D19, D27–D28), `MIGRATION.md` §6b (D20),
+> D37–D39, `docs/api/console.md` (console auth)
+> Old code (reference only): root `apps/platform/src/projects/`
+> (`ProjectsController`/`ProjectService`)
 
-The platform app is the control plane that creates projects and provisions
-their dedicated tenant PostgreSQL containers (D20). This contract covers only
-the project lifecycle itself — team ownership, JWTs, OAuth2/SMTP config, and
-usage/logs are legacy features explicitly deferred until a project's core
-lifecycle is solid (`MIGRATION.md` §6b rule 6).
+The platform app is the control plane: project lifecycle + background
+tenant-PostgreSQL provisioning (D20) and per-project configuration surfaces
+(keys, platforms, auth settings, OAuth2/SMTP, templates, metadata,
+database introspection, webhooks). All routes are console-operator-facing.
 
 ## Auth posture
 
@@ -16,8 +20,11 @@ lifecycle is solid (`MIGRATION.md` §6b rule 6).
 `Authorization: Bearer <accessToken>` — a short-lived console JWT
 (`aud: 'console'`, 15 min default) issued by `POST /console/auth`.
 Public exceptions: `GET /health` and the `/console/auth*` endpoints.
-See `docs/api/console.md` for the token model (rotating refresh tokens,
-reuse detection, env-seeded bootstrap operator).
+Missing/invalid/expired → `401 console_unauthorized`. See
+`docs/api/console.md` for the token model (rotating refresh tokens, reuse
+detection, env-seeded bootstrap operator) and the
+`/console/auth`, `/console/auth/refresh`, `/console/auth/logout`,
+`/console/me` endpoints.
 
 ## Prefix (D39)
 
@@ -27,14 +34,24 @@ and starts unprefixed at the root until a second platform API version exists.
 
 ---
 
-## Endpoints
+## Endpoints — Projects
 
-| Method | Path                 | Purpose                                    |
-| ------ | -------------------- | ------------------------------------------- |
-| POST   | `/projects`          | Create a project and provision its tenant DB |
-| GET    | `/projects`          | List projects (paginated)                   |
-| GET    | `/projects/:id`      | Get a project                               |
-| DELETE | `/projects/:id`      | Delete a project and deprovision its tenant |
+| Method | Path                               | Purpose                                                             |
+| ------ | ---------------------------------- | ------------------------------------------------------------------- |
+| POST   | `/projects`                        | Create a project and provision its tenant DB                        |
+| GET    | `/projects`                        | List projects (`limit`, `offset` → `{ data, meta }`)                |
+| GET    | `/projects/:projectId`             | Get a project                                                       |
+| PATCH  | `/projects/:projectId`             | Update `{ name?, description?, logo?, url? }`                       |
+| GET    | `/projects/:projectId/usage`       | Usage stats (`?range=`; currently zero-filled — see Known gaps)     |
+| DELETE | `/projects/:projectId`             | Delete a project and deprovision its tenant (`?purge=`)             |
+| POST   | `/projects/:projectId/jwts`        | Create project-scoped JWT `{ scopes, duration }`                    |
+| PATCH  | `/projects/:projectId/service`     | Enable/disable one service                                          |
+| PATCH  | `/projects/:projectId/service/all` | Enable/disable all services                                         |
+| PATCH  | `/projects/:projectId/api`         | Enable/disable one API                                              |
+| PATCH  | `/projects/:projectId/api/all`     | Enable/disable all APIs                                             |
+| PATCH  | `/projects/:projectId/oauth2`      | Update an OAuth2 provider `{ provider, appId?, secret?, enabled? }` |
+| PATCH  | `/projects/:projectId/smtp`        | Update SMTP configuration                                           |
+| POST   | `/projects/:projectId/smtp/tests`  | Send SMTP test (not implemented — see Known gaps)                   |
 
 ### Project object
 
@@ -46,6 +63,9 @@ and starts unprefixed at the root until a second platform API version exists.
   "publishableKey": "pk_0195f87e323b7ca2813bb8a274a7b7ca",
   "containerName": "nuvix-tenant-proj_abc123",
   "volumeName": "nuvix-tenant-proj_abc123-data",
+  "description": null,
+  "logo": null,
+  "url": null,
   "$createdAt": "2026-09-14T10:00:00.000Z",
   "$updatedAt": "2026-09-14T10:00:05.000Z"
 }
@@ -65,8 +85,8 @@ and starts unprefixed at the root until a second platform API version exists.
 
 ### `POST /projects`
 
-Body: `{ "name": string, "id"?: string }`. `id` follows the standard ID
-convention (D28) — `'unique()'` (default) or a caller-supplied id.
+Body: `{ name, id?, description?, logo?, url? }`. `id` follows the standard
+ID convention (D28) — `'unique()'` (default) or a caller-supplied id.
 
 Provisioning is **two-phase** (background): `POST /projects` reserves the
 tenant container (fast, inline) and returns the project with
@@ -83,29 +103,149 @@ Query: `?purge=true` (default `false`). Without `purge`, the tenant container
 is removed but its data volume is kept (D37's "keep by default" rule) —
 there is no separate undelete endpoint yet, so the volume is the only
 recovery path if a deletion was a mistake. `purge=true` also destroys the
-volume.
+volume. Returns `204`.
 
-### Errors
+### Project JWTs
 
-| Status | Type                  | Code                    |
-| ------ | --------------------- | ------------------------ |
-| 404    | `/errors/not-found`   | `project_not_found`      |
-| 502    | `/errors/internal`    | `project_provision_failed` |
+`POST /projects/:projectId/jwts` body `{ scopes: string[] (≤100),
+duration: 0–3600 }` → `{ jwt }` (`400 jwt_disabled` when no JWT secret is
+configured). These are the console-issued project tokens consumed by the
+server's admin surfaces (e.g. `GET /v2/logs`).
 
 ---
 
-## v1 → v2 deviations
+## Endpoints — Keys (`/projects/:projectId/keys`)
 
-1. Team ownership, JWTs, OAuth2/SMTP config, usage, and logs are dropped from
-   this slice entirely (D20 §6b rule 6) — not deviations so much as explicit
-   scope cuts, revisited once core provisioning is proven.
-2. One dedicated PostgreSQL container per project (D20) replaces v1's shared
-   schema-per-project model.
-3. Envelope/errors follow `_conventions.md` (problem+json, `meta` pagination)
-   instead of v1's shapes.
+| Method | Path            | Purpose                                     |
+| ------ | --------------- | ------------------------------------------- |
+| POST   | `…/keys`        | Create API key `{ name, scopes?, expire? }` |
+| GET    | `…/keys`        | List keys (`limit`, `offset`)               |
+| GET    | `…/keys/:keyId` | Get key                                     |
+| PUT    | `…/keys/:keyId` | Replace key                                 |
+| PATCH  | `…/keys/:keyId` | Partial update                              |
+| DELETE | `…/keys/:keyId` | Delete key                                  |
 
-## Resolved
+Key objects include `secret` on every response (not create-only),
+`scopes`, `expire`, `accessedAt`, `sdks`. Unknown key → `404 key_not_found`.
 
-1. Provisioning is backgrounded (PROJECTS queue, two-phase — see above).
-2. Platform auth is console JWT + rotating refresh tokens — see
-   `docs/api/console.md`.
+## Endpoints — Platforms (`/projects/:projectId/platforms`)
+
+Client-platform registration (the allow-list behind OAuth2 redirect
+validation in `account.md`).
+
+| Method | Path                      | Purpose                            |
+| ------ | ------------------------- | ---------------------------------- |
+| POST   | `…/platforms`             | Create platform                    |
+| GET    | `…/platforms`             | List platforms (`limit`, `offset`) |
+| GET    | `…/platforms/:platformId` | Get platform                       |
+| PUT    | `…/platforms/:platformId` | Replace platform                   |
+| PATCH  | `…/platforms/:platformId` | Partial update                     |
+| DELETE | `…/platforms/:platformId` | Delete platform                    |
+
+Unknown platform → `404 platform_not_found`.
+
+## Endpoints — Auth settings (`/projects/:projectId/auth`)
+
+The per-project auth configuration read by the auth surfaces (D42 —
+`auths.*`/`limits.*` equivalents).
+
+| Method | Path                         | Purpose                                                   |
+| ------ | ---------------------------- | --------------------------------------------------------- |
+| GET    | `…/auth`                     | Get auth settings                                         |
+| PATCH  | `…/auth/session-alerts`      | Update session alerts                                     |
+| PATCH  | `…/auth/limit`               | Update auth users limit                                   |
+| PATCH  | `…/auth/duration`            | Update session duration                                   |
+| PATCH  | `…/auth/password-history`    | Update password history limit                             |
+| PATCH  | `…/auth/password-dictionary` | Update password dictionary check                          |
+| PATCH  | `…/auth/personal-data`       | Update personal-data check                                |
+| PATCH  | `…/auth/max-sessions`        | Update max sessions limit                                 |
+| PATCH  | `…/auth/mock-numbers`        | Update QA mock numbers `{ numbers: [{ phone, otp }] }`    |
+| PATCH  | `…/auth/memberships-privacy` | Update memberships privacy (`userName`/`userEmail`/`mfa`) |
+| PATCH  | `…/auth/methods/:method`     | Enable/disable an auth method                             |
+
+## Endpoints — Metadata, Templates
+
+| Method | Path                                                 | Purpose                                                     |
+| ------ | ---------------------------------------------------- | ----------------------------------------------------------- |
+| PUT    | `/projects/:projectId/metadata/exposed-schemas`      | Update exposed schemas (`400 invalid_schemas` on bad input) |
+| GET    | `/projects/:projectId/templates/sms/:type/:locale`   | Get custom SMS template                                     |
+| PATCH  | `/projects/:projectId/templates/sms/:type/:locale`   | Update custom SMS template                                  |
+| DELETE | `/projects/:projectId/templates/sms/:type/:locale`   | Reset custom SMS template                                   |
+| GET    | `/projects/:projectId/templates/email/:type/:locale` | Get custom email template                                   |
+| PATCH  | `/projects/:projectId/templates/email/:type/:locale` | Update custom email template                                |
+| DELETE | `/projects/:projectId/templates/email/:type/:locale` | Delete custom email template                                |
+
+Template routes are wired but their service is a stub — every call returns
+`501 not_implemented` (see Known gaps).
+
+## Endpoints — Database admin (`/projects/:projectId/database/*`)
+
+Read-only introspection of a project's tenant PostgreSQL plus raw SQL:
+
+| Method | Path                           | Purpose                                              |
+| ------ | ------------------------------ | ---------------------------------------------------- |
+| POST   | `…/database/query`             | Execute raw SQL on the tenant DB (`400 empty_query`) |
+| GET    | `…/database/schemas`           | List schemas                                         |
+| GET    | `…/database/schemas/:nameOrId` | Get schema                                           |
+| GET    | `…/database/tables`            | List tables (`?schema=`)                             |
+| GET    | `…/database/tables/:id`        | Get table                                            |
+| GET    | `…/database/columns`           | List columns (`?schema=`, `?table=`)                 |
+| GET    | `…/database/indexes`           | List indexes (`?schema=`, `?table=`)                 |
+| GET    | `…/database/functions`         | List functions (`?schema=`)                          |
+| GET    | `…/database/roles`             | List roles                                           |
+| GET    | `…/database/extensions`        | List extensions                                      |
+| GET    | `…/database/views`             | List views (`?schema=`)                              |
+| GET    | `…/database/triggers`          | List triggers (`?schema=`, `?table=`)                |
+| GET    | `…/database/types`             | List custom types (`?schema=`)                       |
+| GET    | `…/database/policies`          | List policies (`?schema=`, `?table=`)                |
+| GET    | `…/database/version`           | PostgreSQL server version                            |
+| GET    | `…/database/config`            | PostgreSQL server settings                           |
+
+Errors: `404 project_not_found`, `400 project_not_active` (tenant still
+provisioning), `404 tenant_target_not_found`, `404 schema_not_found`,
+`404 table_not_found`, `400 empty_query`.
+
+## Endpoints — Webhooks (`/projects/:projectId/webhooks`)
+
+| Method | Path                              | Purpose              |
+| ------ | --------------------------------- | -------------------- |
+| POST   | `…/webhooks`                      | Create webhook       |
+| GET    | `…/webhooks`                      | List webhooks        |
+| GET    | `…/webhooks/:webhookId`           | Get webhook          |
+| PUT    | `…/webhooks/:webhookId`           | Replace webhook      |
+| PATCH  | `…/webhooks/:webhookId`           | Partial update       |
+| PATCH  | `…/webhooks/:webhookId/signature` | Rotate signature key |
+| DELETE | `…/webhooks/:webhookId`           | Delete webhook       |
+
+Unknown webhook → `404 webhook_not_found`.
+
+---
+
+## Errors
+
+| Status | Type                      | Code                                                         | When                                  |
+| ------ | ------------------------- | ------------------------------------------------------------ | ------------------------------------- |
+| 400    | `/errors/bad-request`     | `empty_query`                                                | blank SQL on `/database/query`        |
+| 400    | `/errors/bad-request`     | `invalid_schemas`                                            | bad exposed-schemas payload           |
+| 400    | `/errors/bad-request`     | `smtp_argument_invalid`                                      | incomplete SMTP config                |
+| 400    | `/errors/bad-request`     | `jwt_disabled`                                               | platform JWT secret not configured    |
+| 401    | `/errors/unauthorized`    | `console_unauthorized`                                       | missing/invalid/expired console JWT   |
+| 401    | `/errors/unauthorized`    | `console_invalid_credentials`                                | wrong operator login                  |
+| 401    | `/errors/unauthorized`    | `console_invalid_refresh_token`                              | rotated/reused/unknown refresh token  |
+| 404    | `/errors/not-found`       | `project_not_found`                                          | unknown project                       |
+| 404    | `/errors/not-found`       | `key_not_found` / `platform_not_found` / `webhook_not_found` | unknown sub-resource                  |
+| 404    | `/errors/not-found`       | `schema_not_found` / `table_not_found`                       | unknown tenant DB object              |
+| 404    | `/errors/not-found`       | `service_not_found` / `api_not_found` / `provider_not_found` | unknown service/API/provider          |
+| 404    | `/errors/not-found`       | `tenant_target_not_found`                                    | tenant connection coordinates missing |
+| 400    | `/errors/bad-request`     | `project_not_active`                                         | tenant not finished provisioning      |
+| 502    | `/errors/internal`        | `project_provision_failed`                                   | provisioning failed after retries     |
+| 501    | `/errors/not-implemented` | `not_implemented`                                            | SMTP test; all template endpoints     |
+
+## Known gaps
+
+- `GET /projects/:projectId/usage` returns a zero-filled placeholder shape
+  (routes + schema are final; real metric reads are not wired yet).
+- `POST /projects/:projectId/smtp/tests` and all six template endpoints
+  throw `501 not_implemented`.
+- No `/console/auth/impersonate` or operator-management endpoints beyond
+  `docs/api/console.md`'s surface.

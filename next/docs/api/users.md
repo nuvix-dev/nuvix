@@ -1,67 +1,47 @@
 # v2 Contract — Users
 
-> Status: PROPOSED — review before implementation
-> Depends on: `_conventions.md` (D19, D26–D28), `_i18n.md`, D29 (password
-> hashing policy), `@nuvix/db`, `docs/api/account.md` (shared session/MFA/
-> identity primitives)
+> Status: IMPLEMENTED — `apps/server/src/users/route.ts` (+ `routes.ts`,
+> `service.ts`, `formatter.ts`, `logs-view.ts`),
+> `apps/server/src/users/sessions/**`, `apps/server/src/users/targets/**`,
+> `apps/server/src/stats/usage.ts`
+> Depends on: `_conventions.md` (D19, D26–D28), D29 (password hashing), D42,
+> `@nuvix/db`, `docs/api/account.md` (shared session/identity primitives)
 > Old code (reference only): root `apps/server/src/users/`
 
 User administration: lifecycle, profile fields, prefs/labels/status,
-identities, password-hash imports, tokens/JWTs, sessions, MFA factors and
-recovery codes, push targets. Admin-facing surface (the end-user "account"
-surface is `docs/api/account.md`).
+identities, tokens/JWTs, sessions, push targets, activity logs, and usage
+stats. Admin-facing surface (the end-user "account" surface is
+`docs/api/account.md`).
 
-This revision corrects several inaccuracies in the previous draft found by
-re-reading legacy `users.service.ts`/`mfa.service.ts`/`sessions.service.ts`/
-`targets.service.ts` line-by-line — see "v1 → v2 deviations" for what's an
-intentional improvement vs. a plain correction.
-
-## Auth posture
-
-Admin/key/session/JWT union for most of the module; two documented
-exceptions below (`GET /usage` is admin-only in v1; MFA sub-routes are
-key-only in v1, widened in v2 — see deviations). Scopes: `users.read`,
-`users.write`.
+All routes require a project (`x-nuvix-publishable-key`) and an
+authenticated caller resolved by the shared tenant context chain; responses
+use the server list convention `{ total, <resources> }`.
 
 ---
 
 ## Endpoints — Core
 
-| Method | Path                              | Purpose                                        |
-| ------ | ---------------------------------- | ----------------------------------------------- |
-| POST   | `/v2/users`                        | Create user (server-side hashing)               |
-| POST   | `/v2/users/argon2`                 | Create user with pre-hashed Argon2              |
-| POST   | `/v2/users/bcrypt`                 | Create user with pre-hashed bcrypt              |
-| GET    | `/v2/users`                        | List users (queries + search)                   |
-| GET    | `/v2/users/usage`                  | Aggregate usage stats (**admin-only**)          |
-| GET    | `/v2/users/:userId`                | Get user                                        |
-| DELETE | `/v2/users/:userId`                | Delete user (hard delete, cascades)             |
-| PATCH  | `/v2/users/:userId/name`           | Update name                                     |
-| PATCH  | `/v2/users/:userId/password`       | Update password                                 |
-| PATCH  | `/v2/users/:userId/email`          | Update email                                    |
-| PATCH  | `/v2/users/:userId/phone`          | Update phone                                    |
-| PATCH  | `/v2/users/:userId/verification`   | Set email-verification flag directly            |
-| PATCH  | `/v2/users/:userId/verification/phone` | Set phone-verification flag directly       |
-| GET    | `/v2/users/:userId/prefs`          | Get prefs                                       |
-| PATCH  | `/v2/users/:userId/prefs`          | Merge prefs (**v2 improvement** — see below)    |
-| PUT    | `/v2/users/:userId/labels`         | Replace labels                                  |
-| PATCH  | `/v2/users/:userId/status`         | Activate/block                                  |
-| GET    | `/v2/users/:userId/memberships`    | Teams the user belongs to                       |
-| GET    | `/v2/users/:userId/logs`           | Audit logs                                      |
-
-**Correction — `DELETE /v2/users/:userId` was missing from the previous
-draft entirely** (not a D29 removal, a plain omission). It hard-deletes the
-user document and cascades cleanup of sessions/tokens/targets/memberships/
-identities (background job once Phase 6 lands; synchronous best-effort
-until then). Blocked (`status: false`) users can still be deleted (v1
-parity — deletion has no block-check, unlike the self-service delete-account
-flow in `account.md` which does refuse on a blocked account. This asymmetry
-is intentional: admin delete is a stronger, unconditional operation).
-
-**Correction — the two verification-flag endpoints were also missing.**
-They directly set `emailVerification`/`phoneVerification` with no side
-effects (no re-send, no expiry check) — an admin override, distinct from
-the self-service verification flow in `account.md`.
+| Method | Path                                   | Purpose                                            |
+| ------ | -------------------------------------- | -------------------------------------------------- |
+| POST   | `/v2/users`                            | Create user (Argon2id hashing)                     |
+| POST   | `/v2/users/argon2`                     | Create user with explicit Argon2id                 |
+| POST   | `/v2/users/bcrypt`                     | Create user with explicit bcrypt                   |
+| GET    | `/v2/users`                            | List users (`search`, `limit`, `offset`, `cursor`) |
+| GET    | `/v2/users/usage`                      | Usage stats from recorded metric rows              |
+| GET    | `/v2/users/:userId`                    | Get user (embeds targets)                          |
+| DELETE | `/v2/users/:userId`                    | Delete user (cascades targets/sessions/tokens)     |
+| PATCH  | `/v2/users/:userId/name`               | Update name                                        |
+| PATCH  | `/v2/users/:userId/password`           | Update password (re-hashes, appends history)       |
+| PATCH  | `/v2/users/:userId/email`              | Update email (resets `emailVerification`)          |
+| PATCH  | `/v2/users/:userId/phone`              | Update phone (resets `phoneVerification`)          |
+| PATCH  | `/v2/users/:userId/verification`       | Set `emailVerification` flag directly              |
+| PATCH  | `/v2/users/:userId/verification/phone` | Set `phoneVerification` flag directly              |
+| GET    | `/v2/users/:userId/prefs`              | Get prefs                                          |
+| PATCH  | `/v2/users/:userId/prefs`              | **Replace** prefs (whole object)                   |
+| PUT    | `/v2/users/:userId/labels`             | Replace labels                                     |
+| PATCH  | `/v2/users/:userId/status`             | Activate/block                                     |
+| GET    | `/v2/users/:userId/memberships`        | Teams the user belongs to (`limit`, `offset`)      |
+| GET    | `/v2/users/:userId/logs`               | Activity logs (audit collection)                   |
 
 ### User object
 
@@ -77,248 +57,182 @@ the self-service verification flow in `account.md`.
   "phoneVerification": false,
   "mfa": false,
   "prefs": { "theme": "dark" },
-  "hash": "argon2",
-  "hashOptions": { "memoryCost": 65536, "timeCost": 3, "parallelism": 4 },
-  "targets": [
-    { "$id": "target_1", "name": "Ada's iPhone", "providerType": "push", "identifier": "expo-token-…" }
-  ],
+  "passwordUpdate": "2026-08-26T10:00:00.000Z",
   "registration": "2026-08-26T10:00:00.000Z",
+  "accessedAt": "2026-08-26T10:00:00.000Z",
+  "targets": [
+    {
+      "$id": "target_1",
+      "userId": "user_001",
+      "providerType": "push",
+      "providerId": "",
+      "identifier": "expo-token-…",
+      "name": "Ada's iPhone",
+      "expired": false
+    }
+  ],
   "$createdAt": "2026-08-26T10:00:00.000Z",
   "$updatedAt": "2026-08-26T10:00:00.000Z"
 }
 ```
 
-**Correction — this object shape wasn't documented at all in the previous
-draft**, and two things were missing that legacy's shared `UserModel`
-(base class for both this admin view and `docs/api/account.md`'s
-self-service `Account` object) includes:
-
-- **`targets`** — the account's push/email/sms targets, embedded inline as
-  full objects (same as `account.md`'s Account object) rather than
-  requiring a separate `GET .../targets` call for the common case.
-- **`hash`/`hashOptions`** — the password hashing algorithm and its cost
-  parameters (e.g. `argon2`/`{memoryCost, timeCost, parallelism}`). Legacy
-  exposes these unconditionally on the admin `UserModel` (this whole module
-  is admin/key-only already, unlike `account.md`'s self-service view, which
-  always excludes them via `AccountModel`'s explicit `@Exclude()`). v2 keeps
-  this — it's genuinely useful for migration/backup tooling (exporting a
-  user's current hash state to re-import elsewhere) — but the actual hashed
-  **password value itself** (legacy's confusingly-named `password` field,
-  which holds the hash, not plaintext) is renamed to `passwordHash` in v2
-  for clarity; same data, clearer name, not a capability change.
-
-Neither field is ever present on a **list** response (`GET /v2/users`) —
-same as v1, which only embeds them on single-resource reads, to avoid an
-N+1 targets lookup on every page of a user list.
-
-### Legacy hash variants — REMOVED (D29)
-
-v1's `POST /users/md5 | sha | phpass | scrypt | scrypt-modified` are **not
-carried over**. Per D29 only bcrypt/argon2 are supported for verification;
-importing legacy hashes would create accounts that can never re-verify
-cleanly. SDKs calling these paths get `404 problem+json` like any unknown
-route. Migration path for legacy installs: bulk-reset flows, not hash
-imports.
+The response is an explicit view — no `hash`, `hashOptions`, `password`, or
+`passwordHistory` are ever exposed (earlier drafts proposing their
+inclusion were not implemented). `targets` is embedded on single-resource
+reads; list responses embed each user's stored `targets` value.
 
 ### Create user
 
-Body (`POST /v2/users`): `{ userId?, email?, phone?, password?, name? }`.
-**v2 improvement**: at least one of `email`/`phone` is explicitly validated
-as required (`422` otherwise) — v1 accepts a body with none of them set at
-the DTO level (a real gap, not an enforced rule; it "works in practice"
-only because nothing downstream needs an identifier, which isn't a
-guarantee worth keeping). Server hashes `password` with the project default
-(bcrypt/argon2 per D5). The argon2/bcrypt variants accept an already-hashed
-`password` (+ `hashOptions` where applicable) so plaintext never crosses the
-wire during migrations.
+Body (all variants): `{ userId?, email?, phone?, password?, name? }` —
+`userId` follows D28 (`'unique()'` default). Duplicate email →
+`409 user_email_already_exists`; duplicate phone →
+`409 user_phone_already_exists`. When email/phone are set, matching
+email/sms `targets` documents are created automatically. `password` is
+hashed server-side with the variant's algorithm (`argon2id` default).
 
-**Correction**: `password`/`hash`/`hashOptions` are not blanket-hidden —
-see the User object section above. What's true is narrower: the **plaintext
-password supplied in the request body** is of course never echoed back
-(nothing echoes request bodies in this API), and the pre-hashed-import
-variants' `password`/`hashOptions` request fields aren't specially secret
-either — they're exactly what gets stored, and are then visible on reads
-of that user the same as any other user's `hash`/`hashOptions`/`passwordHash`
-(admin/key-only module, so there's no lower-privilege caller to hide them
-from in the first place).
+**Legacy hash variants removed (D29):** v1's
+`POST /users/md5 | sha | phpass | scrypt | scrypt-modified` have no v2
+equivalent; only `argon2` (Argon2id) and `bcrypt` exist, and both accept
+plaintext (there are no pre-hashed import endpoints).
 
-### Status
+### `PATCH /v2/users/:userId/password`
 
-`PATCH status` body: `{ status: boolean }` → maps to v1's active/blocked
-duality. Blocked users fail session validation at the auth layer.
+Body: `{ password }` (min 8). Re-hashes with Argon2id, updates
+`passwordUpdate`, appends the new hash to `passwordHistory`. No
+personal-data or history _validation_, and no session revocation (see
+Known gaps).
+
+### `GET /v2/users/usage`
+
+Reads the recorded `stats` rows (INF totals + period-bucketed series,
+zero-filled across the window — v1 parity). Query: `range` ∈
+`24h | 7d | 30d | 90d` (default `30d`); invalid → `400 invalid_usage_range`.
+
+```json
+{
+  "range": "30d",
+  "usersTotal": 1234,
+  "sessionsTotal": 5678,
+  "users": [{ "date": "2026-10-26T00:00:00Z", "value": 12 }],
+  "sessions": [{ "date": "2026-10-26T00:00:00Z", "value": 34 }]
+}
+```
+
+### `GET /v2/users/:userId/logs`
+
+Reads the tenant `audit` collection by the user's internal sequence.
+Query: `limit`, `offset`. Each log row is decorated with detected
+client/OS/device fields and GeoIP country (localized name):
+
+```json
+{
+  "total": 2,
+  "logs": [
+    {
+      "event": "user.create",
+      "userId": "user_001",
+      "userEmail": "ada@example.com",
+      "userName": "Ada Lovelace",
+      "ip": "203.0.113.7",
+      "time": "2026-10-26T11:00:00.000Z",
+      "osCode": "MAC",
+      "osName": "macOS",
+      "osVersion": "14",
+      "clientType": "browser",
+      "clientCode": "CH",
+      "clientName": "Chrome",
+      "clientVersion": "128",
+      "clientEngine": "Blink",
+      "clientEngineVersion": "128",
+      "deviceName": "Desktop",
+      "deviceBrand": "Apple",
+      "deviceModel": "",
+      "countryCode": "US",
+      "countryName": "United States"
+    }
+  ]
+}
+```
 
 ## Endpoints — Identities & Tokens & JWTs
 
-| Method | Path                               | Purpose                                          |
-| ------ | ----------------------------------- | -------------------------------------------------- |
-| GET    | `/v2/users/identities`              | List OAuth identities (admin view, all users)       |
-| DELETE | `/v2/users/identities/:identityId`  | Delete identity                                    |
-| POST   | `/v2/users/:userId/tokens`          | Create a generic secret token for this user        |
-| POST   | `/v2/users/:userId/jwts`            | Issue JWT for user                                 |
+| Method | Path                               | Purpose                                                                               |
+| ------ | ---------------------------------- | ------------------------------------------------------------------------------------- |
+| GET    | `/v2/users/identities`             | List OAuth2 identities (admin view, all users; `search`, `limit`, `offset`, `cursor`) |
+| DELETE | `/v2/users/identities/:identityId` | Delete identity (`200 { status: 'success' }`)                                         |
+| POST   | `/v2/users/:userId/tokens`         | Create a generic token for this user                                                  |
+| POST   | `/v2/users/:userId/jwts`           | Issue JWT for user                                                                    |
 
-Identity object fields: `userId`, `provider`, `providerUid`,
+Identity objects expose `userId`, `provider`, `providerUid`,
 `providerEmail`, `providerAccessToken`, `providerAccessTokenExpiry`,
-`providerRefreshToken` (plus base `$id`/`$createdAt`/`$updatedAt`/
-`$permissions`). Filterable/sortable: `userId`, `provider`, `providerUid`,
-`providerEmail`, `providerAccessTokenExpiry`.
+`providerRefreshToken`.
 
-**Correction — `POST /v2/users/:userId/tokens` does not send anything and
-has no `url` field.** The previous draft conflated it with the self-service
-magic-URL flow (`docs/api/account.md`'s `POST /account/tokens/magic-url`).
-The admin endpoint is simpler: body `{ length?, expire? }`
-(`length` 4–128 chars default 6, `expire` 60s–1yr default
-`TOKEN_EXPIRATION_GENERIC`), and the response returns the **plaintext
-secret directly** (`{ secret, expire, userId }`) for the admin caller to
-deliver however they choose — no email/SMS dispatch, no `url` templating.
+**`POST …/tokens`** body: `{ type?, expireInSeconds?, phrase? }` —
+`type` is the numeric-or-string token type (default `1`),
+`expireInSeconds` default `3600`, `phrase` optional. The token document is
+created **without a secret**; the response is the token view
+(`{ $id, userId, type, expire, phrase }`) — no plaintext secret is
+returned or emailed (earlier drafts claiming a returned `secret` were not
+implemented).
 
-**JWT**: body `{ sessionId?, duration? }` (`sessionId` defaults to the
-user's most recent session, `duration` 0–3600s default 900). Response:
-`{ jwt }` (not `token`). **v2 improvement**: v1 silently signs a JWT with an
-empty `sessionId` claim if the given `sessionId` doesn't belong to the user;
-v2 rejects that with `404 user_session_not_found` instead of issuing a
-half-valid token.
+**`POST …/jwts`** body: `{ sessionId?, duration? }` (`duration` seconds,
+default `900`). Response: `{ jwt }` signed with `sub: userId` and
+`sid: sessionId`. `sessionId` is **not validated** against the user's
+sessions (no `user_session_not_found` rejection — see Known gaps).
 
 ## Endpoints — Sessions (`/v2/users/:userId/sessions`)
 
-| Method | Path                    | Purpose                |
-| ------ | ----------------------- | ----------------------- |
-| GET    | `…/sessions`            | List user sessions (no filter/search — same as v1) |
-| POST   | `…/sessions`            | Create session (admin) |
-| DELETE | `…/sessions`            | Delete all sessions    |
-| DELETE | `…/sessions/:sessionId` | Delete one session     |
+| Method | Path                    | Purpose                                                                                |
+| ------ | ----------------------- | -------------------------------------------------------------------------------------- |
+| GET    | `…/sessions`            | List user sessions (`limit`, `offset`)                                                 |
+| POST   | `…/sessions`            | Create session — body `{ provider?, expireInSeconds? }` (defaults `email`, `31536000`) |
+| DELETE | `…/sessions`            | Delete all sessions                                                                    |
+| DELETE | `…/sessions/:sessionId` | Delete one session                                                                     |
 
-Session object shape matches `docs/api/account.md`'s session object,
-including its field-visibility rule — since every caller here is
-admin/key by definition, `secret` and the OAuth2 provider token fields are
-always visible on these responses (this module never has a lower-privilege
-caller to hide them from). `current` is always `false` here (an admin is
-never "the" session owner).
-
-## Endpoints — MFA (`/v2/users/:userId/mfa`)
-
-| Method | Path                         | Purpose                                             |
-| ------ | ----------------------------- | ---------------------------------------------------- |
-| PATCH  | `…/mfa`                       | Enable/disable MFA                                    |
-| GET    | `…/mfa/factors`                | List enrolled factors                                 |
-| PATCH  | `…/mfa/recovery-codes`         | Generate codes (**first time only** — 409 if they already exist) |
-| PUT    | `…/mfa/recovery-codes`         | Regenerate/replace existing codes (404 if none exist) |
-| GET    | `…/mfa/recovery-codes`         | View remaining recovery codes                         |
-| DELETE | `…/mfa/authenticators/:type`   | Remove authenticator                                  |
-
-**Correction — the PATCH/PUT purposes were swapped in the previous draft.**
-Legacy: `PATCH` = `generateMfaRecoveryCodes` (first-time creation, conflicts
-if codes already exist); `PUT` = `regenerateMfaRecoveryCodes` (replace,
-404s if none exist yet). Kept as-is (v1 parity) — only the documentation
-was wrong.
-
-**v2 improvement**: `GET …/mfa/factors`'s `recoveryCode` field is always
-`false` in v1 (never actually computed — a legacy loose end, not intended
-behavior). v2 computes it as `recoveryCodes.length > 0`.
-
-**Correction — auth posture.** v1's `MfaController` for the *admin* users
-module is **key-only** (`AuthType.KEY`), not the admin/key/session/JWT union
-implied by the previous draft. **v2 improvement**: widen this to
-admin+key, matching the rest of the Users module, since restricting MFA
-admin actions to API keys only (excluding admin console sessions) looks
-like an oversight rather than an intentional security boundary.
+Session objects use the shared session view (`docs/api/account.md`) with
+`secret` always empty-string masked and `current` always `false`.
+Unknown session on delete → `404 user_session_not_found`.
 
 ## Endpoints — Targets (`/v2/users/:userId/targets`)
 
-Push/notification targets. Standard CRUD:
+| Method | Path                  | Purpose                          |
+| ------ | --------------------- | -------------------------------- |
+| GET    | `…/targets`           | List targets (`limit`, `offset`) |
+| POST   | `…/targets`           | Create target                    |
+| GET    | `…/targets/:targetId` | Get target                       |
+| PATCH  | `…/targets/:targetId` | Update target                    |
+| DELETE | `…/targets/:targetId` | Delete target                    |
 
-`POST` / `GET` / `GET :targetId` / `PATCH :targetId` / `DELETE :targetId`.
-
-**Correction — the create body was incomplete.** Full body:
-`{ targetId?, providerType, identifier, name, providerId? }` — `name` is
-**required** (not optional, and not in the previous draft at all);
-`providerId` is optional. `PATCH` accepts `{ identifier?, name?,
-providerId? }` (not just `identifier`). `providerType` ∈
-`email | sms | push`; `identifier` is validated against the matching format
-(email/E.164 phone) when `providerType` is `email`/`sms`.
+Create body: `{ providerType, identifier, providerId?, name? }` — `name` is
+**optional** (earlier drafts marking it required were not implemented).
+PATCH accepts `{ identifier?, providerId?, name? }`. `providerType` ∈
+`email | sms | push`.
 
 ---
 
-## v1 → v2 deviations
+## Errors
 
-1. **Legacy hash create endpoints removed** (D29) — see above.
-2. **Envelope**: `{ data, meta: { total, limit, offset } }`; list queries
-   use the shared cursor/offset conventions from `_conventions.md`. (v1's
-   actual envelope is flat `{ data, total }` with no `limit`/`offset` in the
-   response — this is a real deviation, not something v1 already does,
-   which the previous draft correctly anticipated but should be stated as
-   such rather than implied to be a detail already settled.)
-3. **Error format**: problem+json with stable `code`s — corrected from the
-   previous draft's invented strings (`user_email_exists` →
-   `user_email_already_exists`; `identity_not_found` →
-   `user_identity_not_found`) to match what legacy actually emits.
-4. **Sensitive-field stripping** becomes explicit response serialization
-   instead of v1's "expose on the model, strip via a separate interceptor"
-   split.
-5. **Usage endpoint**: kept for parity, admin-only (matching v1's actual,
-   stricter auth posture — corrected from the previous draft's blanket
-   claim), flagged as a console-only candidate to move later.
-6. **`PATCH prefs` is a real shallow merge in v2** — **correction, not
-   parity**: v1's `updatePrefs` is a full replace despite the `PATCH` verb
-   (confirmed: `user.set('prefs', prefs)`, no merge step anywhere). The
-   previous draft's open question ("v1 uses PATCH-as-merge; proposed keeping
-   merge for parity") was based on a wrong premise — there is no v1 merge
-   behavior to have parity *with*. v2 makes `PATCH` a genuine merge (matching
-   what the verb implies) as a deliberate, documented improvement.
-7. **Password update revokes other sessions in v2** — **new, not
-   parity**: v1 does not invalidate any other session when an admin resets
-   a user's password (confirmed: only a webhook fires; no session deletion
-   anywhere in that path). v2 adds this as a security improvement, applied
-   consistently with the same change in `docs/api/account.md`'s self-service
-   password update.
-8. **MFA admin auth posture widened** to admin+key (see above) — v1
-   restricts it to key-only, which reads as an oversight.
-9. **JWT issuance rejects an unknown `sessionId`** instead of v1's silent
-   empty-claim fallback (see above).
-10. **`GET …/mfa/factors.recoveryCode` is now computed correctly** instead
-    of v1's permanently-`false` field.
-11. **Labels**: v2 keeps v1's exact validation — each label
-    `^[a-zA-Z0-9]{1,36}$`, array capped at the project's `limits.arrayParamsSize`
-    (dynamic per-project config, D42 — not a hardcoded `100`), deduplicated
-    — none of which was documented in the previous draft.
-13. **`targets`/`hash`/`hashOptions` embedded in the User object** (new to
-    this draft — see "User object" above); `password` value itself renamed
-    `passwordHash` for clarity.
-12. **`GET …/memberships` total is a real count in v2** — **correction**:
-    v1's `total` is just `memberships.length` of whatever page was fetched,
-    not a true count query (unlike every other list endpoint in this
-    module, which does call `db.count(...)`). v2 fixes this inconsistency.
+| Status | Type                  | Code                        | When                             |
+| ------ | --------------------- | --------------------------- | -------------------------------- |
+| 404    | `/errors/not-found`   | `user_not_found`            | unknown user                     |
+| 404    | `/errors/not-found`   | `user_identity_not_found`   | unknown identity                 |
+| 404    | `/errors/not-found`   | `user_session_not_found`    | unknown session id on delete     |
+| 404    | `/errors/not-found`   | `user_target_not_found`     | unknown target                   |
+| 409    | `/errors/conflict`    | `user_email_already_exists` | duplicate email on create/update |
+| 409    | `/errors/conflict`    | `user_phone_already_exists` | duplicate phone on create/update |
+| 400    | `/errors/bad-request` | `invalid_usage_range`       | bad `?range=` on `/usage`        |
 
-## Implementation notes
+## Known gaps
 
-- Depends on `@nuvix/db` for user docs + identities/targets collections.
-- `updateEmail`/`updatePhone` are compound operations, not simple field
-  setters (v1 parity): they reset the corresponding verification flag to
-  `false`, and rename/delete/create a matching `targets` document for that
-  channel so the target stays consistent with the primary field.
-- `updatePassword` supports clearing the password to `''` (v1 parity) as a
-  distinct "lock out password login" state — this is not re-hashed, it's
-  stored empty.
-- Password history (`passwordHistory > 0`) and personal-data checks
-  (`personalDataCheck`) both apply to `updatePassword`, mirroring
-  `docs/api/account.md`'s self-service password update — same validators,
-  single source of truth.
-- List query allow-lists per sub-resource (v1 parity, previously
-  undocumented): `users` → `name, email, phone, status, passwordUpdate,
-  registration, emailVerification, phoneVerification, labels`; `identities`
-  → `userId, provider, providerUid, providerEmail,
-  providerAccessTokenExpiry`; `memberships` → `userId, teamId, invited,
-  joined, confirm, roles`; `targets` → `userId, providerId, identifier,
-  providerType`; `logs` → `time, period` only. `sessions` has no query
-  support at all (returns the full list). Any other attribute →
-  `400 general_query_invalid`.
-- Smoke cases without DB: guest 403s, 422 validation shapes, removed-route
-  404s (`/v2/users/md5` etc.).
+Described in earlier drafts, **not implemented**:
 
-## Open questions for review
-
-1. Confirm the `PATCH prefs` merge-semantics change (deviation #6) — this
-   is new behavior, not v1 parity as previously assumed.
-2. Confirm session revocation on admin-triggered password reset (deviation
-   #7) is desired (it's a security improvement, but changes client-visible
-   behavior for any session the affected user currently holds).
-3. Confirm widening MFA admin auth to admin+key (deviation #8).
+- Admin MFA management (`PATCH …/mfa`, factors, recovery-codes,
+  authenticators under `/v2/users/:userId/mfa`) — no MFA routes exist in
+  this module; MFA enrollment is self-service via `docs/api/account.md`.
+- Password-update session revocation and personal-data/history validation.
+- JWT `sessionId` validation (`user_session_not_found`).
+- Label validation rules (`^[a-zA-Z0-9]{1,36}$`,
+  `limits.arrayParamsSize` cap, dedup) — labels are stored as given.
+- Attribute allow-lists per list endpoint with
+  `400 general_query_invalid` fallback — lists accept only the generic
+  `search`/`limit`/`offset`/`cursor` params shown above.
