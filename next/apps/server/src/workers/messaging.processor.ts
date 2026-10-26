@@ -385,7 +385,7 @@ async function resolveTargets(session: Session, message: Doc): Promise<Doc[]> {
 async function buildEmailExtras(
   session: Session,
   data: Record<string, unknown>,
-): Promise<{ cc: string[]; bcc: string[] }> {
+): Promise<{ cc: string[]; bcc: string[]; attachments: unknown[] }> {
   const resolveIds = async (ids: unknown): Promise<string[]> => {
     const list = Array.isArray(ids) ? (ids as string[]) : []
     if (list.length === 0) return []
@@ -399,7 +399,57 @@ async function buildEmailExtras(
   return {
     cc: await resolveIds(data.cc),
     bcc: await resolveIds(data.bcc),
+    attachments: await resolveAttachments(session, data.attachments),
   }
+}
+
+/**
+ * Resolves `{bucketId, fileId}` attachment snapshots to vendor
+ * `Attachment` payloads (v1 `buildEmailMessage` parity): file bytes are
+ * read from the storage device at delivery time; missing
+ * buckets/files/devices become send errors (v1 threw into the delivery
+ * error path).
+ */
+async function resolveAttachments(session: Session, attachments: unknown): Promise<unknown[]> {
+  const refs = Array.isArray(attachments) ? attachments : []
+  if (refs.length === 0) return []
+
+  const { Local } = await import('@nuvix/storage')
+  const device = new Local()
+  const resolved: unknown[] = []
+
+  for (const ref of refs) {
+    const attachment = ref as { bucketId?: unknown; fileId?: unknown }
+    const bucketId = attachment.bucketId ? String(attachment.bucketId) : ''
+    const fileId = attachment.fileId ? String(attachment.fileId) : ''
+
+    const bucket = await session.getDocument('buckets', bucketId)
+    if (bucket.empty()) {
+      throw new Error('Storage bucket with the requested ID could not be found')
+    }
+
+    const file = await session.getDocument('files', fileId)
+    if (file.empty() || file.get('bucketId') !== bucketId) {
+      throw new Error('Storage file with the requested ID could not be found')
+    }
+
+    const path = String(file.get('path') ?? '')
+    if (!(await device.exists(path))) {
+      throw new Error(`File not found in ${path}`)
+    }
+
+    const fileData = await device.read(path)
+    const { Attachment } = await import('@nuvix/messaging')
+    resolved.push(
+      new Attachment(
+        String(file.get('name') ?? 'attachment'),
+        fileData,
+        String(file.get('mimeType') ?? 'text/plain'),
+        Number(file.get('sizeOriginal') ?? 0) || undefined,
+      ),
+    )
+  }
+  return resolved
 }
 
 /**
@@ -518,7 +568,12 @@ export async function deliverExternalMessage(
     let data = (message.get('data') as Record<string, unknown>) ?? {}
     if (providerType === 'email') {
       const extras = await buildEmailExtras(deps.session, data)
-      data = { ...data, cc: extras.cc, bcc: extras.bcc }
+      data = {
+        ...data,
+        cc: extras.cc,
+        bcc: extras.bcc,
+        attachments: extras.attachments,
+      }
     }
     if (providerType === 'push' && data.image !== undefined) {
       data = {

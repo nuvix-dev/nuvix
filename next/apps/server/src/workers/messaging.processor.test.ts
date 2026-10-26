@@ -273,6 +273,144 @@ describe('messaging delivery (v1 sendExternalMessage parity)', () => {
     expect(payload!.fileId).toBe('file_1')
   })
 
+  it('resolves email attachment refs to file payloads at delivery (v1 parity)', async () => {
+    const fs = await import('node:fs/promises')
+    const assetPath = '/tmp/opencode/email-attachment-test.txt'
+    await fs.writeFile(assetPath, Buffer.from('hello attachment'))
+
+    let capturedData: Record<string, unknown> | undefined
+    const sender: MessageSender = {
+      async batchLimit() {
+        return 10
+      },
+      async send(params) {
+        capturedData = params.payload.data
+        return {
+          deliveredTo: 1,
+          results: [{ recipient: 'a@test', status: 'success', error: '' }],
+        }
+      },
+    }
+    setMessageSender(sender)
+
+    const session = stubSession({
+      messages: [],
+      providers: [
+        {
+          $id: 'prov_mail',
+          name: 'SMTP',
+          provider: 'smtp',
+          type: 'email',
+          enabled: true,
+          credentials: { host: 'smtp.test', port: 587 },
+          options: { fromEmail: 'no-reply@test', fromName: 'Test' },
+        },
+      ],
+      targets: [{ $id: 't1', identifier: 'a@test', providerType: 'email', providerId: '' }],
+      buckets: [{ $id: 'bucket_1', name: 'Docs' }],
+      files: [
+        {
+          $id: 'file_1',
+          bucketId: 'bucket_1',
+          name: 'notes.txt',
+          path: assetPath,
+          mimeType: 'text/plain',
+          sizeOriginal: 16,
+        },
+      ],
+    })
+
+    const message = fixtureMessage({
+      data: {
+        subject: 'With attachment',
+        content: 'See attached',
+        html: false,
+        cc: [],
+        bcc: [],
+        attachments: [{ bucketId: 'bucket_1', fileId: 'file_1' }],
+      },
+    })
+
+    const result = await deliverExternalMessage(message, {
+      session: session as never,
+      projectId: 'proj_1',
+    })
+
+    expect(result.status).toBe('sent')
+    expect(capturedData).toBeDefined()
+    const attachments = capturedData!.attachments as Array<{
+      constructor: { name: string }
+      name?: unknown
+    }>
+    expect(attachments).toHaveLength(1)
+    // Vendor Attachment payload (name/buffer/type/size).
+    expect(String(attachments[0]!.name)).toBe('notes.txt')
+  })
+
+  it('surfaces missing attachment files as delivery errors (v1 parity)', async () => {
+    let errorThrown: unknown
+    const sender: MessageSender = {
+      async batchLimit() {
+        return 10
+      },
+      async send() {
+        return { deliveredTo: 0, results: [] }
+      },
+    }
+    setMessageSender(sender)
+
+    const session = stubSession({
+      messages: [],
+      providers: [
+        {
+          $id: 'prov_mail',
+          name: 'SMTP',
+          provider: 'smtp',
+          type: 'email',
+          enabled: true,
+          credentials: { host: 'smtp.test', port: 587 },
+          options: { fromEmail: 'no-reply@test', fromName: 'Test' },
+        },
+      ],
+      targets: [{ $id: 't1', identifier: 'a@test', providerType: 'email', providerId: '' }],
+      buckets: [{ $id: 'bucket_1', name: 'Docs' }],
+      files: [
+        {
+          $id: 'file_missing',
+          bucketId: 'bucket_1',
+          name: 'gone.txt',
+          path: '/tmp/opencode/does-not-exist-attachment.txt',
+          mimeType: 'text/plain',
+          sizeOriginal: 5,
+        },
+      ],
+    })
+
+    const message = fixtureMessage({
+      data: {
+        subject: 'Bad attachment',
+        content: 'Body',
+        html: false,
+        cc: [],
+        bcc: [],
+        attachments: [{ bucketId: 'bucket_1', fileId: 'file_missing' }],
+      },
+    })
+
+    // v1: buildEmailMessage threw into the delivery error path.
+    const result = await deliverExternalMessage(message, {
+      session: session as never,
+      projectId: 'proj_1',
+    }).catch((error: unknown) => {
+      errorThrown = error
+      return null
+    })
+
+    expect(errorThrown).toBeInstanceOf(Error)
+    expect(String((errorThrown as Error).message)).toContain('File not found in')
+    void result
+  })
+
   it('fails the message when delivery errors leave zero deliveries', async () => {
     const { sender } = recordingSender([], 0)
     setMessageSender(sender)

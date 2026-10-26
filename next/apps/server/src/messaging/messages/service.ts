@@ -87,6 +87,44 @@ async function validatePushImageRef(session: Session, image: string): Promise<vo
   }
 }
 
+/**
+ * Validates email attachment references (`bucketId:fileId`) — v1
+ * create/update-time parity (bucket exists, file in bucket). Stored as
+ * `{bucketId, fileId}` snapshots; the worker reads the bytes from the
+ * storage device at delivery time.
+ */
+async function validateAttachmentRefs(
+  session: Session,
+  attachments: string[],
+): Promise<Array<{ bucketId: string; fileId: string }>> {
+  const processed: Array<{ bucketId: string; fileId: string }> = []
+  for (const attachment of attachments) {
+    const [bucketId, fileId] = attachment.split(':') as [string, string]
+    if (!bucketId || !fileId) {
+      throw new BadRequestError('Invalid attachment reference', {
+        code: 'messaging_invalid_attachment',
+      })
+    }
+
+    const bucket = await session.getDocument('buckets', bucketId)
+    if (bucket.empty()) {
+      throw new NotFoundError('Storage bucket not found', {
+        code: 'storage_bucket_not_found',
+      })
+    }
+
+    const file = await session.getDocument('files', fileId)
+    if (file.empty() || file.get('bucketId') !== bucketId) {
+      throw new NotFoundError('File not found', {
+        code: 'storage_file_not_found',
+      })
+    }
+
+    processed.push({ bucketId, fileId })
+  }
+  return processed
+}
+
 export interface CreatePushMessageInput extends BaseMessageInput {
   title?: string
   body?: string
@@ -162,6 +200,8 @@ export class MessagingService {
       })
     }
 
+    const processedAttachments = await validateAttachmentRefs(this.session, attachments)
+
     const doc = new Doc<Messages>({
       $id: messageId,
       providerType: 'email',
@@ -175,7 +215,7 @@ export class MessagingService {
         html,
         cc,
         bcc,
-        attachments,
+        attachments: processedAttachments,
       },
       status,
       deliveredTotal: 0,
@@ -446,7 +486,9 @@ export class MessagingService {
     if (input.html !== undefined) currentData.html = input.html
     if (input.cc !== undefined) currentData.cc = input.cc
     if (input.bcc !== undefined) currentData.bcc = input.bcc
-    if (input.attachments !== undefined) currentData.attachments = input.attachments
+    if (input.attachments !== undefined) {
+      currentData.attachments = await validateAttachmentRefs(this.session, input.attachments)
+    }
     doc.set('data', currentData)
 
     const updated = await this.session.updateDocument('messages', messageId, doc)

@@ -515,7 +515,7 @@ onDatabaseCreated` composition hook). Redesigns over v1 recorded:
       usage routes run on the tenant auth-system session.
 - [x] Push assets (Phase 6 follow-through): storage-backed push
       notifications end-to-end — `GET
-  /storage/buckets/:bucketId/files/:fileId/push` (v1
+/storage/buckets/:bucketId/files/:fileId/push` (v1
       `getFileForPushNotification` parity: short-lived JWT entitlement
       with projectId/bucketId/fileId claims, disabled buckets hidden,
       inline disposition + 45-day Expires + range requests; streaming
@@ -530,10 +530,18 @@ onDatabaseCreated` composition hook). Redesigns over v1 recorded:
       own verifier demanded — every vendor fetch failed; v2 signs and
       verifies all three claims. Vendor-facing base URL comes from
       `NUVIX_ENDPOINT` (falls back to `http://localhost:$NUVIX_PORT`).
+- [x] Email attachments (Phase 6 follow-through): create/update-time
+      ref validation on email messages (v1 parity: `bucketId:fileId`
+      refs stored as `{bucketId, fileId}` snapshots) and delivery-time
+      byte resolution in the messaging worker (v1 `buildEmailMessage`
+      parity: file bytes read from the storage device into vendor
+      `Attachment` payloads — name/mime/size from the file record;
+      missing buckets/files/device paths become delivery errors like
+      v1's throws).
 
 ### Phase 9 — Tests & cutover
 
-- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 494 tests across 78 files)
+- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 496 tests across 78 files)
 - [x] Perf baseline vs old app (`test/bench/perf.ts`, `docs/perf-baseline.md`)
 - [x] Docker/deploy artifacts for Bun-only runtime (`Dockerfile`, `docker-compose.yml`, `.dockerignore`, `docs/deployment.md`)
 - [ ] Delete root monorepo (**explicit approval gate**)
