@@ -191,10 +191,34 @@ export function createAvatarService() {
     /^(localhost$|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|\[?::1\]?$)/i
 
   /**
+   * Resolves every hostname and rejects private/loopback/link-local
+   * addresses BEFORE any request leaves the process (DNS-rebinding guard —
+   * a public hostname resolving to 169.254.169.254 is the classic bypass
+   * of a hostname-only blocklist).
+   */
+  async function assertPublicHost(hostname: string): Promise<void> {
+    if (PRIVATE_HOST_RE.test(hostname)) {
+      throw new Error('SSRF blocked')
+    }
+    const { dns } = await import('bun')
+    let records: Array<{ address: string }>
+    try {
+      records = await dns.lookup(hostname, { family: 4 })
+    } catch {
+      throw new Error('DNS resolution failed')
+    }
+    for (const { address: ip } of records) {
+      if (PRIVATE_HOST_RE.test(ip) || ip.startsWith('0.') || ip.startsWith('224.') || ip === '::') {
+        throw new Error('SSRF blocked')
+      }
+    }
+  }
+
+  /**
    * Fetch a remote favicon and re-encode as PNG.
-   * SSRF hardening per contract: http(s) only, private/loopback hosts rejected,
-   * response must be an image. Full DNS-based pinning lands with the
-   * network-hardening pass.
+   * SSRF hardening (network-hardening pass): http(s) only, hostname
+   * blocklist + DNS resolution validated public for every redirect hop,
+   * redirect count capped, response must be an image.
    */
   async function favicon(url: string): Promise<AvatarResult> {
     let parsed: URL
@@ -219,6 +243,7 @@ export function createAvatarService() {
         ) {
           throw new Error('SSRF blocked')
         }
+        await assertPublicHost(currentUrl.hostname)
 
         response = await fetch(currentUrl, {
           redirect: 'manual',

@@ -11,5 +11,6 @@ export {
   ForbiddenError,
   NotFoundError,
   NotImplementedError,
+  TooManyRequestsError,
   UnauthorizedError,
 } from '@nuvix/core/errors'

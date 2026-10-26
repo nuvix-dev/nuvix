@@ -74,6 +74,57 @@ function toUserView(doc: Doc): ConsoleUserView {
 // biome-ignore lint/suspicious/noExplicitAny: dynamic platform records
 type AnyDoc = Doc<any>
 
+/**
+ * Login throttling (hardening pass): per `email`+`clientKey` failure
+ * counter in-process — after MAX_FAILURES failed logins inside
+ * WINDOW_MS, further attempts are rejected with 429 until the window
+ * elapses. Successful login resets the counter. Console auth is
+ * single-instance; a Redis-backed store drops in later if the platform
+ * ever scales horizontally.
+ */
+const MAX_FAILURES = 5
+const WINDOW_MS = 15 * 60 * 1000
+
+const failureCounts = new Map<string, { count: number; windowStart: number }>()
+
+export class LoginThrottledError extends Error {
+  readonly retryAfterSeconds: number
+  constructor(retryAfterSeconds: number) {
+    super('Too many failed login attempts')
+    this.retryAfterSeconds = retryAfterSeconds
+  }
+}
+
+function throttleKey(email: string, clientKey: string): string {
+  return `${email.toLowerCase()}|${clientKey}`
+}
+
+function assertNotThrottled(key: string): void {
+  const entry = failureCounts.get(key)
+  if (!entry) return
+  if (Date.now() - entry.windowStart > WINDOW_MS) {
+    failureCounts.delete(key)
+    return
+  }
+  if (entry.count >= MAX_FAILURES) {
+    const retryAfterSeconds = Math.ceil((entry.windowStart + WINDOW_MS - Date.now()) / 1000)
+    throw new LoginThrottledError(retryAfterSeconds)
+  }
+}
+
+function recordFailure(key: string): void {
+  const entry = failureCounts.get(key)
+  if (!entry || Date.now() - entry.windowStart > WINDOW_MS) {
+    failureCounts.set(key, { count: 1, windowStart: Date.now() })
+    return
+  }
+  entry.count += 1
+}
+
+function resetFailures(key: string): void {
+  failureCounts.delete(key)
+}
+
 export class ConsoleAuthService {
   constructor(private readonly db: Database) {}
 
@@ -86,8 +137,16 @@ export class ConsoleAuthService {
    * wrong passwords (no user enumeration). Creates the session row and
    * returns a fresh token pair.
    */
-  async login(email: string, password: string, userAgent?: string): Promise<ConsoleTokenPair> {
+  async login(
+    email: string,
+    password: string,
+    userAgent?: string,
+    clientKey = '',
+  ): Promise<ConsoleTokenPair> {
     const normalizedEmail = email.trim().toLowerCase()
+    const key = throttleKey(normalizedEmail, clientKey)
+    assertNotThrottled(key)
+
     const user = await this.system().findOne('console_users', (query) =>
       query.equal('email', normalizedEmail),
     )
@@ -97,10 +156,12 @@ export class ConsoleAuthService {
       : await Auth.passwordVerify(password, String(user.get('passwordHash') ?? ''))
     if (!passwordOk) {
       // Same error for unknown email and wrong password.
+      recordFailure(key)
       throw new UnauthorizedError('Invalid email or password', {
         code: 'console_invalid_credentials',
       })
     }
+    resetFailures(key)
 
     const pair = await this.createSession(user, userAgent)
     return { ...pair, user: toUserView(user) }

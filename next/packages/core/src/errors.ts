@@ -89,6 +89,15 @@ export class ConflictError extends AppError {
 }
 
 /** A required capability is not configured (e.g. SMTP for system emails). */
+export class TooManyRequestsError extends AppError {
+  constructor(
+    detail = 'Too many requests',
+    fields?: Omit<ProblemFields, 'type' | 'status' | 'detail'>,
+  ) {
+    super(429, { type: '/errors/rate-limited', detail, ...fields })
+  }
+}
+
 export class ServiceUnavailableError extends AppError {
   constructor(detail = 'Service unavailable', fields?: Omit<ProblemFields, 'type' | 'detail'>) {
     super(503, { type: '/errors/service-unavailable', detail, ...fields })

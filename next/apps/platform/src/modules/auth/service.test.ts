@@ -203,6 +203,58 @@ describe('ConsoleAuthService', () => {
   })
 })
 
+describe('login throttling (hardening pass)', () => {
+  it('locks an email+client after MAX_FAILURES and recovers after the window', async () => {
+    const { service, session } = makeService()
+    await seedUser(session)
+
+    const codes: Array<string | number> = []
+    for (let i = 0; i < 6; i++) {
+      await service.login('op@test', 'wrong', undefined, 'cli').catch((error: unknown) => {
+        const err = error as { fields?: { code?: string }; retryAfterSeconds?: number }
+        codes.push(err.fields?.code ?? err.retryAfterSeconds ?? 'thrown')
+      })
+    }
+    // 5 failures return invalid_credentials; the 6th is throttled (429).
+    const throttled = codes.filter((c) => c !== 'console_invalid_credentials')
+    expect(throttled).toHaveLength(1)
+    expect(Number(throttled[0])).toBeGreaterThan(0)
+
+    // Even the CORRECT password is throttled inside the window.
+    await expect(service.login('op@test', 'correct-horse', undefined, 'cli')).rejects.toThrow()
+
+    // A different client key is NOT throttled (per-credential lockout).
+    const otherClient = await service.login('op@test', 'correct-horse', undefined, 'other')
+    expect(otherClient.user.email).toBe('op@test')
+  })
+
+  it('resets the failure counter after a successful login', async () => {
+    const { service, session } = makeService()
+    await seedUser(session)
+    // Distinct email+client key: the throttle map is module-level, so
+    // this test must not inherit the lockout from the previous one.
+    const email = 'reset@test'
+    const client = 'cli-reset'
+    await seedUser(session, email)
+
+    // 4 failures (one below the limit)...
+    for (let i = 0; i < 4; i++) {
+      await service.login(email, 'wrong', undefined, client).catch(() => {})
+    }
+    // ...then a success resets the counter...
+    await service.login(email, 'correct-horse', undefined, client)
+
+    // ...so 4 MORE failures still return invalid_credentials, not 429.
+    for (let i = 0; i < 4; i++) {
+      await service.login(email, 'wrong', undefined, client).catch((error: unknown) => {
+        expect((error as { fields?: { code?: string } }).fields?.code).toBe(
+          'console_invalid_credentials',
+        )
+      })
+    }
+  })
+})
+
 describe('bootstrapConsoleUser', () => {
   it('seeds the env operator once (idempotent)', async () => {
     const { service, session } = makeService()

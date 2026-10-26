@@ -6,8 +6,10 @@
  * without a protocol change.
  */
 
+import { TooManyRequestsError } from '@nuvix/core/errors'
 import { Elysia, t } from 'elysia'
 import type { ConsoleAuthService } from './service'
+import { LoginThrottledError } from './service'
 
 const REFRESH_COOKIE = 'nx_console_refresh'
 const REFRESH_COOKIE_MAX_AGE = 90 * 86_400
@@ -67,14 +69,31 @@ export function authRoutesFor(service: ConsoleAuthService) {
           }),
           response: TokenPairSchema,
         },
-        async ({ body, headers, set }) => {
-          const pair = await service.login(
-            body.email,
-            body.password,
-            typeof headers['user-agent'] === 'string' ? headers['user-agent'] : undefined,
-          )
-          set.headers['Set-Cookie'] = refreshCookie(pair.refreshToken)
-          return pair
+        async ({ body, headers, set, request }) => {
+          const clientKey =
+            request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+            request.headers.get('x-real-ip') ??
+            ''
+          try {
+            const pair = await service.login(
+              body.email,
+              body.password,
+              typeof headers['user-agent'] === 'string' ? headers['user-agent'] : undefined,
+              clientKey,
+            )
+            set.headers['Set-Cookie'] = refreshCookie(pair.refreshToken)
+            return pair
+          } catch (error) {
+            // Hardening pass: per-credential login throttling.
+            if (error instanceof LoginThrottledError) {
+              set.headers['retry-after'] = String(error.retryAfterSeconds)
+              throw new TooManyRequestsError(
+                `Too many failed login attempts — retry in ${error.retryAfterSeconds}s`,
+                { code: 'console_login_throttled' },
+              )
+            }
+            throw error
+          }
         },
       )
 

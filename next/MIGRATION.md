@@ -589,6 +589,17 @@ onDatabaseCreated` composition hook). Redesigns over v1 recorded:
       separation enforced in the server's authContext (console JWTs
       never authenticate as tenant users; vice versa on the platform).
       Contract: `docs/api/logs.md`.
+- [x] Hardening pass (D35 follow-ups): favicon proxy SSRF guards
+      upgraded from hostname-regex to per-hop DNS validation (every
+      resolved address must be public before any request or redirect
+      leaves the process — DNS-rebinding guard; tests assert private/
+      loopback rejection); console login throttling (per email+client
+      failure counter, 5 failures / 15 min in-process window → 429
+      `console_login_throttled` with `retry-after`, reset on success;
+      in-process by design — the platform is single-instance; a Redis
+      store drops in if it ever scales horizontally). The deferred
+      "Redis-cached GeoIP lookups" idea is dropped as unnecessary: the
+      bundled .mmdb reader is in-process and answers in microseconds.
 
 ### Phase 9 — Tests & cutover
 
