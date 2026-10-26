@@ -492,4 +492,123 @@ const platforms: Collection = {
   ],
 }
 
-export const platformCollections: Collection[] = [projects, webhooks, webhookLogs, keys, platforms]
+/**
+ * Console (operator) user — the platform app's own identity store.
+ * Passwords are Argon2id hashes; accounts are seeded from env at
+ * bootstrap (see `apps/platform/src/modules/auth`).
+ */
+const consoleUsers: Collection = {
+  $collection: Database.METADATA,
+  $id: ID.custom('console_users'),
+  name: 'Console Users',
+  documentSecurity: false,
+  enabled: true,
+  attributes: [
+    {
+      $id: ID.custom('email'),
+      key: 'email',
+      type: AttributeType.String,
+      size: 255,
+      required: true,
+    },
+    {
+      $id: ID.custom('name'),
+      key: 'name',
+      type: AttributeType.String,
+      size: 128,
+      required: false,
+      default: null,
+    },
+    {
+      $id: ID.custom('passwordHash'),
+      key: 'passwordHash',
+      type: AttributeType.String,
+      size: 255,
+      required: true,
+    },
+  ],
+  indexes: [
+    {
+      $id: ID.custom('email'),
+      key: 'idx_console_user_email',
+      type: IndexType.Unique,
+      attributes: ['email'],
+    },
+  ],
+}
+
+/**
+ * Console session — one row per login, storing ONLY the sha256 hash of
+ * the opaque refresh token (plus the immediately-previous hash so
+ * refresh-token reuse is detectable). Deleting the row revokes the
+ * session; access JWTs expire on their own short TTL.
+ */
+const consoleSessions: Collection = {
+  $collection: Database.METADATA,
+  $id: ID.custom('console_sessions'),
+  name: 'Console Sessions',
+  documentSecurity: false,
+  enabled: true,
+  attributes: [
+    {
+      $id: ID.custom('userId'),
+      key: 'userId',
+      type: AttributeType.String,
+      size: 255,
+      required: true,
+    },
+    {
+      $id: ID.custom('refreshHash'),
+      key: 'refreshHash',
+      type: AttributeType.String,
+      size: 64,
+      required: true,
+    },
+    {
+      $id: ID.custom('previousHash'),
+      key: 'previousHash',
+      type: AttributeType.String,
+      size: 64,
+      required: false,
+      default: null,
+    },
+    {
+      $id: ID.custom('userAgent'),
+      key: 'userAgent',
+      type: AttributeType.String,
+      size: 255,
+      required: false,
+      default: null,
+    },
+    {
+      $id: ID.custom('expireAt'),
+      key: 'expireAt',
+      type: AttributeType.Timestamptz,
+      required: true,
+    },
+  ],
+  indexes: [
+    {
+      $id: ID.custom('refreshHash'),
+      key: 'idx_console_session_refresh_hash',
+      type: IndexType.Unique,
+      attributes: ['refreshHash'],
+    },
+    {
+      $id: ID.custom('userId'),
+      key: 'idx_console_session_user',
+      type: IndexType.Key,
+      attributes: ['userId'],
+    },
+  ],
+}
+
+export const platformCollections: Collection[] = [
+  projects,
+  webhooks,
+  webhookLogs,
+  keys,
+  platforms,
+  consoleUsers,
+  consoleSessions,
+]

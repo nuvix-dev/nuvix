@@ -6,6 +6,8 @@ import {
 } from '@nuvix/core/tenants'
 import { config } from '@nuvix/utils'
 import { Elysia, t } from 'elysia'
+import { authRoutesFor } from './modules/auth/routes'
+import { bootstrapConsoleUser, ConsoleAuthService } from './modules/auth/service'
 import { authSettingsRoutes } from './modules/auth-settings/routes'
 import { AuthSettingsService } from './modules/auth-settings/service'
 import { databaseRoutes } from './modules/database/routes'
@@ -22,6 +24,7 @@ import { templatesRoutes } from './modules/templates/routes'
 import { TemplatesService } from './modules/templates/service'
 import { webhookRoutes } from './modules/webhooks/routes'
 import { WebhooksService } from './modules/webhooks/service'
+import { consoleAuth } from './plugins/auth'
 import { problemErrors } from './plugins/errors'
 import { createPlatformDatabase } from './registry/setup'
 
@@ -78,8 +81,15 @@ const templates = new TemplatesService(db)
 const tenantPool = new TenantResourcePool()
 const database = new DatabaseService(db, tenantPool)
 
+// Console operators seeded from env (idempotent — runs once at boot).
+await bootstrapConsoleUser(db)
+
 export const app = new Elysia()
   .use(problemErrors())
+  // Console auth: every route below (except /health and /console/auth*)
+  // requires a valid access JWT.
+  .use(consoleAuth({ secret: jwtSecret ?? '' }))
+  .use(authRoutesFor(new ConsoleAuthService(db)))
   .use(projectRoutes(projects))
   .use(databaseRoutes(database))
   .use(webhookRoutes(webhooks))

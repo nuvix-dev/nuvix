@@ -538,10 +538,28 @@ onDatabaseCreated` composition hook). Redesigns over v1 recorded:
       `Attachment` payloads — name/mime/size from the file record;
       missing buckets/files/device paths become delivery errors like
       v1's throws).
+- [x] Console auth (platform Phase 4 gap closed): session-based operator
+      auth for the platform app, designed for console UI AND CLI —
+      short-lived access JWTs (`aud: 'console'`, 15 min default via
+      `NUVIX_CONSOLE_ACCESS_TTL`) + opaque rotating refresh tokens
+      (90 days, sha256-hashed at rest in `console_sessions`, reuse
+      detection via `previousHash` — re-presenting a rotated token
+      revokes the session; v1's long-lived opaque console cookie
+      sessions replaced wholesale). Bearer-only enforcement on every
+      platform route via `plugins/auth.ts` (public exceptions:
+      `/health`, `/console/auth*`; audience-separated from tenant JWTs);
+      no API keys on the platform surface. Endpoints: `POST
+  /console/auth` (login), `/console/auth/refresh` (rotating),
+      `/console/auth/logout` (revoking), `GET /console/me` (CLI
+      whoami); refresh token also set as httpOnly cookie for the
+      browser console. First operator seeded idempotently from
+      `NUVIX_CONSOLE_EMAIL`/`NUVIX_CONSOLE_PASSWORD` at startup (no
+      public registration). Contract: `docs/api/console.md`; platform.md
+      auth-posture updated (was flagged as a blocking deployment gap).
 
 ### Phase 9 — Tests & cutover
 
-- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 496 tests across 78 files)
+- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 508 tests across 80 files)
 - [x] Perf baseline vs old app (`test/bench/perf.ts`, `docs/perf-baseline.md`)
 - [x] Docker/deploy artifacts for Bun-only runtime (`Dockerfile`, `docker-compose.yml`, `.dockerignore`, `docs/deployment.md`)
 - [ ] Delete root monorepo (**explicit approval gate**)

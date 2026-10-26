@@ -12,10 +12,12 @@ lifecycle is solid (`MIGRATION.md` §6b rule 6).
 
 ## Auth posture
 
-**None yet.** Platform Phase 4-equivalent auth (operator accounts/sessions)
-hasn't been designed. Until it lands, this API MUST only be reachable from a
-trusted network (not exposed publicly) — it can create and destroy Docker
-containers. Tracked as a blocking gap before any non-local deployment.
+**Console JWT (implemented).** Every route requires
+`Authorization: Bearer <accessToken>` — a short-lived console JWT
+(`aud: 'console'`, 15 min default) issued by `POST /console/auth`.
+Public exceptions: `GET /health` and the `/console/auth*` endpoints.
+See `docs/api/console.md` for the token model (rotating refresh tokens,
+reuse detection, env-seeded bootstrap operator).
 
 ## Prefix (D39)
 
