@@ -25,6 +25,7 @@
         "@nuvix/db": "file:../../../../database",
         "@nuvix/pg-meta": "workspace:*",
         "@nuvix/utils": "workspace:*",
+        "bullmq": "^6.3.8",
         "elysia": "2.0.0-beta.6",
       },
     },

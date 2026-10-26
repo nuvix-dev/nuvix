@@ -370,8 +370,22 @@ next/
       will resolve through (`packages/core/src/tenants/resource.ts`, `pool.ts`)
 - [x] Platform auth (operator accounts/keys) — blocking gap before any
       non-local deployment, tracked in `docs/api/platform.md`'s open questions
-- [ ] Background provisioning (Phase 6 job infra) — project creation is
-      currently synchronous; tracked in `docs/api/platform.md`
+- [x] Background provisioning (Phase 6 job infra): `POST /projects` is
+      now two-phase — container reservation (fast) stays inline so the
+      record carries its required container/volume handles and the
+      encrypted tenant `target` (the provisioner is NOT idempotent: a
+      second `provision` call would collide on the container name), then
+      the slow tail (readiness wait + auth-schema bootstrap) runs on the
+      PROJECTS queue (`apps/platform/src/workers/projects.processor.ts`,
+      3 attempts / exponential backoff) flipping the record to `active`
+      or `error`+`errorMessage` on final failure. `ProjectService` falls
+      back to inline provisioning when no Redis is configured (tests /
+      zero-infra dev). Platform runtime starts the worker in-process
+      with graceful shutdown (`apps/platform/src/workers/index.ts`);
+      `parseRedisUrl` moved to `@nuvix/core/queues` (shared). v1's
+      PROJECTS queue registration was vestigial (no processor — v1
+      provisioned synchronously), so this is a v2 improvement, not
+      parity. `docs/api/platform.md` updated (was PROPOSED/stale).
 - [x] Platform API keys slice: CRUD routes (`/projects/:projectId/keys`), 1:1 legacy schema with secret generation `standard_<hex>`
 - [x] Client platforms slice: CRUD routes (`/projects/:projectId/platforms`), 1:1 legacy schema supporting web, flutter, android, apple
 - [x] Auth settings slice: routes under `/projects/:projectId/auth` (session-alerts, limit, duration, password-history, password-dictionary, personal-data, max-sessions, mock-numbers, memberships-privacy, auth methods)
@@ -578,7 +592,7 @@ onDatabaseCreated` composition hook). Redesigns over v1 recorded:
 
 ### Phase 9 — Tests & cutover
 
-- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 513 tests across 81 files)
+- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 516 tests across 82 files)
 - [x] Perf baseline vs old app (`test/bench/perf.ts`, `docs/perf-baseline.md`)
 - [x] Docker/deploy artifacts for Bun-only runtime (`Dockerfile`, `docker-compose.yml`, `.dockerignore`, `docs/deployment.md`)
 - [ ] Delete root monorepo (**explicit approval gate**)

@@ -160,6 +160,13 @@ export class ProjectService {
     ) => Promise<void> = bootstrapAuthSchema,
     private readonly jwtSecret?: string,
     private readonly encryptionKey?: Uint8Array,
+    /**
+     * Queue boundary — when set, the slow readiness-wait + auth-schema
+     * bootstrap run on the PROJECTS queue (background provisioning) and
+     * `create` returns the `provisioning` view immediately. When unset
+     * (tests / no Redis), provisioning runs inline.
+     */
+    private readonly enqueueProvision?: (projectId: string) => Promise<string>,
   ) {}
 
   /**
@@ -174,12 +181,21 @@ export class ProjectService {
     const publishableKey = `pk_${crypto.randomUUID().replaceAll('-', '')}`
     const session = this.db.system()
 
+    // Container creation is fast — it happens inline so the record can
+    // carry its required container/volume handles. The SLOW part
+    // (readiness wait + auth-schema bootstrap) runs on the PROJECTS
+    // queue when a queue boundary is configured (background
+    // provisioning); tests and Redis-less setups run it inline.
     let handle: Awaited<ReturnType<TenantProvisioner['provision']>>['handle']
     let target: Awaited<ReturnType<TenantProvisioner['provision']>>['target']
     try {
       ;({ handle, target } = await this.provisioner.provision({
         projectId: id,
       }))
+      // The target (credentials included) is persisted NOW — encrypted by
+      // the platform db (`filters: ['json', 'encrypt']`) — because the
+      // PROJECTS worker finalizes from it (provision is NOT idempotent:
+      // a second call would collide on the container name).
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       throw new BadGatewayError(`Failed to provision tenant database: ${message}`, {
@@ -216,6 +232,9 @@ export class ProjectService {
       publishableKey,
       containerName: handle.containerName,
       volumeName: handle.volumeName,
+      // Generated types say `string`; the collection attribute is json+encrypt
+      // and the db layer filters the object (same cast pattern as oAuthProviders).
+      target: target as unknown as string,
       description: input.description,
       logo: input.logo,
       url: input.url,
@@ -227,22 +246,71 @@ export class ProjectService {
       templates: {},
       auths: {},
     }
-    let project = await session.createDocument(
+    const project = await session.createDocument(
       'projects',
       new Doc({ $id: id, $permissions: [], ...createInput }),
     )
 
+    if (this.enqueueProvision) {
+      try {
+        await this.enqueueProvision(id)
+        // Backgrounded — the PROJECTS worker finalizes provisioning.
+        return toView(project)
+      } catch (error) {
+        // Queue unavailable → degrade to inline provisioning so the
+        // created record never stalls in `provisioning`.
+        console.error('[projects] enqueue failed; provisioning inline', error)
+      }
+    }
+    return this.provisionProject(id)
+  }
+
+  /**
+   * Finalizes provisioning for a created project: waits for the tenant
+   * container (target persisted — encrypted — at create time) and
+   * bootstraps the `auth` schema, then flips the status to `active`. On
+   * failure the record is kept with `status: "error"` for operator
+   * visibility rather than rolled back, since the container/volume may
+   * have partially formed. Idempotent for already-final statuses (the
+   * PROJECTS worker may race a manual retry).
+   */
+  async provisionProject(id: string): Promise<ProjectView> {
+    const session = this.db.system()
+    const project = await session.getDocument('projects', id)
+    if (project.empty()) {
+      throw new NotFoundError('Project', { code: 'project_not_found' })
+    }
+    if (project.get('status') !== 'provisioning') {
+      return toView(project)
+    }
+
+    const target = project.get('target') as unknown as TenantTarget | undefined
+    if (!target) {
+      await session.updateDocument(
+        'projects',
+        id,
+        new Doc<Projects>({
+          status: 'error',
+          errorMessage: 'Missing tenant target — cannot finalize provisioning',
+        }),
+      )
+      throw new BadGatewayError('Missing tenant target', {
+        code: 'project_provision_failed',
+      })
+    }
+
     try {
       await this.provisioner.waitUntilReady(target)
       await this.bootstrapTenantAuth(target)
-      project = (await session.updateDocument(
+      const updated = (await session.updateDocument(
         'projects',
         id,
-        new Doc({ status: 'active', target }),
+        new Doc<Projects>({ status: 'active' }),
       )) as Doc<Projects>
+      return toView(updated)
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
-      project = await session.updateDocument(
+      await session.updateDocument(
         'projects',
         id,
         new Doc<Projects>({ status: 'error', errorMessage: message }),
@@ -251,8 +319,6 @@ export class ProjectService {
         code: 'project_provision_failed',
       })
     }
-
-    return toView(project)
   }
 
   async list(limit = 25, offset = 0): Promise<{ projects: ProjectView[]; total: number }> {
@@ -287,7 +353,10 @@ export class ProjectService {
       })
     }
     const currentServices = (project.get('services') as Record<string, unknown>) ?? {}
-    const updatedServices = { ...currentServices, [input.service]: input.status }
+    const updatedServices = {
+      ...currentServices,
+      [input.service]: input.status,
+    }
     project.set('services', updatedServices)
 
     const updated = await this.db.system().updateDocument('projects', id, project)
@@ -414,7 +483,9 @@ export class ProjectService {
   async createJwt(id: string, input: CreateJwtInput): Promise<{ jwt: string }> {
     const project = await this.getDoc(id)
     if (!this.jwtSecret) {
-      throw new BadRequestError('JWT is not configured', { code: 'jwt_disabled' })
+      throw new BadRequestError('JWT is not configured', {
+        code: 'jwt_disabled',
+      })
     }
     const token = await signJwt(
       { projectId: project.getId(), scopes: input.scopes },

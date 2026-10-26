@@ -92,6 +92,11 @@ export interface LogJobData {
   metadata?: Record<string, unknown>
 }
 
+export interface ProjectJobData {
+  /** Platform project id — the doc is created before the job enqueues. */
+  projectId: string
+}
+
 export interface BatchJobData {
   operations: unknown[]
   projectId?: string

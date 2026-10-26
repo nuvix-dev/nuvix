@@ -38,6 +38,72 @@ describe('ProjectService', () => {
     expect(project.metadata).toEqual({ allowedSchemas: ['public'] })
   })
 
+  test('create with a queue boundary returns provisioning and enqueues', async () => {
+    const provisioner = new FakeTenantProvisioner()
+    const enqueued: string[] = []
+    const service = new ProjectService(
+      db,
+      provisioner,
+      noopBootstrap,
+      jwtSecret,
+      encryptionKey,
+      async (projectId) => {
+        enqueued.push(projectId)
+        return 'job_1'
+      },
+    )
+
+    const project = await service.create({ name: 'Queued' })
+
+    // Container reserved (handle present) but the record is NOT active.
+    expect(project.status).toBe('provisioning')
+    expect(project.containerName).toBe(`fake-tenant-${project.$id}`)
+    expect(provisioner.provisioned.has(project.$id)).toBe(true)
+    expect(enqueued).toEqual([project.$id])
+
+    // The worker finalizes from the persisted target.
+    const finalized = await service.provisionProject(project.$id)
+    expect(finalized.status).toBe('active')
+  })
+
+  test('provisionProject skips already-final projects (worker retry races)', async () => {
+    const provisioner = new FakeTenantProvisioner()
+    const service = new ProjectService(db, provisioner, noopBootstrap, jwtSecret, encryptionKey)
+    const project = await service.create({ name: 'Done' })
+    expect(project.status).toBe('active')
+
+    const again = await service.provisionProject(project.$id)
+    expect(again.status).toBe('active')
+  })
+
+  test('provisionProject marks the record error when bootstrap fails', async () => {
+    const provisioner = new FakeTenantProvisioner()
+    const failingBootstrap = async () => {
+      throw new Error('bootstrap down')
+    }
+    const service = new ProjectService(
+      db,
+      provisioner,
+      failingBootstrap,
+      jwtSecret,
+      encryptionKey,
+      async () => 'job_1',
+    )
+
+    // Backgrounded: create returns the provisioning view; the worker's
+    // finalize call is what fails.
+    const project = await service.create({ name: 'Broken Queued' })
+    expect(project.status).toBe('provisioning')
+
+    await expect(service.provisionProject(project.$id)).rejects.toThrow(
+      /Failed to provision tenant database/,
+    )
+
+    const doc = await db.system().getDocument('projects', project.$id)
+    expect(doc.get('status')).toBe('error')
+    expect(doc.get('errorMessage')).toBe('bootstrap down')
+  })
+
   test('create generates a distinct publishable selector for every project', async () => {
     const service = new ProjectService(db, new FakeTenantProvisioner(), noopBootstrap)
 

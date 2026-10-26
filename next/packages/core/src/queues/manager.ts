@@ -1,5 +1,5 @@
 import { QueueFor } from '@nuvix/utils'
-import { type JobsOptions, Queue } from 'bullmq'
+import { type ConnectionOptions, type JobsOptions, Queue } from 'bullmq'
 import { ID } from '../id'
 import type {
   AuditJobData,
@@ -8,10 +8,34 @@ import type {
   LogJobData,
   MailJobData,
   MessagingJobData,
+  ProjectJobData,
   QueueManagerOptions,
   StatsJobData,
   WebhookJobData,
 } from './types'
+
+/**
+ * Parses a Redis URL (`redis://[:password@]host[:port][/db]`) into BullMQ
+ * connection options. Missing/invalid input yields no port/host overrides —
+ * BullMQ defaults apply (localhost:6379, db 0). Shared by every app that
+ * runs queue workers (server + platform).
+ */
+export function parseRedisUrl(raw: string): ConnectionOptions {
+  try {
+    const url = new URL(raw)
+    const options: ConnectionOptions = {
+      host: url.hostname || undefined,
+      port: url.port ? Number(url.port) : undefined,
+    }
+    if (url.username && url.username !== 'default') options.username = url.username
+    if (url.password) options.password = url.password
+    const db = Number(url.pathname.replace('/', ''))
+    if (Number.isInteger(db) && db >= 0) options.db = db
+    return options
+  } catch {
+    return {}
+  }
+}
 
 export class QueueManager {
   private readonly queues = new Map<string, Queue>()
@@ -98,6 +122,21 @@ export class QueueManager {
 
   async enqueueDelete(data: DeleteJobData, opts?: JobsOptions): Promise<string> {
     return this.addJob(QueueFor.DELETES, data.type, data, opts)
+  }
+
+  /**
+   * Project provisioning (platform): the slow readiness-wait + auth-schema
+   * bootstrap runs on the PROJECTS queue; the doc is created first with
+   * `status: 'provisioning'`.
+   */
+  async enqueueProject(data: ProjectJobData, opts?: JobsOptions): Promise<string> {
+    return this.addJob(QueueFor.PROJECTS, 'provision', data, {
+      attempts: 3,
+      backoff: { type: 'exponential', delay: 1000 },
+      removeOnComplete: { age: 3600 },
+      removeOnFail: { age: 86_400 },
+      ...opts,
+    })
   }
 
   async enqueueLog(data: LogJobData, opts?: JobsOptions): Promise<string> {

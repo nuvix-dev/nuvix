@@ -68,12 +68,14 @@ and starts unprefixed at the root until a second platform API version exists.
 Body: `{ "name": string, "id"?: string }`. `id` follows the standard ID
 convention (D28) — `'unique()'` (default) or a caller-supplied id.
 
-Provisioning is **synchronous** for this slice: the request blocks until the
-tenant container is running and accepts real connections (`waitUntilReady`),
-then returns the project with `status: "active"`. On provisioning failure the
-project is persisted with `status: "error"` and `errorMessage` set, and the
-request fails with `502`. Moving provisioning to a background job is deferred
-to Phase 6 (async jobs) — tracked as a follow-up, not a silent limitation.
+Provisioning is **two-phase** (background): `POST /projects` reserves the
+tenant container (fast, inline) and returns the project with
+`status: "provisioning"` immediately; the slow tail — readiness wait +
+`auth`-schema bootstrap — runs on the PROJECTS queue (`apps/platform/src/
+workers/projects.processor.ts`, 3 attempts / exponential backoff) and flips
+the record to `active` (or `error` + `errorMessage` on final failure).
+Without Redis the app degrades to inline provisioning (same synchronous
+behavior as before). `GET /projects` / `GET /projects/:id` poll status.
 
 ### `DELETE /projects/:id`
 
@@ -102,9 +104,8 @@ volume.
 3. Envelope/errors follow `_conventions.md` (problem+json, `meta` pagination)
    instead of v1's shapes.
 
-## Open questions for review
+## Resolved
 
-1. Confirm synchronous provisioning is acceptable for this slice (vs. an
-   immediate `202` + poll, which needs Phase 6's job infra to do properly).
-2. Platform auth model (operator accounts, API keys?) — needed before this
-   contract can be considered deployable outside a trusted network.
+1. Provisioning is backgrounded (PROJECTS queue, two-phase — see above).
+2. Platform auth is console JWT + rotating refresh tokens — see
+   `docs/api/console.md`.

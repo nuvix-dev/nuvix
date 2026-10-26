@@ -1,3 +1,4 @@
+import { parseRedisUrl, QueueManager } from '@nuvix/core/queues'
 import { bootstrapAuthSchema } from '@nuvix/core/tenant-auth'
 import {
   DockerTenantProvisioner,
@@ -70,7 +71,23 @@ try {
   // Optional in environments where secret is not yet set
 }
 
-const projects = new ProjectService(db, provisioner, bootstrapAuthSchema, jwtSecret, encryptionKey)
+// Queue runtime — PROJECTS (background provisioning) enqueues here.
+// Without a Redis connection the manager degrades to in-memory test mode
+// and project provisioning falls back to running inline.
+export const queues = new QueueManager({
+  connection: Bun.env.NUVIX_REDIS_URL ? parseRedisUrl(Bun.env.NUVIX_REDIS_URL) : undefined,
+})
+
+const projects = new ProjectService(
+  db,
+  provisioner,
+  bootstrapAuthSchema,
+  jwtSecret,
+  encryptionKey,
+  // Background provisioning: enqueue when Redis is configured; otherwise
+  // the service falls back to inline provisioning (tests / zero-infra dev).
+  Bun.env.NUVIX_REDIS_URL ? async (projectId) => queues.enqueueProject({ projectId }) : undefined,
+)
 const webhooks = new WebhooksService(db)
 const keys = new KeysService(db)
 const platforms = new PlatformsService(db)
