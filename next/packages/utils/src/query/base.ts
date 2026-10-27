@@ -1,13 +1,19 @@
+/** Shared parser foundation: token-stream primitives, field-path parsing, and the operator vocabulary. */
 import { type Token, TokenType } from './tokenizer'
 import { type Condition, type JsonFieldType, QueryParserError } from './types'
 
+/**
+ * Base class for recursive-descent query parsers. Provides token-stream
+ * navigation primitives (match/check/advance/peek/consume) and shared
+ * field-path parsing. Subclasses implement the grammar on top.
+ */
 export abstract class BaseParser {
   protected tableName!: string
   protected mainTable!: string
   protected tokens: Token[] = []
   protected current = 0
 
-  // Token navigation methods
+  /** Consume the next token if it has one of the given types. */
   protected match(...types: TokenType[]): boolean {
     for (const type of types) {
       if (this.check(type)) {
@@ -18,6 +24,7 @@ export abstract class BaseParser {
     return false
   }
 
+  /** True when the next token has the given type (without consuming). */
   protected check(type: TokenType): boolean {
     if (this.isAtEnd()) {
       return false
@@ -25,6 +32,7 @@ export abstract class BaseParser {
     return this.peek().type === type
   }
 
+  /** Consume and return the current token, advancing the cursor. */
   protected advance(): Token {
     if (!this.isAtEnd()) {
       this.current++
@@ -69,6 +77,7 @@ export abstract class BaseParser {
     return token
   }
 
+  /** Consume a token of the expected type, or throw a positioned parser error. */
   protected consume(type: TokenType, message: string): Token {
     if (this.check(type)) {
       return this.advance()
@@ -76,6 +85,10 @@ export abstract class BaseParser {
     this.throwError(message, this.peek())
   }
 
+  /**
+   * Throw a `QueryParserError` anchored at `token`'s position, including a
+   * short snippet of surrounding tokens as context for the caller.
+   */
   protected throwError(message: string, token?: Token): never {
     const t =
       token ??
@@ -103,6 +116,10 @@ export abstract class BaseParser {
     })
   }
 
+  /**
+   * Parse a field reference: dotted segments (`schema.table.column`) with
+   * optional JSON accessors (`column->key`, `column->>key`).
+   */
   protected parseFieldPath(): string | (string | JsonFieldType)[] {
     const parts: (string | JsonFieldType)[] = []
 
@@ -122,7 +139,9 @@ export abstract class BaseParser {
           (allowedOperators.includes(currentToken.value as any) ||
             (next && next.type === TokenType.LPAREN))
         ) {
-          // Dot is followed by operator, so field path is done
+          // The dot is followed by an operator name or a function call, so it
+          // is a statement separator rather than a path segment — rewind one
+          // token (past the dot) and finish this path.
           this.current--
           break
         }
@@ -146,6 +165,11 @@ export abstract class BaseParser {
     return parts.length === 1 && typeof parts[0] === 'string' ? parts[0] : parts
   }
 
+  /**
+   * Parse a raw field string (when the field arrives as a plain string rather
+   * than a token stream) into path parts. Dots separate segments; a dot after
+   * a JSON accessor is rejected as ambiguous.
+   */
   public parseFieldString(field: string): Condition['field'] {
     if (field.includes('->') || field.includes('->>') || field.includes('.')) {
       const parts: (string | JsonFieldType)[] = []
@@ -193,6 +217,7 @@ export abstract class BaseParser {
     return field
   }
 
+  /** Serialize a parsed path back to its canonical string form. */
   protected fieldToString(field: string | (string | JsonFieldType)[]): string {
     if (typeof field === 'string') {
       return field
@@ -214,6 +239,11 @@ export abstract class BaseParser {
   }
 }
 
+/**
+ * Parses comma-separated field lists (e.g. `group=` and select lists).
+ * Field paths here use the simple grammar — no operator lookahead — so
+ * `parseFieldPath` is overridden accordingly.
+ */
 export class GroupParser extends BaseParser {
   constructor(tokens: Token[]) {
     super()
@@ -251,9 +281,8 @@ export class GroupParser extends BaseParser {
     while (!this.isAtEnd()) {
       const field = this.fieldToString(this.parseFieldPath())
       fields.push(this.parseFieldString(field))
-      if (this.match(TokenType.COMMA)) {
-        // continue
-      } else {
+      // Fields are comma-separated; stop at the first non-comma token.
+      if (!this.match(TokenType.COMMA)) {
         break
       }
     }
@@ -261,6 +290,11 @@ export class GroupParser extends BaseParser {
   }
 }
 
+/**
+ * Operator vocabulary accepted in query expressions, grouped by SQL semantics
+ * (comparison, pattern matching, arrays, ranges, null checks, full-text
+ * search, and logical combinators).
+ */
 export const allowedOperators = [
   // Comparison operators
   'eq', // =
@@ -314,6 +348,8 @@ export const allowedOperators = [
   'any', // ANY
 ] as const
 
+/** Union of all supported operator names. */
 export type AllowedOperators = (typeof allowedOperators)[number]
 
+/** Reserved keywords that trigger query modifiers (limit/order/...) instead of field comparisons. */
 export const specialOperators = ['limit', 'group', 'order', 'offset', 'join', 'shape'] as const

@@ -1,3 +1,4 @@
+/** Parses `select=` projections into column and embed AST nodes. */
 import { Parser } from './parser'
 import {
   type ColumnNode,
@@ -7,11 +8,19 @@ import {
   type SelectNode,
 } from './types'
 
+/**
+ * Parses projection strings into `SelectNode[]`. Supported forms:
+ * `column`, `alias:column`, `column::type`, `agg(column)`,
+ * `resource{filter}(subselect)`, and `...resource{filter}` for flattened
+ * embeds. A resource suffix of `.one`/`.many` hints the result shape.
+ */
 export class SelectParser {
+  // Syntax delimiters for the projection mini-language.
   private readonly QUOTE_CHARS = ['"', "'"] as const
   private readonly SEPARATOR = ','
   private readonly CAST_DELIMITER = '::'
   private readonly ALIAS_DELIMITER = ':'
+  // Embed nesting guard: each nested `(subselect)` increments `depth`.
   private depth = 0
   private readonly maxDepth: number = 2
   private readonly allowedAggregations = ['sum', 'count', 'min', 'max', 'avg']
@@ -37,6 +46,7 @@ export class SelectParser {
     this.depth = depth
   }
 
+  /** Parse the projection string into a node list; empty input selects nothing. */
   parse(selectStr?: string): SelectNode[] {
     if (selectStr === null || selectStr === undefined) {
       return []
@@ -52,6 +62,10 @@ export class SelectParser {
     return this.parseTokens(tokens)
   }
 
+  /**
+   * Split on commas that are not inside quotes, parentheses, or braces.
+   * Unbalanced delimiters abort with a positioned parser error.
+   */
   private tokenize(str: string): string[] {
     const tokens: string[] = []
     let current = ''
@@ -113,6 +127,7 @@ export class SelectParser {
     return tokens
   }
 
+  // Delimiter-state helpers used by `tokenize`.
   private handleQuotes(char: string, inQuotes: boolean, quoteChar: string | null): boolean {
     return (
       (!inQuotes && (this.QUOTE_CHARS as readonly string[]).includes(char)) ||
@@ -172,6 +187,10 @@ export class SelectParser {
     return token.match(/^(?:(\.{3})?)?(?:([^${:({]+):)?([^${:({]+){([^}]*)}(?:\((.*?)\))?$/s)
   }
 
+  /**
+   * Parse one column token: strip alias, then cast, then detect an aggregate
+   * wrapper. `count(*)` is the only aggregate allowed without a column.
+   */
   private parseColumn(token: string): ColumnNode {
     let workingToken = token.trim()
 
@@ -229,6 +248,7 @@ export class SelectParser {
     }
   }
 
+  /** Split `alias:value` at the first top-level `:` (a `::` cast never counts). */
   private extractAlias(token: string): { value: string; alias: string | null } {
     let parenDepth = 0
     for (let i = 0; i < token.length; i++) {
@@ -258,6 +278,7 @@ export class SelectParser {
     return { value: token, alias: null }
   }
 
+  /** Split `value::type` at the last top-level `::`, scanning right-to-left. */
   private extractCast(token: string): { value: string; cast: string | null } {
     let parenDepth = 0
     for (let i = token.length - 1; i >= 0; i--) {
@@ -285,6 +306,11 @@ export class SelectParser {
     return { value: token, cast: null }
   }
 
+  /**
+   * Parse an embed token: `resource[.one|.many]{filter}[(subselect)]`.
+   * The filter is parsed as a full query expression for the embedded table;
+   * the subselect recurses with an incremented depth.
+   */
   private parseEmbed(token: string): EmbedNode {
     if (this.depth > this.maxDepth) {
       throw new QueryParserError(`Max depth limit reached. ${this.depth}`, {
@@ -306,6 +332,8 @@ export class SelectParser {
     let resource: string | undefined
     let cardinalityHint: 'one' | 'many' | undefined
 
+    // Cardinality suffix `.one`/`.many` selects object vs. array shape;
+    // deeper dotted resources are rejected.
     const parts = (fullResourceString ?? '').split('.')
     const lastPart = parts[parts.length - 1]?.trim()
 

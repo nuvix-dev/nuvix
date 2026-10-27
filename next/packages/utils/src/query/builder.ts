@@ -1,3 +1,4 @@
+/** Compiles parsed query ASTs (filters, projections, ordering) into `@nuvix/pg` QueryBuilder calls. Values stay parameterized; identifiers are escaped only inside `_rawFieldSql`. */
 import type { DatabaseFacade, QueryBuilder } from '@nuvix/pg'
 import { trusted } from '@nuvix/pg'
 import { JoinBuilder } from './join-builder'
@@ -16,6 +17,7 @@ import type {
 } from './types'
 import { QueryParserError } from './types'
 
+/** Options controlling AST compilation. */
 export interface ASTToQueryBuilderOptions {
   applyExtra?: boolean
   tableName?: string
@@ -26,11 +28,17 @@ export interface ASTToQueryBuilderOptions {
   allowedSchemas?: string[]
 }
 
+/**
+ * Walks a parsed expression tree and produces the corresponding
+ * `QueryBuilder` calls on a mutable `qb` instance. Boolean structure maps to
+ * nested/wrapped where-groups so operator precedence is preserved.
+ */
 export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> {
   public qb: T
   public readonly db: DatabaseFacade
   public readonly allowedSchemas: string[] = []
 
+  /** Operators that accept an `(any|all, value...)` value-list modifier. */
   private readonly anyAllSupportedOperators = [
     'eq',
     'like',
@@ -51,6 +59,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> 
     this.db = db
   }
 
+  /** Create a builder for a nested query, inheriting schema restrictions. */
   createChildBuilder(qb: any, options: ASTToQueryBuilderOptions = {}): ASTToQueryBuilder<any> {
     return new ASTToQueryBuilder(qb, this.db, {
       ...options,
@@ -58,6 +67,11 @@ export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> 
     })
   }
 
+  /**
+   * Apply a filter expression to the query builder. Modifiers (limit/offset/
+   * order/group/shape) are stripped from the expression first; when
+   * `applyExtra` is set they are applied explicitly instead.
+   */
   applyFilters(
     expression: (Expression & ParserResult) | undefined,
     options: ASTToQueryBuilderOptions = {},
@@ -98,6 +112,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> 
     return this.qb
   }
 
+  /** Apply a projection: plain columns directly, embedded relations via `JoinBuilder`. */
   applySelect(selectNodes: SelectNode[] = [], queryBuilder: any = this.qb): T {
     if (!selectNodes || selectNodes.length === 0) {
       return queryBuilder
@@ -130,6 +145,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> 
     return qb
   }
 
+  /** Apply ORDER BY clauses; paths may traverse JSON accessors. */
   applyOrder(orderings: ParsedOrdering[] = [], table = ''): T {
     if (!orderings || orderings.length === 0) {
       return this.qb
@@ -147,6 +163,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> 
     return this.qb
   }
 
+  /** Apply GROUP BY for the given field paths. */
   applyGroupBy(columns?: Condition['field'][], tableName?: string): T {
     if (columns && columns.length > 0) {
       const parts = columns.map((col) => this._rawFieldSql(col, tableName))
@@ -155,6 +172,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> 
     return this.qb
   }
 
+  /** Apply LIMIT/OFFSET, ignoring non-integer or negative values. */
   applyLimitOffset({ limit, offset }: { limit?: number | string; offset?: number | string }): T {
     const l = typeof limit === 'string' ? Number(limit) : limit
     const o = typeof offset === 'string' ? Number(offset) : offset
@@ -169,6 +187,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> 
     return this.qb
   }
 
+  /** Apply a RETURNING clause; embedded relations are rejected here. */
   applyReturning(selectNodes: SelectNode[] = [], queryBuilder: any = this.qb): T {
     let qb = queryBuilder
     if (!selectNodes || selectNodes.length === 0) {
@@ -199,6 +218,11 @@ export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> 
     return qb
   }
 
+  /**
+   * Recursively translate an expression node into where-clauses. `connector`
+   * describes how this node attaches to its parent ('and' | 'or'); or-groups
+   * and not-groups are wrapped so their precedence cannot leak.
+   */
   public _applyExpressionToBuilder(
     expression: Expression,
     qb: any,
@@ -250,6 +274,11 @@ export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> 
     })
   }
 
+  /**
+   * Translate a single comparison into SQL. Handles the `(any|all, ...)` value
+   * modifier, column-to-column comparisons, and the full operator switch
+   * below. Each case mirrors itself for the 'or' connector.
+   */
   private _applyCondition(condition: Condition, qb: any, connector: 'and' | 'or' = 'and'): any {
     const { field: _field, operator, values = [], tableName } = condition
 
@@ -262,7 +291,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> 
     const fieldSql = this._rawFieldSql(_field, tableName)
     const fieldOperand = trusted(fieldSql)
 
-    // ANY / ALL condition modifier
+    // `(any|all, value...)` modifier: first list element selects quantifier.
     if (
       Array.isArray(values) &&
       values.length >= 2 &&
@@ -296,6 +325,8 @@ export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> 
     const filteredValues = values.filter((v) => !this._isValueColumnName(v))
     const value = values[0]
 
+    // Column-to-column comparison: the right operand is a quoted identifier,
+    // not a bound value.
     if (
       typeof value === 'object' &&
       value !== null &&
@@ -367,6 +398,8 @@ export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> 
           ? qb.orWhere(fieldOperand, '~*', this._valueToPattern(value))
           : qb.where(fieldOperand, '~*', this._valueToPattern(value))
       case 'in':
+        // Empty IN list: SQL cannot bind zero placeholders, so substitute an
+        // equivalent constant predicate.
         if (filteredValues.length === 0) {
           return connector === 'or' ? qb.orWhereRaw('1 = 0') : qb.whereRaw('1 = 0')
         }
@@ -482,6 +515,7 @@ export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> 
     }
   }
 
+  /** Full-text search with an optional two-argument form (language, query). */
   private _applyFts(
     fieldSql: string,
     values: unknown[],
@@ -500,10 +534,12 @@ export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> 
     return connector === 'or' ? qb.orWhereRaw(sql, bindings) : qb.whereRaw(sql, bindings)
   }
 
+  /** Translate client-side `*` wildcards into SQL `%` for LIKE-style operators. */
   private _valueToPattern(value: unknown): string {
     return String(value).replaceAll('*', '%')
   }
 
+  /** True when a comparison value explicitly references another column. */
   private _isValueColumnName(value: unknown): value is ValueType {
     return (
       value !== null &&
@@ -513,6 +549,12 @@ export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> 
     )
   }
 
+  /**
+   * Render a field path as SQL text. Plain segments become double-quoted
+   * identifiers; segments after a JSON accessor become quote-escaped keys or
+   * numeric indexes. Identifier quoting lives ONLY here — new field contexts
+   * must route through this method.
+   */
   public _rawFieldSql(_field: Condition['field'], table?: string): string {
     if (typeof _field === 'string') {
       const safeCol = `"${_field.replace(/"/g, '""')}"`
@@ -583,6 +625,11 @@ export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> 
     })
   }
 
+  /**
+   * Build a select expression for one column node: escaped path, optional
+   * cast, optional aggregate wrapper, and an alias — inferred from the JSON
+   * path suffix when not given explicitly.
+   */
   private _buildColumnSelect({ path, tableName, alias, cast, aggregate }: ColumnNode): unknown {
     let resolvedAlias = alias
     if (!resolvedAlias && Array.isArray(path)) {
@@ -617,11 +664,13 @@ export class ASTToQueryBuilder<T extends QueryBuilder<any, any, any, any, any>> 
     return trusted(sql)
   }
 
+  /** Delegate embedded-relation compilation to the join builder. */
   private _handleEmbedNode(embed: EmbedNode): void {
     const joinBuilder = new JoinBuilder(this)
     joinBuilder.applyEmbedNode(embed)
   }
 
+  /** Structural type guards for expression nodes (tree nodes are untagged unions). */
   public static _isCondition(expression: Expression): expression is Condition {
     return (
       expression !== null &&

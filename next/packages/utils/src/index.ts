@@ -1,3 +1,7 @@
+/**
+ * Public surface of `@nuvix/utils` — cross-app configuration, shared
+ * constants, and metrics helpers.
+ */
 export type { Config, NuvixEnv } from './config'
 export { config } from './config'
 export {

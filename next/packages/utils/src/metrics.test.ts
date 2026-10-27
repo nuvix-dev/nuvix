@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { fnv1a128, MetricFor, MetricPeriod } from './metrics'
 
-describe('fnv1a128 (legacy helpers port)', () => {
+describe('fnv1a128', () => {
   it('hashes deterministically to a fixed 32-char hex string', () => {
     const hash = fnv1a128('inf|users')
     expect(hash).toHaveLength(32)
@@ -17,8 +17,8 @@ describe('fnv1a128 (legacy helpers port)', () => {
   })
 })
 
-describe('metric enums (v1 parity)', () => {
-  it('carries the v1 metric keys', () => {
+describe('metric enums', () => {
+  it('exposes the expected metric keys', () => {
     expect(String(MetricFor.USERS)).toBe('users')
     expect(String(MetricFor.SESSIONS)).toBe('sessions')
     expect(String(MetricFor.FILES)).toBe('files')
@@ -28,7 +28,7 @@ describe('metric enums (v1 parity)', () => {
     expect(String(MetricFor.OUTBOUND)).toBe('network.outbound')
   })
 
-  it('carries the v1 periods', () => {
+  it('exposes the expected aggregation periods', () => {
     expect(String(MetricPeriod.INF)).toBe('inf')
     expect(String(MetricPeriod.HOUR)).toBe('1h')
     expect(String(MetricPeriod.DAY)).toBe('1d')

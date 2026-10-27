@@ -77,9 +77,8 @@ export const config = {
   },
 
   /**
-   * Cookie settings for browser-facing flows (OAuth2 sessions, magic URL).
-   * Legacy names: NUVIX_COOKIE_DOMAIN / NUVIX_COOKIE_SAMESITE /
-   * NUVIX_COOKIE_NAME / NUVIX_CONSOLE_URL.
+   * Base URL of the web console. Used as the default redirect target for
+   * OAuth2 flows and as the link base in system emails.
    */
   get consoleURL(): string {
     return Bun.env.NUVIX_CONSOLE_URL ?? 'http://localhost:3000'
@@ -88,7 +87,7 @@ export const config = {
     get domain(): string | undefined {
       return Bun.env.NUVIX_COOKIE_DOMAIN || undefined
     },
-    /** 'lax' | 'none' | 'strict' — legacy defaulted to 'none'. */
+    /** 'lax' | 'none' | 'strict' — SameSite policy applied to the session cookie. */
     get sameSite(): 'lax' | 'none' | 'strict' {
       const raw = (Bun.env.NUVIX_COOKIE_SAMESITE ?? 'none').toLowerCase()
       return raw === 'lax' || raw === 'strict' ? raw : 'none'
@@ -96,7 +95,7 @@ export const config = {
     get name(): string {
       return Bun.env.NUVIX_COOKIE_NAME ?? 'session'
     },
-    /** Legacy `NUVIX_DEBUG_FALLBACK_COOKIES` — X-Fallback-Cookies header. */
+    /** Permit the `X-Fallback-Cookies` header to carry session data — a debug aid for environments that block cookies. */
     get fallback(): boolean {
       return (Bun.env.NUVIX_DEBUG_FALLBACK_COOKIES ?? '').toLowerCase() === 'true'
     },
@@ -105,8 +104,8 @@ export const config = {
   /**
    * Global SMTP settings for system emails (verification, recovery,
    * magic URL, OTP, MFA challenges). All optional — mail sending is
-   * enabled when `host` is set (legacy `configuration.smtp.enabled()`
-   * semantics). Projects override via their own `smtp` record.
+   * enabled when `host` is set. Projects can override these with their
+   * own per-project `smtp` record.
    */
   smtp: {
     get host(): string {
@@ -142,7 +141,7 @@ export const config = {
     },
   },
 
-  /** Usage-metrics recording (network + document events) — v1 enableStats. */
+  /** Usage-metrics recording (network + document events). */
   stats: {
     /** Opt-out via `NUVIX_ENABLE_STATS=false`. */
     get enabled(): boolean {
@@ -151,7 +150,7 @@ export const config = {
   },
 
   limits: {
-    /** Max users per project — legacy `NUVIX_LIMIT_USERS` (0 = unlimited). */
+    /** Maximum users per project (0 = unlimited). */
     get users(): number {
       const raw = Number.parseInt(Bun.env.NUVIX_LIMIT_USERS ?? '10000', 10)
       return Number.isFinite(raw) && raw >= 0 ? raw : 10000
@@ -182,11 +181,11 @@ export const config = {
       return Bun.env.NUVIX_PLATFORM_DB_URL ?? './data/platform.sqlite'
     },
 
-    /** Base64-encoded 32-byte AES-256-GCM key encrypting tenant targets at rest (D37). */
+    /** Base64-encoded 32-byte AES-256-GCM key encrypting tenant targets at rest. */
     get tenantEncryptionKey(): string {
       return required('NUVIX_TENANT_ENCRYPTION_KEY')
     },
-    /** Tenant image pin (D24) — override only for local dev without the exact tag. */
+    /** Tenant PostgreSQL image reference; override only for local development without the exact tag. */
     get tenantPostgresImage(): string {
       return Bun.env.NUVIX_TENANT_POSTGRES_IMAGE ?? 'nuvix/postgres:18.1'
     },

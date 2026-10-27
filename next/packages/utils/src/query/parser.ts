@@ -1,3 +1,4 @@
+/** Recursive-descent parser for the query filter language: boolean expressions, comparisons, and special modifier functions. */
 import { type AllowedOperators, BaseParser, GroupParser, specialOperators } from './base'
 import { OrderParser } from './order'
 import { type Token, Tokenizer, TokenType } from './tokenizer'
@@ -11,8 +12,16 @@ import {
   QueryParserError,
 } from './types'
 
+/**
+ * Parses a query string into an expression tree plus query modifiers.
+ * Precedence (loosest to tightest): `|` (or) → `,` (and) → `!` (not) →
+ * primary. Special `$` functions (limit/order/group/...) are extracted into
+ * the returned modifiers instead of the filter tree. Syntax tokens come from
+ * `ParserConfig`, so dialects can vary.
+ */
 export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
   private config: ParserConfig
+  /** Query modifiers collected from special `$` functions. */
   private extraData: Record<string, unknown> = {}
 
   constructor(config: ParserConfig, tableName: string, mainTable?: string) {
@@ -23,6 +32,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     this._validateConfig()
   }
 
+  /** Create a parser with the default syntax. */
   static create<T extends ParserResult>({
     tableName,
     mainTable,
@@ -33,6 +43,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     return new Parser<T>(defaultConfig, tableName, mainTable)
   }
 
+  /** Parse a query string, normalizing any internal failure into `QueryParserError`. */
   parse(str: string): T & Expression {
     if (typeof str !== 'string') {
       throw new QueryParserError('Input must be a string', {
@@ -61,10 +72,12 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     }
   }
 
+  /** Entry point of the precedence chain. */
   private parseExpression(isTopLevel = false): Expression {
     return this.parseOrExpression(isTopLevel)
   }
 
+  /** `a | b | c` — lowest precedence. */
   private parseOrExpression(isTopLevel = false): Expression {
     let left = this.parseAndExpression(isTopLevel)
 
@@ -89,6 +102,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     return left
   }
 
+  /** `a, b, c` — binds tighter than `|`. */
   private parseAndExpression(isTopLevel = false): Expression {
     let left = this.parseNotExpression(isTopLevel)
 
@@ -113,6 +127,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     return left
   }
 
+  /** `!expr` — prefix negation, right-recursive. */
   private parseNotExpression(isTopLevel = false): Expression {
     if (this.match(TokenType.NOT)) {
       const expr = this.parseNotExpression(false)
@@ -122,6 +137,11 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     return this.parsePrimaryExpression(isTopLevel)
   }
 
+  /**
+   * Grouped expressions, explicit `or(...)`/`and(...)`/`not(...)` forms, or a
+   * leaf condition. Special `$` fields are only allowed at the top level so
+   * modifiers cannot hide inside nested boolean groups.
+   */
   private parsePrimaryExpression(isTopLevel = false): Expression {
     if (this.check(TokenType.SPECIAL_FIELD) && !isTopLevel) {
       this.throwError(
@@ -170,6 +190,10 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     return this.parseCondition()
   }
 
+  /**
+   * A leaf: either a special `$` modifier function or the regular
+   * `field.operator(args)` / `field.operator.value` comparison forms.
+   */
   private parseCondition(): Condition {
     if (this.check(TokenType.SPECIAL_FIELD)) {
       this.advance()
@@ -222,6 +246,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     return this.buildCondition(this.fieldToString(field), operator as AllowedOperators, args)
   }
 
+  /** Comma-separated value list inside `operator(...)`. */
   private parseArgumentList(): unknown[] {
     const args: unknown[] = []
 
@@ -236,6 +261,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     return args
   }
 
+  /** Expression list inside explicit `or(...)`/`and(...)` groups. */
   private parseCommaSeparatedExpressions(): Expression[] {
     const expressions: Expression[] = []
 
@@ -259,6 +285,11 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     return filteredExpressions
   }
 
+  /**
+   * A literal value in any supported token form. `column` references become
+   * `{ __type: 'column' }` nodes so they compile to identifiers, not bound
+   * parameters.
+   */
   private parseValue(): unknown {
     const token = this.peek()
 
@@ -307,6 +338,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     }
   }
 
+  /** Assemble a leaf condition bound to the current table. */
   private buildCondition(field: string, operator: AllowedOperators, args: unknown[]): Condition {
     const parsedField = typeof field === 'string' ? this.parseFieldString(field) : field
 
@@ -318,6 +350,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     }
   }
 
+  /** Route a special `$` modifier into `extraData` (order/group parse their token streams lazily). */
   private handleSpecialCase(operator: string, args: unknown[]): void {
     switch (operator) {
       case 'limit':
@@ -364,6 +397,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     }
   }
 
+  /** Coerce to integer or fail with a positioned parser error. */
   private integerOrThrow(value: unknown, field: string): number {
     const num = Number(value)
     if (typeof num !== 'number' || Number.isNaN(num) || !Number.isInteger(num)) {
@@ -372,6 +406,11 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     return num
   }
 
+  /**
+   * Enforce per-operator arity rules. Comparison operators additionally
+   * accept the `(any|all, value)` modifier form; all other operators reject
+   * column references as arguments.
+   */
   private validateOperator(operator: string, args: unknown[]): void {
     const count = args.length
 
@@ -477,6 +516,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
     }
   }
 
+  /** Fail fast on an incomplete syntax configuration. */
   private _validateConfig(): void {
     if (!this.config?.groups) {
       throw new Error('Config must include groups configuration')
@@ -489,6 +529,7 @@ export class Parser<T extends ParserResult = ParserResult> extends BaseParser {
   }
 }
 
+/** Default syntax: `|` for or, `,` for and, `!` for not, `[]` lists, `{}` casts. */
 const defaultConfig: ParserConfig = {
   groups: {
     OPEN: '(',

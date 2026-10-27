@@ -1,9 +1,9 @@
 /**
- * Usage metrics primitives — v1 `MetricFor`/`MetricPeriod` enums and the
- * deterministic stat-row id hash (`fnv1a128`, legacy `helpers.ts` port).
+ * Usage metrics primitives — metric keys, aggregation periods, and the
+ * deterministic stat-row id hash.
  */
 
-/** Metric keys recorded in the tenant `stats` collection (v1 parity). */
+/** Metric keys recorded in per-project usage stats. Placeholders such as `{type}`, `{provider}`, or `{schemaId}` are substituted with concrete values at write time. */
 export enum MetricFor {
   USERS = 'users',
   TEAMS = 'teams',
@@ -35,7 +35,7 @@ export enum MetricFor {
   OUTBOUND = 'network.outbound',
 }
 
-/** Aggregation periods persisted per metric (v1 parity: INF/HOUR/DAY). */
+/** Aggregation periods persisted per metric. */
 export enum MetricPeriod {
   INF = 'inf',
   HOUR = '1h',
@@ -46,8 +46,8 @@ export enum MetricPeriod {
 }
 
 /**
- * FNV-1a 128-bit hash (legacy `fnv1a128` parity) — deterministic stat-row
- * ids so period rows accumulate via create-or-update-with-increase.
+ * FNV-1a 128-bit hash used to derive deterministic stat-row ids, so rows
+ * for the same metric/period accumulate via create-or-update-with-increment.
  */
 export function fnv1a128(str: string): string {
   let hash = BigInt('0x6c62272e07bb014262b821756295c58d') // 128-bit offset basis

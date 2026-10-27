@@ -1,3 +1,7 @@
+/**
+ * Unit tests for the query engine: tokenizer, filter parser, select parser,
+ * order parser, and AST compilation onto `@nuvix/pg` query builders.
+ */
 import { describe, expect, it } from 'bun:test'
 import { createDatabase } from '@nuvix/pg'
 import { ASTToQueryBuilder } from './builder'

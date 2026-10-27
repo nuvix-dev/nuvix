@@ -1,5 +1,7 @@
+/** Character-level tokenizer for query strings: produces positioned tokens for the recursive-descent parsers. */
 import { type ParsePosition, QueryParserError } from './types'
 
+/** Lexical token categories. Inline comments show the source characters. */
 export enum TokenType {
   // Literals
   STRING = 'STRING',
@@ -42,6 +44,7 @@ export enum TokenType {
   INVALID = 'INVALID',
 }
 
+/** A lexeme with its source position and length, for error reporting. */
 export interface Token {
   type: TokenType
   value: string
@@ -49,6 +52,11 @@ export interface Token {
   length: number
 }
 
+/**
+ * Scans a query string into a `Token` stream terminated by EOF. Tracks
+ * line/column so parser errors can point at the exact source location.
+ * Subclasses (e.g. the order tokenizer) extend `nextToken` for extra syntax.
+ */
 export class Tokenizer {
   protected input: string
   protected position = 0
@@ -59,6 +67,7 @@ export class Tokenizer {
     this.input = input
   }
 
+  /** Scan the full input; an unrecognized character aborts with a pointer-annotated error. */
   public tokenize(): Token[] {
     const tokens: Token[] = []
 
@@ -100,6 +109,7 @@ export class Tokenizer {
     return tokens
   }
 
+  /** Scan the next token; multi-character operators are matched first. */
   protected nextToken(): Token {
     const start = this.getCurrentPosition()
     const char = this.current()
@@ -166,6 +176,7 @@ export class Tokenizer {
     }
   }
 
+  /** Read a quoted literal, honoring backslash escapes; the quote style selects the token type. */
   protected readQuotedString(quote: string, tokenType: TokenType, start: ParsePosition): Token {
     this.advance() // Skip opening quote
     let value = ''
@@ -214,6 +225,7 @@ export class Tokenizer {
     return this.createToken(tokenType, value, start)
   }
 
+  /** Read an optionally negative number with fraction and exponent parts. */
   protected readNumber(start: ParsePosition): Token {
     let value = ''
 
@@ -255,6 +267,7 @@ export class Tokenizer {
     return this.createToken(TokenType.NUMBER, value, start)
   }
 
+  /** Read a bare identifier, mapping reserved words (true/false) to literal tokens. */
   protected readIdentifier(start: ParsePosition): Token {
     let value = ''
 
@@ -300,6 +313,7 @@ export class Tokenizer {
     return this.position < this.input.length ? (this.input[this.position] ?? '') : ''
   }
 
+  /** Look ahead `offset` characters without consuming; returns '' past the end. */
   protected peek(offset = 1): string {
     const pos = this.position + offset - 1
     return pos < this.input.length ? this.input.slice(this.position, this.position + offset) : ''

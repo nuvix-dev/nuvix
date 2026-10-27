@@ -1,7 +1,9 @@
+/** Parses ORDER BY expressions (`field.desc.nullsfirst,...`) into `ParsedOrdering[]`. */
 import { BaseParser } from './base'
 import { type Token, Tokenizer, TokenType } from './tokenizer'
 import type { JsonFieldType, ParsedOrdering } from './types'
 
+/** Tokenizer for ordering expressions: identifiers plus dot/comma and JSON extract operators. */
 class OrderTokenizer extends Tokenizer {
   override nextToken(): Token {
     const start = this.getCurrentPosition()
@@ -37,6 +39,12 @@ class OrderTokenizer extends Tokenizer {
   }
 }
 
+/**
+ * Parses comma-separated ordering clauses of the form
+ * `field[.asc|.desc][.nullsfirst|.nullslast]`, with optional JSON path
+ * accessors. Direction defaults to ascending; null placement defaults to
+ * the database default.
+ */
 export class OrderParser extends BaseParser {
   private static readonly SORT_DIRECTIONS = ['asc', 'desc'] as const
   private static readonly NULL_HANDLING_OPTIONS = ['nullsfirst', 'nullslast'] as const
@@ -47,6 +55,7 @@ export class OrderParser extends BaseParser {
     this.mainTable = mainTable ?? tableName
   }
 
+  /** Convenience entry point: parse from a string (or pre-tokenized stream). */
   static parse(
     ordering: string | null | undefined | Token[],
     tableName: string,
@@ -56,6 +65,7 @@ export class OrderParser extends BaseParser {
     return parser.parse(ordering)
   }
 
+  /** Tokenize (unless already tokenized) and parse the ordering expression. */
   public parse(ordering: string | null | undefined | Token[]): ParsedOrdering[] {
     if (ordering === null || ordering === undefined) {
       return []
@@ -71,6 +81,7 @@ export class OrderParser extends BaseParser {
     return this.parseOrderingClause()
   }
 
+  /** Parse the full clause: `field [modifiers] (, field [modifiers])*`. */
   private parseOrderingClause(): ParsedOrdering[] {
     if (this.tokens.length === 0) {
       throw new Error('Empty ordering expression')
@@ -89,6 +100,8 @@ export class OrderParser extends BaseParser {
       let direction: 'asc' | 'desc' = 'asc'
       let nulls: 'nullsfirst' | 'nullslast' | null = null
 
+      // Scan trailing modifiers (direction and null placement, at most two
+      // identifiers) after the field path.
       for (let i = 0; i < 3 && !this.isAtEnd(); i++) {
         const token = this.peek()
 
@@ -130,6 +143,11 @@ export class OrderParser extends BaseParser {
     return results
   }
 
+  /**
+   * Ordering-specific field-path grammar. Direction/null modifiers are plain
+   * identifiers too, so a dot followed by one of them ends the path instead
+   * of extending it.
+   */
   override parseFieldPath(): string | (string | JsonFieldType)[] {
     const parts: (string | JsonFieldType)[] = []
 

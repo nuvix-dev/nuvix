@@ -1,7 +1,7 @@
 /**
- * Word-combo security phrase generator (v1 `libs/utils/src/auth/pharse.ts`
- * port, bug-for-bug). Magic-URL/OTP emails show the phrase; the response
- * returns it so clients can confirm the channel wasn't tampered with.
+ * Word-combo security phrase generator. Magic-URL/OTP emails show the
+ * phrase; the API response returns it so clients can confirm the channel
+ * wasn't tampered with.
  *
  * The phrase combines a random adjective, noun, and descriptor with a short
  * random alphanumeric suffix, e.g. "Whimsical Unicorn of Destiny-a1b2".

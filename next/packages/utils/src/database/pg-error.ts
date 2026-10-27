@@ -1,3 +1,4 @@
+/** Stable error classifications surfaced to API clients (snake_case `code` values). */
 export type PgErrorType =
   | 'database_conflict'
   | 'database_validation'
@@ -8,6 +9,11 @@ export type PgErrorType =
   | 'database_internal'
   | 'database_unknown'
 
+/**
+ * Normalized, transport-ready error derived from a PostgreSQL failure.
+ * The HTTP `status` and `type` let routes emit RFC 9457 problem details
+ * without leaking SQL specifics.
+ */
 export interface PgTransformedError {
   status: number
   code: string
@@ -24,6 +30,7 @@ export interface PgTransformedError {
   }
 }
 
+/** Shape of errors thrown by the PostgreSQL driver (subset of SQLSTATE fields). */
 interface RawPgError {
   code?: string
   message: string
@@ -35,10 +42,16 @@ interface RawPgError {
   constraint?: string
 }
 
+/** Prefer the driver-provided `detail`; fall back to a generic default. */
 function safeMessage(defaultMessage: string, detail?: string): string {
   return detail || defaultMessage
 }
 
+/**
+ * Some driver errors embed the full SQL statement in their message
+ * (e.g. `<statement> - <actual message>`). Strip the statement so the
+ * message can be shown to clients safely.
+ */
 function stripSqlFromMessage(message: string): string {
   const match = message.match(
     /^(select|insert|update|delete|create|drop|alter|truncate|with|explain)\s[\s\S]*?\s-\s(.+)$/im,
@@ -46,6 +59,10 @@ function stripSqlFromMessage(message: string): string {
   return match ? (match[2] as string) : message
 }
 
+/**
+ * Either a static mapping or a function for context-dependent cases
+ * (e.g. permission errors differ between authenticated and anonymous callers).
+ */
 type ErrorMapEntry =
   | {
       status: number
@@ -54,6 +71,10 @@ type ErrorMapEntry =
     }
   | ((err: RawPgError, authed: boolean) => Omit<PgTransformedError, 'code' | 'details'>)
 
+/**
+ * Mappings for exact SQLSTATE codes. These take precedence over the
+ * class-level fallbacks below.
+ */
 const specificErrorEntries: [string, ErrorMapEntry][] = [
   [
     '23505',
@@ -146,6 +167,11 @@ const specificErrorEntries: [string, ErrorMapEntry][] = [
 
 const SPECIFIC_ERROR_MAP: Map<string, ErrorMapEntry> = new Map(specificErrorEntries)
 
+/**
+ * Fallback mappings keyed by SQLSTATE class (first two characters of the code),
+ * used when no exact-code mapping matches.
+ */
+
 const CLASS_ERROR_MAP: Map<string, { status: number; type: PgErrorType; message: string }> =
   new Map([
     [
@@ -216,6 +242,13 @@ const CLASS_ERROR_MAP: Map<string, { status: number; type: PgErrorType; message:
     ['XX', { status: 500, type: 'database_internal', message: 'Internal Error.' }],
   ])
 
+/**
+ * Translate a PostgreSQL driver error into a client-safe error descriptor.
+ *
+ * Lookup order: exact SQLSTATE code, then SQLSTATE class, then a generic
+ * unknown-database-error fallback. Returns `null` when the input is not a
+ * driver-shaped error, letting callers fall through to their own handling.
+ */
 export function transformPgError(error: unknown, authed = true): PgTransformedError | null {
   if (!error || typeof error !== 'object' || !('message' in error)) {
     return null
