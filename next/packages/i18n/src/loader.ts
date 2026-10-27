@@ -1,3 +1,4 @@
+/** Filesystem-backed translation loader with immutable per-locale caching. */
 import type { TranslationFile } from './types'
 
 /**

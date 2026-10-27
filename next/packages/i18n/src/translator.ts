@@ -25,6 +25,7 @@ export class Translator {
   readonly #tables: TranslatorTables
   readonly #compiled = new Map<string, IntlMessageFormat>()
 
+  /** Create a translator from pre-loaded tables (see `createTranslator`). */
   constructor(locale: string, fallback: string, tables: TranslatorTables) {
     this.locale = locale
     this.fallback = fallback

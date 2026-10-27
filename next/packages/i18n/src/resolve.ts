@@ -1,10 +1,12 @@
 /**
  * Pure locale resolution — no framework or IO dependencies.
  *
- * Chain (D34): explicit header > user preference > Accept-Language > default.
+ * Selection order: explicit header > user preference > Accept-Language >
+ * default fallback. Every candidate must still match an available locale.
  */
 
 /** A single Accept-Language entry, e.g. `fr-CH, fr;q=0.9, en;q=0.8`. */
+/** Parse an `Accept-Language` header into tags ordered by descending quality. Tags with q=0 are dropped. */
 export function parseAcceptLanguage(header: string): string[] {
   return header
     .split(',')
@@ -41,6 +43,7 @@ export function bestMatch(tag: string, available: string[]): string | null {
   return regional ?? null
 }
 
+/** Inputs to `resolveLocale`. */
 export interface ResolveInput {
   /** Value of `x-nuvix-locale`, if sent. */
   headerLocale?: string | null
@@ -54,6 +57,7 @@ export interface ResolveInput {
   fallback?: string
 }
 
+/** Walk the selection chain and return the best available locale, falling back when nothing matches. */
 export function resolveLocale(input: ResolveInput): string {
   const fallback = input.fallback ?? 'en'
 

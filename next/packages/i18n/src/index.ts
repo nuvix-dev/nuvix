@@ -1,3 +1,4 @@
+/** i18n surface: locale resolution, translation loading, and ICU message formatting. */
 import type { TranslationLoader } from './loader'
 import { Translator } from './translator'
 
