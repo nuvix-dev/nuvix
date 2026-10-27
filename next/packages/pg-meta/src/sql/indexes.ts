@@ -1,3 +1,4 @@
+/** SQL for the `indexes` resource: Indexes with flags, key attributes, predicates, and definitions (pg_index + pg_class). */
 export const indexesSql = `
 SELECT
   idx.indexrelid::int8 AS id,

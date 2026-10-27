@@ -1,3 +1,4 @@
+/** PostgreSQL metadata resource: Row level security policies on tables. */
 import { escapeLiteral } from '../helpers'
 import { policiesSql } from '../sql/policies'
 import type { PgPolicy } from '../types'
@@ -8,9 +9,11 @@ export interface PolicyFilterOptions {
   offset?: number
 }
 
+/** RLS policy introspection. Filters become WHERE fragments composed around the raw SQL template in `../sql`. */
 export class PgMetaPolicies {
   constructor(private readonly query: <T = unknown>(sql: string) => Promise<T[]>) {}
 
+  /** List entries, applying optional include/exclude/limit/offset filters. */
   async list(options?: PolicyFilterOptions): Promise<PgPolicy[]> {
     let sql = `WITH policies AS (${policiesSql}) SELECT * FROM policies WHERE true`
     if (options?.tableId !== undefined) {
@@ -25,6 +28,7 @@ export class PgMetaPolicies {
     return this.query<PgPolicy>(sql)
   }
 
+  /** Retrieve a single entry by the given filter, or `null` when not found. */
   async retrieve(filter: { id: number }): Promise<PgPolicy | null> {
     const sql = `WITH policies AS (${policiesSql}) SELECT * FROM policies WHERE id = ${escapeLiteral(filter.id)}`
     const rows = await this.query<PgPolicy>(sql)

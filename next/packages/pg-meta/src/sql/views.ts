@@ -1,3 +1,4 @@
+/** SQL for the `views` resource: Views with updatability and comments (pg_class). */
 export const viewsSql = `
 SELECT
   c.oid :: int8 AS id,

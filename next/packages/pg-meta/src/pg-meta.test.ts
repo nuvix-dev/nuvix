@@ -1,3 +1,4 @@
+/** Unit tests for the `PgMeta` facade: resource wiring and query routing against a mocked SQL connection. */
 import { describe, expect, it } from 'bun:test'
 import type { SQL } from 'bun'
 import { PgMeta } from './pg-meta'

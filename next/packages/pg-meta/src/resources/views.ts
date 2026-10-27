@@ -1,10 +1,13 @@
+/** PostgreSQL metadata resource: Regular and materialized views with their updatability. */
 import { DEFAULT_SYSTEM_SCHEMAS, escapeLiteral, filterByList } from '../helpers'
 import { viewsSql } from '../sql/views'
 import type { FilterOptions, PgView } from '../types'
 
+/** View introspection. Filters become WHERE fragments composed around the raw SQL template in `../sql`. */
 export class PgMetaViews {
   constructor(private readonly query: <T = unknown>(sql: string) => Promise<T[]>) {}
 
+  /** List entries, applying optional include/exclude/limit/offset filters. */
   async list(options?: FilterOptions): Promise<PgView[]> {
     let sql = `WITH views AS (${viewsSql}) SELECT * FROM views WHERE true`
 
@@ -25,6 +28,7 @@ export class PgMetaViews {
     return this.query<PgView>(sql)
   }
 
+  /** Retrieve a single entry by the given filter, or `null` when not found. */
   async retrieve(filter: { id?: number; name?: string; schema?: string }): Promise<PgView | null> {
     let sql = `WITH views AS (${viewsSql}) SELECT * FROM views WHERE true`
 

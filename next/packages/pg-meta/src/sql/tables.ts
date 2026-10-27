@@ -1,3 +1,4 @@
+/** SQL for the `tables` resource: Base tables with RLS state, replica identity, sizes, row estimates, comments, plus primary keys and foreign-key relationships composed as nested JSONB arrays (pg_class + pg_namespace). */
 export const tablesSql = `
 SELECT
   c.oid :: int8 AS id,

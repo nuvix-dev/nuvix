@@ -1,3 +1,4 @@
+/** Live integration tests for `PgMeta` against a real PostgreSQL server; automatically skipped when the database is unreachable. */
 import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
 import { SQL } from 'bun'
 import { PgMeta } from './pg-meta'

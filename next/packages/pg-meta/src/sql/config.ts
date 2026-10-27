@@ -1,3 +1,4 @@
+/** SQL for the `config` resource: PostgreSQL server settings (pg_settings) with units, context, and restart state. */
 export const configSql = `
 SELECT
   name,

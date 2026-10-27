@@ -1,3 +1,4 @@
+/** PostgreSQL metadata resource: Base tables with primary keys, relationships, and size estimates. */
 import {
   coalesceRowsToArray,
   DEFAULT_SYSTEM_SCHEMAS,
@@ -8,9 +9,11 @@ import { columnsSql } from '../sql/columns'
 import { tablesSql } from '../sql/tables'
 import type { PgTable, TableFilterOptions } from '../types'
 
+/** Table introspection. Filters become WHERE fragments composed around the raw SQL template in `../sql`. */
 export class PgMetaTables {
   constructor(private readonly query: <T = unknown>(sql: string) => Promise<T[]>) {}
 
+  /** List entries, applying optional include/exclude/limit/offset filters. */
   async list(options?: TableFilterOptions): Promise<PgTable[]> {
     const includeColumns = options?.includeColumns ?? false
     let sql = `WITH tables AS (${tablesSql})${
@@ -36,6 +39,7 @@ export class PgMetaTables {
     return this.query<PgTable>(sql)
   }
 
+  /** Retrieve a single entry by the given filter, or `null` when not found. */
   async retrieve(filter: {
     id?: number
     name?: string

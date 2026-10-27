@@ -1,3 +1,4 @@
+/** SQL for the `policies` resource: Row level security policies with roles, command, and definitions (pg_policy). */
 export const policiesSql = `
 SELECT
   pol.oid :: int8 AS id,

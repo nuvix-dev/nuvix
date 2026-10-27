@@ -1,3 +1,4 @@
+/** SQL for the `triggers` resource: Triggers with firing mode, events, and backing function (pg_trigger + pg_proc). */
 export const triggersSql = `
 SELECT
   pg_t.oid AS id,

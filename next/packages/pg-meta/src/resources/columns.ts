@@ -1,10 +1,13 @@
+/** PostgreSQL metadata resource: Tables, views, and materialized view columns. */
 import { DEFAULT_SYSTEM_SCHEMAS, escapeLiteral, filterByList } from '../helpers'
 import { columnsSql } from '../sql/columns'
 import type { ColumnFilterOptions, PgColumn } from '../types'
 
+/** Column introspection. Filters become WHERE fragments composed around the raw SQL template in `../sql`. */
 export class PgMetaColumns {
   constructor(private readonly query: <T = unknown>(sql: string) => Promise<T[]>) {}
 
+  /** List entries, applying optional include/exclude/limit/offset filters. */
   async list(options?: ColumnFilterOptions): Promise<PgColumn[]> {
     let sql = `WITH columns AS (${columnsSql}) SELECT * FROM columns WHERE true`
 
@@ -31,6 +34,7 @@ export class PgMetaColumns {
     return this.query<PgColumn>(sql)
   }
 
+  /** Retrieve a single entry by the given filter, or `null` when not found. */
   async retrieve(filter: {
     id?: string
     name?: string

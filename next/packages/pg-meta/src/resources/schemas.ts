@@ -1,10 +1,13 @@
+/** PostgreSQL metadata resource: Schemas (namespaces) and their owners. */
 import { DEFAULT_SYSTEM_SCHEMAS, escapeLiteral, filterByList } from '../helpers'
 import { schemasSql } from '../sql/schemas'
 import type { FilterOptions, PgSchema } from '../types'
 
+/** Schema introspection. Filters become WHERE fragments composed around the raw SQL template in `../sql`. */
 export class PgMetaSchemas {
   constructor(private readonly query: <T = unknown>(sql: string) => Promise<T[]>) {}
 
+  /** List entries, applying optional include/exclude/limit/offset filters. */
   async list(options?: FilterOptions): Promise<PgSchema[]> {
     let sql = `WITH schemas AS (${schemasSql}) SELECT * FROM schemas WHERE true`
     const filter = filterByList(
@@ -24,6 +27,7 @@ export class PgMetaSchemas {
     return this.query<PgSchema>(sql)
   }
 
+  /** Retrieve a single entry by the given filter, or `null` when not found. */
   async retrieve(filter: { id?: number; name?: string }): Promise<PgSchema | null> {
     let sql = `WITH schemas AS (${schemasSql}) SELECT * FROM schemas WHERE true`
     if (filter.id !== undefined) {

@@ -1,3 +1,4 @@
+/** SQL for the `types` resource: Types with enum values or composite attributes (pg_type + pg_enum + pg_attribute). */
 export const typesSql = `
 SELECT
   t.oid::int8 as id,

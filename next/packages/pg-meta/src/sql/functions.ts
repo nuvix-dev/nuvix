@@ -1,3 +1,4 @@
+/** SQL for the `functions` resource: Functions and routines with signatures, volatility, security definer, and set-returning flags (pg_proc + pg_get_function_*). */
 export const functionsSql = `
 WITH functions AS (
   SELECT

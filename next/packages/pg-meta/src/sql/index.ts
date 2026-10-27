@@ -1,3 +1,4 @@
+/** Raw SQL templates for PostgreSQL catalog introspection. One exported fragment per resource; the resource classes compose WHERE filters, limits, and pagination around them. */
 export * from './columns'
 export * from './config'
 export * from './extensions'

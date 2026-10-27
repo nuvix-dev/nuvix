@@ -1,3 +1,4 @@
+/** SQL for the `roles` resource: Roles with privileges, connection limits, and active connection counts (pg_roles + pg_stat_activity). */
 export const rolesSql = `
 SELECT
   oid :: int8 AS id,

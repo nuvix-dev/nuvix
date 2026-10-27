@@ -1,3 +1,5 @@
+/** Row types returned by the metadata resource queries; field names follow PostgreSQL catalog conventions (snake_case). */
+/** Server version and connection headroom. */
 export interface PgVersion {
   version: string
   version_number: number
@@ -5,6 +7,7 @@ export interface PgVersion {
   max_connections: number
 }
 
+/** One row of `pg_settings`. */
 export interface PgConfigSetting {
   name: string
   setting: string
@@ -27,12 +30,14 @@ export interface PgConfigSetting {
   pending_restart: boolean
 }
 
+/** A namespace in the database. */
 export interface PgSchema {
   id: number
   name: string
   owner: string
 }
 
+/** The primary key constraint of a table. */
 export interface PgPrimaryKey {
   schema: string
   table_name: string
@@ -40,6 +45,7 @@ export interface PgPrimaryKey {
   table_id: number
 }
 
+/** A foreign-key edge between two columns. */
 export interface PgRelationship {
   id: number
   constraint_name: string
@@ -51,6 +57,7 @@ export interface PgRelationship {
   target_column_name: string
 }
 
+/** A base table with RLS state, size estimates, and its keys/relationships. */
 export interface PgTable {
   id: number
   schema: string
@@ -68,6 +75,7 @@ export interface PgTable {
   columns?: PgColumn[]
 }
 
+/** One column of a table, including identity/generated/nullability flags. */
 export interface PgColumn {
   table_id: number
   schema: string
@@ -89,12 +97,14 @@ export interface PgColumn {
   comment: string | null
 }
 
+/** One column participating in an index. */
 export interface PgIndexAttribute {
   attribute_number: number
   attribute_name: string
   data_type: string
 }
 
+/** One index on a table, including its definition and attributes. */
 export interface PgIndex {
   id: number
   table_id: number
@@ -119,6 +129,7 @@ export interface PgIndex {
   index_attributes: PgIndexAttribute[]
 }
 
+/** One argument of a function signature. */
 export interface PgFunctionArg {
   mode: 'in' | 'out' | 'inout' | 'variadic'
   name: string
@@ -126,6 +137,7 @@ export interface PgFunctionArg {
   has_default: boolean
 }
 
+/** A routine with signature, volatility, and security attributes. */
 export interface PgFunction {
   id: number
   schema: string
@@ -145,6 +157,7 @@ export interface PgFunction {
   config_params: Record<string, string> | null
 }
 
+/** A login/role with its privileges and connection limits. */
 export interface PgRole {
   id: number
   name: string
@@ -161,6 +174,7 @@ export interface PgRole {
   config: string[] | null
 }
 
+/** An available or installed extension. */
 export interface PgExtension {
   name: string
   schema: string | null
@@ -169,6 +183,7 @@ export interface PgExtension {
   comment: string | null
 }
 
+/** A view and its updatability. */
 export interface PgView {
   id: number
   schema: string
@@ -177,6 +192,7 @@ export interface PgView {
   comment: string | null
 }
 
+/** A trigger with its firing mode and backing function. */
 export interface PgTrigger {
   id: number
   table_id: number
@@ -193,6 +209,7 @@ export interface PgTrigger {
   function_schema: string
 }
 
+/** A type: enum/composite definitions included. */
 export interface PgType {
   id: number
   name: string
@@ -203,6 +220,7 @@ export interface PgType {
   comment: string | null
 }
 
+/** A row level security policy on a table. */
 export interface PgPolicy {
   id: number
   schema: string
@@ -216,6 +234,7 @@ export interface PgPolicy {
   check: string | null
 }
 
+/** Shared list-filtering options for resource queries. */
 export interface FilterOptions {
   includeSystemSchemas?: boolean
   includedSchemas?: string[]
@@ -224,10 +243,12 @@ export interface FilterOptions {
   offset?: number
 }
 
+/** Table query options; omit `includeColumns` to skip the column scan. */
 export interface TableFilterOptions extends FilterOptions {
   includeColumns?: boolean
 }
 
+/** Column query options, scoped optionally to one table. */
 export interface ColumnFilterOptions extends FilterOptions {
   tableId?: number
   table?: string

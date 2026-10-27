@@ -1,3 +1,4 @@
+/** Facade exposing grouped PostgreSQL metadata resources over one shared SQL connection. */
 import type { SQL } from 'bun'
 import { PgMetaColumns } from './resources/columns'
 import { PgMetaConfig } from './resources/config'
@@ -13,6 +14,12 @@ import { PgMetaTypes } from './resources/types'
 import { PgMetaVersion } from './resources/version'
 import { PgMetaViews } from './resources/views'
 
+/**
+ * Introspection entry point: binds each resource group (schemas, tables,
+ * columns, ...) to a single query runner backed by the caller's Bun `SQL`
+ * connection. Resource SQL runs through `unsafe` — it is generated here,
+ * not user input.
+ */
 export class PgMeta {
   readonly schemas: PgMetaSchemas
   readonly tables: PgMetaTables
@@ -48,6 +55,7 @@ export class PgMeta {
     this.config = new PgMetaConfig(runQuery)
   }
 
+  /** Escape hatch: run an ad-hoc metadata query on the shared connection. */
   query<T = unknown>(sqlText: string): Promise<T[]> {
     return this.sql.unsafe<T[]>(sqlText)
   }

@@ -1,3 +1,4 @@
+/** SQL for the `version` resource: Server version and connection headroom (version() + current_setting + pg_stat_activity). */
 export const versionSql = `
 SELECT
   version(),

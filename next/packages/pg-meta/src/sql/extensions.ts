@@ -1,3 +1,4 @@
+/** SQL for the `extensions` resource: Available extensions joined with installed versions and default schema (pg_available_extensions + pg_extension). */
 export const extensionsSql = `
 SELECT
   e.name,

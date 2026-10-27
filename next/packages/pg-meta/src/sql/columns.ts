@@ -1,3 +1,4 @@
+/** SQL for the `columns` resource: Columns of tables and materialized views with resolved types, defaults, identity/generated flags, nullability, and enum values (pg_attribute + pg_type + pg_enum). */
 export const columnsSql = `
 SELECT
   c.oid :: int8 AS table_id,

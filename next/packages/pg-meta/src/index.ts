@@ -1,3 +1,7 @@
+/**
+ * Public surface of `@nuvix/pg-meta`: PostgreSQL introspection resources,
+ * their raw SQL templates, shared helpers, and result row types.
+ */
 export * from './helpers'
 export * from './pg-meta'
 export * from './resources/columns'

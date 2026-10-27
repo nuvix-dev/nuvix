@@ -1,6 +1,8 @@
+/** PostgreSQL metadata resource: PostgreSQL server version information. */
 import { versionSql } from '../sql/version'
 import type { PgVersion } from '../types'
 
+/** Server version introspection. Filters become WHERE fragments composed around the raw SQL template in `../sql`. */
 export class PgMetaVersion {
   constructor(private readonly query: <T = unknown>(sql: string) => Promise<T[]>) {}
 

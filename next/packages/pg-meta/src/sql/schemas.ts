@@ -1,3 +1,4 @@
+/** SQL for the `schemas` resource: Schemas visible to the current role, excluding temporary namespaces (pg_namespace + pg_roles). */
 export const schemasSql = `
 SELECT
   n.oid::int8 as id,
