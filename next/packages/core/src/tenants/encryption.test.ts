@@ -1,4 +1,6 @@
+/** Unit tests for tenant secret encryption: key decoding and round-trip behavior. */
 import { describe, expect, test } from 'bun:test'
+
 import { decodeEncryptionKey, decryptSecret, encryptSecret } from './encryption'
 
 const key = crypto.getRandomValues(new Uint8Array(32))

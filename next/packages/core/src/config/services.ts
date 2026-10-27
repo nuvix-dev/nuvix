@@ -1,3 +1,4 @@
+/** Feature services a project can enable, used for capability checks and console display. */
 export interface ServiceItem {
   key: string
   name: string
@@ -5,6 +6,7 @@ export interface ServiceItem {
   optional: boolean
 }
 
+/** Catalog of core services keyed by id. */
 export const services: Record<string, ServiceItem> = {
   account: {
     key: 'account',

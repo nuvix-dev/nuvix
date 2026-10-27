@@ -1,9 +1,11 @@
+/** Identity primitives: password/token hashing, session encoding, secret verification, and canonical role computation. */
 import { createHash, randomBytes, randomInt, timingSafeEqual } from 'node:crypto'
 import { type Doc, type IEntity, Role, UserDimension } from '@nuvix/db'
 import { hash as argon2Hash, verify as argon2Verify } from 'argon2'
 import * as bcrypt from 'bcrypt'
 import { decryptSecret, encryptSecret } from '../tenants/encryption'
 
+/** Supported password hashing algorithms. */
 export enum HashAlgorithm {
   ARGON2 = 'argon2',
   ARGON2ID = 'argon2id',
@@ -21,7 +23,8 @@ export interface BcryptOptions {
   saltRounds?: number
 }
 
-// biome-ignore lint/complexity/noStaticOnlyClass: matches legacy Auth helper class API
+/** Static utility namespace for auth primitives. Grouped in one class because its constants and methods share context (algorithm defaults, token budgets). */
+// biome-ignore lint/complexity/noStaticOnlyClass: static utility namespace by design
 export class Auth {
   public static readonly DEFAULT_ALGO = HashAlgorithm.ARGON2ID
   public static readonly DEFAULT_ALGO_OPTIONS: Argon2Options = {
@@ -133,10 +136,12 @@ export class Auth {
     return timingSafeEqual(bufA, bufB)
   }
 
+  /** Generate a password-grade hex string. */
   public static passwordGenerator(length = 20): string {
     return randomBytes(length).toString('hex')
   }
 
+  /** Generate a cryptographically random opaque token of exact length. */
   public static tokenGenerator(length = 256): string {
     if (length <= 0) {
       throw new Error('Token length must be greater than 0')
@@ -145,6 +150,7 @@ export class Auth {
     return randomBytes(bytesLength).toString('hex').slice(0, length)
   }
 
+  /** Generate a numeric OTP-style code of exact length. */
   public static codeGenerator(length = 6): string {
     let value = ''
     for (let i = 0; i < length; i++) {
@@ -153,6 +159,7 @@ export class Auth {
     return value
   }
 
+  /** Encrypt a session's id+secret into an opaque transport value. */
   public static async encodeSession(id: string, secret: string, key: Uint8Array): Promise<string> {
     const sessionData = JSON.stringify({ id, secret })
     return encryptSecret(sessionData, key)
@@ -186,6 +193,7 @@ export class Auth {
     }
   }
 
+  /** Find the session whose stored secret hash matches `secret` and whose expiry is in the future. */
   public static sessionVerify<T extends Partial<IEntity> = Partial<IEntity>>(
     sessions: Doc<T>[],
     secret?: string,
@@ -209,6 +217,7 @@ export class Auth {
     return false
   }
 
+  /** Find the token matching secret-hash, type, and a live expiry. */
   public static tokenVerify<T extends Partial<IEntity> = Partial<IEntity>>(
     tokens: Doc<T>[],
     type: number | string | null,
@@ -234,7 +243,9 @@ export class Auth {
   }
 
   /**
-   * Compute caller canonical roles 1:1 with legacy Auth.getRoles.
+   * Compute the canonical role string list for a caller: identity roles,
+   * verification dimensions, confirmed team memberships, labels, and
+   * admin/API-key markers. Used for permission evaluation.
    */
   public static getRoles<T extends Partial<IEntity> = Partial<IEntity>>(
     user?: Doc<T> | null,
@@ -305,6 +316,7 @@ export class Auth {
   }
 }
 
+/** Functional convenience wrapper around `Auth.passwordHash` with default settings. */
 export async function hashPassword(
   password: string,
   options: { algorithm?: 'argon2' | 'argon2id' | 'bcrypt' } = {},
@@ -313,6 +325,7 @@ export async function hashPassword(
   return Auth.passwordHash(password, algo)
 }
 
+/** Functional convenience wrapper around `Auth.passwordVerify`. */
 export async function verifyPassword(
   password: string,
   hash: string,
@@ -322,6 +335,10 @@ export async function verifyPassword(
   return Auth.passwordVerify(password, hash, algo)
 }
 
+/**
+ * Reject passwords containing the user's own personal data (id, email,
+ * name parts, phone) to block trivially guessable secrets.
+ */
 export function validatePersonalData(
   password: string,
   data: {
@@ -354,6 +371,7 @@ export function validatePersonalData(
   return true
 }
 
+/** Reject a new password that matches any hash in the user's history. */
 export async function validatePasswordHistory(
   password: string,
   history: string[],

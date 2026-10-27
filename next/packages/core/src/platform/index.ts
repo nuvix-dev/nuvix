@@ -1,3 +1,4 @@
+/** Platform surface: platform collections and the platform database bootstrap. */
 export { platformCollections } from './collections'
 export {
   createPlatformDatabase,

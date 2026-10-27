@@ -1,3 +1,4 @@
+/** Live integration test: bootstraps the `auth` schema against a real tenant PostgreSQL instance. */
 import { describe, expect, test } from 'bun:test'
 import { Cache, Memory } from '@nuvix/cache'
 import { Doc } from '@nuvix/db'

@@ -60,6 +60,7 @@ function timingSafeEqual(a: string, b: string): boolean {
   return diff === 0
 }
 
+/** Issue a compact HS256 JWT embedding `iat` and computed `exp`. */
 export async function signJwt(
   payload: JwtPayload,
   secret: string,

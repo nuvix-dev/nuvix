@@ -1,5 +1,7 @@
+/** Payload contracts for every background job queue. Each interface maps to one named queue in `QueueFor`. */
 import type { ConnectionOptions, JobsOptions } from 'bullmq'
 
+/** One transactional or bulk email send. */
 export interface MailJobData {
   /** Platform project id — resolves the project's SMTP override/profile. */
   projectId: string
@@ -26,18 +28,20 @@ export interface MailJobData {
   bodyTemplate?: string
 }
 
+/** One message delivery (immediate or from a schedule). */
 export interface MessagingJobData {
   /** Platform project id — resolves the tenant database. */
   projectId: string
   /**
-   * Message id (scheduled jobs) or the full message record (inline
-   * enqueue at create, v1 `MessagingJob.EXTERNAL` parity).
+   * Message id for scheduled deliveries, or the full message record for
+   * inline enqueues at creation time.
    */
   message: string | Record<string, unknown>
   /** Schedule document id — deleted after a scheduled message delivers. */
   scheduleId?: string
 }
 
+/** One audit-trail write. */
 export interface AuditJobData {
   event: string
   /** Platform project id — workers resolve the tenant database from it. */
@@ -49,13 +53,15 @@ export interface AuditJobData {
   data?: Record<string, unknown>
 }
 
+/** Usage metrics for a single event. */
 export interface StatsJobData {
   /** Platform project id — resolves the tenant database (auth schema). */
   projectId: string
-  /** One job carries the metrics of a single event (v1 parity). */
+  /** Metrics to increment for the event (typically one row per key). */
   metrics: Array<{ key: string; value: number }>
 }
 
+/** One webhook delivery attempt. */
 export interface WebhookJobData {
   /** Platform project id (jobs resolve through the platform registry). */
   projectId: string
@@ -64,10 +70,11 @@ export interface WebhookJobData {
   webhookInternalId?: number
   event: string
   payload: Record<string, unknown>
-  /** Delivery attempt counter at enqueue/processing time (v1 parity). */
+  /** Delivery attempt counter at enqueue/processing time. */
   attempts?: number
 }
 
+/** One resource deletion (optionally cascading). */
 export interface DeleteJobData {
   type: string
   resourceId: string
@@ -75,6 +82,7 @@ export interface DeleteJobData {
   cascade?: boolean
 }
 
+/** One request-log row to persist. */
 export interface LogJobData {
   /** Platform project id — resolves the tenant database. */
   projectId: string
@@ -92,16 +100,19 @@ export interface LogJobData {
   metadata?: Record<string, unknown>
 }
 
+/** One project provisioning request. */
 export interface ProjectJobData {
   /** Platform project id — the doc is created before the job enqueues. */
   projectId: string
 }
 
+/** One batch of queued operations. */
 export interface BatchJobData {
   operations: unknown[]
   projectId?: string
 }
 
+/** Queue manager construction options. */
 export interface QueueManagerOptions {
   connection?: ConnectionOptions
   prefix?: string

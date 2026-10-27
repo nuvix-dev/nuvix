@@ -1,15 +1,15 @@
 /**
- * At-rest encryption for tenant connection secrets (D37).
+ * At-rest encryption for tenant connection secrets.
  *
  * The platform registry stores each project's tenant password encrypted
- * with a server-held key — never in plaintext. AES-256-GCM via
- * `crypto.subtle` (Bun-native, matches the hand-rolled-on-`crypto.subtle`
- * precedent already set for JWT in D6).
+ * with a server-held key — never in plaintext. AES-256-GCM via the
+ * platform-standard `crypto.subtle` helpers.
  */
 
 const ALGORITHM = 'AES-GCM'
 const IV_BYTES = 12
 
+/** Import a base64-decoded server key, enforcing the 32-byte requirement. */
 async function importKey(rawKey: Uint8Array): Promise<CryptoKey> {
   if (rawKey.length !== 32) {
     throw new Error(`Tenant target encryption key must be 32 bytes, got ${rawKey.length}`)

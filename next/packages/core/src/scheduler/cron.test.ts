@@ -1,3 +1,4 @@
+/** Unit tests for the mini cron scheduler: expression parsing and due-date computation. */
 import { describe, expect, it } from 'bun:test'
 import { CronScheduler } from './cron'
 

@@ -1,3 +1,4 @@
+/** Unit tests for the data-layer filters: JSON/JSONB round-trips, casting, and encryption. */
 import { describe, expect, test } from 'bun:test'
 import { Doc } from '@nuvix/db'
 import { createEncryptFilter, jsonFilter, registerCoreDbFilters } from './filters'

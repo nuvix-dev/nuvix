@@ -1,4 +1,6 @@
+/** Unit tests for the in-memory tenant provisioner used in tests. */
 import { describe, expect, test } from 'bun:test'
+
 import { FakeTenantProvisioner } from './fake-provisioner'
 
 describe('FakeTenantProvisioner', () => {

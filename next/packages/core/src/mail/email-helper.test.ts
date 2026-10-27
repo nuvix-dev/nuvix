@@ -1,3 +1,4 @@
+/** Unit tests for email composition: template rendering, custom overrides, and SMTP resolution. */
 import { beforeAll, describe, expect, it } from 'bun:test'
 import { EmailHelper, type ProjectMailInfo } from './email-helper'
 

@@ -1,14 +1,17 @@
+/** Read-only control-plane resolvers: project lookup, provider/platform/webhook reads, API-key resolution. */
 import type { Database, Doc } from '@nuvix/db'
 import { Query } from '@nuvix/db'
 import type { ProjectMailInfo } from '../mail'
 import type { TenantTarget } from '../tenants'
 
+/** Shape of the fields a `projects` document carries for these reads. */
 interface ProjectRecord {
   status: string
   publishableKey: string
   target?: TenantTarget
 }
 
+/** One OAuth2 provider configured on a project. */
 export interface OAuthProviderInfo {
   /** Stable provider key (e.g. `google`, `apple`). */
   key: string
@@ -18,6 +21,7 @@ export interface OAuthProviderInfo {
   enabled?: boolean
 }
 
+/** One registered client platform (for redirect/origin validation). */
 export interface PlatformInfo {
   type?: string
   hostname?: string | null
@@ -37,6 +41,7 @@ export interface ResolvedProject {
   platforms?: PlatformInfo[]
 }
 
+/** Shape of a `keys` document. */
 interface KeyRecord {
   projectId: string
   name: string
@@ -46,6 +51,7 @@ interface KeyRecord {
   accessedAt?: Date | string | null
 }
 
+/** A successfully resolved platform API key. */
 export interface ResolvedApiKey {
   id: string
   projectId: string
@@ -67,6 +73,11 @@ export interface WebhookInfo {
 export class ProjectRegistry {
   constructor(private readonly db: Database) {}
 
+  /**
+   * Resolve a project by publishable key. Returns `null` unless the
+   * project is active and its tenant connection target is provisioned —
+   * selection only; authorization happens later per request.
+   */
   async resolve(publishableKey: string): Promise<ResolvedProject | null> {
     const project = (await this.db
       .system()
@@ -196,6 +207,7 @@ export class ProjectRegistry {
     }
   }
 
+  /** Normalize the raw `oAuthProviders` array on a project record. */
   private resolveProviders(data: { oAuthProviders?: unknown }): OAuthProviderInfo[] {
     const raw = data.oAuthProviders
     if (!Array.isArray(raw)) return []
@@ -211,9 +223,14 @@ export class ProjectRegistry {
   }
 }
 
+/** Resolves platform API keys against the control-plane `keys` collection. */
 export class KeyRegistry {
   constructor(private readonly db: Database) {}
 
+  /**
+   * Look up a key by exact secret match, honoring expiry and stamping
+   * `accessedAt` (best-effort). Returns `null` for missing/expired keys.
+   */
   async resolve(projectId: string, secret: string): Promise<ResolvedApiKey | null> {
     const session = this.db.system()
     const docs = (await session.find('keys', (query) =>
@@ -247,6 +264,7 @@ export class KeyRegistry {
   }
 }
 
+/** True for plain JSON objects (not arrays, not class instances). */
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
 }

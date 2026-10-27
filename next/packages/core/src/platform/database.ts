@@ -1,3 +1,4 @@
+/** The platform's own single database: driver wiring plus schema bootstrap. */
 import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
 import { Cache, Memory } from '@nuvix/cache'
@@ -6,12 +7,14 @@ import { registerCoreDbFilters } from '../db'
 import { decodeEncryptionKey } from '../tenants'
 import { platformCollections } from './collections'
 
+/** Connection settings for the platform metadata database. */
 export interface PlatformDatabaseOptions {
   driver: 'sqlite' | 'postgres'
   url: string
   encryptionKey: string
 }
 
+/** Build the driver-specific adapter; SQLite file paths get their parent directory created first. */
 async function createAdapter(options: PlatformDatabaseOptions): Promise<Adapter | SQLiteAdapter> {
   if (options.driver === 'postgres') return new Adapter(options.url)
 
@@ -21,6 +24,7 @@ async function createAdapter(options: PlatformDatabaseOptions): Promise<Adapter 
   return new SQLiteAdapter(options.url)
 }
 
+/** Create the database (if needed) and add any missing platform collections — idempotent across restarts. */
 export async function ensurePlatformSchema(db: Database): Promise<void> {
   if (!(await db.exists())) await db.create()
 
@@ -37,6 +41,7 @@ export async function ensurePlatformSchema(db: Database): Promise<void> {
   }
 }
 
+/** Fully wired platform database: filters registered, schema ensured, ready to serve. */
 export async function createPlatformDatabase(options: PlatformDatabaseOptions): Promise<Database> {
   registerCoreDbFilters(decodeEncryptionKey(options.encryptionKey))
   const db = new Database(await createAdapter(options), new Cache(new Memory()))

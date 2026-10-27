@@ -1,10 +1,13 @@
 /**
- * Shared `@nuvix/db` filter registry (1:1 with legacy libs/utils/src/database/filters.ts).
+ * Shared `@nuvix/db` attribute filters. Filters hook attribute reads and
+ * writes inside the data layer so business code sees decoded values while
+ * storage keeps an encoding suitable for search or persistence.
  */
 
 import { Database, type Doc, type Filter, Query, type Session } from '@nuvix/db'
 import { decryptSecret, encryptSecret } from '../tenants/encryption'
 
+/** Transparent JSON encode/decode for nested values. */
 export const jsonFilter: Filter = {
   encode(value) {
     return value === null || value === undefined ? null : JSON.stringify(value)
@@ -19,6 +22,7 @@ export const jsonFilter: Filter = {
   },
 }
 
+/** Persists a value as a JSON envelope; non-finite numbers degrade to strings so `JSON.stringify` cannot emit `null`. */
 export const castingFilter: Filter = {
   encode(value) {
     return JSON.stringify({ value }, (_key, val) =>
@@ -35,6 +39,7 @@ export const castingFilter: Filter = {
   },
 }
 
+/** AES-GCM encryption at rest for secret attributes; bound to the tenant key at registration time. */
 export function createEncryptFilter(key: Uint8Array): Filter {
   return {
     async encode(value) {
@@ -52,6 +57,7 @@ export function createEncryptFilter(key: Uint8Array): Filter {
   }
 }
 
+/** Builds the text-search blob for users: id, email, name, phone, and labels. */
 export const userSearchFilter: Filter = {
   encode(_, doc: Doc) {
     const searchValues = [
@@ -71,6 +77,7 @@ export const userSearchFilter: Filter = {
   },
 }
 
+/** Builds the text-search blob for messaging providers. */
 export const providerSearchFilter: Filter = {
   encode(_, doc: Doc) {
     return [doc.getId(), doc.get('name', ''), doc.get('provider', ''), doc.get('type', '')]
@@ -82,6 +89,7 @@ export const providerSearchFilter: Filter = {
   },
 }
 
+/** Builds the text-search blob for messaging topics. */
 export const topicSearchFilter: Filter = {
   encode(_, doc: Doc) {
     return [doc.getId(), doc.get('name', ''), doc.get('description', '')].filter(Boolean).join(' ')
@@ -91,6 +99,7 @@ export const topicSearchFilter: Filter = {
   },
 }
 
+/** Builds the text-search blob for messages, mixing in provider-specific fields by type. */
 export const messageSearchFilter: Filter = {
   encode(_, doc: Doc) {
     const searchValues = [doc.getId(), doc.get('status', '')]
@@ -110,6 +119,11 @@ export const messageSearchFilter: Filter = {
   },
 }
 
+/**
+ * Sub-query filters: each hydrates a related collection (up to 100 rows)
+ * onto the document at read time. `encode` is a no-op because these are
+ * read-only derivations.
+ */
 export const subQuerySessionsFilter: Filter = {
   encode: () => null,
   decode: (_, doc: Doc, db?: Session) => {
@@ -200,6 +214,7 @@ export const subQueryFilesFilter: Filter = {
   },
 }
 
+/** Registry mutations are idempotent: re-registering an existing filter name is ignored. */
 const ALREADY_REGISTERED = /already exists/i
 
 function registerOnce(name: string, filter: Filter): void {
@@ -214,7 +229,8 @@ function registerOnce(name: string, filter: Filter): void {
 }
 
 /**
- * Registers all core DB filters matching legacy definitions.
+ * Register every core filter with the shared `@nuvix/db` registry. The
+ * encryption filter registers only when a tenant key is provided.
  */
 export function registerCoreDbFilters(encryptionKey?: Uint8Array): void {
   registerOnce('json', jsonFilter)

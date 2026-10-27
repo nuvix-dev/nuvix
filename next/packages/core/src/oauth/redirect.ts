@@ -1,7 +1,5 @@
 /**
- * Redirect URL validation — Bun-native port of legacy
- * `libs/core/src/validators/network/{platform,origin,redirect}.ts`, trimmed to
- * the `RedirectValidator` surface that the OAuth2 and magic-URL flows need.
+ * Redirect URL validation for the OAuth2 and magic-URL flows.
  *
  * A redirect target is valid when:
  * - its scheme is a web scheme (http/https/browser-extension) AND its
@@ -16,6 +14,7 @@ export interface PlatformConfig {
   key?: string | null
 }
 
+/** Schemes treated as web URLs (host must match a registered platform). */
 const WEB_SCHEMES = new Set([
   'http',
   'https',
@@ -25,6 +24,7 @@ const WEB_SCHEMES = new Set([
   'ms-edge-extension',
 ])
 
+/** Platform types whose `key` carries a bundle-style hostname/pattern. */
 const FLUTTER_MULTIPLATFORM_TYPES = new Set([
   'flutter-ios',
   'flutter-android',
@@ -73,6 +73,7 @@ export function platformSchemes(projectId: string, platforms: PlatformConfig[]):
   return [...schemes]
 }
 
+/** Extract the scheme portion of a URI, tolerating non-URL custom schemes. */
 export function parseScheme(uri: string): string | undefined {
   const trimmed = uri.trim()
   if (trimmed === '') return undefined
@@ -84,12 +85,13 @@ export function parseScheme(uri: string): string | undefined {
   }
 }
 
+/** Precomputed validation rules for a project's registered platforms. */
 export interface RedirectRules {
   hostnames: string[]
   schemes: string[]
 }
 
-/** Builds the redirect validation rules for a project's platforms. */
+/** Assemble hostnames + schemes in one call for flow handlers. */
 export function redirectRules(projectId: string, platforms: PlatformConfig[]): RedirectRules {
   return {
     hostnames: platformHostnames(platforms),

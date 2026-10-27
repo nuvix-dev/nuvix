@@ -1,6 +1,8 @@
+/** Per-project tenant resource pool with bounded LRU eviction. */
 import type { ResolvedProject } from '../platform'
 import { TenantResource, type TenantResourceDependencies } from './resource'
 
+/** Pool construction options. */
 export interface TenantResourcePoolOptions {
   max?: number
   dependencies?: TenantResourceDependencies
@@ -24,6 +26,7 @@ export class TenantResourcePool {
     this.dependencies = options.dependencies ?? {}
   }
 
+  /** Return the cached resource for a project, or construct and admit a new one. */
   async get(project: ResolvedProject): Promise<TenantResource> {
     const existing = this.resources.get(project.id)
     if (existing) {
@@ -47,6 +50,7 @@ export class TenantResourcePool {
     return resource
   }
 
+  /** Close and drop every pooled resource. */
   async close(): Promise<void> {
     const resources = [...this.resources.values()]
     this.resources.clear()

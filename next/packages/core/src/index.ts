@@ -1,3 +1,7 @@
+/**
+ * Public surface of `@nuvix/core`: auth, configuration, error taxonomy,
+ * events, id helpers, queues, cron scheduling, and tenant management.
+ */
 export * from './auth'
 export * from './config'
 export * from './errors'

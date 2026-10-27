@@ -1,12 +1,15 @@
+/** Listener callback shape; may be sync or async. */
 export type EventListener<T = unknown> = (data: T) => void | Promise<void>
 
 /**
- * Type-safe event emitter built on Web standards.
- * Replaces @nestjs/event-emitter with zero dependencies.
+ * Type-safe event emitter built on Web standards (zero dependencies).
+ * `emit` never awaits listeners and never propagates their errors;
+ * `emitAsync` awaits all of them and propagates.
  */
 export class TypedEventEmitter<Events extends object = Record<string, unknown>> {
   private listeners = new Map<keyof Events, Set<EventListener<unknown>>>()
 
+  /** Subscribe; returns an unsubscribe function. */
   on<K extends keyof Events>(event: K, listener: EventListener<Events[K]>): () => void {
     let set = this.listeners.get(event)
     if (!set) {
@@ -17,6 +20,7 @@ export class TypedEventEmitter<Events extends object = Record<string, unknown>> 
     return () => this.off(event, listener)
   }
 
+  /** Subscribe for a single invocation only. */
   once<K extends keyof Events>(event: K, listener: EventListener<Events[K]>): () => void {
     const unsubscribe = this.on(event, async (data) => {
       unsubscribe()
@@ -35,6 +39,7 @@ export class TypedEventEmitter<Events extends object = Record<string, unknown>> 
     }
   }
 
+  /** Fire listeners synchronously; async rejections are logged, not thrown. */
   emit<K extends keyof Events>(event: K, data: Events[K]): void {
     const set = this.listeners.get(event)
     if (set) {
@@ -54,6 +59,7 @@ export class TypedEventEmitter<Events extends object = Record<string, unknown>> 
     }
   }
 
+  /** Fire listeners and await every async one before resolving. */
   async emitAsync<K extends keyof Events>(event: K, data: Events[K]): Promise<void> {
     const set = this.listeners.get(event)
     if (set) {
@@ -69,6 +75,7 @@ export class TypedEventEmitter<Events extends object = Record<string, unknown>> 
     }
   }
 
+  /** Current subscription count for one event. */
   listenerCount<K extends keyof Events>(event: K): number {
     return this.listeners.get(event)?.size ?? 0
   }

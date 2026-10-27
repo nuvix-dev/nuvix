@@ -1,9 +1,9 @@
 import { ID as BaseID } from '@nuvix/db'
 
 /**
- * `@nuvix/db`'s `ID` plus the v2 create-endpoint id convention (D28): ported
- * unchanged from the legacy `libs/core/src/helpers/ID.helper.ts` so every v2
- * app resolves ids the same way instead of each service reimplementing it.
+ * `@nuvix/db`'s `ID` extended with the create-endpoint id convention shared
+ * by every app: short values (or none) generate a fresh id, long values are
+ * treated as caller-supplied custom ids.
  */
 export class ID extends BaseID {
   /**

@@ -1,4 +1,6 @@
+/** Unit tests for `TenantResource`: facade construction, schema binding, single-close semantics. */
 import { describe, expect, test } from 'bun:test'
+
 import type { Database, Session } from '@nuvix/db'
 import type { SQL } from 'bun'
 import { TenantResource } from './resource'

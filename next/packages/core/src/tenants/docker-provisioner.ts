@@ -11,20 +11,20 @@ import type {
 
 /**
  * Provisions one dedicated `nuvix/postgres:18.1` container per project on a
- * single Docker host (D20, D37). Talks to the Docker CLI via `Bun.spawn`
- * rather than the HTTP/socket API — dependency-free, matches AGENTS.md's
- * Bun-native-first rule.
+ * single Docker host. Talks to the Docker CLI via `Bun.spawn` rather than
+ * the HTTP/socket API — no extra dependencies, and the binary is already a
+ * runtime requirement for self-hosted deployments.
  *
  * Networking: host-mapped random port (`-p 0:5432`) — works identically for
- * local `bun run dev` and a single self-hosted box; an internal-network-only
- * mode is a later hardening pass, not this slice.
+ * local development and a single self-hosted box; an internal-network-only
+ * mode is a possible future hardening pass.
  *
  * Volumes: named per project, so `docker rm -f` (no `-v`) never touches tenant
  * data — that's what makes "keep the volume by default" fall out for free.
  * A `purge` deprovision additionally removes the volume.
  */
 export interface DockerTenantProvisionerOptions {
-  /** Exact tenant image — AGENTS.md/D24 pin this to `nuvix/postgres:18.1`. */
+  /** Exact tenant image; defaults to the pinned `nuvix/postgres:18.1`. */
   image?: string
   /** Prefix for container/volume names, so multiple environments can share a host. */
   namePrefix?: string
@@ -39,6 +39,7 @@ const DEFAULT_NAME_PREFIX = 'nuvix-tenant'
 const DEFAULT_ADMIN_USER = 'nuvix_admin'
 const DEFAULT_ADMIN_DATABASE = 'postgres'
 
+/** Run a `docker` CLI command, failing with its stderr on non-zero exit. */
 async function runDocker(args: string[]): Promise<string> {
   const proc = Bun.spawn(['docker', ...args], {
     stdout: 'pipe',
@@ -60,6 +61,7 @@ function generatePassword(): string {
   return Buffer.from(crypto.getRandomValues(new Uint8Array(24))).toString('base64url')
 }
 
+/** `TenantProvisioner` backed by one local Docker host. */
 export class DockerTenantProvisioner implements TenantProvisioner {
   private readonly image: string
   private readonly namePrefix: string
@@ -81,6 +83,10 @@ export class DockerTenantProvisioner implements TenantProvisioner {
     return `${this.namePrefix}-${projectId}-data`
   }
 
+  /**
+   * Create the data volume, start the container on a random host port,
+   * and return its connection target with a freshly generated password.
+   */
   async provision({ projectId }: ProvisionRequest): Promise<ProvisionResult> {
     const containerName = this.containerName(projectId)
     const volumeName = this.volumeName(projectId)
@@ -119,6 +125,7 @@ export class DockerTenantProvisioner implements TenantProvisioner {
     return { handle, target }
   }
 
+  /** Read the container's mapped 5432 port from `docker port`. */
   private async resolveHostPort(containerName: string): Promise<number> {
     // `docker port <name> 5432/tcp` prints one "host:port" line per bound
     // address family (e.g. 0.0.0.0:32768 and [::]:32768) — take the first.
@@ -131,10 +138,12 @@ export class DockerTenantProvisioner implements TenantProvisioner {
     return port
   }
 
+  /** Block until the new instance accepts queries (delegates to `waitUntilPostgresReady`). */
   async waitUntilReady(target: TenantTarget, options?: WaitUntilReadyOptions): Promise<void> {
     return waitUntilPostgresReady(target, options)
   }
 
+  /** Remove the container, and the data volume too when `purge` is set. */
   async deprovision(handle: TenantHandle, options: DeprovisionOptions = {}): Promise<void> {
     await runDocker(['rm', '-f', handle.containerName]).catch((error) => {
       // Already gone is fine; anything else surfaces.

@@ -13,10 +13,12 @@ import type {
  * touches Docker. Tracks provisioned handles so tests can assert on
  * provision/deprovision behavior without a real container runtime.
  */
+/** In-memory provisioner for tests and offline development; always immediately ready. */
 export class FakeTenantProvisioner implements TenantProvisioner {
   readonly provisioned = new Map<string, TenantHandle>()
   private nextPort = 40000
 
+  /** Allocate a deterministic fake handle/target; never performs I/O. */
   async provision({ projectId }: ProvisionRequest): Promise<ProvisionResult> {
     const handle: TenantHandle = {
       projectId,
@@ -38,6 +40,7 @@ export class FakeTenantProvisioner implements TenantProvisioner {
     // Nothing real is running — always "ready" immediately.
   }
 
+  /** Forget the handle; no special purge handling without real volumes. */
   async deprovision(handle: TenantHandle, _options?: DeprovisionOptions): Promise<void> {
     this.provisioned.delete(handle.projectId)
   }

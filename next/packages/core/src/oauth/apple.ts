@@ -1,6 +1,13 @@
+/** Sign in with Apple: form_post authorize flow, ES256 client-secret JWT, and id_token-based profiles. */
 import type { TokensResponse } from './provider'
 import { OAuth2Provider, OAuth2ProviderError } from './provider'
 
+/**
+ * Apple specializes the abstract provider: authorization uses
+ * `response_mode=form_post`, tokens carry an `id_token` whose claims
+ * supply the user identity, and the client secret must be a signed JWT
+ * minted from the project's private key material.
+ */
 export class AppleOAuth2 extends OAuth2Provider {
   protected user: Record<string, unknown> = {}
   protected tokens: TokensResponse = {}
@@ -27,6 +34,7 @@ export class AppleOAuth2 extends OAuth2Provider {
     )
   }
 
+  /** Exchange the authorization code, caching the response and hydrating claims. */
   protected async getTokens(code: string): Promise<TokensResponse> {
     if (Object.keys(this.tokens).length === 0) {
       const body = new URLSearchParams({
@@ -97,7 +105,7 @@ export class AppleOAuth2 extends OAuth2Provider {
   /**
    * Apple's `client_secret` is a signed ES256 JWT built from the project's
    * stored secret blob (`{"p8","keyID","teamID"}`), minted once per process
-   * with a 180-day expiry — same as legacy.
+   * with a 180-day expiry, cached for the process lifetime.
    */
   private async getAppSecret(): Promise<string> {
     if (this.clientSecretJwt) return this.clientSecretJwt
@@ -159,6 +167,7 @@ export class AppleOAuth2 extends OAuth2Provider {
     return this.clientSecretJwt
   }
 
+  /** Extract identity claims from the `id_token` (or the `user` form param fallback). */
   private hydrateClaims(): void {
     if (this.tokens.id_token) {
       this.claims = this.decodeIdToken(this.tokens.id_token)
@@ -175,6 +184,7 @@ export class AppleOAuth2 extends OAuth2Provider {
   }
 }
 
+/** Unpadded URL-safe base64 encoder used for the JWS segments. */
 function base64Url(input: string | Uint8Array): string {
   const raw = typeof input === 'string' ? Uint8Array.from(input, (c) => c.charCodeAt(0)) : input
   return btoa(String.fromCharCode(...raw))

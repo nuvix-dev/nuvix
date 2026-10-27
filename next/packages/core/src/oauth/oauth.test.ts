@@ -1,3 +1,4 @@
+/** Unit tests for OAuth2 providers: authorize-URL construction, token refresh, id_token claim parsing, and redirect validation. */
 import { describe, expect, it } from 'bun:test'
 import { AppleOAuth2 } from './apple'
 import { GoogleOAuth2 } from './google'
@@ -32,7 +33,7 @@ describe('google provider', () => {
     [],
   )
 
-  it('builds the legacy authorize URL', () => {
+  it('builds the Google authorize URL', () => {
     const url = new URL(google.getLoginURL())
     expect(url.origin + url.pathname).toBe('https://accounts.google.com/o/oauth2/v2/auth')
     expect(url.searchParams.get('client_id')).toBe('client-id')
@@ -56,7 +57,7 @@ describe('google provider', () => {
 })
 
 describe('apple provider', () => {
-  it('builds the legacy authorize URL (form_post)', () => {
+  it('builds the Apple authorize URL (form_post)', () => {
     const apple = new AppleOAuth2('com.example.app', '{}', 'https://cb', {
       token: true,
     })
@@ -110,7 +111,7 @@ describe('redirect validation', () => {
   it('allows registered custom schemes and reserved schemes', () => {
     expect(validateRedirectURL('myapp://callback', rules)).toBeNull()
     expect(validateRedirectURL('exp://callback', rules)).toBeNull()
-    // Real project IDs (D28) are alphanumeric — scheme grammar safe.
+    // Real project ids are alphanumeric, so the custom-scheme grammar accepts them.
     const idRules = redirectRules('665a3b1f0012', [{ type: 'web', hostname: 'app.example.com' }])
     expect(validateRedirectURL('nuvix-callback-665a3b1f0012://cb', idRules)).toBeNull()
   })

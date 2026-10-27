@@ -1,3 +1,4 @@
+/** Mail surface: email composition helper and builder. */
 export {
   type BuiltEmail,
   EmailBuilder,

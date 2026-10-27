@@ -1,3 +1,4 @@
+/** OAuth2 surface: providers, registry, and redirect validation. */
 export { AppleOAuth2 } from './apple'
 export { GoogleOAuth2 } from './google'
 export {

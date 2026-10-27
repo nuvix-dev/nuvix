@@ -1,4 +1,6 @@
+/** Unit tests for the tenant resource pool: caching, LRU eviction, and close-on-destroy. */
 import { describe, expect, test } from 'bun:test'
+
 import type { Database } from '@nuvix/db'
 import type { SQL } from 'bun'
 import type { ResolvedProject } from '../platform'

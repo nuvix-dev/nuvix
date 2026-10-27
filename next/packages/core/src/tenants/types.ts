@@ -1,7 +1,7 @@
 /**
- * Tenant provisioning primitives (D20, D37 — see MIGRATION.md §6b/§2).
+ * Tenant provisioning primitives.
  *
- * v2 makes multi-tenancy structural: one dedicated PostgreSQL container per
+ * Multi-tenancy is structural: one dedicated PostgreSQL container per
  * project. The `TenantProvisioner` interface is the only boundary the
  * platform app's project service depends on — today it's backed by
  * `DockerTenantProvisioner` (a single Docker host), and a Kubernetes-backed
@@ -30,6 +30,7 @@ export interface ProvisionRequest {
   projectId: string
 }
 
+/** Handle plus ready-to-use connection coordinates. */
 export interface ProvisionResult {
   handle: TenantHandle
   target: TenantTarget
@@ -39,7 +40,7 @@ export interface DeprovisionOptions {
   /**
    * When true, also destroys the tenant's data volume. Default false: the
    * container is stopped/removed but the volume is kept as a safety window,
-   * matching D37's "keep volumes by default, explicit purge to destroy data".
+   * Data is kept by default — destroying data requires an explicit purge.
    */
   purge?: boolean
 }
@@ -51,8 +52,8 @@ export interface WaitUntilReadyOptions {
 
 /**
  * Provisions and tears down per-tenant PostgreSQL instances. Route handlers
- * never see this directly (AGENTS.md: routes never receive registry/lifecycle
- * controls) — only the platform app's project service is injected with one.
+ * never see this directly — only the platform app's project service is
+ * injected with one.
  */
 export interface TenantProvisioner {
   provision(request: ProvisionRequest): Promise<ProvisionResult>

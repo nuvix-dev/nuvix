@@ -1,4 +1,6 @@
+/** Live integration test: provisions and destroys a real tenant container via the Docker CLI. */
 import { describe, expect, test } from 'bun:test'
+
 import { SQL } from 'bun'
 import { DockerTenantProvisioner } from './docker-provisioner'
 

@@ -1,4 +1,6 @@
+/** Unit tests for the tenant cache factory: namespacing and in-memory fallback. */
 import { describe, expect, test } from 'bun:test'
+
 import { createTenantCacheFactory } from './cache'
 
 describe('createTenantCacheFactory', () => {

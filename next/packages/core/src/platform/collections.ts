@@ -1,3 +1,4 @@
+/** Platform metadata collection definitions for the control-plane database. */
 import { AttributeType, type Collection, Database, ID, IndexType } from '@nuvix/db'
 
 /** Control-plane schema shared by the platform writer and server resolver. */
@@ -145,6 +146,7 @@ const projects: Collection = {
   ],
 }
 
+/** Registered webhook endpoints that receive platform events. */
 const webhooks: Collection = {
   $collection: Database.METADATA,
   $id: ID.custom('webhooks'),
@@ -261,8 +263,7 @@ const webhooks: Collection = {
 }
 
 /**
- * Webhook delivery log (v1 `webhook_logs` internal collection parity) —
- * one row per delivery attempt, trimmed to the last delivery on reads.
+ * One row per webhook delivery attempt, trimmed to the last delivery on reads.
  */
 const webhookLogs: Collection = {
   $collection: Database.METADATA,
@@ -332,6 +333,7 @@ const webhookLogs: Collection = {
   ],
 }
 
+/** Secret API keys for programmatic platform access (hashed at rest). */
 const keys: Collection = {
   $collection: Database.METADATA,
   $id: ID.custom('keys'),
@@ -416,6 +418,7 @@ const keys: Collection = {
   ],
 }
 
+/** Per-project platform registrations that anchor OAuth/magic-URL redirects. */
 const platforms: Collection = {
   $collection: Database.METADATA,
   $id: ID.custom('platforms'),
@@ -603,6 +606,7 @@ const consoleSessions: Collection = {
   ],
 }
 
+/** Every platform collection, in bootstrap order. */
 export const platformCollections: Collection[] = [
   projects,
   webhooks,

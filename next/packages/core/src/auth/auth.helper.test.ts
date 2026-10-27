@@ -1,3 +1,4 @@
+/** Unit tests for auth helper primitives: hashing, token and code generators, session codecs, role computation. */
 import { describe, expect, test } from 'bun:test'
 import { Doc, Role, UserDimension } from '@nuvix/db'
 import { Auth, HashAlgorithm, validatePasswordHistory, validatePersonalData } from './auth.helper'

@@ -1,3 +1,4 @@
+/** Unit tests for `TypedEventEmitter`: subscription lifecycle, sync/async emission, and error isolation. */
 import { describe, expect, it } from 'bun:test'
 import { TypedEventEmitter } from './emitter'
 

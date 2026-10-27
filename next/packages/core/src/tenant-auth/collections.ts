@@ -1,3 +1,8 @@
+/**
+ * Core tenant collection definitions. Every tenant project's `auth` schema
+ * boots with these collections: identity, sessions/tokens, teams, storage,
+ * messaging, audit, and request logs.
+ */
 import { AttributeType, type Collection, Database, ID, IndexType } from '@nuvix/db'
 
 const users: Collection = {
@@ -729,11 +734,9 @@ const identities: Collection = {
 }
 
 /**
- * API request logs — one row per served request (v1 `ApiLog` parity,
- * snake_case columns). Written by the LOGS worker (batched, redacted);
- * read by the server's admin logs route. Lives in the tenant `auth`
- * schema — logs are per-project data (v1 stored them in the platform
- * main pool's system schema because v1 was not truly multi-tenant).
+ * API request logs — one row per served request, written by the LOGS
+ * worker (batched, redacted) and read by the admin logs route. Lives in
+ * the tenant `auth` schema because logs are per-project data.
  */
 const apiLogs: Collection = {
   $collection: Database.METADATA,
@@ -1729,8 +1732,7 @@ const subscribers: Collection = {
 }
 
 /**
- * Audit trail (v1 parity: `@nuvix/audit` collection — attributes and
- * indexes ported 1:1). Written by the audits worker; read by the log
+ * Audit trail. Written by the audits worker; read by the user log
  * endpoints (users/:id/logs and friends).
  */
 const audit: Collection = {
@@ -1820,7 +1822,8 @@ const audit: Collection = {
 }
 
 /**
- * All core tenant project collections (1:1 with legacy authCollections and commonCollections).
+ * Every collection provisioned into a new tenant's `auth` schema, in
+ * bootstrap order.
  */
 export const authCollections: Collection[] = [
   users,

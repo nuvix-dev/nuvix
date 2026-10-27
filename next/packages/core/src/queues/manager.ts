@@ -1,3 +1,4 @@
+/** BullMQ queue manager with typed enqueue helpers and an in-memory fallback for tests. */
 import { QueueFor } from '@nuvix/utils'
 import { type ConnectionOptions, type JobsOptions, Queue } from 'bullmq'
 import { ID } from '../id'
@@ -37,6 +38,11 @@ export function parseRedisUrl(raw: string): ConnectionOptions {
   }
 }
 
+/**
+ * Owns the Queue instances for every job queue and routes typed enqueues.
+ * Without a Redis connection (or with `isTest`), jobs buffer in memory so
+ * callers and tests can enqueue without infrastructure.
+ */
 export class QueueManager {
   private readonly queues = new Map<string, Queue>()
   private readonly inMemoryJobs = new Map<
@@ -73,10 +79,12 @@ export class QueueManager {
     }
   }
 
+  /** Access a live queue for custom consumers. */
   getQueue<T = unknown>(name: string): Queue<T> | undefined {
     return this.queues.get(name) as Queue<T> | undefined
   }
 
+  /** Route one job: real Redis enqueue, or in-memory record in test mode. */
   private async addJob<T>(
     queueName: string,
     jobName: string,
@@ -100,26 +108,32 @@ export class QueueManager {
     return job.id ?? `job_${ID.unique()}`
   }
 
+  /** Queue a mail send.. */
   async enqueueMail(data: MailJobData, opts?: JobsOptions): Promise<string> {
     return this.addJob(QueueFor.MAILS, 'send_mail', data, opts)
   }
 
+  /** Queue a message delivery.. */
   async enqueueMessaging(data: MessagingJobData, opts?: JobsOptions): Promise<string> {
     return this.addJob(QueueFor.MESSAGING, 'send_message', data, opts)
   }
 
+  /** Queue an audit write (job name = event).. */
   async enqueueAudit(data: AuditJobData, opts?: JobsOptions): Promise<string> {
     return this.addJob(QueueFor.AUDITS, data.event, data, opts)
   }
 
+  /** Queue usage metrics for one event.. */
   async enqueueStats(data: StatsJobData, opts?: JobsOptions): Promise<string> {
     return this.addJob(QueueFor.STATS, 'add-metric', data, opts)
   }
 
+  /** Queue a webhook delivery attempt.. */
   async enqueueWebhook(data: WebhookJobData, opts?: JobsOptions): Promise<string> {
     return this.addJob(QueueFor.WEBHOOKS, data.event, data, opts)
   }
 
+  /** Queue a resource deletion.. */
   async enqueueDelete(data: DeleteJobData, opts?: JobsOptions): Promise<string> {
     return this.addJob(QueueFor.DELETES, data.type, data, opts)
   }
@@ -139,22 +153,27 @@ export class QueueManager {
     })
   }
 
+  /** Queue a request-log row.. */
   async enqueueLog(data: LogJobData, opts?: JobsOptions): Promise<string> {
     return this.addJob(QueueFor.LOGS, 'log', data, opts)
   }
 
+  /** Queue a batch of operations.. */
   async enqueueBatch(data: BatchJobData, opts?: JobsOptions): Promise<string> {
     return this.addJob(QueueFor.BATCH, 'batch_operation', data, opts)
   }
 
+  /** Inspect buffered jobs in test mode. */
   getInMemoryJobs(queueName: string): Array<{ id: string; name: string; data: unknown }> {
     return this.inMemoryJobs.get(queueName) ?? []
   }
 
+  /** Reset buffered jobs between tests. */
   clearInMemoryJobs(): void {
     this.inMemoryJobs.clear()
   }
 
+  /** Close every queue's connection and drop buffers. */
   async close(): Promise<void> {
     await Promise.all(Array.from(this.queues.values()).map((q) => q.close()))
     this.queues.clear()
@@ -162,6 +181,7 @@ export class QueueManager {
   }
 }
 
+/** Factory for the queue manager. */
 export function createQueueManager(options: QueueManagerOptions = {}): QueueManager {
   return new QueueManager(options)
 }

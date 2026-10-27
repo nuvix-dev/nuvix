@@ -1,11 +1,10 @@
 /**
- * OAuth2 provider abstraction — Bun-native port of legacy
- * `libs/core/src/OAuth2.ts`, stripped of Nest typings and node-only deps.
+ * OAuth2 provider abstraction.
  *
  * Each concrete provider (see `google.ts`, `apple.ts`) implements the
  * authorize-URL/token-exchange/user-profile surface as defined by the
- * upstream provider. The legacy wire contract (URL shapes, scopes, state
- * serialization) is preserved 1:1 so existing provider apps keep working.
+ * upstream provider. Providers keep the state param as a serialized JSON
+ * payload so redirect targets survive the round trip.
  */
 
 export interface OAuth2State {
@@ -15,7 +14,7 @@ export interface OAuth2State {
   failure: string
   /**
    * `true` when the flow must return an OAuth2 token (userId + secret query
-   * params) instead of creating a session (legacy `tokens/oauth2` flow).
+   * params) instead of creating a session (used by the tokens endpoint).
    */
   token?: boolean
 }
@@ -32,6 +31,10 @@ export class OAuth2ProviderError extends Error {
   }
 }
 
+/**
+ * Shared OAuth2 plumbing: credential/scope state, state parsing, and the
+ * token/profile helpers common to providers.
+ */
 export abstract class OAuth2Provider {
   protected readonly appID: string
   protected readonly appSecret: string
@@ -95,6 +98,7 @@ export abstract class OAuth2Provider {
     return typeof tokens.expires_in === 'number' ? tokens.expires_in : 0
   }
 
+  /** JSON request helper that always sends a Nuvix user agent and fails non-2xx responses. */
   protected async request(
     method: 'GET' | 'POST',
     url: string,
@@ -132,6 +136,7 @@ export abstract class OAuth2Provider {
   }
 }
 
+/** Normalized shape of an upstream token endpoint response. */
 export interface TokensResponse {
   access_token?: string
   refresh_token?: string

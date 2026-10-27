@@ -1,7 +1,10 @@
+/** RFC 6238 TOTP (SHA-1, 6 digits, 30s period) with base32 secret encoding and provisioning URI generation. */
 import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 
+/** RFC 4648 base32 alphabet used for TOTP secrets. */
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
 
+/** Encode bytes to unpadded RFC 4648 base32. */
 export function base32Encode(buffer: Buffer): string {
   let bits = 0
   let value = 0
@@ -26,6 +29,7 @@ export function base32Encode(buffer: Buffer): string {
   return output
 }
 
+/** Decode base32, tolerating lowercase and separators; invalid characters are ignored. */
 export function base32Decode(input: string): Buffer {
   const cleaned = input.toUpperCase().replace(/[\s-]/g, '')
   let bits = 0
@@ -51,10 +55,12 @@ export function base32Decode(input: string): Buffer {
   return Buffer.from(bytes)
 }
 
+/** Generate a base32-encoded random secret for enrollment. */
 export function generateTotpSecret(length = 20): string {
   return base32Encode(randomBytes(length))
 }
 
+/** Compute the HOTP value for the time counter via HMAC-SHA1 dynamic truncation. */
 export function generateTotpCode(secret: string, timestamp = Date.now(), period = 30): string {
   const key = base32Decode(secret)
   const counter = Math.floor(timestamp / 1000 / period)
@@ -75,6 +81,10 @@ export function generateTotpCode(secret: string, timestamp = Date.now(), period 
   return otp
 }
 
+/**
+ * Check an OTP against codes generated within `window` periods of
+ * `timestamp`, comparing in constant time to avoid timing leaks.
+ */
 export function verifyTotpCode(
   otp: string,
   secret: string,
@@ -100,12 +110,14 @@ export function verifyTotpCode(
   return false
 }
 
+/** Parameters for an `otpauth://` provisioning URI. */
 export interface TotpUriOptions {
   secret: string
   label: string
   issuer: string
 }
 
+/** Build the URI authenticator apps scan as a QR code. */
 export function getTotpUri({ secret, label, issuer }: TotpUriOptions): string {
   const encodedIssuer = encodeURIComponent(issuer)
   const encodedLabel = encodeURIComponent(label)

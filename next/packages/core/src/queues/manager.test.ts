@@ -1,4 +1,6 @@
+/** Unit tests for `QueueManager`: in-memory test-mode buffering and Redis URL parsing. */
 import { describe, expect, it } from 'bun:test'
+
 import { QueueFor } from '@nuvix/utils'
 import { createQueueManager } from './manager'
 

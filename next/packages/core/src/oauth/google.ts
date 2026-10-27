@@ -1,6 +1,8 @@
+/** Google OAuth2: standard authorization-code flow with the userinfo v3 endpoints. */
 import type { TokensResponse } from './provider'
 import { OAuth2Provider } from './provider'
 
+/** Default scopes request identity (openid profile email); profile claims come from the userinfo endpoint. */
 export class GoogleOAuth2 extends OAuth2Provider {
   protected user: Record<string, unknown> = {}
   protected tokens: TokensResponse = {}
@@ -27,6 +29,7 @@ export class GoogleOAuth2 extends OAuth2Provider {
     )
   }
 
+  /** Exchange the authorization code, caching the response for the instance lifetime. */
   protected async getTokens(code: string): Promise<TokensResponse> {
     if (Object.keys(this.tokens).length === 0) {
       const params = new URLSearchParams({
@@ -86,6 +89,7 @@ export class GoogleOAuth2 extends OAuth2Provider {
     return user.name ? String(user.name) : ''
   }
 
+  /** Fetch (and cache) the userinfo document backing the profile getters. */
   protected async getUser(accessToken: string): Promise<Record<string, unknown>> {
     if (Object.keys(this.user).length === 0) {
       this.user = await this.request(

@@ -1,3 +1,4 @@
+/** Static catalog metadata for one OAuth2 provider. */
 export interface OAuthProvider {
   name: string
   developers: string
@@ -7,6 +8,7 @@ export interface OAuthProvider {
   mock: boolean
 }
 
+/** Catalog of OAuth2 providers known to the platform: console metadata plus which ones ship enabled by default. */
 const appOAuthProviders = {
   amazon: {
     name: 'Amazon',
@@ -322,6 +324,7 @@ const appOAuthProviders = {
   },
 } as const
 
+/** All supported providers keyed by their id. */
 export const oAuthProviders: Record<keyof typeof appOAuthProviders, OAuthProvider> =
   appOAuthProviders
 

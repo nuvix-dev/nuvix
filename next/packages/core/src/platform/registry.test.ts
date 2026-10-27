@@ -1,3 +1,4 @@
+/** Unit tests for the platform registries: project resolution, provider/platform/webhook reads, and API-key lookup. */
 import { beforeAll, describe, expect, test } from 'bun:test'
 import { type Database, Doc } from '@nuvix/db'
 import type { TenantTarget } from '../tenants'

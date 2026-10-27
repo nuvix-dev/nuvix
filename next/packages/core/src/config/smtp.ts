@@ -1,3 +1,4 @@
+/** SMTP delivery settings for a project or the platform. */
 export interface SmtpConfig {
   host: string
   port: number
@@ -11,6 +12,7 @@ export interface SmtpConfig {
   secure: 'tls' | 'ssl' | false
 }
 
+/** Disabled state used as the baseline before a project configures mail. */
 export const defaultSmtpConfig: SmtpConfig = {
   host: '',
   port: 0,

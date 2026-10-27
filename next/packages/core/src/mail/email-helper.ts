@@ -1,10 +1,8 @@
 /**
- * Email composition — Bun-native port of legacy
- * `libs/core/src/helpers/email.helper.ts` (EmailHelper + EmailBuilder):
- * renders Handlebars templates from `assets/locale/templates`, resolves the
- * effective SMTP configuration (project override → system default), and
- * applies the project's custom templates (platform templates slice:
- * `templates['email.<key>']` with subject/message/sender overrides).
+ * Email composition: renders Handlebars templates from
+ * `assets/locale/templates`, resolves the effective SMTP configuration
+ * (project override → system default), and applies project-custom template
+ * overrides (`templates['email.<key>']` with subject/message/sender fields).
  *
  * The renderer only BUILDS the payload — delivery happens in the mails
  * worker.
@@ -12,7 +10,7 @@
 
 import Handlebars from 'handlebars'
 
-/** Effective SMTP settings for one send (legacy `SmtpConfig`). */
+/** Effective SMTP settings for one send. */
 export interface SmtpConfig {
   host: string
   port: number
@@ -41,6 +39,7 @@ export interface ProjectMailInfo {
   templates?: Record<string, unknown>
 }
 
+/** Platform-level SMTP defaults used when a project has none. */
 export interface SystemSmtp {
   host: string
   port: number
@@ -52,6 +51,7 @@ export interface SystemSmtp {
   replyTo: string
 }
 
+/** A fully rendered, immutable email payload ready for the mails queue. */
 export interface BuiltEmail {
   email: string
   subject: string
@@ -60,6 +60,10 @@ export interface BuiltEmail {
   variables: Record<string, unknown>
 }
 
+/**
+ * Loads and caches Handlebars templates and resolves transport settings.
+ * Immutable after construction; builders read project mail info per call.
+ */
 export class EmailHelper {
   readonly #templatesDir: string
   readonly #systemSmtp: SystemSmtp
@@ -70,10 +74,12 @@ export class EmailHelper {
     this.#systemSmtp = systemSmtp
   }
 
+  /** Start a fluent composition for one email. */
   builder(project: ProjectMailInfo): EmailBuilder {
     return EmailBuilder.create(this, project)
   }
 
+  /** Render a cached (or newly compiled) template file with data. */
   async render(templateFile: string, data: Record<string, unknown>): Promise<string> {
     const compiled = await this.#getCompiledTemplate(templateFile)
     return compiled(data)
@@ -92,7 +98,7 @@ export class EmailHelper {
   /**
    * Effective SMTP for a project: the project's own `smtp` record when
    * enabled, falling back to sender identity defaults from the system
-   * config (legacy `resolveSmtp` parity).
+   * config. Custom template overrides may adjust the sender trio.
    */
   resolveSmtp(
     project: ProjectMailInfo,
@@ -145,6 +151,10 @@ type EmailState = {
   variables?: Record<string, unknown>
 }
 
+/**
+ * Fluent, immutable email composition: every setter returns a new builder
+ * so partially built states can be safely reused across calls.
+ */
 export class EmailBuilder {
   readonly #helper: EmailHelper
   readonly #project: ProjectMailInfo
@@ -160,6 +170,7 @@ export class EmailBuilder {
     return new EmailBuilder(helper, project, {})
   }
 
+  /** Set the recipient. */
   to(email: string): EmailBuilder {
     return new EmailBuilder(this.#helper, this.#project, {
       ...this.#state,
@@ -167,6 +178,7 @@ export class EmailBuilder {
     })
   }
 
+  /** Point at a template file and its override key (`email.<key>`). */
   usingTemplate(file: string, key: string): EmailBuilder {
     return new EmailBuilder(this.#helper, this.#project, {
       ...this.#state,
@@ -175,6 +187,7 @@ export class EmailBuilder {
     })
   }
 
+  /** Set the default subject (overridable by custom template). */
   withSubject(subject: string): EmailBuilder {
     return new EmailBuilder(this.#helper, this.#project, {
       ...this.#state,
@@ -182,6 +195,7 @@ export class EmailBuilder {
     })
   }
 
+  /** Template data for the inner render. */
   withData(data: Record<string, unknown>): EmailBuilder {
     return new EmailBuilder(this.#helper, this.#project, {
       ...this.#state,
@@ -189,6 +203,7 @@ export class EmailBuilder {
     })
   }
 
+  /** Shared variables merged into every render. */
   withVariables(variables: Record<string, unknown>): EmailBuilder {
     return new EmailBuilder(this.#helper, this.#project, {
       ...this.#state,
@@ -196,6 +211,7 @@ export class EmailBuilder {
     })
   }
 
+  /** Validate the state, render the body, apply overrides, and freeze the payload. */
   async build(): Promise<BuiltEmail> {
     const { email, templateFile, templateKey, subject, templateData, variables } = this.#state
     if (!email) throw new Error('Email recipient is required')
@@ -207,11 +223,9 @@ export class EmailBuilder {
     // slice stores them under `email.<templateKey>`).
     const customTemplate = readCustomTemplate(this.#project.templates, templateKey)
 
-    // Variables are merged into the inner render (data wins on conflicts):
-    // v1 rendered the inner template with `withData` only, but inner
-    // templates reference `{{redirect}}`/`{{user}}` which live in
-    // `withVariables` — so v1 shipped EMPTY links in recovery/verification
-    // emails. Merging fixes that latent bug.
+    // Both variable sets render together (data wins on conflicts). Inner
+    // templates reference shared variables like `{{redirect}}`/`{{user}}`,
+    // so merging is required for recovery/verification links to resolve.
     const rendered = await this.#helper.render(templateFile, {
       ...(variables ?? {}),
       ...(templateData ?? {}),
@@ -231,6 +245,7 @@ export class EmailBuilder {
   }
 }
 
+/** Look up a project's custom template override under `email.<key>`. */
 function readCustomTemplate(
   templates: Record<string, unknown> | undefined,
   key: string,

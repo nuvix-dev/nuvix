@@ -1,3 +1,4 @@
+/** Tenant management surface: provisioners, resource pool, caches, and encryption. */
 export {
   createTenantCacheFactory,
   type TenantCacheFactory,

@@ -2,7 +2,7 @@ import { AppleOAuth2 } from './apple'
 import { GoogleOAuth2 } from './google'
 import { type OAuth2Provider, OAuth2ProviderError } from './provider'
 
-/** Constructor shape every concrete provider shares (legacy parity). */
+/** Constructor shape every concrete provider shares. */
 export type OAuth2ProviderCtor = new (
   appId: string,
   appSecret: string,
@@ -12,8 +12,8 @@ export type OAuth2ProviderCtor = new (
 ) => OAuth2Provider
 
 /**
- * Static OAuth2 provider registry (legacy used dynamic file-import; v2 keeps
- * an explicit map — no runtime import surprises under Bun's bundler). A
+ * Explicit OAuth2 provider registry (a static map rather than dynamic
+ * imports, so bundling stays predictable under Bun). A
  * provider is only usable when the project's `oAuthProviders` entry names a
  * key present here AND has credentials configured.
  */
@@ -22,10 +22,12 @@ export const oauthProviders: Record<string, OAuth2ProviderCtor> = {
   apple: AppleOAuth2,
 }
 
+/** True when `name` is a registered provider id. */
 export function isOAuthProviderKey(name: string): boolean {
   return Object.hasOwn(oauthProviders, name)
 }
 
+/** Resolve a provider class or fail with a 400-status provider error. */
 export function getOAuth2Provider(name: string): OAuth2ProviderCtor {
   const Provider = oauthProviders[name]
   if (!Provider) {

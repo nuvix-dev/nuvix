@@ -39,6 +39,7 @@ export interface ProblemFields {
   errors?: Array<{ field?: string; message: string }>
 }
 
+/** Base error carrying an HTTP status plus problem-details fields. */
 export class AppError extends Error {
   readonly status: number
   readonly fields: ProblemFields
@@ -51,18 +52,21 @@ export class AppError extends Error {
   }
 }
 
+/** Request input failed validation or is malformed. */
 export class BadRequestError extends AppError {
   constructor(detail: string, fields?: Omit<ProblemFields, 'type' | 'detail'>) {
     super(400, { type: '/errors/bad-request', detail, ...fields })
   }
 }
 
+/** Missing or invalid credentials. */
 export class UnauthorizedError extends AppError {
   constructor(detail = 'Authentication required', fields?: Omit<ProblemFields, 'type' | 'detail'>) {
     super(401, { type: '/errors/unauthorized', detail, ...fields })
   }
 }
 
+/** Authenticated caller lacks permission. */
 export class ForbiddenError extends AppError {
   constructor(
     detail = 'Insufficient permissions',
@@ -72,6 +76,7 @@ export class ForbiddenError extends AppError {
   }
 }
 
+/** Requested resource does not exist. */
 export class NotFoundError extends AppError {
   constructor(resource = 'Resource', fields?: Omit<ProblemFields, 'type' | 'detail'>) {
     super(404, {
@@ -82,13 +87,14 @@ export class NotFoundError extends AppError {
   }
 }
 
+/** Request conflicts with current state. */
 export class ConflictError extends AppError {
   constructor(detail: string, fields?: Omit<ProblemFields, 'type' | 'detail'>) {
     super(409, { type: '/errors/conflict', detail, ...fields })
   }
 }
 
-/** A required capability is not configured (e.g. SMTP for system emails). */
+/** The client exceeded a rate limit. */
 export class TooManyRequestsError extends AppError {
   constructor(
     detail = 'Too many requests',
@@ -98,6 +104,7 @@ export class TooManyRequestsError extends AppError {
   }
 }
 
+/** Temporary outage or maintenance. */
 export class ServiceUnavailableError extends AppError {
   constructor(detail = 'Service unavailable', fields?: Omit<ProblemFields, 'type' | 'detail'>) {
     super(503, { type: '/errors/service-unavailable', detail, ...fields })
@@ -111,6 +118,7 @@ export class BadGatewayError extends AppError {
   }
 }
 
+/** Operation is known but not implemented yet. */
 export class NotImplementedError extends AppError {
   constructor(detail = 'Not implemented', fields?: Omit<ProblemFields, 'type' | 'detail'>) {
     super(501, { type: '/errors/not-implemented', detail, code: 'not_implemented', ...fields })

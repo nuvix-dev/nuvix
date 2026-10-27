@@ -1,3 +1,4 @@
+/** Unit tests for the TOTP implementation: base32 codecs, code generation/verification, and enrollment URIs. */
 import { describe, expect, it } from 'bun:test'
 import {
   base32Decode,

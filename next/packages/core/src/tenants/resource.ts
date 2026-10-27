@@ -1,3 +1,4 @@
+/** One tenant's runtime: pooled SQL connection plus lazily bound database facades. */
 import { Adapter, Database, type Session } from '@nuvix/db'
 import { createDatabase as createPgDatabase, type DatabaseFacade } from '@nuvix/pg'
 import { PgMeta } from '@nuvix/pg-meta'
@@ -6,6 +7,7 @@ import { createAuthDatabase } from '../tenant-auth'
 import { createTenantCacheFactory, type TenantCacheFactory } from './cache'
 import type { TenantTarget } from './types'
 
+/** Construction-time and composition-time extension points; every hook is optional and injectable. */
 export interface TenantResourceDependencies {
   createSql?: (target: TenantTarget) => SQL
   createDatabase?: (sql: SQL, cache: ReturnType<TenantCacheFactory['forTenant']>) => Database
@@ -24,6 +26,7 @@ export interface TenantResourceDependencies {
   onDatabaseCreated?: (tenant: { projectId: string; schema: string; database: Database }) => void
 }
 
+/** Default tenant connection: one server-side pool dedicated to this resource. */
 function createSql(target: TenantTarget): SQL {
   return new SQL({
     hostname: target.host,
@@ -34,10 +37,12 @@ function createSql(target: TenantTarget): SQL {
   })
 }
 
+/** Default document-plane database bound to the given connection and cache. */
 function createDatabase(sql: SQL, cache: ReturnType<TenantCacheFactory['forTenant']>): Database {
   return new Database(new Adapter(sql), cache)
 }
 
+/** Fallback cache backend when no tenant-wide factory is injected (in-memory). */
 const defaultCacheFactory = createTenantCacheFactory()
 
 /**
@@ -204,6 +209,7 @@ export class TenantResource {
     return this.authDb.system()
   }
 
+  /** Close the tenant's SQL pool exactly once, from any call site. */
   close(): Promise<void> {
     this.closePromise ??= this.sql.close()
     return this.closePromise

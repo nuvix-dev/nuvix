@@ -1,3 +1,4 @@
+/** Tenant `auth` schema: collection provisioning and request-time database construction. */
 import { Cache, Memory } from '@nuvix/cache'
 import { Adapter, Database, Doc, Permission, Role } from '@nuvix/db'
 import { SQL } from 'bun'
@@ -17,7 +18,7 @@ export const AUTH_SCHEMA = 'auth'
  * race. Binding the schema once, at construction, on an adapter used only
  * for auth data avoids that entirely; the underlying Bun `SQL` connection
  * pool is still shared with the tenant's default adapter (one pool per
- * tenant, per `AGENTS.md`).
+ * tenant).
  */
 export function createAuthDatabase(sql: SQL, cache: Cache): Database {
   registerCoreDbFilters()

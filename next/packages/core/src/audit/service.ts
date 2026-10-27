@@ -1,7 +1,7 @@
 /**
- * Audit trail service — Bun-native port of the legacy `@nuvix/audit`
- * `Audit` class (log + per-user/per-resource reads), operating on a
- * caller-provided tenant `Session` instead of a bound database.
+ * Audit trail service: append-only logging plus per-user/per-resource
+ * reads, operating on a caller-provided tenant `Session` so every write
+ * inherits the caller's tenant and authorization context.
  *
  * The `audit` collection (see `tenant-auth/collections.ts`) stores one row
  * per audited event: `{ userId (internal sequence), event, resource,
@@ -55,7 +55,7 @@ export class AuditService {
 
   /** All audit rows for a user (internal sequence), newest first. */
   async getLogsByUser(userId: number, queries: QueryType[] = []): Promise<Doc[]> {
-    // v1 shape: caller queries (limit/offset/filters) + user filter, newest first.
+    // Caller queries (limit/offset/filters) apply, then the user filter; rows sort newest first.
     return this.session.find(AUDIT_COLLECTION, [
       ...queries,
       Query.equal('userId', [userId]),

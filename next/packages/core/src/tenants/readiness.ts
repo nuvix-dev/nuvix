@@ -3,9 +3,11 @@ import type { TenantTarget, WaitUntilReadyOptions } from './types'
 
 /**
  * Polls a tenant target with a real `Bun.sql` connection until it accepts
- * queries, or throws once `timeoutMs` elapses. This is the ONLY readiness
+ * queries, or throws once `timeoutMs` elapses. This is the only readiness
  * signal provisioners use — never the container's own `HEALTHCHECK` status,
- * which reflects the postgres process, not whether Nuvix can actually reach it.
+ * which reflects the postgres process, not whether Nuvix can actually reach
+ * it through a mapped port. Each probe opens a single-connection SQL pool,
+ * runs `select 1`, and closes it.
  */
 export async function waitUntilPostgresReady(
   target: TenantTarget,
