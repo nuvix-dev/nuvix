@@ -1,3 +1,4 @@
+/** Tests for the auth context plugin: session/api-key resolution and role mapping. */
 import { describe, expect, test } from 'bun:test'
 import { treaty } from '@elysia/eden'
 import { Elysia } from 'elysia'

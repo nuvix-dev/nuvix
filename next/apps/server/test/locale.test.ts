@@ -1,3 +1,4 @@
+/** Tests for locale data catalogs and locale route behavior. */
 import { describe, expect, test } from 'bun:test'
 import { treaty } from '@elysia/eden'
 import { TranslationLoader } from '@nuvix/i18n'
@@ -59,7 +60,7 @@ describe('GET /v2/locale', () => {
       country: 'Germany',
       continentCode: 'EU',
       eu: true,
-      // v1 data parity: only a few currencies carry `locations` (USD, ILS, INR, PLN…)
+      // Only a few currencies carry `locations` (USD, ILS, INR, PLN…)
       currency: null,
     })
   })

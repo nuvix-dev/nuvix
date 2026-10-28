@@ -1,3 +1,4 @@
+/** Tests for the project context plugin: publishable-key resolution and tenant binding. */
 import { describe, expect, test } from 'bun:test'
 import { treaty } from '@elysia/eden'
 import { Elysia } from 'elysia'

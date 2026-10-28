@@ -1,3 +1,4 @@
+/** Tests for OpenAPI generation: schema coverage and documentation metadata. */
 import { describe, expect, test } from 'bun:test'
 
 // app.ts reads config.jwtSecret and the platform DB config at import time

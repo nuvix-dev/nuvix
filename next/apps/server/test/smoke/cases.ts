@@ -1,15 +1,15 @@
 /**
- * Declarative behavioral-parity cases for the smoke harness.
+ * Declarative behavioral cases for the smoke harness.
  *
- * Each case describes one request against the real v2 app plus the
+ * Each case describes one request against the real composed app plus the
  * *behavioral* outcome we promise (status, content-type class, cache
  * semantics, envelope shape). This is intentionally NOT a byte-diff:
- * v2 envelopes differ from v1 by design (see docs/api/_conventions.md).
+ * envelope shapes are governed by docs/api/_conventions.md.
  *
  * When NUVIX_V1_BASE_URL is set, the runner also fetches the same route
- * from the live old app (path defaults to swapping /v2 -> /v1) and prints
- * a normalized diff report. That comparison is informational; the v2
- * assertions below are the hard contract.
+ * from the configured reference deployment (path defaults to swapping
+ * /v2 -> /v1) and prints a normalized diff report. That comparison is
+ * informational; the assertions below are the hard contract.
  */
 export interface ParityCase {
   name: string
@@ -46,9 +46,9 @@ export interface ParityCase {
   assertJson?: (json: Record<string, unknown>) => string | null
 
   /**
-   * Old-app path for the informational v1 comparison.
-   * Defaults to `path` with the /v2 prefix swapped to /v1.
-   * Set to null to skip the comparison for this case.
+   * Path used on the reference deployment for the informational
+   * side-by-side comparison. Defaults to `path` with the /v2 prefix
+   * swapped to /v1. Set to null to skip the comparison for this case.
    */
   v1Path?: string | null
 }

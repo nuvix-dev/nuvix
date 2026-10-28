@@ -1,3 +1,4 @@
+/** Tests for the shared error hierarchy and problem-details rendering. */
 import { describe, expect, test } from 'bun:test'
 import { treaty } from '@elysia/eden'
 import type { Translator } from '@nuvix/i18n'
@@ -80,7 +81,7 @@ describe('problem+json error mapping (via treaty)', () => {
     expect(body.code).toBe('user_not_found')
   })
 
-  test('translates detail via messageKey + params (D34)', async () => {
+  test('translates detail via messageKey + params', async () => {
     const { error } = await client.v2.localized.get()
 
     expect(error!.status).toBe(409)

@@ -1,3 +1,4 @@
+/** Tests for tenant-local secret API-key authentication. */
 import { describe, expect, test } from 'bun:test'
 import type { ResolvedApiKey, ResolvedProject } from '@nuvix/core/platform'
 import type { TenantResource, TenantResourcePool } from '@nuvix/core/tenants'

@@ -1,3 +1,4 @@
+/** Tests for the avatars service and route: initials generation and image proxies. */
 import { describe, expect, test } from 'bun:test'
 import { treaty } from '@elysia/eden'
 import { Elysia } from 'elysia'
@@ -53,7 +54,7 @@ describe('avatar service', () => {
     expect(result.headers['Cache-Control']).toContain('immutable')
   })
 
-  test('initials: missing name falls back to NA (v1 parity)', async () => {
+  test('initials: missing name falls back to NA', async () => {
     const result = await service.initials({})
     expect(isPng(result.body)).toBe(true)
   })

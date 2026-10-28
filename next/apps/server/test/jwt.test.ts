@@ -1,3 +1,4 @@
+/** Tests for JWT signing/verification helpers. */
 import { describe, expect, test } from 'bun:test'
 import { signJwt, verifyJwt } from '../src/utils/jwt'
 

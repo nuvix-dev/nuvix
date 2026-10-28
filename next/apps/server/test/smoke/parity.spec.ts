@@ -2,12 +2,12 @@
  * Behavioral smoke harness — boots the REAL composed app (not a probe) and
  * runs every case in ./cases.ts against it via app.handle().
  *
- * v2 assertions are hard failures. When NUVIX_V1_BASE_URL is set (e.g.
+ * Assertions are hard failures. When NUVIX_V1_BASE_URL is set (e.g.
  * `NUVIX_V1_BASE_URL=http://localhost:3000 bun test test/smoke`), each case
- * is additionally replayed against the live old app and a normalized
- * side-by-side report is printed after the run. The v1 comparison is
- * informational: contracts intentionally differ, the report exists to make
- * behavioral drift visible during migration review.
+ * is additionally replayed against the configured reference deployment and
+ * a normalized side-by-side report is printed after the run. That
+ * comparison is informational: the report exists to make behavioral drift
+ * between deployments visible during review.
  */
 process.env.NUVIX_INTERNAL_DATABASE_URL ??= 'postgres://localhost:5432/nuvix'
 process.env.NUVIX_JWT_SECRET ??= 'smoke-test-secret'
@@ -101,7 +101,7 @@ async function compareWithV1(case_: ParityCase): Promise<V1Comparison> {
 afterAll(async () => {
   if (!V1_BASE || v1Results.length === 0) return
   const matches = v1Results.filter((r) => r.verdict === 'match').length
-  console.log(`\n── v1 parity report (${V1_BASE}) ─────────────────────────`)
+  console.log(`\n── reference comparison report (${V1_BASE}) ─────────────`)
   for (const r of v1Results) {
     const mark = r.verdict === 'match' ? '✓' : r.verdict === 'diff' ? '~' : '!'
     console.log(`${mark} ${r.name}${r.detail ? ` — ${r.detail}` : ''}`)
@@ -109,7 +109,7 @@ afterAll(async () => {
   console.log(`── ${matches}/${v1Results.length} normalized behaviors match ──\n`)
 })
 
-describe('smoke: real-app behavioral parity', () => {
+describe('smoke: real-app behavior contract', () => {
   for (const c of cases) {
     test(c.name, async () => {
       // Arrange

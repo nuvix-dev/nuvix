@@ -1,3 +1,4 @@
+/** Tests for the request pipeline order: publishable key, project, tenant, auth, session. */
 import { describe, expect, test } from 'bun:test'
 import { Elysia } from 'elysia'
 import { cors } from '../src/plugins/cors'
