@@ -1,7 +1,9 @@
+/** HTTP surface for a user's sessions (list, mint, revoke one/all). */
 import { Query, type Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
 import { UserSessionsService } from './service'
 
+/** Bind user-session routes against the composed tenant context. */
 export const userSessionsRoutes = () =>
   new Elysia()
     .derive('plugin', (ctx) => ({

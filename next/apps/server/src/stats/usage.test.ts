@@ -1,9 +1,10 @@
+/** Tests for usage range parsing and stats series reads with zero-filled windows. */
 import { describe, expect, it } from 'bun:test'
 import { Doc, type Session } from '@nuvix/db'
 import { MetricFor, MetricPeriod } from '@nuvix/utils'
 import { parseUsageRange, readUsageSeries } from './usage'
 
-describe('parseUsageRange (legacy RangeQueryDTO parity)', () => {
+describe('parseUsageRange', () => {
   it('accepts the documented ranges and defaults to 30d', () => {
     expect(parseUsageRange(undefined)).toBe('30d')
     expect(parseUsageRange('')).toBe('30d')
@@ -13,13 +14,13 @@ describe('parseUsageRange (legacy RangeQueryDTO parity)', () => {
     expect(parseUsageRange('90d')).toBe('90d')
   })
 
-  it('rejects unknown ranges (v1 DTO @IsIn parity)', () => {
-    expect(() => parseUsageRange('1d')).toThrow() // v1 default '1d' was itself invalid!
+  it('rejects unknown ranges', () => {
+    expect(() => parseUsageRange('1d')).toThrow()
     expect(() => parseUsageRange('forever')).toThrow()
   })
 })
 
-describe('readUsageSeries (v1 getUsage reads parity)', () => {
+describe('readUsageSeries', () => {
   function statsSession(inf: Record<string, number>, dayRows: Doc[]) {
     return {
       findOne: async (

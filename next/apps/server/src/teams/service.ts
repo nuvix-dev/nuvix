@@ -1,3 +1,4 @@
+/** Team management: CRUD, owner-scoped permissions, preferences, and membership teardown on delete. */
 import { Doc, ID, Permission, Query, Role, type Session } from '@nuvix/db'
 import { ConflictError, NotFoundError, NotImplementedError } from '../shared/errors'
 import type { Memberships, Teams, TeamsDoc, UsersDoc } from '../types/generated'
@@ -13,9 +14,11 @@ export interface UpdateTeamInput {
   name: string
 }
 
+/** Create, read, update, and remove teams over the tenant session. */
 export class TeamsService {
   constructor(private readonly session: Session) {}
 
+  /** List teams with optional filters and search; returns the unfiltered total. */
   async findAll(
     queries: Query[] = [],
     search?: string,
@@ -35,6 +38,7 @@ export class TeamsService {
     }
   }
 
+  /** Fetch one team or throw not-found. */
   async findOne(teamId: string): Promise<TeamView> {
     const doc = (await this.session.getDocument('teams', teamId)) as TeamsDoc
     if (doc.empty()) {
@@ -43,6 +47,7 @@ export class TeamsService {
     return formatTeam(doc)
   }
 
+  /** Create a team; when a creator is given, seed their `owner` membership. */
   async create(userId: string | undefined, input: CreateTeamInput): Promise<TeamView> {
     const teamId =
       input.teamId && input.teamId !== 'unique()' ? ID.custom(input.teamId) : ID.unique()
@@ -99,6 +104,7 @@ export class TeamsService {
     return formatTeam(createdTeam)
   }
 
+  /** Rename a team and refresh its search text. */
   async update(teamId: string, input: UpdateTeamInput): Promise<TeamView> {
     const doc = (await this.session.getDocument('teams', teamId)) as TeamsDoc
     if (doc.empty()) {
@@ -112,6 +118,7 @@ export class TeamsService {
     return formatTeam(updated)
   }
 
+  /** Delete a team after removing all of its memberships. */
   async remove(teamId: string): Promise<void> {
     const doc = (await this.session.getDocument('teams', teamId)) as TeamsDoc
     if (doc.empty()) {
@@ -126,6 +133,7 @@ export class TeamsService {
     await this.session.deleteDocument('teams', teamId)
   }
 
+  /** Read the team's preference map. */
   async getPrefs(teamId: string): Promise<Record<string, unknown>> {
     const doc = (await this.session.getDocument('teams', teamId)) as TeamsDoc
     if (doc.empty()) {
@@ -134,6 +142,7 @@ export class TeamsService {
     return (doc.get('prefs') ?? {}) as Record<string, unknown>
   }
 
+  /** Replace the team's preference map wholesale. */
   async setPrefs(teamId: string, prefs: Record<string, unknown>): Promise<Record<string, unknown>> {
     const doc = (await this.session.getDocument('teams', teamId)) as TeamsDoc
     if (doc.empty()) {
@@ -145,6 +154,7 @@ export class TeamsService {
     return prefs
   }
 
+  /** Placeholder until team-scoped logs exist. */
   async getLogs(_teamId: string): Promise<never> {
     throw new NotImplementedError('Team logs are not implemented', {
       code: 'general_not_implemented',

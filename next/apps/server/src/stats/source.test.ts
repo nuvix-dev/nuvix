@@ -1,3 +1,4 @@
+/** Tests for usage metric wiring: document-event listeners and request-path network metrics. */
 import { describe, expect, it } from 'bun:test'
 import { Doc } from '@nuvix/db'
 import { MetricFor } from '@nuvix/utils'
@@ -23,7 +24,7 @@ function fakeDoc(collection: string, attrs: Record<string, unknown> = {}) {
   return doc
 }
 
-describe('wireStatsDatabase (v1 StatsHelper parity)', () => {
+describe('wireStatsDatabase', () => {
   it('maps document creates/deletes to metric batches', async () => {
     const enqueued: Array<{
       projectId: string
@@ -57,8 +58,7 @@ describe('wireStatsDatabase (v1 StatsHelper parity)', () => {
     remove(fakeDoc('files', { sizeOriginal: 512 }))
     create(fakeDoc('stats')) // unmatched collection → no metrics
 
-    // Files carrying a bucketInternalId also record per-bucket metrics
-    // (v1 `{bucketInternalId}.files[.storage]` key parity).
+    // Files carrying a bucketInternalId also record per-bucket metrics.
     create(fakeDoc('files', { sizeOriginal: 2048, bucketInternalId: 9 }))
 
     expect(enqueued).toEqual([
@@ -101,7 +101,7 @@ describe('wireStatsDatabase (v1 StatsHelper parity)', () => {
       { key: '9.files.storage', value: 2048 },
     ])
 
-    // Batch creates count the batch size (v1 DocumentsCreate parity).
+    // Batch creates count the batch size.
     batchCreate([fakeDoc('users'), fakeDoc('users'), fakeDoc('users')])
     expect(enqueued.at(-1)!.metrics).toEqual([{ key: MetricFor.USERS, value: 3 }])
   })
@@ -123,7 +123,7 @@ describe('wireStatsDatabase (v1 StatsHelper parity)', () => {
   })
 })
 
-describe('statsRequestSource (v1 StatsHook parity)', () => {
+describe('statsRequestSource', () => {
   function makeApp(
     enqueue: (projectId: string, metrics: Array<{ key: string; value: number }>) => Promise<void>,
     auth: unknown = { type: 'session' },
@@ -162,7 +162,7 @@ describe('statsRequestSource (v1 StatsHook parity)', () => {
     const metrics = enqueued[0]!.metrics
     expect(metrics.find((m) => m.key === MetricFor.REQUESTS)?.value).toBe(1)
     expect(metrics.find((m) => m.key === MetricFor.INBOUND)?.value).toBe(0)
-    // v1 parity: serialized response body size.
+    // Outbound is the serialized response body size.
     expect(metrics.find((m) => m.key === MetricFor.OUTBOUND)?.value).toBe(
       Buffer.byteLength(JSON.stringify({ status: 'ok' })),
     )
@@ -191,13 +191,13 @@ describe('statsRequestSource (v1 StatsHook parity)', () => {
     await new Promise((resolve) => setTimeout(resolve, 10))
 
     expect(enqueued).toHaveLength(1)
-    // v1 parity: the serialized JSON body size (Fastify Content-Length).
+    // Outbound is the serialized JSON body size.
     expect(enqueued[0]!.metrics.find((m) => m.key === MetricFor.OUTBOUND)?.value).toBe(
       Buffer.byteLength(JSON.stringify({ status: 'ok', note: '0123456789' })),
     )
   })
 
-  it('skips API-key callers (v1 isAdminUser parity)', async () => {
+  it('skips API-key callers', async () => {
     const enqueued: Array<{
       projectId: string
       metrics: Array<{ key: string; value: number }>
@@ -236,7 +236,7 @@ describe('statsRequestSource (v1 StatsHook parity)', () => {
     expect(enqueued).toHaveLength(0)
   })
 
-  it('respects the enabled gate (v1 enableStats parity)', async () => {
+  it('respects the enabled gate', async () => {
     const enqueued: Array<{
       projectId: string
       metrics: Array<{ key: string; value: number }>

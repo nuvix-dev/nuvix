@@ -1,3 +1,4 @@
+/** Admin session management for a user: list, mint, delete, and revoke all. */
 import { Auth } from '@nuvix/core/auth'
 import { Doc, ID, Permission, Query, Role, type Session } from '@nuvix/db'
 import { NotFoundError } from '../../shared/errors'
@@ -5,9 +6,11 @@ import type { Sessions, SessionsDoc, UsersDoc } from '../../types/generated'
 import { sessionDetectorFields } from '../../utils/session-intel'
 import { formatSession, type SessionView } from '../formatter'
 
+/** Create and revoke a user's sessions. */
 export class UserSessionsService {
   constructor(private readonly session: Session) {}
 
+  /** List a user's sessions with filters. */
   async findAll(
     userId: string,
     queries: Query[] = [],
@@ -27,6 +30,7 @@ export class UserSessionsService {
     }
   }
 
+  /** Mint a new session, decorating it with UA/geo intelligence. */
   async create(
     userId: string,
     options: {
@@ -69,6 +73,7 @@ export class UserSessionsService {
     return formatSession(sessionDoc, sessionId)
   }
 
+  /** Revoke one session. */
   async delete(userId: string, sessionId: string): Promise<{ status: 'success' }> {
     const sessionDoc = (await this.session.getDocument('sessions', sessionId)) as SessionsDoc
     if (sessionDoc.empty() || sessionDoc.get('userId') !== userId) {
@@ -81,6 +86,7 @@ export class UserSessionsService {
     return { status: 'success' }
   }
 
+  /** Revoke every session the user holds. */
   async deleteAll(userId: string): Promise<{ status: 'success' }> {
     const userDoc = (await this.session.getDocument('users', userId)) as UsersDoc
     if (userDoc.empty()) {

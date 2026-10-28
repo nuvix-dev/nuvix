@@ -1,9 +1,10 @@
+/** Tests for webhook event matching and fan-out enqueue behavior. */
 import { describe, expect, it } from 'bun:test'
 import type { ProjectRegistry } from '@nuvix/core/platform'
 import type { QueueManager } from '@nuvix/core/queues'
 import { createWebhookFanout, eventMatchesPattern, webhookSubscribesToEvent } from './dispatch'
 
-describe('eventMatchesPattern (v1 parity)', () => {
+describe('eventMatchesPattern', () => {
   it('matches wildcards', () => {
     expect(eventMatchesPattern('user.create', '*')).toBe(true)
     expect(eventMatchesPattern('user.create', 'user.*')).toBe(true)
@@ -18,9 +19,9 @@ describe('eventMatchesPattern (v1 parity)', () => {
     expect(eventMatchesPattern('users.create', 'user.*')).toBe(false)
   })
 
-  it('treats regex metacharacters literally (v1 escaping parity)', () => {
-    // v1 escapes `.`, `+`, etc. before expanding `*` — metacharacters in a
-    // pattern are LITERAL characters, not regex syntax.
+  it('treats regex metacharacters literally', () => {
+    // `.`, `+`, etc. are escaped before `*` expands — metacharacters in
+    // a pattern are LITERAL characters, not regex syntax.
     expect(eventMatchesPattern('CUSTOMlist', 'CUSTOM+list')).toBe(false)
     expect(eventMatchesPattern('CUSTOM+list', 'CUSTOM+list')).toBe(true)
     expect(eventMatchesPattern('CUSTOMXlist', 'CUSTOM.+list')).toBe(false)
@@ -29,7 +30,7 @@ describe('eventMatchesPattern (v1 parity)', () => {
   })
 })
 
-describe('webhookSubscribesToEvent (v1 parity)', () => {
+describe('webhookSubscribesToEvent', () => {
   it('matches any subscribed pattern', () => {
     expect(webhookSubscribesToEvent({ events: ['team.*', 'user.create'] }, 'user.create')).toBe(
       true,
@@ -56,7 +57,7 @@ describe('createWebhookFanout', () => {
     return { registry, queues }
   }
 
-  it('enqueues one delivery job per subscribed enabled webhook with v1 retry policy', async () => {
+  it('enqueues one delivery job per subscribed enabled webhook with the documented retry policy', async () => {
     const calls: unknown[] = []
     const { registry, queues } = makeDeps(
       [
@@ -95,7 +96,7 @@ describe('createWebhookFanout', () => {
     expect(first.data.event).toBe('user.create')
     expect(first.data.webhookInternalId).toBe(11)
     expect(first.data.attempts).toBe(0)
-    // v1 retry policy
+    // Retry policy mirrors the enqueuer contract: 5 attempts, exponential backoff.
     expect(first.opts.attempts).toBe(5)
     expect(first.opts.backoff).toEqual({ type: 'exponential', delay: 1000 })
     expect(first.opts.removeOnComplete).toEqual({ age: 3600 })

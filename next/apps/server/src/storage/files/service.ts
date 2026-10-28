@@ -1,3 +1,4 @@
+/** File management inside buckets: uploads, downloads with range streaming, and push-notification assets. */
 import * as fs from 'node:fs/promises'
 import nodePath from 'node:path'
 import {
@@ -663,13 +664,10 @@ export class FilesService {
   }
 
   /**
-   * Stream a file for push-notification rich media (v1
-   * `getFileForPushNotification` parity): entitlement comes from a
-   * short-lived signed JWT (projectId/bucketId/fileId claims), bucket
-   * permissions are not consulted, and disabled buckets stay hidden.
-   * v1 bug fixed en route: v1 signed the JWT without the `projectId`
-   * claim its own verifier demanded — every push fetch failed; v2 signs
-   * and verifies all three claims.
+   * Stream a file for push-notification rich media: entitlement comes
+   * from a short-lived signed JWT whose projectId/bucketId/fileId
+   * claims must all match, bucket permissions are not consulted, and
+   * disabled buckets stay hidden.
    */
   async serveFileForPush(
     bucketId: string,
@@ -726,7 +724,7 @@ export class FilesService {
     return this.readForStream(filePath, mimeType, fileName, size, rangeHeader)
   }
 
-  /** Shared range/streaming reader (v1 serve tail parity). */
+  /** Shared range/streaming reader backing every download path. */
   private async readForStream(
     filePath: string,
     mimeType: string,

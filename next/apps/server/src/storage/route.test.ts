@@ -1,3 +1,4 @@
+/** Route tests for storage: upload/download flows and signed push-asset streaming. */
 import { describe, expect, it } from 'bun:test'
 import { Doc, type Session } from '@nuvix/db'
 import { Translator } from '@nuvix/i18n'
@@ -181,7 +182,7 @@ describe('Storage Routes', () => {
     expect(json.name).toBe('Updated Read Bucket')
   })
 
-  it('streams push assets for a valid signed JWT (v1 parity)', async () => {
+  it('streams push assets for a valid signed JWT', async () => {
     const { signJwt } = await import('@nuvix/core/auth')
     const fs = await import('node:fs/promises')
     const assetPath = '/tmp/opencode/push-asset-test.png'

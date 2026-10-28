@@ -1,3 +1,4 @@
+/** Admin user management: creation, profile updates, identities, tokens, memberships, and usage reads. */
 import { AuditService } from '@nuvix/core/audit'
 import { hashPassword } from '@nuvix/core/auth'
 import { Doc, ID, Permission, Query, Role, type Session } from '@nuvix/db'
@@ -27,6 +28,7 @@ import {
 } from './formatter'
 import type { LogView } from './logs-view'
 
+/** Fields for creating a user; password hashing algorithm is chosen by the caller. */
 export interface CreateUserInput {
   userId?: string
   email?: string
@@ -35,12 +37,14 @@ export interface CreateUserInput {
   name?: string
 }
 
+/** CRUD and administrative helpers for project users, backed by the tenant session. */
 export class UsersService {
   constructor(
     private readonly session: Session,
     private readonly jwtSecret?: string,
   ) {}
 
+  /** List users with optional filters and search; returns the unfiltered total. */
   async findAll(
     queries: Query[] = [],
     search?: string,
@@ -60,6 +64,7 @@ export class UsersService {
     }
   }
 
+  /** Fetch one user or throw not-found. */
   async findOne(userId: string): Promise<UserView> {
     const userDoc = (await this.session.getDocument('users', userId)) as UsersDoc
     if (userDoc.empty()) {
@@ -72,9 +77,7 @@ export class UsersService {
     return formatUser(userDoc, targets)
   }
 
-  /**
-   * List all identities in the project (admin) — v1 parity.
-   */
+  /** List OAuth2 identities linked in this project. */
   async getIdentities(
     queries: Query[] = [],
     search?: string,
@@ -94,9 +97,7 @@ export class UsersService {
     }
   }
 
-  /**
-   * Delete an identity (admin) — v1 parity.
-   */
+  /** Remove a linked identity; the user record is untouched. */
   async deleteIdentity(identityId: string): Promise<void> {
     const identity = (await this.session.getDocument('identities', identityId)) as IdentitiesDoc
     if (identity.empty()) {
@@ -107,18 +108,25 @@ export class UsersService {
     await this.session.deleteDocument('identities', identityId)
   }
 
+  /** Create a user with an argon2id password hash (default). */
   async create(input: CreateUserInput): Promise<UserView> {
     return this.createUser(input, 'argon2id')
   }
 
+  /** Create a user with an argon2id password hash. */
   async createArgon2(input: CreateUserInput): Promise<UserView> {
     return this.createUser(input, 'argon2id')
   }
 
+  /** Create a user with a bcrypt password hash. */
   async createBcrypt(input: CreateUserInput): Promise<UserView> {
     return this.createUser(input, 'bcrypt')
   }
 
+  /**
+   * Shared creation path: uniqueness checks, password hashing, and
+   * email/SMS delivery targets seeded from the identity fields.
+   */
   private async createUser(
     input: CreateUserInput,
     algorithm: 'argon2id' | 'bcrypt',
@@ -232,6 +240,7 @@ export class UsersService {
     return formatUser(userDoc, targets)
   }
 
+  /** Enable or disable a user account. */
   async updateStatus(userId: string, status: boolean): Promise<UserView> {
     const userDoc = (await this.session.getDocument('users', userId)) as UsersDoc
     if (userDoc.empty()) {
@@ -242,6 +251,7 @@ export class UsersService {
     return formatUser(updated, userDoc.get('targets') || [])
   }
 
+  /** Update the user's display name. */
   async updateName(userId: string, name: string): Promise<UserView> {
     const userDoc = (await this.session.getDocument('users', userId)) as UsersDoc
     if (userDoc.empty()) {
@@ -258,6 +268,7 @@ export class UsersService {
     return formatUser(updated, userDoc.get('targets') || [])
   }
 
+  /** Update the user's email and its delivery target. */
   async updateEmail(userId: string, email: string): Promise<UserView> {
     const normalized = email.toLowerCase()
     const userDoc = (await this.session.getDocument('users', userId)) as UsersDoc
@@ -316,6 +327,7 @@ export class UsersService {
     return formatUser(updated)
   }
 
+  /** Update the user's phone and its delivery target. */
   async updatePhone(userId: string, phone: string): Promise<UserView> {
     const userDoc = (await this.session.getDocument('users', userId)) as UsersDoc
     if (userDoc.empty()) {
@@ -373,6 +385,7 @@ export class UsersService {
     return formatUser(updated)
   }
 
+  /** Set a new password, appending the prior hash to the history. */
   async updatePassword(userId: string, password: string): Promise<UserView> {
     const userDoc = (await this.session.getDocument('users', userId)) as UsersDoc
     if (userDoc.empty()) {
@@ -391,6 +404,7 @@ export class UsersService {
     return formatUser(updated)
   }
 
+  /** Replace the user's label set. */
   async updateLabels(userId: string, labels: string[]): Promise<UserView> {
     const userDoc = (await this.session.getDocument('users', userId)) as UsersDoc
     if (userDoc.empty()) {
@@ -401,6 +415,7 @@ export class UsersService {
     return formatUser(updated)
   }
 
+  /** Set the email verification flag directly (admin override). */
   async updateEmailVerification(userId: string, emailVerification: boolean): Promise<UserView> {
     const userDoc = (await this.session.getDocument('users', userId)) as UsersDoc
     if (userDoc.empty()) {
@@ -411,6 +426,7 @@ export class UsersService {
     return formatUser(updated)
   }
 
+  /** Set the phone verification flag directly (admin override). */
   async updatePhoneVerification(userId: string, phoneVerification: boolean): Promise<UserView> {
     const userDoc = (await this.session.getDocument('users', userId)) as UsersDoc
     if (userDoc.empty()) {
@@ -421,6 +437,7 @@ export class UsersService {
     return formatUser(updated)
   }
 
+  /** Read the user's preference map. */
   async getPrefs(userId: string): Promise<Record<string, unknown>> {
     const userDoc = (await this.session.getDocument('users', userId)) as UsersDoc
     if (userDoc.empty()) {
@@ -429,6 +446,7 @@ export class UsersService {
     return (userDoc.get('prefs') ?? {}) as Record<string, unknown>
   }
 
+  /** Merge the given keys into the user's preference map. */
   async updatePrefs(
     userId: string,
     prefs: Record<string, unknown>,
@@ -442,6 +460,7 @@ export class UsersService {
     return prefs
   }
 
+  /** Delete the user along with their targets and outstanding tokens. */
   async delete(userId: string): Promise<{ status: 'success' }> {
     const userDoc = (await this.session.getDocument('users', userId)) as UsersDoc
     if (userDoc.empty()) {
@@ -474,9 +493,9 @@ export class UsersService {
   }
 
   /**
-   * Activity logs for a user (admin) — v1 parity: reads the `audit`
-   * collection by the user's internal sequence and decorates each log with
-   * detected UA fields + geoip country + localized country name.
+   * Activity logs for a user: reads the `audit` collection by the
+   * user's internal sequence and decorates each log with detected UA
+   * fields plus a geoip-resolved, localized country name.
    */
   async getLogs(
     userId: string,
@@ -538,6 +557,7 @@ export class UsersService {
     return { total, logs: output }
   }
 
+  /** Mint a short-lived JWT for the user (optionally bound to a session). */
   async createJwt(
     userId: string,
     sessionId?: string,
@@ -561,6 +581,7 @@ export class UsersService {
     return { jwt: token }
   }
 
+  /** Create a typed verification token (with optional secret phrase). */
   async createToken(
     userId: string,
     type: number | string,
@@ -591,6 +612,7 @@ export class UsersService {
     return formatToken(tokenDoc)
   }
 
+  /** List the user's team memberships. */
   async getMemberships(
     userId: string,
     queries: Query[] = [],
@@ -610,6 +632,10 @@ export class UsersService {
     }
   }
 
+  /**
+   * Users/sessions usage series; totals come from recorded stats rows,
+   * not live counts.
+   */
   async getUsage(range = '30d'): Promise<{
     range: string
     usersTotal: number
@@ -617,7 +643,7 @@ export class UsersService {
     users: Array<{ date: string; value: number }>
     sessions: Array<{ date: string; value: number }>
   }> {
-    // v1 parity: usage reads the recorded `stats` rows (INF totals + the
+    // Totals come from recorded `stats` rows (INF totals + the
     // period-bucketed series), not live counts.
     const usageRange = parseUsageRange(range)
     const usage = await readUsageSeries(

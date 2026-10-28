@@ -1,8 +1,10 @@
+/** HTTP surface for team CRUD and preferences. */
 import { type Doc, Query, type Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
 import type { Users } from '../types/generated'
 import { TeamsService } from './service'
 
+/** Bind team core routes against the composed tenant context. */
 export const teamCoreRoutes = () =>
   new Elysia()
     .derive('plugin', (ctx) => ({

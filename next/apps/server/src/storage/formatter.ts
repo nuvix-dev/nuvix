@@ -1,5 +1,7 @@
+/** Projection helpers: bucket and file documents to API response shapes. */
 import type { BucketsDoc, FilesDoc } from '../types/generated'
 
+/** API-projected bucket. */
 export interface BucketView {
   $id: string
   $createdAt: string
@@ -15,6 +17,7 @@ export interface BucketView {
   antivirus: boolean
 }
 
+/** API-projected file. */
 export interface FileView {
   $id: string
   $createdAt: string
@@ -30,6 +33,7 @@ export interface FileView {
   chunksUploaded: number
 }
 
+/** Global storage usage series and totals. */
 export interface StorageUsageView {
   range: string
   bucketsTotal: number
@@ -40,6 +44,7 @@ export interface StorageUsageView {
   storage: { value: number; date: string }[]
 }
 
+/** Per-bucket usage series and totals. */
 export interface BucketUsageView {
   range: string
   filesTotal: number
@@ -48,6 +53,7 @@ export interface BucketUsageView {
   storage: { value: number; date: string }[]
 }
 
+/** Map a bucket document to its API projection. */
 export function formatBucket(doc: BucketsDoc): BucketView {
   return {
     $id: doc.getId(),
@@ -65,6 +71,7 @@ export function formatBucket(doc: BucketsDoc): BucketView {
   }
 }
 
+/** Map a file document to its API projection. */
 export function formatFile(doc: FilesDoc): FileView {
   return {
     $id: doc.getId(),

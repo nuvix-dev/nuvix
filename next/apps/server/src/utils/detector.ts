@@ -1,9 +1,8 @@
 /**
- * User-agent detection — Bun-native port of legacy
- * `libs/core/src/helpers/detector.helper.ts` (same `ua-parser-js` engine,
- * same session/log field mapping: osCode/osName/osVersion, clientType/
+ * User-agent detection over the `ua-parser-js` engine, mapping into the
+ * session/log field shape: osCode/osName/osVersion, clientType/
  * clientCode/clientName/clientVersion/clientEngine/clientEngineVersion,
- * deviceName/deviceBrand/deviceModel).
+ * deviceName/deviceBrand/deviceModel.
  */
 
 import { UAParser } from 'ua-parser-js'

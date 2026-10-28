@@ -1,3 +1,4 @@
+/** HTTP surface for file upload/download/management inside buckets, including the push-asset stream. */
 import type { TenantResource } from '@nuvix/core/tenants'
 import { type Doc, Query, type Session } from '@nuvix/db'
 import { Local } from '@nuvix/storage'
@@ -6,6 +7,7 @@ import { Elysia, t } from 'elysia'
 import type { Users } from '../../types/generated'
 import { FilesService } from './service'
 
+/** Bind file routes against the composed tenant context. */
 export const storageFilesRoutes = () =>
   new Elysia()
     .derive('plugin', (ctx) => ({
@@ -366,7 +368,7 @@ export const storageFilesRoutes = () =>
       },
     )
 
-    // 6b. Push-notification asset (internal; v1 parity)
+    // Push-notification asset stream (internal surface; JWT-authorized).
     .get(
       '/buckets/:bucketId/files/:fileId/push',
       {

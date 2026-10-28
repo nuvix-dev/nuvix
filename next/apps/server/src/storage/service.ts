@@ -1,3 +1,4 @@
+/** Barrel for the storage service layer. */
 export {
   type CreateBucketInput,
   StorageService,

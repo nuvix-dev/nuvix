@@ -1,3 +1,4 @@
+/** Route tests for admin user management, identities, and activity logs. */
 import { describe, expect, it } from 'bun:test'
 import { Doc, type Session } from '@nuvix/db'
 import { Translator } from '@nuvix/i18n'
@@ -225,7 +226,7 @@ describe('Users Routes', () => {
     expect(getRes.status).toBe(404)
   })
 
-  it('lists user activity logs via GET /users/:userId/logs (v1 parity)', async () => {
+  it('lists user activity logs via GET /users/:userId/logs', async () => {
     await mockSession.createDocument(
       'users',
       new Doc({ $id: 'user_logs_1', email: 'logs@example.com' }),
@@ -279,7 +280,7 @@ describe('Users Routes', () => {
     expect(data.usersTotal).toBeDefined()
   })
 
-  it('lists project identities via GET /users/identities (v1 parity)', async () => {
+  it('lists project identities via GET /users/identities', async () => {
     await mockSession.createDocument(
       'identities',
       new Doc({
@@ -302,7 +303,7 @@ describe('Users Routes', () => {
     expect(data.identities[0]!.provider).toBe('google')
   })
 
-  it('deletes an identity via DELETE /users/identities/:identityId (v1 parity)', async () => {
+  it('deletes an identity via DELETE /users/identities/:identityId', async () => {
     const res = await testApp.handle(
       new Request('http://localhost/users/identities/identity_1', {
         method: 'DELETE',

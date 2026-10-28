@@ -1,8 +1,6 @@
 /**
- * Webhook dispatch — v2 port of legacy `WebhooksService` fan-out half:
- * matches platform webhooks against domain events and enqueues delivery
- * jobs (BullMQ retries carry the v1 policy — 5 attempts, exponential
- * backoff from 1s).
+ * Webhook dispatch: matches platform webhooks against domain events and
+ * enqueues delivery jobs (5 attempts, exponential backoff from 1s).
  *
  * The dispatch boundary is injected via composition (`app.ts`): the request
  * path only sees `fanout(projectId, event, payload)`; the platform webhook
@@ -13,9 +11,9 @@ import type { ProjectRegistry, WebhookInfo } from '@nuvix/core/platform'
 import type { QueueManager } from '@nuvix/core/queues'
 
 /**
- * Wildcard-aware event matcher (v1 `eventMatchesPattern` parity):
- * `*` matches everything, `user.*` matches `user.create` etc.; all other
- * regex metacharacters are escaped first.
+ * Wildcard-aware event matcher: `*` matches everything, `user.*`
+ * matches `user.create` etc.; all other regex metacharacters are
+ * escaped first.
  */
 export function eventMatchesPattern(event: string, pattern: string): boolean {
   if (!pattern || !event) {
@@ -31,6 +29,7 @@ export function eventMatchesPattern(event: string, pattern: string): boolean {
   return new RegExp(regexString).test(event)
 }
 
+/** Whether any of the webhook's subscription patterns cover the event. */
 export function webhookSubscribesToEvent(
   webhook: Pick<WebhookInfo, 'events'>,
   event: string,
@@ -45,8 +44,8 @@ const WEBHOOKS_PER_EVENT_LIMIT = 100
  * Creates the production fan-out: enabled webhooks of the project that
  * subscribe to the event → bulk-enqueued delivery jobs. `httpUser`/
  * `httpPass`/`signatureKey` stay in the webhook record — the worker re-reads
- * it fresh from the platform DB before delivering (v1 parity), so job
- * payloads carry ids only.
+ * it fresh from the platform DB before delivering, so job payloads
+ * carry ids only.
  */
 export function createWebhookFanout(deps: {
   registry: ProjectRegistry
@@ -68,7 +67,7 @@ export function createWebhookFanout(deps: {
             attempts: 0,
           },
           {
-            attempts: 5, // v1 retry policy
+            attempts: 5,
             backoff: { type: 'exponential', delay: 1000 },
             removeOnComplete: { age: 3600 },
             removeOnFail: { age: 86400 },
@@ -82,8 +81,7 @@ export function createWebhookFanout(deps: {
 /**
  * Reads the project's enabled webhooks through the narrow registry
  * boundary and filters by event subscription. Errors are swallowed:
- * webhooks fan-out must never break the request path (v1 listener
- * semantics).
+ * webhook fan-out must never break the request path.
  */
 async function readWebhooks(
   registry: ProjectRegistry,

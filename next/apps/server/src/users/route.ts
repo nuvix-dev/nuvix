@@ -1,3 +1,4 @@
+/** Composition of the users subsystem: core routes plus sessions and push targets. */
 import { Elysia } from 'elysia'
 import type { GeoIP } from '../context/geoip'
 import { userCoreRoutes } from './routes'
@@ -10,6 +11,7 @@ export interface UserRoutesOptions {
   geoip?: GeoIP
 }
 
+/** Compose user routes. */
 export const userRoutes = (options: UserRoutesOptions = {}) =>
   new Elysia({ prefix: '/users' })
     .use(userCoreRoutes(options))

@@ -1,3 +1,4 @@
+/** Service tests for admin user management over a stubbed tenant session. */
 import { describe, expect, it, mock } from 'bun:test'
 import { Doc, type Session } from '@nuvix/db'
 import { ConflictError } from '../shared/errors'
@@ -36,7 +37,7 @@ describe('UsersService', () => {
   })
 
   it('should return usage statistics from recorded stats rows', async () => {
-    // v1 parity: INF rows carry totals; 1d rows carry the series and the
+    // INF rows carry totals; 1d rows carry the series and the
     // window is zero-filled to `limit` buckets.
     const infTotals: Record<string, number> = { users: 5, sessions: 7 }
     const dayRows: Doc[] = [

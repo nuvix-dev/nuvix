@@ -1,3 +1,4 @@
+/** Tests for bucket/file service behavior over a stubbed tenant session. */
 import { describe, expect, it } from 'bun:test'
 import { Doc, type Session } from '@nuvix/db'
 import type { Device } from '@nuvix/storage'
@@ -170,7 +171,7 @@ describe('Storage Module Services', () => {
     })
 
     it('returns storage usage stats from recorded stats rows', async () => {
-      // v1 parity: INF rows carry totals; the window is zero-filled.
+      // INF rows carry totals; the window is zero-filled.
       const infTotals: Record<string, number> = {
         buckets: 2,
         files: 3,

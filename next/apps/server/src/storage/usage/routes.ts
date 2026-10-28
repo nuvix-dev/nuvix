@@ -1,7 +1,9 @@
+/** HTTP surface for storage usage reads (global and per-bucket). */
 import type { Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
 import { StorageService } from '../buckets/service'
 
+/** Bind usage routes against the composed tenant context. */
 export const storageUsageRoutes = () =>
   new Elysia()
     .derive('plugin', (ctx) => ({

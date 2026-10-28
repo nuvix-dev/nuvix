@@ -1,7 +1,7 @@
 /**
- * Request client-IP extraction — proxy-aware (v1 parity): the
- * `x-forwarded-for` header wins (first hop), else the socket address.
- * Elysia beta.6 does not auto-populate a client IP (Phase 1 note).
+ * Request client-IP extraction, proxy-aware: the first hop of the
+ * `x-forwarded-for` header wins, else the socket address (Elysia beta.6
+ * does not auto-populate a client IP).
  */
 export function requestIp(
   request: Request,
@@ -17,7 +17,7 @@ export function requestIp(
   return ''
 }
 
-/** Caller user-agent (legacy recorded 'UNKNOWN' when absent). */
+/** Caller user-agent; `UNKNOWN` when the header is absent. */
 export function requestUserAgent(request: Request): string {
   return request.headers.get('user-agent') || 'UNKNOWN'
 }

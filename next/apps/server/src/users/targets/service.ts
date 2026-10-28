@@ -1,8 +1,10 @@
+/** Admin push/messaging target management for a user. */
 import { Doc, ID, Permission, Query, Role, type Session } from '@nuvix/db'
 import { NotFoundError } from '../../shared/errors'
 import type { Targets, TargetsDoc, UsersDoc } from '../../types/generated'
 import { formatTarget, type TargetView } from '../formatter'
 
+/** Fields for a new delivery target (provider type + identifier). */
 export interface CreateTargetInput {
   providerType: string
   identifier: string
@@ -10,15 +12,18 @@ export interface CreateTargetInput {
   name?: string
 }
 
+/** Mutable target fields. */
 export interface UpdateTargetInput {
   identifier?: string
   providerId?: string
   name?: string
 }
 
+/** CRUD a user's delivery targets. */
 export class UserTargetsService {
   constructor(private readonly session: Session) {}
 
+  /** List a user's targets with filters. */
   async findAll(
     userId: string,
     queries: Query[] = [],
@@ -38,6 +43,7 @@ export class UserTargetsService {
     }
   }
 
+  /** Fetch one target or throw not-found. */
   async findOne(userId: string, targetId: string): Promise<TargetView> {
     const targetDoc = (await this.session.getDocument('targets', targetId)) as TargetsDoc
     if (targetDoc.empty() || targetDoc.get('userId') !== userId) {
@@ -48,6 +54,7 @@ export class UserTargetsService {
     return formatTarget(targetDoc)
   }
 
+  /** Register a delivery target for the user. */
   async create(userId: string, input: CreateTargetInput): Promise<TargetView> {
     const userDoc = (await this.session.getDocument('users', userId)) as UsersDoc
     if (userDoc.empty()) {
@@ -77,6 +84,7 @@ export class UserTargetsService {
     return formatTarget(targetDoc)
   }
 
+  /** Update a target's name or identifier. */
   async update(userId: string, targetId: string, input: UpdateTargetInput): Promise<TargetView> {
     const targetDoc = (await this.session.getDocument('targets', targetId)) as TargetsDoc
     if (targetDoc.empty() || targetDoc.get('userId') !== userId) {
@@ -98,6 +106,7 @@ export class UserTargetsService {
     return formatTarget(updated)
   }
 
+  /** Remove a delivery target. */
   async delete(userId: string, targetId: string): Promise<{ status: 'success' }> {
     const targetDoc = (await this.session.getDocument('targets', targetId)) as TargetsDoc
     if (targetDoc.empty() || targetDoc.get('userId') !== userId) {

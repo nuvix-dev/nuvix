@@ -1,9 +1,11 @@
+/** HTTP surface for bucket CRUD and usage reads. */
 import { Query, type Session } from '@nuvix/db'
 import { Local } from '@nuvix/storage'
 import { config } from '@nuvix/utils'
 import { Elysia, t } from 'elysia'
 import { StorageService } from './service'
 
+/** Bind bucket routes against the composed tenant context. */
 export const storageBucketsRoutes = () =>
   new Elysia()
     .derive('plugin', (ctx) => ({

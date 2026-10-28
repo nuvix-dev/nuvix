@@ -1,17 +1,16 @@
 /**
- * API request logs — server routes over the tenant `api_logs`
+ * API request logs — admin routes over the tenant `api_logs`
  * collection (auth schema; each project's logs live in its own tenant
- * database — v1 stored them in the platform main pool because v1 was
- * not truly multi-tenant).
+ * database).
  *
- * Admin-only surface, two auth legs:
+ * Two auth legs:
  *  - tenant-local secret API key (`x-nuvix-key` → `auth.type === 'apiKey'`),
  *  - console operator JWT (`Authorization: Bearer`, `aud: 'console'`) —
  *    lets the console UI read project logs directly from the server API.
  *
- * v1 exposed an AST filter DSL on the platform surface (console-internal
- * machinery); v2 replaces it with simple query params — sufficient for
- * the console UI and greppable from the CLI.
+ * Filtering uses simple query params (method, status, path prefix,
+ * resource tag, timestamp bounds) — enough for the console UI and easy
+ * to grep from the CLI.
  */
 
 import { verifyJwt } from '@nuvix/core/auth'
@@ -37,6 +36,7 @@ async function consoleJwtSubject(
   return String(payload.sub)
 }
 
+/** Bind the logs routes; reads resolve through the composed tenant context. */
 export function logsRoutes(options: { jwtSecret: string }) {
   return new Elysia({ name: 'logs-routes' }).get(
     '/logs',

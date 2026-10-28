@@ -1,3 +1,4 @@
+/** Route tests for teams and memberships over a composed in-memory tenant database. */
 import { describe, expect, it } from 'bun:test'
 import { Doc, type Session } from '@nuvix/db'
 import { Translator } from '@nuvix/i18n'

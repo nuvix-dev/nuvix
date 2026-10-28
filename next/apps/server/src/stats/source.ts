@@ -1,18 +1,13 @@
 /**
- * Stats sources — v2 port of legacy `StatsHook` (request-path network
- * metrics) and `StatsHelper` (tenant document-event usage metrics).
+ * Usage metrics sources: request-path network metrics and tenant
+ * document-event metrics.
  *
- * Document events (v1 `connect` parity): the composition wires every
- * tenant `Database` through `wireStatsDatabase`, which registers
- * `calculate-usage` listeners and enqueues metric batches — users, teams,
- * sessions, buckets, files (+ storage bytes).
- *
- * v1 compensation notes (redesign, recorded in MIGRATION.md):
- *  - No `reduce` path: v2 deletes sessions/files row-by-row, so their
- *    DocumentDelete events already decrement the aggregate metrics.
- *  - No per-bucket `{bucketInternalId}.files` metrics: v2 keeps one
- *    `files` collection (bucketId attribute) instead of per-bucket
- *    collections.
+ * Document events: the composition wires every tenant `Database`
+ * through `wireStatsDatabase`, which registers `calculate-usage`
+ * listeners and enqueues metric batches — users, teams, sessions,
+ * buckets, files (+ storage bytes). Session and file deletes fire
+ * DocumentDelete events, so the aggregate metrics decrement there
+ * without a separate reduce path.
  */
 
 import { type Database, type Doc, Events } from '@nuvix/db'
@@ -27,8 +22,8 @@ export type StatsEnqueuer = (
 
 /**
  * Registers `calculate-usage` document-event listeners on a tenant
- * database (v1 `StatsHelper.connect` parity). Events must never break
- * request paths — the enqueue side is fire-and-forget.
+ * database. Events must never break request paths — the enqueue side
+ * is fire-and-forget.
  */
 export function wireStatsDatabase(deps: {
   projectId: string
@@ -40,7 +35,7 @@ export function wireStatsDatabase(deps: {
   const emit = (metrics: Array<{ key: string; value: number }>): void => {
     if (metrics.length === 0) return
     void enqueue(projectId, metrics).catch(() => {
-      // Stats emission must never break the request path (v1 parity).
+      // Stats emission must never break the request path.
     })
   }
 
@@ -72,10 +67,7 @@ function collectionOf(
   return first?.getCollection?.() ?? ''
 }
 
-/**
- * Metric mapping for one document delta (v1 `usageDatabaseListener`
- * parity, minus the per-bucket-collection keys — see module docs).
- */
+/** Metric keys for one document delta, keyed by the document's collection. */
 function documentMetrics(document: Doc, value: number): Array<{ key: string; value: number }> {
   return collectionMetrics(document.getCollection?.() ?? '', value, document)
 }
@@ -100,8 +92,7 @@ function collectionMetrics(
         { key: MetricFor.FILES, value },
         { key: MetricFor.FILES_STORAGE, value: size },
       ]
-      // Per-bucket metrics (v1 `{bucketInternalId}.files[.storage]` keys —
-      // v2 files carry bucketInternalId on the document).
+      // Per-bucket breakdown metrics, when the file carries its bucket id.
       const bucketInternalId = document?.get?.('bucketInternalId')
       if (bucketInternalId !== undefined && bucketInternalId !== null) {
         const bucketKey = String(bucketInternalId)
@@ -122,9 +113,8 @@ function collectionMetrics(
 }
 
 /**
- * Request-path network metrics (v1 `StatsHook.onResponse` parity):
- * requests count + inbound/outbound bytes. Skipped for API-key callers
- * (v1 `isAdminUser` parity — those are console/platform maintenance
+ * Request-path network metrics: request count + inbound/outbound
+ * bytes. Skipped for API-key callers (console/platform maintenance
  * traffic, not product usage) and when stats are disabled.
  */
 export function statsRequestSource(options: {
@@ -140,12 +130,12 @@ export function statsRequestSource(options: {
         if (!enabled()) return
         const ctx = raw as {
           request?: Request
-          /** Mapped handler return (Elysia afterResponse parity). */
+          /** The handler's mapped return value, not the raw Response. */
           responseValue?: unknown
           project?: unknown
           auth?: unknown
         }
-        // API-key callers are v1's "admin" traffic — not usage.
+        // API-key callers are maintenance traffic — not product usage.
         if (
           ctx.auth &&
           typeof ctx.auth === 'object' &&
@@ -158,11 +148,10 @@ export function statsRequestSource(options: {
         if (!projectId) return
 
         const inbound = Number(ctx.request?.headers.get('content-length')) || 0
-        // v1 measured the serialized response body (Fastify Content-Length).
-        // Elysia's afterResponse hands us the mapped `responseValue` —
+        // Outbound size is measured from the mapped `responseValue`:
         // strings/JSON serialize to the same wire size; Response returns
         // are already encoded (content-length set at send time, not
-        // visible here) and fall back to 0, same as v1's missing header.
+        // visible here) and fall back to 0.
         const value = ctx.responseValue
         let outbound = 0
         if (typeof value === 'string') {

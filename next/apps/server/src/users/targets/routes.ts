@@ -1,7 +1,9 @@
+/** HTTP surface for a user's delivery targets (CRUD). */
 import { Query, type Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
 import { UserTargetsService } from './service'
 
+/** Bind user-target routes against the composed tenant context. */
 export const userTargetsRoutes = () =>
   new Elysia()
     .derive('plugin', (ctx) => ({

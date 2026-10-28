@@ -1,3 +1,4 @@
+/** Service tests for teams and memberships behavior. */
 import { describe, expect, it } from 'bun:test'
 import { Doc, type Session } from '@nuvix/db'
 import {

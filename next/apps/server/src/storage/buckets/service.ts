@@ -1,3 +1,4 @@
+/** Bucket management: CRUD, file cleanup on delete, and storage usage reads over recorded stats. */
 import { Doc, ID, KeyValidator, Permission, Query, type Session } from '@nuvix/db'
 import type { Device } from '@nuvix/storage'
 import { MetricFor } from '@nuvix/utils'
@@ -192,7 +193,7 @@ export class StorageService {
    * Get global storage usage stats.
    */
   async getStorageUsage(range = '30d'): Promise<StorageUsageView> {
-    // v1 parity: usage reads the recorded `stats` rows, not live counts.
+    // Usage reads the recorded `stats` rows, not live counts.
     const usageRange = parseUsageRange(range)
     const usage = await readUsageSeries(
       this.session,
@@ -222,7 +223,7 @@ export class StorageService {
       })
     }
 
-    // v1 parity: per-bucket metrics recorded under the
+    // Per-bucket metrics are recorded under the
     // `{bucketInternalId}.files[.storage]` keys.
     const usageRange = parseUsageRange(range)
     const bucketInternalId = String(bucket.getSequence() ?? '')

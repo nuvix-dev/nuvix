@@ -1,3 +1,4 @@
+/** Projection helpers: user, target, session, membership, and token documents to API shapes. */
 import type {
   MembershipsDoc,
   SessionsDoc,
@@ -6,6 +7,7 @@ import type {
   UsersDoc,
 } from '../types/generated'
 
+/** API-projected user (delivery targets inlined). */
 export interface UserView {
   $id: string
   $createdAt: string
@@ -25,6 +27,7 @@ export interface UserView {
   targets: TargetView[]
 }
 
+/** API-projected push/messaging target. */
 export interface TargetView {
   $id: string
   $createdAt: string
@@ -37,6 +40,7 @@ export interface TargetView {
   expired: boolean
 }
 
+/** API-projected session; `current` marks the caller's own session. */
 export interface SessionView {
   $id: string
   $createdAt: string
@@ -69,6 +73,7 @@ export interface SessionView {
   mfaUpdatedAt: string
 }
 
+/** API-projected team membership. */
 export interface MembershipView {
   $id: string
   $createdAt: string
@@ -84,6 +89,7 @@ export interface MembershipView {
   roles: string[]
 }
 
+/** API-projected verification token (secret omitted). */
 export interface TokenView {
   $id: string
   $createdAt: string
@@ -94,6 +100,7 @@ export interface TokenView {
   secret?: string
 }
 
+/** Map a target document to its API projection. */
 export function formatTarget(doc: TargetsDoc): TargetView {
   return {
     $id: doc.getId(),
@@ -108,6 +115,7 @@ export function formatTarget(doc: TargetsDoc): TargetView {
   }
 }
 
+/** Map a session document, flagging the caller's current session. */
 export function formatSession(doc: SessionsDoc, currentSessionId?: string): SessionView {
   return {
     $id: doc.getId(),
@@ -143,6 +151,7 @@ export function formatSession(doc: SessionsDoc, currentSessionId?: string): Sess
   }
 }
 
+/** Map a membership document to its API projection. */
 export function formatMembership(doc: MembershipsDoc): MembershipView {
   return {
     $id: doc.getId(),
@@ -160,6 +169,7 @@ export function formatMembership(doc: MembershipsDoc): MembershipView {
   }
 }
 
+/** Map a token document to its API projection. */
 export function formatToken(doc: TokensDoc): TokenView {
   return {
     $id: doc.getId(),
@@ -171,6 +181,7 @@ export function formatToken(doc: TokensDoc): TokenView {
   }
 }
 
+/** Map a user document (and its targets) to the API projection. */
 export function formatUser(user: UsersDoc, targets: TargetsDoc[] = []): UserView {
   return {
     $id: user.getId(),

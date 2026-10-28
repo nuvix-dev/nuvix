@@ -1,17 +1,17 @@
 /**
- * API request-log source — v2 port of legacy `LogsHook.onResponse`:
- * every served request enqueues one `api_logs` row (method, path,
- * status, latency, IP, UA, redacted-in-worker metadata).
+ * API request-log source: every served request enqueues one `api_logs`
+ * row (method, path, status, timestamp, IP, UA, metadata redacted later
+ * in the worker).
  *
- * Skips (v1 parity):
- *  - API-key callers (`ctx.auth.type === 'apiKey'` — v1's `isAdminUser`:
- *    platform/console maintenance traffic, not product usage),
+ * Skipped:
+ *  - API-key callers (`ctx.auth.type === 'apiKey'`) — platform/console
+ *    maintenance traffic, not product usage,
  *  - the health probe and the OpenAPI spec surface.
  *
- * The request-path is the ONLY place with response status/latency; the
+ * The request path is the only place with response status/latency; the
  * worker deep-redacts metadata at buffer time. Elysia beta.6's minimal
  * afterResponse context is bridged through the shared-instance derive
- * chain (project/auth) exactly like the stats source.
+ * chain (project/auth), the same pattern as the stats source.
  */
 
 import type { Elysia } from 'elysia'
@@ -48,6 +48,7 @@ function extractProjectId(project: unknown): string | undefined {
   return undefined
 }
 
+/** Compose request-log emission onto the consuming instance. */
 export function logsRequestSource(options: {
   enqueue: LogsEnqueuer
   enabled?: () => boolean
@@ -70,7 +71,7 @@ export function logsRequestSource(options: {
         const url = new URL(ctx.request?.url ?? 'http://localhost/')
         if (SKIP_PATHS.has(url.pathname)) return
 
-        // API-key callers are admin traffic (v1 isAdminUser parity).
+        // API-key callers are admin/maintenance traffic, never product usage.
         if (
           ctx.auth &&
           typeof ctx.auth === 'object' &&
@@ -89,8 +90,8 @@ export function logsRequestSource(options: {
             : ctx.responseValue instanceof Response
               ? ctx.responseValue.status
               : 200
-        // Error detail surfaces only for non-2xx (v1 parity: the ctx error
-        // message is unavailable post-response; the status code suffices).
+        // The post-response context has no error message; non-2xx
+        // requests record just the status code.
         const error = status >= 400 ? `Error response (${status})` : undefined
 
         const forwarded =
@@ -114,7 +115,7 @@ export function logsRequestSource(options: {
             },
           })
           .catch(() => {
-            // Logging must never break the request path (v1 parity).
+            // Logging must never break the request path.
           })
       } catch {
         // Same guarantee.

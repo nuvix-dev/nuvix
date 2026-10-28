@@ -1,3 +1,4 @@
+/** Team membership lifecycle: invite (auto-creating users when needed), confirm, update, remove. */
 import { Auth } from '@nuvix/core/auth'
 import { Doc, ID, Permission, Query, Role, type Session } from '@nuvix/db'
 import { BadRequestError, NotFoundError } from '../../shared/errors'
@@ -22,9 +23,11 @@ export interface UpdateMembershipStatusInput {
   secret: string
 }
 
+/** Add, list, update, confirm, and remove team memberships. */
 export class MembershipsService {
   constructor(private readonly session: Session) {}
 
+  /** Invite a member by user id, email, or phone — creating a user record on demand. */
   async addMember(teamId: string, input: CreateMembershipInput): Promise<MembershipView> {
     if (!input.userId && !input.email && !input.phone) {
       throw new BadRequestError('At least one of userId, email, or phone is required', {
@@ -120,6 +123,7 @@ export class MembershipsService {
     return view
   }
 
+  /** List a team's memberships with filters. */
   async getMembers(
     teamId: string,
     queries: Query[] = [],
@@ -145,6 +149,7 @@ export class MembershipsService {
     }
   }
 
+  /** Fetch one membership or throw not-found. */
   async getMember(teamId: string, membershipId: string): Promise<MembershipView> {
     const team = (await this.session.getDocument('teams', teamId)) as TeamsDoc
     if (team.empty()) {
@@ -159,6 +164,7 @@ export class MembershipsService {
     return formatMembership(doc)
   }
 
+  /** Update a membership's mutable fields (roles). */
   async updateMember(
     teamId: string,
     membershipId: string,
@@ -184,6 +190,7 @@ export class MembershipsService {
     return formatMembership(updated)
   }
 
+  /** Accept/reject a pending invite via its secret token. */
   async updateMemberStatus(
     teamId: string,
     membershipId: string,
@@ -228,6 +235,7 @@ export class MembershipsService {
     return formatMembership(updated)
   }
 
+  /** Remove a membership; the user record itself is untouched. */
   async deleteMember(teamId: string, membershipId: string): Promise<void> {
     const team = (await this.session.getDocument('teams', teamId)) as TeamsDoc
     if (team.empty()) {

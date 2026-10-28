@@ -1,7 +1,7 @@
 /**
- * User activity-log view — v1 `Models.LOG` shape (users/teams/collections
- * `logs` endpoints share it): audit event + acting user + detected
- * client/OS/device fields + geoip country.
+ * User activity-log view, shared by the users/teams/collections `logs`
+ * endpoints: audit event + acting user + detected client/OS/device
+ * fields + geoip country.
  */
 export interface LogView {
   event: string

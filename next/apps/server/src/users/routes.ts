@@ -1,3 +1,4 @@
+/** HTTP surface for admin user management: CRUD, profile fields, identities, logs, usage. */
 import { Query, type Session } from '@nuvix/db'
 import type { Translator } from '@nuvix/i18n'
 import { Elysia, t } from 'elysia'
@@ -5,6 +6,7 @@ import { auditAfter } from '../plugins/audit'
 import type { UserRoutesOptions } from './route'
 import { UsersService } from './service'
 
+/** Bind user core routes against the composed tenant context. */
 export const userCoreRoutes = (options: UserRoutesOptions = {}) =>
   new Elysia()
     .derive('plugin', (ctx) => ({
@@ -221,7 +223,8 @@ export const userCoreRoutes = (options: UserRoutesOptions = {}) =>
       },
     )
 
-    // 5b. List identities (admin) — must precede /:userId (v1 parity)
+    // Identity list/delete and user logs precede the /:userId route so
+    // their fixed segments are not captured as an id.
     .get(
       '/identities',
       {
@@ -257,7 +260,7 @@ export const userCoreRoutes = (options: UserRoutesOptions = {}) =>
       },
     )
 
-    // 5c. Delete identity (admin) — must precede /:userId (v1 parity)
+    // (Route ordering: precedes /:userId.)
     .delete(
       '/identities/:identityId',
       {
@@ -285,7 +288,7 @@ export const userCoreRoutes = (options: UserRoutesOptions = {}) =>
       },
     )
 
-    // 5d. User activity logs (admin) — must precede /:userId (v1 parity)
+    // (Route ordering: precedes /:userId.)
     .get(
       '/:userId/logs',
       {

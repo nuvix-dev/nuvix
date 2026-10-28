@@ -1,15 +1,11 @@
 /**
- * Usage readers — v2 port of legacy `UsersService.getUsage` /
- * `StorageService.getStorageUsage`/`getBucketStorageUsage` stats reads.
+ * Usage readers for the tenant `stats` collection (auth schema): INF
+ * rows carry the running total; period rows (1h/1d) carry the time
+ * series, zero-filled across the requested window.
  *
- * Reads the tenant `stats` collection (auth schema): INF rows carry the
- * running total; period rows (1h/1d) carry the time series, filled
- * across the requested window with zeros (v1 parity — the window fill
- * loop and `usageConfig` buckets are ported 1:1).
- *
- * v1's `Authorization.skip` parity is structural: the admin routes that
- * expose usage run on the tenant auth-system session (API-key callers),
- * so no permission escape is needed at read time.
+ * The admin routes that expose usage run on the tenant auth-system
+ * session (API-key callers), so no permission escape is needed at read
+ * time.
  */
 
 import { Query, type Session } from '@nuvix/db'
@@ -17,7 +13,7 @@ import { MetricPeriod } from '@nuvix/utils'
 import { BadRequestError } from '../shared/errors'
 import { formatPeriodDate } from '../workers/stats.processor'
 
-/** Window buckets per range (legacy `libs/core/src/config/usage.ts`). */
+/** Window shape per range: bucket period, number of buckets, and seconds per bucket. */
 export const usageConfig = {
   '24h': { period: MetricPeriod.HOUR, limit: 24, factor: 3600 },
   '7d': { period: MetricPeriod.DAY, limit: 7, factor: 86400 },
@@ -27,7 +23,7 @@ export const usageConfig = {
 
 export type UsageRange = keyof typeof usageConfig
 
-/** Valid ranges (legacy `RangeQueryDTO` surface + `7d`). */
+/** Validate the `range` query param, defaulting to 30 days. */
 export function parseUsageRange(range?: string): UsageRange {
   if (!range || range === '') return '30d'
   if (range in usageConfig) return range as UsageRange
@@ -42,9 +38,9 @@ export interface UsageSeries {
 }
 
 /**
- * Reads INF totals + period-bucketed series for the given metrics, zero-
- * filling the requested window (v1 parity: `leap` stepping loop over
- * `limit × factor` seconds).
+ * Reads INF totals + period-bucketed series for the given metrics,
+ * zero-filling the requested window by stepping `limit × factor`
+ * seconds from now backwards.
  */
 export async function readUsageSeries(
   session: Session,
@@ -75,7 +71,7 @@ export async function readUsageSeries(
       byTime.set(bucket, row.get('value') ?? 0)
     }
 
-    // Fill the window with zeros where no bucket row exists (v1 parity).
+    // Fill the window with zeros where no bucket row exists.
     const data: Array<{ value: number; date: string }> = []
     const nowSeconds = Math.floor(Date.now() / 1000)
     let leap = nowSeconds - days.limit * days.factor
