@@ -1,3 +1,4 @@
+/** Service tests for table row operations: filters, upserts, RLS context, and identifier sanitation. */
 import { describe, expect, it } from 'bun:test'
 import type { SQL } from 'bun'
 import { BadRequestError, NotFoundError } from '../../shared/errors'

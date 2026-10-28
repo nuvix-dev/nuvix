@@ -1,3 +1,4 @@
+/** Index management for schema collections: unique, fulltext, and spatial indexes on attributes. */
 import { type Database, Doc, DuplicateException, type Index, type IndexType } from '@nuvix/db'
 import { ConflictError, NotFoundError } from '../../shared/errors'
 

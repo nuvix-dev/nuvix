@@ -1,3 +1,4 @@
+/** Collection attribute management: typed columns and relationships, with per-type validation. */
 import {
   type Attribute,
   AttributeType,
@@ -98,6 +99,7 @@ export interface UpdateAttributeInput {
   elements?: string[]
 }
 
+/** Create/read/update/delete collection attributes against a tenant database. */
 export class AttributesService {
   /**
    * Get all attributes for a collection.
@@ -150,7 +152,8 @@ export class AttributesService {
   }
 
   /**
-   * Create an attribute helper.
+   * Shared create path: loads the collection, delegates to the db layer,
+   * and maps duplicate keys to a conflict error.
    */
   private async createAttribute(
     db: Database,
@@ -189,6 +192,7 @@ export class AttributesService {
     }
   }
 
+  /** Create a single-line string column, optionally encrypted at rest. */
   async createStringAttribute(
     db: Database,
     collectionId: string,
@@ -213,6 +217,7 @@ export class AttributesService {
     return this.createAttribute(db, collectionId, attribute)
   }
 
+  /** Create an email-format string column. */
   async createEmailAttribute(
     db: Database,
     collectionId: string,
@@ -232,6 +237,7 @@ export class AttributesService {
     return this.createAttribute(db, collectionId, attribute)
   }
 
+  /** Create an enum column validated against a fixed element list. */
   async createEnumAttribute(
     db: Database,
     collectionId: string,
@@ -252,6 +258,7 @@ export class AttributesService {
     return this.createAttribute(db, collectionId, attribute)
   }
 
+  /** Create an IPv4/IPv6 format column. */
   async createIPAttribute(
     db: Database,
     collectionId: string,
@@ -271,6 +278,7 @@ export class AttributesService {
     return this.createAttribute(db, collectionId, attribute)
   }
 
+  /** Create a URL-format column. */
   async createURLAttribute(
     db: Database,
     collectionId: string,
@@ -290,6 +298,7 @@ export class AttributesService {
     return this.createAttribute(db, collectionId, attribute)
   }
 
+  /** Create a signed 64-bit integer column with optional bounds. */
   async createIntegerAttribute(
     db: Database,
     collectionId: string,
@@ -310,6 +319,7 @@ export class AttributesService {
     return this.createAttribute(db, collectionId, attribute)
   }
 
+  /** Create a double-precision column with optional bounds. */
   async createFloatAttribute(
     db: Database,
     collectionId: string,
@@ -330,6 +340,7 @@ export class AttributesService {
     return this.createAttribute(db, collectionId, attribute)
   }
 
+  /** Create a boolean column. */
   async createBooleanAttribute(
     db: Database,
     collectionId: string,
@@ -348,6 +359,7 @@ export class AttributesService {
     return this.createAttribute(db, collectionId, attribute)
   }
 
+  /** Create an ISO-8601 date column. */
   async createDateAttribute(
     db: Database,
     collectionId: string,
@@ -367,6 +379,10 @@ export class AttributesService {
     return this.createAttribute(db, collectionId, attribute)
   }
 
+  /**
+   * Bind a cross-collection relationship (one-to-one/one-to-many; two-way
+   * keys are also created by the db layer when `twoWay` is set).
+   */
   async createRelationshipAttribute(
     db: Database,
     collectionId: string,
@@ -409,6 +425,7 @@ export class AttributesService {
     })
   }
 
+  /** Update an attribute's mutable flags (only `required` today). */
   async updateAttribute(
     db: Database,
     collectionId: string,
@@ -424,6 +441,7 @@ export class AttributesService {
     return this.getAttribute(db, collectionId, key)
   }
 
+  /** Delete an attribute; relationship attributes route to `deleteRelationship`. */
   async deleteAttribute(db: Database, collectionId: string, key: string): Promise<void> {
     const attribute = await this.getAttribute(db, collectionId, key)
 

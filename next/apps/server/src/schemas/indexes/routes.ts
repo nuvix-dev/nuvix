@@ -1,3 +1,4 @@
+/** HTTP surface for index create/list/delete. */
 import { IndexType } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
 import type { TenantContext } from '../../context/tenant'
@@ -9,6 +10,7 @@ export interface IndexesRouteServices {
   indexes?: IndexesService
 }
 
+/** Bind index routes; services may be overridden (tests inject fakes). */
 export const indexesRoutes = (services?: IndexesRouteServices) => {
   const defaultService = services?.indexes ?? new IndexesService()
 

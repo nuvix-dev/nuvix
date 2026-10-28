@@ -1,3 +1,4 @@
+/** Service tests for attribute creation and per-type validation rules. */
 import { describe, expect, test } from 'bun:test'
 import { type Attribute, AttributeType, type Database, Doc, RelationType } from '@nuvix/db'
 import { ConflictError, NotFoundError } from '../../shared/errors'

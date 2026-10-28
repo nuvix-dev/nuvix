@@ -1,3 +1,4 @@
+/** Collection CRUD against a tenant database; reads inline attributes and permission metadata. */
 import {
   type Collection,
   Database,
@@ -32,6 +33,7 @@ export interface CollectionUsage {
   documents: Array<{ date: string; value: number }>
 }
 
+/** Create, list, update, and remove collections; usage stats roll up per collection. */
 export class CollectionsService {
   /**
    * Create a new collection in the schema.

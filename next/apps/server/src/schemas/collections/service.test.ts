@@ -1,3 +1,4 @@
+/** Service tests for collection CRUD and naming constraints. */
 import { describe, expect, test } from 'bun:test'
 import { type Collection, Database, Doc, DuplicateException, type Permission } from '@nuvix/db'
 import { ConflictError, NotFoundError } from '../../shared/errors'

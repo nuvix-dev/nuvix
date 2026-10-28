@@ -1,3 +1,4 @@
+/** Table row CRUD semantics over tenant PostgreSQL tables: filters, queries, upserts, and row permissions. */
 import type { TenantResource } from '@nuvix/core/tenants'
 import { Database, Doc, PermissionsValidator, PermissionType } from '@nuvix/db'
 import { createDatabase as createPgDatabase, type DatabaseFacade } from '@nuvix/pg'
@@ -14,6 +15,7 @@ import {
 import type { SQL } from 'bun'
 import { BadRequestError, ForbiddenError, NotFoundError } from '../../shared/errors'
 
+/** Caller identity bound into PostgreSQL session variables for row-level security. */
 export interface RequestContext {
   method?: string
   url?: string
@@ -26,6 +28,7 @@ export interface RequestContext {
   allowedSchemas?: string[]
 }
 
+/** Options for filtered/ordered/paginated row listing. */
 export interface TableSelectOptions {
   schema: string
   table: string
@@ -37,6 +40,7 @@ export interface TableSelectOptions {
   context?: RequestContext
 }
 
+/** Options for a filtered row count. */
 export interface TableCountOptions {
   schema: string
   table: string
@@ -44,6 +48,7 @@ export interface TableCountOptions {
   context?: RequestContext
 }
 
+/** Options for a single row lookup. */
 export interface TableRowOptions {
   schema: string
   table: string
@@ -53,6 +58,7 @@ export interface TableRowOptions {
   context?: RequestContext
 }
 
+/** Options for inserting rows, with an optional returning projection. */
 export interface TableInsertOptions {
   schema: string
   table: string
@@ -64,6 +70,7 @@ export interface TableInsertOptions {
   context?: RequestContext
 }
 
+/** Options for insert-or-update rows against a conflict target. */
 export interface TableUpsertOptions {
   schema: string
   table: string
@@ -74,6 +81,7 @@ export interface TableUpsertOptions {
   context?: RequestContext
 }
 
+/** Options for a filtered bulk update. */
 export interface TableUpdateOptions {
   schema: string
   table: string
@@ -88,6 +96,7 @@ export interface TableUpdateOptions {
   context?: RequestContext
 }
 
+/** Options for updating one row by id. */
 export interface TableUpdateRowOptions {
   schema: string
   table: string
@@ -98,6 +107,7 @@ export interface TableUpdateRowOptions {
   context?: RequestContext
 }
 
+/** Options for a filtered bulk delete. */
 export interface TableDeleteOptions {
   schema: string
   table: string
@@ -110,6 +120,7 @@ export interface TableDeleteOptions {
   context?: RequestContext
 }
 
+/** Options for deleting one row by id. */
 export interface TableDeleteRowOptions {
   schema: string
   table: string
@@ -119,6 +130,7 @@ export interface TableDeleteRowOptions {
   context?: RequestContext
 }
 
+/** Options for invoking a database function with optional result projection. */
 export interface TableFunctionOptions {
   schema: string
   functionName: string
@@ -131,12 +143,14 @@ export interface TableFunctionOptions {
   context?: RequestContext
 }
 
+/** Target (table or row) for a permissions read. */
 export interface TablePermissionsOptions {
   schema: string
   tableId: string
   rowId?: string | number
 }
 
+/** Target and replacement permission list for a permissions update. */
 export interface TableUpdatePermissionsOptions {
   schema: string
   tableId: string
@@ -144,12 +158,14 @@ export interface TableUpdatePermissionsOptions {
   permissions: string[]
 }
 
+/** Connection source: tenant resource, live SQL handle, or a lazy getter for either. */
 export type SqlProvider =
   | SQL
   | (() => SQL | undefined)
   | TenantResource
   | (() => TenantResource | undefined)
 
+/** Reject identifiers that are not plain SQL names before they can be interpolated. */
 export function sanitizeIdentifier(identifier: string, label = 'identifier'): string {
   if (!identifier || typeof identifier !== 'string') {
     throw new BadRequestError(`Invalid ${label}: must be a non-empty string`, {
@@ -165,11 +181,13 @@ export function sanitizeIdentifier(identifier: string, label = 'identifier'): st
   return identifier
 }
 
+/** Parameterized WHERE fragment; values bind via placeholders, never string interpolation. */
 export interface ParsedWhere {
   sql: string
   params: unknown[]
 }
 
+/** Translate a structured filter (object map or `column.op(value)` string list) into SQL. */
 export function parseFilter(
   filter: string | Record<string, unknown> | undefined,
   startParamIndex = 1,
@@ -260,11 +278,17 @@ export function parseFilter(
   }
 }
 
+/** Execute typed row operations against the tenant database, applying RLS session context per call. */
 export class TablesService {
   private static readonly DEFAULT_LIMIT = 500
 
   constructor(private readonly resourceOrGetter?: SqlProvider) {}
 
+  /**
+   * Resolve the underlying database facade. Accepts a tenant resource (whose
+   * Bun SQL is shared with `@nuvix/db`), a bare SQL handle, or a lazy getter —
+   * so composition can defer connection acquisition until first use.
+   */
   private getDb(): DatabaseFacade {
     if (!this.resourceOrGetter) {
       throw new BadRequestError('Tenant database connection is not available', {
@@ -293,6 +317,10 @@ export class TablesService {
     return createPgDatabase(res as any)
   }
 
+  /**
+   * Bind caller identity (role, user, session, selected headers) to session
+   * variables separately from the query itself, so row-level security sees it.
+   */
   private async applyRlsContext(txDb: DatabaseFacade, context: RequestContext): Promise<void> {
     const roles = context.roles ?? []
     const user = context.user
@@ -400,6 +428,7 @@ export class TablesService {
     }
   }
 
+  /** List rows with filtering, ordering, pagination, and an optional field projection. */
   async select({
     schema,
     table,
@@ -457,6 +486,7 @@ export class TablesService {
     )
   }
 
+  /** Count rows matching the filter. */
   async count({ schema, table, filter, context }: TableCountOptions): Promise<{ count: number }> {
     sanitizeIdentifier(table, 'table')
     sanitizeIdentifier(schema, 'schema')
@@ -489,6 +519,7 @@ export class TablesService {
     )
   }
 
+  /** Fetch a single row by id. */
   async getRow({ schema, table, rowId, select, filter, context }: TableRowOptions) {
     sanitizeIdentifier(table, 'table')
     sanitizeIdentifier(schema, 'schema')
@@ -534,6 +565,7 @@ export class TablesService {
     )
   }
 
+  /** Insert rows and optionally return a projection of the inserted data. */
   async insert({
     schema,
     table,
@@ -615,6 +647,7 @@ export class TablesService {
     )
   }
 
+  /** Insert with an explicit conflict target; matched rows update, others insert. */
   async upsert({ schema, table, input, columns, onConflict, select, context }: TableUpsertOptions) {
     return this.insert({
       schema,
@@ -628,6 +661,7 @@ export class TablesService {
     })
   }
 
+  /** Update all rows matching a filter (bulk). */
   async update({
     schema,
     table,
@@ -708,6 +742,7 @@ export class TablesService {
     )
   }
 
+  /** Update one row by id. */
   async updateRow({ schema, table, rowId, input, filter, select, context }: TableUpdateRowOptions) {
     sanitizeIdentifier(table, 'table')
     sanitizeIdentifier(schema, 'schema')
@@ -757,6 +792,7 @@ export class TablesService {
     )
   }
 
+  /** Delete all rows matching a filter (bulk). */
   async delete({
     schema,
     table,
@@ -820,6 +856,7 @@ export class TablesService {
     )
   }
 
+  /** Delete one row by id. */
   async deleteRow({ schema, table, rowId, filter, select, context }: TableDeleteRowOptions) {
     sanitizeIdentifier(table, 'table')
     sanitizeIdentifier(schema, 'schema')
@@ -864,6 +901,7 @@ export class TablesService {
     )
   }
 
+  /** Invoke a stored function with arguments and optional result projection. */
   async callFunction({
     schema,
     functionName,
@@ -950,6 +988,7 @@ export class TablesService {
     )
   }
 
+  /** List permission grants for a table or a single row. */
   async getPermissions({ schema, tableId, rowId }: TablePermissionsOptions): Promise<string[]> {
     sanitizeIdentifier(tableId, 'tableId')
     sanitizeIdentifier(schema, 'schema')
@@ -979,6 +1018,7 @@ export class TablesService {
     return result
   }
 
+  /** Replace permission grants for a table or a single row. */
   async updatePermissions({
     schema,
     tableId,

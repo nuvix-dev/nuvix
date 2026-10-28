@@ -1,3 +1,4 @@
+/** HTTP surface for document CRUD: list/get/batch create-update-delete, plus upsert/delete-by-query. */
 import { Query, type Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
 import type { TenantContext } from '../../context/tenant'
@@ -8,6 +9,7 @@ export interface DocumentsRouteServices {
   documents?: DocumentsService
 }
 
+/** Bind document routes; services may be overridden (tests inject fakes). */
 export const documentsRoutes = (services?: DocumentsRouteServices) => {
   const defaultService = services?.documents ?? new DocumentsService()
 

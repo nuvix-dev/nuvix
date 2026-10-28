@@ -1,3 +1,4 @@
+/** HTTP surface for collection attributes (typed columns, relationships, and their aliases). */
 import { OnDelete, RelationType } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
 import type { TenantContext } from '../../context/tenant'
@@ -9,6 +10,7 @@ export interface AttributesRouteServices {
   attributes?: AttributesService
 }
 
+/** Bind attribute routes; services may be overridden (tests inject fakes). */
 export const attributesRoutes = (services?: AttributesRouteServices) => {
   const defaultService = services?.attributes ?? new AttributesService()
 
@@ -353,14 +355,13 @@ export const attributesRoutes = (services?: AttributesRouteServices) => {
         },
       )
 
-      // 10b. Create Timestamptz attribute (v1 alias of datetime)
+      // Timestamptz attribute — a timezone-aware alias of the datetime type.
       .post(
         '/collections/:collectionId/attributes/timestamptz',
         {
           detail: {
             summary: 'Create timestamptz attribute',
-            description:
-              'Alias of the datetime attribute (v1 path parity) — adds a timezone-aware timestamp column.',
+            description: 'Alias of the datetime attribute: adds a timezone-aware timestamp column.',
             tags: ['Schemas Attributes'],
           },
           params: t.Object({

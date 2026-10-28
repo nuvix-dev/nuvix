@@ -1,3 +1,4 @@
+/** HTTP surfaces for table row operations: schema-scoped and public tables, backed by the same service. */
 import { Elysia, t } from 'elysia'
 import type { TenantContext } from '../../context/tenant'
 import { ForbiddenError } from '../../shared/errors'
@@ -21,6 +22,7 @@ export function extractRequestContext(tenant: TenantContext, req: Request): Requ
   }
 }
 
+/** Bind schema-scoped table row routes (requires a `schemaId` prefix); services may be overridden. */
 export const schemaTablesRoutes = (services?: TablesRouteServices) =>
   new Elysia()
     .derive('plugin', (ctx) => {
@@ -563,6 +565,7 @@ export const schemaTablesRoutes = (services?: TablesRouteServices) =>
       },
     )
 
+/** Bind public-table routes; services may be overridden. */
 export const publicTablesRoutes = (services?: TablesRouteServices) =>
   new Elysia({ prefix: '/public' })
     .derive('plugin', (ctx) => {

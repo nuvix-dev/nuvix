@@ -9,6 +9,7 @@ export interface CollectionsRouteServices {
   collections?: CollectionsService
 }
 
+/** Bind collection CRUD routes; services may be overridden (tests inject fakes). */
 export const collectionsRoutes = (services?: CollectionsRouteServices) => {
   const defaultService = services?.collections ?? new CollectionsService()
 

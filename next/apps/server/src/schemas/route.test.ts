@@ -1,3 +1,4 @@
+/** Route tests composing the full schemas subsystem over an in-memory tenant database. */
 import { describe, expect, it } from 'bun:test'
 import { treaty } from '@elysia/eden'
 import type { TenantResource } from '@nuvix/core/tenants'

@@ -1,3 +1,4 @@
+/** Service tests for document CRUD, batch operations, and duplicate handling. */
 import { describe, expect, test } from 'bun:test'
 import { Doc, DuplicateException, type Query, type Session } from '@nuvix/db'
 import { ConflictError, NotFoundError } from '../../shared/errors'

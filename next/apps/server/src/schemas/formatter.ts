@@ -1,5 +1,7 @@
+/** Projection helpers: internal `@nuvix/db` docs to API response shapes. */
 import type { Attribute, Collection, Doc, Index } from '@nuvix/db'
 
+/** API-projected collection. */
 export interface CollectionView {
   $id: string
   $createdAt?: string
@@ -12,6 +14,7 @@ export interface CollectionView {
   indexes: IndexView[]
 }
 
+/** API-projected attribute. */
 export interface AttributeView {
   $id: string
   key: string
@@ -28,6 +31,7 @@ export interface AttributeView {
   options?: Record<string, unknown>
 }
 
+/** API-projected index. */
 export interface IndexView {
   $id: string
   key: string
@@ -38,6 +42,7 @@ export interface IndexView {
   orders?: string[]
 }
 
+/** API-projected document. */
 export interface DocumentView {
   $id: string
   $collection?: string
@@ -47,6 +52,7 @@ export interface DocumentView {
   [key: string]: unknown
 }
 
+/** Map a collection document (attributes and indexes inlined) to its API projection. */
 export function formatCollection(doc: Doc<Collection>): CollectionView {
   const rawAttributes = (doc.get('attributes') ?? []) as Array<Attribute | Doc<Attribute>>
   const rawIndexes = (doc.get('indexes') ?? []) as Array<Index | Doc<Index>>
@@ -74,6 +80,7 @@ export function formatCollection(doc: Doc<Collection>): CollectionView {
   }
 }
 
+/** Map an attribute document to its API projection. */
 export function formatAttribute(doc: Doc<Attribute>): AttributeView {
   const key = doc.get('key') || doc.getId()
   return {
@@ -93,6 +100,7 @@ export function formatAttribute(doc: Doc<Attribute>): AttributeView {
   }
 }
 
+/** Map an index document to its API projection. */
 export function formatIndex(doc: Doc<Index>): IndexView {
   const key = doc.get('key') || doc.getId()
   const rawOrders = doc.get('orders')
@@ -109,6 +117,7 @@ export function formatIndex(doc: Doc<Index>): IndexView {
   }
 }
 
+/** Map a document to its API projection. */
 export function formatDocument(doc: Doc): DocumentView {
   return {
     ...doc.toObject(),

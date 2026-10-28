@@ -1,3 +1,4 @@
+/** Document CRUD inside schema collections: permission-checked queries, batch writes, upserts. */
 import {
   Doc,
   DuplicateException,

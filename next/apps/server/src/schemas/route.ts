@@ -1,3 +1,4 @@
+/** Composition of the schema CRUD subsystem: collections, attributes, indexes, documents, and tables. */
 import { Elysia } from 'elysia'
 import { attributesRoutes } from './attributes/routes'
 import type { AttributesService } from './attributes/service'
@@ -18,6 +19,10 @@ export interface SchemasRouteServices {
   tables?: TablesService
 }
 
+/**
+ * Compose schema routes; each subtree accepts an optional service
+ * override (tests inject fakes, production uses defaults).
+ */
 export const schemasRoutes = (services?: SchemasRouteServices) => {
   const schemaRoutes = new Elysia({ prefix: '/schemas/:schemaId' })
     .use(collectionsRoutes({ collections: services?.collections }))

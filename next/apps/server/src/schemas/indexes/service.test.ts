@@ -1,3 +1,4 @@
+/** Service tests for index create/list/delete behavior. */
 import { describe, expect, test } from 'bun:test'
 import { type Database, Doc, type Index, IndexType, Order } from '@nuvix/db'
 import { ConflictError, NotFoundError } from '../../shared/errors'
