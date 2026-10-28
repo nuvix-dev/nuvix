@@ -1,3 +1,4 @@
+/** CORS composition. */
 import type { Elysia } from 'elysia'
 
 /** Handles CORS preflight requests and attaches origin, credential, and variation headers to responses. */

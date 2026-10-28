@@ -250,7 +250,7 @@ export function auditAfter(meta: AuditMeta) {
         // Audit emission must never break the request path.
       })
 
-       // Webhook fan-out reuses the sanitized audit payload.
+      // Webhook fan-out reuses the sanitized audit payload.
       if (projectId) {
         void webhookFanout(projectId, meta.event, auditPayload ?? {}).catch(() => {
           // Fan-out failures must never break the request path either.

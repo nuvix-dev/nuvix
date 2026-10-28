@@ -1,3 +1,4 @@
+/** Request throttling plugin backed by per-key counters. */
 import type { Elysia } from 'elysia'
 import { RATE_LIMIT_HEADERS } from '../shared/constants'
 

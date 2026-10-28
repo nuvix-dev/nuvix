@@ -1,3 +1,4 @@
+/** Avatar generation service: builds location-based placeholder avatars and serves uploaded profile files. */
 import { readdir } from 'node:fs/promises'
 import path from 'node:path'
 import type { Translator } from '@nuvix/i18n'

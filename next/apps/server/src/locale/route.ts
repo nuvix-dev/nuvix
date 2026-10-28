@@ -1,3 +1,4 @@
+/** Locale endpoints: country/continent/language catalogs and locale listing, localized per caller. */
 import { type AnySchema, Elysia, t } from 'elysia'
 import type { GeoIP } from '../context/geoip'
 import { getTranslator, type LocaleContextOptions } from '../context/locale'

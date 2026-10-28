@@ -1,3 +1,4 @@
+/** Problem-details error plugin with caller-localized detail messages. */
 import type { Translator } from '@nuvix/i18n'
 import { Elysia, problem } from 'elysia'
 import { AppError } from '../shared/errors'

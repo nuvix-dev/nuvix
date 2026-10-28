@@ -1,3 +1,4 @@
+/** Security-header plugin. */
 import type { Elysia } from 'elysia'
 
 /** Adds baseline browser security headers to every API response. */

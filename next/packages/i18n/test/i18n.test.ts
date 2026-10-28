@@ -1,3 +1,4 @@
+/** Unit and fixture tests for i18n: locale resolution, loading, and ICU formatting. */
 import { beforeAll, describe, expect, test } from 'bun:test'
 import { createTranslator } from '../src'
 import { TranslationLoader } from '../src/loader'
