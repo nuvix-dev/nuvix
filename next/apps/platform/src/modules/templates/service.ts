@@ -1,6 +1,8 @@
+/** Template service boundary; unsupported SMS and email operations fail explicitly with a stable error. */
 import { NotImplementedError } from '@nuvix/core/errors'
 import type { Database } from '@nuvix/db'
 
+/** Holds the future project-scoped template persistence boundary. */
 export class TemplatesService {
   constructor(readonly db: Database) {}
 

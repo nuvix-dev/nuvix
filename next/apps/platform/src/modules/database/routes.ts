@@ -1,7 +1,10 @@
+/** Defines project-scoped database query and introspection endpoints. */
 import { Elysia, t } from 'elysia'
 import type { DatabaseService } from './service'
 
+/** Adds transport schemas and delegates database access to the injected service. */
 export function databaseRoutes(service: DatabaseService) {
+  // Keep project selection and tenant-resource access inside the service rather than exposing infrastructure here.
   return new Elysia({ name: 'database-routes' })
     .post(
       '/projects/:projectId/database/query',

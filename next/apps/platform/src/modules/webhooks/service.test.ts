@@ -1,3 +1,4 @@
+/** Service-level coverage for webhook ownership, secret projection, updates, rotation, and deletion. */
 process.env.NUVIX_PLATFORM_DB_DRIVER ??= 'sqlite'
 process.env.NUVIX_PLATFORM_DB_URL ??= ':memory:'
 process.env.NUVIX_TENANT_ENCRYPTION_KEY ??= '+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo='
@@ -14,8 +15,10 @@ let projectService: ProjectService
 let webhooksService: WebhooksService
 let projectId: string
 
+// Webhook tests isolate platform persistence from tenant bootstrap work.
 const noopBootstrap = async () => {}
 
+// Reuse one project so every lifecycle assertion checks the same ownership boundary.
 beforeAll(async () => {
   db = await createPlatformDatabase()
   projectService = new ProjectService(db, new FakeTenantProvisioner(), noopBootstrap)
@@ -81,7 +84,7 @@ describe('WebhooksService', () => {
     expect(updated.url).toBe('https://example.com/after')
     expect(updated.enabled).toBe(false)
 
-    // Re-enabling resets attempts
+    // Re-enabling a webhook resets its delivery-attempt counter.
     const reEnabled = await webhooksService.update(projectId, created.$id, {
       enabled: true,
     })

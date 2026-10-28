@@ -1,3 +1,4 @@
+/** Service-level coverage for project provisioning, status transitions, configuration, and deletion. */
 process.env.NUVIX_PLATFORM_DB_DRIVER ??= 'sqlite'
 process.env.NUVIX_PLATFORM_DB_URL ??= ':memory:'
 process.env.NUVIX_TENANT_ENCRYPTION_KEY ??= '+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo='
@@ -10,11 +11,12 @@ import { ProjectService } from './service'
 
 let db: Database
 
-/** `FakeTenantProvisioner`'s target isn't a real Postgres instance — never attempt a real bootstrap connection against it in unit tests. */
+// The fake provisioner supplies local targets, so unit tests use an inert bootstrap callback.
 const noopBootstrap = async () => {}
 const encryptionKey = decodeEncryptionKey(process.env.NUVIX_TENANT_ENCRYPTION_KEY!)
 const jwtSecret = 'test-jwt-secret-for-project'
 
+// Share one platform database; each test creates isolated project records and provisioner instances.
 beforeAll(async () => {
   db = await createPlatformDatabase()
 })
@@ -31,7 +33,7 @@ describe('ProjectService', () => {
     expect(project.publishableKey).toMatch(/^pk_[0-9a-f]{32}$/)
     expect(project.containerName).toBe(`fake-tenant-${project.$id}`)
     expect(provisioner.provisioned.has(project.$id)).toBe(true)
-    // The tenant's connection secret is never part of the public view.
+    // Tenant connection coordinates remain private to the platform registry.
     expect(project).not.toHaveProperty('target')
     expect(project.services?.account).toBe(true)
     expect(project.apis?.rest).toBe(true)
@@ -55,7 +57,7 @@ describe('ProjectService', () => {
 
     const project = await service.create({ name: 'Queued' })
 
-    // Container reserved (handle present) but the record is NOT active.
+    // Reservation is complete, but activation waits for the queued worker.
     expect(project.status).toBe('provisioning')
     expect(project.containerName).toBe(`fake-tenant-${project.$id}`)
     expect(provisioner.provisioned.has(project.$id)).toBe(true)
@@ -90,8 +92,7 @@ describe('ProjectService', () => {
       async () => 'job_1',
     )
 
-    // Backgrounded: create returns the provisioning view; the worker's
-    // finalize call is what fails.
+    // Queued creation returns a provisioning view; the worker's finalization records bootstrap failures.
     const project = await service.create({ name: 'Broken Queued' })
     expect(project.status).toBe('provisioning')
 

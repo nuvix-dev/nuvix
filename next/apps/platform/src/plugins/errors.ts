@@ -2,7 +2,7 @@ import { Elysia, problem } from 'elysia'
 import { AppError } from '../shared/errors'
 
 /**
- * Maps `AppError` to RFC-9457 problem+json responses (D19).
+ * Maps `AppError` to RFC-9457 problem+json responses.
  *
  * No i18n here (unlike `apps/server`'s equivalent plugin) — the platform app
  * is an internal control plane, not a localized end-user surface; `detail`
@@ -10,6 +10,7 @@ import { AppError } from '../shared/errors'
  * registered inside a plugin must use `'global'` scope or they never reach
  * the consuming instance's routes.
  */
+/** Register the single global error handler used by every platform route. */
 export function problemErrors() {
   return new Elysia({ name: 'problem-errors' }).error('global', AppError, ({ error, set }) => {
     set.status = error.status

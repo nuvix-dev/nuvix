@@ -1,3 +1,4 @@
+/** Unit coverage for persisting project authentication policy through the platform database. */
 process.env.NUVIX_PLATFORM_DB_DRIVER ??= 'sqlite'
 process.env.NUVIX_PLATFORM_DB_URL ??= ':memory:'
 process.env.NUVIX_TENANT_ENCRYPTION_KEY ??= '+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo='
@@ -14,8 +15,10 @@ let projectService: ProjectService
 let authSettingsService: AuthSettingsService
 let projectId: string
 
+// Project creation needs a bootstrap hook, but these tests isolate settings persistence from tenant setup.
 const noopBootstrap = async () => {}
 
+// Reuse one project so each case exercises updates against the same stored auth-settings record.
 beforeAll(async () => {
   db = await createPlatformDatabase()
   projectService = new ProjectService(db, new FakeTenantProvisioner(), noopBootstrap)

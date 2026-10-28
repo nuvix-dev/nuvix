@@ -1,17 +1,21 @@
+/** Owns project authentication policy updates while preserving the rest of each project's stored settings. */
 import { NotFoundError } from '@nuvix/core/errors'
 import type { Database } from '@nuvix/db'
 
+/** Phone mock number used by the SMS/phone development template. */
 export interface MockNumber {
   phone: string
   otp: string
 }
 
+/** Membership privacy switches (names/emails/MFA status visible to other members). */
 export interface MembershipsPrivacyInput {
   userName?: boolean
   userEmail?: boolean
   mfa?: boolean
 }
 
+/** The `projects.auths` record shape: session policy, password policy, and privacy switches. */
 export interface ProjectAuthSettings {
   sessionAlerts?: boolean
   limit?: number
@@ -27,9 +31,11 @@ export interface ProjectAuthSettings {
   [method: string]: unknown
 }
 
+/** Reads and updates the project-scoped authentication policy used by tenant services. */
 export class AuthSettingsService {
   constructor(private readonly db: Database) {}
 
+  // Project metadata is resolved through the trusted platform database boundary, not through a tenant connection.
   private async getProject(projectId: string) {
     const session = this.db.system()
     const project = await session.getDocument('projects', projectId)
@@ -48,6 +54,7 @@ export class AuthSettingsService {
     const project = await this.getProject(projectId)
     const session = this.db.system()
 
+    // Mutate the existing record rather than replacing it so independent auth options remain intact.
     const auths = (project.get('auths') as Record<string, unknown>) ?? {}
     updater(auths)
 
@@ -56,6 +63,7 @@ export class AuthSettingsService {
     return auths
   }
 
+  /** Return the whole `auths` record. */
   async getAuthSettings(projectId: string): Promise<Record<string, unknown>> {
     const project = await this.getProject(projectId)
     return (project.get('auths') as Record<string, unknown>) ?? {}

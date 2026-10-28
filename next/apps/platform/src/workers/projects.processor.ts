@@ -1,15 +1,4 @@
-/**
- * Platform projects worker — finalizes background tenant provisioning.
- *
- * `ProjectService.create` reserves the container (fast) and enqueues a
- * `PROJECTS` job with the project id; THIS worker runs the slow tail —
- * readiness wait + `auth` schema bootstrap — and flips the record to
- * `active` (or `error` on the final attempt). Idempotent: already-final
- * statuses are skipped (manual retries race safely).
- *
- * The platform DB + provisioner are composed lazily per worker thread;
- * tests override the boundary via `setProjectProvisioner`.
- */
+/** Processes project jobs by finalizing tenant provisioning and mapping retry outcomes to worker results. */
 
 import type { ProjectJobData } from '@nuvix/core/queues'
 import type { Job } from 'bullmq'
@@ -20,12 +9,12 @@ export interface ProjectProvisioningBoundary {
 
 let boundary: ProjectProvisioningBoundary | undefined
 
-/** Overrides the provisioning boundary (tests). */
+/** Replaces the provisioning boundary so tests can avoid constructing platform infrastructure. */
 export function setProjectProvisioning(custom: ProjectProvisioningBoundary): void {
   boundary = custom
 }
 
-/** Memoized default boundary: platform DB + Docker provisioner + service. */
+/** Lazily constructs and reuses the production platform database, provisioner, and service boundary. */
 async function defaultBoundary(): Promise<ProjectProvisioningBoundary> {
   const { ProjectService } = await import('../modules/projects/service')
   const { DockerTenantProvisioner, decodeEncryptionKey } = await import('@nuvix/core/tenants')
@@ -37,7 +26,7 @@ async function defaultBoundary(): Promise<ProjectProvisioningBoundary> {
   try {
     encryptionKey = decodeEncryptionKey(config.platform.tenantEncryptionKey)
   } catch {
-    // Optional in environments where the key is not yet set.
+    // Secret encryption remains optional for environments that do not configure a tenant key.
   }
 
   const provisioner = new DockerTenantProvisioner({
@@ -69,10 +58,10 @@ export default async function processProject(
     const attempts = job.opts.attempts ?? 1
     const isFinal = job.attemptsMade >= attempts
     if (!isFinal) {
-      // Let BullMQ retry (exponential backoff); status stays `provisioning`.
+      // Rethrow non-final failures so BullMQ applies its configured retry policy.
       throw error
     }
-    // Final failure already recorded `status: "error"` by the service.
+    // The service has already recorded the final provisioning error; report it without another retry.
     console.error(
       `[projects] provisioning failed permanently for ${projectId}:`,
       error instanceof Error ? error.message : error,

@@ -1,3 +1,4 @@
+/** Executable entry point: Bun server, in-process queue workers, graceful shutdown. */
 import { parseRedisUrl } from '@nuvix/core/queues'
 import { config } from '@nuvix/utils'
 import { app, queues } from './app'
@@ -22,6 +23,7 @@ console.log(
   `[nuvix] platform API listening on http://${server.hostname}:${server.port} (${config.env})`,
 )
 
+/** Close workers, queues, and the HTTP server, then exit. */
 async function shutdown(signal: string) {
   console.log(`[nuvix] ${signal} received — shutting down`)
   try {

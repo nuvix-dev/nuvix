@@ -2,6 +2,7 @@ process.env.NUVIX_PLATFORM_DB_DRIVER ??= 'sqlite'
 process.env.NUVIX_PLATFORM_DB_URL ??= ':memory:'
 process.env.NUVIX_TENANT_ENCRYPTION_KEY ??= '+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo='
 
+/** Route-level Eden treaty coverage for project database queries and metadata inspection. */
 import { beforeAll, describe, expect, test } from 'bun:test'
 import { treaty } from '@elysia/eden'
 import { FakeTenantProvisioner, TenantResourcePool } from '@nuvix/core/tenants'
@@ -21,6 +22,7 @@ async function buildApp() {
   const db = await createPlatformDatabase()
   projectService = new ProjectService(db, new FakeTenantProvisioner(), async () => {})
 
+  // Return deterministic metadata so route assertions focus on service wiring and response shapes.
   const mockMeta = {
     query: async (sql: string) => [{ count: 42, query: sql }],
     schemas: {
@@ -122,6 +124,7 @@ async function buildApp() {
     },
   } as unknown as PgMeta
 
+  // Keep resource construction injectable while preserving the production route-to-pool boundary.
   const pool = new TenantResourcePool({
     dependencies: {
       createSql: () => ({ close: async () => {} }) as unknown as SQL,
@@ -137,6 +140,7 @@ async function buildApp() {
 
 let client: Awaited<ReturnType<typeof buildApp>>
 
+// Build one composed client so every case uses the same route and metadata fixtures.
 beforeAll(async () => {
   client = await buildApp()
 })

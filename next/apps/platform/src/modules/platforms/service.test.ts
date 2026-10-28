@@ -1,3 +1,4 @@
+/** Service-level coverage for client-platform ownership, listing, updates, and deletion. */
 process.env.NUVIX_PLATFORM_DB_DRIVER ??= 'sqlite'
 process.env.NUVIX_PLATFORM_DB_URL ??= ':memory:'
 process.env.NUVIX_TENANT_ENCRYPTION_KEY ??= '+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo='
@@ -14,8 +15,10 @@ let projectService: ProjectService
 let platformsService: PlatformsService
 let projectId: string
 
+// Platform tests do not provision tenant databases, so project setup uses an inert bootstrap hook.
 const noopBootstrap = async () => {}
 
+// Reuse one project so every lifecycle operation is checked within a single ownership boundary.
 beforeAll(async () => {
   db = await createPlatformDatabase()
   projectService = new ProjectService(db, new FakeTenantProvisioner(), noopBootstrap)

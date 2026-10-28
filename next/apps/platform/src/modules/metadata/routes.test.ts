@@ -1,3 +1,4 @@
+/** Route-level coverage for project metadata configuration through the Eden treaty client. */
 process.env.NUVIX_PLATFORM_DB_DRIVER ??= 'sqlite'
 process.env.NUVIX_PLATFORM_DB_URL ??= ':memory:'
 process.env.NUVIX_TENANT_ENCRYPTION_KEY ??= '+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo='
@@ -18,12 +19,14 @@ async function buildApp() {
   const db = await createPlatformDatabase()
   projectService = new ProjectService(db, new FakeTenantProvisioner(), async () => {})
   const service = new MetadataService(db)
+  // Compose the real route plugin so validation and problem responses are covered together.
   const app = new Elysia().use(problemErrors()).use(metadataRoutes(service))
   return treaty(app)
 }
 
 let client: Awaited<ReturnType<typeof buildApp>>
 
+// Build the client once; each case creates or selects its own project input.
 beforeAll(async () => {
   client = await buildApp()
 })

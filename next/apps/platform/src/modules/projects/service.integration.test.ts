@@ -1,3 +1,4 @@
+/** Live coverage for project provisioning and tenant schema bootstrap against `nuvix/postgres:18.1`. */
 process.env.NUVIX_PLATFORM_DB_DRIVER ??= 'sqlite'
 process.env.NUVIX_PLATFORM_DB_URL ??= ':memory:'
 process.env.NUVIX_TENANT_ENCRYPTION_KEY ??= '+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo='
@@ -8,12 +9,7 @@ import { SQL } from 'bun'
 import { createPlatformDatabase } from '../../registry/setup'
 import { ProjectService } from './service'
 
-/**
- * Live integration coverage against a REAL `nuvix/postgres:18.1` container
- * (AGENTS.md) — proves the full "schema init happens once, at project
- * creation" flow this slice was built for, not just each piece in
- * isolation. Skipped (not faked) when Docker isn't available.
- */
+/** Detects whether the required PostgreSQL image is available without masking a missing Docker runtime. */
 async function dockerAvailable(): Promise<boolean> {
   try {
     const proc = Bun.spawn(['docker', 'image', 'inspect', 'nuvix/postgres:18.1'], {
@@ -37,10 +33,8 @@ describe.skipIf(!hasDocker)('ProjectService.create (live nuvix/postgres:18.1)', 
     const project = await service.create({ name: 'Live Bootstrap' })
     expect(project.status).toBe('active')
 
-    // Read the tenant's real connection coordinates straight from the
-    // registry (never exposed on the public ProjectView) to verify the
-    // auth schema really exists on the actual container, proving
-    // bootstrapTenantAuth ran for real, not just that create() resolved.
+    // Inspect the private registry target only to verify the auth schema on the actual container;
+    // these connection coordinates never leave the platform service's public project view.
     const stored = await db.system().getDocument('projects', project.$id)
     const target = stored.get('target') as unknown as {
       host: string

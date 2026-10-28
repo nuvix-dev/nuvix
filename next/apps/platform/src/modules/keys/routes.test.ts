@@ -2,6 +2,7 @@ process.env.NUVIX_PLATFORM_DB_DRIVER ??= 'sqlite'
 process.env.NUVIX_PLATFORM_DB_URL ??= ':memory:'
 process.env.NUVIX_TENANT_ENCRYPTION_KEY ??= '+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo='
 
+/** Route-level Eden treaty coverage for project API-key creation and lifecycle operations. */
 import { beforeAll, describe, expect, test } from 'bun:test'
 import { treaty } from '@elysia/eden'
 import { FakeTenantProvisioner } from '@nuvix/core/tenants'
@@ -18,6 +19,7 @@ async function buildApp() {
   const projectService = new ProjectService(db, new FakeTenantProvisioner(), async () => {})
   const keysService = new KeysService(db)
 
+  // Compose project and key routes so each request exercises the public platform boundary.
   const app = new Elysia()
     .use(problemErrors())
     .use(projectRoutes(projectService))
@@ -29,6 +31,7 @@ async function buildApp() {
 let client: Awaited<ReturnType<typeof buildApp>>['client']
 let projectId: string
 
+// Share one project so list and lifecycle assertions observe keys created by earlier cases.
 beforeAll(async () => {
   const built = await buildApp()
   client = built.client

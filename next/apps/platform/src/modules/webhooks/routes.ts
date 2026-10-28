@@ -1,11 +1,9 @@
-/**
- * Webhook routes for platform API.
- * Contract: projects/:projectId/webhooks
- */
+/** Defines the project-scoped webhook lifecycle, including delivery settings and signature rotation. */
 
 import { Elysia, t } from 'elysia'
 import type { WebhooksService } from './service'
 
+// Reuse one response schema so create, read, update, and rotation stay shape-compatible.
 const WebhookSchema = t.Object({
   $id: t.String(),
   projectId: t.String(),
@@ -22,6 +20,7 @@ const WebhookSchema = t.Object({
   $updatedAt: t.Any(),
 })
 
+/** Adds transport validation while the service enforces project ownership and webhook persistence. */
 export function webhookRoutes(service: WebhooksService) {
   return new Elysia({ name: 'webhook-routes' })
     .post(
@@ -62,6 +61,7 @@ export function webhookRoutes(service: WebhooksService) {
         detail: { summary: 'List webhooks', tags: ['webhooks'] },
       },
       async ({ params: { projectId }, query }) => {
+        // Resolve optional pagination values to the public contract defaults.
         const limit = query.limit ?? 25
         const offset = query.offset ?? 0
         const { webhooks, total } = await service.list(projectId, limit, offset)

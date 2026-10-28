@@ -1,3 +1,4 @@
+/** Service-level coverage for project metadata persistence and missing-project handling. */
 process.env.NUVIX_PLATFORM_DB_DRIVER ??= 'sqlite'
 process.env.NUVIX_PLATFORM_DB_URL ??= ':memory:'
 process.env.NUVIX_TENANT_ENCRYPTION_KEY ??= '+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo='
@@ -13,6 +14,7 @@ let db: Database
 let projectService: ProjectService
 let metadataService: MetadataService
 
+// Share the platform database and service setup; each case supplies its own project identifier.
 beforeAll(async () => {
   db = await createPlatformDatabase()
   projectService = new ProjectService(db, new FakeTenantProvisioner(), async () => {})

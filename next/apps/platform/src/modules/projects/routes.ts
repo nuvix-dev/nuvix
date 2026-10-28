@@ -1,14 +1,11 @@
-/**
- * Project routes — thin HTTP layer over `ProjectService`.
- * Contract: docs/api/platform.md
- *
- * NOTE (elysia 2.0.0-beta.6): route signature is `.get(path, hook, handler)` —
- * the schema/hook object comes BEFORE the handler.
- */
+/** HTTP layer for project operations; schemas validate transport input while `ProjectService` owns behavior. */
+
+// Elysia 2 expects the schema/hook object before each route handler.
 
 import { Elysia, t } from 'elysia'
 import type { ProjectService } from './service'
 
+// Reuse one project response contract across lifecycle and settings endpoints.
 export const ProjectSchema = t.Object({
   $id: t.String(),
   name: t.String(),
@@ -31,6 +28,7 @@ export const ProjectSchema = t.Object({
   $updatedAt: t.Any(),
 })
 
+// Usage responses keep time-series data and aggregate counters together for dashboard clients.
 export const ProjectUsageSchema = t.Object({
   requests: t.Array(t.Object({ date: t.String(), value: t.Number() })),
   network: t.Array(t.Object({ date: t.String(), value: t.Number() })),
@@ -48,7 +46,9 @@ export const ProjectUsageSchema = t.Object({
   ),
 })
 
+/** Registers project lifecycle, configuration, integration, and usage routes. */
 export function projectRoutes(service: ProjectService) {
+  // Keep handlers thin: validate transport data here and delegate project rules to the service.
   return new Elysia({ name: 'project-routes' })
     .post(
       '/projects',
@@ -83,6 +83,7 @@ export function projectRoutes(service: ProjectService) {
         detail: { summary: 'List projects', tags: ['projects'] },
       },
       async ({ query }) => {
+        // Resolve optional pagination values to the public contract defaults.
         const limit = query.limit ?? 25
         const offset = query.offset ?? 0
         const { projects, total } = await service.list(limit, offset)

@@ -1,7 +1,4 @@
-/**
- * Platform webhooks service.
- * Manages webhook subscriptions for projects.
- */
+/** Owns project webhook subscriptions, delivery settings, and signing-key rotation. */
 
 import { randomBytes } from 'node:crypto'
 import { ID } from '@nuvix/core'
@@ -48,6 +45,7 @@ export interface WebhookView {
 
 function toView(doc: Doc<Webhooks>): WebhookView {
   const data = doc.toObject()
+  // Never expose the stored HTTP password in a public webhook projection.
   return {
     $id: doc.getId(),
     projectId: data.projectId,
@@ -68,9 +66,7 @@ function toView(doc: Doc<Webhooks>): WebhookView {
 export class WebhooksService {
   constructor(private readonly db: Database) {}
 
-  /**
-   * Resolve project by public ID.
-   */
+  /** Resolve the owning project before any webhook operation. */
   private async getProject(projectId: string) {
     const session = this.db.system()
     const project = await session.getDocument('projects', projectId)
@@ -82,9 +78,7 @@ export class WebhooksService {
     return project
   }
 
-  /**
-   * List all webhooks for a project.
-   */
+  /** List webhooks within one project, using offset pagination. */
   async list(
     projectId: string,
     limit = 25,
@@ -93,6 +87,7 @@ export class WebhooksService {
     const project = await this.getProject(projectId)
     const session = this.db.system()
 
+    // Scope both the page and count to the project's internal sequence.
     const queries = [
       Query.equal('projectInternalId', [project.getSequence()]),
       Query.limit(limit),
@@ -110,9 +105,7 @@ export class WebhooksService {
     }
   }
 
-  /**
-   * Create a webhook for a project.
-   */
+  /** Create a project-owned webhook and generate its signing key when none is supplied. */
   async create(projectId: string, input: CreateWebhookInput): Promise<WebhookView> {
     const project = await this.getProject(projectId)
     const session = this.db.system()
@@ -140,9 +133,7 @@ export class WebhooksService {
     return toView(created)
   }
 
-  /**
-   * Get a single webhook for a project.
-   */
+  /** Retrieve a webhook only when it belongs to the requested project. */
   async get(projectId: string, webhookId: string): Promise<WebhookView> {
     const project = await this.getProject(projectId)
     const session = this.db.system()
@@ -161,9 +152,7 @@ export class WebhooksService {
     return toView(webhook)
   }
 
-  /**
-   * Update a webhook.
-   */
+  /** Update webhook delivery settings after confirming project ownership. */
   async update(
     projectId: string,
     webhookId: string,
@@ -192,6 +181,7 @@ export class WebhooksService {
     if (input.enabled !== undefined) {
       webhook.set('enabled', input.enabled)
       if (input.enabled) {
+        // Re-enabling starts with a clean delivery-attempt counter.
         webhook.set('attempts', 0)
       }
     }
@@ -200,9 +190,7 @@ export class WebhooksService {
     return toView(updated)
   }
 
-  /**
-   * Update signature key of a webhook.
-   */
+  /** Replace a webhook's signing key after confirming project ownership. */
   async updateSignature(projectId: string, webhookId: string): Promise<WebhookView> {
     const project = await this.getProject(projectId)
     const session = this.db.system()
@@ -223,9 +211,7 @@ export class WebhooksService {
     return toView(updated)
   }
 
-  /**
-   * Delete a webhook.
-   */
+  /** Permanently remove a webhook after confirming project ownership. */
   async delete(projectId: string, webhookId: string): Promise<void> {
     const project = await this.getProject(projectId)
     const session = this.db.system()

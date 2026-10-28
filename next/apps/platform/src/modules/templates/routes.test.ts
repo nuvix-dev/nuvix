@@ -1,3 +1,4 @@
+/** Route-level coverage for template endpoints that currently report explicit non-implementation responses. */
 process.env.NUVIX_PLATFORM_DB_DRIVER ??= 'sqlite'
 process.env.NUVIX_PLATFORM_DB_URL ??= ':memory:'
 process.env.NUVIX_TENANT_ENCRYPTION_KEY ??= '+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo='
@@ -13,12 +14,14 @@ import { TemplatesService } from './service'
 async function buildApp() {
   const db = await createPlatformDatabase()
   const service = new TemplatesService(db)
+  // Compose the real plugin so each unsupported operation is checked at the HTTP boundary.
   const app = new Elysia().use(problemErrors()).use(templatesRoutes(service))
   return treaty(app)
 }
 
 let client: Awaited<ReturnType<typeof buildApp>>
 
+// Build the treaty client once for the shared route composition.
 beforeAll(async () => {
   client = await buildApp()
 })

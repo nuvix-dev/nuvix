@@ -2,6 +2,7 @@ process.env.NUVIX_PLATFORM_DB_DRIVER ??= 'sqlite'
 process.env.NUVIX_PLATFORM_DB_URL ??= ':memory:'
 process.env.NUVIX_TENANT_ENCRYPTION_KEY ??= '+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo='
 
+/** Service-level coverage for API-key issuance, visibility, expiry, and project ownership. */
 import { beforeAll, describe, expect, test } from 'bun:test'
 import { FakeTenantProvisioner } from '@nuvix/core/tenants'
 import type { Database } from '@nuvix/db'
@@ -14,8 +15,10 @@ let projectService: ProjectService
 let keysService: KeysService
 let projectId: string
 
+// Project creation requires a tenant bootstrap callback, which key tests intentionally do not exercise.
 const noopBootstrap = async () => {}
 
+// Share one project so lifecycle assertions use the same ownership boundary.
 beforeAll(async () => {
   db = await createPlatformDatabase()
   projectService = new ProjectService(db, new FakeTenantProvisioner(), noopBootstrap)

@@ -2,6 +2,7 @@ process.env.NUVIX_PLATFORM_DB_DRIVER ??= 'sqlite'
 process.env.NUVIX_PLATFORM_DB_URL ??= ':memory:'
 process.env.NUVIX_TENANT_ENCRYPTION_KEY ??= '+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo='
 
+/** Service-level coverage for project resolution, validation failures, and tenant metadata passthroughs. */
 import { beforeAll, describe, expect, test } from 'bun:test'
 import { FakeTenantProvisioner, TenantResourcePool } from '@nuvix/core/tenants'
 import type { Database } from '@nuvix/db'
@@ -15,10 +16,12 @@ let projectService: ProjectService
 let databaseService: DatabaseService
 let mockMeta: PgMeta
 
+// Build shared platform and tenant-resource fixtures once; each case creates its own project record.
 beforeAll(async () => {
   db = await createPlatformDatabase()
   projectService = new ProjectService(db, new FakeTenantProvisioner(), async () => {})
 
+  // Keep metadata deterministic so assertions target service delegation rather than PostgreSQL behavior.
   mockMeta = {
     query: async (sql: string) => [{ result: 'ok', query: sql }],
     schemas: {
@@ -120,6 +123,7 @@ beforeAll(async () => {
     },
   } as unknown as PgMeta
 
+  // Inject the resource factory so the service still follows production pool boundaries without opening a database.
   const pool = new TenantResourcePool({
     dependencies: {
       createSql: () => ({ close: async () => {} }) as unknown as import('bun').SQL,

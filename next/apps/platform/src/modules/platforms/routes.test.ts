@@ -1,3 +1,4 @@
+/** Route-level Eden treaty coverage for project client-platform lifecycle operations. */
 process.env.NUVIX_PLATFORM_DB_DRIVER ??= 'sqlite'
 process.env.NUVIX_PLATFORM_DB_URL ??= ':memory:'
 process.env.NUVIX_TENANT_ENCRYPTION_KEY ??= '+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo='
@@ -18,6 +19,7 @@ async function buildApp() {
   const projectService = new ProjectService(db, new FakeTenantProvisioner(), async () => {})
   const platformsService = new PlatformsService(db)
 
+  // Compose project and platform routes so requests cross the same boundary as production clients.
   const app = new Elysia()
     .use(problemErrors())
     .use(projectRoutes(projectService))
@@ -29,6 +31,7 @@ async function buildApp() {
 let client: Awaited<ReturnType<typeof buildApp>>['client']
 let projectId: string
 
+// Share one project so list and lifecycle cases observe platforms created by earlier requests.
 beforeAll(async () => {
   const built = await buildApp()
   client = built.client

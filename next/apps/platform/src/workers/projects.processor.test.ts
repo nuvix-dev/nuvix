@@ -1,9 +1,11 @@
+/** Worker-level coverage for project provisioning completion and retry behavior. */
 import { beforeAll, describe, expect, it } from 'bun:test'
 import processProject, { setProjectProvisioning } from './projects.processor'
 
 const finalized: string[] = []
 const failures: string[] = []
 
+// Inject a deterministic provisioning boundary so retry decisions can be tested without Redis or Docker.
 beforeAll(() => {
   setProjectProvisioning({
     finalize: async (projectId) => {
@@ -35,12 +37,12 @@ describe('projects.processor (background provisioning)', () => {
   it('rethrows on non-final attempts so BullMQ retries', async () => {
     failures.push('proj_retry')
     await expect(processProject(job('proj_retry', 3, 0))).rejects.toThrow('bootstrap down')
-    // attemptsMade 1 of 3 → still retrying.
+    // Non-final attempts rethrow so BullMQ can schedule another delivery.
     await expect(processProject(job('proj_retry', 3, 1))).rejects.toThrow('bootstrap down')
   })
 
   it('reports failure without throwing on the final attempt', async () => {
-    // The service already recorded status 'error'; the worker surfaces it.
+    // The service records the error; the final worker attempt returns it without another retry.
     const result = await processProject(job('proj_retry', 3, 3))
     expect(result.success).toBe(false)
     expect(result.status).toBe('error')

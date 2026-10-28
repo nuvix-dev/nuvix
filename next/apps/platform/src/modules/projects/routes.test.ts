@@ -1,3 +1,4 @@
+/** Route-level Eden treaty coverage for project lifecycle, service toggles, integrations, and usage. */
 process.env.NUVIX_PLATFORM_DB_DRIVER ??= 'sqlite'
 process.env.NUVIX_PLATFORM_DB_URL ??= ':memory:'
 process.env.NUVIX_TENANT_ENCRYPTION_KEY ??= '+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo='
@@ -13,15 +14,10 @@ import { ProjectService } from './service'
 
 const jwtSecret = 'test-jwt-secret-routes'
 
-/**
- * Composed the same way as `app.ts`, but with `FakeTenantProvisioner` in
- * place of `DockerTenantProvisioner` — route/composition coverage should
- * never depend on a real Docker host (that's `docker-provisioner.integration.test.ts`'s job).
- */
+/** Builds the platform composition with an in-memory tenant provisioner so route tests stay local. */
 async function buildApp() {
   const db = await createPlatformDatabase()
-  // FakeTenantProvisioner's target isn't a real Postgres instance — never
-  // attempt a real bootstrap connection against it in route tests.
+  // The fake provisioner supplies deterministic targets; route tests must not open external database connections.
   const service = new ProjectService(db, new FakeTenantProvisioner(), async () => {}, jwtSecret)
   const app = new Elysia().use(problemErrors()).use(projectRoutes(service))
   return treaty(app)
@@ -29,6 +25,7 @@ async function buildApp() {
 
 let client: Awaited<ReturnType<typeof buildApp>>
 
+// Build the composed client once; each case creates the project state it needs.
 beforeAll(async () => {
   client = await buildApp()
 })

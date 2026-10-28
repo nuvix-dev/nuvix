@@ -1,21 +1,25 @@
+/** Platform API key lifecycle: generation, scoping, expiry, and deletion. */
 import { randomBytes } from 'node:crypto'
 import { ID } from '@nuvix/core'
 import { NotFoundError } from '@nuvix/core/errors'
 import { type Database, Doc, Query } from '@nuvix/db'
 import type { Keys } from '../../types/generated'
 
+/** Options when issuing a new API key. */
 export interface CreateKeyInput {
   name: string
   scopes?: string[]
   expire?: string | null
 }
 
+/** Options when editing an existing API key. */
 export interface UpdateKeyInput {
   name?: string
   scopes?: string[]
   expire?: string | null
 }
 
+/** API-key projection with the generated secret needed by clients to configure credentials securely. */
 export interface KeyView {
   $id: string
   projectId: string
@@ -45,12 +49,11 @@ function toView(doc: Doc<Keys>): KeyView {
   }
 }
 
+/** Owns the `keys` collection for one project. */
 export class KeysService {
   constructor(private readonly db: Database) {}
 
-  /**
-   * Resolve project by public ID.
-   */
+  /** Load the owning project or fail with a not-found error. */
   private async getProject(projectId: string) {
     const session = this.db.system()
     const project = await session.getDocument('projects', projectId)
@@ -62,9 +65,7 @@ export class KeysService {
     return project
   }
 
-  /**
-   * List all keys for a project.
-   */
+  /** List the project's keys with pagination. */
   async list(
     projectId: string,
     limit = 25,
@@ -90,9 +91,7 @@ export class KeysService {
     }
   }
 
-  /**
-   * Create an API key for a project.
-   */
+/** Issue a project-owned key with a 128-byte random `standard_…` secret. */
   async create(projectId: string, input: CreateKeyInput): Promise<KeyView> {
     const project = await this.getProject(projectId)
     const session = this.db.system()
@@ -116,9 +115,7 @@ export class KeysService {
     return toView(created)
   }
 
-  /**
-   * Get a single key for a project.
-   */
+  /** Fetch one key, enforcing that it belongs to the project. */
   async get(projectId: string, keyId: string): Promise<KeyView> {
     const project = await this.getProject(projectId)
     const session = this.db.system()
@@ -137,9 +134,7 @@ export class KeysService {
     return toView(key)
   }
 
-  /**
-   * Update a key.
-   */
+  /** Update editable key metadata after confirming project ownership. */
   async update(projectId: string, keyId: string, input: UpdateKeyInput): Promise<KeyView> {
     const project = await this.getProject(projectId)
     const session = this.db.system()
@@ -165,9 +160,7 @@ export class KeysService {
     return toView(updated)
   }
 
-  /**
-   * Delete a key.
-   */
+  /** Permanently remove a project-owned key after confirming its ownership. */
   async delete(projectId: string, keyId: string): Promise<void> {
     const project = await this.getProject(projectId)
     const session = this.db.system()

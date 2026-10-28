@@ -1,6 +1,8 @@
+/** Defines the project-scoped API-key lifecycle, including creation, pagination, updates, and revocation. */
 import { Elysia, t } from 'elysia'
 import type { KeysService } from './service'
 
+// Keep the response contract centralized so every key operation exposes the same public fields.
 const KeySchema = t.Object({
   $id: t.String(),
   projectId: t.String(),
@@ -14,6 +16,7 @@ const KeySchema = t.Object({
   $updatedAt: t.Any(),
 })
 
+/** Adds transport validation and delegates key ownership and secret handling to the service. */
 export function keyRoutes(service: KeysService) {
   return new Elysia({ name: 'key-routes' })
     .post(
@@ -54,6 +57,7 @@ export function keyRoutes(service: KeysService) {
         detail: { summary: 'List API keys', tags: ['keys'] },
       },
       async ({ params: { projectId }, query }) => {
+        // Apply contract defaults here so service pagination receives concrete bounds.
         const limit = query.limit ?? 25
         const offset = query.offset ?? 0
         const { keys, total } = await service.list(projectId, limit, offset)

@@ -1,3 +1,4 @@
+/** App composition for the platform (console/control-plane) server. */
 import { parseRedisUrl, QueueManager } from '@nuvix/core/queues'
 import { bootstrapAuthSchema } from '@nuvix/core/tenant-auth'
 import {
@@ -30,12 +31,13 @@ import { problemErrors } from './plugins/errors'
 import { createPlatformDatabase } from './registry/setup'
 
 /**
- * Framework glue — the ONLY place Elysia-specific wiring lives (mirrors
- * `apps/server/src/app.ts`). Infrastructure (database, provisioner) is
- * constructed once here and injected into services; routes never see it
- * directly (AGENTS.md).
+ * Framework glue — the only place Elysia-specific wiring lives. Since the
+ * server is the composition root, it constructs infrastructure (database,
+ * provisioner, queue manager) once and injects it into services; routes
+ * receive services only, never infrastructure.
  */
 
+/** Unauthenticated liveness probe. */
 const health = new Elysia({ name: 'health' }).get(
   '/health',
   {
@@ -52,7 +54,9 @@ const health = new Elysia({ name: 'health' }).get(
   }),
 )
 
+/** Control-plane database, created and schema-bootstrapped at startup. */
 const db = await createPlatformDatabase()
+/** Creates one dedicated PostgreSQL container per project. */
 const provisioner = new DockerTenantProvisioner({
   image: config.platform.tenantPostgresImage,
 })
@@ -71,9 +75,11 @@ try {
   // Optional in environments where secret is not yet set
 }
 
-// Queue runtime — PROJECTS (background provisioning) enqueues here.
-// Without a Redis connection the manager degrades to in-memory test mode
-// and project provisioning falls back to running inline.
+/**
+ * Queue runtime — project-creation requests enqueue here so provisioning
+ * happens in a worker. Without Redis the manager degrades to in-memory
+ * mode and project provisioning falls back to running inline.
+ */
 export const queues = new QueueManager({
   connection: Bun.env.NUVIX_REDIS_URL ? parseRedisUrl(Bun.env.NUVIX_REDIS_URL) : undefined,
 })
@@ -95,6 +101,7 @@ const authSettings = new AuthSettingsService(db)
 const metadata = new MetadataService(db)
 const templates = new TemplatesService(db)
 
+/** Shared pool of tenant resources for per-project database browsing. */
 const tenantPool = new TenantResourcePool()
 const database = new DatabaseService(db, tenantPool)
 

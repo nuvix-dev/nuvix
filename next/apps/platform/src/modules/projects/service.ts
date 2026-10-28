@@ -1,8 +1,4 @@
-/**
- * Project lifecycle service (D20). Owns business rules; routes never touch
- * `Database`, sessions, or the `TenantProvisioner` directly (AGENTS.md).
- * Contract: docs/api/platform.md
- */
+/** Owns project lifecycle rules, tenant provisioning, configuration updates, and public projections. */
 
 import { ID } from '@nuvix/core'
 import { signJwt } from '@nuvix/core/auth'
@@ -26,7 +22,11 @@ import type { Projects, ProjectsCreateInput } from '../../types/generated'
 
 export interface CreateProjectInput {
   name: string
-  /** Standard v2 create-id convention (D28): `'unique()'` (default) or a caller-supplied id. */
+  /**
+   * Caller-chosen id. `'unique()'` (or nothing) generates a fresh id; any
+   * longer value is used as a custom id — the same convention every
+   * create endpoint follows.
+   */
   id?: string
   description?: string
   logo?: string
@@ -148,54 +148,31 @@ export class ProjectService {
   constructor(
     private readonly db: Database,
     private readonly provisioner: TenantProvisioner,
-    /**
-     * Bootstraps the tenant's `auth` schema (users/sessions/teams/…) exactly
-     * once, right here at creation time — never lazily per-request from the
-     * server app (`TenantResource.authSession` assumes it already exists).
-     * Injected so tests can fake it instead of opening a real connection to
-     * `FakeTenantProvisioner`'s made-up target.
-     */
+    /** Initializes the tenant auth schema during provisioning; injected so tests can avoid real connections. */
     private readonly bootstrapTenantAuth: (
       target: TenantTarget,
     ) => Promise<void> = bootstrapAuthSchema,
     private readonly jwtSecret?: string,
     private readonly encryptionKey?: Uint8Array,
-    /**
-     * Queue boundary — when set, the slow readiness-wait + auth-schema
-     * bootstrap run on the PROJECTS queue (background provisioning) and
-     * `create` returns the `provisioning` view immediately. When unset
-     * (tests / no Redis), provisioning runs inline.
-     */
+    /** When set, readiness and auth bootstrap run on the projects queue; otherwise provisioning stays inline. */
     private readonly enqueueProvision?: (projectId: string) => Promise<string>,
   ) {}
 
-  /**
-   * Creates the project record, then provisions its dedicated tenant
-   * container synchronously (docs/api/platform.md — backgrounding this is a
-   * Phase 6 follow-up, not silently dropped). On provisioning failure the
-   * record is kept with `status: "error"` for operator visibility rather
-   * than rolled back, since the container/volume may have partially formed.
-   */
+  /** Creates a project and its tenant; queued failures remain visible as an error instead of being rolled back. */
   async create(input: CreateProjectInput): Promise<ProjectView> {
     const id = ID.auto(input.id)
     const publishableKey = `pk_${crypto.randomUUID().replaceAll('-', '')}`
     const session = this.db.system()
 
-    // Container creation is fast — it happens inline so the record can
-    // carry its required container/volume handles. The SLOW part
-    // (readiness wait + auth-schema bootstrap) runs on the PROJECTS
-    // queue when a queue boundary is configured (background
-    // provisioning); tests and Redis-less setups run it inline.
+    // Create the container inline so the project record can persist its required handles immediately.
+    // Readiness and auth-schema bootstrap may then run on the projects queue.
     let handle: Awaited<ReturnType<TenantProvisioner['provision']>>['handle']
     let target: Awaited<ReturnType<TenantProvisioner['provision']>>['target']
     try {
       ;({ handle, target } = await this.provisioner.provision({
         projectId: id,
       }))
-      // The target (credentials included) is persisted NOW — encrypted by
-      // the platform db (`filters: ['json', 'encrypt']`) — because the
-      // PROJECTS worker finalizes from it (provision is NOT idempotent:
-      // a second call would collide on the container name).
+      // Persist the encrypted target immediately because the worker needs it to finalize provisioning.
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error)
       throw new BadGatewayError(`Failed to provision tenant database: ${message}`, {
@@ -254,26 +231,17 @@ export class ProjectService {
     if (this.enqueueProvision) {
       try {
         await this.enqueueProvision(id)
-        // Backgrounded — the PROJECTS worker finalizes provisioning.
+        // The projects worker owns finalization while this response reports provisioning state.
         return toView(project)
       } catch (error) {
-        // Queue unavailable → degrade to inline provisioning so the
-        // created record never stalls in `provisioning`.
+        // If queue submission fails, finalize inline so the record does not remain stuck in provisioning.
         console.error('[projects] enqueue failed; provisioning inline', error)
       }
     }
     return this.provisionProject(id)
   }
 
-  /**
-   * Finalizes provisioning for a created project: waits for the tenant
-   * container (target persisted — encrypted — at create time) and
-   * bootstraps the `auth` schema, then flips the status to `active`. On
-   * failure the record is kept with `status: "error"` for operator
-   * visibility rather than rolled back, since the container/volume may
-   * have partially formed. Idempotent for already-final statuses (the
-   * PROJECTS worker may race a manual retry).
-   */
+  /** Finalizes a queued project, recording errors and returning already-final projects unchanged. */
   async provisionProject(id: string): Promise<ProjectView> {
     const session = this.db.system()
     const project = await session.getDocument('projects', id)
@@ -321,6 +289,7 @@ export class ProjectService {
     }
   }
 
+  /** List projects with offset pagination and a total count. */
   async list(limit = 25, offset = 0): Promise<{ projects: ProjectView[]; total: number }> {
     const session = this.db.system()
     const [projects, total] = await Promise.all([
@@ -330,10 +299,12 @@ export class ProjectService {
     return { projects: projects.map(toView), total }
   }
 
+  /** Return one public project projection. */
   async get(id: string): Promise<ProjectView> {
     return toView(await this.getDoc(id))
   }
 
+  /** Update editable project metadata without changing provisioning state. */
   async update(id: string, input: UpdateProjectInput): Promise<ProjectView> {
     const project = await this.getDoc(id)
     if (input.name !== undefined) project.set('name', input.name)
@@ -516,7 +487,7 @@ export class ProjectService {
     })
   }
 
-  /** Deprovisions the tenant container (and, with `purge`, its volume) then deletes the record. */
+  /** Deprovision the tenant and then remove the platform project record. */
   async delete(id: string, options: { purge?: boolean } = {}): Promise<void> {
     const project = await this.getDoc(id)
     const session = this.db.system()
@@ -531,6 +502,7 @@ export class ProjectService {
     await session.deleteDocument('projects', id)
   }
 
+  /** Resolve a project document or return the stable not-found error. */
   private async getDoc(id: string): Promise<Doc<Projects>> {
     const project = await this.db.system().getDocument('projects', id)
     if (project.empty()) {

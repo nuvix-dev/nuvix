@@ -1,3 +1,4 @@
+/** HTTP-level coverage for console authentication, including token rotation and cookie-based refresh. */
 import { describe, expect, it } from 'bun:test'
 import { Auth } from '@nuvix/core/auth'
 import { Doc } from '@nuvix/db'
@@ -9,7 +10,7 @@ import { ConsoleAuthService, hashRefreshToken } from './service'
 
 process.env.NUVIX_JWT_SECRET ??= 'test-jwt-secret'
 
-/** In-memory platform session (same surface as the service test stub). */
+/** Minimal in-memory session adapter that lets the route tests exercise persistence without a platform database. */
 function stubSession() {
   const store = new Map<string, Map<string, Doc<Record<string, unknown>>>>()
   const colOf = (name: string) => {
@@ -75,7 +76,7 @@ function makeApp() {
     .use(problemErrors())
     .use(consoleAuth({ secret: process.env.NUVIX_JWT_SECRET! }))
     .use(authRoutesFor(service))
-    // A stand-in protected platform route.
+    // Keep one protected route in the composition to verify the auth plugin's request boundary.
     .get('/projects', () => ({ projects: [] }))
     .get('/health', () => ({ status: 'ok' }))
 
@@ -110,7 +111,7 @@ describe('console auth HTTP flow (CLI-compatible)', () => {
     const { testApp, session } = makeApp()
     await seedOperator(session)
 
-    // 1. Login
+    // Establish a console session and verify the response exposes the operator and refresh cookie.
     const login = await testApp.handle(
       new Request('http://localhost/console/auth', {
         method: 'POST',
@@ -128,7 +129,7 @@ describe('console auth HTTP flow (CLI-compatible)', () => {
     expect(pair.user.email).toBe('op@test')
     expect(login.headers.get('set-cookie')).toContain('nx_console_refresh=')
 
-    // 2. Protected route with the bearer token
+    // The access token returned by login must authenticate a protected platform route.
     const who = await testApp.handle(
       new Request('http://localhost/projects', {
         headers: { authorization: `Bearer ${pair.accessToken}` },
@@ -136,7 +137,7 @@ describe('console auth HTTP flow (CLI-compatible)', () => {
     )
     expect(who.status).toBe(200)
 
-    // 3. Whoami
+    // The identity endpoint must resolve the same operator from the access token.
     const me = await testApp.handle(
       new Request('http://localhost/console/me', {
         headers: { authorization: `Bearer ${pair.accessToken}` },
@@ -145,7 +146,7 @@ describe('console auth HTTP flow (CLI-compatible)', () => {
     expect(me.status).toBe(200)
     expect(((await me.json()) as { email: string }).email).toBe('op@test')
 
-    // 4. Refresh — rotation: the old refresh token stops working.
+    // Refresh rotates the credential pair, making the previous refresh token unusable.
     const refreshed = await testApp.handle(
       new Request('http://localhost/console/auth/refresh', {
         method: 'POST',
@@ -160,7 +161,7 @@ describe('console auth HTTP flow (CLI-compatible)', () => {
     }
     expect(pair2.refreshToken).not.toBe(pair.refreshToken)
 
-    // Old refresh token = rotated-away → reuse → session revoked (401).
+    // Reusing a rotated token revokes the session instead of accepting a stale credential.
     const reuse = await testApp.handle(
       new Request('http://localhost/console/auth/refresh', {
         method: 'POST',
@@ -170,8 +171,7 @@ describe('console auth HTTP flow (CLI-compatible)', () => {
     )
     expect(reuse.status).toBe(401)
 
-    // 5. New access token still works until its own expiry; logout via
-    // the newest refresh token kills the session row.
+    // Logging out with the newest refresh token removes the persisted session row.
     const logout = await testApp.handle(
       new Request('http://localhost/console/auth/logout', {
         method: 'POST',
@@ -210,7 +210,7 @@ describe('console auth HTTP flow (CLI-compatible)', () => {
   it('401s on tampered and foreign-audience tokens', async () => {
     const { testApp } = makeApp()
 
-    // Token signed for a different audience (server app JWTs) is rejected.
+    // A token signed for a different audience must not authenticate console routes.
     const foreign = await import('@nuvix/core/auth').then(({ signJwt }) =>
       signJwt({ sub: 'user_1', aud: 'tenant' }, process.env.NUVIX_JWT_SECRET!, 60),
     )
@@ -221,7 +221,7 @@ describe('console auth HTTP flow (CLI-compatible)', () => {
     )
     expect(res.status).toBe(401)
 
-    // Tampered signature.
+    // Altering the signed token payload must invalidate the signature.
     const parts = foreign.split('.')
     const tampered = `${parts[0]}.${parts[1]}.AAAA${parts[2]!.slice(4)}`
     const res2 = await testApp.handle(
@@ -246,7 +246,7 @@ describe('console auth HTTP flow (CLI-compatible)', () => {
     expect(res.status).toBe(401)
     const body = (await res.json()) as { code?: string; title?: string }
     expect(body.code).toBe('console_invalid_credentials')
-    // No session material persisted for failed logins.
+    // Failed authentication must not create a persisted console session.
     expect(hashRefreshToken('')).toBeDefined()
     expect(session.store.get('console_sessions')?.size ?? 0).toBe(0)
   })

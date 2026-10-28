@@ -1,9 +1,6 @@
 /**
- * Console auth routes — login, rotating refresh, logout, and the `me`
- * sanity probe (also the CLI's `whoami`). Token pairs are returned in
- * the body (CLI-friendly); the refresh token is additionally set as an
- * httpOnly cookie so a browser console can adopt cookie-based refresh
- * without a protocol change.
+ * Exposes console login, token rotation, logout, and identity routes. Token pairs remain in the
+ * response for CLI clients, while the refresh token is also available through an HttpOnly cookie.
  */
 
 import { TooManyRequestsError } from '@nuvix/core/errors'
@@ -23,6 +20,7 @@ function clearRefreshCookie(): string {
   return `${REFRESH_COOKIE}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`
 }
 
+// Prefer an explicit body token for CLI calls, then fall back to the browser's refresh cookie.
 function refreshFrom(headers: Record<string, unknown>, body?: { refreshToken?: string }): string {
   return (
     body?.refreshToken ??
@@ -32,6 +30,7 @@ function refreshFrom(headers: Record<string, unknown>, body?: { refreshToken?: s
   )
 }
 
+// Keep the token response typed at the route boundary so clients receive one stable shape.
 const TokenPairSchema = t.Object({
   accessToken: t.String(),
   refreshToken: t.String(),
@@ -43,14 +42,11 @@ const TokenPairSchema = t.Object({
   }),
 })
 
-/**
- * Wires the routes against a provided service (app composition) — kept
- * separate so tests can inject an in-memory-backed service.
- */
+/** Binds console auth routes to an injected service so composition and tests share the same boundary. */
 export function authRoutesFor(service: ConsoleAuthService) {
   return (
     new Elysia({ name: 'console-auth-routes' })
-      // Login — the only credential-bearing endpoint.
+      // Login is the only route that accepts the operator's primary credentials.
       .post(
         '/console/auth',
         {
@@ -84,7 +80,7 @@ export function authRoutesFor(service: ConsoleAuthService) {
             set.headers['Set-Cookie'] = refreshCookie(pair.refreshToken)
             return pair
           } catch (error) {
-            // Hardening pass: per-credential login throttling.
+            // Per-credential login throttling maps to a 429 with Retry-After.
             if (error instanceof LoginThrottledError) {
               set.headers['retry-after'] = String(error.retryAfterSeconds)
               throw new TooManyRequestsError(
@@ -97,7 +93,7 @@ export function authRoutesFor(service: ConsoleAuthService) {
         },
       )
 
-      // Refresh — rotating; the previous token becomes unusable.
+      // Refresh rotates the credential pair and invalidates the presented refresh token.
       .post(
         '/console/auth/refresh',
         {
@@ -124,7 +120,7 @@ export function authRoutesFor(service: ConsoleAuthService) {
         },
       )
 
-      // Logout — revokes the session bound to the refresh token.
+      // Logout revokes the session associated with the supplied refresh token.
       .post(
         '/console/auth/logout',
         {
@@ -147,8 +143,7 @@ export function authRoutesFor(service: ConsoleAuthService) {
         },
       )
 
-      // Whoami — sanity probe; requires a valid access token (enforced by
-      // the consoleAuth plugin).
+      // The identity route is protected by the upstream consoleAuth plugin.
       .get(
         '/console/me',
         {
@@ -165,8 +160,7 @@ export function authRoutesFor(service: ConsoleAuthService) {
           }),
         },
         (ctx) => {
-          // consoleAuth (composed upstream) derives `consoleUser`; the
-          // cast-derive pattern reaches it across the .use() boundary.
+          // Read the user derived by consoleAuth across the Elysia composition boundary.
           const consoleUser =
             'consoleUser' in ctx ? (ctx as { consoleUser: { id: string } }).consoleUser : undefined
           return service.getMe(consoleUser?.id ?? '')

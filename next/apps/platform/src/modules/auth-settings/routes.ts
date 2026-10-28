@@ -1,7 +1,10 @@
+/** Defines the platform HTTP surface for reading and changing a project's authentication policy. */
 import { Elysia, t } from 'elysia'
 import type { AuthSettingsService } from './service'
 
+/** Adds transport validation while keeping authentication-setting rules inside the injected service. */
 export function authSettingsRoutes(service: AuthSettingsService) {
+  // Each handler passes validated input through unchanged; persistence and policy decisions belong to the service.
   return new Elysia({ name: 'auth-settings-routes' })
     .get(
       '/projects/:projectId/auth',

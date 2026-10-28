@@ -1,3 +1,4 @@
+/** Service-level coverage for console login, refresh-token rotation, throttling, and session revocation. */
 import { describe, expect, it } from 'bun:test'
 import { verifyJwt } from '@nuvix/core/auth'
 import { Doc } from '@nuvix/db'
@@ -10,7 +11,7 @@ import {
 
 process.env.NUVIX_JWT_SECRET ??= 'test-jwt-secret'
 
-/** In-memory platform session covering the console-auth surface. */
+/** In-memory platform session that isolates console-auth behavior from database infrastructure. */
 function stubSession() {
   const store = new Map<string, Map<string, Doc<Record<string, unknown>>>>()
   const colOf = (name: string) => {
@@ -117,7 +118,7 @@ describe('ConsoleAuthService', () => {
     expect(payload?.sub).toBe('user_1')
     expect(payload?.email).toBe('op@test')
 
-    // Only the HASH of the refresh token is stored.
+    // Persist only the refresh-token hash so a database read cannot recover the bearer credential.
     const sessionRow = [...session.store.get('console_sessions')!.values()][0]!
     expect(sessionRow.get('refreshHash')).toBe(hashRefreshToken(pair.refreshToken))
     expect(sessionRow.get('previousHash')).toBeNull()
@@ -148,17 +149,17 @@ describe('ConsoleAuthService', () => {
     const first = await service.login('op@test', 'correct-horse')
     const second = await service.refresh(first.refreshToken)
 
-    // New pair, new hash; the old hash moved to previousHash.
+    // Rotation issues a new pair and retains the previous hash for reuse detection.
     expect(second.refreshToken).not.toBe(first.refreshToken)
     const row = [...session.store.get('console_sessions')!.values()][0]!
     expect(row.get('refreshHash')).toBe(hashRefreshToken(second.refreshToken))
     expect(row.get('previousHash')).toBe(hashRefreshToken(first.refreshToken))
 
-    // Re-presenting the rotated-away token = theft → session revoked.
+    // Reusing a rotated token is treated as credential theft and revokes the session.
     await expect(service.refresh(first.refreshToken)).rejects.toThrow()
     expect(session.store.get('console_sessions')!.size).toBe(0)
 
-    // Even the CURRENT token is dead now (its session was revoked).
+    // The current token is also invalid because its session was revoked.
     await expect(service.refresh(second.refreshToken)).rejects.toThrow()
   })
 
@@ -184,7 +185,7 @@ describe('ConsoleAuthService', () => {
     expect(session.store.get('console_sessions')!.size).toBe(0)
 
     await expect(service.refresh(pair.refreshToken)).rejects.toThrow()
-    // Idempotent: revoking an unknown token succeeds.
+    // Logout is idempotent, so revoking an unknown token still succeeds.
     await expect(service.logout('unknown-token')).resolves.toBeUndefined()
   })
 
@@ -215,15 +216,15 @@ describe('login throttling (hardening pass)', () => {
         codes.push(err.fields?.code ?? err.retryAfterSeconds ?? 'thrown')
       })
     }
-    // 5 failures return invalid_credentials; the 6th is throttled (429).
+    // The first five failures report invalid credentials; the sixth is throttled.
     const throttled = codes.filter((c) => c !== 'console_invalid_credentials')
     expect(throttled).toHaveLength(1)
     expect(Number(throttled[0])).toBeGreaterThan(0)
 
-    // Even the CORRECT password is throttled inside the window.
+    // A correct password remains throttled while the credential window is active.
     await expect(service.login('op@test', 'correct-horse', undefined, 'cli')).rejects.toThrow()
 
-    // A different client key is NOT throttled (per-credential lockout).
+    // A different client key has an independent lockout window.
     const otherClient = await service.login('op@test', 'correct-horse', undefined, 'other')
     expect(otherClient.user.email).toBe('op@test')
   })
@@ -231,20 +232,19 @@ describe('login throttling (hardening pass)', () => {
   it('resets the failure counter after a successful login', async () => {
     const { service, session } = makeService()
     await seedUser(session)
-    // Distinct email+client key: the throttle map is module-level, so
-    // this test must not inherit the lockout from the previous one.
+    // Use a distinct email and client key because the throttle map is module-scoped.
     const email = 'reset@test'
     const client = 'cli-reset'
     await seedUser(session, email)
 
-    // 4 failures (one below the limit)...
+    // Stay one failure below the throttle limit.
     for (let i = 0; i < 4; i++) {
       await service.login(email, 'wrong', undefined, client).catch(() => {})
     }
-    // ...then a success resets the counter...
+    // A successful login resets the failure counter.
     await service.login(email, 'correct-horse', undefined, client)
 
-    // ...so 4 MORE failures still return invalid_credentials, not 429.
+    // The next four failures should therefore remain invalid-credential responses.
     for (let i = 0; i < 4; i++) {
       await service.login(email, 'wrong', undefined, client).catch((error: unknown) => {
         expect((error as { fields?: { code?: string } }).fields?.code).toBe(
@@ -268,10 +268,10 @@ describe('bootstrapConsoleUser', () => {
     expect(users.size).toBe(1)
     const doc = [...users.values()][0]!
     expect(doc.get('email')).toBe('root@test')
-    // Stored as an Argon2 hash, never plaintext.
+    // The bootstrap password is stored as an Argon2 hash, never as plaintext.
     expect(String(doc.get('passwordHash'))).toContain('$argon2')
 
-    // The seeded operator can log in.
+    // Verify that the seeded operator can authenticate with the configured password.
     const pair = await service.login('root@test', 'bootstrap-secret')
     expect(pair.user.email).toBe('root@test')
 

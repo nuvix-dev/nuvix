@@ -1,3 +1,4 @@
+/** Route-level coverage for project authentication settings, using the composed platform app. */
 process.env.NUVIX_PLATFORM_DB_DRIVER ??= 'sqlite'
 process.env.NUVIX_PLATFORM_DB_URL ??= ':memory:'
 process.env.NUVIX_TENANT_ENCRYPTION_KEY ??= '+xbltPjXL+amkXEHKmIeKvxRQd7YEg6pRt3/PRXSmzo='
@@ -14,6 +15,7 @@ import { authSettingsRoutes } from './routes'
 import { AuthSettingsService } from './service'
 
 async function buildApp() {
+  // Compose the project and auth-settings plugins so tests exercise the same route boundary clients use.
   const db = await createPlatformDatabase()
   const projectService = new ProjectService(db, new FakeTenantProvisioner(), async () => {})
   const authSettingsService = new AuthSettingsService(db)
@@ -29,6 +31,7 @@ async function buildApp() {
 let client: Awaited<ReturnType<typeof buildApp>>['client']
 let projectId: string
 
+// All cases share one project because each request verifies persistence across route calls.
 beforeAll(async () => {
   const built = await buildApp()
   client = built.client

@@ -1,3 +1,4 @@
+/** Owns project client-platform records and enforces their project ownership boundary. */
 import { ID } from '@nuvix/core'
 import { NotFoundError } from '@nuvix/core/errors'
 import { type Database, Doc, Query } from '@nuvix/db'
@@ -48,9 +49,7 @@ function toView(doc: Doc<Platforms>): PlatformView {
 export class PlatformsService {
   constructor(private readonly db: Database) {}
 
-  /**
-   * Resolve project by public ID.
-   */
+  /** Resolve the owning project before any platform operation. */
   private async getProject(projectId: string) {
     const session = this.db.system()
     const project = await session.getDocument('projects', projectId)
@@ -62,9 +61,7 @@ export class PlatformsService {
     return project
   }
 
-  /**
-   * List all platforms for a project.
-   */
+  /** List platforms within one project, using offset pagination. */
   async list(
     projectId: string,
     limit = 25,
@@ -73,6 +70,7 @@ export class PlatformsService {
     const project = await this.getProject(projectId)
     const session = this.db.system()
 
+    // Scope both the page and count to the project's internal sequence.
     const queries = [
       Query.equal('projectInternalId', [project.getSequence()]),
       Query.limit(limit),
@@ -90,9 +88,7 @@ export class PlatformsService {
     }
   }
 
-  /**
-   * Create a platform for a project.
-   */
+  /** Create a client platform owned by the project. */
   async create(projectId: string, input: CreatePlatformInput): Promise<PlatformView> {
     const project = await this.getProject(projectId)
     const session = this.db.system()
@@ -114,9 +110,7 @@ export class PlatformsService {
     return toView(created)
   }
 
-  /**
-   * Get a single platform for a project.
-   */
+  /** Retrieve a platform only when it belongs to the requested project. */
   async get(projectId: string, platformId: string): Promise<PlatformView> {
     const project = await this.getProject(projectId)
     const session = this.db.system()
@@ -135,9 +129,7 @@ export class PlatformsService {
     return toView(platform)
   }
 
-  /**
-   * Update a platform.
-   */
+  /** Update editable platform metadata after confirming project ownership. */
   async update(
     projectId: string,
     platformId: string,
@@ -166,9 +158,7 @@ export class PlatformsService {
     return toView(updated)
   }
 
-  /**
-   * Delete a platform.
-   */
+  /** Permanently remove a platform after confirming project ownership. */
   async delete(projectId: string, platformId: string): Promise<void> {
     const project = await this.getProject(projectId)
     const session = this.db.system()

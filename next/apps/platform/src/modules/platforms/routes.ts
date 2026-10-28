@@ -1,6 +1,8 @@
+/** Defines the project-scoped client-platform lifecycle and its pagination contract. */
 import { Elysia, t } from 'elysia'
 import type { PlatformsService } from './service'
 
+// Keep one response schema for create, read, and update operations.
 const PlatformSchema = t.Object({
   $id: t.String(),
   projectId: t.String(),
@@ -13,6 +15,7 @@ const PlatformSchema = t.Object({
   $updatedAt: t.Any(),
 })
 
+/** Adds transport validation while the service enforces project ownership and persistence. */
 export function platformRoutes(service: PlatformsService) {
   return new Elysia({ name: 'platform-routes' })
     .post(
@@ -50,6 +53,7 @@ export function platformRoutes(service: PlatformsService) {
         detail: { summary: 'List client platforms', tags: ['platforms'] },
       },
       async ({ params: { projectId }, query }) => {
+        // Resolve optional query values to contract defaults before calling the service.
         const limit = query.limit ?? 25
         const offset = query.offset ?? 0
         const { platforms, total } = await service.list(projectId, limit, offset)

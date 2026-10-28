@@ -1,7 +1,10 @@
+/** Defines project-scoped custom SMS and email template operations. */
 import { Elysia, t } from 'elysia'
 import type { TemplatesService } from './service'
 
+/** Validates template route input and delegates storage behavior to the injected service. */
 export function templatesRoutes(service: TemplatesService) {
+  // Keep template selection in route parameters while the service owns project and template rules.
   return new Elysia({ name: 'templates-routes' })
     .get(
       '/projects/:projectId/templates/sms/:type/:locale',

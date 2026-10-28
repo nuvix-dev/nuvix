@@ -1,24 +1,6 @@
 /**
- * Console auth — session-based operator authentication for the platform
- * app, designed for BOTH the console UI and the CLI (token pairs in the
- * response body; CLI stores the refresh token in its config file).
- *
- * Token model:
- *  - Access: short-lived JWT (HS256, `aud: 'console'`, default 15 min)
- *    signed with `NUVIX_JWT_SECRET`. Stateless — verified per request.
- *  - Refresh: opaque 32-byte random token (base64url). NEVER stored in
- *    the clear — only its sha256 hash, in a `console_sessions` row.
- *    Default 90 days.
- *
- * Rotation & reuse detection (v2 design, replaces v1's long-lived
- * console sessions): every refresh mints a new refresh token and moves
- * the old hash to `previousHash`. Presenting the previous token again
- * is evidence of theft → the whole session is revoked immediately.
- * Deleting the session row (logout/revocation) invalidates the refresh
- * token; access JWTs simply expire on their short TTL.
- *
- * First operator: seeded idempotently from `NUVIX_CONSOLE_EMAIL` +
- * `NUVIX_CONSOLE_PASSWORD` at startup (bootstrapConsoleUser).
+ * Implements platform-operator authentication for the console and CLI. Access tokens are short-lived
+ * JWTs, while refresh tokens are opaque credentials stored only as hashes and rotated on every use.
  */
 
 import { createHash, randomBytes } from 'node:crypto'
@@ -37,14 +19,17 @@ export const CONSOLE_ACCESS_TTL_SECONDS = Number.parseInt(
 export const CONSOLE_REFRESH_TTL_SECONDS =
   Number.parseInt(process.env.NUVIX_CONSOLE_REFRESH_TTL_DAYS ?? '90', 10) * 86_400
 
+/** JWT audience restricting these tokens to the console surface. */
 export const CONSOLE_JWT_AUDIENCE = 'console'
 
+/** Safe console-user projection for API responses. */
 export interface ConsoleUserView {
   $id: string
   email: string
   name: string | null
 }
 
+/** The token pair returned by login and refresh. */
 export interface ConsoleTokenPair {
   accessToken: string
   refreshToken: string
@@ -58,6 +43,7 @@ export function hashRefreshToken(token: string): string {
   return createHash('sha256').update(token).digest('hex')
 }
 
+/** Creates the opaque credential used to renew a console access token. */
 export function newRefreshToken(): string {
   return randomBytes(32).toString('base64url')
 }
@@ -75,12 +61,8 @@ function toUserView(doc: Doc): ConsoleUserView {
 type AnyDoc = Doc<any>
 
 /**
- * Login throttling (hardening pass): per `email`+`clientKey` failure
- * counter in-process — after MAX_FAILURES failed logins inside
- * WINDOW_MS, further attempts are rejected with 429 until the window
- * elapses. Successful login resets the counter. Console auth is
- * single-instance; a Redis-backed store drops in later if the platform
- * ever scales horizontally.
+ * Limits repeated failures per email and client key within one process. A shared store is required
+ * when multiple platform instances must enforce the same lockout window.
  */
 const MAX_FAILURES = 5
 const WINDOW_MS = 15 * 60 * 1000
@@ -155,7 +137,7 @@ export class ConsoleAuthService {
       ? false
       : await Auth.passwordVerify(password, String(user.get('passwordHash') ?? ''))
     if (!passwordOk) {
-      // Same error for unknown email and wrong password.
+      // Keep unknown-email and wrong-password responses indistinguishable.
       recordFailure(key)
       throw new UnauthorizedError('Invalid email or password', {
         code: 'console_invalid_credentials',
@@ -179,7 +161,7 @@ export class ConsoleAuthService {
     )
 
     if (session.empty()) {
-      // Not the current token — could be a revoked or reused one.
+      // A missing current-token match may indicate revocation or reuse; inspect previousHash next.
       await this.revokeByPreviousHash(presentedHash)
       throw new UnauthorizedError('Invalid or expired refresh token', {
         code: 'console_invalid_refresh_token',
@@ -202,7 +184,7 @@ export class ConsoleAuthService {
       })
     }
 
-    // Rotate: replace the hash, keep the old one for reuse detection.
+    // Replace the current hash while retaining the old one for reuse detection.
     const nextToken = newRefreshToken()
     session.set('previousHash', presentedHash)
     session.set('refreshHash', hashRefreshToken(nextToken))
@@ -252,7 +234,7 @@ export class ConsoleAuthService {
     return toUserView(user)
   }
 
-  /** Reuse detection: a presented token matching a rotated-away hash. */
+  /** Removes a session when a rotated-away refresh token is presented again. */
   private async revokeByPreviousHash(presentedHash: string): Promise<void> {
     const rows = await this.system().find('console_sessions', [
       Query.equal('previousHash', [presentedHash]),
@@ -263,7 +245,7 @@ export class ConsoleAuthService {
     }
   }
 
-  /** Creates the session row + mints the first token pair. */
+  /** Persists the initial refresh hash and mints its corresponding access token. */
   private async createSession(
     user: AnyDoc,
     userAgent?: string,
@@ -298,11 +280,7 @@ export class ConsoleAuthService {
   }
 }
 
-/**
- * Seeds the first console operator from env (idempotent): runs at
- * startup when `NUVIX_CONSOLE_EMAIL` + `NUVIX_CONSOLE_PASSWORD` are set
- * and the email does not exist yet.
- */
+/** Seeds the first console operator once when the required bootstrap credentials are configured. */
 export async function bootstrapConsoleUser(db: Database): Promise<void> {
   const email = process.env.NUVIX_CONSOLE_EMAIL?.trim().toLowerCase()
   const password = process.env.NUVIX_CONSOLE_PASSWORD
