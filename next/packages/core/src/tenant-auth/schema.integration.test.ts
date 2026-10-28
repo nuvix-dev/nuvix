@@ -9,8 +9,9 @@ import { AUTH_SCHEMA, bootstrapAuthSchema, createAuthDatabase, ensureAuthSchema 
 
 /**
  * Live integration coverage against a REAL `nuvix/postgres:18.1` container
- * (AGENTS.md). Requires a reachable Docker daemon with that image already
- * present — skipped (not faked) when Docker isn't available.
+ * — never simulated while reported as integration coverage. Requires a
+ * reachable Docker daemon with that image already present; skipped (not
+ * faked) when Docker isn't available.
  */
 async function dockerAvailable(): Promise<boolean> {
   try {

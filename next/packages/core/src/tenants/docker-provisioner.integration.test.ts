@@ -6,10 +6,9 @@ import { DockerTenantProvisioner } from './docker-provisioner'
 
 /**
  * Live integration coverage against a REAL `nuvix/postgres:18.1` container
- * (AGENTS.md: "Live tenant behavior must be tested against exactly
- * nuvix/postgres:18.1 and must not be simulated while reported as
- * integration coverage."). Requires a reachable Docker daemon with that
- * image already present — skipped (not faked) when Docker isn't available.
+ * — never simulated while reported as integration coverage. Requires a
+ * reachable Docker daemon with that image already present; skipped (not
+ * faked) when Docker isn't available.
  */
 async function dockerAvailable(): Promise<boolean> {
   try {

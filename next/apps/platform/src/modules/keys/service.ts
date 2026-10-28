@@ -91,7 +91,7 @@ export class KeysService {
     }
   }
 
-/** Issue a project-owned key with a 128-byte random `standard_…` secret. */
+  /** Issue a project-owned key with a 128-byte random `standard_…` secret. */
   async create(projectId: string, input: CreateKeyInput): Promise<KeyView> {
     const project = await this.getProject(projectId)
     const session = this.db.system()
