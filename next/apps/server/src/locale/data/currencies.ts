@@ -1,9 +1,4 @@
-/**
- * List Of World Currencies.
- *
- * Source:
- * https://gist.github.com/GoGross/19b254a4210d3d72b3dfc1e808116af3
- */
+/** Currency metadata used to format localized monetary values and associate currencies with regions. */
 
 export const currencies = [
   {

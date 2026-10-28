@@ -1,9 +1,4 @@
-/**
- * OAuth2 relay pages — v1 parity (`GET /auth/oauth2/success|failure`).
- * Rendered with Handlebars (D9) from `assets/views/` and mounted at the app
- * root (unversioned, like legacy): the OAuth2 provider redirects the browser
- * here when no custom success/failure URL was supplied.
- */
+/** Renders root-level OAuth2 success and failure relay pages from the shared Handlebars assets. */
 
 import { Elysia, t } from 'elysia'
 import Handlebars from 'handlebars'
@@ -38,6 +33,7 @@ async function renderPage(body: string, title: string): Promise<string> {
   return page({ title, body })
 }
 
+/** Mount the browser-facing relay pages outside the versioned API prefix. */
 export const oauthPages = () =>
   new Elysia({ name: 'oauth-pages' })
     .get(

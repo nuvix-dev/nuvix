@@ -1,3 +1,4 @@
+/** Owns password-recovery token lifecycle, password reset validation, and optional email delivery. */
 import {
   Auth,
   type HashAlgorithm,
@@ -31,21 +32,14 @@ export interface UpdateRecoveryInput {
   password: string
 }
 
-/**
- * Per-request delivery deps the route composes from the project context
- * (`MailDelivery` — `rules` back the redirect validation, v1
- * `ctx.validateRedirectURL` parity).
- */
+/** Per-request mail capability, translator, and project redirect rules supplied by route composition. */
 export type RecoveryDelivery = MailDelivery
 
+/** Implements recovery operations against one caller-scoped tenant session. */
 export class AccountRecoveryService {
   constructor(private readonly session: Session) {}
 
-  /**
-   * Sends the password-recovery email (v1 `recovery.create` parity —
-   * inner template + localized strings, redirect URL with
-   * userId/secret/expire params).
-   */
+  /** Build and send the localized recovery message with its one-time redirect credentials. */
   private async sendRecoveryEmail(input: {
     mail: MailCapability
     locale: Translator
@@ -125,10 +119,8 @@ export class AccountRecoveryService {
       }),
     )) as TokensDoc
 
-    // Send the recovery email when delivery deps are present (production
-    // routes always pass them; unit tests exercise the token path alone).
-    // Disabled SMTP surfaces 503 `general_smtp_disabled` (v1 parity), and
-    // the redirect URL is validated against the project's platforms.
+    // Send mail only when route composition supplies delivery capabilities; token-only callers remain valid.
+    // Disabled SMTP is reported explicitly, and redirect URLs are checked against project platforms.
     if (delivery) {
       const { mail, locale, rules } = delivery
       if (!mail.enabled) {

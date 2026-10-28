@@ -1,3 +1,4 @@
+/** Defines passwordless email, SMS, magic-link, and JWT token endpoints for authenticated accounts. */
 import type { Doc, Session } from '@nuvix/db'
 import type { Translator } from '@nuvix/i18n'
 import { Elysia, t } from 'elysia'
@@ -8,7 +9,7 @@ import { requireAuth } from '../auth'
 import { AccountSessionsService } from '../sessions/service'
 
 export interface TokensRouteDeps {
-  /** System-email composer (undefined in test composition → no email). */
+  /** Optional system-email capability used by magic-link and email-token flows. */
   mail?: MailComposer
 }
 
@@ -17,6 +18,7 @@ export const accountTokensRoutes = ({
   mail,
 }: { jwtSecret?: string } & TokensRouteDeps = {}) =>
   new Elysia({ name: 'account-tokens' })
+    // Token handlers use request-scoped account, project, locale, and delivery context.
     .derive('plugin', (ctx) => ({
       db: ('db' in ctx ? ctx.db : undefined) as unknown as Session,
       user: ('user' in ctx ? ctx.user : undefined) as unknown as Doc<Users>,
@@ -27,7 +29,7 @@ export const accountTokensRoutes = ({
       locale: ('locale' in ctx ? ctx.locale : undefined) as unknown as Translator | undefined,
     }))
 
-    // 28. Create magic URL token
+    // Passwordless token issuance.
     .post(
       '/tokens/magic-url',
       {
@@ -45,7 +47,7 @@ export const accountTokensRoutes = ({
           phrase: t.Optional(
             t.Boolean({
               description:
-                'Toggle for security phrase. If enabled, the email includes a randomly generated phrase which is also returned in the response (v1 parity).',
+                'Toggle for security phrase. If enabled, the email includes a randomly generated phrase which is also returned in the response.',
               default: false,
             }),
           ),
@@ -61,7 +63,6 @@ export const accountTokensRoutes = ({
       },
     )
 
-    // 29. Create email token (OTP)
     .post(
       '/tokens/email',
       {
@@ -85,7 +86,6 @@ export const accountTokensRoutes = ({
       },
     )
 
-    // 30. Create phone token
     .post(
       '/tokens/phone',
       {
@@ -106,7 +106,7 @@ export const accountTokensRoutes = ({
       },
     )
 
-    // 31. Create JWT (and alias /jwt)
+    // JWT access-token issuance.
     .post(
       '/jwts',
       {
@@ -139,10 +139,7 @@ export const accountTokensRoutes = ({
       },
     )
 
-/**
- * Per-request delivery bundle; `undefined` when no composer/locale is
- * wired (the service then skips the mail path — test mode).
- */
+/** Compose the per-request delivery bundle, or omit it when mail capabilities are unavailable. */
 async function mailDelivery(
   composer: MailComposer | undefined,
   projectId: string | undefined,

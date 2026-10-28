@@ -1,3 +1,4 @@
+/** Composed account-route coverage for registration, profile updates, sessions, and push targets. */
 import { describe, expect, it } from 'bun:test'
 import { Doc, type Session } from '@nuvix/db'
 import { Translator } from '@nuvix/i18n'
@@ -7,6 +8,7 @@ import type { AccountView, SessionView, TargetView } from './formatter'
 import { accountRoutes } from './route'
 
 describe('Account Routes', () => {
+  // Keep the tenant session local so the composed routes can be exercised without external services.
   const store = new Map<string, Map<string, Doc>>()
 
   const getCollection = (name: string) => {
@@ -85,6 +87,7 @@ describe('Account Routes', () => {
   let currentUserDoc = new Doc({})
   let currentSessionDoc = new Doc({})
 
+  // The derived documents advance as each test creates the account and session used by later requests.
   const testApp = new Elysia()
     .use(
       problemErrors({

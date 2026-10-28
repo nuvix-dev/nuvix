@@ -1,3 +1,4 @@
+/** ISO country codes for European Union membership checks in locale responses. */
 export const euList = [
   'AT', // Austria
   'BE', // Belgium

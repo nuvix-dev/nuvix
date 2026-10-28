@@ -1,3 +1,4 @@
+/** Starts the Bun HTTP server, attaches queue workers, and coordinates graceful shutdown. */
 import { config } from '@nuvix/utils'
 import { app, queues } from './app'
 import { createQueueWorkers, parseRedisUrl } from './workers'

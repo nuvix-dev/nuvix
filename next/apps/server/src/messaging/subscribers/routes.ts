@@ -1,14 +1,16 @@
+/** Defines topic subscriber creation, listing, retrieval, and removal endpoints. */
 import { Query, type Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
 import { SubscribersService } from './service'
 
+/** Compose subscriber routes with the caller-scoped tenant session. */
 export const messagingSubscribersRoutes = () =>
   new Elysia()
+    // Subscriber services enforce topic and target ownership rules.
     .derive('plugin', (ctx) => ({
       db: ('db' in ctx ? ctx.db : undefined) as unknown as Session,
     }))
 
-    // 1. Create subscriber
     .post(
       '/topics/:topicId/subscribers',
       {
@@ -39,7 +41,6 @@ export const messagingSubscribersRoutes = () =>
       },
     )
 
-    // 2. List topic subscribers
     .get(
       '/topics/:topicId/subscribers',
       {
@@ -89,7 +90,6 @@ export const messagingSubscribersRoutes = () =>
       },
     )
 
-    // 3. Get topic subscriber by ID
     .get(
       '/topics/:topicId/subscribers/:subscriberId',
       {
@@ -109,7 +109,6 @@ export const messagingSubscribersRoutes = () =>
       },
     )
 
-    // 4. Delete topic subscriber
     .delete(
       '/topics/:topicId/subscribers/:subscriberId',
       {

@@ -1,3 +1,4 @@
+/** Owns account creation, profile changes, credentials, contact verification, and preference storage. */
 import {
   Auth,
   type HashAlgorithm,
@@ -27,9 +28,11 @@ export interface CreateAccountInput {
   name?: string
 }
 
+/** Implements profile operations against one caller-scoped tenant session. */
 export class AccountService {
   constructor(private readonly session: Session) {}
 
+  // Account creation also establishes the user's initial email target.
   async createAccount(input: CreateAccountInput): Promise<AccountView> {
     const email = input.email.toLowerCase()
 
@@ -171,6 +174,7 @@ export class AccountService {
     return formatAccount(updated, targets)
   }
 
+  // Credential changes enforce the current password, personal-data, and password-history policies.
   async updatePassword(
     userId: string,
     password: string,
@@ -242,6 +246,7 @@ export class AccountService {
     return formatAccount(updated, targets)
   }
 
+  // Contact updates keep the corresponding delivery target synchronized with the user record.
   async updateEmail(userId: string, email: string, password?: string): Promise<AccountView> {
     const normalized = email.toLowerCase()
     const user = (await this.session.getDocument('users', userId)) as UsersDoc
@@ -417,14 +422,7 @@ export class AccountService {
     return formatAccount(updated, targets)
   }
 
-  /**
-   * Sends the verification email when delivery deps are present (v1
-   * `account.createVerification` parity — redirect URL with
-   * userId/secret/expire, inner-base template, 503 `general_smtp_disabled`
-   * when project SMTP is off). Legacy rendered `email-verification.tpl`,
-   * which does not exist in assets (latent v1 crash); v2 uses the generic
-   * `email-inner-base.tpl`, whose variables match exactly.
-   */
+  /** Create an email verification token and optionally deliver its localized message. */
   async createEmailVerification(
     userId: string,
     url?: string,
@@ -434,7 +432,7 @@ export class AccountService {
       mail: MailDelivery['mail']
       locale: Translator
       rules: MailDelivery['rules']
-      /** Request origin — the v1 `url ??= protocol://host` fallback. */
+      /** Request origin used when no redirect URL is supplied. */
       origin: string
     },
   ): Promise<TokenView> {
@@ -573,7 +571,7 @@ export class AccountService {
         ],
         userId,
         userInternalId: user.getSequence(),
-        type: 2, // Phone
+        type: 2, // Token type reserved for phone verification.
         secret: Auth.hash(secret),
         expire,
         userAgent,

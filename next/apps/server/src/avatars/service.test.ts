@@ -1,9 +1,10 @@
+/** Security-focused coverage for favicon URL validation and DNS-rebinding protection. */
 import { describe, expect, it } from 'bun:test'
 import { createAvatarService } from './service'
 
 const service = createAvatarService()
 
-describe('favicon SSRF hardening (network-hardening pass)', () => {
+describe('favicon SSRF guards', () => {
   it('rejects private/loopback hosts before any request', async () => {
     for (const url of [
       'http://localhost/favicon.ico',
@@ -17,8 +18,7 @@ describe('favicon SSRF hardening (network-hardening pass)', () => {
   })
 
   it('rejects hostnames that resolve to private addresses (DNS-rebinding guard)', async () => {
-    // `localhost` always resolves to loopback; the DNS validation layer
-    // must catch it even if a future refactor drops the hostname regex.
+    // DNS validation must still reject loopback resolution if hostname checks change later.
     await expect(service.favicon('http://localhost:3000/favicon.ico')).rejects.toThrow()
   })
 

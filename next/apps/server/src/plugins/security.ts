@@ -1,9 +1,6 @@
 import type { Elysia } from 'elysia'
 
-/**
- * Security headers applied to every response.
- * Deliberately minimal — Nuvix serves an API, not HTML.
- */
+/** Adds baseline browser security headers to every API response. */
 export function securityHeaders(app: Elysia) {
   return app.request(({ set }) => {
     set.headers['x-content-type-options'] = 'nosniff'

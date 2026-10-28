@@ -1,3 +1,4 @@
+/** Route-level coverage for admin-only request-log access, authentication, filtering, and pagination. */
 import { describe, expect, it } from 'bun:test'
 import { signJwt } from '@nuvix/core/auth'
 import type { TenantResource } from '@nuvix/core/tenants'
@@ -8,7 +9,7 @@ import { logsRoutes } from './route'
 
 process.env.NUVIX_JWT_SECRET ??= 'test-jwt-secret'
 
-/** In-memory tenant session covering the api_logs read surface. */
+/** In-memory tenant session covering the request-log read surface. */
 function stubSession() {
   const store = new Map<string, Map<string, Doc<Record<string, unknown>>>>()
   const colOf = (name: string) => {
@@ -35,12 +36,12 @@ function stubSession() {
         const attr = q.getAttribute?.()
         const values = q.values
         const method = q.getMethod?.()
-        // Order queries: sort in-memory (orderDesc only, what the route uses).
+        // Mirror the route's newest-first ordering for deterministic assertions.
         if (method === 'orderDesc' && attr) {
           all.sort((a, b) => String(b.get(attr)).localeCompare(String(a.get(attr))))
           continue
         }
-        // Skip limit/offset (no attribute) — filter-only stub.
+        // Pagination is asserted at the route boundary; this stub only applies filters.
         if (attr && values && values.length > 0) {
           all = all.filter((d) => values.includes(d.get(attr)))
         }
@@ -74,7 +75,7 @@ const LOG_ROWS = [
 
 function makeApp() {
   const session = stubSession()
-  // Seed the same rows for every test (fresh session per test).
+  // Seed a fresh copy of the fixture rows for each isolated route composition.
   const col = new Map<string, Doc<Record<string, unknown>>>()
   for (const row of LOG_ROWS) {
     col.set(row.$id, new Doc<Record<string, unknown>>(row))
@@ -88,7 +89,7 @@ function makeApp() {
     .use(problemErrors())
     .derive('plugin', ({ request }) => ({
       tenantResource,
-      // Mimic authContext's API-key leg (tests exercise both admin legs).
+      // Exercise both supported admin authentication paths without external auth services.
       auth: request.headers.has('x-nuvix-key')
         ? { type: 'apiKey', mode: 'admin' }
         : ({ type: 'guest' } as unknown),
@@ -110,7 +111,7 @@ describe('GET /logs (server, admin-only)', () => {
 
   it('401s with a tenant JWT (audience separation: console leg only)', async () => {
     const { testApp } = makeApp()
-    // A tenant-style JWT (no aud claim) must NOT satisfy the console leg.
+    // A tenant-style JWT without the console audience must not satisfy the console leg.
     const tenantJwt = await signJwt(
       { sub: 'user_1', sessionId: 's1' },
       process.env.NUVIX_JWT_SECRET!,
@@ -175,7 +176,7 @@ describe('GET /logs (server, admin-only)', () => {
       logs: Array<{ request_id: string }>
     }
     expect(body.total).toBe(2)
-    // The 500 row (11:00) sorts before the 200 row (10:00).
+    // The 500 row at 11:00 must precede the 200 row at 10:00.
     expect(body.logs[0]!.request_id).toBe('r2')
   })
 })

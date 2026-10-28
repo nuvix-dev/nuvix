@@ -1,3 +1,4 @@
+/** Service-level coverage for account profile, session, recovery, target, MFA, and identity behavior. */
 import { describe, expect, it } from 'bun:test'
 import { Doc, type Session } from '@nuvix/db'
 import { BadRequestError, ConflictError, UnauthorizedError } from '../shared/errors'
@@ -11,6 +12,7 @@ import {
 } from './service'
 
 function createInMemorySession() {
+  // Share one deterministic session adapter shape across the focused service suites.
   const store = new Map<string, Map<string, Doc>>()
 
   const getCollection = (name: string) => {
@@ -146,16 +148,16 @@ describe('Account Module Services', () => {
         name: 'User X',
       })
 
-      // Prefs
+      // Preference storage.
       await service.updatePrefs(account.$id, { theme: 'dark' })
       const prefs = await service.getPrefs(account.$id)
       expect(prefs.theme).toBe('dark')
 
-      // Name
+      // Profile name update.
       const updatedName = await service.updateName(account.$id, 'User X Renamed')
       expect(updatedName.name).toBe('User X Renamed')
 
-      // Password
+      // Password replacement and current-password verification.
       const updatedPass = await service.updatePassword(
         account.$id,
         'BrandNewPassword123!',
@@ -167,7 +169,7 @@ describe('Account Module Services', () => {
         service.updatePassword(account.$id, 'AnotherNew123!', 'WrongOldPassword!'),
       ).rejects.toThrow(UnauthorizedError)
 
-      // Email update
+      // Email update and target synchronization.
       const updatedEmail = await service.updateEmail(
         account.$id,
         'newemail@example.com',
@@ -175,7 +177,7 @@ describe('Account Module Services', () => {
       )
       expect(updatedEmail.email).toBe('newemail@example.com')
 
-      // Phone update
+      // Phone update and target synchronization.
       const updatedPhone = await service.updatePhone(
         account.$id,
         '+15551234567',
@@ -183,7 +185,7 @@ describe('Account Module Services', () => {
       )
       expect(updatedPhone.phone).toBe('+15551234567')
 
-      // Email verification
+      // Email verification token lifecycle.
       const emailToken = await service.createEmailVerification(account.$id)
       expect(emailToken.secret).toBeDefined()
       const verifiedEmail = await service.updateEmailVerification(
@@ -192,7 +194,7 @@ describe('Account Module Services', () => {
       )
       expect(verifiedEmail.$id).toBe(emailToken.$id)
 
-      // Phone verification
+      // Phone verification token lifecycle.
       const phoneToken = await service.createPhoneVerification(account.$id)
       expect(phoneToken.secret).toBeDefined()
       const verifiedPhone = await service.updatePhoneVerification(
@@ -201,7 +203,7 @@ describe('Account Module Services', () => {
       )
       expect(verifiedPhone.$id).toBe(phoneToken.$id)
 
-      // Status
+      // Account status change.
       const blocked = await service.updateStatus(account.$id)
       expect(blocked.status).toBe(false)
     })
@@ -232,7 +234,7 @@ describe('Account Module Services', () => {
         }),
       ).rejects.toThrow(UnauthorizedError)
 
-      // Session listing and getting
+      // Session listing and retrieval.
       const list = await sessionService.getSessions(login.userId, login.session.$id)
       expect(list.total).toBe(1)
       expect(list.sessions[0]?.current).toBe(true)
@@ -244,11 +246,11 @@ describe('Account Module Services', () => {
       )
       expect(single.$id).toBe(login.session.$id)
 
-      // JWT
+      // Session-scoped JWT creation.
       const jwt = await sessionService.createJWT(login.userId, login.session.$id)
       expect(jwt.jwt).toBeDefined()
 
-      // Delete session
+      // Session deletion.
       await sessionService.deleteSession(login.userId, login.session.$id)
       const listAfter = await sessionService.getSessions(login.userId)
       expect(listAfter.total).toBe(0)
@@ -296,7 +298,7 @@ describe('Account Module Services', () => {
         password: 'BrandNewPassword456!',
       })
 
-      // Verify login with new password works
+      // Confirm the reset password can authenticate a new session.
       const login = await sessionService.createEmailSession({
         email: 'recover@example.com',
         password: 'BrandNewPassword456!',
@@ -346,23 +348,23 @@ describe('Account Module Services', () => {
         password: 'SecurePassword123!',
       })
 
-      // Authenticator
+      // TOTP authenticator enrollment.
       const auth = await mfaService.createMfaAuthenticator(user.$id, 'totp')
       expect(auth.secret).toBeDefined()
       expect(auth.uri).toContain('otpauth://totp/')
 
-      // Recovery codes
+      // Recovery-code generation and retrieval.
       const codes = await mfaService.createMfaRecoveryCodes(user.$id)
       expect(codes.recoveryCodes.length).toBe(6)
 
       const storedCodes = await mfaService.getMfaRecoveryCodes(user.$id)
       expect(storedCodes.recoveryCodes.length).toBe(6)
 
-      // Factors
+      // Available factor discovery.
       const factors = await mfaService.getMfaFactors(user.$id)
       expect(factors.recoveryCode).toBe(true)
 
-      // MFA challenge with recovery code
+      // One-time MFA challenge completion with a recovery code.
       const challenge = await mfaService.createMfaChallenge({
         userId: user.$id,
         factor: 'recoveryCode',
@@ -375,7 +377,7 @@ describe('Account Module Services', () => {
         otp: codes.recoveryCodes[0] ?? '',
       })
 
-      // Update MFA enabled
+      // Account-level MFA enablement.
       const mfaEnabled = await mfaService.updateMfa(user.$id, true)
       expect(mfaEnabled.mfa).toBe(true)
     })

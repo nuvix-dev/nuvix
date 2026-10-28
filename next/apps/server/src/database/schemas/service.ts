@@ -1,3 +1,4 @@
+/** Owns tenant schema metadata and coordinates PostgreSQL DDL with document-store initialization. */
 import type { TenantResource } from '@nuvix/core/tenants'
 import { Schemas, type SchemaType } from '@nuvix/utils'
 import { ConflictError, NotFoundError } from '../../shared/errors'
@@ -22,6 +23,7 @@ interface SystemSchemaRow {
   type: string
 }
 
+/** Persists schema metadata in the tenant control tables and executes matching DDL. */
 export class PostgresSchemaStorage implements SchemaStorage {
   constructor(private readonly tenantResource: TenantResource) {}
 
@@ -96,11 +98,12 @@ export class PostgresSchemaStorage implements SchemaStorage {
   async delete(name: string): Promise<void> {
     const sql = this.tenantResource.getSql()
     await sql.unsafe(`DROP SCHEMA IF EXISTS "${name.replace(/"/g, '""')}" CASCADE`)
-    // Also remove from system.schemas in case DDL trigger was not triggered
+    // Remove metadata explicitly in case the database DDL hook did not run.
     await this.tenantResource.pg().table('system.schemas').where('name', '=', name).delete()
   }
 }
 
+/** Applies authorization-independent schema rules over an injected storage boundary. */
 export class DatabaseService {
   private readonly storage: SchemaStorage
 
@@ -111,9 +114,7 @@ export class DatabaseService {
     this.storage = storage ?? new PostgresSchemaStorage(tenantResource)
   }
 
-  /**
-   * List all schemas in the database with optional type filter.
-   */
+  /** List schemas with an optional type filter. */
   async getSchemas(type?: string): Promise<{ data: SchemaItem[]; total: number }> {
     const schemas = await this.storage.find(type)
     return {
@@ -122,9 +123,7 @@ export class DatabaseService {
     }
   }
 
-  /**
-   * Get a schema by name.
-   */
+  /** Retrieve one schema by name. */
   async getSchema(name: string): Promise<SchemaItem> {
     const schema = await this.storage.get(name)
     if (!schema) {
@@ -133,9 +132,7 @@ export class DatabaseService {
     return schema
   }
 
-  /**
-   * Create a standard schema (managed or unmanaged).
-   */
+  /** Create a managed, unmanaged, or document schema after duplicate checking. */
   async createSchema(data: {
     name: string
     type: SchemaType | 'managed' | 'unmanaged' | 'document'
@@ -155,9 +152,7 @@ export class DatabaseService {
     })
   }
 
-  /**
-   * Create a document schema and initialize @nuvix/db metadata collection.
-   */
+  /** Create a document schema and initialize its document collection atomically. */
   async createDocumentSchema(data: {
     name: string
     type: SchemaType | 'managed' | 'unmanaged' | 'document'
@@ -188,9 +183,7 @@ export class DatabaseService {
     return schema
   }
 
-  /**
-   * Update a schema's description.
-   */
+  /** Update a schema description after confirming the schema exists. */
   async updateSchema(name: string, description?: string | null): Promise<SchemaItem> {
     const existing = await this.storage.get(name)
     if (!existing) {
@@ -200,9 +193,7 @@ export class DatabaseService {
     return this.storage.update(name, description)
   }
 
-  /**
-   * Delete a schema and its objects.
-   */
+  /** Delete a schema and its database objects after existence checking. */
   async deleteSchema(name: string): Promise<void> {
     const existing = await this.storage.get(name)
     if (!existing) {

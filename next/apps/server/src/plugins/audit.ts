@@ -1,17 +1,4 @@
-/**
- * Audit emission — v2 port of legacy `AuditHook` + route `audit:` metadata.
- *
- * Elysia 2 (beta.6) does not expose route metadata to global hooks, so the
- * decorator equivalent is a per-route `afterHandle` produced by
- * `auditAfter(meta)`: on success it maps the `resource` template
- * (`user/{res.$id}` — `{req.*}`, `{res.*}`, `{user.*}`, `{params.*}`,
- * `{query.*}`, `{body.*}` segments), strips sensitive fields from the
- * payload, and enqueues to the AUDITS queue. Handlers stay untouched and
- * fully typed.
- *
- * The emitter is a narrow composition boundary: `app.ts` initializes it with
- * the QueueManager (tests swap in an in-memory recorder).
- */
+/** Provides route-level audit mapping, sensitive-payload filtering, queue emission, and webhook fan-out. */
 
 import type { QueueManager } from '@nuvix/core/queues'
 
@@ -48,11 +35,7 @@ let enqueueAudit: AuditEnqueuer = async () => {
   // Not initialized (unit-test composition) — audits are dropped silently.
 }
 
-/**
- * Webhook fan-out boundary — injectable so audit emission and webhook
- * dispatch share one request-path hook (v2 replaces v1's separate
- * `@OnEvent('*')` listener). Uninitialized (unit-test composition) = no-op.
- */
+/** Injectable webhook fan-out boundary sharing the audit request hook; uninitialized composition is a no-op. */
 export type WebhookFanout = (
   projectId: string,
   event: string,
@@ -87,7 +70,7 @@ export function initInMemoryAuditEmitter(): { events: AuditEnqueueInput[] } {
   return { events }
 }
 
-// ── Template mapping (v1 AuditHook.mapResource parity) ──────────────────────
+// Template mapping for request, response, user, and route-parameter sources.
 
 const MAPPING_PART = /\{(\w+)\.([^}]+)\}/
 
@@ -120,7 +103,7 @@ function mapValue(template: string, sources: AuditSources): string {
       value = sources.body?.[key]
       break
     case 'user':
-      // v1 source: the resolved current user document.
+      // Resolve user templates from the current authenticated user document.
       value = key === '$id' || key === 'id' ? sources.user?.id : sources.user?.sequence
       break
     default:
@@ -143,7 +126,7 @@ export function mapAuditTemplateValue(template: string, sources: AuditSources): 
   return value === 'Unknown' ? undefined : value
 }
 
-/** Fields never written to the audit payload (v1 sensitiveFields default). */
+/** Fields that must never be written to audit payloads. */
 const SENSITIVE_KEYS = new Set([
   'password',
   'passwordHistory',
@@ -163,7 +146,7 @@ function stripSensitive(data: Record<string, unknown>): Record<string, unknown> 
   return out
 }
 
-// ── Per-route afterHandle hook ───────────────────────────────────────────────
+// Per-route afterHandle hook.
 
 /** Shape of the Elysia route context our hook reads (all optional-tolerant). */
 export interface AuditedHookContext {
@@ -227,17 +210,7 @@ function extractProjectId(project: unknown): string | undefined {
   return undefined
 }
 
-/**
- * Builds a per-route `afterHandle` hook that emits the audit event for the
- * route. Usage (v1 decorator parity):
- *
- * ```ts
- * .post('', {
- *   detail: {...},
- *   afterHandle: auditAfter({ event: 'user.create', resource: 'user/{res.$id}' }),
- * }, handler)
- * ```
- */
+/** Build a per-route afterHandle hook that maps and emits the configured audit event. */
 export function auditAfter(meta: AuditMeta) {
   // `(ctx: unknown)` keeps the hook assignable to any route's afterHandle
   // signature (Elysia contexts are narrowed per-route; we read a subset).
@@ -277,8 +250,7 @@ export function auditAfter(meta: AuditMeta) {
         // Audit emission must never break the request path.
       })
 
-      // Webhook fan-out shares the emission pipeline (v1 `@OnEvent('*')`
-      // parity); sensitive fields are already stripped from the payload.
+       // Webhook fan-out reuses the sanitized audit payload.
       if (projectId) {
         void webhookFanout(projectId, meta.event, auditPayload ?? {}).catch(() => {
           // Fan-out failures must never break the request path either.

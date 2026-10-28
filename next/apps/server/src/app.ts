@@ -1,3 +1,4 @@
+/** Composes server infrastructure, request context, plugins, and all project-facing API modules. */
 import { openapi } from '@elysia/openapi'
 import { createPlatformDatabase, KeyRegistry, ProjectRegistry } from '@nuvix/core/platform'
 import { QueueManager } from '@nuvix/core/queues'
@@ -33,10 +34,7 @@ import { userRoutes } from './users/route'
 import { createWebhookFanout } from './webhooks/dispatch'
 import { parseRedisUrl } from './workers'
 
-/**
- * Framework glue — the ONLY place Elysia-specific wiring lives.
- * Routes are composed as plugins and mounted here.
- */
+/** Keep Elysia-specific composition in one module while feature code remains plugin-oriented. */
 
 // Translation assets live at the monorepo root (see docs/api/_i18n.md).
 const translationsDir = new URL('../../../assets/locale/translations', import.meta.url).pathname
@@ -66,9 +64,7 @@ const health = new Elysia({ name: 'health' }).get(
 const geoip = await createGeoIP()
 const avatars = createAvatarService()
 
-// Shared control-plane registry boundary (D38/Phase 7): the server app reads
-// the SAME platform schema the platform app writes, through the one
-// `@nuvix/core/platform` bootstrap function — never a second definition.
+// Share the platform schema used by the platform app through one registry boundary.
 const platformDb = await createPlatformDatabase({
   driver: config.platform.dbDriver,
   url: config.platform.dbUrl,
@@ -98,8 +94,7 @@ const logsEnqueuer: LogsEnqueuer = async (projectId, row) => {
   await queues.enqueueLog({ projectId, ...row })
 }
 
-// Tenant resources notify composition of their Database facades so the
-// stats usage listeners attach (v1 `StatsHelper.connect` parity).
+// Tenant resources notify composition of their Database facades so usage listeners can attach.
 const tenantPool = new TenantResourcePool({
   dependencies: {
     onDatabaseCreated: ({ projectId, database }) => {
@@ -149,8 +144,8 @@ const v2 = new Elysia({ prefix: '/v2' })
       documentation: { info: { title: 'Nuvix API', version: '2.0.0' } },
     }),
   )
-  // Request order (AGENTS.md): publishable key -> platform project -> ...
-  // -> tenant-local auth -> canonical roles -> caller-scoped Session.
+  // Request pipeline order: publishable key -> platform project ->
+  // tenant-local auth -> canonical roles -> caller-scoped `Session`.
   .use(projectContext({ lookup: projectRegistry }))
   .use(authContext({ jwtSecret: config.jwtSecret }))
   // Network usage metrics (requests + bytes) — every project response.
@@ -185,16 +180,9 @@ const v2 = new Elysia({ prefix: '/v2' })
       .use(databaseRoutes())
       .use(schemasRoutes()),
   )
-  // Dev-only route exercising the context chain; removed once real modules land.
-  // NOTE: defined inline AFTER authContext/projectContext so the derived
-  // types flow in ('plugin'-scoped derive types only reach routes registered
-  // downstream).
+  // Keep this diagnostic route downstream of context plugins so derived values are available to its handler.
   .get('/whoami', ({ auth, project }) => ({ auth, project }))
   .use(health)
 
-/**
- * Root app — unversioned routes (OAuth2 relay pages) + the /v2 API.
- * The legacy app served the relay pages unversioned; providers redirect the
- * browser there directly, outside the /v2 prefix.
- */
+/** Root app composing unversioned OAuth2 relay pages with the versioned project API. */
 export const app = new Elysia().use(oauthPages()).use(v2)

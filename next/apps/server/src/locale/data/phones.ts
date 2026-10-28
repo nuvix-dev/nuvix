@@ -1,6 +1,4 @@
-/**
- * Phone codes for countries
- */
+/** International dialing prefixes keyed by ISO country code for phone-related locale responses. */
 
 export const phoneCodes = {
   AF: '93',

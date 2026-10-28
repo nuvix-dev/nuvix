@@ -1,14 +1,16 @@
+/** Defines messaging topic creation, discovery, permission updates, and deletion endpoints. */
 import { Query, type Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
 import { TopicsService } from './service'
 
+/** Compose topic routes with the caller-scoped tenant session. */
 export const messagingTopicsRoutes = () =>
   new Elysia()
+    // Topic services own permission checks and subscriber-count maintenance.
     .derive('plugin', (ctx) => ({
       db: ('db' in ctx ? ctx.db : undefined) as unknown as Session,
     }))
 
-    // 1. Create topic
     .post(
       '/topics',
       {
@@ -47,7 +49,6 @@ export const messagingTopicsRoutes = () =>
       },
     )
 
-    // 2. List topics
     .get(
       '/topics',
       {
@@ -94,7 +95,6 @@ export const messagingTopicsRoutes = () =>
       },
     )
 
-    // 3. Get topic by ID
     .get(
       '/topics/:topicId',
       {
@@ -113,7 +113,6 @@ export const messagingTopicsRoutes = () =>
       },
     )
 
-    // 4. Update topic
     .patch(
       '/topics/:topicId',
       {
@@ -149,7 +148,6 @@ export const messagingTopicsRoutes = () =>
       },
     )
 
-    // 5. Delete topic
     .delete(
       '/topics/:topicId',
       {

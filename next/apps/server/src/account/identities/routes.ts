@@ -1,3 +1,4 @@
+/** Defines authenticated account identity listing and unlinking endpoints. */
 import { type Doc, Query, type Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
 import { auditAfter } from '../../plugins/audit'
@@ -5,14 +6,15 @@ import type { Users } from '../../types/generated'
 import { requireAuth } from '../auth'
 import { AccountIdentitiesService } from './service'
 
+/** Compose identity routes with the narrow database and user context they require. */
 export const accountIdentitiesRoutes = () =>
   new Elysia()
+    // Identity ownership comes from the authenticated account context, not route parameters.
     .derive('plugin', (ctx) => ({
       db: ('db' in ctx ? ctx.db : undefined) as unknown as Session,
       user: ('user' in ctx ? ctx.user : undefined) as unknown as Doc<Users>,
     }))
 
-    // 32. List identities
     .get(
       '/identities',
       {
@@ -39,7 +41,6 @@ export const accountIdentitiesRoutes = () =>
       },
     )
 
-    // 33. Delete identity
     .delete(
       '/identities/:identityId',
       {

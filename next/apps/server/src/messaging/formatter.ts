@@ -1,3 +1,4 @@
+/** Normalizes messaging documents into stable topic, subscriber, provider, and message API views. */
 import type {
   MessagesDoc,
   ProvidersDoc,

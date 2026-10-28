@@ -1,9 +1,8 @@
+/** Configures server-side collection metadata and generated database types for the Bun workspace. */
 import { authCollections } from '@nuvix/core/tenant-auth'
 import type { NuvixDBConfig } from '@nuvix/db'
 
-/**
- * Drives `bun run gen:types` (the `nuvix-db` CLI — see package.json).
- */
+/** Supplies the collection and filter declarations consumed by the database type generator. */
 const config: NuvixDBConfig = {
   collections: authCollections,
 

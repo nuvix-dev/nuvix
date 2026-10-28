@@ -1,3 +1,4 @@
+/** Defines account creation, profile, credential, preference, and verification endpoints. */
 import type { Doc, Session } from '@nuvix/db'
 import type { Translator } from '@nuvix/i18n'
 import { Elysia, t } from 'elysia'
@@ -8,12 +9,14 @@ import { requireAuth } from '../auth'
 import { AccountService } from './service'
 
 export interface ProfileRouteDeps {
-  /** System-email composer (undefined in test composition → no email). */
+  /** Optional system-email capability used when verification messages are sent. */
   mail?: MailComposer
 }
 
+/** Compose profile routes with the account and optional messaging capabilities they need. */
 export const accountProfileRoutes = ({ mail }: ProfileRouteDeps = {}) =>
   new Elysia({ name: 'account-profile' })
+    // Handlers resolve the caller from context and keep account rules in AccountService.
     .derive('plugin', (ctx) => ({
       db: ('db' in ctx ? ctx.db : undefined) as unknown as Session,
       user: ('user' in ctx ? ctx.user : undefined) as unknown as Doc<Users>,
@@ -23,7 +26,7 @@ export const accountProfileRoutes = ({ mail }: ProfileRouteDeps = {}) =>
       locale: ('locale' in ctx ? ctx.locale : undefined) as unknown as Translator | undefined,
     }))
 
-    // 1. Create account
+    // Account profile lifecycle.
     .post(
       '',
       {
@@ -59,7 +62,6 @@ export const accountProfileRoutes = ({ mail }: ProfileRouteDeps = {}) =>
       },
     )
 
-    // 2. Get account
     .get(
       '',
       {
@@ -76,7 +78,6 @@ export const accountProfileRoutes = ({ mail }: ProfileRouteDeps = {}) =>
       },
     )
 
-    // 3. Delete account
     .delete(
       '',
       {
@@ -106,7 +107,6 @@ export const accountProfileRoutes = ({ mail }: ProfileRouteDeps = {}) =>
       },
     )
 
-    // 4. Get preferences
     .get(
       '/prefs',
       {
@@ -123,7 +123,6 @@ export const accountProfileRoutes = ({ mail }: ProfileRouteDeps = {}) =>
       },
     )
 
-    // 5. Update preferences
     .patch(
       '/prefs',
       {
@@ -149,7 +148,6 @@ export const accountProfileRoutes = ({ mail }: ProfileRouteDeps = {}) =>
       },
     )
 
-    // 6. Update name
     .patch(
       '/name',
       {
@@ -177,7 +175,6 @@ export const accountProfileRoutes = ({ mail }: ProfileRouteDeps = {}) =>
       },
     )
 
-    // 7. Update password
     .patch(
       '/password',
       {
@@ -209,7 +206,6 @@ export const accountProfileRoutes = ({ mail }: ProfileRouteDeps = {}) =>
       },
     )
 
-    // 8. Update email
     .patch(
       '/email',
       {
@@ -237,7 +233,6 @@ export const accountProfileRoutes = ({ mail }: ProfileRouteDeps = {}) =>
       },
     )
 
-    // 9. Update phone
     .patch(
       '/phone',
       {
@@ -262,7 +257,6 @@ export const accountProfileRoutes = ({ mail }: ProfileRouteDeps = {}) =>
       },
     )
 
-    // 10. Update status
     .patch(
       '/status',
       {
@@ -283,7 +277,7 @@ export const accountProfileRoutes = ({ mail }: ProfileRouteDeps = {}) =>
       },
     )
 
-    // 11. Create email verification
+    // Email and phone verification.
     .post(
       '/verification',
       {
@@ -359,7 +353,6 @@ export const accountProfileRoutes = ({ mail }: ProfileRouteDeps = {}) =>
       },
     )
 
-    // 12. Update email verification
     .put(
       '/verification',
       {
@@ -409,7 +402,6 @@ export const accountProfileRoutes = ({ mail }: ProfileRouteDeps = {}) =>
       },
     )
 
-    // 13. Create phone verification
     .post(
       '/verification/phone',
       {
@@ -449,7 +441,6 @@ export const accountProfileRoutes = ({ mail }: ProfileRouteDeps = {}) =>
       },
     )
 
-    // 14. Update phone verification
     .put(
       '/verification/phone',
       {

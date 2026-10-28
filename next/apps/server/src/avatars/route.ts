@@ -1,15 +1,8 @@
+/** Defines image and QR avatar endpoints while keeping rendering and SSRF checks in the service. */
 import { Elysia, type HTTPHeaders, t } from 'elysia'
 import type { AvatarService } from './service'
 
-/**
- * Avatars routes — thin HTTP layer over the pure service.
- * Contract: docs/api/avatars.md
- *
- * NOTE (elysia 2.0.0-beta.6): route signature is `.get(path, hook, handler)` —
- * the schema/hook object comes BEFORE the handler.
- */
-
-/** Apply service result to the response context. */
+/** Apply service-produced content and cache headers without duplicating response wiring per route. */
 function apply(
   set: { headers: HTTPHeaders },
   contentType: string,
@@ -25,6 +18,7 @@ const ImageQuery = t.Object({
   quality: t.Optional(t.Integer({ minimum: 0, maximum: 100, default: 90 })),
 })
 
+/** Register avatar routes and delegate image generation to the injected service. */
 export function avatarRoutes(service: AvatarService) {
   return new Elysia({ name: 'avatar-routes' })
     .get(

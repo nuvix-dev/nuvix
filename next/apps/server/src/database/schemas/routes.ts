@@ -1,10 +1,13 @@
+/** Defines admin-scoped database schema listing, creation, metadata update, and deletion routes. */
 import { Elysia, t } from 'elysia'
 import type { TenantContext } from '../../context/tenant'
 import { ForbiddenError } from '../../shared/errors'
 import { DatabaseService, type SchemaStorage } from './service'
 
+/** Compose schema routes with the tenant resource and optional storage boundary. */
 export const databaseSchemasRoutes = (storage?: SchemaStorage) =>
   new Elysia()
+    // Schema management is limited to administrative or API-key callers.
     .derive('plugin', (ctx) => {
       const tenant = ctx as unknown as TenantContext
       if (!tenant.isAdmin && !tenant.isAPIUser) {
@@ -15,7 +18,7 @@ export const databaseSchemasRoutes = (storage?: SchemaStorage) =>
       }
     })
 
-    // 1. List schemas
+    // Schema listing and creation.
     .get(
       '/schemas',
       {
@@ -40,7 +43,6 @@ export const databaseSchemasRoutes = (storage?: SchemaStorage) =>
       },
     )
 
-    // 2. Create schema
     .post(
       '/schemas',
       {
@@ -78,7 +80,7 @@ export const databaseSchemasRoutes = (storage?: SchemaStorage) =>
       },
     )
 
-    // 3. Get schema by ID
+    // Schema retrieval, metadata updates, and deletion.
     .get(
       '/schemas/:schemaId',
       {
@@ -96,7 +98,6 @@ export const databaseSchemasRoutes = (storage?: SchemaStorage) =>
       },
     )
 
-    // 4. Update schema description
     .patch(
       '/schemas/:schemaId',
       {
@@ -124,7 +125,6 @@ export const databaseSchemasRoutes = (storage?: SchemaStorage) =>
       },
     )
 
-    // 5. Delete schema
     .delete(
       '/schemas/:schemaId',
       {

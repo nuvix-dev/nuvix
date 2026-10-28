@@ -1,3 +1,4 @@
+/** Provides graceful country and continent lookup for locale context without making startup dependent on the asset. */
 import maxmind, { type CountryResponse } from 'maxmind'
 
 /** Minimal geo result — everything else (names, EU flag, currency) derives from these codes. */
@@ -6,14 +7,7 @@ export interface GeoResult {
   continentCode?: string
 }
 
-/**
- * GeoIP lookup abstraction.
- *
- * Backed by the bundled dbip-country-lite `.mmdb`. When the asset is missing
- * (or the path unset), returns a no-op provider whose lookups are always
- * `null` — `/v2/locale` then serves the unknown-IP shape instead of failing
- * startup (see docs/api/locale.md).
- */
+/** GeoIP lookup abstraction backed by the bundled country database when available. */
 export interface GeoIP {
   lookup(ip: string): GeoResult | null
 }

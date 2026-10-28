@@ -1,11 +1,6 @@
 import type { Elysia } from 'elysia'
 
-/**
- * Minimal CORS plugin — hand-rolled because @elysiajs/cors@1.x is
- * incompatible with elysia@2.0.0-beta (uses removed `onRequest` hook).
- *
- * Handles preflight (OPTIONS) and attaches CORS headers to responses.
- */
+/** Handles CORS preflight requests and attaches origin, credential, and variation headers to responses. */
 
 export interface CorsOptions {
   /** Allowed origins. Use `true` for any, or a list of exact origins. */

@@ -1,3 +1,4 @@
+/** Route-level audit coverage for account creation and deletion actor/resource attribution. */
 import { beforeEach, describe, expect, it } from 'bun:test'
 import type { ProjectRegistry } from '@nuvix/core/platform'
 import { Doc, type Session } from '@nuvix/db'
@@ -7,7 +8,7 @@ import { initInMemoryAuditEmitter } from '../plugins/audit'
 import { problemErrors } from '../plugins/errors'
 import { accountRoutes } from './route'
 
-// ── In-memory tenant DB ─────────────────────────────────────────────────────
+// Use a small in-memory session so the tests observe emitted audit events without external services.
 
 const store = new Map<string, Map<string, Doc>>()
 const getCollection = (name: string) => {
@@ -92,11 +93,10 @@ describe('audit emission through routes', () => {
     const event = events.find((e) => e.event === 'user.create')
     expect(event).toBeDefined()
     expect(event!.resource).toBe(`user/${created.$id}`)
-    // v1 semantics: the audit row records the ACTOR — the guest here; the
-    // created user is captured via resource + payload.
+    // A guest create has no actor; the created user is identified by resource and payload instead.
     expect(event!.userId).toBeUndefined()
     expect(event!.userAgent).toBe('Mozilla/5.0 (test)')
-    // Password never lands in the audit payload
+    // Credentials must never be copied into audit data.
     expect(JSON.stringify(event!.data)).not.toContain('SecurePass123!')
   })
 

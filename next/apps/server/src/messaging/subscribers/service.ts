@@ -1,3 +1,4 @@
+/** Owns topic subscriptions, role checks, recipient enrichment, and provider-specific topic counts. */
 import { Doc, ID, Permission, Query, Role, type Session } from '@nuvix/db'
 import { ConflictError, NotFoundError, UnauthorizedError } from '../../shared/errors'
 import type { Subscribers } from '../../types/generated'
@@ -8,12 +9,11 @@ export interface CreateSubscriberInput {
   targetId: string
 }
 
+/** Implements subscriber operations against one caller-scoped tenant session. */
 export class SubscribersService {
   constructor(private readonly session: Session) {}
 
-  /**
-   * Create a new subscriber on a topic.
-   */
+  /** Create a topic subscription after checking topic access and target existence. */
   async createSubscriber(topicId: string, input: CreateSubscriberInput): Promise<SubscriberView> {
     const topic = await this.session.getDocument('topics', topicId)
     if (topic.empty()) {
@@ -22,7 +22,7 @@ export class SubscribersService {
       })
     }
 
-    // Role check against topic's subscribe permissions
+    // A topic's subscribe roles restrict who may add a target.
     const subscribeRoles = (topic.get('subscribe') as string[]) ?? []
     if (subscribeRoles.length > 0) {
       const authorized = this.session.ctx.roles.some((role) => subscribeRoles.includes(role))
@@ -72,7 +72,7 @@ export class SubscribersService {
 
     const created = await this.session.createDocument('subscribers', subscriberDoc)
 
-    // Increment topic count attribute
+    // Keep the topic's provider-specific subscriber total synchronized.
     const totalAttr =
       providerType === 'email'
         ? 'emailTotal'
@@ -93,9 +93,7 @@ export class SubscribersService {
     })
   }
 
-  /**
-   * List subscribers for a topic.
-   */
+  /** List topic subscribers and enrich each record with target and user details. */
   async listSubscribers(
     topicId: string,
     queries: Query[] = [],
@@ -117,7 +115,7 @@ export class SubscribersService {
     const docs = await this.session.find('subscribers', q)
     const total = await this.session.count('subscribers', filterQueries)
 
-    // Enrich subscribers with target and user data
+    // Resolve related records in parallel so response views include recipient context.
     const enriched = await Promise.all(
       docs.map(async (doc) => {
         const targetId = doc.get('targetId') ?? ''
@@ -136,9 +134,7 @@ export class SubscribersService {
     return { total, subscribers: enriched }
   }
 
-  /**
-   * Get a single subscriber.
-   */
+  /** Retrieve one subscriber only when it belongs to the requested topic. */
   async getSubscriber(topicId: string, subscriberId: string): Promise<SubscriberView> {
     const topic = await this.session.getDocument('topics', topicId)
     if (topic.empty()) {
@@ -167,9 +163,7 @@ export class SubscribersService {
     })
   }
 
-  /**
-   * Delete a subscriber and decrement topic total.
-   */
+  /** Delete a topic subscription and decrement its provider-specific total. */
   async deleteSubscriber(topicId: string, subscriberId: string): Promise<void> {
     const topic = await this.session.getDocument('topics', topicId)
     if (topic.empty()) {
@@ -189,7 +183,7 @@ export class SubscribersService {
 
     await this.session.deleteDocument('subscribers', subscriberId)
 
-    // Decrement topic count attribute
+    // Keep the topic total non-negative when removing the subscription.
     const totalAttr =
       providerType === 'email'
         ? 'emailTotal'

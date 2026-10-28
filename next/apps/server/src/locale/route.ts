@@ -11,16 +11,7 @@ import {
   phoneCodes,
 } from './data'
 
-/**
- * Locale module — static reference data + GeoIP detection.
- * Contract: docs/api/locale.md
- *
- * NOTE: complete static lists with `meta.total` only — no pagination params
- * (D27 deviation, justified in the contract).
- *
- * NOTE (elysia 2.0.0-beta.6): route signature is `.get(path, hook, handler)` —
- * the schema/hook object comes BEFORE the handler.
- */
+/** Defines GeoIP locale detection and complete static country, language, phone, and currency lists. */
 
 const UNKNOWN = '--'
 
@@ -47,8 +38,7 @@ function localizedName(
 export function localeRoutes(geoip: GeoIP, i18n: LocaleContextOptions) {
   return (
     new Elysia({ name: 'locale-routes' })
-      // Self-contained derive so handlers get fully-typed `locale` (derives from
-      // OTHER plugin instances don't flow through types across .use()).
+      // Resolve locale locally so handlers retain the translator type across plugin composition.
       .derive('plugin', async ({ request }) => ({
         locale: await getTranslator(request.headers, i18n),
       }))
@@ -89,7 +79,7 @@ export function localeRoutes(geoip: GeoIP, i18n: LocaleContextOptions) {
           result.countryCode = geo.countryCode ?? UNKNOWN
           result.continentCode = geo.continentCode ?? UNKNOWN
 
-          // v1 bug fix: EU membership is determined by COUNTRY code, not continent.
+          // EU membership is determined by country code, not continent code.
           result.eu = !!geo.countryCode && euList.includes(geo.countryCode)
 
           if (geo.countryCode) {
@@ -173,7 +163,7 @@ export function localeRoutes(geoip: GeoIP, i18n: LocaleContextOptions) {
             .sort(([a], [b]) => a.localeCompare(b))
             .flatMap(([code, phone]) => {
               const key = `countries.${code.toLowerCase()}`
-              // v1 parity: skip entries without a translation (stable output).
+              // Skip entries without a translation to keep the response meaningful and stable.
               if (locale.raw(key) === null) return []
               return [
                 {

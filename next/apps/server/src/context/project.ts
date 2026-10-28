@@ -1,19 +1,8 @@
+/** Resolves publishable-key project context without forcing unrelated routes to require a tenant. */
 import type { ResolvedProject } from '@nuvix/core/platform'
 import { Elysia } from 'elysia'
 import { HEADERS } from '../shared/constants'
 import { BadRequestError, NotFoundError } from '../shared/errors'
-
-/**
- * Project context resolution — publishable key → platform project → tenant
- * database coordinates (D20, D40; MIGRATION.md Phase 1 "context chain",
- * unblocked once `@nuvix/db`-backed tenant primitives landed in Phase 7).
- *
- * Resolution never throws: routes/services that don't need a tenant (locale,
- * avatars, health) simply ignore `project`. Routes that DO need one call
- * `requireProject()`, which turns the two failure states into typed errors.
- * Stateful lookup (the platform registry query) is pluggable, same pattern
- * as `AuthVerifiers` in `./auth.ts`.
- */
 
 /** Narrow read boundary this module depends on — satisfied by `ProjectRegistry`. */
 export interface ProjectLookup {
@@ -36,13 +25,7 @@ export async function resolveProjectContext(
   return project ? { status: 'resolved', project } : { status: 'invalid' }
 }
 
-/**
- * Turns a non-resolved `ProjectContext` into the typed error a route/service
- * should surface. `absent` (caller forgot the header) and `invalid` (key
- * doesn't match an active project) are deliberately distinct: the publishable
- * key is not a secret (D40), so there's no oracle concern in telling the two
- * apart the way there would be for an actual credential.
- */
+/** Convert absent or invalid project context into the typed error expected by tenant-aware routes. */
 export function requireProject(context: ProjectContext): ResolvedProject {
   if (context.status === 'resolved') return context.project
   if (context.status === 'absent') {
@@ -53,9 +36,10 @@ export function requireProject(context: ProjectContext): ResolvedProject {
   throw new NotFoundError('Project', { code: 'project_not_found' })
 }
 
+/** Expose project context at plugin scope for downstream tenant-aware routes. */
 export function projectContext(options: { lookup: ProjectLookup }) {
   return new Elysia({ name: 'project-context' }).derive(
-    // NOTE: scope required — local-scoped derive does not cross .use() boundaries
+    // Plugin scope lets composed route modules consume the resolved project context.
     'plugin',
     async ({ request }) => ({
       project: await resolveProjectContext(request.headers, options.lookup),

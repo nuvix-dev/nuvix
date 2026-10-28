@@ -1,13 +1,7 @@
 import type { Elysia } from 'elysia'
 import { RATE_LIMIT_HEADERS } from '../shared/constants'
 
-/**
- * Rate limiting with a pluggable store.
- *
- * Phase 1 ships an in-memory fixed-window store (single-process dev/test).
- * The `Store` interface is designed so a Redis-backed store drops in later
- * (Phase 6) without touching call sites.
- */
+/** Applies fixed-window rate limits through a pluggable counter store. */
 
 export interface RateLimitStore {
   /** Increments the counter for key, returns [count, windowResetAt] (unix ms). */
@@ -24,7 +18,7 @@ export class MemoryRateLimitStore implements RateLimitStore {
     if (!entry || entry.resetAt <= now) {
       entry = { count: 0, resetAt: now + windowMs }
       this.windows.set(key, entry)
-      // opportunistic cleanup to bound memory
+      // Periodically remove expired entries so long-lived processes do not retain stale keys.
       if (this.windows.size > 10_000) this.evictExpired(now)
     }
 

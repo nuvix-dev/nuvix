@@ -1,3 +1,4 @@
+/** Coverage for audit template mapping, event emission, and sensitive-payload filtering. */
 import { describe, expect, it } from 'bun:test'
 import {
   auditAfter,
@@ -55,7 +56,7 @@ describe('auditAfter hook', () => {
       user: { getId: () => 'u77', getSequence: () => 3, get: () => 'Ada' },
     })
 
-    // Emission is async fire-and-forget; yield a tick.
+    // Emission is asynchronous; yield once before inspecting the in-memory event list.
     await new Promise((r) => setTimeout(r, 0))
 
     expect(events).toHaveLength(1)
@@ -65,7 +66,7 @@ describe('auditAfter hook', () => {
     expect(event.userId).toBe('u77')
     expect(event.userSequence).toBe(3)
     expect(event.userAgent).toBe('Mozilla/5.0 Chrome/128')
-    // Sensitive fields stripped from the payload
+    // Credentials and other sensitive fields must not enter audit payloads.
     expect(event.data?.password).toBeUndefined()
     expect(event.data?.email).toBe('a@b.c')
   })

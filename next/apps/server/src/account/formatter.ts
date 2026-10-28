@@ -1,3 +1,4 @@
+/** Defines account response aliases and normalizes identity documents for API responses. */
 import type { IdentitiesDoc } from '../types/generated'
 import {
   formatMembership,
@@ -28,6 +29,7 @@ export interface IdentityView {
   providerRefreshToken: string
 }
 
+/** Convert an identity document into the stable account-facing shape. */
 export function formatIdentity(doc: IdentitiesDoc): IdentityView {
   return {
     $id: doc.getId(),

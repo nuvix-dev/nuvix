@@ -1,3 +1,4 @@
+/** Service-level coverage for messaging topics, subscribers, providers, and channel-specific messages. */
 import { describe, expect, it } from 'bun:test'
 import { Doc, type Session } from '@nuvix/db'
 import { BadRequestError, ConflictError, NotFoundError } from '../shared/errors'
@@ -7,6 +8,7 @@ import { SubscribersService } from './subscribers/service'
 import { TopicsService } from './topics/service'
 
 function createInMemorySession(roles: string[] = ['role:all', 'user:user_1']) {
+  // Use one deterministic session adapter shape across the messaging service suites.
   const store = new Map<string, Map<string, Doc>>()
 
   const getCollection = (name: string) => {
@@ -136,7 +138,7 @@ describe('Messaging Module Services', () => {
       const topicsService = new TopicsService(session)
       const subscribersService = new SubscribersService(session)
 
-      // Setup topic, user, target
+      // Seed the topic, user, and delivery target required by subscriber creation.
       await topicsService.createTopic({
         topicId: 'news',
         name: 'News',
@@ -171,20 +173,20 @@ describe('Messaging Module Services', () => {
       expect(subscriber.targetId).toBe('target_email_1')
       expect(subscriber.userName).toBe('Alice')
 
-      // Verify topic count incremented
+      // The subscriber updates the topic's provider-specific count.
       const topic = await topicsService.getTopic('news')
       expect(topic.emailTotal).toBe(1)
 
-      // List subscribers
+      // List subscribers for the topic.
       const list = await subscribersService.listSubscribers('news')
       expect(list.total).toBe(1)
       expect(list.subscribers[0]?.$id).toBe('sub_1')
 
-      // Get subscriber
+      // Retrieve the created subscriber.
       const fetched = await subscribersService.getSubscriber('news', 'sub_1')
       expect(fetched.$id).toBe('sub_1')
 
-      // Delete subscriber
+      // Deleting the subscriber decrements the topic count.
       await subscribersService.deleteSubscriber('news', 'sub_1')
       const topicAfter = await topicsService.getTopic('news')
       expect(topicAfter.emailTotal).toBe(0)
@@ -208,7 +210,7 @@ describe('Messaging Module Services', () => {
       expect(provider.name).toBe('Primary Sendgrid')
       expect(provider.provider).toBe('sendgrid')
       expect(provider.type).toBe('email')
-      // Sensitive credentials must not be returned
+      // Sensitive provider credentials must never be returned in the public view.
       expect((provider as unknown as Record<string, unknown>).credentials).toBeUndefined()
 
       const fetched = await service.getProvider('sendgrid_1')
@@ -245,7 +247,7 @@ describe('Messaging Module Services', () => {
       const { session } = createInMemorySession()
       const service = new MessagingService(session)
 
-      // Rejects without targets
+      // Non-draft messages require at least one recipient collection.
       await expect(
         service.createEmailMessage({
           subject: 'Weekly Digest',
@@ -256,7 +258,7 @@ describe('Messaging Module Services', () => {
         }),
       ).rejects.toThrow(BadRequestError)
 
-      // Creates with target
+      // A targeted message is persisted and marked for processing.
       const message = await service.createEmailMessage({
         messageId: 'msg_1',
         subject: 'Weekly Digest',

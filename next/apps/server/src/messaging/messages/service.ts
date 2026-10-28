@@ -1,13 +1,10 @@
+/** Owns message validation, persistence, target lookup, and queue-backed delivery scheduling. */
 import { Doc, ID, Query, type Session } from '@nuvix/db'
 import { BadRequestError, ConflictError, NotFoundError } from '../../shared/errors'
 import type { Messages, Targets } from '../../types/generated'
 import { formatMessage, type MessageView } from '../formatter'
 
-/**
- * Delivery wiring — creates/updates that leave draft enqueue a messaging
- * job (v1 `MessagingJob.EXTERNAL` parity). Optional so unit tests can
- * exercise the persistence-only surface.
- */
+/** Optional delivery wiring for non-draft messages; omitted when persistence is tested without queues. */
 export interface MessagingDeliveryDeps {
   /** Platform project id — carried in job payloads for tenant routing. */
   projectId: string
@@ -56,12 +53,7 @@ export interface UpdateSmsMessageInput extends Partial<BaseMessageInput> {
   content?: string
 }
 
-/**
- * Validates a push-message image reference (`bucketId:fileId`) — v1
- * create-time parity (bucket exists, file exists in that bucket, mime
- * png/jpeg). Storage-backed push assets are streamed through
- * `/storage/buckets/:bucketId/files/:fileId/push` at delivery time.
- */
+/** Validate a storage-backed push image reference and restrict it to PNG or JPEG files. */
 async function validatePushImageRef(session: Session, image: string): Promise<void> {
   if (!image.includes(':')) return // absolute URL or external asset — not ours
   const [bucketId, fileId] = image.split(':') as [string, string]
@@ -87,12 +79,7 @@ async function validatePushImageRef(session: Session, image: string): Promise<vo
   }
 }
 
-/**
- * Validates email attachment references (`bucketId:fileId`) — v1
- * create/update-time parity (bucket exists, file in bucket). Stored as
- * `{bucketId, fileId}` snapshots; the worker reads the bytes from the
- * storage device at delivery time.
- */
+/** Validate email attachment references and store bucket/file snapshots for delivery workers. */
 async function validateAttachmentRefs(
   session: Session,
   attachments: string[],
@@ -151,6 +138,7 @@ export interface UpdatePushMessageInput extends Partial<BaseMessageInput> {
   badge?: number
 }
 
+/** Persists messaging records in one caller-scoped tenant session. */
 export class MessagingService {
   constructor(
     private readonly session: Session,
@@ -365,10 +353,7 @@ export class MessagingService {
     return formatMessage(created)
   }
 
-  /**
-   * Enqueues delivery for a fresh record that will actually send
-   * (v1: `processing` → immediate; `scheduled` → delayed BullMQ job).
-   */
+  /** Enqueue processing messages immediately and scheduled messages after their requested delay. */
   private async enqueueDelivery(created: Doc<Messages>, status: string): Promise<void> {
     if (!this.delivery || status === 'draft') return
     if (['processing', 'scheduled'].includes(status) === false) return

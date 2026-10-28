@@ -1,3 +1,4 @@
+/** Composes the account API from focused profile, recovery, session, identity, target, MFA, and OAuth2 plugins. */
 import { Elysia } from 'elysia'
 import type { MailComposer } from '../mail/composer'
 import { accountIdentitiesRoutes } from './identities/routes'
@@ -17,6 +18,7 @@ export interface AccountRoutesOptions {
   mail?: MailComposer
 }
 
+/** Mount account subroutes under one prefix while enabling optional capabilities explicitly. */
 export const accountRoutes = (options: AccountRoutesOptions = {}) =>
   new Elysia({ prefix: '/account' })
     .use(accountProfileRoutes({ mail: options.mail }))

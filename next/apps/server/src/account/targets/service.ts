@@ -1,3 +1,4 @@
+/** Owns authenticated push-target registration, update, expiration reset, and deletion. */
 import { Doc, ID, Permission, Role, type Session } from '@nuvix/db'
 import { ConflictError, NotFoundError } from '../../shared/errors'
 import type { Targets, TargetsDoc, UsersDoc } from '../../types/generated'
@@ -19,6 +20,7 @@ export interface UpdatePushTargetInput {
   name?: string
 }
 
+/** Implements push-target operations against one caller-scoped tenant session. */
 export class AccountTargetsService {
   constructor(private readonly session: Session) {}
 
@@ -54,6 +56,7 @@ export class AccountTargetsService {
     return formatTarget(created)
   }
 
+  /** Update a push target only when it belongs to the authenticated user. */
   async updatePushTarget(input: UpdatePushTargetInput): Promise<TargetView> {
     const doc = (await this.session.getDocument('targets', input.targetId)) as TargetsDoc
     if (doc.empty() || doc.get('userId') !== input.userId) {
@@ -61,6 +64,7 @@ export class AccountTargetsService {
     }
 
     if (input.identifier) {
+      // A new device token is usable again even if the previous token expired.
       doc.set('identifier', input.identifier)
       doc.set('expired', false)
     }
@@ -76,6 +80,7 @@ export class AccountTargetsService {
     return formatTarget(updated)
   }
 
+  /** Delete a push target only when it belongs to the authenticated user. */
   async deletePushTarget(userId: string, targetId: string): Promise<void> {
     const doc = (await this.session.getDocument('targets', targetId)) as TargetsDoc
     if (doc.empty() || doc.get('userId') !== userId) {

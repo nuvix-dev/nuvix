@@ -1,3 +1,4 @@
+/** Owns account MFA state, TOTP enrollment, recovery codes, and one-time challenges. */
 import { Auth, generateTotpSecret, getTotpUri, verifyTotpCode } from '@nuvix/core/auth'
 import { Doc, ID, Permission, Query, Role, type Session } from '@nuvix/db'
 import { BadRequestError, NotFoundError } from '../../shared/errors'
@@ -19,9 +20,11 @@ export interface MfaFactors {
   recoveryCode: boolean
 }
 
+/** Implements MFA operations against one authenticated tenant session. */
 export class AccountMfaService {
   constructor(private readonly session: Session) {}
 
+  // Account-level MFA state and the factors currently available to the user.
   async updateMfa(userId: string, mfa: boolean, sessionId?: string): Promise<AccountView> {
     const user = (await this.session.getDocument('users', userId)) as UsersDoc
     if (user.empty()) {
@@ -74,6 +77,7 @@ export class AccountMfaService {
     }
   }
 
+  // TOTP enrollment is stored as an unverified authenticator until the user proves possession.
   async createMfaAuthenticator(
     userId: string,
     type: string,
@@ -193,6 +197,7 @@ export class AccountMfaService {
     }
   }
 
+  // Recovery codes are generated, replaced, and consumed as single-use credentials.
   async createMfaRecoveryCodes(userId: string): Promise<{ recoveryCodes: string[] }> {
     const user = (await this.session.getDocument('users', userId)) as UsersDoc
     if (user.empty()) {
@@ -296,11 +301,13 @@ export class AccountMfaService {
       if (idx === -1) {
         throw new BadRequestError('Invalid recovery code', { code: 'user_invalid_token' })
       }
+      // Remove the code before persisting so a successful challenge cannot be replayed.
       codes.splice(idx, 1)
       user.set('mfaRecoveryCodes', codes)
       await this.session.updateDocument('users', input.userId, user)
     }
 
+    // Challenges are one-time records and are deleted after successful verification.
     await this.session.deleteDocument('challenges', input.challengeId)
 
     if (input.sessionId) {

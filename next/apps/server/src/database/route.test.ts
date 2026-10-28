@@ -1,3 +1,4 @@
+/** Route-level coverage for admin-only database schema CRUD and authorization behavior. */
 import { describe, expect, it } from 'bun:test'
 import { treaty } from '@elysia/eden'
 import type { TenantResource } from '@nuvix/core/tenants'
@@ -89,12 +90,12 @@ describe('Database Routes', () => {
 
     const client = treaty(app)
 
-    // 1. List initially empty
+    // The in-memory store starts empty.
     const listInitial = await client.database.schemas.get()
     expect(listInitial.status).toBe(200)
     expect(listInitial.data?.total).toBe(0)
 
-    // 2. Create managed schema
+    // Create a managed schema.
     const created1 = await client.database.schemas.post({
       name: 'analytics',
       type: 'managed',
@@ -104,7 +105,7 @@ describe('Database Routes', () => {
     expect(created1.data?.name).toBe('analytics')
     expect(created1.data?.type).toBe('managed')
 
-    // 3. Create document schema
+    // Create a document schema.
     const created2 = await client.database.schemas.post({
       name: 'content',
       type: 'document',
@@ -113,7 +114,7 @@ describe('Database Routes', () => {
     expect(created2.status).toBe(200)
     expect(created2.data?.name).toBe('content')
 
-    // 4. List with filter
+    // Verify type filtering.
     const filteredList = await client.database.schemas.get({
       query: { type: 'managed' },
     })
@@ -121,23 +122,23 @@ describe('Database Routes', () => {
     expect(filteredList.data?.total).toBe(1)
     expect(filteredList.data?.data[0]?.name).toBe('analytics')
 
-    // 5. Get by ID
+    // Retrieve by schema name.
     const got = await client.database.schemas({ schemaId: 'analytics' }).get()
     expect(got.status).toBe(200)
     expect(got.data?.name).toBe('analytics')
 
-    // 6. Update description
+    // Update the schema description.
     const updated = await client.database.schemas({ schemaId: 'analytics' }).patch({
       description: 'Updated description',
     })
     expect(updated.status).toBe(200)
     expect(updated.data?.description).toBe('Updated description')
 
-    // 7. Delete schema
+    // Delete the managed schema.
     const deleted = await client.database.schemas({ schemaId: 'analytics' }).delete()
     expect(deleted.status).toBe(204)
 
-    // 8. Confirm deletion
+    // Confirm the deleted schema is no longer addressable.
     const getAfterDelete = await client.database.schemas({ schemaId: 'analytics' }).get()
     expect(getAfterDelete.status).toBe(404)
   })

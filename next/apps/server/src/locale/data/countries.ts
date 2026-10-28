@@ -1,10 +1,4 @@
-/**
- * ISO 3166 standard country codes
- * https://www.iso.org/iso-3166-country-codes.html
- *
- * Source:
- * https://www.iso.org/obp/ui/#search/code/
- */
+/** ISO 3166-1 alpha-2 country codes used by locale and GeoIP response formatting. */
 
 export const countries = [
   'AF',

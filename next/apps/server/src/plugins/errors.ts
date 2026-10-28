@@ -7,17 +7,7 @@ export interface ProblemErrorsOptions {
   getTranslator?: (headers: Headers) => Promise<Translator>
 }
 
-/**
- * Maps application errors to RFC-9457 problem+json responses.
- *
- * When an `AppError` carries `messageKey`, the `detail` is translated via the
- * request locale (D32/D34); the English `detail` remains the fallback.
- *
- * NOTE (elysia@2.0.0-beta.6):
- * - v2 replaced `.onError` with `.error(ErrorClass, handler)` registration.
- * - Error handlers registered inside a plugin MUST use `global` scope,
- *   otherwise they do not propagate to the consuming instance's routes.
- */
+/** Maps application errors to RFC 9457 problem+json responses through one global composed-route contract. */
 export function problemErrors(options: ProblemErrorsOptions = {}) {
   return new Elysia({ name: 'problem-errors' }).error(
     'global',

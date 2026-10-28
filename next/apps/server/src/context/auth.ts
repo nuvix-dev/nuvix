@@ -1,15 +1,7 @@
+/** Resolves request authentication from sessions, JWTs, and API keys with optional stateful verifiers. */
 import { Elysia } from 'elysia'
 import { HEADERS } from '../shared/constants'
 import { verifyJwt } from '../utils/jwt'
-
-/**
- * Auth context resolution — Phase 1 primitives.
- *
- * Stateless parts (JWT signature, header parsing) are resolved here.
- * Stateful verification (session lookup, API-key lookup) is pluggable:
- * DB-backed verifiers are injected once @nuvix/db is wired (Phase 3+).
- * Until then unverified credentials resolve to `guest`.
- */
 
 export type AuthMode = 'admin' | 'console'
 
@@ -19,7 +11,7 @@ export type AuthContext =
   | { type: 'jwt'; userId: string; sessionId?: string }
   | { type: 'apiKey'; keyId: string; mode: AuthMode }
 
-/** Injected by later phases; null/unset means credential cannot be trusted. */
+/** Optional stateful checks; absent verifiers leave the request unauthenticated. */
 export interface AuthVerifiers {
   verifySession?: (sessionId: string) => Promise<{ userId: string } | null>
   verifyApiKey?: (key: string, mode: AuthMode) => Promise<{ keyId: string } | null>
@@ -34,7 +26,7 @@ export async function resolveAuth(
   verifiers: AuthVerifiers = {},
   jwtSecret?: string,
 ): Promise<AuthContext> {
-  // 1. Session token
+  // Session credentials are checked before stateless bearer credentials.
   const sessionId = headers.get(HEADERS.session)
   if (sessionId) {
     if (!verifiers.verifySession) return { type: 'guest' }
@@ -42,7 +34,7 @@ export async function resolveAuth(
     return session ? { type: 'session', sessionId, userId: session.userId } : { type: 'guest' }
   }
 
-  // 2. Short-lived JWT
+  // Short-lived JWT credentials.
   const token = headers.get(HEADERS.jwt)
   if (token && jwtSecret) {
     const payload = await verifyJwt(token, jwtSecret)
@@ -59,7 +51,7 @@ export async function resolveAuth(
     return { type: 'guest' }
   }
 
-  // 3. API key (+ optional mode)
+  // Tenant API-key credentials and their optional mode.
   const apiKey = headers.get(HEADERS.apiKey)
   if (apiKey) {
     const mode = parseMode(headers.get(HEADERS.mode))
@@ -73,7 +65,7 @@ export async function resolveAuth(
 
 export function authContext(options: { jwtSecret?: string; verifiers?: AuthVerifiers } = {}) {
   return new Elysia({ name: 'auth-context' }).derive(
-    // NOTE: scope required — local-scoped derive does not cross .use() boundaries
+    // Plugin scope makes the resolved auth context available to downstream route plugins.
     'plugin',
     async ({ request }) => ({
       auth: await resolveAuth(request.headers, options.verifiers, options.jwtSecret),

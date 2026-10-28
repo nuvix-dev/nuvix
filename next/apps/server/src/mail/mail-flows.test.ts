@@ -1,15 +1,10 @@
+/** Mail-flow coverage for template composition, redirect validation, and SMTP delivery failures. */
 import { beforeAll, describe, expect, it } from 'bun:test'
 import type { ProjectMailInfo } from '@nuvix/core/mail'
 import { EmailHelper } from '@nuvix/core/mail'
 import { type RedirectRules, redirectRules, validateRedirectURL } from '@nuvix/core/oauth'
 import type { Session } from '@nuvix/db'
 import { Doc, ID, type IEntity } from '@nuvix/db'
-
-/**
- * Mail-flow tests: the composed EmailHelper against real assets templates,
- * redirect-rule validation, and the services' delivery contracts (503 on
- * disabled SMTP, foreign-host redirect rejection).
- */
 
 const TEMPLATES_DIR = new URL('../../../../assets/locale/templates', import.meta.url).pathname
 
@@ -149,7 +144,7 @@ describe('recovery delivery contract', () => {
     expect(sent).toHaveLength(1)
     expect(sent[0]?.to).toBe('r@example.com')
 
-    // disabled SMTP → 503 problem (v1 `general_smtp_disabled` parity)
+    // Disabled SMTP must surface the service's 503 delivery error.
     const disabled = delivery({ enabled: false })
     expect(async () =>
       svc.createRecovery(
@@ -168,7 +163,7 @@ describe('recovery delivery contract', () => {
   })
 })
 
-describe('verification payload parity', () => {
+describe('verification email payload', () => {
   it('builds the verification email off the inner-base template', async () => {
     const built = await helper
       .builder(projectWithSmtp)

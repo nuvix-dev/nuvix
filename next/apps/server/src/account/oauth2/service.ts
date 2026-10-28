@@ -1,23 +1,4 @@
-/**
- * Account OAuth2 flows — v2 port of legacy
- * `apps/server/src/account/sessions/session.service.ts` OAuth2 surface.
- *
- * Flow (v1 parity):
- *  1. `GET /account/sessions/oauth2/:provider` → 302 to the provider
- *     authorize URL; state carries success/failure + the token flag.
- *  2. `GET|POST /account/sessions/oauth2/:provider/callback` → provider
- *     calls back with `code` (+`state`). The flow validates state, exchanges
- *     the code, resolves/creates/links the user + identity, replaces any
- *     current session (session upgrade), then:
- *     - session flow: creates a DB session, sets the httpOnly cookie
- *       (`nx_<name>`), and 302s to the success URL;
- *     - token flow (`state.token`): creates an OAUTH2-type token and returns
- *       `secret`/`userId` as success query params (non-cookie clients).
- *
- * Failures 302 to the state's `failure` URL with an `error` query param
- * (legacy shape: JSON `{message, type, code}`); without a failure URL the
- * error surfaces as a normal problem+json response.
- */
+/** Coordinates OAuth2 authorization, callback account linking, session creation, and token issuance. */
 
 import { Auth } from '@nuvix/core/auth'
 import {
@@ -106,12 +87,10 @@ type StateInput = {
 export class OAuth2Service {
   constructor(private readonly deps: OAuth2ServiceDeps) {}
 
-  // ── Step 1: begin flow (login URL) ────────────────────────────────────────
+  // Authorization URL construction.
 
   /**
-   * Builds the provider authorize URL (session flow — `state.token = false`).
-   * v1 parity: validates success/failure against project platforms, requires
-   * the provider to exist, be enabled, and have credentials configured.
+   * Builds the provider authorize URL for a cookie-backed session flow.
    */
   async beginSessionFlow(input: OAuth2BeginInput): Promise<OAuth2RedirectResult> {
     return this.begin(input, false)
@@ -158,7 +137,7 @@ export class OAuth2Service {
     }
   }
 
-  // ── Step 2: callback (the actual login) ───────────────────────────────────
+  // Callback processing and account resolution.
 
   /**
    * Handles the provider callback: state validation, code exchange, user +
@@ -191,10 +170,7 @@ export class OAuth2Service {
     const validateState = (kind: 'success' | 'failure') => {
       const url = state[kind]
       if (!url) return
-      // v2 fix (v1 bug): our own relay pages (`/auth/oauth2/{success,failure}`
-      // on this server) are always valid targets — v1 validated them against
-      // registered client platforms, which broke default flows whenever the
-      // API host itself wasn't registered as a client platform.
+      // Local relay pages are trusted internal targets; external URLs still require platform validation.
       const relayPrefix = `${input.baseUrl}/auth/oauth2/`
       if (url.startsWith(relayPrefix)) return
       const message = validateRedirectURL(url, rules)
@@ -306,7 +282,7 @@ export class OAuth2Service {
       sessionUpgrade = true
     }
 
-    // Session upgrade: replace the caller's current session with the new one (v1 parity).
+    // Replace the caller's current session before creating the new authenticated session.
     const currentSession = this.deps.currentSession
     if (currentSession && !currentSession.empty() && currentSession.getId()) {
       const currentDocument = (await db.getDocument(
@@ -322,7 +298,7 @@ export class OAuth2Service {
     let resolved = user
 
     if (resolved.empty()) {
-      // 1. Existing session for the same provider identity?
+      // First resolve an existing session for the same provider identity.
       const session = (await db.findOne('sessions', [
         Query.equal('provider', [input.provider]),
         Query.equal('providerUid', [oauth2ID]),
@@ -334,13 +310,13 @@ export class OAuth2Service {
     }
 
     if (resolved.empty() && email) {
-      // 2. Existing user with the same email?
+      // If none exists, resolve an existing user with the same email.
       const userWithEmail = (await db.findOne('users', [Query.equal('email', [email])])) as UsersDoc
       if (!userWithEmail.empty()) resolved = userWithEmail
     }
 
     if (resolved.empty()) {
-      // 3. Existing identity for the same provider uid?
+      // Finally, resolve a user through an existing provider identity.
       const identity = (await db.findOne('identities', [
         Query.equal('provider', [input.provider]),
         Query.equal('providerUid', [oauth2ID]),
@@ -406,7 +382,7 @@ export class OAuth2Service {
       await db.updateDocument('identities', identity.getId(), identity)
     }
 
-    // Backfill profile basics on first link (v1 parity).
+    // Fill missing profile fields when an existing account is linked.
     if (!resolved.get('email')) resolved.set('email', email)
     if (!resolved.get('name')) resolved.set('name', name)
     resolved.set('status', true)
@@ -420,7 +396,7 @@ export class OAuth2Service {
     const cookies: string[] = []
 
     if (state.token) {
-      // Token flow: return userId + secret as query params (non-cookie clients).
+      // Token flow returns userId and secret as query parameters for non-cookie clients.
       const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_OAUTH2)
       await db.createDocument(
         'tokens',
@@ -441,7 +417,7 @@ export class OAuth2Service {
       query.set('secret', secret)
       query.set('userId', resolved.getId())
     } else {
-      // Session flow: create the DB session and set the httpOnly cookie.
+      // Session flow creates the tenant session and sets the HttpOnly cookie.
       const secret = Auth.tokenGenerator(Auth.TOKEN_LENGTH_SESSION)
       const sessionDoc = new Doc<Sessions>({
         $id: ID.unique(),
@@ -468,15 +444,14 @@ export class OAuth2Service {
 
       cookies.push(this.sessionCookie(resolved.getId(), secret, expire, input.baseUrl))
 
-      // v1 parity: the default relay success page receives the credential in
-      // query params (the page forwards them to the opener window).
+      // The default relay page receives the credential so it can forward it to the opener window.
       if (parsedSuccess.pathname === '/auth/oauth2/success') {
         query.set('domain', config.cookie.domain ?? '')
         query.set('key', sessionCookieName())
         query.set('secret', encodeSessionToken(resolved.getId(), secret))
       }
 
-      // Session upgrade: rebind push targets to the fresh session (v1 parity).
+      // Rebind push targets to the fresh session after a session upgrade.
       if (sessionUpgrade) {
         const targets = (resolved.get('targets') ?? []) as Doc<{
           providerType?: string
@@ -500,14 +475,11 @@ export class OAuth2Service {
     }
   }
 
-  // ── Session refresh: rotate the provider's access token (contract §PATCH) ──
+  // Provider-session token refresh.
 
   /**
-   * Refreshes the upstream provider tokens stored on an OAuth2 session.
-   * v2 fix for the v1 bug: updates `providerAccessToken` only, rotates
-   * `providerRefreshToken` when the provider returns a new one (v1
-   * overwrote the refresh token with the access token), and bumps the
-   * expiry. No-op for non-OAuth2 sessions.
+   * Refreshes provider tokens stored on an OAuth2 session while preserving the refresh token
+   * unless the provider returns a replacement. Non-OAuth2 sessions are ignored.
    */
   async refreshProviderSession(session: SessionsDoc): Promise<void> {
     const provider = session.get('provider')
@@ -531,7 +503,7 @@ export class OAuth2Service {
     await this.deps.db.updateDocument('sessions', session.getId(), session)
   }
 
-  // ── Internals ─────────────────────────────────────────────────────────────
+  // Internal provider, redirect, and project-setting helpers.
 
   private instantiate(
     name: string,
@@ -584,7 +556,7 @@ export class OAuth2Service {
     return redirectRules(this.deps.projectId, platforms)
   }
 
-  /** `project.auths.duration` overrides the default session length (v1 parity). */
+  /** Resolve the project-specific session duration, falling back to the platform default. */
   private async sessionDuration(): Promise<number> {
     try {
       const auths = await this.deps.registry.getAuthSettings(this.deps.projectId)
@@ -596,7 +568,7 @@ export class OAuth2Service {
     return Auth.TOKEN_EXPIRATION_LOGIN_LONG
   }
 
-  /** `project.auths.limit` overrides the default user cap (v1 parity). */
+  /** Resolve the project-specific user limit, falling back to the platform default. */
   private async projectUserLimit(): Promise<number> {
     try {
       const auths = await this.deps.registry.getAuthSettings(this.deps.projectId)
@@ -608,7 +580,7 @@ export class OAuth2Service {
     return config.limits.users
   }
 
-  /** Creates a first-time OAuth2 user (+ email target) — v1 parity. */
+  /** Creates a first-time OAuth2 user and its verified email target. */
   private async createUser(email: string, name: string): Promise<UsersDoc> {
     if (!email) {
       throw new OAuth2FlowError('user_unauthorized', 'OAuth provider failed to return email.', 401)
@@ -620,8 +592,7 @@ export class OAuth2Service {
       Query.equal('providerEmail', [email]),
     ])) as IdentitiesDoc
     if (!identityWithMatchingEmail.empty()) {
-      // An identity with the same email exists under a different provider —
-      // never auto-link for security reasons (v1 parity).
+      // Never auto-link an email already owned by an identity from another provider.
       throw new OAuth2FlowError(
         'general_bad_request',
         'An account with the same email already exists',
@@ -702,7 +673,7 @@ export class OAuth2Service {
   }
 }
 
-// ── Cookie/session token encoding (matches `context/tenant.ts` decode path) ──
+// Cookie and session-token encoding shared with the tenant context decoder.
 
 export function sessionCookieName(): string {
   return `nx_${config.cookie.name}`
@@ -731,15 +702,13 @@ export function createOAuth2Refresher(deps: {
 }
 
 /**
- * Encodes the session credential for cookies / query params: base64 JSON
- * `{id, secret}` — the same shape `Auth.decodeSession` (no key) parses in the
- * tenant context chain (legacy `Auth.encodeSession` format without AES).
+ * Encodes a session credential as base64 JSON `{id, secret}` for cookies and relay query parameters.
  */
 export function encodeSessionToken(userId: string, secret: string): string {
   return Buffer.from(JSON.stringify({ id: userId, secret })).toString('base64')
 }
 
-// ── Errors (mapped to problem+json by the shared error handler) ──────────────
+// OAuth2-specific errors are mapped to problem+json by the shared error handler.
 
 class OAuth2FlowError extends AppError {
   constructor(code: string, detail: string, status: number) {

@@ -1,3 +1,4 @@
+/** Defines authenticated MFA status, factor enrollment, recovery-code, and challenge endpoints. */
 import type { Doc, Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
 import { auditAfter } from '../../plugins/audit'
@@ -5,15 +6,17 @@ import type { Sessions, Users } from '../../types/generated'
 import { requireAuth } from '../auth'
 import { AccountMfaService } from './service'
 
+/** Compose MFA routes with the session and user context needed by the service layer. */
 export const accountMfaRoutes = () =>
   new Elysia()
+    // MFA operations always resolve ownership from the authenticated account context.
     .derive('plugin', (ctx) => ({
       db: ('db' in ctx ? ctx.db : undefined) as unknown as Session,
       user: ('user' in ctx ? ctx.user : undefined) as unknown as Doc<Users>,
       session: ('session' in ctx ? ctx.session : undefined) as unknown as Doc<Sessions>,
     }))
 
-    // 37. Update MFA status
+    // MFA status and authenticator enrollment.
     .patch(
       '/mfa',
       {
@@ -34,7 +37,6 @@ export const accountMfaRoutes = () =>
       },
     )
 
-    // 38. List MFA factors
     .get(
       '/mfa/factors',
       {
@@ -52,7 +54,6 @@ export const accountMfaRoutes = () =>
       },
     )
 
-    // 39. Create authenticator
     .post(
       '/mfa/authenticators/:type',
       {
@@ -74,7 +75,6 @@ export const accountMfaRoutes = () =>
       },
     )
 
-    // 40. Verify authenticator
     .put(
       '/mfa/authenticators/:type',
       {
@@ -102,7 +102,6 @@ export const accountMfaRoutes = () =>
       },
     )
 
-    // 41. Delete authenticator
     .delete(
       '/mfa/authenticators/:type',
       {
@@ -129,7 +128,7 @@ export const accountMfaRoutes = () =>
       },
     )
 
-    // 42. Create MFA recovery codes
+    // Recovery-code lifecycle.
     .post(
       '/mfa/recovery-codes',
       {
@@ -147,7 +146,6 @@ export const accountMfaRoutes = () =>
       },
     )
 
-    // 43. Regenerate MFA recovery codes
     .patch(
       '/mfa/recovery-codes',
       {
@@ -165,7 +163,6 @@ export const accountMfaRoutes = () =>
       },
     )
 
-    // 44. Get MFA recovery codes
     .get(
       '/mfa/recovery-codes',
       {
@@ -182,7 +179,7 @@ export const accountMfaRoutes = () =>
       },
     )
 
-    // 45. Create MFA challenge
+    // Challenge creation and completion.
     .post(
       '/mfa/challenge',
       {
@@ -208,7 +205,6 @@ export const accountMfaRoutes = () =>
       },
     )
 
-    // 46. Complete MFA challenge
     .put(
       '/mfa/challenge',
       {

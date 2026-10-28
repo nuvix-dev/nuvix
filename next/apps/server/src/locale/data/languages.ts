@@ -1,9 +1,4 @@
-/**
- * List of languages classified in ISO 639-1.
- *
- * Source:
- * https://gist.github.com/joshuabaker/d2775b5ada7d1601bcd7b31cb4081981
- */
+/** Language names and native labels associated with ISO 639-1 codes for locale responses. */
 
 export const languages = [
   {

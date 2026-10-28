@@ -1,3 +1,4 @@
+/** Defines authenticated session inspection, revocation, creation, and token-exchange endpoints. */
 import type { Doc, Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
 import { auditAfter } from '../../plugins/audit'
@@ -8,10 +9,12 @@ import type { OAuth2RouteDeps } from '../oauth2/routes'
 import { createOAuth2Refresher } from '../oauth2/service'
 import { AccountSessionsService } from './service'
 
+/** Compose session routes with optional JWT and OAuth2 refresh capabilities. */
 export const accountSessionsRoutes = (
   options: { jwtSecret?: string; oauth2?: OAuth2RouteDeps } = {},
 ) =>
   new Elysia()
+    // Session ownership and project context come from the request pipeline.
     .derive('plugin', (ctx) => ({
       db: ('db' in ctx ? ctx.db : undefined) as unknown as Session,
       user: ('user' in ctx ? ctx.user : undefined) as unknown as Doc<Users>,
@@ -21,7 +24,7 @@ export const accountSessionsRoutes = (
       },
     }))
 
-    // 17. List sessions
+    // Session inspection and revocation.
     .get(
       '/sessions',
       {
@@ -38,7 +41,6 @@ export const accountSessionsRoutes = (
       },
     )
 
-    // 18. Delete all sessions
     .delete(
       '/sessions',
       {
@@ -68,7 +70,6 @@ export const accountSessionsRoutes = (
       },
     )
 
-    // 19. Get session
     .get(
       '/sessions/:sessionId',
       {
@@ -89,7 +90,6 @@ export const accountSessionsRoutes = (
       },
     )
 
-    // 20. Delete session
     .delete(
       '/sessions/:sessionId',
       {
@@ -124,7 +124,6 @@ export const accountSessionsRoutes = (
       },
     )
 
-    // 21. Update session (extend)
     .patch(
       '/sessions/:sessionId',
       {
@@ -145,6 +144,7 @@ export const accountSessionsRoutes = (
       async ({ db, user, session, params: { sessionId }, project }) => {
         const userId = requireAuth(user)
         const service = new AccountSessionsService(db, options.jwtSecret, {
+          // Provider refresh is available only when OAuth2 composition supplies its registry.
           refreshOAuth2: options.oauth2
             ? createOAuth2Refresher({
                 registry: options.oauth2.registry,
@@ -158,7 +158,7 @@ export const accountSessionsRoutes = (
       },
     )
 
-    // 22. Create email session (and alias /sessions)
+    // Session creation and one-time token exchanges.
     .post(
       '/sessions/email',
       {
@@ -220,7 +220,6 @@ export const accountSessionsRoutes = (
       },
     )
 
-    // 23. Create anonymous session
     .post(
       '/sessions/anonymous',
       {
@@ -245,7 +244,6 @@ export const accountSessionsRoutes = (
       },
     )
 
-    // 24. Create session with token
     .post(
       '/sessions/token',
       {
@@ -276,7 +274,6 @@ export const accountSessionsRoutes = (
       },
     )
 
-    // 25. Update magic URL session
     .put(
       '/sessions/magic-url',
       {
@@ -307,7 +304,6 @@ export const accountSessionsRoutes = (
       },
     )
 
-    // 26. Update phone session
     .put(
       '/sessions/phone',
       {
@@ -338,7 +334,6 @@ export const accountSessionsRoutes = (
       },
     )
 
-    // 27. Create phone token (and alias /sessions/phone)
     .post(
       '/sessions/phone',
       {

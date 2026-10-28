@@ -1,7 +1,4 @@
-/**
- * OAuth2 route flow tests — full begin → callback cycle against a mocked
- * Google token/userinfo endpoint and an in-memory tenant DB + registry.
- */
+/** Route-level OAuth2 coverage for authorization, callback, token refresh, and failure redirects. */
 
 import { describe, expect, it } from 'bun:test'
 import type { ProjectRegistry } from '@nuvix/core/platform'
@@ -12,7 +9,7 @@ import { problemErrors } from '../../plugins/errors'
 import { accountRoutes } from '../route'
 import { sessionCookieName } from './service'
 
-// ── In-memory tenant DB ─────────────────────────────────────────────────────
+// In-memory tenant session used to observe users, identities, sessions, and tokens.
 
 const store = new Map<string, Map<string, Doc>>()
 const getCollection = (name: string) => {
@@ -61,7 +58,7 @@ const mockSession = {
   purgeCachedDocument: async () => {},
 } as unknown as Session
 
-// ── Fake control-plane registry ─────────────────────────────────────────────
+// Control-plane registry double supplying provider configuration and project settings.
 
 const fakeRegistry = {
   getOAuthProviders: async () => [
@@ -78,7 +75,7 @@ const fakeRegistry = {
   getAuthSettings: async () => ({ duration: 3600, limit: 100 }),
 } as unknown as ProjectRegistry
 
-// ── Mock the Google OAuth2 endpoints (real provider code paths, fake wire) ──
+// Google OAuth2 wire double; the application still executes the real provider code paths.
 
 const PROFILE = {
   sub: 'google-user-1',
@@ -113,7 +110,7 @@ globalThis.fetch = (async (input: string | URL | Request, init?: RequestInit) =>
   return originalFetch(input as never, init)
 }) as typeof fetch
 
-// ── App under test ──────────────────────────────────────────────────────────
+// Compose the account application with the mocked tenant context and provider registry.
 
 const currentUser = new Doc({})
 const currentSession = new Doc({})
@@ -193,7 +190,7 @@ describe('OAuth2 routes', () => {
   })
 
   it('creates user + identity + session on callback and sets the cookie', async () => {
-    // Build a state pointing at the default relay page (v1 parity params).
+    // Build state pointing at the default relay page.
     const state = encodeURIComponent(
       JSON.stringify({
         success: `${BASE}/auth/oauth2/success`,
@@ -209,7 +206,7 @@ describe('OAuth2 routes', () => {
     expect(res.status).toBe(302)
     const location = new URL(res.headers.get('location')!)
     expect(location.pathname).toBe('/auth/oauth2/success')
-    // Relay-page query params (v1 parity: domain/key/secret)
+    // The relay receives the session key and secret needed to complete the browser flow.
     expect(location.searchParams.get('key')).toBe(sessionCookieName())
     expect(location.searchParams.get('secret')).toBeTruthy()
 
@@ -240,7 +237,7 @@ describe('OAuth2 routes', () => {
     expect(session.provider).toBe('google')
     expect(session.factors).toEqual(['email', 'oauth2'])
 
-    // Email target provisioned (v1 parity)
+    // A verified provider email creates the corresponding email target.
     const targets = [...getCollection('targets').values()]
     expect(targets).toHaveLength(1)
     expect((targets[0]!.toObject() as Record<string, unknown>).identifier).toBe(PROFILE.email)
@@ -286,7 +283,7 @@ describe('OAuth2 routes', () => {
   })
 
   it('token flow returns userId + secret as query params and mints an OAUTH2 token', async () => {
-    // Begin token flow
+    // Begin a token-based OAuth2 flow.
     const begin = await testApp.handle(new Request(`${BASE}/account/tokens/oauth2/google`))
     expect(begin.status).toBe(302)
     const state = JSON.parse(
@@ -294,7 +291,7 @@ describe('OAuth2 routes', () => {
     ) as { token: boolean }
     expect(state.token).toBe(true)
 
-    // Complete it
+    // Complete the flow and inspect the returned token credentials.
     const encodedState = encodeURIComponent(
       JSON.stringify({
         success: 'https://app.example.com/token-cb',
@@ -316,11 +313,12 @@ describe('OAuth2 routes', () => {
 
     const tokens = [...getCollection('tokens').values()]
     expect(tokens).toHaveLength(1)
-    expect((tokens[0]!.toObject() as Record<string, unknown>).type).toBe(7) // TokenType.OAUTH2 (legacy value parity)
+    // Persist the OAuth2 token type marker on the created token record.
+    expect((tokens[0]!.toObject() as Record<string, unknown>).type).toBe(7)
   })
 
-  it('refreshes provider tokens when an OAuth2 session is PATCHed (v1 bug fix)', async () => {
-    // Craft a user + google OAuth2 session carrying stale provider tokens.
+  it('refreshes provider tokens when an OAuth2 session is PATCHed', async () => {
+    // Seed a Google OAuth2 session carrying stale provider tokens.
     const userDoc = await mockSession.createDocument(
       'users',
       new Doc({
@@ -361,8 +359,7 @@ describe('OAuth2 routes', () => {
     const updated = (
       (await mockSession.getDocument('sessions', sessionDoc.getId())) as Doc
     ).toObject() as Record<string, unknown>
-    // Access token rotated (fetch mock returns at-1), refresh token PRESERVED
-    // (v1 overwrote it with the access token — the bug this fixes).
+    // Refreshing rotates the access token while preserving the provider refresh token.
     expect(updated.providerAccessToken).toBe('at-1')
     expect(updated.providerRefreshToken).toBe('stale-rt')
     expect(updated.providerAccessTokenExpiry).toBeTruthy()

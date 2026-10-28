@@ -1,11 +1,4 @@
-/**
- * Project mail composer — the narrow capability account services use to
- * send system emails (v1 `EmailHelper` + `MailsQueue.add` parity).
- *
- * `build()` composes the payload via `EmailHelper` (custom project template
- * override + SMTP resolution) and enqueues it to the MAILS queue. Delivery
- * happens in the mails worker.
- */
+/** Provides project-scoped mail capabilities that compose localized messages and enqueue delivery jobs. */
 
 import { type BuiltEmail, EmailHelper, type ProjectMailInfo } from '@nuvix/core/mail'
 import { type RedirectRules, redirectRules } from '@nuvix/core/oauth'
@@ -31,7 +24,7 @@ export interface MailBuildInput {
 
 /** Narrow mail capability handed to services (undefined → mail disabled). */
 export interface MailCapability {
-  /** System/project SMTP availability (legacy `configuration.smtp.enabled()`). */
+  /** Whether system SMTP is configured for delivery. */
   readonly enabled: boolean
   /** Project display name (async — resolved from the control plane). */
   projectName(): Promise<string>
@@ -41,11 +34,7 @@ export interface MailCapability {
 /** Per-project capability factory — composition holds the composer. */
 export interface MailComposer {
   capabilityFor(projectId: string): MailCapability
-  /**
-   * Platform redirect rules for the project (v1
-   * `ctx.validateRedirectURL` parity) — shares the control-plane registry
-   * read with the mail profile.
-   */
+  /** Platform redirect rules used to validate links embedded in messages. */
   redirectRulesFor(projectId: string): Promise<RedirectRules>
 }
 
@@ -132,11 +121,7 @@ export interface MailDelivery {
   rules: RedirectRules
 }
 
-/**
- * Disabled-mail capability — handed to services when the project-facing
- * server runs without SMTP; service methods surface the legacy
- * `503 general_smtp_disabled` problem on use.
- */
+/** Capability used when SMTP is unavailable; service methods surface a stable disabled-mail error on use. */
 export const disabledMailCapability: MailCapability = {
   enabled: false,
   projectName: async () => 'Nuvix',

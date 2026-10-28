@@ -1,3 +1,4 @@
+/** Re-exports account services, formatters, and token types through one module boundary. */
 export * from './formatter'
 export { AccountIdentitiesService } from './identities/service'
 export { AccountMfaService } from './mfa/service'

@@ -1,3 +1,4 @@
+/** Owns messaging topic lifecycle, subscription permissions, search metadata, and cleanup. */
 import { Doc, ID, Query, type Session } from '@nuvix/db'
 import { ConflictError, NotFoundError } from '../../shared/errors'
 import type { Topics } from '../../types/generated'
@@ -14,12 +15,11 @@ export interface UpdateTopicInput {
   subscribe?: string[]
 }
 
+/** Implements topic operations against one caller-scoped tenant session. */
 export class TopicsService {
   constructor(private readonly session: Session) {}
 
-  /**
-   * Create a new topic.
-   */
+  /** Create a topic with empty provider counts and optional subscription roles. */
   async createTopic(input: CreateTopicInput): Promise<TopicView> {
     const topicId = !input.topicId || input.topicId === 'unique()' ? ID.unique() : input.topicId
 
@@ -44,9 +44,7 @@ export class TopicsService {
     return formatTopic(created)
   }
 
-  /**
-   * List all topics.
-   */
+  /** List topics with optional search and caller-supplied pagination queries. */
   async listTopics(
     queries: Query[] = [],
     search?: string,
@@ -66,9 +64,7 @@ export class TopicsService {
     }
   }
 
-  /**
-   * Get topic by ID.
-   */
+  /** Retrieve one topic by identifier. */
   async getTopic(topicId: string): Promise<TopicView> {
     const doc = await this.session.getDocument('topics', topicId)
     if (doc.empty()) {
@@ -79,9 +75,7 @@ export class TopicsService {
     return formatTopic(doc)
   }
 
-  /**
-   * Update topic settings.
-   */
+  /** Update topic display name or subscription permissions. */
   async updateTopic(topicId: string, input: UpdateTopicInput): Promise<TopicView> {
     const doc = await this.session.getDocument('topics', topicId)
     if (doc.empty()) {
@@ -102,9 +96,7 @@ export class TopicsService {
     return formatTopic(updated)
   }
 
-  /**
-   * Delete a topic and its subscribers.
-   */
+  /** Delete a topic together with all of its subscriber records. */
   async deleteTopic(topicId: string): Promise<void> {
     const doc = await this.session.getDocument('topics', topicId)
     if (doc.empty()) {
@@ -113,7 +105,7 @@ export class TopicsService {
       })
     }
 
-    // Delete all subscriber records for this topic
+    // Remove dependent subscriptions before deleting the topic record.
     const subscribers = await this.session.find('subscribers', [Query.equal('topicId', [topicId])])
     for (const sub of subscribers) {
       await this.session.deleteDocument('subscribers', sub.getId())

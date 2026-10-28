@@ -1,19 +1,16 @@
+/** Defines message discovery, channel-specific composition, scheduling, and deletion endpoints. */
 import type { QueueManager } from '@nuvix/core/queues'
 import { Query, type Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
 import { type MessagingDeliveryDeps, MessagingService } from './service'
 
 export interface MessagesRouteDeps {
-  /** Queue runtime — delivery enqueue (undefined in test composition). */
+  /** Optional queue runtime used to enqueue immediate or scheduled delivery. */
   queues?: QueueManager
 }
 
 export const messagingMessagesRoutes = ({ queues }: MessagesRouteDeps = {}) => {
-  /**
-   * Delivery wiring (v1 `MessagingJob.EXTERNAL`): immediate for
-   * `processing`, delayed for `scheduled`; absent without a queue
-   * runtime (test composition).
-   */
+  /** Build delivery wiring for immediate and scheduled messages when queues are available. */
   const deliveryFor = (projectId: string | undefined): MessagingDeliveryDeps | undefined => {
     if (!queues || !projectId) return undefined
     return {
@@ -27,6 +24,7 @@ export const messagingMessagesRoutes = ({ queues }: MessagesRouteDeps = {}) => {
 
   return (
     new Elysia({ name: 'messaging-messages' })
+      // Keep project context narrow; queue-backed delivery is composed per request.
       .derive('plugin', (ctx) => ({
         db: ('db' in ctx ? ctx.db : undefined) as unknown as Session,
         project: ('project' in ctx ? ctx.project : undefined) as unknown as
@@ -34,7 +32,7 @@ export const messagingMessagesRoutes = ({ queues }: MessagesRouteDeps = {}) => {
           | undefined,
       }))
 
-      // 1. List messages
+      // Message discovery and target listing.
       .get(
         '/messages',
         {
@@ -81,7 +79,6 @@ export const messagingMessagesRoutes = ({ queues }: MessagesRouteDeps = {}) => {
         },
       )
 
-      // 2. Get single message
       .get(
         '/messages/:messageId',
         {
@@ -100,7 +97,6 @@ export const messagingMessagesRoutes = ({ queues }: MessagesRouteDeps = {}) => {
         },
       )
 
-      // 3. Get message targets
       .get(
         '/messages/:messageId/targets',
         {
@@ -138,7 +134,7 @@ export const messagingMessagesRoutes = ({ queues }: MessagesRouteDeps = {}) => {
         },
       )
 
-      // 4. Create Email message
+      // Channel-specific message composition and updates.
       .post(
         '/messages/email',
         {
@@ -177,7 +173,6 @@ export const messagingMessagesRoutes = ({ queues }: MessagesRouteDeps = {}) => {
         },
       )
 
-      // 5. Update Email message
       .patch(
         '/messages/email/:messageId',
         {
@@ -208,7 +203,6 @@ export const messagingMessagesRoutes = ({ queues }: MessagesRouteDeps = {}) => {
         },
       )
 
-      // 6. Create SMS message
       .post(
         '/messages/sms',
         {
@@ -235,7 +229,6 @@ export const messagingMessagesRoutes = ({ queues }: MessagesRouteDeps = {}) => {
         },
       )
 
-      // 7. Update SMS message
       .patch(
         '/messages/sms/:messageId',
         {
@@ -260,7 +253,6 @@ export const messagingMessagesRoutes = ({ queues }: MessagesRouteDeps = {}) => {
         },
       )
 
-      // 8. Create Push message
       .post(
         '/messages/push',
         {
@@ -297,7 +289,6 @@ export const messagingMessagesRoutes = ({ queues }: MessagesRouteDeps = {}) => {
         },
       )
 
-      // 9. Update Push message
       .patch(
         '/messages/push/:messageId',
         {
@@ -331,7 +322,7 @@ export const messagingMessagesRoutes = ({ queues }: MessagesRouteDeps = {}) => {
         },
       )
 
-      // 10. Delete message
+      // Message deletion.
       .delete(
         '/messages/:messageId',
         {

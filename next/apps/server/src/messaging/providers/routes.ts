@@ -1,14 +1,17 @@
+/** Defines messaging-provider discovery, credential management, and delivery-channel configuration routes. */
 import { Query, type Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
 import { ProvidersService } from './service'
 
+/** Compose provider routes with the caller-scoped tenant session. */
 export const messagingProvidersRoutes = () =>
   new Elysia()
+    // Provider services own validation and persistence; routes only bind request data.
     .derive('plugin', (ctx) => ({
       db: ('db' in ctx ? ctx.db : undefined) as unknown as Session,
     }))
 
-    // 1. List providers
+    // Provider discovery and removal.
     .get(
       '/providers',
       {
@@ -55,7 +58,6 @@ export const messagingProvidersRoutes = () =>
       },
     )
 
-    // 2. Get single provider by ID
     .get(
       '/providers/:providerId',
       {
@@ -75,7 +77,6 @@ export const messagingProvidersRoutes = () =>
       },
     )
 
-    // 3. Delete provider by ID
     .delete(
       '/providers/:providerId',
       {
@@ -100,9 +101,7 @@ export const messagingProvidersRoutes = () =>
       },
     )
 
-    // -------------------------------------------------------------------------
-    // Mailgun
-    // -------------------------------------------------------------------------
+    // Mailgun configuration.
     .post(
       '/providers/mailgun',
       {
@@ -156,9 +155,7 @@ export const messagingProvidersRoutes = () =>
       },
     )
 
-    // -------------------------------------------------------------------------
-    // SendGrid
-    // -------------------------------------------------------------------------
+    // SendGrid configuration.
     .post(
       '/providers/sendgrid',
       {
@@ -208,9 +205,7 @@ export const messagingProvidersRoutes = () =>
       },
     )
 
-    // -------------------------------------------------------------------------
-    // SMTP
-    // -------------------------------------------------------------------------
+    // SMTP configuration.
     .post(
       '/providers/smtp',
       {
@@ -272,9 +267,7 @@ export const messagingProvidersRoutes = () =>
       },
     )
 
-    // -------------------------------------------------------------------------
-    // Twilio
-    // -------------------------------------------------------------------------
+    // Twilio configuration.
     .post(
       '/providers/twilio',
       {
@@ -320,9 +313,7 @@ export const messagingProvidersRoutes = () =>
       },
     )
 
-    // -------------------------------------------------------------------------
-    // Textmagic
-    // -------------------------------------------------------------------------
+    // Textmagic configuration.
     .post(
       '/providers/textmagic',
       {
@@ -368,9 +359,7 @@ export const messagingProvidersRoutes = () =>
       },
     )
 
-    // -------------------------------------------------------------------------
-    // Vonage
-    // -------------------------------------------------------------------------
+    // Vonage configuration.
     .post(
       '/providers/vonage',
       {
@@ -416,9 +405,7 @@ export const messagingProvidersRoutes = () =>
       },
     )
 
-    // -------------------------------------------------------------------------
-    // Msg91
-    // -------------------------------------------------------------------------
+    // Msg91 configuration.
     .post(
       '/providers/msg91',
       {
@@ -464,9 +451,7 @@ export const messagingProvidersRoutes = () =>
       },
     )
 
-    // -------------------------------------------------------------------------
-    // Telesign
-    // -------------------------------------------------------------------------
+    // Telesign configuration.
     .post(
       '/providers/telesign',
       {
@@ -512,9 +497,7 @@ export const messagingProvidersRoutes = () =>
       },
     )
 
-    // -------------------------------------------------------------------------
-    // FCM
-    // -------------------------------------------------------------------------
+    // Firebase Cloud Messaging configuration.
     .post(
       '/providers/fcm',
       {
@@ -560,9 +543,7 @@ export const messagingProvidersRoutes = () =>
       },
     )
 
-    // -------------------------------------------------------------------------
-    // APNS
-    // -------------------------------------------------------------------------
+    // Apple Push Notification service configuration.
     .post(
       '/providers/apns',
       {

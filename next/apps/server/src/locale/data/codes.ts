@@ -1,11 +1,4 @@
-/**
- * ISO 639-1 standard language codes
- * https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
- *
- * Source:
- * https://www.andiamo.co.uk/resources/iso-language-codes/
- *
- */
+/** Supported ISO 639-1 language and region identifiers used by locale negotiation. */
 
 export const localeCodes = [
   {

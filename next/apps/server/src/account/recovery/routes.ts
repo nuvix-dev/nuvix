@@ -1,3 +1,4 @@
+/** Defines password-recovery initiation and completion endpoints with optional email delivery. */
 import type { Session } from '@nuvix/db'
 import type { Translator } from '@nuvix/i18n'
 import { Elysia, t } from 'elysia'
@@ -6,12 +7,14 @@ import { auditAfter } from '../../plugins/audit'
 import { AccountRecoveryService, type RecoveryDelivery } from './service'
 
 export interface RecoveryRouteDeps {
-  /** System-email composer (undefined in test composition → no email). */
+  /** Optional system-email capability used to deliver recovery instructions. */
   mail?: MailComposer
 }
 
+/** Compose recovery routes with request-scoped project, locale, and delivery capabilities. */
 export const accountRecoveryRoutes = ({ mail }: RecoveryRouteDeps = {}) =>
   new Elysia({ name: 'account-recovery' })
+    // Recovery rules stay in the service; this layer only supplies request context and transport validation.
     .derive('plugin', (ctx) => ({
       db: ('db' in ctx ? ctx.db : undefined) as unknown as Session,
       project: ('project' in ctx ? ctx.project : undefined) as unknown as
@@ -20,7 +23,7 @@ export const accountRecoveryRoutes = ({ mail }: RecoveryRouteDeps = {}) =>
       locale: ('locale' in ctx ? ctx.locale : undefined) as unknown as Translator | undefined,
     }))
 
-    // 15. Create recovery
+    // Recovery initiation.
     .post(
       '/recovery',
       {
@@ -35,7 +38,6 @@ export const accountRecoveryRoutes = ({ mail }: RecoveryRouteDeps = {}) =>
             format: 'email',
             description: 'User account registered email address',
           }),
-          // Required (v1 parity: `@IsNotEmpty @IsUrl` on CreateRecoveryDTO).
           url: t.String({
             format: 'uri',
             description: 'Redirect URL callback containing reset token',
@@ -55,7 +57,7 @@ export const accountRecoveryRoutes = ({ mail }: RecoveryRouteDeps = {}) =>
       },
     )
 
-    // 16. Update recovery (confirm)
+    // Recovery confirmation.
     .put(
       '/recovery',
       {
@@ -85,11 +87,7 @@ export const accountRecoveryRoutes = ({ mail }: RecoveryRouteDeps = {}) =>
       },
     )
 
-/**
- * Composes the per-request delivery deps (capability + translator + platform
- * redirect rules). Returns `undefined` when no composer is configured, so the
- * service can still mint recovery tokens without sending mail (test mode).
- */
+/** Compose per-request delivery capabilities; absent mail support still allows token creation. */
 async function recoveryDelivery(
   projectId: string,
   composer: MailComposer | undefined,

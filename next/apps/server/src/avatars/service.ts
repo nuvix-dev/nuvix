@@ -5,13 +5,7 @@ import { Resvg } from '@resvg/resvg-js'
 import QRCode from 'qrcode'
 import { NotFoundError } from '../shared/errors'
 
-/**
- * Avatars module — image generation/serving.
- * Contract: docs/api/avatars.md
- *
- * Services are pure: they return `{ body, contentType, headers }`; the route
- * layer converts to a Response. Bun.Image replaces sharp (D21).
- */
+/** Provides avatar rendering, static asset resizing, QR generation, and SSRF-guarded favicon proxying. */
 
 const ASSETS_DIR = new URL('../../../../assets/avatars/', import.meta.url).pathname
 const FONT_FILE = new URL('../../../../assets/fonts/Varela-Regular.ttf', import.meta.url).pathname
@@ -42,7 +36,7 @@ const AVATAR_CACHE = { 'Cache-Control': 'public, max-age=86400, immutable' }
 const FAVICON_CACHE = { 'Cache-Control': 'public, max-age=3600' }
 
 export function createAvatarService() {
-  // Loaded eagerly at startup — ~425 tiny stat calls, negligible.
+  // Start asset scans eagerly so requests do not repeat directory discovery.
   const sets = {
     flags: loadSet('flags'),
     browsers: loadSet('browsers'),
@@ -136,7 +130,7 @@ export function createAvatarService() {
     background?: string
     circle?: boolean
   }): Promise<AvatarResult> {
-    // v1 parity: missing/empty name renders "NA".
+    // Use a stable placeholder when no display name is available.
     const name = opts.name?.trim() ? opts.name : 'NA'
     const width = clampDim(opts.width, 500)
     const height = clampDim(opts.height, 500)
@@ -185,7 +179,7 @@ export function createAvatarService() {
     return { body: new Uint8Array(buffer), contentType: 'image/png', headers }
   }
 
-  // --- Favicon proxy -------------------------------------------------------
+  // Favicon proxy with protocol, hostname, DNS, redirect, and content-type checks.
 
   const PRIVATE_HOST_RE =
     /^(localhost$|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|\[?::1\]?$)/i
@@ -215,10 +209,7 @@ export function createAvatarService() {
   }
 
   /**
-   * Fetch a remote favicon and re-encode as PNG.
-   * SSRF hardening (network-hardening pass): http(s) only, hostname
-   * blocklist + DNS resolution validated public for every redirect hop,
-   * redirect count capped, response must be an image.
+   * Fetch a remote favicon and re-encode it as PNG after validating every redirect hop.
    */
   async function favicon(url: string): Promise<AvatarResult> {
     let parsed: URL

@@ -1,3 +1,4 @@
+/** Owns account session lifecycle, token issuance, passwordless login, and session-scoped JWT creation. */
 import { Auth, type HashAlgorithm } from '@nuvix/core/auth'
 import { validateRedirectURL } from '@nuvix/core/oauth'
 import { Doc, ID, Permission, Query, Role, type Session } from '@nuvix/db'
@@ -22,10 +23,7 @@ import { signJwt } from '../../utils/jwt'
 import { sessionDetectorFields } from '../../utils/session-intel'
 import { formatSession, formatToken, type SessionView, type TokenView } from '../formatter'
 
-/**
- * Token type codes — 1:1 with legacy `TokenType` enum (public API surface:
- * the `type` field appears in token responses, so values must not drift).
- */
+/** Stable numeric token markers persisted in tenant token records and exposed in token views. */
 export const TokenType = {
   VERIFICATION: 2,
   RECOVERY: 3,
@@ -55,7 +53,7 @@ export interface CreateMagicURLTokenInput {
   userId?: string
   email: string
   url?: string
-  /** Enable the security phrase (v1 parity: shown in email + response). */
+  /** Include a security phrase in the magic-link email and response. */
   phrase?: boolean
   ip?: string
   userAgent?: string
@@ -92,6 +90,7 @@ export interface AccountSessionsOptions {
   refreshOAuth2?: (session: SessionsDoc) => Promise<void>
 }
 
+/** Implements session and token operations against one caller-scoped tenant session. */
 export class AccountSessionsService {
   constructor(
     private readonly session: Session,
@@ -191,8 +190,7 @@ export class AccountSessionsService {
     const newExpire = new Date(Date.now() + Auth.TOKEN_EXPIRATION_LOGIN_LONG * 1000)
     doc.set('expire', newExpire)
 
-    // OAuth2 sessions: rotate the upstream provider tokens while refreshing
-    // (contract §PATCH — v2 fix for v1's refresh-token overwrite bug).
+    // OAuth2 sessions can refresh their upstream provider tokens during extension.
     if (this.options?.refreshOAuth2) {
       await this.options.refreshOAuth2(doc)
     }
@@ -232,7 +230,7 @@ export class AccountSessionsService {
       throw new ForbiddenError('User is blocked', { code: 'user_blocked' })
     }
 
-    // Rehash password if algorithm outdated
+    // Upgrade credentials transparently when the stored hashing algorithm is outdated.
     if ((user.get('hash') as HashAlgorithm) !== Auth.DEFAULT_ALGO) {
       const newHash = await Auth.passwordHash(input.password, Auth.DEFAULT_ALGO)
       user.set('password', newHash)
@@ -450,8 +448,7 @@ export class AccountSessionsService {
       phrase = generatePhrase()
     }
 
-    // Validate the redirect against project platforms before spending the
-    // token (v1 validates at entry; delivery is required to use this flow).
+    // Validate the redirect before storing the token so invalid destinations cannot consume credentials.
     if (delivery && input.url) {
       const invalid = validateRedirectURL(input.url, delivery.rules)
       if (invalid) {
@@ -641,11 +638,7 @@ export class AccountSessionsService {
   }
 }
 
-/**
- * Magic-URL login email (v1 `createMagicURLSession` parity): subject and
- * copy localized, redirect URL carries userId/secret/expire, and the
- * optional security phrase renders in `securityPhrase`.
- */
+/** Build the localized magic-link email and include its one-time redirect credentials. */
 async function sendMagicUrlEmail(input: {
   delivery: MailDelivery & { origin: string }
   userAgent: string
@@ -664,7 +657,7 @@ async function sendMagicUrlEmail(input: {
     })
   }
 
-  // v1 `magicAuthDefaultPath` fallback when the caller omitted `url`.
+  // Use the account magic-link endpoint when the caller omits a redirect URL.
   const base = input.redirectUrl || `${input.delivery.origin}/auth/magic-url`
   const url = new URL(base)
   url.searchParams.set('userId', input.userId)
@@ -714,10 +707,7 @@ async function sendMagicUrlEmail(input: {
   })
 }
 
-/**
- * Email OTP message (v1 `createEmailToken` parity): 6-digit code in the
- * `email-otp.tpl` layout with client info from the request user-agent.
- */
+/** Build the localized email OTP message with request-derived client information. */
 async function sendOtpEmail(input: {
   delivery: MailDelivery & { origin: string }
   email: string

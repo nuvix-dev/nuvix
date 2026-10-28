@@ -1,3 +1,4 @@
+/** Resolves project, tenant resource, credentials, and role-scoped database context for downstream routes. */
 import { Auth } from '@nuvix/core/auth'
 import type { ResolvedApiKey, ResolvedProject } from '@nuvix/core/platform'
 import type { TenantResource, TenantResourcePool } from '@nuvix/core/tenants'
@@ -32,6 +33,7 @@ export interface TenantContextOptions {
   jwtSecret?: string
 }
 
+/** Read one URL-encoded cookie value without exposing parsing details to context resolution. */
 export function parseCookie(cookieHeader: string | null, name: string): string | undefined {
   if (!cookieHeader) return undefined
   const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`))
@@ -57,7 +59,7 @@ export async function resolveTenantContext(
 
   const tenantResource = await options.tenantPool.get(project)
 
-  // 1. API key authentication (x-nuvix-key header or apikey query param)
+  // API-key authentication from the dedicated header or query parameter.
   const apiKeyHeader = headers.get(HEADERS.apiKey) || query.apikey || query.apiKey
   let isAPIUser = false
   let isAdmin = false
@@ -93,7 +95,7 @@ export async function resolveTenantContext(
     }
   }
 
-  // 2. Session authentication (x-nuvix-session header or cookie)
+  // Session authentication from the dedicated header or browser cookie.
   let user = new Doc<Users>({})
   let currentSession = new Doc<Sessions>({})
   const sessionHeader = headers.get(HEADERS.session)
@@ -124,7 +126,7 @@ export async function resolveTenantContext(
     }
   }
 
-  // 3. JWT authentication (x-nuvix-jwt header)
+  // JWT authentication when no valid session has already resolved the user.
   const jwtHeader = headers.get(HEADERS.jwt)
   if (jwtHeader && options.jwtSecret && user.empty()) {
     try {
@@ -149,7 +151,7 @@ export async function resolveTenantContext(
     }
   }
 
-  // 4. Role calculation
+  // Derive roles before creating the caller-scoped database session.
   const roles = Auth.getRoles(user, false, false)
   const db = tenantResource.authSession(roles)
 

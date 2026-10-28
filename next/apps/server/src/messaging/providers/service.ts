@@ -1,3 +1,4 @@
+/** Owns messaging-provider credentials, channel options, search, and lifecycle operations. */
 import { Doc, ID, Query, type Session } from '@nuvix/db'
 import { ConflictError, NotFoundError } from '../../shared/errors'
 import type { Providers } from '../../types/generated'
@@ -83,12 +84,11 @@ export interface ApnsProviderInput extends BaseProviderInput {
   sandbox?: boolean
 }
 
+/** Implements provider operations against one caller-scoped tenant session. */
 export class ProvidersService {
   constructor(private readonly session: Session) {}
 
-  /**
-   * Common helper to create a provider doc.
-   */
+  /** Create a provider document while separating credentials from display options. */
   private async createProvider<T extends BaseProviderInput>(
     input: T,
     providerType: string,
@@ -135,9 +135,7 @@ export class ProvidersService {
     return formatProvider(created)
   }
 
-  /**
-   * Common helper to update a provider doc.
-   */
+  /** Update provider credentials and options without replacing unrelated fields. */
   private async updateProvider<T extends Partial<BaseProviderInput>>(
     providerId: string,
     input: T,
@@ -179,7 +177,7 @@ export class ProvidersService {
     return formatProvider(updated)
   }
 
-  // --- Email Providers ---
+  // Email delivery providers.
 
   async createMailgunProvider(input: MailgunProviderInput): Promise<ProviderView> {
     return this.createProvider(
@@ -293,7 +291,7 @@ export class ProvidersService {
     )
   }
 
-  // --- SMS Providers ---
+  // SMS delivery providers.
 
   async createTwilioProvider(input: TwilioProviderInput): Promise<ProviderView> {
     return this.createProvider(
@@ -405,7 +403,7 @@ export class ProvidersService {
     )
   }
 
-  // --- Push Providers ---
+  // Push delivery providers.
 
   async createFcmProvider(input: FcmProviderInput): Promise<ProviderView> {
     const creds =
@@ -459,7 +457,7 @@ export class ProvidersService {
     )
   }
 
-  // --- List, Get, Delete ---
+  // Provider discovery and deletion.
 
   async listProviders(
     queries: Query[] = [],

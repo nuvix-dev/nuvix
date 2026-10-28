@@ -1,3 +1,4 @@
+/** Defines authenticated push-target registration, update, and removal endpoints. */
 import type { Doc, Session } from '@nuvix/db'
 import { Elysia, t } from 'elysia'
 import { auditAfter } from '../../plugins/audit'
@@ -5,15 +6,16 @@ import type { Sessions, Users } from '../../types/generated'
 import { requireAuth } from '../auth'
 import { AccountTargetsService } from './service'
 
+/** Compose target routes with the caller's tenant session and user context. */
 export const accountTargetsRoutes = () =>
   new Elysia()
+    // Target ownership is derived from the authenticated user rather than request input.
     .derive('plugin', (ctx) => ({
       db: ('db' in ctx ? ctx.db : undefined) as unknown as Session,
       user: ('user' in ctx ? ctx.user : undefined) as unknown as Doc<Users>,
       session: ('session' in ctx ? ctx.session : undefined) as unknown as Doc<Sessions>,
     }))
 
-    // 34. Create push target
     .post(
       '/targets/push',
       {
@@ -45,7 +47,6 @@ export const accountTargetsRoutes = () =>
       },
     )
 
-    // 35. Update push target
     .put(
       '/targets/:targetId/push',
       {
@@ -80,7 +81,6 @@ export const accountTargetsRoutes = () =>
       },
     )
 
-    // 36. Delete push target
     .delete(
       '/targets/:targetId/push',
       {

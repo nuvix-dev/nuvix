@@ -1,3 +1,4 @@
+/** Composed messaging-route coverage for topics, subscribers, providers, and messages. */
 import { describe, expect, it } from 'bun:test'
 import { Doc, type Session } from '@nuvix/db'
 import { Translator } from '@nuvix/i18n'
@@ -7,6 +8,7 @@ import type { MessageView, ProviderView, SubscriberView, TopicView } from './for
 import { messagingRoutes } from './route'
 
 describe('Messaging Routes', () => {
+  // Keep the tenant session local so the full messaging composition can run without external services.
   const store = new Map<string, Map<string, Doc>>()
 
   const getCollection = (name: string) => {
@@ -71,6 +73,7 @@ describe('Messaging Routes', () => {
     email: 'messaging@example.com',
   })
 
+  // Compose all messaging subroutes against one caller-scoped test context.
   const testApp = new Elysia()
     .use(
       problemErrors({
@@ -113,7 +116,7 @@ describe('Messaging Routes', () => {
   })
 
   it('creates a subscriber via POST /messaging/topics/:topicId/subscribers', async () => {
-    // Seed user and target
+    // Seed the user and delivery target required by subscriber creation.
     await mockSession.createDocument(
       'users',
       new Doc({ $id: 'user_1', name: 'Alice', email: 'alice@test.com' }),

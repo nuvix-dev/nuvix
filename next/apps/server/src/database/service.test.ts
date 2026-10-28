@@ -1,3 +1,4 @@
+/** Service-level coverage for schema filtering, lifecycle rules, rollback, and PostgreSQL storage delegation. */
 import { describe, expect, test } from 'bun:test'
 import type { TenantResource } from '@nuvix/core/tenants'
 import type { Database } from '@nuvix/db'
@@ -45,6 +46,7 @@ class MemorySchemaStorage implements SchemaStorage {
 }
 
 describe('DatabaseService', () => {
+  // Use a deterministic tenant-resource double so tests focus on service decisions and storage calls.
   const fakeTenantResource = {
     getSql: () => ({}) as unknown as ReturnType<TenantResource['getSql']>,
     databaseForSchema: (_name: string) =>

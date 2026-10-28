@@ -1,13 +1,4 @@
-/**
- * OAuth2 routes — `GET /account/sessions/oauth2/:provider` (302 to the
- * provider), `GET|POST /account/sessions/oauth2/:provider/callback` (the
- * login itself), and `GET /account/tokens/oauth2/:provider` (token flow).
- *
- * Callback collapse note (docs/api/account.md): v2 drops v1's separate
- * `redirect` hop — publishable-key routing doesn't need it. The POST form on
- * the callback path exists because Apple posts its profile back
- * (`response_mode: form_post`).
- */
+/** Defines OAuth2 authorization, callback, and token-flow endpoints for account authentication. */
 
 import type { ProjectRegistry } from '@nuvix/core/platform'
 import type { Doc, Session } from '@nuvix/db'
@@ -43,6 +34,7 @@ interface OAuth2RouteContext {
   set: { status?: number; headers: Record<string, string> }
 }
 
+/** Convert a service redirect result into the HTTP response expected by browser clients. */
 function applyRedirect(
   set: { status?: number; headers: Record<string, string> },
   result: {
@@ -62,6 +54,7 @@ function applyRedirect(
   return ''
 }
 
+/** Compose OAuth2 routes with project registry, tenant session, and secret-decryption dependencies. */
 export const oauth2Routes = (deps: OAuth2RouteDeps) =>
   new Elysia({ name: 'account-oauth2' })
     .derive('plugin', (ctx) => ({
@@ -70,7 +63,7 @@ export const oauth2Routes = (deps: OAuth2RouteDeps) =>
       session: ('session' in ctx ? ctx.session : undefined) as unknown as Doc<Sessions>,
     }))
 
-    // 1. Begin OAuth2 session flow → 302 to the provider's authorize URL
+    // Begin the session flow and redirect to the provider's authorization endpoint.
     .get(
       '/sessions/oauth2/:provider',
       {
@@ -100,7 +93,7 @@ export const oauth2Routes = (deps: OAuth2RouteDeps) =>
       },
     )
 
-    // 2. OAuth2 callback — GET (query-string providers) and POST (Apple form_post)
+    // Accept both query-string callbacks and provider form posts.
     .get(
       '/sessions/oauth2/:provider/callback',
       {
@@ -129,7 +122,7 @@ export const oauth2Routes = (deps: OAuth2RouteDeps) =>
       (ctx) => runCallback(ctx as unknown as CallbackCtx, deps),
     )
 
-    // 3. Begin OAuth2 token flow → 302 to the provider
+    // Begin the token flow and redirect to the provider.
     .get(
       '/tokens/oauth2/:provider',
       {
@@ -155,6 +148,7 @@ export const oauth2Routes = (deps: OAuth2RouteDeps) =>
       },
     )
 
+/** Shared callback schema for query-string and form-post providers. */
 function callbackParams() {
   return t.Object({
     code: t.Optional(t.String({ description: 'Provider authorization code' })),
@@ -181,6 +175,7 @@ type CallbackCtx = {
   request: Request
 }
 
+/** Normalize callback input before handing provider exchange and account linking to the service. */
 async function runCallback(ctx: CallbackCtx, deps: OAuth2RouteDeps) {
   const service = oauth2Service(ctx, deps)
   const params = { ...(ctx.query ?? {}), ...(ctx.body ?? {}) }
@@ -196,6 +191,7 @@ async function runCallback(ctx: CallbackCtx, deps: OAuth2RouteDeps) {
   return applyRedirect(ctx.set, result)
 }
 
+/** Build the service with request-scoped tenant and project context. */
 function oauth2Service(
   ctx: Pick<OAuth2RouteContext, 'db' | 'user' | 'session' | 'project'>,
   deps: OAuth2RouteDeps,
