@@ -1,21 +1,18 @@
 /**
- * Logs worker — Bun-native port of legacy `ApiLogsQueue`
- * (AbstractBatchQueue): buffers incoming API-log events per tenant and
- * flushes them to the tenant's `api_logs` collection (auth schema) in
- * batches, with v1's deep recursive redaction over the metadata
- * (headers/query/mode/session type/user).
+ * Logs worker: buffers incoming API-log events per tenant and flushes
+ * them to the tenant's `api_logs` collection (auth schema) in batches,
+ * with deep recursive redaction over the metadata (headers/query/mode/
+ * session type/user).
  *
- * Logs are per-project data — they live in EACH project's tenant
- * database (v1 stored them in the platform main pool's `system` schema
- * because v1 was not truly multi-tenant). Job payloads carry
- * `projectId`; the worker resolves the tenant through the platform
- * registry + tenant pool (D20/D41).
+ * Logs are per-project data — they live in each project's tenant
+ * database. Job payloads carry `projectId`; the worker resolves the
+ * tenant through the platform registry and tenant pool.
  *
- * The request-path SOURCE lives in `../logs/source.ts` (v1 `LogsHook`
- * parity). Logs are lossy by design: persistence failures are
- * swallowed after logging (they must never break delivery of anything
- * else); a tenant provisioned before the `api_logs` collection existed
- * logs a one-time warning until re-provisioned.
+ * The request-path source lives in `../request-logs/source.ts`. Logs
+ * are lossy by design: persistence failures are swallowed after
+ * logging (they must never break delivery of anything else); a tenant
+ * provisioned before the `api_logs` collection existed logs a one-time
+ * warning until re-provisioned.
  */
 
 import type { LogJobData } from '@nuvix/core/queues'
@@ -37,7 +34,7 @@ const SENSITIVE_KEYS = new Set([
   'x-nuvix-jwt',
 ])
 
-/** v1 `ApiLog` wire shape + tenant resolution field. */
+/** API-log wire shape plus tenant resolution field. */
 export type ApiLogJobData = LogJobData
 
 function isSensitiveKey(key: string): boolean {
@@ -52,7 +49,7 @@ function isSensitiveKey(key: string): boolean {
   )
 }
 
-/** Deep recursive redaction for metadata (v1 `redact` parity). */
+/** Deep recursive redaction for metadata; sensitive keys become `[REDACTED]`. */
 export function redact(data: unknown): unknown {
   if (!data || typeof data !== 'object') return data
   if (Array.isArray(data)) return data.map((v) => redact(v))
@@ -156,8 +153,8 @@ async function flush(): Promise<void> {
     try {
       await persister(projectId, rows)
     } catch (error) {
-      // Logs are lossy by design — never break the worker loop; drop the
-      // batch after reporting (v1 queued failures were silent, too).
+      // Logs are lossy by design — never break the worker loop; drop
+      // the batch after reporting.
       console.error('[logs] flush failed, batch dropped', error)
     }
   }

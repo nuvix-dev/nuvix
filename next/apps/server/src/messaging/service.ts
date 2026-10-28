@@ -1,3 +1,4 @@
+/** Barrel for the messaging service layer. */
 export * from './messages/service'
 export * from './providers/service'
 export * from './subscribers/service'

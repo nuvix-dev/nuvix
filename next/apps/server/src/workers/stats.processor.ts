@@ -1,21 +1,17 @@
 /**
- * Stats worker — Bun-native port of legacy `StatsQueue`
- * (AbstractBatchQueue): buffers incoming metric batches per tenant and
- * flushes them to the tenant `stats` collection (auth schema) in batches,
- * aggregated per metric key and persisted across the v1 periods
- * (inf/1h/1d) with deterministic `fnv1a128` ids via
- * create-or-update-with-increase.
+ * Stats worker: buffers incoming metric batches per tenant and flushes
+ * them to the tenant `stats` collection (auth schema) in batches,
+ * aggregated per metric key and persisted across periods (inf/1h/1d)
+ * with deterministic `fnv1a128` ids via create-or-update-with-increase.
  *
  * Metric SOURCES live in `../stats/source.ts` (request-path network
- * metrics + tenant document-event listeners — v1 `StatsHook` +
- * `StatsHelper` parity); job payloads carry `projectId` and the worker
- * resolves the tenant through the platform registry + tenant pool
- * (D20/D41).
+ * metrics + tenant document-event listeners); job payloads carry
+ * `projectId` and the worker resolves the tenant through the platform
+ * registry and tenant pool.
  *
- * v1's `reduce` path (bucket/user delete compensations) is intentionally
- * dropped: v2 deletes file/session rows row-by-row (their DocumentDelete
- * events decrement the metrics naturally), so no batch compensation is
- * needed — see MIGRATION.md.
+ * No separate reduce/compensation path exists: file/session deletes
+ * row-by-row, and their DocumentDelete events decrement the metrics
+ * naturally.
  */
 
 import { Doc, type Session } from '@nuvix/db'
@@ -25,7 +21,7 @@ import type { Job } from 'bullmq'
 export interface StatsJobData {
   /** Platform project id — resolves the tenant database (auth schema). */
   projectId: string
-  /** One job carries the metrics of a single event (v1 parity). */
+  /** One job carries the metrics of a single event. */
   metrics: Array<{ key: string; value: number }>
 }
 
@@ -100,7 +96,7 @@ async function defaultPersist(
 /**
  * Aggregates metric batches and persists one `stats` row per
  * (period, metric) with the deterministic id — values accumulate via
- * create-or-update-with-increase (v1 `persist` parity).
+ * create-or-update-with-increase.
  */
 export async function persistStats(
   session: Session,
@@ -136,7 +132,7 @@ export async function persistStats(
   await session.createOrUpdateDocumentsWithIncrease('stats', 'value', docs)
 }
 
-/** v1 `StatsQueue.formatDate` parity: INF has no time bucket. */
+/** Bucket key for a period: INF has no time bucket. */
 export function formatPeriodDate(period: MetricPeriod, date: Date): string {
   switch (period) {
     case MetricPeriod.INF:
@@ -155,7 +151,7 @@ async function flush(): Promise<void> {
   if (buffer.length === 0) return
 
   const batch = buffer.splice(0, buffer.length)
-  // Aggregate per tenant, then per metric (v1 persist aggregation parity).
+  // Aggregate per tenant, then per metric.
   const byProject = new Map<string, Array<{ key: string; value: number }>>()
   for (const job of batch) {
     const list = byProject.get(job.projectId) ?? []

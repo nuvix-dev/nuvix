@@ -1,12 +1,11 @@
 /**
- * Webhooks worker — delivery half of legacy `WebhooksService.deliverWebhook`
- * plus `logDelivery` (v1 parity, platform-DB records; the fan-out half lives
- * in `../webhooks/dispatch.ts`).
+ * Webhooks worker — delivery half (the fan-out half lives in
+ * `../webhooks/dispatch.ts`).
  *
- * Flow (v1 parity):
+ * Flow:
  *  1. Re-read the webhook from the platform DB before delivering — fresh
- *     URL/signatureKey/Basic auth credentials, and disabled/deleted
- *     webhooks are skipped WITHOUT acking retries (v1 semantics).
+ *     URL/signatureKey/Basic auth credentials; disabled/deleted webhooks
+ *     are skipped WITHOUT acking retries.
  *  2. Deliver: POST `{event, timestamp, data}`, HMAC-SHA256 signature
  *     header, Basic auth when configured, 10s timeout.
  *  3. Log: one `webhook_logs` row per attempt + webhook `attempts`
@@ -14,8 +13,7 @@
  *     error string on failure).
  *
  * Job payloads carry ids only; the record re-read supplies delivery
- * credentials (v1 `getActiveWebhooksForEvent` → `deliverWebhook`
- * split).
+ * credentials.
  */
 
 import { createHmac } from 'node:crypto'
@@ -53,7 +51,7 @@ export interface WebhookStore {
 
 export interface WebhookProcessResult {
   success: boolean
-  /** True when the webhook was missing/disabled — job won't retry (v1). */
+  /** True when the webhook was missing/disabled — job won't retry. */
   skipped?: boolean
   statusCode?: number
   response?: string
@@ -93,9 +91,9 @@ async function defaultRead(_projectId: string, webhookId: string): Promise<Webho
 }
 
 /**
- * One `webhook_logs` row per attempt + webhook `attempts` counter
- * (v1 `logDelivery` parity: reset on success, increment + truncated
- * error string on failure; truncation caps response/error at 1000).
+ * One `webhook_logs` row per attempt + webhook `attempts` counter:
+ * reset on success, increment + truncated error string on failure
+ * (response/error capped at 1000 chars).
  */
 async function defaultLog(entry: WebhookDeliveryLog): Promise<void> {
   try {
@@ -126,7 +124,7 @@ async function defaultLog(entry: WebhookDeliveryLog): Promise<void> {
       await system.updateDocument('webhooks', webhook.getId(), webhook)
     }
   } catch {
-    // Delivery logging must never fail the job on its own (v1 parity).
+    // Delivery logging must never fail the job on its own.
   }
 }
 
@@ -155,16 +153,17 @@ export function setWebhookStore(custom: WebhookStore): void {
   store = custom
 }
 
+/** Entry point wired in `workers/index.ts`. */
 export default async function processWebhooks(
   job: Job<WebhookJobData>,
 ): Promise<WebhookProcessResult> {
   const { webhookId, projectId, event, payload } = job.data
 
   // Fresh re-read: URL, signature key, Basic auth and enabled state come
-  // from the platform record at delivery time (v1 parity).
+  // from the platform record at delivery time.
   const webhook = await store.read(projectId, webhookId)
   if (!webhook) {
-    // Deleted → don't retry (v1 semantics).
+    // Deleted → don't retry.
     return { success: true, skipped: true }
   }
   if (!webhook.enabled) {

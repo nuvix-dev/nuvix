@@ -1,3 +1,4 @@
+/** Tests for the stats worker: metric aggregation, period buckets, and batch buffering. */
 import { describe, expect, it } from 'bun:test'
 import type { Doc, Session } from '@nuvix/db'
 import { MetricFor, MetricPeriod } from '@nuvix/utils'
@@ -32,7 +33,7 @@ function stubSession() {
   return { session: session as unknown as Session, calls }
 }
 
-describe('persistStats (v1 StatsQueue.persist parity)', () => {
+describe('persistStats', () => {
   it('persists one row per period with deterministic fnv ids', async () => {
     const { session, calls } = stubSession()
 
@@ -88,7 +89,7 @@ describe('persistStats (v1 StatsQueue.persist parity)', () => {
     expect(calls[0]!.rows.every((r) => r.metric === MetricFor.TEAMS)).toBe(true)
   })
 
-  it('formats period buckets (v1 formatDate parity)', () => {
+  it('formats period buckets', () => {
     const date = new Date('2026-10-25T13:45:12.000Z')
     expect(formatPeriodDate(MetricPeriod.INF, date)).toBe('inf')
     expect(formatPeriodDate(MetricPeriod.HOUR, date)).toBe('2026-10-25T13:00:00Z')
@@ -96,7 +97,7 @@ describe('persistStats (v1 StatsQueue.persist parity)', () => {
   })
 })
 
-describe('processStats batching (v1 AbstractBatchQueue parity)', () => {
+describe('processStats batching', () => {
   it('buffers jobs per tenant and flushes aggregated metrics', async () => {
     const persisted: Array<{
       projectId: string

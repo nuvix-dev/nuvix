@@ -1,9 +1,8 @@
 /**
- * Messaging worker — Bun-native port of legacy `MessagingQueue`
- * (`sendExternalMessage`): delivers queued Email/SMS/Push messages to
- * their resolved targets through the tenant's enabled providers.
+ * Messaging worker: delivers queued Email/SMS/Push messages to their
+ * resolved targets through the tenant's enabled providers.
  *
- * Flow (v1 parity):
+ * Flow:
  *  1. Load the message (idempotency skip on `sent`).
  *  2. Resolve targets from `topics` (topic.targets ∩ providerType),
  *     `users` (user.targets), and direct `targets`.
@@ -19,8 +18,8 @@
  *     search index with the involved providers.
  *
  * Job payloads carry `projectId`; the worker resolves the tenant
- * connection through the platform registry + tenant pool (D20/D41), and
- * DB calls run on the tenant's auth-system session (messages, targets,
+ * connection through the platform registry and tenant pool, and DB
+ * calls run on the tenant's auth-system session (messages, targets,
  * topics and providers live in the `auth` schema).
  */
 
@@ -32,7 +31,7 @@ export interface MessagingJobData {
   projectId: string
   /**
    * Message id (scheduled jobs) or the full message record (inline
-   * enqueue at create, v1 `MessagingJob.EXTERNAL` parity).
+   * enqueue at create).
    */
   message: string | Record<string, unknown>
   /** Schedule document id — deleted after a scheduled message delivers. */
@@ -67,7 +66,7 @@ interface ProviderSnapshot {
 
 /**
  * Injectable send boundary (tests stub this; prod builds the vendor
- * adapter mirroring v1's `get{Email,Push,Sms}Adapter`).
+ * adapter for the provider kind).
  */
 export interface MessageSender {
   /** Max recipients per request for this provider (adapter constant). */
@@ -76,7 +75,7 @@ export interface MessageSender {
   send(params: {
     messageType: MessageTypeValue
     provider: ProviderSnapshot
-    /** Fully-built per-batch payload (v1 Email/SMS/Push inputs). */
+    /** Fully-built per-batch payload. */
     payload: {
       to: string[]
       data: Record<string, unknown>
@@ -84,7 +83,7 @@ export interface MessageSender {
   }): Promise<BatchSendResult>
 }
 
-/** Vendor per-request batch limits (mirror adapter constants 1:1). */
+/** Vendor per-request batch limits (mirroring adapter constants). */
 const VENDOR_BATCH_LIMITS: Record<MessageTypeValue, Record<string, number>> = {
   email: { mailgun: 1000, sendgrid: 1000, smtp: 1000 },
   sms: { msg91: 100, telesign: 1000, textmagic: 1000, twilio: 1, vonage: 1 },
@@ -332,7 +331,7 @@ async function loadMessage(session: Session, data: MessagingJobData): Promise<An
 
 /**
  * Resolves delivery targets for a message (topics → users → direct
- * targets, all filtered by the message's provider type) — v1 parity.
+ * targets, all filtered by the message's provider type).
  */
 async function resolveTargets(session: Session, message: Doc): Promise<Doc[]> {
   const providerType = message.get('providerType') as string
@@ -377,10 +376,8 @@ async function resolveTargets(session: Session, message: Doc): Promise<Doc[]> {
 }
 
 /**
- * Resolve cc/bcc target ids to identifiers (v1 buildEmailMessage parity).
- * Storage-backed attachments are deferred to a follow-up slice (v1 read
- * them through the storage device; the resolution boundary is kept — the
- * send payload carries the RawBucket/File references onward).
+ * Resolves cc/bcc target ids to identifiers and storage-backed
+ * attachments to vendor payloads for the email send path.
  */
 async function buildEmailExtras(
   session: Session,
@@ -405,10 +402,9 @@ async function buildEmailExtras(
 
 /**
  * Resolves `{bucketId, fileId}` attachment snapshots to vendor
- * `Attachment` payloads (v1 `buildEmailMessage` parity): file bytes are
- * read from the storage device at delivery time; missing
- * buckets/files/devices become send errors (v1 threw into the delivery
- * error path).
+ * `Attachment` payloads: file bytes are read from the storage device at
+ * delivery time; missing buckets/files/devices become send errors in
+ * the delivery error path.
  */
 async function resolveAttachments(session: Session, attachments: unknown): Promise<unknown[]> {
   const refs = Array.isArray(attachments) ? attachments : []
@@ -453,12 +449,12 @@ async function resolveAttachments(session: Session, attachments: unknown): Promi
 }
 
 /**
- * Resolves a push message's `image` to a vendor-fetchable URL (v1
- * `processedImage` parity): `bucketId:fileId` references are signed with
- * a 15-day JWT against the push-asset stream endpoint
+ * Resolves a push message's `image` to a vendor-fetchable URL:
+ * `bucketId:fileId` references are signed with a 15-day JWT against the
+ * push-asset stream endpoint
  * (`/storage/buckets/:bucketId/files/:fileId/push`); absolute URLs pass
- * through. v1 signed at create time and stored the URL in the message —
- * v2 signs at delivery so tokens never sit stale in the database.
+ * through. Signing happens at delivery time so tokens never sit stale
+ * in the database.
  */
 async function resolvePushImage(
   projectId: string | undefined,
@@ -493,7 +489,7 @@ function providerSnapshot(provider: AnyDoc): ProviderSnapshot {
   }
 }
 
-/** Mark the message failed with the given errors (v1 parity). */
+/** Mark the message failed, appending the given delivery errors. */
 async function failMessage(session: Session, message: AnyDoc, errors: string[]): Promise<void> {
   message.set('status', 'failed')
   message.set('deliveryErrors', [...((message.get('deliveryErrors') as string[]) ?? []), ...errors])
@@ -501,8 +497,8 @@ async function failMessage(session: Session, message: AnyDoc, errors: string[]):
 }
 
 /**
- * Deliver one message (v1 `sendExternalMessage`). Exported for tests;
- * `processMessaging` composes prod deps around it.
+ * Deliver one message. Exported for tests; `processMessaging` composes
+ * prod deps around it.
  */
 export async function deliverExternalMessage(
   message: AnyDoc,
@@ -513,7 +509,7 @@ export async function deliverExternalMessage(
     throw new Error(`Unsupported message provider type: ${providerType}`)
   }
 
-  // Idempotency: sent messages never re-process (v1 parity).
+  // Idempotency: sent messages never re-process.
   if (message.get('status') === 'sent') {
     return { status: 'sent', deliveredTotal: 0 }
   }
@@ -564,7 +560,7 @@ export async function deliverExternalMessage(
 
     const snapshot = providerSnapshot(provider)
 
-    // cc/bcc ids resolve once per provider batch (v1 per-message build).
+    // cc/bcc ids resolve once per provider batch.
     let data = (message.get('data') as Record<string, unknown>) ?? {}
     if (providerType === 'email') {
       const extras = await buildEmailExtras(deps.session, data)
@@ -603,7 +599,7 @@ export async function deliverExternalMessage(
               `Failed sending to target ${item.recipient} with error: ${item.error}`,
             )
           }
-          // Expired push tokens mark their target expired (v1 parity).
+          // Expired push tokens mark their target expired.
           if (item.error === 'Expired device token') {
             const target = await deps.session.findOne('targets', [
               Query.equal('identifier', [item.recipient]),
@@ -622,9 +618,9 @@ export async function deliverExternalMessage(
     }
   }
 
-  // v1 finalization semantics: zero deliveries across run batches with
-  // no recorded error is itself an error; any pre-existing error or
-  // (new error + zero deliveries) fails the message.
+  // Finalization: zero deliveries across all batches with no recorded
+  // error is itself an error; any pre-existing error, or a new error
+  // with zero deliveries, fails the message.
   if (deliveredTotal === 0 && deliveryErrors.length === 0) {
     deliveryErrors.push('Unknown error')
   }
@@ -638,7 +634,7 @@ export async function deliverExternalMessage(
   message.set('deliveredTotal', deliveredTotal)
   message.set('deliveredAt', new Date().toISOString())
 
-  // Extend the search index with the involved providers (v1 parity).
+  // Extend the search index with the involved providers.
   const searchBase = String(message.get('search') ?? '')
   const providerTags = [...knownProviders.values()]
     .map((p) => `${p.get('name') ?? ''} ${p.get('provider') ?? ''} ${providerType}`.trim())
@@ -665,8 +661,8 @@ export default async function processMessaging(
 
   await deliverExternalMessage(message, { session })
 
-  // Scheduled messages: drop the schedule doc after delivery (v1 parity,
-  // best-effort).
+  // Scheduled messages: drop the schedule doc after delivery
+  // (best-effort).
   if (data.scheduleId) {
     try {
       const { createPlatformDatabase } = await import('@nuvix/core/platform')
@@ -678,7 +674,7 @@ export default async function processMessaging(
       })
       await platformDb.system().deleteDocument('schedules', data.scheduleId)
     } catch {
-      // Non-critical: schedule cleanup is best-effort (v1 parity).
+      // Non-critical: schedule cleanup is best-effort.
     }
   }
 

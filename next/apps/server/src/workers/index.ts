@@ -1,8 +1,10 @@
+/** BullMQ worker composition: one worker per queue, plus a shared close boundary. */
 import { QueueFor } from '@nuvix/utils'
 import { type ConnectionOptions, Worker } from 'bullmq'
 
 export { parseRedisUrl } from '@nuvix/core/queues'
 
+/** Handles to every queue worker and a graceful shutdown. */
 export interface QueueWorkers {
   deletesWorker: Worker
   mailsWorker: Worker
@@ -15,6 +17,7 @@ export interface QueueWorkers {
   close(): Promise<void>
 }
 
+/** Build all queue workers over one Redis connection. */
 export function createQueueWorkers(connection: ConnectionOptions): QueueWorkers {
   const deletesWorker = new Worker(
     QueueFor.DELETES,

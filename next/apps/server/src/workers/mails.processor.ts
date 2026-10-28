@@ -1,13 +1,12 @@
 /**
- * Mails worker — Bun-native port of legacy `MailsQueue`: sends system
- * emails (verification, recovery, magic URL, OTP, MFA challenges) over
- * SMTP via the `@nuvix/messaging` SMTP adapter (nodemailer peer dep).
+ * Mails worker: sends system emails (verification, recovery, magic URL,
+ * OTP, MFA challenges) over SMTP via the `@nuvix/messaging` SMTP
+ * adapter.
  *
  * Pipeline: recipients → transporter (project SMTP override → system
  * config) → base-template render (the inner content is injected as
- * `{{{body}}}` — fixing v1's bug where the inner render was validated but
- * never passed to the wrapper) → send with retry (3 attempts, exponential
- * backoff, permanent-failure short-circuit).
+ * `{{{body}}}`) → send with retry (3 attempts, exponential backoff,
+ * permanent-failure short-circuit).
  */
 
 import { config } from '@nuvix/utils'
@@ -151,14 +150,14 @@ function resolveFrom(data: MailJobData): { email: string; name: string } {
   }
 }
 
-/** Renders the base wrapper around the inner content (v1 pipeline, fixed). */
+/** Renders the base wrapper around the inner content. */
 async function renderBody(data: MailJobData): Promise<string> {
   const Handlebars = (await import('handlebars')).default
   const path = data.bodyTemplate ?? DEFAULT_BODY_TEMPLATE
   const source = await Bun.file(path).text()
   const compiled = Handlebars.compile(source)
-  // v1 bug fix: the inner-rendered `body` is injected into the wrapper
-  // (v1 validated it but never passed it to the base template).
+  // The inner-rendered `body` is injected into the wrapper alongside
+  // the wrapper variables.
   return compiled({
     ...(data.variables ?? {}),
     body: data.body,

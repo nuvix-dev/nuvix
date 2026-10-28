@@ -1,3 +1,4 @@
+/** Tests across queue workers: audits batching, webhooks delivery/logging, logs redaction. */
 import { describe, expect, it } from 'bun:test'
 import { existsSync } from 'node:fs'
 import { Doc } from '@nuvix/db'
@@ -93,7 +94,7 @@ describe('Queue Worker Processors', () => {
       expect(parsedBody.event).toBe('users.create')
       expect(parsedBody.data).toEqual({ userId: 'u_1', name: 'Alice' })
 
-      // v1 logDelivery parity: one webhook_logs row on success.
+      // One webhook_logs row on success.
       expect(logs).toHaveLength(1)
       expect(logs[0]!.success).toBe(true)
       expect(logs[0]!.statusCode).toBe(200)
@@ -138,7 +139,7 @@ describe('Queue Worker Processors', () => {
 
       await expect(processWebhooks(mockJob)).rejects.toThrow('HTTP 500')
 
-      // v1 logDelivery parity: failure row records the error.
+      // Failure row records the error.
       expect(logs).toHaveLength(1)
       expect(logs[0]!.success).toBe(false)
       expect(String(logs[0]!.error)).toContain('HTTP 500')
@@ -251,7 +252,7 @@ describe('Queue Worker Processors', () => {
     const headers = (row.metadata?.headers ?? {}) as Record<string, unknown>
     expect(headers['Content-Type']).toBe('application/json')
     expect(headers['User-Agent']).toBe('bun-test')
-    // v1 deep-redaction parity: sensitive keys at ANY nesting level.
+    // Deep redaction: sensitive keys at ANY nesting level.
     expect(headers.Authorization).toBe('[REDACTED]')
     expect(headers['x-nuvix-key']).toBe('[REDACTED]')
     expect(headers['nested-token']).toBe('[REDACTED]')

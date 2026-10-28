@@ -1,3 +1,4 @@
+/** Tests for the audits worker: payload normalization and batch flushing. */
 import { beforeEach, describe, expect, it } from 'bun:test'
 import type { AuditJobData } from './audits.processor'
 
@@ -25,7 +26,7 @@ describe('audits processor', () => {
     setAuditPersister(async () => {})
   })
 
-  it('maps job payloads to normalized audit rows (v1 buildItem parity)', () => {
+  it('maps job payloads to normalized audit rows', () => {
     const row = toAuditRow({
       event: 'session.create',
       projectId: 'proj_1',

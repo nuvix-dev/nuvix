@@ -1,3 +1,4 @@
+/** Tests for the messaging worker: target resolution, provider grouping, push/email payload handling. */
 import { beforeAll, describe, expect, it } from 'bun:test'
 import { Doc, type IEntity } from '@nuvix/db'
 import {
@@ -168,7 +169,7 @@ function fixtureProviders(): Record<string, Array<Record<string, unknown>>> {
   }
 }
 
-describe('messaging delivery (v1 sendExternalMessage parity)', () => {
+describe('messaging delivery', () => {
   let deps: MessagingDeps
   let providers: Record<string, Array<Record<string, unknown>>>
 
@@ -190,7 +191,7 @@ describe('messaging delivery (v1 sendExternalMessage parity)', () => {
     // t1..t3 resolve (t4 is push-filtered); grouped per providerId —
     // t1 names a disabled provider so it falls back to the default, and
     // batchLimit 2 splits { a,b } / { c } within the default group.
-    // [v1 groups per providerId: prov_disabled → fallback default]
+    // Targets group per providerId; a disabled provider falls back to the default.
     expect(batches).toHaveLength(2)
     const allRecipients = batches.flatMap((b) => b.to).sort()
     expect(allRecipients).toEqual(['a@test', 'b@test', 'c@test'])
@@ -223,7 +224,7 @@ describe('messaging delivery (v1 sendExternalMessage parity)', () => {
     expect(message.get('status')).toBe('sent')
   })
 
-  it('signs push image refs into vendor-fetchable URLs (v1 processedImage parity)', async () => {
+  it('signs push image refs into vendor-fetchable URLs', async () => {
     const { sender, batches } = recordingSender()
     setMessageSender(sender)
 
@@ -262,7 +263,7 @@ describe('messaging delivery (v1 sendExternalMessage parity)', () => {
     expect(result.status).toBe('sent')
     const data = batches[0]!.data as { image?: string }
     expect(data.image).toMatch(/\/v2\/storage\/buckets\/bucket_1\/files\/file_1\/push\?jwt=/)
-    // The signed JWT carries all three claims (v1 signed without projectId —
+    // The signed JWT carries all three claims (a projectId-less token would —
     // its own verifier rejected every request; v2 signs and verifies all).
     const token = new URL(data.image!).searchParams.get('jwt')!
     const { verifyJwt } = await import('@nuvix/core/auth')
@@ -273,7 +274,7 @@ describe('messaging delivery (v1 sendExternalMessage parity)', () => {
     expect(payload!.fileId).toBe('file_1')
   })
 
-  it('resolves email attachment refs to file payloads at delivery (v1 parity)', async () => {
+  it('resolves email attachment refs to file payloads at delivery', async () => {
     const fs = await import('node:fs/promises')
     const assetPath = '/tmp/opencode/email-attachment-test.txt'
     await fs.writeFile(assetPath, Buffer.from('hello attachment'))
@@ -347,7 +348,7 @@ describe('messaging delivery (v1 sendExternalMessage parity)', () => {
     expect(String(attachments[0]!.name)).toBe('notes.txt')
   })
 
-  it('surfaces missing attachment files as delivery errors (v1 parity)', async () => {
+  it('surfaces missing attachment files as delivery errors', async () => {
     let errorThrown: unknown
     const sender: MessageSender = {
       async batchLimit() {
@@ -397,7 +398,7 @@ describe('messaging delivery (v1 sendExternalMessage parity)', () => {
       },
     })
 
-    // v1: buildEmailMessage threw into the delivery error path.
+    // Missing files throw into the delivery error path.
     const result = await deliverExternalMessage(message, {
       session: session as never,
       projectId: 'proj_1',

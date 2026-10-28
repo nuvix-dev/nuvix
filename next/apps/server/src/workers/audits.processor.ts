@@ -1,11 +1,9 @@
 /**
- * Audits worker — Bun-native port of legacy `AuditsQueue`
- * (AbstractBatchQueue): buffers incoming audit events per tenant and
- * flushes them to the tenant's `audit` collection in batches
- * (5000 items / 3s — legacy `configuration.limits.batchSize`).
+ * Audits worker: buffers incoming audit events and flushes them to the
+ * tenant's `audit` collection in batches (5000 items / 3s).
  *
  * Job payloads carry `projectId`; the worker resolves the tenant
- * connection through the platform registry + tenant pool (D20/D41).
+ * connection through the platform registry and tenant pool.
  */
 
 import type { Job } from 'bullmq'
@@ -43,7 +41,7 @@ export interface AuditRow {
   }
 }
 
-/** Maps a queue job payload to a normalized audit row (v1 buildItem parity). */
+/** Maps a queue job payload to a normalized audit row. */
 export function toAuditRow(data: AuditJobData): AuditRow {
   return {
     projectId: data.projectId ?? '',

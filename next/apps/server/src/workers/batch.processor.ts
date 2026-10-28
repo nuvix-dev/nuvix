@@ -1,5 +1,7 @@
+/** Generic batch worker: iterates queued item batches and reports per-item counts. */
 import type { Job } from 'bullmq'
 
+/** A queued batch of items with an optional size hint. */
 export interface BatchJobData {
   type: string
   items: Array<Record<string, unknown>>
@@ -7,6 +9,7 @@ export interface BatchJobData {
   options?: Record<string, unknown>
 }
 
+/** Per-batch outcome with counts and errors. */
 export interface BatchProcessResult {
   success: boolean
   processedCount: number
@@ -14,6 +17,7 @@ export interface BatchProcessResult {
   errors?: string[]
 }
 
+/** Entry point wired in `workers/index.ts`. */
 export default async function processBatch(job: Job<BatchJobData>): Promise<BatchProcessResult> {
   const { items = [] } = job.data
 
