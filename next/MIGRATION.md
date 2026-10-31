@@ -603,9 +603,17 @@ onDatabaseCreated` composition hook). Redesigns over v1 recorded:
 
 ### Phase 9 — Tests & cutover
 
-- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 516 tests across 82 files)
+- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 524 tests across 83 files)
 - [x] Perf baseline vs old app (`test/bench/perf.ts`, `docs/perf-baseline.md`)
 - [x] Docker/deploy artifacts for Bun-only runtime (`Dockerfile`, `docker-compose.yml`, `.dockerignore`, `docs/deployment.md`)
+- [x] Dependency hygiene (fresh-clone fix): password hashing moved to native
+      `Bun.password` (D5) — the `argon2`/`bcrypt` npm imports in `@nuvix/core`
+      were phantom dependencies resolvable only through the legacy root's
+      `node_modules` (fresh-clone typecheck/runtime breakage, DoD
+      zero-imports violation); `handlebars` declared in `@nuvix/core`
+      (same phantom path); `@resvg/resvg-js` moved to runtime dependencies
+      (the Docker image installs with `--production` and never installed it).
+      Verified: zero bare imports in `next/**` resolve outside the `next/` tree.
 - [ ] Delete root monorepo (**explicit approval gate**)
 
 ---

@@ -1,8 +1,6 @@
 /** Identity primitives: password/token hashing, session encoding, secret verification, and canonical role computation. */
 import { createHash, randomBytes, randomInt, timingSafeEqual } from 'node:crypto'
 import { type Doc, type IEntity, Role, UserDimension } from '@nuvix/db'
-import { hash as argon2Hash, verify as argon2Verify } from 'argon2'
-import * as bcrypt from 'bcrypt'
 import { decryptSecret, encryptSecret } from '../tenants/encryption'
 
 /** Supported password hashing algorithms. */
@@ -12,15 +10,18 @@ export enum HashAlgorithm {
   BCRYPT = 'bcrypt',
 }
 
+/** Options for argon2id hashing via native `Bun.password` (D5). */
 export interface Argon2Options {
-  hashLength?: number
-  timeCost?: number
+  /** Memory usage in kibibytes (minimum 8). Default: 65536 (64 MiB). */
   memoryCost?: number
-  parallelism?: number
+  /** Number of iterations. Default: 3. */
+  timeCost?: number
 }
 
+/** Options for bcrypt hashing via native `Bun.password` (D5). */
 export interface BcryptOptions {
-  saltRounds?: number
+  /** Cost factor between 4 and 31. Default: 10. */
+  cost?: number
 }
 
 /** Static utility namespace for auth primitives. Grouped in one class because its constants and methods share context (algorithm defaults, token budgets). */
@@ -28,10 +29,8 @@ export interface BcryptOptions {
 export class Auth {
   public static readonly DEFAULT_ALGO = HashAlgorithm.ARGON2ID
   public static readonly DEFAULT_ALGO_OPTIONS: Argon2Options = {
-    hashLength: 32,
+    memoryCost: 1 << 16, // 64 MiB
     timeCost: 3,
-    memoryCost: 1 << 16,
-    parallelism: 4,
   }
 
   // Token Expiration times (seconds)
@@ -60,7 +59,8 @@ export class Auth {
   }
 
   /**
-   * Hash password using Argon2 or Bcrypt.
+   * Hash password using Argon2 (argon2id) or Bcrypt via native `Bun.password`
+   * — no native npm packages (D5).
    */
   public static async passwordHash(
     plain: string,
@@ -71,18 +71,18 @@ export class Auth {
       case HashAlgorithm.ARGON2:
       case HashAlgorithm.ARGON2ID: {
         const opts = options as Argon2Options
-        return argon2Hash(plain, {
-          raw: false,
-          hashLength: opts.hashLength,
-          timeCost: opts.timeCost,
+        return Bun.password.hash(plain, {
+          algorithm: 'argon2id',
           memoryCost: opts.memoryCost,
-          parallelism: opts.parallelism,
+          timeCost: opts.timeCost,
         })
       }
       case HashAlgorithm.BCRYPT: {
         const opts = options as BcryptOptions
-        const saltRounds = opts.saltRounds || 10
-        return bcrypt.hash(plain, saltRounds)
+        return Bun.password.hash(plain, {
+          algorithm: 'bcrypt',
+          cost: opts.cost ?? 10,
+        })
       }
       default:
         throw new Error(`Hashing algorithm '${algo}' is not supported.`)
@@ -102,15 +102,17 @@ export class Auth {
     switch (algo) {
       case HashAlgorithm.ARGON2:
       case HashAlgorithm.ARGON2ID: {
+        // The explicit label makes Bun reject hashes of any other algorithm
+        // (it throws) — a mismatch verifies as false, matching v1 semantics.
         try {
-          return await argon2Verify(hash, plain)
+          return await Bun.password.verify(plain, hash, 'argon2id')
         } catch {
           return false
         }
       }
       case HashAlgorithm.BCRYPT: {
         try {
-          return await bcrypt.compare(plain, hash)
+          return await Bun.password.verify(plain, hash, 'bcrypt')
         } catch {
           return false
         }
