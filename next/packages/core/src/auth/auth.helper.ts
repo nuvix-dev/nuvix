@@ -254,10 +254,16 @@ export class Auth {
     isAdmin?: boolean,
     isAPIUser?: boolean,
   ): string[] {
-    const roles: string[] = []
+    const roles: string[] = [
+      // v1 parity: every request context carries the `any` role, so
+      // collections created with the default `Permission.*(Role.any())`
+      // grants remain reachable by guests and authenticated callers alike.
+      Role.any().toString(),
+    ]
 
     if (!user?.getId()) {
-      return [Role.guests().toString()]
+      roles.push(Role.guests().toString())
+      return roles
     }
 
     const userId = user.getId()

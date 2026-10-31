@@ -3,6 +3,7 @@ import { Cache, Memory } from '@nuvix/cache'
 import { Adapter, Database, Doc, Permission, Role } from '@nuvix/db'
 import { SQL } from 'bun'
 import { registerCoreDbFilters } from '../db/filters'
+import { registerCoreDbFormats } from '../db/formats'
 import type { TenantTarget } from '../tenants/types'
 import { authCollections } from './collections'
 
@@ -22,6 +23,7 @@ export const AUTH_SCHEMA = 'auth'
  */
 export function createAuthDatabase(sql: SQL, cache: Cache): Database {
   registerCoreDbFilters()
+  registerCoreDbFormats()
   const adapter = new Adapter(sql)
   adapter.setMeta({ schema: AUTH_SCHEMA, namespace: AUTH_SCHEMA })
   return new Database(adapter, cache)

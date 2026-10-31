@@ -10,7 +10,11 @@ import type { TenantTarget } from './types'
 /** Construction-time and composition-time extension points; every hook is optional and injectable. */
 export interface TenantResourceDependencies {
   createSql?: (target: TenantTarget) => SQL
-  createDatabase?: (sql: SQL, cache: ReturnType<TenantCacheFactory['forTenant']>) => Database
+  createDatabase?: (
+    sql: SQL,
+    cache: ReturnType<TenantCacheFactory['forTenant']>,
+    meta?: { schema: string; namespace: string },
+  ) => Database
   createAuthDatabase?: (sql: SQL, cache: ReturnType<TenantCacheFactory['forTenant']>) => Database
   createPgDatabase?: (sql: SQL) => DatabaseFacade
   createPgMeta?: (sql: SQL) => PgMeta
@@ -38,8 +42,14 @@ function createSql(target: TenantTarget): SQL {
 }
 
 /** Default document-plane database bound to the given connection and cache. */
-function createDatabase(sql: SQL, cache: ReturnType<TenantCacheFactory['forTenant']>): Database {
-  return new Database(new Adapter(sql), cache)
+function createDatabase(
+  sql: SQL,
+  cache: ReturnType<TenantCacheFactory['forTenant']>,
+  meta?: { schema: string; namespace: string },
+): Database {
+  const adapter = new Adapter(sql)
+  if (meta) adapter.setMeta(meta)
+  return new Database(adapter, cache)
 }
 
 /** Fallback cache backend when no tenant-wide factory is injected (in-memory). */
@@ -78,6 +88,10 @@ export class TenantResource {
     this.db = (dependencies.createDatabase ?? createDatabase)(
       this.sql,
       cacheFactory.forTenant(`tenant:${projectId}:default`),
+      {
+        schema: 'public',
+        namespace: 'default',
+      },
     )
     this.notifyCreated('default', this.db)
   }
@@ -144,11 +158,17 @@ export class TenantResource {
     let schemaDb = this.schemaDbs.get(schema)
     if (!schemaDb) {
       const cacheFactory = this.dependencies.cacheFactory ?? defaultCacheFactory
-      const adapter = new Adapter(this.sql)
-      adapter.setMeta({ schema, namespace: schema })
+      // The metadata (schema + namespace) MUST reach the Database's own
+      // adapter: schema selection lives there, and a discarded adapter
+      // silently producing `undefined`-prefixed DDL is exactly the class
+      // of bug this guard exists to prevent.
       schemaDb = (this.dependencies.createDatabase ?? createDatabase)(
         this.sql,
         cacheFactory.forTenant(`tenant:${this.projectId}:${schema}`),
+        {
+          schema,
+          namespace: schema,
+        },
       )
       this.schemaDbs.set(schema, schemaDb)
       this.notifyCreated(schema, schemaDb)

@@ -3,7 +3,7 @@ import { mkdir } from 'node:fs/promises'
 import path from 'node:path'
 import { Cache, Memory } from '@nuvix/cache'
 import { Adapter, Database, Doc, SQLiteAdapter } from '@nuvix/db'
-import { registerCoreDbFilters } from '../db'
+import { registerCoreDbFilters, registerCoreDbFormats } from '../db'
 import { decodeEncryptionKey } from '../tenants'
 import { platformCollections } from './collections'
 
@@ -44,6 +44,7 @@ export async function ensurePlatformSchema(db: Database): Promise<void> {
 /** Fully wired platform database: filters registered, schema ensured, ready to serve. */
 export async function createPlatformDatabase(options: PlatformDatabaseOptions): Promise<Database> {
   registerCoreDbFilters(decodeEncryptionKey(options.encryptionKey))
+  registerCoreDbFormats()
   const db = new Database(await createAdapter(options), new Cache(new Memory()))
   await ensurePlatformSchema(db)
   return db
