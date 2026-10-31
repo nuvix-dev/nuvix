@@ -7,6 +7,7 @@ const {
   toAuditRow,
   default: processAudits,
   flushAudits,
+  resetAudits,
   setAuditPersister,
 } = await import('./audits.processor')
 
@@ -21,6 +22,13 @@ function makeJob(data: Partial<AuditJobData>): Parameters<typeof processAudits>[
 }
 
 describe('audits processor', () => {
+  // Worker buffers are module-level; bun runs test files in one process —
+  // reset per test so leftovers from other files (e.g. workers.test.ts's
+  // processAudits smoke test) can't change group counts.
+  beforeEach(() => {
+    resetAudits()
+  })
+
   beforeEach(() => {
     // Drain any state left by earlier tests.
     setAuditPersister(async () => {})

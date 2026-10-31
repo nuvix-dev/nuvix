@@ -1,11 +1,12 @@
 /** Tests for the stats worker: metric aggregation, period buckets, and batch buffering. */
-import { describe, expect, it } from 'bun:test'
+import { beforeEach, describe, expect, it } from 'bun:test'
 import type { Doc, Session } from '@nuvix/db'
 import { MetricFor, MetricPeriod } from '@nuvix/utils'
 import processStats, {
   flushStats,
   formatPeriodDate,
   persistStats,
+  resetStats,
   setStatsPersister,
 } from './stats.processor'
 
@@ -98,6 +99,10 @@ describe('persistStats', () => {
 })
 
 describe('processStats batching', () => {
+  // Module-level buffer leaks across test files in one bun process.
+  beforeEach(() => {
+    resetStats()
+  })
   it('buffers jobs per tenant and flushes aggregated metrics', async () => {
     const persisted: Array<{
       projectId: string

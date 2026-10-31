@@ -195,3 +195,13 @@ export default async function processStats(
 export async function flushStats(): Promise<void> {
   await flush()
 }
+
+/** Test helper: drop buffered jobs and cancel the scheduled flush
+ * (module-level state leaks across test files in one bun process). */
+export function resetStats(): void {
+  if (flushTimer) {
+    clearTimeout(flushTimer)
+    flushTimer = null
+  }
+  buffer.length = 0
+}

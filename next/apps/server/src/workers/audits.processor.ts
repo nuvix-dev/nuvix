@@ -160,3 +160,13 @@ export default async function processAudits(
 export async function flushAudits(): Promise<void> {
   await flush()
 }
+
+/** Test helper: drop buffered rows and cancel the scheduled flush
+ * (module-level state leaks across test files in one bun process). */
+export function resetAudits(): void {
+  if (flushTimer) {
+    clearTimeout(flushTimer)
+    flushTimer = null
+  }
+  buffer.length = 0
+}
