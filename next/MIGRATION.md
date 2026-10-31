@@ -748,6 +748,34 @@ Tracked here so nothing gets decided silently:
       audit/stats worker buffers leaked across test files in one bun
       process, flipping with file-run order — fixed (27a46e78) and the
       gate re-run green end to end.
+- [x] Live DB-route verification against `nuvix/postgres:18.1`
+      (`apps/server/src/schemas/route.integration.test.ts`, 7 live tests:
+      production provisioning → document-schema CRUD → collection →
+      attributes → indexes → documents → tables/RPC surface → posture
+      403 → cleanup → deprovision). The first live run exposed five real
+      production defects the in-memory fakes could never catch, all fixed: 1. `TenantResource.databaseForSchema()` configured an adapter it then
+      discarded — the schema/namespace meta never reached the created
+      `Database`, so document-schema seeding emitted
+      `CREATE TABLE undefined__metadata_perms` (fixed by threading
+      `meta` through the `createDatabase` dependency); 2. `SqlBuilder.getTableName/getSQLIndex` composed `meta.namespace`
+      without a fallback (SQLite builder already defaulted to
+      `"default"`) — fixed in the `database` sibling (a5b5b85); 3. the admin tables surface ran the PostgREST RLS role-switch
+      (`set_config('role', 'authenticated')`) and lost owner privileges
+      on the new schema's tables (42501) — admin posture now skips the
+      switch, the public surface keeps it; 4. attribute formats were never registered into `@nuvix/db`'s
+      `Structure` registry (every `format`-declaring attribute failed
+      with "Format not available") — `registerCoreDbFormats()` ports the
+      seven v1 formats and runs in every composition root; 5. v1 seeded the `any` role into every request context; the v2
+      scoped-session rewrite dropped it, making collections created with
+      the default `Permission.*(Role.any())` grants unreachable —
+      restored in `Auth.getRoles()`.
+      Also fixed in the sibling: `_uid` got a generated default so raw
+      tables-surface inserts into document-backed tables work (41733b7).
+      Operational notes: provisioning is NOT idempotent per projectId (the
+      deterministic volume persists the run's data dir + `nuvix_admin`
+      password — reuse unique names per run), and bun copies `file:`-linked
+      sibling dists at install time — rebuilding a sibling alone does NOT
+      change what `next/` loads; `bun install` in `next` is required.
 - [ ] `DEFERRED_ROUTES.md` empty after Phase 8 (file never existed — the
       deferred-routes ledger lives in each contract's Known gaps section)
 - [ ] Root monorepo deleted after explicit final review

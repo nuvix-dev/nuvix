@@ -19,6 +19,7 @@ export function extractRequestContext(tenant: TenantContext, req: Request): Requ
     session: tenant.session,
     roles: tenant.roles,
     allowedSchemas: ((tenant.project as any)?.metadata as any)?.allowedSchemas ?? [],
+    admin: tenant.isAdmin === true || tenant.isAPIUser === true,
   }
 }
 
@@ -48,10 +49,14 @@ export const schemaTablesRoutes = (services?: TablesRouteServices) =>
         query: t.Optional(
           t.Object({
             select: t.Optional(
-              t.String({ description: 'Columns to select (comma-separated or wildcard)' }),
+              t.String({
+                description: 'Columns to select (comma-separated or wildcard)',
+              }),
             ),
             filter: t.Optional(
-              t.String({ description: 'Filter expression (e.g. status.eq.active)' }),
+              t.String({
+                description: 'Filter expression (e.g. status.eq.active)',
+              }),
             ),
             order: t.Optional(t.String({ description: 'Ordering expression (e.g. id.desc)' })),
             limit: t.Optional(t.String({ description: 'Maximum rows to return' })),
@@ -192,7 +197,9 @@ export const schemaTablesRoutes = (services?: TablesRouteServices) =>
         }),
         query: t.Object({
           columns: t.Optional(t.String({ description: 'Column list' })),
-          on_conflict: t.String({ description: 'Unique conflict column(s) to match on' }),
+          on_conflict: t.String({
+            description: 'Unique conflict column(s) to match on',
+          }),
           select: t.Optional(t.String({ description: 'Returned columns selection' })),
         }),
         body: t.Union([t.Record(t.String(), t.Any()), t.Array(t.Record(t.String(), t.Any()))], {
@@ -234,11 +241,15 @@ export const schemaTablesRoutes = (services?: TablesRouteServices) =>
             limit: t.Optional(t.String({ description: 'Row update limit' })),
             offset: t.Optional(t.String({ description: 'Row update offset' })),
             force: t.Optional(
-              t.Union([t.String(), t.Boolean()], { description: 'Force full table update' }),
+              t.Union([t.String(), t.Boolean()], {
+                description: 'Force full table update',
+              }),
             ),
           }),
         ),
-        body: t.Record(t.String(), t.Any(), { description: 'Column key-value pairs to set' }),
+        body: t.Record(t.String(), t.Any(), {
+          description: 'Column key-value pairs to set',
+        }),
       },
       async ({ tenant, tablesService, params: { schemaId, tableId }, query, body, request }) => {
         return tablesService.update({
@@ -277,7 +288,9 @@ export const schemaTablesRoutes = (services?: TablesRouteServices) =>
             filter: t.Optional(t.String({ description: 'Additional filter condition' })),
           }),
         ),
-        body: t.Record(t.String(), t.Any(), { description: 'Updated column values' }),
+        body: t.Record(t.String(), t.Any(), {
+          description: 'Updated column values',
+        }),
       },
       async ({
         tenant,
@@ -320,7 +333,9 @@ export const schemaTablesRoutes = (services?: TablesRouteServices) =>
             limit: t.Optional(t.String({ description: 'Delete limit' })),
             offset: t.Optional(t.String({ description: 'Delete offset' })),
             force: t.Optional(
-              t.Union([t.String(), t.Boolean()], { description: 'Force full table deletion' }),
+              t.Union([t.String(), t.Boolean()], {
+                description: 'Force full table deletion',
+              }),
             ),
           }),
         ),
@@ -389,7 +404,9 @@ export const schemaTablesRoutes = (services?: TablesRouteServices) =>
       },
       async ({ tenant, tablesService, params: { schemaId, tableId } }) => {
         if (!tenant.isAdmin && !tenant.isAPIUser) {
-          throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+          throw new ForbiddenError('Access forbidden', {
+            code: 'user_forbidden',
+          })
         }
         return tablesService.getPermissions({
           schema: schemaId,
@@ -410,12 +427,16 @@ export const schemaTablesRoutes = (services?: TablesRouteServices) =>
           tableId: t.String({ description: 'Table name' }),
         }),
         body: t.Object({
-          permissions: t.Array(t.String(), { description: 'Updated permission rules list' }),
+          permissions: t.Array(t.String(), {
+            description: 'Updated permission rules list',
+          }),
         }),
       },
       async ({ tenant, tablesService, params: { schemaId, tableId }, body }) => {
         if (!tenant.isAdmin && !tenant.isAPIUser) {
-          throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+          throw new ForbiddenError('Access forbidden', {
+            code: 'user_forbidden',
+          })
         }
         return tablesService.updatePermissions({
           schema: schemaId,
@@ -442,7 +463,9 @@ export const schemaTablesRoutes = (services?: TablesRouteServices) =>
       },
       async ({ tenant, tablesService, params: { schemaId, tableId, rowId } }) => {
         if (!tenant.isAdmin && !tenant.isAPIUser) {
-          throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+          throw new ForbiddenError('Access forbidden', {
+            code: 'user_forbidden',
+          })
         }
         return tablesService.getPermissions({
           schema: schemaId,
@@ -465,12 +488,16 @@ export const schemaTablesRoutes = (services?: TablesRouteServices) =>
           rowId: t.String({ description: 'Row ID' }),
         }),
         body: t.Object({
-          permissions: t.Array(t.String(), { description: 'Updated row permissions' }),
+          permissions: t.Array(t.String(), {
+            description: 'Updated row permissions',
+          }),
         }),
       },
       async ({ tenant, tablesService, params: { schemaId, tableId, rowId }, body }) => {
         if (!tenant.isAdmin && !tenant.isAPIUser) {
-          throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+          throw new ForbiddenError('Access forbidden', {
+            code: 'user_forbidden',
+          })
         }
         return tablesService.updatePermissions({
           schema: schemaId,
@@ -861,7 +888,9 @@ export const publicTablesRoutes = (services?: TablesRouteServices) =>
       },
       async ({ tenant, tablesService, params: { tableId } }) => {
         if (!tenant.isAdmin && !tenant.isAPIUser) {
-          throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+          throw new ForbiddenError('Access forbidden', {
+            code: 'user_forbidden',
+          })
         }
         return tablesService.getPermissions({
           schema: 'public',
@@ -879,12 +908,16 @@ export const publicTablesRoutes = (services?: TablesRouteServices) =>
         },
         params: t.Object({ tableId: t.String({ description: 'Table name' }) }),
         body: t.Object({
-          permissions: t.Array(t.String(), { description: 'Updated permission rules list' }),
+          permissions: t.Array(t.String(), {
+            description: 'Updated permission rules list',
+          }),
         }),
       },
       async ({ tenant, tablesService, params: { tableId }, body }) => {
         if (!tenant.isAdmin && !tenant.isAPIUser) {
-          throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+          throw new ForbiddenError('Access forbidden', {
+            code: 'user_forbidden',
+          })
         }
         return tablesService.updatePermissions({
           schema: 'public',
@@ -908,7 +941,9 @@ export const publicTablesRoutes = (services?: TablesRouteServices) =>
       },
       async ({ tenant, tablesService, params: { tableId, rowId } }) => {
         if (!tenant.isAdmin && !tenant.isAPIUser) {
-          throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+          throw new ForbiddenError('Access forbidden', {
+            code: 'user_forbidden',
+          })
         }
         return tablesService.getPermissions({
           schema: 'public',
@@ -930,12 +965,16 @@ export const publicTablesRoutes = (services?: TablesRouteServices) =>
           rowId: t.String({ description: 'Row ID' }),
         }),
         body: t.Object({
-          permissions: t.Array(t.String(), { description: 'Updated row permissions' }),
+          permissions: t.Array(t.String(), {
+            description: 'Updated row permissions',
+          }),
         }),
       },
       async ({ tenant, tablesService, params: { tableId, rowId }, body }) => {
         if (!tenant.isAdmin && !tenant.isAPIUser) {
-          throw new ForbiddenError('Access forbidden', { code: 'user_forbidden' })
+          throw new ForbiddenError('Access forbidden', {
+            code: 'user_forbidden',
+          })
         }
         return tablesService.updatePermissions({
           schema: 'public',
@@ -953,7 +992,9 @@ export const publicTablesRoutes = (services?: TablesRouteServices) =>
           description: 'Execute a stored procedure in the default "public" schema.',
           tags: ['Public Tables'],
         },
-        params: t.Object({ functionId: t.String({ description: 'Function name' }) }),
+        params: t.Object({
+          functionId: t.String({ description: 'Function name' }),
+        }),
         query: t.Optional(
           t.Object({
             select: t.Optional(t.String()),
@@ -987,7 +1028,9 @@ export const publicTablesRoutes = (services?: TablesRouteServices) =>
           description: 'Execute a stored procedure in the default "public" schema (alias of /rpc).',
           tags: ['Public Tables'],
         },
-        params: t.Object({ functionId: t.String({ description: 'Function name' }) }),
+        params: t.Object({
+          functionId: t.String({ description: 'Function name' }),
+        }),
         query: t.Optional(
           t.Object({
             select: t.Optional(t.String()),

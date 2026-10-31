@@ -26,6 +26,13 @@ export interface RequestContext {
   session?: any
   roles?: string[]
   allowedSchemas?: string[]
+  /**
+   * Trusted-caller posture (platform admin or API key). Admin table/RPC
+   * calls run with the tenant owner's privileges and skip the RLS
+   * role-switch; non-admin (public PostgREST-style) calls run under the
+   * `anon`/`authenticated` role with `request.auth.*` set.
+   */
+  admin?: boolean
 }
 
 /** Options for filtered/ordered/paginated row listing. */
@@ -409,7 +416,7 @@ export class TablesService {
     context?: RequestContext,
   ): Promise<T> {
     const run = async (txDb: DatabaseFacade): Promise<T> => {
-      if (context) {
+      if (context && !context.admin) {
         await this.applyRlsContext(txDb, context)
       }
       return callback(txDb)
@@ -512,7 +519,9 @@ export class TablesService {
         }
 
         qb = qb.count('*', 'count')
-        const result = (await qb.execute()) as Array<{ count: string | number }>
+        const result = (await qb.execute()) as Array<{
+          count: string | number
+        }>
         return { count: Number(result?.[0]?.count ?? 0) }
       },
       context,
@@ -942,7 +951,9 @@ export class TablesService {
         }
 
         let qb: any = (txDb as any).table(txDb.raw(callSql, bindings))
-        const ast = new ASTToQueryBuilder(qb, txDb, { tableName: functionName })
+        const ast = new ASTToQueryBuilder(qb, txDb, {
+          tableName: functionName,
+        })
 
         if (select) {
           const selectNodes =

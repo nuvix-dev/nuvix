@@ -146,7 +146,12 @@ Errors: `404 document_not_found`, `409 document_already_exists`,
 
 PostgREST-compatible row access over any table in the schema (admin
 surface), plus a `/public` mirror that reads/writes tables in the default
-`public` schema. Both surfaces expose the same operations:
+`public` schema. Both surfaces expose the same operations. `tableId` is the
+**physical PostgreSQL table name** — a document collection `todos` created
+in schema `myschema` lives in `myschema.myschema_todos`, so it is addressed
+as `…/tables/myschema_todos`. Admin-surface calls run with the tenant
+owner's privileges; the public surface applies the `anon`/`authenticated`
+RLS role-switch with `request.auth.*` from the caller context.
 
 | Method | Path                                   | Purpose                                                                              |
 | ------ | -------------------------------------- | ------------------------------------------------------------------------------------ |
@@ -198,6 +203,11 @@ PostgreSQL errors).
   auth posture and query parsing.
 - Document-schema creation seeds `@nuvix/db` metadata collections; rollback
   on partial failure keeps the registry consistent.
+- Attribute formats (`email`, `datetime`, `enum`, `ip`, `url`, `integer`,
+  `float`) are registered into `@nuvix/db`'s `Structure` registry by
+  `registerCoreDbFormats()` alongside the core filters in every composition
+  root — an attribute declaring a `format` without a registered format is a
+  500, so the registration must run before any collection/attribute work.
 - Collections/attributes/indexes require admin/API-key posture on every
   mutating route (`403 user_forbidden` otherwise); document reads/writes
   apply document-level permissions on top.
