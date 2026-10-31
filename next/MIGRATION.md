@@ -725,10 +725,29 @@ Tracked here so nothing gets decided silently:
 
 ## 9. Definition of Done
 
-- [ ] All v2 contracts in `docs/api/` implemented across both apps
-- [ ] Zero imports of: `@nestjs/*`, `fastify*`, `class-validator`, `class-transformer`,
-      `reflect-metadata`, `rxjs`, `ioredis`, `pg`, `argon2`, `bcrypt`
-- [ ] Bun-only runtime; file/crypto/net operations use Bun natives
-- [ ] Fresh `bun test` suite green (unit + integration + e2e)
-- [ ] `DEFERRED_ROUTES.md` empty after Phase 8
+- [x] All v2 contracts in `docs/api/` implemented across both apps
+      (status lines flipped to IMPLEMENTED after route/error-code
+      verification against code)
+- [x] Zero imports of: `@nestjs/*`, `fastify*`, `class-validator`,
+      `class-transformer`, `reflect-metadata`, `rxjs`, `ioredis`, `pg`,
+      `argon2`, `bcrypt` — verified by resolution audit, not just source
+      grep: the first fresh-clone gate caught undeclared `argon2`/`bcrypt`
+      imports in `@nuvix/core` silently resolving from the LEGACY root
+      node_modules (ambient directory-walk leak that a source scan can't
+      see). Fixed by switching to native `Bun.password` + declaring all
+      phantom deps (91679960).
+- [x] Bun-only runtime; file/crypto/net operations use Bun natives
+      (Bun.password, Bun.file, Bun.dns, Bun build — no pg driver)
+- [x] Fresh gate green in an ISOLATED environment: clone nuvix
+      (v2-rewrite) + the five sibling repos fresh from GitHub, build each
+      sibling (their `dist/` is gitignored — a bare clone cannot even
+      install `next/`), then from `next/`: `bun install --frozen-lockfile`
+      (clean), `bun run lint` (73-warnings baseline, 0 errors),
+      `bun run typecheck` (0), `bun test` (524 pass / 0 fail / 83 files),
+      `git diff --check` (clean). One real defect found by this gate —
+      audit/stats worker buffers leaked across test files in one bun
+      process, flipping with file-run order — fixed (27a46e78) and the
+      gate re-run green end to end.
+- [ ] `DEFERRED_ROUTES.md` empty after Phase 8 (file never existed — the
+      deferred-routes ledger lives in each contract's Known gaps section)
 - [ ] Root monorepo deleted after explicit final review
