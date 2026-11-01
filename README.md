@@ -109,7 +109,10 @@ docker compose up -d
 
 ### Local Development
 
+The backend lives in `next/` (Bun-native v2):
+
 ```bash
+cd next
 bun install
 bun run dev     # Start dev server with auto-reload
 bun run test    # Run full test suite

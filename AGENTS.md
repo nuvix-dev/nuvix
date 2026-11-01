@@ -1,25 +1,24 @@
-# Nuvix v2 Migration Guide
+# Nuvix v2 Guide
 
 ## Mission
 
-Continue the Bun-native v2 rewrite in `next/`. Own implementation, tests, and
-migration documentation together. Make routine implementation decisions
+Own the Bun-native v2 backend in `next/`. Own implementation, tests, and
+documentation together. Make routine implementation decisions
 autonomously: do not pause for naming, file layout, refactoring, test fixes,
 error mapping, or selection of the next documented slice.
 
 After a logical slice passes validation, commit it, push `v2-rewrite`, update
 the migration records, and continue to the next unblocked slice. Ask the user
 only for a genuinely new product decision, a change to a locked architecture
-decision, unavailable credentials/infrastructure, or destructive legacy
-cutover.
+decision, unavailable credentials/infrastructure, or destructive operations
+beyond the completed Phase 9 cutover.
 
 ## Repository boundaries
 
-- `next/**` is the active v2 workspace.
-- Root `apps/**`, `libs/**`, tests, and configuration are legacy behavior
-  references. Do not copy their NestJS architecture or modify them during the
-  rewrite.
-- Never delete the legacy root before the explicit Phase 9 approval gate.
+- `next/**` is the workspace — all code, docs, and tests live there.
+- The legacy v1 monorepo root (`apps/**`, `libs/**`, root configs) was
+  deleted in the Phase 9 cutover; consult git history for legacy behavior
+  only when a contract references it.
 - Preserve unrelated worktree changes. Never reset, clean, or broadly stage.
 - `.tmp/**` and `thoughts/**` are scratch/history, not authoritative project
   status and not commit targets.
@@ -35,7 +34,8 @@ cutover.
 4. Relevant ADRs in `next/docs/architecture/decisions/`
 5. The relevant contract in `next/docs/api/`
 6. Adjacent v2 source and tests
-7. Legacy root code only for behavior, business rules, and edge cases
+7. Git history of the deleted legacy root, only when a contract references
+   legacy behavior
 
 Current user instructions and amended decisions override stale prose. When
 committed code and tests prove documentation is stale, correct it in the same
@@ -44,7 +44,8 @@ slice instead of asking permission or creating another status document.
 ## Slice workflow
 
 1. Reconcile the contract and current implementation status.
-2. Read legacy behavior where needed; redesign rather than mechanically port.
+2. Consult legacy behavior from git history when a contract references it;
+   redesign rather than mechanically port.
 3. Implement through small, narrow, injected capabilities.
 4. Add unit, route, composition, and live integration coverage as applicable.
 5. Update the API contract, architecture notes, and `MIGRATION.md`.
@@ -114,7 +115,6 @@ as integration coverage.
 - changing a locked Dxx decision or accepted ADR;
 - introducing materially new or breaking public behavior not answered by a
   contract or reference behavior;
-- deleting/cutting over the legacy root;
 - credentials, access, or external infrastructure are unavailable; or
 - a sibling package needs an incompatible public API change rather than a
   clear bug fix.

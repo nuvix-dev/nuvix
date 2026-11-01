@@ -614,7 +614,22 @@ onDatabaseCreated` composition hook). Redesigns over v1 recorded:
       (same phantom path); `@resvg/resvg-js` moved to runtime dependencies
       (the Docker image installs with `--production` and never installed it).
       Verified: zero bare imports in `next/**` resolve outside the `next/` tree.
-- [ ] Delete root monorepo (**explicit approval gate**)
+- [x] Delete root monorepo (Phase 9 cutover, approved 2026-10-31): legacy
+      `apps/`, `libs/`, `docs/`, `scripts/`, `configs/`, `assets/`, and all
+      root configs (package.json, bun.lock, turbo.json, tsconfigs, root
+      Dockerfile/compose, biome.json, env examples) removed; repo root now
+      holds only `next/`, project meta (README, LICENSE, CONTRIBUTING,
+      AGENTS.md, .github) and untracked runtime data (`storage/`). The v2
+      runtime asset tree (avatars, fonts, i18n translations, mail templates,
+      OAuth views, GeoIP db) lives in `next/assets/` — the root `assets/`
+      copy was merged into it first (root values win; the 8 v2-only
+      translation keys preserved), and `oauth-pages.ts` was repointed from
+      the root copy to `next/assets`. CI `docker.yml` now builds
+      `next/Dockerfile` (context `./next`); `next/biome.json` flipped to
+      `"root": true` (no root config remains). Post-cutover gate green from
+      `next/`: frozen install, lint (80 warnings / 0 errors), typecheck (0),
+      `bun test` (531 pass / 0 fail incl. 7 live DB-route tests),
+      `git diff --check` clean.
 
 ---
 
@@ -776,6 +791,8 @@ Tracked here so nothing gets decided silently:
       password — reuse unique names per run), and bun copies `file:`-linked
       sibling dists at install time — rebuilding a sibling alone does NOT
       change what `next/` loads; `bun install` in `next` is required.
-- [ ] `DEFERRED_ROUTES.md` empty after Phase 8 (file never existed — the
+- [x] `DEFERRED_ROUTES.md` empty after Phase 8 (file never existed — the
       deferred-routes ledger lives in each contract's Known gaps section)
-- [ ] Root monorepo deleted after explicit final review
+- [x] Root monorepo deleted after explicit final review (Phase 9 cutover,
+      2026-10-31 — see the Phase 9 checklist for the kept/deleted inventory
+      and the post-cutover gate results)
