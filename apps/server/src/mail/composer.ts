@@ -6,8 +6,7 @@ import type { ProjectRegistry } from '@nuvix/core/platform'
 import type { QueueManager } from '@nuvix/core/queues'
 import type { Translator } from '@nuvix/i18n'
 import { config } from '@nuvix/utils'
-
-const TEMPLATES_DIR = new URL('../../../../assets/locale/templates', import.meta.url).pathname
+import { mailTemplatesDir } from '../assets'
 
 export interface MailBuildInput {
   to: string
@@ -58,7 +57,7 @@ function createMailCapability(deps: {
   queues: QueueManager
   projectId: string
 }): MailCapability {
-  const helper = new EmailHelper(TEMPLATES_DIR, {
+  const helper = new EmailHelper(mailTemplatesDir, {
     host: config.smtp.host,
     port: config.smtp.port,
     user: config.smtp.user,

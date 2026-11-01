@@ -7,7 +7,7 @@ import {
   TenantResourcePool,
 } from '@nuvix/core/tenants'
 import { config } from '@nuvix/utils'
-import { Elysia, t } from 'elysia'
+import { Elysia, inAotBuild, t } from 'elysia'
 import { authRoutesFor } from './modules/auth/routes'
 import { bootstrapConsoleUser, ConsoleAuthService } from './modules/auth/service'
 import { authSettingsRoutes } from './modules/auth-settings/routes'
@@ -55,7 +55,8 @@ const health = new Elysia({ name: 'health' }).get(
 )
 
 /** Control-plane database, created and schema-bootstrapped at startup. */
-const db = await createPlatformDatabase()
+// Skipped during the AOT dry-run: routes register, handlers never run.
+const db = inAotBuild() ? ({} as never) : await createPlatformDatabase()
 /** Creates one dedicated PostgreSQL container per project. */
 const provisioner = new DockerTenantProvisioner({
   image: config.platform.tenantPostgresImage,

@@ -1,5 +1,6 @@
 /** Provides graceful country and continent lookup for locale context without making startup dependent on the asset. */
 import maxmind, { type CountryResponse } from 'maxmind'
+import { geoipDatabase } from '../assets'
 
 /** Minimal geo result — everything else (names, EU flag, currency) derives from these codes. */
 export interface GeoResult {
@@ -12,10 +13,7 @@ export interface GeoIP {
   lookup(ip: string): GeoResult | null
 }
 
-const DEFAULT_MMDB = new URL(
-  '../../../../assets/dbip/dbip-country-lite-2024-09.mmdb',
-  import.meta.url,
-).pathname
+const DEFAULT_MMDB = geoipDatabase
 
 export async function createGeoIP(mmdbPath: string = DEFAULT_MMDB): Promise<GeoIP> {
   if (!(await Bun.file(mmdbPath).exists())) {

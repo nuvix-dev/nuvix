@@ -1,6 +1,9 @@
 /** BullMQ queue manager with typed enqueue helpers and an in-memory fallback for tests. */
 import { QueueFor } from '@nuvix/utils'
-import { type ConnectionOptions, type JobsOptions, Queue } from 'bullmq'
+// Type-only: bullmq's runtime import is lazy (see the constructor) so
+// compositions without a Redis connection — tests, the AOT dry-run build,
+// and in-memory mode — never load bullmq (and its native msgpackr addon).
+import type { ConnectionOptions, JobsOptions, Queue } from 'bullmq'
 import { ID } from '../id'
 import type {
   AuditJobData,
@@ -55,6 +58,18 @@ export class QueueManager {
     this.isTestMode = options.isTest || !options.connection
 
     if (!this.isTestMode && options.connection) {
+      // Lazy runtime import — keeps bullmq (and msgpackr's native addon) out
+      // of every code path that never touches a real Redis connection.
+      const { Queue: BullQueue } = require('bullmq') as {
+        Queue: new (
+          name: string,
+          opts?: {
+            connection?: ConnectionOptions
+            prefix?: string
+            defaultJobOptions?: JobsOptions
+          },
+        ) => Queue
+      }
       const queueNames = [
         QueueFor.MAILS,
         QueueFor.MESSAGING,
@@ -69,7 +84,7 @@ export class QueueManager {
       for (const name of queueNames) {
         this.queues.set(
           name,
-          new Queue(name, {
+          new BullQueue(name, {
             connection: options.connection,
             prefix: options.prefix,
             defaultJobOptions: options.defaultJobOptions,

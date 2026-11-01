@@ -4,12 +4,10 @@ import path from 'node:path'
 import type { Translator } from '@nuvix/i18n'
 import { Resvg } from '@resvg/resvg-js'
 import QRCode from 'qrcode'
+import { avatarFontFile, avatarsDir } from '../assets'
 import { NotFoundError } from '../shared/errors'
 
 /** Provides avatar rendering, static asset resizing, QR generation, and SSRF-guarded favicon proxying. */
-
-const ASSETS_DIR = new URL('../../../../assets/avatars/', import.meta.url).pathname
-const FONT_FILE = new URL('../../../../assets/fonts/Varela-Regular.ttf', import.meta.url).pathname
 
 export type AvatarSet = 'flags' | 'browsers' | 'credit-cards'
 
@@ -23,7 +21,7 @@ const clampDim = (v: number | undefined, fallback: number) => {
 
 /** Scan an asset directory once; code = filename without extension. */
 async function loadSet(dir: string): Promise<Set<string>> {
-  const entries = await readdir(path.join(ASSETS_DIR, dir))
+  const entries = await readdir(path.join(avatarsDir, dir))
   return new Set(entries.map((f) => path.basename(f, path.extname(f)).toLowerCase()))
 }
 
@@ -71,7 +69,7 @@ export function createAvatarService() {
     height: number,
   ): Promise<AvatarResult> {
     const normalized = await assertCode(set, code)
-    const file = Bun.file(path.join(ASSETS_DIR, set, `${normalized}.png`))
+    const file = Bun.file(path.join(avatarsDir, set, `${normalized}.png`))
     const body = await file.image().resize(width, height, { fit: 'fill' }).png().bytes()
     return { body, contentType: 'image/png', headers: AVATAR_CACHE }
   }
@@ -144,7 +142,7 @@ export function createAvatarService() {
       font: {
         loadSystemFonts: false,
         defaultFontFamily: 'Varela, Arial, sans-serif',
-        fontFiles: [FONT_FILE],
+        fontFiles: [avatarFontFile],
       },
     })
       .render()

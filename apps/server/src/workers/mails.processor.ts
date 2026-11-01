@@ -38,12 +38,13 @@ export interface MailJobData {
   bodyTemplate?: string
 }
 
+import { mailTemplatesDir } from '../assets'
+
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const SEND_RETRY_ATTEMPTS = 3
 const SEND_RETRY_DELAY_MS = 500
 
-const TEMPLATES_DIR = new URL('../../../../assets/locale/templates', import.meta.url).pathname
-const DEFAULT_BODY_TEMPLATE = `${TEMPLATES_DIR}/email-base-styled.tpl`
+const DEFAULT_BODY_TEMPLATE = `${mailTemplatesDir}/email-base-styled.tpl`
 
 /** Injectable send boundary (tests stub this; prod uses the SMTP adapter). */
 export type MailSender = (params: {

@@ -57,7 +57,7 @@ export function logsRequestSource(options: {
   // Function-style plugin — registers the hook directly on the consuming
   // instance (same pattern as `rateLimit` and the stats source).
   return (app) =>
-    app.afterResponse((raw: unknown): void => {
+    app.onAfterResponse((raw: unknown): void => {
       try {
         if (!enabled()) return
         const ctx = raw as {

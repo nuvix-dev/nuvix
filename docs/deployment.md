@@ -1,11 +1,10 @@
 # Deployment — Nuvix v2 (Bun Runtime)
 
-Nuvix v2 runs on a pure Bun runtime. There is no Node.js dependency, no NestJS runtime, no Turbo build step, and no compilation step required.
+Nuvix v2 runs on a pure Bun runtime. There is no Node.js dependency, no NestJS runtime, and no Turbo build step. Deployable apps are **ahead-of-time (AOT) compiled**: route handlers and schemas are compiled at the build step instead of the first request (see `build.ts` and the [Elysia AOT docs](https://next.elysiajs.com/patterns/aot/)) — faster startup, lower peak memory, and no runtime compiler allocations.
 
 ## Architecture
 
 Nuvix v2 separates concerns into two cooperating runtime containers:
-
 1. **Control Plane (`apps/platform`)**
    - HTTP port: `4100` (`NUVIX_PLATFORM_PORT`)
    - Manages tenant lifecycle (provisioning dedicated `nuvix/postgres:18.1` containers per project via `/var/run/docker.sock`).
@@ -53,3 +52,24 @@ docker compose up -d
 - Platform API: `GET http://localhost:4100/health`
 - PostgreSQL: `pg_isready -U postgres`
 - Redis: `redis-cli ping`
+
+## AOT Bundle
+
+Both apps compile to a self-contained bundle via one build script:
+
+```bash
+bun run build:bundle                 # APP_NAME=server (default)
+APP_NAME=platform bun run build:bundle
+bun apps/server/dist/index.js        # run the compiled server
+```
+
+`build.ts` dry-runs the app entry (guarded by `inAotBuild()` — no HTTP server,
+no queue workers, no platform persistence) and emits `apps/<app>/dist/`.
+Runtime assets resolve relative to the bundle through `apps/server/src/assets.ts`;
+`dist/` sits beside `src/`, so source and bundle resolve identically. The
+Dockerfile runs this build in its build stage and executes
+`apps/${APP_NAME}/dist/index.js` in the runtime stage.
+
+Queue workers load lazily (dynamic import inside the runtime guard) and BullMQ
+processors run as in-process handler functions — the build and the bundle never
+touch bullmq unless a Redis connection is actually configured.

@@ -1,12 +1,13 @@
 /** Composes server infrastructure, request context, plugins, and all project-facing API modules. */
 import { openapi } from '@elysia/openapi'
 import { createPlatformDatabase, KeyRegistry, ProjectRegistry } from '@nuvix/core/platform'
-import { QueueManager } from '@nuvix/core/queues'
+import { parseRedisUrl, QueueManager } from '@nuvix/core/queues'
 import { TenantResourcePool } from '@nuvix/core/tenants'
 import { TranslationLoader } from '@nuvix/i18n'
 import { config } from '@nuvix/utils'
-import { Elysia, t } from 'elysia'
+import { Elysia, inAotBuild, t } from 'elysia'
 import { accountRoutes } from './account/route'
+import { translationsDir } from './assets'
 import { avatarRoutes } from './avatars/route'
 import { createAvatarService } from './avatars/service'
 import { authContext } from './context/auth'
@@ -32,12 +33,10 @@ import { storageRoutes } from './storage/route'
 import { teamRoutes } from './teams/route'
 import { userRoutes } from './users/route'
 import { createWebhookFanout } from './webhooks/dispatch'
-import { parseRedisUrl } from './workers'
 
 /** Keep Elysia-specific composition in one module while feature code remains plugin-oriented. */
 
 // Translation assets live at the monorepo root (see docs/api/_i18n.md).
-const translationsDir = new URL('../../../assets/locale/translations', import.meta.url).pathname
 const i18nLoader = new TranslationLoader(translationsDir)
 const localeOptions = {
   loader: i18nLoader,
@@ -65,11 +64,15 @@ const geoip = await createGeoIP()
 const avatars = createAvatarService()
 
 // Share the platform schema used by the platform app through one registry boundary.
-const platformDb = await createPlatformDatabase({
-  driver: config.platform.dbDriver,
-  url: config.platform.dbUrl,
-  encryptionKey: config.platform.tenantEncryptionKey,
-})
+// During the AOT dry-run the build only registers routes — handlers never
+// execute, so real platform persistence is skipped entirely.
+const platformDb = inAotBuild()
+  ? ({} as never)
+  : await createPlatformDatabase({
+      driver: config.platform.dbDriver,
+      url: config.platform.dbUrl,
+      encryptionKey: config.platform.tenantEncryptionKey,
+    })
 const projectRegistry = new ProjectRegistry(platformDb)
 const keyRegistry = new KeyRegistry(platformDb)
 

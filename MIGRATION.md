@@ -631,6 +631,27 @@ onDatabaseCreated` composition hook). Redesigns over v1 recorded:
   `next/`: frozen install, lint (80 warnings / 0 errors), typecheck (0),
   `bun test` (531 pass / 0 fail incl. 7 live DB-route tests),
   `git diff --check` clean.
+- [x] Post-cutover restructure (2026-11-01): the `next/` nesting was flattened
+  to the repo root and the `@nuvix/*` platform libraries (db, cache, pg,
+  storage, messaging) switched from local `file:` sibling links to
+  **published npm packages** (verified byte-identical to the sibling
+  dists; `@nuvix/telemetry` declared in consumers for cache's optional
+  peer; `@nuvix/storage@2.0.1` picked up). `@nuvix/pg-meta` stays a
+  workspace package. Fresh-clone gate now needs NO sibling checkouts.
+- [x] Elysia `2.0.0-rc.1` upgrade + AOT compilation (2026-11-01): migrated the
+  error plugins from the removed `.error('global', …)` scope argument to
+  `.onError(Class, handler)` applied directly to the consuming app via
+  transforms (plugin-instance hooks never reach composed routes in rc);
+  renamed `.request`/`.afterResponse` hooks to `.onRequest`/
+  `.onAfterResponse`. Adopted Elysia 2 AOT compilation: both entries
+  export `app`, runtime side-effects (HTTP server, queue workers,
+  platform persistence) are guarded by `inAotBuild()`, asset paths
+  centralized in `apps/server/src/assets.ts` (depth-stable across src/
+  and dist/), BullMQ runs as in-process handler functions with lazy
+  worker loading, and `build.ts` compiles either app to
+  `apps/<app>/dist` (verified live: bundle serves /v2/health, RFC 9457
+  errors, and asset-backed avatar renders). `typebox@1.3.19` promoted to
+  a direct dependency (the AOT manifest emits bare `typebox` imports).
 
 ---
 

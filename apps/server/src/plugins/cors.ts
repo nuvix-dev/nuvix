@@ -31,7 +31,7 @@ export function cors(options: CorsOptions) {
 
   return (app: Elysia) =>
     app
-      .request(({ request, set }) => {
+      .onRequest(({ request, set }) => {
         const origin = request.headers.get('origin')
         if (!origin) return
 

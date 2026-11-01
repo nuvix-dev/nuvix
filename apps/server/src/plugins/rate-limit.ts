@@ -59,7 +59,7 @@ export function rateLimit(options: RateLimitOptions) {
   const bucket = options.bucket ?? 'api'
 
   return (app: Elysia) =>
-    app.request(async ({ request, set }) => {
+    app.onRequest(async ({ request, set }) => {
       const key = `${bucket}:${options.keyBy?.(request) ?? clientIp(request)}`
       const [count, resetAt] = await store.increment(key, options.windowMs)
       const remaining = Math.max(0, options.max - count)

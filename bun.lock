@@ -6,7 +6,8 @@
       "name": "nuvix-next",
       "dependencies": {
         "@elysia/openapi": "2.0.0-beta.1",
-        "elysia": "2.0.0-beta.6",
+        "elysia": "2.0.0-rc.1",
+        "typebox": "1.3.19",
       },
       "devDependencies": {
         "@biomejs/biome": "^2.4.10",
@@ -27,7 +28,7 @@
         "@nuvix/telemetry": "^1.0.2",
         "@nuvix/utils": "workspace:*",
         "bullmq": "^6.3.8",
-        "elysia": "2.0.0-beta.6",
+        "elysia": "2.0.0-rc.1",
       },
     },
     "apps/server": {
@@ -41,12 +42,12 @@
         "@nuvix/i18n": "workspace:*",
         "@nuvix/messaging": "^2.0.0",
         "@nuvix/pg": "^2.0.0",
-        "@nuvix/storage": "^2.0.0",
+        "@nuvix/storage": "^2.0.1",
         "@nuvix/telemetry": "^1.0.2",
         "@nuvix/utils": "workspace:*",
         "@resvg/resvg-js": "^2.6.2",
         "bullmq": "^6.3.8",
-        "elysia": "2.0.0-beta.6",
+        "elysia": "2.0.0-rc.1",
         "handlebars": "^4.7.8",
         "ioredis": "^6.0.0",
         "maxmind": "^5.0.6",
@@ -167,7 +168,7 @@
 
     "@nuvix/server": ["@nuvix/server@workspace:apps/server"],
 
-    "@nuvix/storage": ["@nuvix/storage@2.0.0", "", {}, "sha512-fdARQ9gD6NNbJaJRt0RyZo5+0ydf1Mi4TSAakFHYvs9mytB++miJI2L1UGVpo7AclQFIO+x8dVMBd/VXNiRK2Q=="],
+    "@nuvix/storage": ["@nuvix/storage@2.0.1", "", {}, "sha512-FF1d/a1vgeKLTl7p6VzBtPJKa6wc4CcN+k86iGq5KvpLsGH1c9cePZfGXSCYqric+MdT8jdtMH8m72Nyjmri/A=="],
 
     "@nuvix/telemetry": ["@nuvix/telemetry@1.0.2", "", { "dependencies": { "@opentelemetry/api": "^1.9.0", "@opentelemetry/exporter-otlp-http": "^0.26.0", "@opentelemetry/sdk-metrics": "^2.1.0" } }, "sha512-jjPjN/eYLOHbmqCS7v10ux/29hQELwnW8XRcptInbV+jmt7v1Vn53pmhbkH6oq/g9V5ZACRPmlks7o6bSPNopQ=="],
 
@@ -301,11 +302,11 @@
 
     "dijkstrajs": ["dijkstrajs@1.0.3", "", {}, "sha512-qiSlmBq9+BCdCA/L46dw8Uy93mloxsPSbwnm5yrKn2vMPiy8KyAskTF6zuV/j5BMsmOGZDPs7KjU+mjb670kfA=="],
 
-    "elysia": ["elysia@2.0.0-beta.6", "", { "dependencies": { "deuri": "^3.0.0", "memoirist": "1.2.2" }, "peerDependencies": { "@types/bun": ">= 1.3.0", "exact-mirror": ">= 1.2.2", "openapi-types": ">= 12.0.0", "typebox": ">= 1.3.0", "typescript": ">= 5.7.0" }, "optionalPeers": ["@types/bun", "openapi-types", "typescript"] }, "sha512-MUZ2Vd36dQGGqjp5y9c5OQjbWJUU6S3BVE97DcwnqBmVv0wbLSX90DwQZ7Dp3vRoHZJFqEgi9TMFvm8A6bu9Mg=="],
+    "elysia": ["elysia@2.0.0-rc.1", "", { "dependencies": { "deuri": "^3.0.0", "memoirist": "1.2.3" }, "peerDependencies": { "@types/bun": ">= 1.3.0", "exact-mirror": ">= 1.2.6", "openapi-types": ">= 12.0.0", "typebox": ">= 1.3.0", "typescript": ">= 5.7.0" }, "optionalPeers": ["@types/bun", "typescript"] }, "sha512-DBfUtnQvCuR+kUNGZZV/qsCUKaTcpVa25rhVcpWhpqr7lsmpnoAEQqHf9HjCUYzpclejETpwQTgy7eabgtryvg=="],
 
     "emoji-regex": ["emoji-regex@8.0.0", "", {}, "sha512-MSjYzcWNOA0ewAHpz0MxpYFvwg6yjy1NG3xteoqz644VCo/RPgnr1/GGt+ic3iJTzQ8Eu3TdM14SawnVUmGE6A=="],
 
-    "exact-mirror": ["exact-mirror@1.2.4", "", { "peerDependencies": { "typebox": ">= 1.1.0" }, "optionalPeers": ["typebox"] }, "sha512-lNLw824fkSqcHSxNIh8skA7gHO5X5Q8UUllXuRedtJCU8cJwKOT3XPQY8GfhveatFMO4nCK8+oEXsLGErMWC/Q=="],
+    "exact-mirror": ["exact-mirror@1.2.6", "", { "peerDependencies": { "typebox": ">= 1.1.0" }, "optionalPeers": ["typebox"] }, "sha512-EGx81nhFP1GE94coJsz94FLzdxWrnkNCJdfdX44rbd7pVcAotWzDlBJUC7yy1Ae7d7dYKpoTtZ1jCAIz2IVtfA=="],
 
     "find-up": ["find-up@4.1.0", "", { "dependencies": { "locate-path": "^5.0.0", "path-exists": "^4.0.0" } }, "sha512-PpOwAdQ/YlXQ2vj8a3h8IipDuYRi3wceVQQGYWxNINccq40Anw7BlsEXCMbt1Zt+OLA6Fq9suIpIWD0OsnISlw=="],
 
@@ -329,7 +330,7 @@
 
     "maxmind": ["maxmind@5.0.7", "", { "dependencies": { "mmdb-lib": "3.0.3", "tiny-lru": "13.0.0" } }, "sha512-+w637dwfv01MKjkrp4sKDBTEKHLPvWLYb647QTjiz3wG/teSemqudIKNShaS6eqZ7ffxC9oZlQQgIqY0rGojog=="],
 
-    "memoirist": ["memoirist@1.2.2", "", {}, "sha512-d5b1l7vth7Iim1z4z+GHQtxs2sQvcsvDn928FdJW7dPFu3ChIb66xpaA/QF1VKKEiskScuB6RXramHpXF35ZEw=="],
+    "memoirist": ["memoirist@1.2.3", "", {}, "sha512-6wkntadi3vDUBX6y5UDuLsLr+hsojMkaapsZyGGzP6rZoYD6K/pAbrp1cZki24jMewoca3KofRYO0T6EEeHNVg=="],
 
     "minimist": ["minimist@1.2.8", "", {}, "sha512-2yyAR8qBkN3YuheJanUpWC5U3bb5osDywNB8RzDVlDwDHbocAJveqqj1u8+SVD7jkWT4yvsHCpWqqWqAxb0zCA=="],
 

@@ -1,4 +1,4 @@
-import { Elysia, problem } from 'elysia'
+import { type Elysia, problem } from 'elysia'
 import { AppError } from '../shared/errors'
 
 /**
@@ -6,13 +6,14 @@ import { AppError } from '../shared/errors'
  *
  * No i18n here (unlike `apps/server`'s equivalent plugin) — the platform app
  * is an internal control plane, not a localized end-user surface; `detail`
- * is always the English fallback. NOTE (elysia@2.0.0-beta.6): error handlers
- * registered inside a plugin must use `'global'` scope or they never reach
- * the consuming instance's routes.
+ * is always the English fallback. NOTE (elysia@2.0.0-rc.1): the handler is
+ * applied directly to the consuming app via a transform — error handlers
+ * registered inside a plugin instance never reach the consuming instance's
+ * routes (the beta.6 `'global'` scope argument no longer exists).
  */
 /** Register the single global error handler used by every platform route. */
 export function problemErrors() {
-  return new Elysia({ name: 'problem-errors' }).error('global', AppError, ({ error, set }) => {
+  const handler = ({ error, set }: { error: AppError; set: any }) => {
     set.status = error.status
     return problem(error.status, {
       type: error.fields.type,
@@ -22,5 +23,7 @@ export function problemErrors() {
       instance: error.message,
       errors: error.fields.errors,
     })
-  })
+  }
+
+  return (app: Elysia) => app.onError(AppError, handler)
 }

@@ -2,8 +2,7 @@
 
 import { Elysia, t } from 'elysia'
 import Handlebars from 'handlebars'
-
-const viewsDir = new URL('../../../assets/views', import.meta.url).pathname
+import { viewsDir } from './assets'
 
 let cachedLayout: HandlebarsTemplateDelegate | undefined
 let cachedSuccess: HandlebarsTemplateDelegate | undefined

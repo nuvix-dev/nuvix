@@ -5,8 +5,7 @@ import { EmailHelper } from '@nuvix/core/mail'
 import { type RedirectRules, redirectRules, validateRedirectURL } from '@nuvix/core/oauth'
 import type { Session } from '@nuvix/db'
 import { Doc, ID, type IEntity } from '@nuvix/db'
-
-const TEMPLATES_DIR = new URL('../../../../assets/locale/templates', import.meta.url).pathname
+import { mailTemplatesDir } from '../assets'
 
 const systemSmtp = {
   host: 'system.smtp.test',
@@ -32,7 +31,7 @@ const projectWithSmtp: ProjectMailInfo = {
   },
 }
 
-const helper = new EmailHelper(TEMPLATES_DIR, systemSmtp)
+const helper = new EmailHelper(mailTemplatesDir, systemSmtp)
 
 describe('redirect rules', () => {
   let rules: RedirectRules

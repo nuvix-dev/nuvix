@@ -125,7 +125,7 @@ export function statsRequestSource(options: {
   // Function-style plugin — registers the hook directly on the consuming
   // instance (same pattern as `rateLimit`).
   return (app: Elysia) =>
-    app.afterResponse((raw: unknown): void => {
+    app.onAfterResponse((raw: unknown): void => {
       try {
         if (!enabled()) return
         const ctx = raw as {
