@@ -2,7 +2,7 @@
 
 ## Mission
 
-Own the Bun-native v2 backend in `next/`. Own implementation, tests, and
+Own the Bun-native v2 backend. Own implementation, tests, and
 documentation together. Make routine implementation decisions
 autonomously: do not pause for naming, file layout, refactoring, test fixes,
 error mapping, or selection of the next documented slice.
@@ -15,26 +15,29 @@ beyond the completed Phase 9 cutover.
 
 ## Repository boundaries
 
-- `next/**` is the workspace — all code, docs, and tests live there.
-- The legacy v1 monorepo root (`apps/**`, `libs/**`, root configs) was
-  deleted in the Phase 9 cutover; consult git history for legacy behavior
-  only when a contract references it.
+- The repo root IS the workspace: `apps/`, `packages/`, `docs/`, `assets/`,
+  `test/` live at the root (the `next/` nesting was flattened away after the
+  Phase 9 cutover).
+- The legacy v1 monorepo root was deleted in the Phase 9 cutover; consult
+  git history for legacy behavior only when a contract references it.
 - Preserve unrelated worktree changes. Never reset, clean, or broadly stage.
 - `.tmp/**` and `thoughts/**` are scratch/history, not authoritative project
   status and not commit targets.
-- `/home/ubuntu/{cache,database,pg-ts,storage,messaging}` are independent
-  sibling repositories. Change one only when a defect belongs there; validate,
-  commit, and push it separately before updating Nuvix.
+- `@nuvix/*` platform libraries (db, cache, pg, storage, messaging) are
+  consumed as **published npm packages**, not local `file:` links. A defect
+  belonging in one of their upstream repos (`nuvix-dev/{database,cache,
+  pg-ts,storage,messaging}`) is fixed there: validate, commit, push, publish
+  a new version (CI publishes on GitHub Release; `npm publish` needs the
+  maintainer's browser-auth token), then bump the dependency here.
 
 ## Read before implementing a slice
 
-1. `next/MIGRATION.md`
-2. `next/docs/api/_conventions.md`
-3. `next/docs/architecture/integrations.md`
-4. Relevant ADRs in `next/docs/architecture/decisions/`
-5. The relevant contract in `next/docs/api/`
-6. Adjacent v2 source and tests
-7. Git history of the deleted legacy root, only when a contract references
+1. `MIGRATION.md`
+2. `docs/api/_conventions.md`
+3. Relevant ADRs in `docs/architecture/decisions/` (when present)
+4. The relevant contract in `docs/api/`
+5. Adjacent v2 source and tests
+6. Git history of the deleted legacy root, only when a contract references
    legacy behavior
 
 Current user instructions and amended decisions override stale prose. When
@@ -79,16 +82,16 @@ slice instead of asking permission or creating another status document.
   edits, or `node_modules` edits. The existing Elysia OpenAPI patch is the only
   approved exception.
 
-## Sibling packages
+## Platform library upgrades
 
-Follow `next/docs/architecture/integrations.md`. Build a changed sibling before
-validating `next`. Run `bun install` in `next` when a sibling manifest or
-dependency graph changes, commit `next/bun.lock`, and verify the frozen install.
+`@nuvix/*` libraries arrive as published npm packages. To pick up a new
+upstream release, bump the range in the consuming manifests, run
+`bun install` (commit `bun.lock`), and verify the frozen install.
 
 ## Validation
 
 Use focused tests during implementation. Before completing a substantial
-slice, run from `next/`:
+slice, run from the repo root:
 
 ```bash
 bun install --frozen-lockfile
@@ -104,11 +107,12 @@ as integration coverage.
 
 ## Git
 
-- Work on `v2-rewrite` for routine migration work.
-- Stage exact paths, normally `next/**` plus this guide when it changes.
+- Work on `v2-rewrite` for routine work.
+- Stage exact paths, normally this guide plus the slice's files.
 - Use atomic Conventional Commits and push each validated logical slice.
 - Never force-push or rewrite shared history.
-- Commit sibling-package fixes in their own repositories first.
+- Commit upstream-library fixes in their own repositories first, publish, then
+  bump here.
 
 ## Ask the user only when
 

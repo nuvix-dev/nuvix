@@ -21,10 +21,11 @@
     "test": "bun test"
   },
   "dependencies": {
-    "@nuvix/cache": "file:../../../../cache",
-    "@nuvix/db": "file:../../../../database",
-    "@nuvix/pg": "file:../../../../pg-ts",
+    "@nuvix/cache": "^2.0.0",
+    "@nuvix/db": "^1.0.1",
+    "@nuvix/pg": "^2.0.0",
     "@nuvix/pg-meta": "workspace:*",
+    "@nuvix/telemetry": "^1.0.2",
     "@nuvix/utils": "workspace:*",
     "bullmq": "^6.3.8",
     "handlebars": "^4.7.8"

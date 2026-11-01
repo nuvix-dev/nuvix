@@ -10,7 +10,7 @@
     "./phrase": "./src/phrase.ts"
   },
   "dependencies": {
-    "@nuvix/pg": "file:../../../../pg-ts"
+    "@nuvix/pg": "^2.0.0"
   },
   "scripts": {
     "test": "bun test"

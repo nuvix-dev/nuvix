@@ -31,7 +31,6 @@ One platform. Self-host anywhere. Built for scale.
 Most apps need the same backend building blocks: auth, a database, file storage, and messaging. The usual answer is four different vendors, four dashboards, and four billing pages before you write a single line of product code.
 
 **Nuvix replaces all of that.**
-
 - One unified backend
 - Single permission model
 - Fully self-hostable
@@ -45,32 +44,37 @@ Stop managing multiple services. Start building products.
 ## Core Features
 
 ### Authentication
+
 Multi-tenant auth with user accounts, sessions, teams, and role-based access. Security isn't a config option—it's the default.
 
 **Includes:** OAuth/Social login, MFA, session management, team roles, permissions.
 
 ### Database
+
 PostgreSQL under the hood. Three schema modes so you pick the right fit for each use case:
 
-| Mode | Best For | What You Get |
-|------|----------|--------------|
-| **Document** | Prototyping, MVPs | NoSQL-style flexibility, no SQL needed |
-| **Managed** | Production apps | Auto-generated CRUD + Row-Level Security policies |
-| **Unmanaged** | Custom logic | Raw SQL, full control, no guardrails |
+| Mode          | Best For          | What You Get                                      |
+| ------------- | ----------------- | ------------------------------------------------- |
+| **Document**  | Prototyping, MVPs | NoSQL-style flexibility, no SQL needed            |
+| **Managed**   | Production apps   | Auto-generated CRUD + Row-Level Security policies |
+| **Unmanaged** | Custom logic      | Raw SQL, full control, no guardrails              |
 
 Mix and match across the same project. All three share one unified API.
 
 ### Storage
+
 Permission-aware file system with S3-compatible drivers or local storage. The same permission rules that govern your database govern your files.
 
 **Includes:** Local & S3-compatible storage, permission inheritance, signed URLs, CDN-ready.
 
 ### Messaging
+
 Email, SMS, and push notifications through a single API. No need to wire up SendGrid, Twilio, and Firebase separately.
 
 **Includes:** Email templates, SMS delivery, push notifications, delivery tracking, scheduling.
 
 ### AI-Ready
+
 Purpose-built for AI products. Secure data layers, granular permissions, session management, and file handling for ML pipelines. Store embeddings, manage context, enforce access rules on every request.
 
 ---
@@ -109,10 +113,7 @@ docker compose up -d
 
 ### Local Development
 
-The backend lives in `next/` (Bun-native v2):
-
 ```bash
-cd next
 bun install
 bun run dev     # Start dev server with auto-reload
 bun run test    # Run full test suite
@@ -140,16 +141,15 @@ bun add @nuvix/client
 ### Quick Usage
 
 ```typescript
-import { Client } from '@nuvix/client';
+import { Client } from '@nuvix/client'
 
-const nx = new Client()
-    .setEndpoint('https://api.nuvix.in/v1')
+const nx = new Client().setEndpoint('https://api.nuvix.in/v1')
 
 // Authentication
-const session = await nx.account.createAnonymousSession();
+const session = await nx.account.createAnonymousSession()
 
 // Database queries
-const todos = await nx.db.from('todos').select('*');
+const todos = await nx.db.from('todos').select('*')
 ```
 
 ---
@@ -175,7 +175,6 @@ nuvix/
 ## Security Model
 
 Security isn't an afterthought. Every request in Nuvix passes through the same permission pipeline.
-
 - **Managed Schemas** - Auto-generate Row-Level Security policies. You don't write them by hand.
 - **Project Isolation** - Tenant data is separated at the database level.
 - **Self-Hosted** - Your data never leaves your infrastructure.
@@ -188,7 +187,6 @@ Security isn't an afterthought. Every request in Nuvix passes through the same p
 ## Roadmap
 
 Exciting features coming soon:
-
 - [ ] Realtime subscriptions (WebSocket support)
 - [ ] Edge functions (Deploy functions at the edge)
 - [ ] Python SDK
@@ -202,7 +200,6 @@ Have an idea? [Open an issue](https://github.com/nuvix-dev/nuvix/issues) or [joi
 ## Contributing
 
 We welcome contributions. Whether it's code, docs, bug reports, or ideas—we'd love your input.
-
 1. Read the [Contributing Guide](CONTRIBUTING.md)
 2. Browse [open issues](https://github.com/nuvix-dev/nuvix/issues)
 3. Join our [Discord community](https://discord.gg/2fWv2T6RzK)
@@ -221,12 +218,12 @@ We welcome contributions. Whether it's code, docs, bug reports, or ideas—we'd 
 
 ## Resources & Links
 
-| Resource | Purpose |
-|----------|---------|
-| [Documentation](https://nuvix-docs.vercel.app) | Guides, API reference, tutorials, examples |
-| [Console](https://github.com/nuvix-dev/console) | Admin dashboard (self-hosted or managed) |
-| [Discord Community](https://discord.gg/rHKCXu7cYW) | Get help, ask questions, share ideas |
-| [X / Twitter](https://x.com/nuvix_dev) | Latest updates and announcements |
+| Resource                                           | Purpose                                    |
+| -------------------------------------------------- | ------------------------------------------ |
+| [Documentation](https://nuvix-docs.vercel.app)     | Guides, API reference, tutorials, examples |
+| [Console](https://github.com/nuvix-dev/console)    | Admin dashboard (self-hosted or managed)   |
+| [Discord Community](https://discord.gg/rHKCXu7cYW) | Get help, ask questions, share ideas       |
+| [X / Twitter](https://x.com/nuvix_dev)             | Latest updates and announcements           |
 
 ---
 

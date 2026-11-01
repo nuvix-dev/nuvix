@@ -11,10 +11,11 @@
   },
   "dependencies": {
     "@elysia/eden": "2.0.0-beta.5",
-    "@nuvix/cache": "file:../../../../cache",
+    "@nuvix/cache": "^2.0.0",
     "@nuvix/core": "workspace:*",
-    "@nuvix/db": "file:../../../../database",
+    "@nuvix/db": "^1.0.1",
     "@nuvix/pg-meta": "workspace:*",
+    "@nuvix/telemetry": "^1.0.2",
     "@nuvix/utils": "workspace:*",
     "bullmq": "^6.3.8",
     "elysia": "2.0.0-beta.6"

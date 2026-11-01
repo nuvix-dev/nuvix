@@ -12,7 +12,7 @@ jobs:
       contents: read
       packages: write
       id-token: write # Required for signing/attestations in 2026
-    
+
     strategy:
       fail-fast: false
       matrix:
@@ -63,8 +63,8 @@ jobs:
       - name: Build and Push
         uses: docker/build-push-action@v6 # Updated to v6 for 2026 features
         with:
-          context: ./next
-          file: ./next/Dockerfile
+          context: .
+          file: ./Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           build-args: |

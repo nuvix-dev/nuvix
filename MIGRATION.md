@@ -4,8 +4,12 @@
 > **Scope**: Full rewrite of the Nuvix backend from NestJS/Fastify/Node to a
 > Bun-native stack built on Elysia (`elysia@next`). This is a **rewrite**, not
 > a mechanical migration.
-> **Location**: Everything lives in `next/`. Root monorepo stays untouched and
-> runnable until cutover, then it is deleted.
+> **Location**: Everything originally lived in `next/` while the legacy root
+> existed; after the Phase 9 cutover the workspace was flattened to the repo
+> root (`apps/`, `packages/`, `docs/`, `assets/`, `test/` at root) and the
+> `@nuvix/*` platform libraries switched from local `file:` sibling links to
+> published npm packages. Paths in historical sections below refer to the
+> old layout.
 
 ---
 
@@ -257,7 +261,6 @@ next/
 - [x] Error classes + `problemErrors` plugin mapping `AppError` → RFC-9457 (tested)
 
 **Elysia 2.0.0-beta.6 API notes** (verified against installed source, not docs):
-
 - `.onError` does NOT exist — error handling is `.error(ErrorClass, handler)` or `.error('global'|'plugin'|'local', Class, handler)`
 - Error handlers registered inside a plugin MUST use `'global'` scope or they silently don't propagate to the consuming instance
 - Native RFC-9457 support: built-in `problem(status, detail)` helper; framework already emits problem+json for 404/validation/etc. Built-in errors: `NotFound`, `ParseError`, `ValidationError` (422), `InternalServerError`, all extending `ElysiaError` with `problemType`/`problemTitle`
@@ -273,7 +276,6 @@ next/
 - [x] OpenAPI docs via `@elysia/openapi@2.0.0-beta.1` (D10) — spec at `/v2/openapi/json` (typed from `t` schemas), Scalar UI at `/v2/openapi`. **Requires a Bun patch** (`patches/@elysia+openapi@2.0.0-beta.1.patch`): the published bundle has broken relative `../node_modules/typebox` imports in its `gen` submodule; the patch stubs `Script` (only used by `fromTypes()`, which we don't use). Root `package.json` also carries `elysia` so the patched copy resolves it under Bun's isolated linker. Defaults differ from v1 plugin: spec path is `/openapi/json` (not `/openapi.json`), UI is Scalar (not Swagger).
 
 **Phase 1 notes (verified against elysia 2.0.0-beta.6 source):**
-
 - `onRequest` does NOT exist → the hook is `.request(fn)` (matches §2 table, but confirmed in practice: this is exactly why `@elysiajs/cors@1.x` crashes)
 - `derive` inside a plugin needs explicit scope to cross `.use()` boundaries: `.derive('plugin', fn)`; local-scoped derive silently doesn't propagate (same class of bug as error handlers needing `'global'`)
 - **Plugin factories MUST be invoked before `.use()`**: `.use(plugin(opts))` works, but `.use(plugin)` (bare function reference) silently drops the returned instance's `'global'`-scoped error handlers — requests fall through to default error handling. Mutator-style plugins (`fn(app)` that calls `.request()`/`.derive()` on the passed instance) are unaffected. Verified empirically against 2.0.0-beta.6
@@ -310,22 +312,22 @@ next/
 - [x] MFA: hand-rolled RFC-6238 TOTP + recovery codes (zero external dependencies)
 - [x] Implement account/sessions/mfa/recovery/identities/targets services on `@nuvix/db`, sharing the users/sessions/tokens/authenticators/challenges/identities/targets collection family with the Users slice (Phase 3)
 - [x] OAuth2 account flows (parity slice, post-audit): Bun-native port of the
-      legacy provider abstraction (`packages/core/src/oauth` — abstract
-      provider + google/apple, ES256 client-secret JWT for Apple on
-      `crypto.subtle`, static registry), full begin → callback flow
-      (`GET /account/sessions/oauth2/:provider`,
-      `GET|POST /account/sessions/oauth2/:provider/callback`,
-      `GET /account/tokens/oauth2/:provider`) with session upgrade, identity
-      upsert/linking, user-count + auth-duration project settings (via
-      `ProjectRegistry.getOAuthProviders/getPlatforms/getAuthSettings`),
-      platform-validated redirect URLs (own relay pages exempt — v1 bug
-      fix), httpOnly session cookie (`nx_<name>`, matches the tenant
-      context's cookie parsing), unversioned relay pages
-      (`/auth/oauth2/{success,failure}` on Handlebars per D9), provider-token
-      rotation on `PATCH /account/sessions/:id` (v1 refresh-token overwrite
-      bug fixed), and `TokenType` realigned 1:1 to legacy values (public
-      `type` field parity; OAUTH2=7). 23 tests (unit + treaty route flows
-      with a mocked provider wire)
+  legacy provider abstraction (`packages/core/src/oauth` — abstract
+  provider + google/apple, ES256 client-secret JWT for Apple on
+  `crypto.subtle`, static registry), full begin → callback flow
+  (`GET /account/sessions/oauth2/:provider`,
+  `GET|POST /account/sessions/oauth2/:provider/callback`,
+  `GET /account/tokens/oauth2/:provider`) with session upgrade, identity
+  upsert/linking, user-count + auth-duration project settings (via
+  `ProjectRegistry.getOAuthProviders/getPlatforms/getAuthSettings`),
+  platform-validated redirect URLs (own relay pages exempt — v1 bug
+  fix), httpOnly session cookie (`nx_<name>`, matches the tenant
+  context's cookie parsing), unversioned relay pages
+  (`/auth/oauth2/{success,failure}` on Handlebars per D9), provider-token
+  rotation on `PATCH /account/sessions/:id` (v1 refresh-token overwrite
+  bug fixed), and `TokenType` realigned 1:1 to legacy values (public
+  `type` field parity; OAUTH2=7). 23 tests (unit + treaty route flows
+  with a mocked provider wire)
 
 ### Phase 5 — Storage + Messaging + Webhooks
 
@@ -345,47 +347,46 @@ next/
 > per-tenant Postgres to run schema CRUD against (D20), and that DB only
 > exists once the platform app can provision one — so tenant provisioning +
 > the platform's own control-plane persistence come first.
-
 - [x] Tenant provisioning primitives (D20, D37): `TenantProvisioner` interface,
-      `DockerTenantProvisioner` (real `nuvix/postgres:18.1` containers via
-      `Bun.spawn`, live-tested), `FakeTenantProvisioner` for unit/route tests (`packages/core/src/tenants/`)
+  `DockerTenantProvisioner` (real `nuvix/postgres:18.1` containers via
+  `Bun.spawn`, live-tested), `FakeTenantProvisioner` for unit/route tests (`packages/core/src/tenants/`)
 - [x] Platform persistence bootstrap (D38): `@nuvix/db` filter registry,
-      `nuvix-db` generated types + `Entities` augmentation, schema-driven
-      bootstrap supporting SQLite (default) or PostgreSQL
-      (`apps/platform/src/registry/`)
+  `nuvix-db` generated types + `Entities` augmentation, schema-driven
+  bootstrap supporting SQLite (default) or PostgreSQL
+  (`apps/platform/src/registry/`)
 - [x] Projects vertical slice: contract (`docs/api/platform.md`), `ProjectService`
-      (create/list/get/delete wired to the provisioner), routes, unit + route
-      tests (`apps/platform/src/modules/projects/`)
+  (create/list/get/delete wired to the provisioner), routes, unit + route
+  tests (`apps/platform/src/modules/projects/`)
 - [x] Publishable project selectors (D40): unique `publishableKey` generated
-      during project creation, persisted/indexed by the platform registry, and
-      returned to operators for project-facing API configuration
+  during project creation, persisted/indexed by the platform registry, and
+  returned to operators for project-facing API configuration
 - [x] Shared control-plane registry boundary (`@nuvix/core/platform`): one
-      platform schema/bootstrap source for both apps, plus narrow active-project
-      lookup by publishable key; tenant targets stay encrypted at rest and are
-      never exposed to routes
+  platform schema/bootstrap source for both apps, plus narrow active-project
+  lookup by publishable key; tenant targets stay encrypted at rest and are
+  never exposed to routes
 - [x] Tenant resource lifecycle (D41): `TenantResource` (one Bun `SQL` +
-      `@nuvix/db` `Database`, closed exactly once) and `TenantResourcePool`
-      (bounded LRU keyed by `ResolvedProject`) — the per-tenant connection
-      layer the server app's context chain and Phase 3's database service
-      will resolve through (`packages/core/src/tenants/resource.ts`, `pool.ts`)
+  `@nuvix/db` `Database`, closed exactly once) and `TenantResourcePool`
+  (bounded LRU keyed by `ResolvedProject`) — the per-tenant connection
+  layer the server app's context chain and Phase 3's database service
+  will resolve through (`packages/core/src/tenants/resource.ts`, `pool.ts`)
 - [x] Platform auth (operator accounts/keys) — blocking gap before any
-      non-local deployment, tracked in `docs/api/platform.md`'s open questions
+  non-local deployment, tracked in `docs/api/platform.md`'s open questions
 - [x] Background provisioning (Phase 6 job infra): `POST /projects` is
-      now two-phase — container reservation (fast) stays inline so the
-      record carries its required container/volume handles and the
-      encrypted tenant `target` (the provisioner is NOT idempotent: a
-      second `provision` call would collide on the container name), then
-      the slow tail (readiness wait + auth-schema bootstrap) runs on the
-      PROJECTS queue (`apps/platform/src/workers/projects.processor.ts`,
-      3 attempts / exponential backoff) flipping the record to `active`
-      or `error`+`errorMessage` on final failure. `ProjectService` falls
-      back to inline provisioning when no Redis is configured (tests /
-      zero-infra dev). Platform runtime starts the worker in-process
-      with graceful shutdown (`apps/platform/src/workers/index.ts`);
-      `parseRedisUrl` moved to `@nuvix/core/queues` (shared). v1's
-      PROJECTS queue registration was vestigial (no processor — v1
-      provisioned synchronously), so this is a v2 improvement, not
-      parity. `docs/api/platform.md` updated (was PROPOSED/stale).
+  now two-phase — container reservation (fast) stays inline so the
+  record carries its required container/volume handles and the
+  encrypted tenant `target` (the provisioner is NOT idempotent: a
+  second `provision` call would collide on the container name), then
+  the slow tail (readiness wait + auth-schema bootstrap) runs on the
+  PROJECTS queue (`apps/platform/src/workers/projects.processor.ts`,
+  3 attempts / exponential backoff) flipping the record to `active`
+  or `error`+`errorMessage` on final failure. `ProjectService` falls
+  back to inline provisioning when no Redis is configured (tests /
+  zero-infra dev). Platform runtime starts the worker in-process
+  with graceful shutdown (`apps/platform/src/workers/index.ts`);
+  `parseRedisUrl` moved to `@nuvix/core/queues` (shared). v1's
+  PROJECTS queue registration was vestigial (no processor — v1
+  provisioned synchronously), so this is a v2 improvement, not
+  parity. `docs/api/platform.md` updated (was PROPOSED/stale).
 - [x] Platform API keys slice: CRUD routes (`/projects/:projectId/keys`), 1:1 legacy schema with secret generation `standard_<hex>`
 - [x] Client platforms slice: CRUD routes (`/projects/:projectId/platforms`), 1:1 legacy schema supporting web, flutter, android, apple
 - [x] Auth settings slice: routes under `/projects/:projectId/auth` (session-alerts, limit, duration, password-history, password-dictionary, personal-data, max-sessions, mock-numbers, memberships-privacy, auth methods)
@@ -403,203 +404,203 @@ next/
 - [x] Decomposed domain route architecture: all domain modules promoted to `apps/server/src/` top level (`account/`, `users/`, `teams/`, `storage/`, `messaging/`, `database/`, `schemas/`), broken down into granular subdomain routes with complete OpenAPI schema detail metadata (`summary`, `description`, `tags`, parameter & query documentation)
 - [x] Full API surface audit vs `docs/api/*` (audited all endpoints across account, teams, users, database schemas, avatars, locale, platform, and storage/messaging)
 - [x] Parity batch (post-audit): admin identities endpoints
-      (`GET /users/identities`, `DELETE /users/identities/:identityId` —
-      v1 parity, contract §users.md already specified them) and the
-      `timestamptz` attribute-create alias (v1 path parity)
+  (`GET /users/identities`, `DELETE /users/identities/:identityId` —
+  v1 parity, contract §users.md already specified them) and the
+  `timestamptz` attribute-create alias (v1 path parity)
 - [x] Session metadata parity: every session-creation path (email,
-      anonymous, token, admin-created) now records the caller IP
-      (proxy-aware `requestIp`) and UA-derived detector fields
-      (`osCode/osName/osVersion`, `client*`, `device*` — v1 recorded these;
-      v2 sessions were missing them entirely). Shared `Detector` port
-      (`utils/detector.ts` on `ua-parser-js`) + `sessionDetectorFields`
-      helper.
+  anonymous, token, admin-created) now records the caller IP
+  (proxy-aware `requestIp`) and UA-derived detector fields
+  (`osCode/osName/osVersion`, `client*`, `device*` — v1 recorded these;
+  v2 sessions were missing them entirely). Shared `Detector` port
+  (`utils/detector.ts` on `ua-parser-js`) + `sessionDetectorFields`
+  helper.
 - [x] Audit subsystem (Phase 6 follow-through): `audit` collection added to
-      the tenant auth schema (1:1 with `@nuvix/audit`), Bun-native
-      `AuditService` (`packages/core/src/audit`), real audits worker
-      (batched writes: 5000 items / 3s, tenant resolution via
-      `ProjectRegistry.getProjectTarget` + `TenantResourcePool`), the
-      `auditAfter()` per-route emission hook (v1 `AuditHook` parity: resource
-      templates, sensitive-field stripping, actor extraction), queue runtime
-      activation (`QueueManager` + workers wired into composition/index with
-      graceful shutdown; Redis-optional in tests, fail-fast in prod), `GET
+  the tenant auth schema (1:1 with `@nuvix/audit`), Bun-native
+  `AuditService` (`packages/core/src/audit`), real audits worker
+  (batched writes: 5000 items / 3s, tenant resolution via
+  `ProjectRegistry.getProjectTarget` + `TenantResourcePool`), the
+  `auditAfter()` per-route emission hook (v1 `AuditHook` parity: resource
+  templates, sensitive-field stripping, actor extraction), queue runtime
+  activation (`QueueManager` + workers wired into composition/index with
+  graceful shutdown; Redis-optional in tests, fail-fast in prod), `GET
 /users/:userId/logs` (v1 parity with UA detection via a Detector port
-      on `ua-parser-js`, geoip country, locale country names). Auth-domain
-      routes now emit v1's audit events (user.create/update/delete,
-      session.create/update/delete(s), identity.delete, verification._,
+  on `ua-parser-js`, geoip country, locale country names). Auth-domain
+  routes now emit v1's audit events (user.create/update/delete,
+  session.create/update/delete(s), identity.delete, verification._,
       recovery._, challenge._, target._). Known v1 template bugs fixed
-      (delete routes audited `{res.$id}` against status-only responses →
-      `Unknown`; v2 uses `{user.$id}`/`{params.userId}`)
+  (delete routes audited `{res.$id}` against status-only responses →
+  `Unknown`; v2 uses `{user.$id}`/`{params.userId}`)
 - [x] Mails delivery (Phase 6 follow-through): real mails worker
-      (SMTP via `@nuvix/messaging`'s adapter over nodemailer — 3-attempt
-      exponential-backoff retry, permanent-failure short-circuit, batched
-      recipients, per-project `server` override → system `NUVIX_SMTP_*`
-      fallback), `EmailHelper`/`EmailBuilder` port
-      (`packages/core/src/mail`, cached Handlebars compile, project SMTP
-      resolution + custom `email.<templateKey>` overrides), mail composer
-      per-request capability (`apps/server/src/mail/composer.ts`:
-      `MailComposer.capabilityFor/redirectRulesFor`, injectable → disabled
-      in test composition), copy of v1 email templates
-      (`assets/locale/templates`), and the recovery / verification /
-      magic-URL / email-OTP flows actually sending mail (503
-      `general_smtp_disabled` off, redirect validation on). v1 bugs fixed
-      en route: recovery `url` is required (v1 DTO `@IsNotEmpty @IsUrl` —
-      v2 contract drift to optional corrected); verification tokens used
-      raw `type: 1` instead of the legacy `TokenType.VERIFICATION = 2`;
-      verification emails rendered `email-verification.tpl` (absent from
-      assets — latent v1 crash) → generic `email-inner-base.tpl`; inner
-      templates got `withData` only while `{{redirect}}` lives in
-      `withVariables` → empty `<a href>` links in every mailed
-      recovery/verification/magic email (v2 merges variables into the inner
-      render). `PhraseGenerator` ported (`@nuvix/utils/phrase`) restoring
-      v1's magic-URL `phrase` toggle.
+  (SMTP via `@nuvix/messaging`'s adapter over nodemailer — 3-attempt
+  exponential-backoff retry, permanent-failure short-circuit, batched
+  recipients, per-project `server` override → system `NUVIX_SMTP_*`
+  fallback), `EmailHelper`/`EmailBuilder` port
+  (`packages/core/src/mail`, cached Handlebars compile, project SMTP
+  resolution + custom `email.<templateKey>` overrides), mail composer
+  per-request capability (`apps/server/src/mail/composer.ts`:
+  `MailComposer.capabilityFor/redirectRulesFor`, injectable → disabled
+  in test composition), copy of v1 email templates
+  (`assets/locale/templates`), and the recovery / verification /
+  magic-URL / email-OTP flows actually sending mail (503
+  `general_smtp_disabled` off, redirect validation on). v1 bugs fixed
+  en route: recovery `url` is required (v1 DTO `@IsNotEmpty @IsUrl` —
+  v2 contract drift to optional corrected); verification tokens used
+  raw `type: 1` instead of the legacy `TokenType.VERIFICATION = 2`;
+  verification emails rendered `email-verification.tpl` (absent from
+  assets — latent v1 crash) → generic `email-inner-base.tpl`; inner
+  templates got `withData` only while `{{redirect}}` lives in
+  `withVariables` → empty `<a href>` links in every mailed
+  recovery/verification/magic email (v2 merges variables into the inner
+  render). `PhraseGenerator` ported (`@nuvix/utils/phrase`) restoring
+  v1's magic-URL `phrase` toggle.
 - [x] Messaging delivery (Phase 6 follow-through): real messaging worker —
-      v1 `sendExternalMessage` parity (target resolution from topics →
-      users → direct targets filtered by `providerType`; default enabled
-      provider fallback; per-`providerId` identifier grouping;
-      per-adapter batch chunking; expired push tokens mark their target;
-      v1 finalization semantics incl. `Unknown error` on zero deliveries;
-      deliveredTotal/deliveredAt + provider-tagged search index). Vendor
-      adapters constructed from provider credentials 1:1 with the current
-      `@nuvix/messaging` signatures (SMTP/Mailgun/Sendgrid, Twilio/
-      Telesign/TextMagic/Vonage/Msg91, FCM/APNS); per-vendor batch limits
-      mirrored from the adapter implementations. `MessagingJobData`
-      reshaped to v1's `{ projectId, message, scheduleId? }`; message
-      create/update now enqueue (`processing` → immediate, `scheduled` →
-      delayed BullMQ job with delay = scheduledAt − now; v1's internal
-      `schedules` collection + SchedulesHelper hook replaced by
-      BullMQ-native delayed jobs — same delivery semantics, one less
-      moving part, noted for the records). Worker runs on the tenant
-      auth-system session (messages live in the `auth` schema); email
-      cc/bcc target-id resolution ported; storage-backed attachments are
-      deferred (payload carries the references; boundary hook exists).
+  v1 `sendExternalMessage` parity (target resolution from topics →
+  users → direct targets filtered by `providerType`; default enabled
+  provider fallback; per-`providerId` identifier grouping;
+  per-adapter batch chunking; expired push tokens mark their target;
+  v1 finalization semantics incl. `Unknown error` on zero deliveries;
+  deliveredTotal/deliveredAt + provider-tagged search index). Vendor
+  adapters constructed from provider credentials 1:1 with the current
+  `@nuvix/messaging` signatures (SMTP/Mailgun/Sendgrid, Twilio/
+  Telesign/TextMagic/Vonage/Msg91, FCM/APNS); per-vendor batch limits
+  mirrored from the adapter implementations. `MessagingJobData`
+  reshaped to v1's `{ projectId, message, scheduleId? }`; message
+  create/update now enqueue (`processing` → immediate, `scheduled` →
+  delayed BullMQ job with delay = scheduledAt − now; v1's internal
+  `schedules` collection + SchedulesHelper hook replaced by
+  BullMQ-native delayed jobs — same delivery semantics, one less
+  moving part, noted for the records). Worker runs on the tenant
+  auth-system session (messages live in the `auth` schema); email
+  cc/bcc target-id resolution ported; storage-backed attachments are
+  deferred (payload carries the references; boundary hook exists).
 - [x] Webhooks dispatch (Phase 6 follow-through): delivery end-to-end —
-      fan-out (`apps/server/src/webhooks/dispatch.ts` porting v1
-      `queueWebhookDelivery`/`eventMatchesPattern`: wildcard matcher with
-      v1's regex-escaping semantics, enabled-webhook filter, 5-attempt
-      exponential-backoff BullMQ jobs, remove-on-complete 1h / fail 24h)
-      and the delivery worker (v1 `deliverWebhook` + `logDelivery`
-      parity: platform-DB re-read of the webhook before every delivery —
-      fresh URL/signatureKey/Basic auth, deleted/disabled webhooks skip
-      without retrying; POST `{event, timestamp, data}` with HMAC-SHA256
-      `X-Webhook-Signature`, `X-Webhook-Event`, `X-Webhook-ID`, Basic
-      auth, 10s timeout, TLS-skip when `security=false`; one
-      `webhook_logs` row per attempt + `attempts` counter reset-on-success/
-      increment-with-truncated-`logs`-on-failure). `WebhookJobData`
-      reshaped to v1's id-only payload (credentials live in the webhook
-      record, never in the job). The fan-out shares the audit emission
-      pipeline via an injectable `WebhookFanout` boundary in
-      `plugins/audit.ts` (replaces v1's `@OnEvent('*')` listener — Elysia
-      has no equivalent global emitter), so every audited domain event
-      fans out to subscribed webhooks automatically. Fixed en route: audit
-      job payloads carried no `projectId` at all → the audits worker
-      silently dropped every row in production; `auditAfter` now extracts
-      the platform project from the request context and both audit rows
-      and webhook fan-out are tenant-correct. `webhook_logs` added to the
-      platform schema (`ensurePlatformSchema` creates it on next run).
+  fan-out (`apps/server/src/webhooks/dispatch.ts` porting v1
+  `queueWebhookDelivery`/`eventMatchesPattern`: wildcard matcher with
+  v1's regex-escaping semantics, enabled-webhook filter, 5-attempt
+  exponential-backoff BullMQ jobs, remove-on-complete 1h / fail 24h)
+  and the delivery worker (v1 `deliverWebhook` + `logDelivery`
+  parity: platform-DB re-read of the webhook before every delivery —
+  fresh URL/signatureKey/Basic auth, deleted/disabled webhooks skip
+  without retrying; POST `{event, timestamp, data}` with HMAC-SHA256
+  `X-Webhook-Signature`, `X-Webhook-Event`, `X-Webhook-ID`, Basic
+  auth, 10s timeout, TLS-skip when `security=false`; one
+  `webhook_logs` row per attempt + `attempts` counter reset-on-success/
+  increment-with-truncated-`logs`-on-failure). `WebhookJobData`
+  reshaped to v1's id-only payload (credentials live in the webhook
+  record, never in the job). The fan-out shares the audit emission
+  pipeline via an injectable `WebhookFanout` boundary in
+  `plugins/audit.ts` (replaces v1's `@OnEvent('*')` listener — Elysia
+  has no equivalent global emitter), so every audited domain event
+  fans out to subscribed webhooks automatically. Fixed en route: audit
+  job payloads carried no `projectId` at all → the audits worker
+  silently dropped every row in production; `auditAfter` now extracts
+  the platform project from the request context and both audit rows
+  and webhook fan-out are tenant-correct. `webhook_logs` added to the
+  platform schema (`ensurePlatformSchema` creates it on next run).
 - [x] Stats recording (Phase 6 follow-through): real stats pipeline —
-      metric primitives ported (`@nuvix/utils/metrics`: v1 `MetricFor`/
-      `MetricPeriod` enums + `fnv1a128` deterministic stat-row id hash),
-      real stats worker (batched flush 5000/3s, per-tenant aggregation,
-      one `stats` row per (inf/1h/1d) × metric with create-or-update-
-      with-increase on the tenant auth-system session — v1
-      `StatsQueue.persist` parity), and both v1 sources: network metrics
-      (requests + inbound/outbound bytes per response — v1 `StatsHook`,
-      skipping API-key callers, opt-out via `NUVIX_ENABLE_STATS=false`;
-      Elysia beta.6's minimal afterResponse context is bridged through
-      the shared-instance derive chain) and usage document events (v1
-      `StatsHelper.connect` — `calculate-usage` listeners wired onto
-      every tenant `Database` via a new `TenantResourceDependencies.
+  metric primitives ported (`@nuvix/utils/metrics`: v1 `MetricFor`/
+  `MetricPeriod` enums + `fnv1a128` deterministic stat-row id hash),
+  real stats worker (batched flush 5000/3s, per-tenant aggregation,
+  one `stats` row per (inf/1h/1d) × metric with create-or-update-
+  with-increase on the tenant auth-system session — v1
+  `StatsQueue.persist` parity), and both v1 sources: network metrics
+  (requests + inbound/outbound bytes per response — v1 `StatsHook`,
+  skipping API-key callers, opt-out via `NUVIX_ENABLE_STATS=false`;
+  Elysia beta.6's minimal afterResponse context is bridged through
+  the shared-instance derive chain) and usage document events (v1
+  `StatsHelper.connect` — `calculate-usage` listeners wired onto
+  every tenant `Database` via a new `TenantResourceDependencies.
 onDatabaseCreated` composition hook). Redesigns over v1 recorded:
-      the user/bucket delete `reduce` compensations are dropped — v2
-      deletes sessions/files row-by-row, so per-row DocumentDelete events
-      already decrement the aggregate metrics (v1's compensation existed
-      because bucket files lived in per-bucket collections deleted
-      wholesale). Per-bucket metrics are KEPT (v1
-      `{bucketInternalId}.files[.storage]` keys — v2 file docs carry
-      `bucketInternalId`).
+  the user/bucket delete `reduce` compensations are dropped — v2
+  deletes sessions/files row-by-row, so per-row DocumentDelete events
+  already decrement the aggregate metrics (v1's compensation existed
+  because bucket files lived in per-bucket collections deleted
+  wholesale). Per-bucket metrics are KEPT (v1
+  `{bucketInternalId}.files[.storage]` keys — v2 file docs carry
+  `bucketInternalId`).
 - [x] Usage reads (Phase 6 follow-through): `GET /users/usage`,
-      `GET /storage/usage`, and `GET /storage/buckets/:bucketId/usage`
-      now read the recorded `stats` rows (v1 parity) instead of live
-      counts — `apps/server/src/stats/usage.ts` ports the v1
-      `usageConfig` buckets (24h hourly, 7d/30d/90d daily), INF totals +
-      period series with the v1 zero-filled window loop, and the
-      `RangeQueryDTO` validation (`parseUsageRange`; v1's own service
-      default `'1d'` was not a config key — latent v1 crash, v2 defaults
-      `'30d'`). v1's `Authorization.skip` parity is structural: the
-      usage routes run on the tenant auth-system session.
+  `GET /storage/usage`, and `GET /storage/buckets/:bucketId/usage`
+  now read the recorded `stats` rows (v1 parity) instead of live
+  counts — `apps/server/src/stats/usage.ts` ports the v1
+  `usageConfig` buckets (24h hourly, 7d/30d/90d daily), INF totals +
+  period series with the v1 zero-filled window loop, and the
+  `RangeQueryDTO` validation (`parseUsageRange`; v1's own service
+  default `'1d'` was not a config key — latent v1 crash, v2 defaults
+  `'30d'`). v1's `Authorization.skip` parity is structural: the
+  usage routes run on the tenant auth-system session.
 - [x] Push assets (Phase 6 follow-through): storage-backed push
-      notifications end-to-end — `GET
+  notifications end-to-end — `GET
 /storage/buckets/:bucketId/files/:fileId/push` (v1
-      `getFileForPushNotification` parity: short-lived JWT entitlement
-      with projectId/bucketId/fileId claims, disabled buckets hidden,
-      inline disposition + 45-day Expires + range requests; streaming
-      tail shared with `serveFile`), create/update-time image-ref
-      validation on push messages (v1 parity: bucket exists, file in
-      bucket, png/jpeg only), and delivery-time URL signing in the
-      messaging worker (v1 `processedImage`: 15-day JWT →
-      `/v2/storage/...` push URL; `image` refs stay raw in the message
-      doc and resolve at delivery so tokens never sit stale in the
-      database — v1 signed at create and stored the URL). v1 bug fixed
-      en route: v1 signed the push JWT without the `projectId` claim its
-      own verifier demanded — every vendor fetch failed; v2 signs and
-      verifies all three claims. Vendor-facing base URL comes from
-      `NUVIX_ENDPOINT` (falls back to `http://localhost:$NUVIX_PORT`).
+  `getFileForPushNotification` parity: short-lived JWT entitlement
+  with projectId/bucketId/fileId claims, disabled buckets hidden,
+  inline disposition + 45-day Expires + range requests; streaming
+  tail shared with `serveFile`), create/update-time image-ref
+  validation on push messages (v1 parity: bucket exists, file in
+  bucket, png/jpeg only), and delivery-time URL signing in the
+  messaging worker (v1 `processedImage`: 15-day JWT →
+  `/v2/storage/...` push URL; `image` refs stay raw in the message
+  doc and resolve at delivery so tokens never sit stale in the
+  database — v1 signed at create and stored the URL). v1 bug fixed
+  en route: v1 signed the push JWT without the `projectId` claim its
+  own verifier demanded — every vendor fetch failed; v2 signs and
+  verifies all three claims. Vendor-facing base URL comes from
+  `NUVIX_ENDPOINT` (falls back to `http://localhost:$NUVIX_PORT`).
 - [x] Email attachments (Phase 6 follow-through): create/update-time
-      ref validation on email messages (v1 parity: `bucketId:fileId`
-      refs stored as `{bucketId, fileId}` snapshots) and delivery-time
-      byte resolution in the messaging worker (v1 `buildEmailMessage`
-      parity: file bytes read from the storage device into vendor
-      `Attachment` payloads — name/mime/size from the file record;
-      missing buckets/files/device paths become delivery errors like
-      v1's throws).
+  ref validation on email messages (v1 parity: `bucketId:fileId`
+  refs stored as `{bucketId, fileId}` snapshots) and delivery-time
+  byte resolution in the messaging worker (v1 `buildEmailMessage`
+  parity: file bytes read from the storage device into vendor
+  `Attachment` payloads — name/mime/size from the file record;
+  missing buckets/files/device paths become delivery errors like
+  v1's throws).
 - [x] Console auth (platform Phase 4 gap closed): session-based operator
-      auth for the platform app, designed for console UI AND CLI —
-      short-lived access JWTs (`aud: 'console'`, 15 min default via
-      `NUVIX_CONSOLE_ACCESS_TTL`) + opaque rotating refresh tokens
-      (90 days, sha256-hashed at rest in `console_sessions`, reuse
-      detection via `previousHash` — re-presenting a rotated token
-      revokes the session; v1's long-lived opaque console cookie
-      sessions replaced wholesale). Bearer-only enforcement on every
-      platform route via `plugins/auth.ts` (public exceptions:
-      `/health`, `/console/auth*`; audience-separated from tenant JWTs);
-      no API keys on the platform surface. Endpoints: `POST
+  auth for the platform app, designed for console UI AND CLI —
+  short-lived access JWTs (`aud: 'console'`, 15 min default via
+  `NUVIX_CONSOLE_ACCESS_TTL`) + opaque rotating refresh tokens
+  (90 days, sha256-hashed at rest in `console_sessions`, reuse
+  detection via `previousHash` — re-presenting a rotated token
+  revokes the session; v1's long-lived opaque console cookie
+  sessions replaced wholesale). Bearer-only enforcement on every
+  platform route via `plugins/auth.ts` (public exceptions:
+  `/health`, `/console/auth*`; audience-separated from tenant JWTs);
+  no API keys on the platform surface. Endpoints: `POST
 /console/auth` (login), `/console/auth/refresh` (rotating),
-      `/console/auth/logout` (revoking), `GET /console/me` (CLI
-      whoami); refresh token also set as httpOnly cookie for the
-      browser console. First operator seeded idempotently from
-      `NUVIX_CONSOLE_EMAIL`/`NUVIX_CONSOLE_PASSWORD` at startup (no
-      public registration). Contract: `docs/api/console.md`; platform.md
-      auth-posture updated (was flagged as a blocking deployment gap).
+  `/console/auth/logout` (revoking), `GET /console/me` (CLI
+  whoami); refresh token also set as httpOnly cookie for the
+  browser console. First operator seeded idempotently from
+  `NUVIX_CONSOLE_EMAIL`/`NUVIX_CONSOLE_PASSWORD` at startup (no
+  public registration). Contract: `docs/api/console.md`; platform.md
+  auth-posture updated (was flagged as a blocking deployment gap).
 - [x] API request logs (Phase 6 follow-through): end-to-end —
-      request-log source (v1 `LogsHook`: afterResponse emit; API-key
-      callers, /health and the OpenAPI surface skipped), batched LOGS
-      worker (v1 `ApiLogsQueue`: 5000/3s flush, v1's DEEP recursive
-      metadata redaction moved to buffer time), and a server-side
-      `GET /v2/logs` admin route (v1's platform `getLogs` with the AST
-      filter DSL replaced by simple query params — limit/offset/method/
-      status/path/resource/since/until, newest first). Storage redesign
-      per user decision: logs live in EACH project's tenant database
-      (`api_logs` collection in the `auth` schema — additive via
-      `ensureAuthSchema`; tenants provisioned before it need
-      re-provisioning or a one-off ensure) instead of v1's platform
-      main-pool `system` schema — v1 was not truly multi-tenant, so its
-      main-pool logs table mixed projects. Read auth: tenant-local API
-      key OR console operator JWT (aud 'console') — the console UI
-      reads project logs straight from the server API. Audience
-      separation enforced in the server's authContext (console JWTs
-      never authenticate as tenant users; vice versa on the platform).
-      Contract: `docs/api/logs.md`.
+  request-log source (v1 `LogsHook`: afterResponse emit; API-key
+  callers, /health and the OpenAPI surface skipped), batched LOGS
+  worker (v1 `ApiLogsQueue`: 5000/3s flush, v1's DEEP recursive
+  metadata redaction moved to buffer time), and a server-side
+  `GET /v2/logs` admin route (v1's platform `getLogs` with the AST
+  filter DSL replaced by simple query params — limit/offset/method/
+  status/path/resource/since/until, newest first). Storage redesign
+  per user decision: logs live in EACH project's tenant database
+  (`api_logs` collection in the `auth` schema — additive via
+  `ensureAuthSchema`; tenants provisioned before it need
+  re-provisioning or a one-off ensure) instead of v1's platform
+  main-pool `system` schema — v1 was not truly multi-tenant, so its
+  main-pool logs table mixed projects. Read auth: tenant-local API
+  key OR console operator JWT (aud 'console') — the console UI
+  reads project logs straight from the server API. Audience
+  separation enforced in the server's authContext (console JWTs
+  never authenticate as tenant users; vice versa on the platform).
+  Contract: `docs/api/logs.md`.
 - [x] Hardening pass (D35 follow-ups): favicon proxy SSRF guards
-      upgraded from hostname-regex to per-hop DNS validation (every
-      resolved address must be public before any request or redirect
-      leaves the process — DNS-rebinding guard; tests assert private/
-      loopback rejection); console login throttling (per email+client
-      failure counter, 5 failures / 15 min in-process window → 429
-      `console_login_throttled` with `retry-after`, reset on success;
-      in-process by design — the platform is single-instance; a Redis
-      store drops in if it ever scales horizontally). The deferred
-      "Redis-cached GeoIP lookups" idea is dropped as unnecessary: the
-      bundled .mmdb reader is in-process and answers in microseconds.
+  upgraded from hostname-regex to per-hop DNS validation (every
+  resolved address must be public before any request or redirect
+  leaves the process — DNS-rebinding guard; tests assert private/
+  loopback rejection); console login throttling (per email+client
+  failure counter, 5 failures / 15 min in-process window → 429
+  `console_login_throttled` with `retry-after`, reset on success;
+  in-process by design — the platform is single-instance; a Redis
+  store drops in if it ever scales horizontally). The deferred
+  "Redis-cached GeoIP lookups" idea is dropped as unnecessary: the
+  bundled .mmdb reader is in-process and answers in microseconds.
 
 ### Phase 9 — Tests & cutover
 
@@ -607,29 +608,29 @@ onDatabaseCreated` composition hook). Redesigns over v1 recorded:
 - [x] Perf baseline vs old app (`test/bench/perf.ts`, `docs/perf-baseline.md`)
 - [x] Docker/deploy artifacts for Bun-only runtime (`Dockerfile`, `docker-compose.yml`, `.dockerignore`, `docs/deployment.md`)
 - [x] Dependency hygiene (fresh-clone fix): password hashing moved to native
-      `Bun.password` (D5) — the `argon2`/`bcrypt` npm imports in `@nuvix/core`
-      were phantom dependencies resolvable only through the legacy root's
-      `node_modules` (fresh-clone typecheck/runtime breakage, DoD
-      zero-imports violation); `handlebars` declared in `@nuvix/core`
-      (same phantom path); `@resvg/resvg-js` moved to runtime dependencies
-      (the Docker image installs with `--production` and never installed it).
-      Verified: zero bare imports in `next/**` resolve outside the `next/` tree.
+  `Bun.password` (D5) — the `argon2`/`bcrypt` npm imports in `@nuvix/core`
+  were phantom dependencies resolvable only through the legacy root's
+  `node_modules` (fresh-clone typecheck/runtime breakage, DoD
+  zero-imports violation); `handlebars` declared in `@nuvix/core`
+  (same phantom path); `@resvg/resvg-js` moved to runtime dependencies
+  (the Docker image installs with `--production` and never installed it).
+  Verified: zero bare imports in `next/**` resolve outside the `next/` tree.
 - [x] Delete root monorepo (Phase 9 cutover, approved 2026-10-31): legacy
-      `apps/`, `libs/`, `docs/`, `scripts/`, `configs/`, `assets/`, and all
-      root configs (package.json, bun.lock, turbo.json, tsconfigs, root
-      Dockerfile/compose, biome.json, env examples) removed; repo root now
-      holds only `next/`, project meta (README, LICENSE, CONTRIBUTING,
-      AGENTS.md, .github) and untracked runtime data (`storage/`). The v2
-      runtime asset tree (avatars, fonts, i18n translations, mail templates,
-      OAuth views, GeoIP db) lives in `next/assets/` — the root `assets/`
-      copy was merged into it first (root values win; the 8 v2-only
-      translation keys preserved), and `oauth-pages.ts` was repointed from
-      the root copy to `next/assets`. CI `docker.yml` now builds
-      `next/Dockerfile` (context `./next`); `next/biome.json` flipped to
-      `"root": true` (no root config remains). Post-cutover gate green from
-      `next/`: frozen install, lint (80 warnings / 0 errors), typecheck (0),
-      `bun test` (531 pass / 0 fail incl. 7 live DB-route tests),
-      `git diff --check` clean.
+  `apps/`, `libs/`, `docs/`, `scripts/`, `configs/`, `assets/`, and all
+  root configs (package.json, bun.lock, turbo.json, tsconfigs, root
+  Dockerfile/compose, biome.json, env examples) removed; repo root now
+  holds only `next/`, project meta (README, LICENSE, CONTRIBUTING,
+  AGENTS.md, .github) and untracked runtime data (`storage/`). The v2
+  runtime asset tree (avatars, fonts, i18n translations, mail templates,
+  OAuth views, GeoIP db) lives in `next/assets/` — the root `assets/`
+  copy was merged into it first (root values win; the 8 v2-only
+  translation keys preserved), and `oauth-pages.ts` was repointed from
+  the root copy to `next/assets`. CI `docker.yml` now builds
+  `next/Dockerfile` (context `./next`); `next/biome.json` flipped to
+  `"root": true` (no root config remains). Post-cutover gate green from
+  `next/`: frozen install, lint (80 warnings / 0 errors), typecheck (0),
+  `bun test` (531 pass / 0 fail incl. 7 live DB-route tests),
+  `git diff --check` clean.
 
 ---
 
@@ -646,7 +647,6 @@ platform metadata.service.ts                           ← platform
 ```
 
 **Rules during Phases 1–7:**
-
 - No `@nuvix/pg` imports anywhere in `next/`.
 - A handful of call sites need raw DDL/SQL that has no `@nuvix/db` document-plane
   equivalent (e.g. schema CRUD's `system.create_schema`/`drop schema` calls).
@@ -687,7 +687,6 @@ v2 makes tenancy **structural**:
 ```
 
 **Rules:**
-
 1. **One database per tenant/project.** No shared-schema tenancy in v2.
 2. The **platform app owns provisioning**: creating the project record,
    creating its database (via the pg-18 image's auto-schema bootstrap),
@@ -710,7 +709,6 @@ v2 makes tenancy **structural**:
 Tracked here so nothing gets decided silently:
 
 **Resolved:**
-
 1. ✅ **API prefix** → `/v2` (D26)
 2. ✅ **Pagination** → cursor-based primary, offset where impractical; all list responses carry `meta` (D27)
 3. ✅ **IDs** → keep existing scheme; port the ID helper (wraps `@nuvix/db` ID) (D28)
@@ -719,7 +717,6 @@ Tracked here so nothing gets decided silently:
 6. ✅ **Auth at launch** → D23 resolved at the Phase 4 gate: DB session (long-lived, revocable, `x-nuvix-session`) doubles as the refresh credential; a short-lived JWT minted from it via `POST /v2/account/tokens/jwt` is the access token (`x-nuvix-jwt`) — see `docs/api/account.md`
 
 **Still open:**
-
 7. **TOTP** — hand-rolled RFC-6238 on `crypto.subtle` vs keep otplib. _(Phase 4)_
 8. **Realtime/WebSocket** — Elysia 2's generator-based `.ws()`; in v2 core scope or post-v2? _(after Phase 3)_
 9. **Auth header names** — keep `x-nuvix-session`/`x-nuvix-key` or rename in v2. _(Phase 1, contract design)_
@@ -741,58 +738,58 @@ Tracked here so nothing gets decided silently:
 ## 9. Definition of Done
 
 - [x] All v2 contracts in `docs/api/` implemented across both apps
-      (status lines flipped to IMPLEMENTED after route/error-code
-      verification against code)
+  (status lines flipped to IMPLEMENTED after route/error-code
+  verification against code)
 - [x] Zero imports of: `@nestjs/*`, `fastify*`, `class-validator`,
-      `class-transformer`, `reflect-metadata`, `rxjs`, `ioredis`, `pg`,
-      `argon2`, `bcrypt` — verified by resolution audit, not just source
-      grep: the first fresh-clone gate caught undeclared `argon2`/`bcrypt`
-      imports in `@nuvix/core` silently resolving from the LEGACY root
-      node_modules (ambient directory-walk leak that a source scan can't
-      see). Fixed by switching to native `Bun.password` + declaring all
-      phantom deps (91679960).
+  `class-transformer`, `reflect-metadata`, `rxjs`, `ioredis`, `pg`,
+  `argon2`, `bcrypt` — verified by resolution audit, not just source
+  grep: the first fresh-clone gate caught undeclared `argon2`/`bcrypt`
+  imports in `@nuvix/core` silently resolving from the LEGACY root
+  node_modules (ambient directory-walk leak that a source scan can't
+  see). Fixed by switching to native `Bun.password` + declaring all
+  phantom deps (91679960).
 - [x] Bun-only runtime; file/crypto/net operations use Bun natives
-      (Bun.password, Bun.file, Bun.dns, Bun build — no pg driver)
+  (Bun.password, Bun.file, Bun.dns, Bun build — no pg driver)
 - [x] Fresh gate green in an ISOLATED environment: clone nuvix
-      (v2-rewrite) + the five sibling repos fresh from GitHub, build each
-      sibling (their `dist/` is gitignored — a bare clone cannot even
-      install `next/`), then from `next/`: `bun install --frozen-lockfile`
-      (clean), `bun run lint` (73-warnings baseline, 0 errors),
-      `bun run typecheck` (0), `bun test` (524 pass / 0 fail / 83 files),
-      `git diff --check` (clean). One real defect found by this gate —
-      audit/stats worker buffers leaked across test files in one bun
-      process, flipping with file-run order — fixed (27a46e78) and the
-      gate re-run green end to end.
+  (v2-rewrite) + the five sibling repos fresh from GitHub, build each
+  sibling (their `dist/` is gitignored — a bare clone cannot even
+  install `next/`), then from `next/`: `bun install --frozen-lockfile`
+  (clean), `bun run lint` (73-warnings baseline, 0 errors),
+  `bun run typecheck` (0), `bun test` (524 pass / 0 fail / 83 files),
+  `git diff --check` (clean). One real defect found by this gate —
+  audit/stats worker buffers leaked across test files in one bun
+  process, flipping with file-run order — fixed (27a46e78) and the
+  gate re-run green end to end.
 - [x] Live DB-route verification against `nuvix/postgres:18.1`
-      (`apps/server/src/schemas/route.integration.test.ts`, 7 live tests:
-      production provisioning → document-schema CRUD → collection →
-      attributes → indexes → documents → tables/RPC surface → posture
-      403 → cleanup → deprovision). The first live run exposed five real
-      production defects the in-memory fakes could never catch, all fixed: 1. `TenantResource.databaseForSchema()` configured an adapter it then
-      discarded — the schema/namespace meta never reached the created
-      `Database`, so document-schema seeding emitted
-      `CREATE TABLE undefined__metadata_perms` (fixed by threading
-      `meta` through the `createDatabase` dependency); 2. `SqlBuilder.getTableName/getSQLIndex` composed `meta.namespace`
-      without a fallback (SQLite builder already defaulted to
-      `"default"`) — fixed in the `database` sibling (a5b5b85); 3. the admin tables surface ran the PostgREST RLS role-switch
-      (`set_config('role', 'authenticated')`) and lost owner privileges
-      on the new schema's tables (42501) — admin posture now skips the
-      switch, the public surface keeps it; 4. attribute formats were never registered into `@nuvix/db`'s
-      `Structure` registry (every `format`-declaring attribute failed
-      with "Format not available") — `registerCoreDbFormats()` ports the
-      seven v1 formats and runs in every composition root; 5. v1 seeded the `any` role into every request context; the v2
-      scoped-session rewrite dropped it, making collections created with
-      the default `Permission.*(Role.any())` grants unreachable —
-      restored in `Auth.getRoles()`.
-      Also fixed in the sibling: `_uid` got a generated default so raw
-      tables-surface inserts into document-backed tables work (41733b7).
-      Operational notes: provisioning is NOT idempotent per projectId (the
-      deterministic volume persists the run's data dir + `nuvix_admin`
-      password — reuse unique names per run), and bun copies `file:`-linked
-      sibling dists at install time — rebuilding a sibling alone does NOT
-      change what `next/` loads; `bun install` in `next` is required.
+  (`apps/server/src/schemas/route.integration.test.ts`, 7 live tests:
+  production provisioning → document-schema CRUD → collection →
+  attributes → indexes → documents → tables/RPC surface → posture
+  403 → cleanup → deprovision). The first live run exposed five real
+  production defects the in-memory fakes could never catch, all fixed: 1. `TenantResource.databaseForSchema()` configured an adapter it then
+  discarded — the schema/namespace meta never reached the created
+  `Database`, so document-schema seeding emitted
+  `CREATE TABLE undefined__metadata_perms` (fixed by threading
+  `meta` through the `createDatabase` dependency); 2. `SqlBuilder.getTableName/getSQLIndex` composed `meta.namespace`
+  without a fallback (SQLite builder already defaulted to
+  `"default"`) — fixed in the `database` sibling (a5b5b85); 3. the admin tables surface ran the PostgREST RLS role-switch
+  (`set_config('role', 'authenticated')`) and lost owner privileges
+  on the new schema's tables (42501) — admin posture now skips the
+  switch, the public surface keeps it; 4. attribute formats were never registered into `@nuvix/db`'s
+  `Structure` registry (every `format`-declaring attribute failed
+  with "Format not available") — `registerCoreDbFormats()` ports the
+  seven v1 formats and runs in every composition root; 5. v1 seeded the `any` role into every request context; the v2
+  scoped-session rewrite dropped it, making collections created with
+  the default `Permission.*(Role.any())` grants unreachable —
+  restored in `Auth.getRoles()`.
+  Also fixed in the sibling: `_uid` got a generated default so raw
+  tables-surface inserts into document-backed tables work (41733b7).
+  Operational notes: provisioning is NOT idempotent per projectId (the
+  deterministic volume persists the run's data dir + `nuvix_admin`
+  password — reuse unique names per run), and bun copies `file:`-linked
+  sibling dists at install time — rebuilding a sibling alone does NOT
+  change what `next/` loads; `bun install` in `next` is required.
 - [x] `DEFERRED_ROUTES.md` empty after Phase 8 (file never existed — the
-      deferred-routes ledger lives in each contract's Known gaps section)
+  deferred-routes ledger lives in each contract's Known gaps section)
 - [x] Root monorepo deleted after explicit final review (Phase 9 cutover,
-      2026-10-31 — see the Phase 9 checklist for the kept/deleted inventory
-      and the post-cutover gate results)
+  2026-10-31 — see the Phase 9 checklist for the kept/deleted inventory
+  and the post-cutover gate results)
