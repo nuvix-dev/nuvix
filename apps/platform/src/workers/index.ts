@@ -2,7 +2,8 @@
 
 import { useBunRedisClients } from '@nuvix/core/queues'
 import { QueueFor } from '@nuvix/utils'
-import { Worker, type WorkerOptions } from 'bullmq'
+import { type ConnectionOptions, Worker } from 'bullmq'
+import processProject from './projects.processor'
 
 /** The platform owns project provisioning; project-facing queues are composed by the server app. */
 export interface PlatformQueueWorkers {
@@ -11,16 +12,16 @@ export interface PlatformQueueWorkers {
 }
 
 /** Build the project-provisioning worker over the supplied Redis connection. */
-export function createPlatformQueueWorkers(
-  connection: WorkerOptions['connection'],
-): PlatformQueueWorkers {
+export function createPlatformQueueWorkers(connection: ConnectionOptions): PlatformQueueWorkers {
   // Bun RedisClient via BullMQ's global factory — ioredis is never loaded.
   useBunRedisClients()
-  const projectsWorker = new Worker(
-    QueueFor.PROJECTS,
-    new URL('./projects.processor.ts', import.meta.url).pathname,
-    { connection, concurrency: 5 },
-  )
+  // In-process handler (not a file path) so the AOT bundle works: BullMQ's
+  // file-processor form resolves files on disk at runtime, which breaks when
+  // the bundle lives in dist/.
+  const projectsWorker = new Worker(QueueFor.PROJECTS, processProject, {
+    connection,
+    concurrency: 5,
+  })
 
   return {
     projectsWorker,
