@@ -84,3 +84,8 @@ wrapped in BullMQ's own `createBunRedisClient` adapter. ioredis is never
 installed or loaded. `NUVIX_REDIS_URL` keeps its documented form
 (`redis://[:password@]host[:port][/db]`); credentials are applied by the
 factory when building the client URL.
+
+> Note: only plaintext `redis://` URLs are supported today — `parseRedisUrl`
+> discards the URL scheme, so a `rediss://` (TLS) endpoint would silently
+> downgrade to plaintext. Until TLS support is added, keep Redis on a
+> trusted network.

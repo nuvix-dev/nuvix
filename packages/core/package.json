@@ -27,7 +27,7 @@
     "@nuvix/pg-meta": "workspace:*",
     "@nuvix/telemetry": "^1.0.2",
     "@nuvix/utils": "workspace:*",
-    "bullmq": "latest",
+    "bullmq": "6.7.3",
     "handlebars": "^4.7.8"
   }
 }

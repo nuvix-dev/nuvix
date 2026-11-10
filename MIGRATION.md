@@ -661,8 +661,8 @@ onDatabaseCreated` composition hook). Redesigns over v1 recorded:
   convention) and wraps it in BullMQ's own `createBunRedisClient`
   adapter. Call sites keep passing plain `connection` options
   (`parseRedisUrl` retained); QueueManager and both worker factories
-  invoke the configurator before constructing Queue/Worker. bullmq
-  bumped to 6.5 (msgpackr-extract 3.0.7 — its native addon loads fine
+  invoke the configurator before constructing Queue/Worker. bullmq is
+  pinned exactly at 6.7.3 (was on `latest`; msgpackr-extract 3.0.7 — its native addon loads fine
   under bun 1.4.4; earlier 3.0.4 panicked on ARM per bun#18546),
   `@elysia/openapi` to `^2.0.0-rc.1` (removing the only package patch),
   `@types/bun` to 1.4.4, and biome re-pinned exact 2.5.10 (caret range
