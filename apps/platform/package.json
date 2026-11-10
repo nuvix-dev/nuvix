@@ -17,7 +17,7 @@
     "@nuvix/pg-meta": "workspace:*",
     "@nuvix/telemetry": "^1.0.2",
     "@nuvix/utils": "workspace:*",
-    "bullmq": "^6.3.8",
+    "bullmq": "latest",
     "elysia": "2.0.0-rc.1"
   }
 }

@@ -1,4 +1,6 @@
 /** Composes the platform process's queue workers, currently limited to tenant project provisioning. */
+
+import { useBunRedisClients } from '@nuvix/core/queues'
 import { QueueFor } from '@nuvix/utils'
 import { Worker, type WorkerOptions } from 'bullmq'
 
@@ -12,6 +14,8 @@ export interface PlatformQueueWorkers {
 export function createPlatformQueueWorkers(
   connection: WorkerOptions['connection'],
 ): PlatformQueueWorkers {
+  // Bun RedisClient via BullMQ's global factory — ioredis is never loaded.
+  useBunRedisClients()
   const projectsWorker = new Worker(
     QueueFor.PROJECTS,
     new URL('./projects.processor.ts', import.meta.url).pathname,

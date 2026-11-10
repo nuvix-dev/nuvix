@@ -73,3 +73,14 @@ Dockerfile runs this build in its build stage and executes
 Queue workers load lazily (dynamic import inside the runtime guard) and BullMQ
 processors run as in-process handler functions — the build and the bundle never
 touch bullmq unless a Redis connection is actually configured.
+
+## Redis — BullMQ over Bun's built-in client
+
+Queue connections are Bun's native `RedisClient` (RESP3, part of the runtime):
+`useBunRedisClients()` (in `@nuvix/core/queues`) sets BullMQ's global
+`RedisConnection.clientFactory` once at startup, so every connection BullMQ
+creates — Queue, Worker, QueueEvents, blocking duplicates — is a Bun client
+wrapped in BullMQ's own `createBunRedisClient` adapter. ioredis is never
+installed or loaded. `NUVIX_REDIS_URL` keeps its documented form
+(`redis://[:password@]host[:port][/db]`); credentials are applied by the
+factory when building the client URL.

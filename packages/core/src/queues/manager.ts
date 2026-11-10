@@ -5,6 +5,7 @@ import { QueueFor } from '@nuvix/utils'
 // and in-memory mode — never load bullmq (and its native msgpackr addon).
 import type { ConnectionOptions, JobsOptions, Queue } from 'bullmq'
 import { ID } from '../id'
+import { useBunRedisClients } from './redis-factory'
 import type {
   AuditJobData,
   BatchJobData,
@@ -22,7 +23,8 @@ import type {
  * Parses a Redis URL (`redis://[:password@]host[:port][/db]`) into BullMQ
  * connection options. Missing/invalid input yields no port/host overrides —
  * BullMQ defaults apply (localhost:6379, db 0). Shared by every app that
- * runs queue workers (server + platform).
+ * runs queue workers (server + platform). The client itself is built by the
+ * global Bun factory (see redis-factory.ts) — ioredis is never loaded.
  */
 export function parseRedisUrl(raw: string): ConnectionOptions {
   try {
@@ -58,17 +60,13 @@ export class QueueManager {
     this.isTestMode = options.isTest || !options.connection
 
     if (!this.isTestMode && options.connection) {
+      // Route every BullMQ connection through Bun's built-in RedisClient
+      // (ioredis is never loaded). Idempotent; lazily requires bullmq.
+      useBunRedisClients()
       // Lazy runtime import — keeps bullmq (and msgpackr's native addon) out
-      // of every code path that never touches a real Redis connection.
+      // of in-memory/test paths and the AOT dry-run.
       const { Queue: BullQueue } = require('bullmq') as {
-        Queue: new (
-          name: string,
-          opts?: {
-            connection?: ConnectionOptions
-            prefix?: string
-            defaultJobOptions?: JobsOptions
-          },
-        ) => Queue
+        Queue: new (name: string, opts?: Record<string, unknown>) => Queue
       }
       const queueNames = [
         QueueFor.MAILS,

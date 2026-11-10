@@ -114,6 +114,8 @@ export interface BatchJobData {
 
 /** Queue manager construction options. */
 export interface QueueManagerOptions {
+  /** ioredis-style connection options — BullMQ builds the actual client
+   * through the global Bun factory (see redis-factory.ts). */
   connection?: ConnectionOptions
   prefix?: string
   defaultJobOptions?: JobsOptions

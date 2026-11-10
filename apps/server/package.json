@@ -21,7 +21,7 @@
     "@nuvix/telemetry": "^1.0.2",
     "@nuvix/utils": "workspace:*",
     "@resvg/resvg-js": "^2.6.2",
-    "bullmq": "^6.3.8",
+    "bullmq": "latest",
     "elysia": "2.0.0-rc.1",
     "handlebars": "^4.7.8",
     "ioredis": "^6.0.0",

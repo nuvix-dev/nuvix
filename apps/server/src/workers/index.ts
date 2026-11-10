@@ -1,4 +1,6 @@
 /** BullMQ worker composition: one worker per queue, plus a shared close boundary. */
+
+import { useBunRedisClients } from '@nuvix/core/queues'
 import { QueueFor } from '@nuvix/utils'
 import { type ConnectionOptions, Worker } from 'bullmq'
 import processAudits from './audits.processor'
@@ -27,6 +29,10 @@ export interface QueueWorkers {
 
 /** Build all queue workers over one Redis connection. */
 export function createQueueWorkers(connection: ConnectionOptions): QueueWorkers {
+  // Every connection BullMQ creates (workers + blocking duplicates) is a Bun
+  // RedisClient — ioredis is never loaded.
+  useBunRedisClients()
+
   const deletesWorker = new Worker(QueueFor.DELETES, processDeletes, {
     connection,
     concurrency: 100,

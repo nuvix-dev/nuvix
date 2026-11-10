@@ -652,6 +652,24 @@ onDatabaseCreated` composition hook). Redesigns over v1 recorded:
   `apps/<app>/dist` (verified live: bundle serves /v2/health, RFC 9457
   errors, and asset-backed avatar renders). `typebox@1.3.19` promoted to
   a direct dependency (the AOT manifest emits bare `typebox` imports).
+- [x] BullMQ over Bun's built-in Redis client (2026-11-10): replaced the
+  implicit ioredis default with the documented
+  `RedisConnection.clientFactory` pattern — `useBunRedisClients()` (new
+  `packages/core/src/queues/redis-factory.ts`, idempotent, lazily requires
+  bullmq) builds a Bun `RedisClient` URL from the merged connection
+  options (host/port/username/password/db, `default`-username
+  convention) and wraps it in BullMQ's own `createBunRedisClient`
+  adapter. Call sites keep passing plain `connection` options
+  (`parseRedisUrl` retained); QueueManager and both worker factories
+  invoke the configurator before constructing Queue/Worker. bullmq
+  bumped to 6.5 (msgpackr-extract 3.0.7 — its native addon loads fine
+  under bun 1.4.4; earlier 3.0.4 panicked on ARM per bun#18546),
+  `@elysia/openapi` to `^2.0.0-rc.1` (removing the only package patch),
+  `@types/bun` to 1.4.4, and biome re-pinned exact 2.5.10 (caret range
+  had floated to 2.6.4 breaking the config schema). Verified in a
+  pristine clone on bun 1.4.4: full gate green, source and AOT-bundle
+  entries boot against live redis:8-alpine, 8 queues/8 workers register,
+  `CLIENT LIST` shows zero ioredis connections.
 
 ---
 
