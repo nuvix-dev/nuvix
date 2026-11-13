@@ -565,9 +565,9 @@ onDatabaseCreated` composition hook). Redesigns over v1 recorded:
   `/health`, `/console/auth*`; audience-separated from tenant JWTs);
   no API keys on the platform surface. Endpoints: `POST
 /console/auth` (login), `/console/auth/refresh` (rotating),
-  `/console/auth/logout` (revoking), `GET /console/me` (CLI
-  whoami); refresh token also set as httpOnly cookie for the
-  browser console. First operator seeded idempotently from
+  `/console/auth/logout` (revoking); refresh token also set as
+  httpOnly cookie for the browser console. First operator seeded
+  idempotently from
   `NUVIX_CONSOLE_EMAIL`/`NUVIX_CONSOLE_PASSWORD` at startup (no
   public registration). Contract: `docs/api/console.md`; platform.md
   auth-posture updated (was flagged as a blocking deployment gap).
