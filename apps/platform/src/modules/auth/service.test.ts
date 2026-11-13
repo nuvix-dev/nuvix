@@ -188,20 +188,6 @@ describe('ConsoleAuthService', () => {
     // Logout is idempotent, so revoking an unknown token still succeeds.
     await expect(service.logout('unknown-token')).resolves.toBeUndefined()
   })
-
-  it('getMe returns the operator and 401s for unknown ids', async () => {
-    const { service, session } = makeService()
-    await seedUser(session)
-
-    const me = await service.getMe('user_1')
-    expect(me.email).toBe('op@test')
-
-    let code = ''
-    await service.getMe('nobody').catch((error: { fields?: { code?: string } }) => {
-      code = error.fields?.code ?? ''
-    })
-    expect(code).toBe('console_unauthorized')
-  })
 })
 
 describe('login throttling (hardening pass)', () => {

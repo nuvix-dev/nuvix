@@ -223,17 +223,6 @@ export class ConsoleAuthService {
     }
   }
 
-  /** Fresh operator profile for `GET /console/me` (JWT-verified id). */
-  async getMe(userId: string): Promise<ConsoleUserView> {
-    const user = await this.system().getDocument('console_users', userId)
-    if (user.empty()) {
-      throw new UnauthorizedError('Operator not found', {
-        code: 'console_unauthorized',
-      })
-    }
-    return toUserView(user)
-  }
-
   /** Removes a session when a rotated-away refresh token is presented again. */
   private async revokeByPreviousHash(presentedHash: string): Promise<void> {
     const rows = await this.system().find('console_sessions', [

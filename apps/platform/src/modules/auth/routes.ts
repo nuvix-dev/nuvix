@@ -142,29 +142,5 @@ export function authRoutesFor(service: ConsoleAuthService) {
           return { status: 'ok' as const }
         },
       )
-
-      // The identity route is protected by the upstream consoleAuth plugin.
-      .get(
-        '/console/me',
-        {
-          detail: {
-            summary: 'Console whoami',
-            description:
-              'Returns the operator bound to the presented access token. The CLI uses this as its `whoami`.',
-            tags: ['Console Auth'],
-          },
-          response: t.Object({
-            $id: t.String(),
-            email: t.String(),
-            name: t.Nullable(t.String()),
-          }),
-        },
-        (ctx) => {
-          // Read the user derived by consoleAuth across the Elysia composition boundary.
-          const consoleUser =
-            'consoleUser' in ctx ? (ctx as { consoleUser: { id: string } }).consoleUser : undefined
-          return service.getMe(consoleUser?.id ?? '')
-        },
-      )
   )
 }

@@ -23,8 +23,7 @@ Public exceptions: `GET /health` and the `/console/auth*` endpoints.
 Missing/invalid/expired → `401 console_unauthorized`. See
 `docs/api/console.md` for the token model (rotating refresh tokens, reuse
 detection, env-seeded bootstrap operator) and the
-`/console/auth`, `/console/auth/refresh`, `/console/auth/logout`,
-`/console/me` endpoints.
+`/console/auth`, `/console/auth/refresh`, `/console/auth/logout` endpoints.
 
 ## Prefix (D39)
 

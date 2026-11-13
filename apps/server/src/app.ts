@@ -183,8 +183,6 @@ const v2 = new Elysia({ prefix: '/v2' })
       .use(databaseRoutes())
       .use(schemasRoutes()),
   )
-  // Keep this diagnostic route downstream of context plugins so derived values are available to its handler.
-  .get('/whoami', ({ auth, project }) => ({ auth, project }))
   .use(health)
 
 /** Root app composing unversioned OAuth2 relay pages with the versioned project API. */

@@ -209,19 +209,6 @@ export const cases: ParityCase[] = [
 
   // ── Context chain & project resolution ──────────────────────────────
   {
-    name: 'whoami returns guest auth and absent project without credentials',
-    path: '/v2/whoami',
-    status: 200,
-    jsonKeys: ['auth', 'project'],
-    assertJson: (j) => {
-      const auth = j.auth as { type?: string }
-      const proj = j.project as { status?: string }
-      return auth?.type === 'guest' && proj?.status === 'absent'
-        ? null
-        : `unexpected whoami shape: ${JSON.stringify(j)}`
-    },
-  },
-  {
     name: 'tenant route without publishable key returns 400 publishable_key_required',
     path: '/v2/database/schemas',
     status: 400,

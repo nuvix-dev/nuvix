@@ -76,10 +76,6 @@ const suites = [
     factory: () => new Request('http://localhost/v2/health'),
   },
   {
-    name: 'GET /v2/whoami (Context chain: auth + project)',
-    factory: () => new Request('http://localhost/v2/whoami'),
-  },
-  {
     name: 'GET /v2/locale (GeoIP + ICU translation)',
     factory: () =>
       new Request('http://localhost/v2/locale', {

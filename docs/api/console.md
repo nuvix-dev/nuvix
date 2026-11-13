@@ -8,9 +8,8 @@
 
 Session-based operator authentication for the platform app (control plane),
 designed for BOTH the console UI and the CLI:
-
-- The CLI logs in with credentials, stores the refresh token in its config
-  file, and mints access tokens on demand (`GET /console/me` is its `whoami`).
+- The CLI logs in with credentials and stores the refresh token in its config
+  file; access tokens are minted on demand via `POST /console/auth/refresh`.
 - The console UI uses the same body contract; the refresh token is also set
   as an `httpOnly` cookie so the UI can adopt cookie-based refresh without a
   protocol change.
@@ -26,7 +25,6 @@ password, exchanged for a token pair.
 | Refresh | Opaque 32-byte random (base64url, 43 chars)         | 90 days (`NUVIX_CONSOLE_REFRESH_TTL_DAYS`)  | **sha256 hash only**, in `console_sessions` |
 
 Security properties:
-
 - **Rotation** — every refresh mints a new refresh token; the presented
   token's hash moves to `previousHash` and is no longer valid.
 - **Reuse detection** — presenting a rotated-away token revokes the whole
@@ -49,12 +47,11 @@ registration endpoint.
 
 ## Endpoints
 
-| Method | Path                    | Purpose                     | Auth   |
-| ------ | ----------------------- | --------------------------- | ------ |
-| POST   | `/console/auth`         | Login → token pair          | none   |
-| POST   | `/console/auth/refresh` | Rotate → fresh pair         | none   |
-| POST   | `/console/auth/logout`  | Revoke the session          | none   |
-| GET    | `/console/me`           | Operator bound to the token | Bearer |
+| Method | Path                    | Purpose             | Auth |
+| ------ | ----------------------- | ------------------- | ---- |
+| POST   | `/console/auth`         | Login → token pair  | none |
+| POST   | `/console/auth/refresh` | Rotate → fresh pair | none |
+| POST   | `/console/auth/logout`  | Revoke the session  | none |
 
 Every OTHER platform route (projects, keys, platforms, webhooks, templates,
 auth-settings, database, metadata) requires a valid Bearer access token.
@@ -85,7 +82,6 @@ Response `200`:
 Body (optional when using the cookie): `{ "refreshToken": "…" }`.
 
 Response `200` — same shape as login, with a NEW refresh token. Errors:
-
 - `401` `console_invalid_refresh_token` — unknown, expired, or
   **rotated-away** token (the latter also revokes the session).
 
@@ -96,18 +92,8 @@ Body (optional when using the cookie): `{ "refreshToken": "…" }`.
 Response `200` `{ "status": "ok" }` — idempotent; the refresh cookie is
 cleared.
 
-### `GET /console/me`
-
-`Authorization: Bearer <accessToken>` required.
-
-Response `200`:
-
-```json
-{ "$id": "u1", "email": "op@example.com", "name": "Operator" }
-```
-
-`401` `console_unauthorized` — missing/invalid/expired token (also used for
-platform routes without a token).
+`401` `console_unauthorized` applies to every protected platform route
+without a valid bearer token (see `docs/api/platform.md`).
 
 ---
 

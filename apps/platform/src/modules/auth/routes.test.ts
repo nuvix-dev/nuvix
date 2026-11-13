@@ -137,15 +137,6 @@ describe('console auth HTTP flow (CLI-compatible)', () => {
     )
     expect(who.status).toBe(200)
 
-    // The identity endpoint must resolve the same operator from the access token.
-    const me = await testApp.handle(
-      new Request('http://localhost/console/me', {
-        headers: { authorization: `Bearer ${pair.accessToken}` },
-      }),
-    )
-    expect(me.status).toBe(200)
-    expect(((await me.json()) as { email: string }).email).toBe('op@test')
-
     // Refresh rotates the credential pair, making the previous refresh token unusable.
     const refreshed = await testApp.handle(
       new Request('http://localhost/console/auth/refresh', {
