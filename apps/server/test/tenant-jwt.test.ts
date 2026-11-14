@@ -1,14 +1,15 @@
 /** Tests for tenant-local JWT authentication and console-audience separation. */
+
+import { describe, expect, test } from 'bun:test'
 import { signJwt } from '@nuvix/core/auth'
 import type { ResolvedProject } from '@nuvix/core/platform'
 import type { TenantResource, TenantResourcePool } from '@nuvix/core/tenants'
 import type { Doc, Session } from '@nuvix/db'
 import { Elysia } from 'elysia'
-import { describe, expect, test } from 'bun:test'
 import type { ProjectLookup } from '../src/context/project'
 import { tenantContext } from '../src/context/tenant'
-import type { Users } from '../src/types/generated'
 import { problemErrors } from '../src/plugins/errors'
+import type { Users } from '../src/types/generated'
 
 const JWT_SECRET = 'test-tenant-jwt-secret'
 const ACTIVE_PROJECT: ResolvedProject = {
