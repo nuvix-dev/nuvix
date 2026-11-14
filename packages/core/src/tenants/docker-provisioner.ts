@@ -1,3 +1,6 @@
+import { chmodSync, existsSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { waitUntilPostgresReady } from './readiness'
 import type {
   DeprovisionOptions,
@@ -15,9 +18,15 @@ import type {
  * the HTTP/socket API — no extra dependencies, and the binary is already a
  * runtime requirement for self-hosted deployments.
  *
- * Networking: host-mapped random port (`-p 0:5432`) — works identically for
- * local development and a single self-hosted box; an internal-network-only
- * mode is a possible future hardening pass.
+ * Networking: host-mapped random port bound to loopback only
+ * (`-p 127.0.0.1:0:5432`) — tenant databases are never reachable from the
+ * network; a shared-host internal-network mode is a possible future pass.
+ *
+ * Credentials: the generated password reaches the container through a
+ * 0600 secret file mounted at `/run/secrets/tenant_password`
+ * (`POSTGRES_PASSWORD_FILE`), never through argv or `-e` — the process
+ * list and `docker inspect` never see it. The file is removed with the
+ * tenant's volume on `deprovision`.
  *
  * Volumes: named per project, so `docker rm -f` (no `-v`) never touches tenant
  * data — that's what makes "keep the volume by default" fall out for free.
@@ -84,6 +93,34 @@ export class DockerTenantProvisioner implements TenantProvisioner {
   }
 
   /**
+   * Host-side 0600 file carrying the tenant password — mounted read-only
+   * into the container. Lives until the tenant is deprovisioned so the
+   * image's entrypoint can re-read it on container restarts.
+   */
+  private secretFilePath(projectId: string): string {
+    const dir = join(tmpdir(), `${this.namePrefix}-secrets`)
+    mkdirSync(dir, { recursive: true, mode: 0o700 })
+    return join(dir, `${projectId}.secret`)
+  }
+
+  private writeSecretFile(projectId: string, password: string): string {
+    const path = this.secretFilePath(projectId)
+    writeFileSync(path, password, { encoding: 'utf8', mode: 0o600 })
+    // Defensive: guarantee 0600 even where umask is unusually permissive.
+    chmodSync(path, 0o600)
+    return path
+  }
+
+  private removeSecretFile(projectId: string): void {
+    const path = this.secretFilePath(projectId)
+    try {
+      if (existsSync(path)) rmSync(path)
+    } catch {
+      // Best-effort hygiene; a leftover 0600 file is harmless.
+    }
+  }
+
+  /**
    * Create the data volume, start the container on a random host port,
    * and return its connection target with a freshly generated password.
    */
@@ -91,26 +128,36 @@ export class DockerTenantProvisioner implements TenantProvisioner {
     const containerName = this.containerName(projectId)
     const volumeName = this.volumeName(projectId)
     const password = generatePassword()
+    const secretFile = this.writeSecretFile(projectId, password)
 
     await runDocker(['volume', 'create', volumeName])
 
-    await runDocker([
-      'run',
-      '-d',
-      '--name',
-      containerName,
-      '--label',
-      'nuvix.tenant=true',
-      '--label',
-      `nuvix.project-id=${projectId}`,
-      '-e',
-      `POSTGRES_PASSWORD=${password}`,
-      '-v',
-      `${volumeName}:/var/lib/postgresql/data`,
-      '-p',
-      '0:5432',
-      this.image,
-    ])
+    try {
+      await runDocker([
+        'run',
+        '-d',
+        '--name',
+        containerName,
+        '--label',
+        'nuvix.tenant=true',
+        '--label',
+        `nuvix.project-id=${projectId}`,
+        // Password enters through a mounted 0600 secret file — never argv/env.
+        '-e',
+        'POSTGRES_PASSWORD_FILE=/run/secrets/tenant_password',
+        '-v',
+        `${secretFile}:/run/secrets/tenant_password:ro`,
+        '-v',
+        `${volumeName}:/var/lib/postgresql/data`,
+        // Loopback-only: the tenant database is never network-reachable.
+        '-p',
+        '127.0.0.1:0:5432',
+        this.image,
+      ])
+    } catch (error) {
+      this.removeSecretFile(projectId)
+      throw error
+    }
 
     const port = await this.resolveHostPort(containerName)
 
@@ -154,5 +201,6 @@ export class DockerTenantProvisioner implements TenantProvisioner {
         if (!String(error).includes('No such volume')) throw error
       })
     }
+    this.removeSecretFile(handle.projectId)
   }
 }
