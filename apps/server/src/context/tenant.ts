@@ -131,6 +131,13 @@ export async function resolveTenantContext(
   if (jwtHeader && options.jwtSecret && user.empty()) {
     try {
       const payload = await verifyJwt(jwtHeader, options.jwtSecret)
+      // Audience separation: console (platform) JWTs must never
+      // authenticate as tenant users on the project-facing server.
+      if (payload && payload.aud === 'console') {
+        throw new UnauthorizedError('Invalid JWT token', {
+          code: 'user_jwt_invalid',
+        })
+      }
       if (payload?.sub) {
         const userDoc = (await tenantResource
           .authSystemSession()
