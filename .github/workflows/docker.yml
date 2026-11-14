@@ -12,7 +12,7 @@ jobs:
       contents: read
       packages: write
       id-token: write # Required for signing/attestations in 2026
-    
+
     strategy:
       fail-fast: false
       matrix:

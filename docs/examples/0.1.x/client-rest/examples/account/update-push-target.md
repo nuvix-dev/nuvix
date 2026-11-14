@@ -1,9 +1,0 @@
-PUT /v1/account/targets/{targetId}/push HTTP/1.1
-Host: api.nuvix.in
-Content-Type: application/json
-X-Nuvix-Project: <YOUR_PROJECT_ID>
-X-Nuvix-Session: 
-
-{
-  "identifier": "<IDENTIFIER>"
-}

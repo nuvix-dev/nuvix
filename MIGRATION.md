@@ -1,0 +1,834 @@
+# Nuvix v2 — Bun-Native Rewrite Plan
+
+> **Status**: PLANNING → EXECUTION
+> **Scope**: Full rewrite of the Nuvix backend from NestJS/Fastify/Node to a
+> Bun-native stack built on Elysia (`elysia@next`). This is a **rewrite**, not
+> a mechanical migration.
+> **Location**: Everything originally lived in `next/` while the legacy root
+> existed; after the Phase 9 cutover the workspace was flattened to the repo
+> root (`apps/`, `packages/`, `docs/`, `assets/`, `test/` at root) and the
+> `@nuvix/*` platform libraries switched from local `file:` sibling links to
+> published npm packages. Paths in historical sections below refer to the
+> old layout.
+
+---
+
+## 0. Philosophy
+
+**The old codebase is a REFERENCE, not a BLUEPRINT.**
+
+| Old code tells us              | Old code does NOT tell us             |
+| ------------------------------ | ------------------------------------- |
+| What the product does          | How to structure folders/files        |
+| What routes/features exist     | What to name functions or params      |
+| Business rules & edge cases    | Which patterns to keep                |
+| Where the hard-won logic lives | The API contract (we're designing v2) |
+
+We are building the **next version**: APIs improve, structure improves,
+architecture improves. Every structural decision is made fresh, optimized for
+testability, readability, and Bun-native performance — never copied from the
+old tree out of convenience.
+
+---
+
+## 1. Ground Rules
+
+### ✅ What we FOLLOW
+
+1. **Bun-native first.** Before any dependency, check Bun builtins:
+   - `Bun.sql` / `SQL` — Postgres · `Bun.redis` — Redis
+   - `Bun.password` — argon2id/bcrypt · `Bun.file` / `Bun.write` — files
+   - `Bun.crypto` / `crypto.subtle` — HMAC, JWT, tokens, MD5 legacy
+   - `Bun.spawn`, `Bun.sleep`, `Bun.env`, `bun test`
+     File handling, hashing, HTTP, scheduling — all through Bun natives.
+2. **Elysia idioms.** Lifecycle hooks (`onRequest/onParse/onBeforeHandle/
+onError`), typed context via `derive`/`resolve`, `t` (TypeBox) schemas,
+   plugin composition. No framework fighting.
+3. **Contract-first per module.** Before porting a domain, write its v2 API
+   contract (routes, schemas, errors) in `docs/api/<module>.md`, review it,
+   then implement. Implementation without a reviewed contract doesn't start.
+4. **Vertical slices.** One domain = one self-contained folder with co-located
+   route + schema + service + tests (see §4).
+5. **Structure as you go.** Never copy old file organization. Extract pure,
+   testable functions; keep handlers thin; services own business logic.
+6. **Pin exact versions** of `elysia@next` (beta) and plugins in `bun.lock`.
+7. **Reference, don't trust.** When implementing business logic, read the old
+   service code to learn the _rules_ (e.g. session expiry semantics, bucket
+   permission inheritance), then implement cleanly in the new shape.
+
+### ❌ What we DON'T follow
+
+1. **Old tests are NOT truth.** AI-generated slop, outdated. Not ported, not
+   trusted. New tests are written fresh against the v2 contracts.
+2. **No NestJS patterns.** No DI container, decorators, modules,
+   reflect-metadata, rxjs, class-validator/class-transformer.
+3. **No Node compatibility shims.** Bun-only runtime (D8).
+4. **No copying of naming.** Function names, param names, DTO names, file
+   layouts from the old repo are not carried over unless genuinely good.
+5. **Don't touch root monorepo.** It stays runnable as a live reference.
+
+---
+
+## 2. Locked Architecture Decisions
+
+| #   | Decision                                           | Choice                                                                                                                                                                                                                                                                                                                                               | Notes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| --- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Location                                           | `next/` subfolder, new monorepo                                                                                                                                                                                                                                                                                                                      | Parallel dev; root deletable at cutover                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| D2  | Framework                                          | **Elysia `elysia@next` (2.0.0-beta.x)**                                                                                                                                                                                                                                                                                                              | Bun-native, e2e type safety                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| D3  | Validation                                         | Elysia built-in `t` (TypeBox)                                                                                                                                                                                                                                                                                                                        | Replaces class-validator/transformer                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| D4  | Queues                                             | BullMQ + Bun adapter (`createBunRedisClient(new RedisClient(...))`)                                                                                                                                                                                                                                                                                  | Revisit minimal custom queue later                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| D5  | Passwords                                          | `Bun.password` (argon2id/bcrypt)                                                                                                                                                                                                                                                                                                                     | Drops argon2+bcrypt pkgs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| D6  | JWT                                                | Hand-rolled HS256/HS512 on `crypto.subtle`                                                                                                                                                                                                                                                                                                           | Drops @nestjs/jwt                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| D7  | Monorepo                                           | Plain Bun workspaces (no Turborepo)                                                                                                                                                                                                                                                                                                                  | Native tooling only                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| D8  | Runtime                                            | **Bun-only**, Node dropped                                                                                                                                                                                                                                                                                                                           | Unlocks all native APIs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| D9  | Templates                                          | Keep Handlebars                                                                                                                                                                                                                                                                                                                                      | Template-syntax compat for users                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| D10 | API docs                                           | `@elysia/openapi` (official 2.x plugin, Scalar UI)                                                                                                                                                                                                                                                                                                   | Spec at `/v2/openapi/json`, Scalar UI at `/v2/openapi`. Needs a small Bun patch (Phase 1 notes)                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| D11 | `@nuvix/db`, `@nuvix/cache`                        | Sibling **source checkouts** linked from `@nuvix/server` via `file:../../../../database` and `file:../../../../cache` (not the npm packages)                                                                                                                                                                                                         | The published `@nuvix/db@1.0.0-alpha.2` ships `types: "./dist/index.d.ts"` but the tarball never contains that file, so every import silently resolves to `any` under TS7's bundler resolution instead of erroring — a real, confirmed bug, not a config problem here. Fixed on the sibling's `main` (`fix: publish complete type declarations`) but never republished. Use the local checkout until a corrected version ships; re-evaluate switching back to the npm package once one is published with real declarations. |
+| D12 | `@nuvix/pg`                                        | Deferred through Phase 7; use `Bun.sql` directly for the rare raw-DDL calls schemas work needs (e.g. `system.create_schema`) instead of pulling in the query-builder package early                                                                                                                                                                   | See §6                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| D13 | **API surface**                                    | **Full v2 API redesign**                                                                                                                                                                                                                                                                                                                             | Paths, payloads, pagination may all change; documented per-module first                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| D14 | **Errors**                                         | **New unified error format**                                                                                                                                                                                                                                                                                                                         | Consistent codes, structured details, correct HTTP statuses                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| D15 | **Code layout**                                    | Vertical slices (feature folders)                                                                                                                                                                                                                                                                                                                    | Co-located route/schema/service/test                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| D16 | **File naming**                                    | Minimal suffixes                                                                                                                                                                                                                                                                                                                                     | `locale/service.ts`, not `locale.service.ts`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| D17 | **Tests**                                          | `bun test`                                                                                                                                                                                                                                                                                                                                           | Zero-dep, native                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| D18 | **Workspace names**                                | Simple internal names (`@nuvix/next-core`, `@nuvix/next-utils`, …)                                                                                                                                                                                                                                                                                   | Rename-friendly during rewrite                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| D19 | **Web standards**                                  | RFC 9457 Problem Details (`application/problem+json`) for ALL errors; standard HTTP semantics, caching, status codes throughout                                                                                                                                                                                                                      | Elysia 2 has native `problem()` support — use it, don't invent an envelope                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| D20 | **Multi-tenancy**                                  | First-class: **each tenant (project) gets its own database**; platform provisions project creation & DB lifecycle                                                                                                                                                                                                                                    | Old code was partially multi-tenant; v2 makes it structural. See §6b                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| D21 | **Images**                                         | `Bun.Image` replaces `sharp`                                                                                                                                                                                                                                                                                                                         | Native, faster, zero deps. Linux serves JPEG/PNG/WebP/GIF/BMP. SVG→PNG still needs `@resvg/resvg-js` (open Q)                                                                                                                                                                                                                                                                                                                                                                                                               |
+| D22 | **Scheduling**                                     | `Bun.cron` replaces `@nestjs/schedule` / cron loops                                                                                                                                                                                                                                                                                                  | OS-level scheduled jobs, built-in                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| D23 | **Auth model**                                     | Design auth module **token-ready**: short-lived access tokens (~1 min) + refresh tokens (Clerk-style) as target state; DB sessions may ship first but must not be baked into architecture                                                                                                                                                            | See Open Questions #5                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| D24 | **Database engine**                                | PostgreSQL 18 via custom image [nuvix-dev/postgres](https://github.com/nuvix-dev/postgres) (auto-schema extensions)                                                                                                                                                                                                                                  | Reference for schema/collection redesign                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| D25 | **Schema/collections**                             | Free to redesign collection/schema model during rewrite                                                                                                                                                                                                                                                                                              | Old schema is reference, not contract                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| D26 | **API prefix**                                     | `/v2`                                                                                                                                                                                                                                                                                                                                                | All server routes mounted under `/v2`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| D27 | **Pagination**                                     | Cursor-based primary; offset allowed where cursors impractical. Every list response carries a `meta` object                                                                                                                                                                                                                                          | Meta shape defined in `_conventions.md`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| D28 | **IDs**                                            | Keep existing ID scheme — port the ID class from old lib                                                                                                                                                                                                                                                                                             | DB/tooling compat where it matters                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| D29 | **Legacy compat**                                  | **Dropped.** Breaking release: no legacy data migration, no legacy password algo support (MD5 etc.), no legacy session/token survival across cutover                                                                                                                                                                                                 | Simplifies auth & schema work substantially                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| D30 | **Test client**                                    | `@elysia/eden` `treaty` (2.0.0-beta.5, pinned) for ALL API tests — unit (against instance) and e2e (against URL). Fully typed paths/responses/errors generated from the Elysia instance                                                                                                                                                              | Compile-time route safety; one client pattern everywhere; error bodies typed via `error.value`                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| D31 | **TypeScript**                                     | TypeScript 7.0.2 (Go-native compiler, stable). Verified: full workspace typechecks clean incl. Elysia generics; ~0.2s for the repo                                                                                                                                                                                                                   | Bun transpiles anyway — tsc is typecheck-only here, so native compiler is pure win; revisit if issues surface                                                                                                                                                                                                                                                                                                                                                                                                               |
+| D32 | **i18n scope & engine**                            | Everything localized (errors, emails, SMS, locale data) via **ICU MessageFormat** (`intl-messageformat`) in `packages/i18n`; assets stay flat dot-key JSON at `assets/locale/translations/`                                                                                                                                                          | 73 locales migrated to ICU by script; see `docs/api/_i18n.md`                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| D33 | **Typed translation keys**                         | `TranslationKey` union generated from `en.json` (`bun run generate:keys` in `packages/i18n`); unknown keys are compile errors                                                                                                                                                                                                                        | Per-key param-type inference dropped (ICU) — params are a plain record, verified by tests                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| D34 | **Locale resolution**                              | `x-nuvix-locale` header > user pref (future hook) > `Accept-Language` (q-values) > `en`; exposed on context as `locale` via `'plugin'`-scoped derive; error `messageKey` translated at serialization time                                                                                                                                            | English `detail` always present as fallback; translation failures never mask the original error                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| D35 | **GeoIP graceful degradation**                     | Bundled dbip `.mmdb`; missing asset → no-op provider (lookups `null`), `/v2/locale` serves unknown-IP shape, warn once at boot — never fails startup                                                                                                                                                                                                 | Full DNS-pinned SSRF guards + Redis-cached lookups deferred to hardening pass                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| D36 | **Avatar caching**                                 | Static avatars/QR: `Cache-Control: public, max-age=86400, immutable`; favicon proxy: `max-age=3600` NOT immutable (remote content changes); favicon gets SSRF guard (http(s) only, private-host literals rejected, image/* content-type required) — v1 had no cache header and no guard                                                              | QR `Content-Disposition: inline` by default, `attachment` with `download=true`                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| D37 | **Tenant target encryption**                       | A project's tenant connection (`TenantTarget`: host/port/user/password) is stored via `@nuvix/db`'s `filters: ['json', 'encrypt']` (AES-256-GCM on `crypto.subtle`, key from `NUVIX_TENANT_ENCRYPTION_KEY`); never returned by the API                                                                                                               | `packages/core/src/tenants/encryption.ts`; deprovision keeps the data volume by default, `purge` destroys it                                                                                                                                                                                                                                                                                                                                                                                                                |
+| D38 | **`@nuvix/db` filter registry**                    | Shared filters (`json`, `encrypt`) registered once per process via `registerCoreDbFilters` — collections reference them by name instead of each service hand-rolling encode/decode                                                                                                                                                                   | `packages/core/src/db/filters.ts`; replaces legacy `configureDbFiltersAndFormats`                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| D39 | **Platform API prefix**                            | No `/v2` prefix — D26 scopes that to the project-facing server. The platform app is versioned independently, on its own port (`config.platform.port`)                                                                                                                                                                                                | `docs/api/platform.md`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| D40 | **Project selection**                              | `x-nuvix-publishable-key` selects a platform project and its tenant database; it is public and never authorizes access. `x-nuvix-key` remains the distinct tenant-local secret API-key credential                                                                                                                                                    | `_conventions.md` §6; generated by the platform project service                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| D41 | **Tenant resource lifecycle**                      | One `TenantResource` per project owns exactly one Bun `SQL` handle and the `@nuvix/db` `Database` built on it; a bounded `TenantResourcePool` (LRU, default 100) hands them out per `ResolvedProject`, evicting (and closing) the least-recently-used resource beyond capacity                                                                       | `packages/core/src/tenants/resource.ts`, `pool.ts`; satisfies §6b rule 4                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| D42 | **Project-scoped config, not hardcoded constants** | Any behavior that legacy gated on `project.auths.*`/`project.limits.*` (feature toggles, password policy, session caps, array-size limits, etc.) is resolved from the project's own settings at request time via a narrow settings lookup — never a hardcoded constant in service code. One defaults schema; a project's stored override always wins | `docs/api/account.md` "Project configuration & limits"; depends on the Phase 7 auth-settings platform slice for real per-project storage                                                                                                                                                                                                                                                                                                                                                                                    |
+
+### Elysia 2 API notes (code against THESE from day one)
+
+Elysia 2 is a complete rewrite with breaking changes. We never write Elysia-1-style code:
+
+| Elysia 1.x                                                                         | Elysia 2 (`elysia@next`)                                                                     |
+| ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `.get('/', handler, { body: t.Object({...}) })`                                    | `.get('/', { body: t.Object({...}) }, handler)` — **options BEFORE handler**                 |
+| `onRequest / onParse / onBeforeHandle / onAfterHandle / onAfterResponse / onError` | `request / parse / beforeHandle / afterHandle / afterResponse / error` (`on` prefix dropped) |
+| `resolve()` (ran at beforeHandle)                                                  | **removed** — `derive()` now runs at beforeHandle                                            |
+| `.error('Code', Class)` + error dictionary                                         | `.error(MyErrorClass, handler)` — class-based, fully inferred                                |
+| Custom error envelopes                                                             | RFC 9457 via `problem(status, {...})` + `application/problem+json`                           |
+| `.ws()` always available                                                           | opt-in: `.use(websocket())` from `elysia/websocket`; generator handlers (`yield`) preferred  |
+| guard/group additive schemas                                                       | default **override**; pass `schema: 'standalone'` explicitly when needed                     |
+| `{ as: 'scoped' }`                                                                 | string scope form: `.guard('plugin', fn)` etc.                                               |
+| JIT compile at request time                                                        | optional **AOT build plugin**: `import { aot } from 'elysia/plugin/aot/bun'` in `Bun.build`  |
+| `@elysiajs/*` plugins                                                              | new official scope is **`@elysia`** for 2.x plugins (`@elysiajs` stays 1.x)                  |
+
+Also useful: `defer(fn)` for post-response work (audit/stats side-effects),
+per-field cookie schemas with signing, `Manifest.isCapturing()` to skip
+long-running connections during AOT dry-run.
+
+### Bun 1.4 natives we adopt
+
+| Need                                   | Bun builtin                                   |
+| -------------------------------------- | --------------------------------------------- |
+| Image processing (avatars, thumbnails) | `Bun.Image` (D21)                             |
+| Scheduled jobs                         | `Bun.cron` (D22)                              |
+| Files/storage local driver             | `Bun.file`, `Bun.write`, `Bun.s3.*`           |
+| Hashing/tokens/JWT                     | `Bun.crypto`, `crypto.subtle`, `Bun.password` |
+| SQL / Redis                            | `Bun.sql`, `Bun.redis`                        |
+| Tarballs/archives (backups, exports)   | `Bun.Archive`                                 |
+| Config files                           | `Bun.JSON5`, TOML/YAML utils                  |
+
+---
+
+## 3. Dependency Migration Map
+
+### Removed → replaced by Bun natives or Elysia
+
+| Old                                                  | Replacement                                                                     |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------- |
+| `@nestjs/*` (all ~10 pkgs)                           | Elysia core + plugins + our composition                                         |
+| `fastify`, `@fastify/{cookie,multipart,static,view}` | Elysia built-ins/plugins                                                        |
+| `class-validator`, `class-transformer`               | Elysia `t` schemas                                                              |
+| `@nestjs/jwt`                                        | `packages/core/jwt.ts` on `crypto.subtle`                                       |
+| `ioredis`                                            | `Bun.redis` (+ BullMQ Bun adapter for queues)                                   |
+| `pg`                                                 | `Bun.sql` via new `@nuvix/db`; pg type-parser config deleted                    |
+| `argon2`, `bcrypt`                                   | `Bun.password`                                                                  |
+| `reflect-metadata`, `rxjs`                           | deleted                                                                         |
+| `qs`, `path-to-regexp`                               | Elysia router/parsing                                                           |
+| `@nestjs/schedule`                                   | `Bun.cron` (D22)                                                                |
+| `@nestjs/event-emitter`                              | typed emitter on `EventTarget`                                                  |
+| `sharp`                                              | `Bun.Image` (D21)                                                               |
+| `otplib`                                             | evaluate at Auth phase: RFC-6238 TOTP on `crypto.subtle`, else keep temporarily |
+
+### Kept (justified)
+
+| Package                                                                                               | Why                                                                           |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `handlebars`                                                                                          | User template syntax compat (D9)                                              |
+| `bullmq`                                                                                              | Queue engine w/ Bun adapter (D4)                                              |
+| `maxmind`                                                                                             | GeoIP; no Bun native equivalent                                               |
+| `@resvg/resvg-js`                                                                                     | SVG→PNG rendering — `Bun.Image` has no SVG support (pending Open Question #7) |
+| `@nuvix/db`, `@nuvix/cache`, `@nuvix/storage`, `@nuvix/messaging`, `@nuvix/audit`, `@nuvix/telemetry` | Our libs, latest Bun-native versions                                          |
+| `elysia@next`, `@elysia/openapi`                                                                      | New foundation                                                                |
+
+### Deferred
+
+| Package     | Plan                                    |
+| ----------- | --------------------------------------- |
+| `@nuvix/pg` | Build locally inside `next/` later (§6) |
+
+---
+
+## 4. New Monorepo Structure (`next/`)
+
+```
+next/
+├── MIGRATION.md                  ← this file
+├── docs/
+│   └── api/                      ← v2 API contracts, one file per module (reviewed BEFORE impl)
+├── package.json                  ← bun workspaces: ["apps/*", "packages/*"]
+├── bun.lock                      ← exact-pinned elysia@next + plugins
+├── tsconfig.json                 ← strict, bundler resolution, bun-types
+├── biome.json
+├── .env.example
+├── apps/
+│   ├── server/                   ← project-facing API
+│   │   └── src/
+│   │       ├── index.ts          ← entry: assemble app, Bun.serve
+│   │       ├── app.ts            ← root Elysia instance + global plugins
+│   │       ├── context/          ← project resolution, auth, api key, mode
+│   │       │                     (built with derive/resolve, fully typed)
+│   │       ├── shared/           ← error envelope, security headers, pagination utils
+│   │       ├── account/          ← Domain: profile/, sessions/, tokens/, identities/, targets/, mfa/, recovery/
+│   │       ├── avatars/          ← Domain: avatars and image generation
+│   │       ├── database/         ← Domain: schemas/ management
+│   │       ├── locale/           ← Domain: i18n and geoip routing
+│   │       ├── messaging/        ← Domain: topics/, subscribers/, providers/, messages/
+│   │       ├── schemas/          ← Domain: collections/, attributes/, indexes/, documents/, tables/
+│   │       ├── storage/          ← Domain: buckets/, files/, usage/
+│   │       ├── teams/            ← Domain: memberships/, prefs, teams core
+│   │       └── users/            ← Domain: sessions/, targets/, users core
+│   └── platform/                 ← admin/console API (same slice layout)
+│       └── src/modules/ projects/ keys/ templates/ auth-settings/ metadata/
+└── packages/
+    ├── core/                     ← @nuvix/next-core
+    │   ├── auth/                 ← session/jwt/api-key/OAuth2/MFA primitives
+    │   ├── queues/               ← BullMQ-over-Bun wrapper + workers
+    │   ├── models/               ← shared data models
+    │   ├── i18n/  oauth/  ratelimit/
+    │   └── jwt.ts                ← crypto.subtle HS256/HS512
+    ├── utils/                    ← @nuvix/next-utils (config, query builders, constants)
+    └── pg-meta/                  ← @nuvix/next-pg-meta (schema introspection over Bun.sql)
+```
+
+### Pipeline mapping (conceptual old → new)
+
+| Concern                       | New home                                                |
+| ----------------------------- | ------------------------------------------------------- |
+| CORS / security headers       | global plugins in `app.ts`                              |
+| Project + mode resolution     | `context/project.ts` (`resolve`)                        |
+| Auth (session/JWT/API key)    | `context/auth.ts` (`resolve`) — one place, typed output |
+| Rate limiting                 | `packages/core/ratelimit` on `Bun.redis`                |
+| Audit/stats/logs side-effects | `onAfterResponse` hooks → queues                        |
+| Error handling                | `shared/errors.ts` envelope + single `onError`          |
+| Validation                    | `t` schemas inline per route                            |
+| Response shaping              | `mapResponse` / plain handler returns                   |
+
+---
+
+## 5. Execution Phases
+
+> Each module follows the same loop:
+> **design contract → review → implement → bun test → manual smoke vs old behavior**
+
+### Phase 0 — Scaffolding
+
+- [x] `next/` monorepo: workspaces, tsconfig, biome, env loader (`packages/utils/src/config.ts`, fail-fast validation)
+- [x] Pin `elysia@next` exact version (**2.0.0-beta.6**); smoke-test boot + `/v2/health` ✅
+- [x] Define **API conventions** in `docs/api/_conventions.md`: RFC 9457 problem+json errors (D19), pagination (D27), ID scheme (D28), versioning/prefix (D26), auth header names (see §7 Open Questions)
+- [x] Port config module into `packages/utils`
+- [x] Error classes + `problemErrors` plugin mapping `AppError` → RFC-9457 (tested)
+
+**Elysia 2.0.0-beta.6 API notes** (verified against installed source, not docs):
+- `.onError` does NOT exist — error handling is `.error(ErrorClass, handler)` or `.error('global'|'plugin'|'local', Class, handler)`
+- Error handlers registered inside a plugin MUST use `'global'` scope or they silently don't propagate to the consuming instance
+- Native RFC-9457 support: built-in `problem(status, detail)` helper; framework already emits problem+json for 404/validation/etc. Built-in errors: `NotFound`, `ParseError`, `ValidationError` (422), `InternalServerError`, all extending `ElysiaError` with `problemType`/`problemTitle`
+- Bun 1.4 uses the isolated linker by default → workspace deps live under `<pkg>/node_modules`, not hoisted to root
+- Route signature is options-before-handler: `.get(path, { response: t.Object({...}) }, handler)`
+
+### Phase 1 — Core pipeline skeleton
+
+- [x] Typed error classes + problem+json envelope (done early in Phase 0 — `apps/server/src/shared/errors.ts` + `plugins/errors.ts`)
+- [x] Auth resolution primitives: JWT util (`utils/jwt.ts`, zero-dep HS256 on `crypto.subtle`), auth context (`context/auth.ts`: guest/session/jwt/apiKey union, pluggable DB-backed verifiers for later phases; precedence session > jwt > key > guest)
+- [x] CORS (`plugins/cors.ts`, hand-rolled), security headers (`plugins/security.ts`), rate limiting (`plugins/rate-limit.ts`, pluggable `Store`; memory impl now, Redis drops in later) — all tested
+- [x] Context chain — project resolution leg: `context/project.ts`'s `projectContext` derive resolves `x-nuvix-publishable-key` through `@nuvix/core/platform`'s `ProjectRegistry` (the same control-plane DB the platform app writes) into a `ProjectContext` union (`absent | invalid | resolved`); `requireProject()` turns the non-resolved states into typed 400/404 errors for routes that need a tenant. Console/admin mode selection stays deferred to Phase 4 (needs tenant-local auth to mean anything)
+- [x] OpenAPI docs via `@elysia/openapi@2.0.0-beta.1` (D10) — spec at `/v2/openapi/json` (typed from `t` schemas), Scalar UI at `/v2/openapi`. **Requires a Bun patch** (`patches/@elysia+openapi@2.0.0-beta.1.patch`): the published bundle has broken relative `../node_modules/typebox` imports in its `gen` submodule; the patch stubs `Script` (only used by `fromTypes()`, which we don't use). Root `package.json` also carries `elysia` so the patched copy resolves it under Bun's isolated linker. Defaults differ from v1 plugin: spec path is `/openapi/json` (not `/openapi.json`), UI is Scalar (not Swagger).
+
+**Phase 1 notes (verified against elysia 2.0.0-beta.6 source):**
+- `onRequest` does NOT exist → the hook is `.request(fn)` (matches §2 table, but confirmed in practice: this is exactly why `@elysiajs/cors@1.x` crashes)
+- `derive` inside a plugin needs explicit scope to cross `.use()` boundaries: `.derive('plugin', fn)`; local-scoped derive silently doesn't propagate (same class of bug as error handlers needing `'global'`)
+- **Plugin factories MUST be invoked before `.use()`**: `.use(plugin(opts))` works, but `.use(plugin)` (bare function reference) silently drops the returned instance's `'global'`-scoped error handlers — requests fall through to default error handling. Mutator-style plugins (`fn(app)` that calls `.request()`/`.derive()` on the passed instance) are unaffected. Verified empirically against 2.0.0-beta.6
+- **Route signature is `.get(path, hook, handler)`** — the schema/hook object comes BEFORE the handler (v1 Elysia had handler second). Passing `(path, handler, hook)` does not error: the hook object is treated as the handler and gets JSON-serialized as the response body (`{"query":{...}}`), and the real function is registered as a hook. Every route in a module silently returns its own schema. Caught via treaty 404/shape mismatches; verified with minimal repro
+- **Returning a `Response` instance from a handler breaks when any hook object is present** — even `{}` — the Response gets stringified. Binary endpoints must return bytes (`Uint8Array`) and set `content-type` etc. via `set.headers` instead
+- **`query`/`headers`/etc. in hooks must be a single TypeBox schema** (`t.Object({...})`); a plain object-of-schemas fails at route-compile time with "Elysia Validator support only TypeBox and Standard Schema" (500 on first request, not at registration)
+- **Async derives MUST be awaited inside the derive fn**: `.derive('plugin', ({req}) => ({ locale: getTranslator(...) }))` leaves a bare `Promise` on context — first consumer crashes with `locale.format is not a function`. Latent until a route actually reads the value; use `.derive('plugin', async (...) => ({ locale: await ... }))`
+- **Derives don't flow through TYPES across separate plugin instances**: `localeRoutes()` mounted after `localeContext()` sees `locale` at runtime but TS doesn't. Self-contained modules should own their derive (accept `LocaleContextOptions`, derive internally) for full inference
+- **`context.ip` is not auto-populated** in beta.6 — resolve client IP manually: `x-forwarded-for` header first, else `server?.requestIP(request)?.address`
+- **Eden treaty dynamic segments take the VALUE as property**: `client.v2.avatars.flags.us.get()`, NOT `.get({ params: { code: 'us' } })` (the latter sends the literal `:code` path)
+- Async error handlers + returning `problem(status, {...})` from them work correctly (unwrapped to problem+json on both route and error handler paths)
+- Async `derive` works fine (returns `MaybePromise`)
+- No `Bun.JWT` API exists in Bun 1.4 → JWT stays hand-rolled HS256 on `crypto.subtle` (D6 confirmed)
+
+### Phase 2 — First vertical slice: Locale + Avatars
+
+- [x] i18n foundation (D32–D34): `packages/i18n` (loader/translator/resolver, 12 tests), ICU migration of all 73 locale files + round-trip tests, typed-key codegen, `context/locale.ts` derive, error `messageKey` plumbing in `AppError`/`problemErrors`. Contract: `docs/api/_i18n.md`
+- [x] Write v2 contracts for both modules → review (approved; `docs/api/locale.md`, `docs/api/avatars.md`)
+- [x] Implement Locale + Avatars (`apps/server/src/locale`, `apps/server/src/avatars`); Bun.Image replaces sharp (D21), resvg only for initials SVG→PNG, assets copied to `next/assets/{avatars,fonts,dbip}`. 25 module tests, treaty-based. **v1 bug fixed:** `eu` was always `false` in v1 (`euList` holds country codes but was checked against `continentCode`); v2 checks the country code
+- [x] Smoke-test harness (`apps/server/test/smoke/`): declarative behavioral cases run against the REAL composed app via `app.handle()`; set `NUVIX_V1_BASE_URL` to also replay each case against a live old app and print a normalized parity report (informational — v2 assertions are the hard contract). 17 cases seeded for locale/avatars/errors
+
+### Phase 3 — Data services
+
+- [x] Contracts drafted for review: `docs/api/database.md` (schemas CRUD only — collections/documents deferred until `@nuvix/db` stabilizes), `docs/api/teams.md` (incl. invite/accept lifecycle), `docs/api/users.md` (**legacy hash-create endpoints dropped per D29** — md5/sha/phpass/scrypt variants not carried over)
+- [x] `teams.md`/`users.md` re-audited line-by-line against legacy `apps/server/src/teams/**`/`users/**` (three parallel research passes) and rewritten to fix real inaccuracies found: missing fields/endpoints (`teamId` on create, `DELETE /users/:userId`, the two verification-flag endpoints), wrong error-code strings, wrong auth-posture claims, a mislabeled invite lifecycle (exactly-one → at-least-one identifier, owner-role authorization, auto-provisioning), and several legacy bugs now deliberately fixed instead of ported (team `getPrefs` 404, `PATCH prefs` merge vs. replace, MFA recovery-code PATCH/PUT semantics, `memberships` list `total`, last-owner protection added as new). Every fix is labeled _correction_ (draft was wrong about v1) or _improvement_ (deliberate change) — see each doc's own deviations section for the full list
+- [x] Implement database service on new `@nuvix/db`
+- [x] Teams, Users slices (Users service complete, Teams complete with 1:1 legacy parity and reserved `GET /teams/:teamId/logs`)
+- [x] Schemas slice — collections, documents, attributes, indexes implemented on `@nuvix/db`
+
+### Phase 4 — Account/Auth (highest risk)
+
+- [x] Contract first: `docs/api/account.md` written from scratch (previously nonexistent) via an exhaustive line-by-line read of legacy `account/**` (account, sessions, mfa, recovery, identities, targets) — covers sessions, MFA (TOTP + recovery codes + challenge flow), recovery, OAuth2, identities, push targets, and JWT/access-token issuance. D23 resolved: DB session = long-lived revocable refresh credential (`x-nuvix-session`), short-lived JWT minted from it via `POST /v2/account/tokens/jwt` = the access token (`x-nuvix-jwt`) — formalizes machinery v1 already had (`/account/jwts`) rather than inventing new primitives. Several legacy bugs fixed rather than ported (MFA challenge chicken-and-egg gate, OAuth2 session-refresh field bug, identity-delete missing ownership check, recovery skipping the personal-data check) — all itemized in the contract's deviations section, pending review
+- [x] Password hashing: bcrypt/argon2 only — legacy algos (MD5 etc.) NOT supported per D29
+- [x] MFA: hand-rolled RFC-6238 TOTP + recovery codes (zero external dependencies)
+- [x] Implement account/sessions/mfa/recovery/identities/targets services on `@nuvix/db`, sharing the users/sessions/tokens/authenticators/challenges/identities/targets collection family with the Users slice (Phase 3)
+- [x] OAuth2 account flows (parity slice, post-audit): Bun-native port of the
+  legacy provider abstraction (`packages/core/src/oauth` — abstract
+  provider + google/apple, ES256 client-secret JWT for Apple on
+  `crypto.subtle`, static registry), full begin → callback flow
+  (`GET /account/sessions/oauth2/:provider`,
+  `GET|POST /account/sessions/oauth2/:provider/callback`,
+  `GET /account/tokens/oauth2/:provider`) with session upgrade, identity
+  upsert/linking, user-count + auth-duration project settings (via
+  `ProjectRegistry.getOAuthProviders/getPlatforms/getAuthSettings`),
+  platform-validated redirect URLs (own relay pages exempt — v1 bug
+  fix), httpOnly session cookie (`nx_<name>`, matches the tenant
+  context's cookie parsing), unversioned relay pages
+  (`/auth/oauth2/{success,failure}` on Handlebars per D9), provider-token
+  rotation on `PATCH /account/sessions/:id` (v1 refresh-token overwrite
+  bug fixed), and `TokenType` realigned 1:1 to legacy values (public
+  `type` field parity; OAUTH2=7). 23 tests (unit + treaty route flows
+  with a mocked provider wire)
+
+### Phase 5 — Storage + Messaging + Webhooks
+
+- [x] Storage: buckets/files, `@nuvix/storage` Device drivers, native `Bun.Image` for image preview/transformations (no sharp), single and resumable chunked upload support via Content-Range, bucket & file CRUD, storage usage stats
+- [x] Messaging: topics, subscribers (target linking + total tracking), providers (Email: Mailgun/SendGrid/SMTP, SMS: Twilio/TextMagic/Vonage/Msg91/Telesign, Push: FCM/APNS), messages (Email/SMS/Push delivery requests, target resolution, status tracking)
+- [x] Webhooks: platform CRUD (`/projects/:projectId/webhooks`), signature rotation (`/projects/:projectId/webhooks/:webhookId/signature`), attempts tracking and reset on enable, 1:1 legacy schema and behavior
+
+### Phase 6 — Async jobs
+
+- [x] BullMQ over external worker files: audits, batch, deletes, logs, mails, messaging, stats, webhooks (`apps/server/src/workers/*.processor.ts`)
+- [x] Cron scheduler on `Bun.cron` native (D22) (`packages/core/src/scheduler/cron.ts`)
+- [x] Typed event emitter on Web standards (`packages/core/src/events/emitter.ts`)
+
+### Phase 7 — Platform app
+
+> Pulled forward ahead of Phase 3: Phase 3's database service needs a real
+> per-tenant Postgres to run schema CRUD against (D20), and that DB only
+> exists once the platform app can provision one — so tenant provisioning +
+> the platform's own control-plane persistence come first.
+- [x] Tenant provisioning primitives (D20, D37): `TenantProvisioner` interface,
+  `DockerTenantProvisioner` (real `nuvix/postgres:18.1` containers via
+  `Bun.spawn`, live-tested), `FakeTenantProvisioner` for unit/route tests (`packages/core/src/tenants/`)
+- [x] Platform persistence bootstrap (D38): `@nuvix/db` filter registry,
+  `nuvix-db` generated types + `Entities` augmentation, schema-driven
+  bootstrap supporting SQLite (default) or PostgreSQL
+  (`apps/platform/src/registry/`)
+- [x] Projects vertical slice: contract (`docs/api/platform.md`), `ProjectService`
+  (create/list/get/delete wired to the provisioner), routes, unit + route
+  tests (`apps/platform/src/modules/projects/`)
+- [x] Publishable project selectors (D40): unique `publishableKey` generated
+  during project creation, persisted/indexed by the platform registry, and
+  returned to operators for project-facing API configuration
+- [x] Shared control-plane registry boundary (`@nuvix/core/platform`): one
+  platform schema/bootstrap source for both apps, plus narrow active-project
+  lookup by publishable key; tenant targets stay encrypted at rest and are
+  never exposed to routes
+- [x] Tenant resource lifecycle (D41): `TenantResource` (one Bun `SQL` +
+  `@nuvix/db` `Database`, closed exactly once) and `TenantResourcePool`
+  (bounded LRU keyed by `ResolvedProject`) — the per-tenant connection
+  layer the server app's context chain and Phase 3's database service
+  will resolve through (`packages/core/src/tenants/resource.ts`, `pool.ts`)
+- [x] Platform auth (operator accounts/keys) — blocking gap before any
+  non-local deployment, tracked in `docs/api/platform.md`'s open questions
+- [x] Background provisioning (Phase 6 job infra): `POST /projects` is
+  now two-phase — container reservation (fast) stays inline so the
+  record carries its required container/volume handles and the
+  encrypted tenant `target` (the provisioner is NOT idempotent: a
+  second `provision` call would collide on the container name), then
+  the slow tail (readiness wait + auth-schema bootstrap) runs on the
+  PROJECTS queue (`apps/platform/src/workers/projects.processor.ts`,
+  3 attempts / exponential backoff) flipping the record to `active`
+  or `error`+`errorMessage` on final failure. `ProjectService` falls
+  back to inline provisioning when no Redis is configured (tests /
+  zero-infra dev). Platform runtime starts the worker in-process
+  with graceful shutdown (`apps/platform/src/workers/index.ts`);
+  `parseRedisUrl` moved to `@nuvix/core/queues` (shared). v1's
+  PROJECTS queue registration was vestigial (no processor — v1
+  provisioned synchronously), so this is a v2 improvement, not
+  parity. `docs/api/platform.md` updated (was PROPOSED/stale).
+- [x] Platform API keys slice: CRUD routes (`/projects/:projectId/keys`), 1:1 legacy schema with secret generation `standard_<hex>`; secrets are hashed at rest (SHA-256, `secretHash`) and returned only in the create response (v2 hardening, not parity)
+- [x] Client platforms slice: CRUD routes (`/projects/:projectId/platforms`), 1:1 legacy schema supporting web, flutter, android, apple
+- [x] Auth settings slice: routes under `/projects/:projectId/auth` (session-alerts, limit, duration, password-history, password-dictionary, personal-data, max-sessions, mock-numbers, memberships-privacy, auth methods)
+- [x] Remaining platform slices: extended project configuration (services, APIs, OAuth2, SMTP, JWTs), metadata (`/projects/:projectId/metadata/exposed-schemas`), templates, and project usage stats (`/projects/:projectId/usage`)
+- [x] pg-meta introspection over `Bun.sql` (`@nuvix/pg-meta`, wired via `TenantResource.meta()`, platform `/projects/:projectId/database/*` routes)
+
+### Phase 8 — Local `@nuvix/pg` replacement (D12)
+
+- [x] `@nuvix/pg` (Bun-native query builder on caller-owned Bun `SQL`, `/home/ubuntu/pg-ts`) integrated into monorepo (`packages/core`, `packages/utils`, `apps/server`)
+- [x] `TenantResource.pg()` facade wired: shares the tenant's single Bun `SQL` client with `@nuvix/db`, closed exactly once on resource disposal (D41)
+- [x] Data services schema storage (`PostgresSchemaStorage`) migrated to `@nuvix/pg` query builder
+- [x] Full production query engine implemented in `@nuvix/utils/query` (`Tokenizer`, `Parser`, `SelectParser`, `OrderParser`, `ASTToQueryBuilder`, `JoinBuilder`), matching 1:1 legacy query syntax, embedded lateral joins, JSON extractors, and `@nuvix/pg` query generation
+- [x] Tables service migrated in `apps/server/src/schemas/tables/service.ts`: full PostgreSQL RLS transaction context injection (`set_config`), table & row permissions management (`${tableId}_perms`), `force` deletion/update protection, and error mapping via `transformPgError`
+- [x] Managed & unmanaged schema routes (`/schemas/:schemaId/tables/*`, `/public/tables/*`, `/schemas/:schemaId/rpc/*`, `/public/rpc/*`, permissions endpoints) fully wired with request context and verified via Eden Treaty
+- [x] Decomposed domain route architecture: all domain modules promoted to `apps/server/src/` top level (`account/`, `users/`, `teams/`, `storage/`, `messaging/`, `database/`, `schemas/`), broken down into granular subdomain routes with complete OpenAPI schema detail metadata (`summary`, `description`, `tags`, parameter & query documentation)
+- [x] Full API surface audit vs `docs/api/*` (audited all endpoints across account, teams, users, database schemas, avatars, locale, platform, and storage/messaging)
+- [x] Parity batch (post-audit): admin identities endpoints
+  (`GET /users/identities`, `DELETE /users/identities/:identityId` —
+  v1 parity, contract §users.md already specified them) and the
+  `timestamptz` attribute-create alias (v1 path parity)
+- [x] Session metadata parity: every session-creation path (email,
+  anonymous, token, admin-created) now records the caller IP
+  (proxy-aware `requestIp`) and UA-derived detector fields
+  (`osCode/osName/osVersion`, `client*`, `device*` — v1 recorded these;
+  v2 sessions were missing them entirely). Shared `Detector` port
+  (`utils/detector.ts` on `ua-parser-js`) + `sessionDetectorFields`
+  helper.
+- [x] Audit subsystem (Phase 6 follow-through): `audit` collection added to
+  the tenant auth schema (1:1 with `@nuvix/audit`), Bun-native
+  `AuditService` (`packages/core/src/audit`), real audits worker
+  (batched writes: 5000 items / 3s, tenant resolution via
+  `ProjectRegistry.getProjectTarget` + `TenantResourcePool`), the
+  `auditAfter()` per-route emission hook (v1 `AuditHook` parity: resource
+  templates, sensitive-field stripping, actor extraction), queue runtime
+  activation (`QueueManager` + workers wired into composition/index with
+  graceful shutdown; Redis-optional in tests, fail-fast in prod), `GET
+/users/:userId/logs` (v1 parity with UA detection via a Detector port
+  on `ua-parser-js`, geoip country, locale country names). Auth-domain
+  routes now emit v1's audit events (user.create/update/delete,
+  session.create/update/delete(s), identity.delete, verification._,
+      recovery._, challenge._, target._). Known v1 template bugs fixed
+  (delete routes audited `{res.$id}` against status-only responses →
+  `Unknown`; v2 uses `{user.$id}`/`{params.userId}`)
+- [x] Mails delivery (Phase 6 follow-through): real mails worker
+  (SMTP via `@nuvix/messaging`'s adapter over nodemailer — 3-attempt
+  exponential-backoff retry, permanent-failure short-circuit, batched
+  recipients, per-project `server` override → system `NUVIX_SMTP_*`
+  fallback), `EmailHelper`/`EmailBuilder` port
+  (`packages/core/src/mail`, cached Handlebars compile, project SMTP
+  resolution + custom `email.<templateKey>` overrides), mail composer
+  per-request capability (`apps/server/src/mail/composer.ts`:
+  `MailComposer.capabilityFor/redirectRulesFor`, injectable → disabled
+  in test composition), copy of v1 email templates
+  (`assets/locale/templates`), and the recovery / verification /
+  magic-URL / email-OTP flows actually sending mail (503
+  `general_smtp_disabled` off, redirect validation on). v1 bugs fixed
+  en route: recovery `url` is required (v1 DTO `@IsNotEmpty @IsUrl` —
+  v2 contract drift to optional corrected); verification tokens used
+  raw `type: 1` instead of the legacy `TokenType.VERIFICATION = 2`;
+  verification emails rendered `email-verification.tpl` (absent from
+  assets — latent v1 crash) → generic `email-inner-base.tpl`; inner
+  templates got `withData` only while `{{redirect}}` lives in
+  `withVariables` → empty `<a href>` links in every mailed
+  recovery/verification/magic email (v2 merges variables into the inner
+  render). `PhraseGenerator` ported (`@nuvix/utils/phrase`) restoring
+  v1's magic-URL `phrase` toggle.
+- [x] Messaging delivery (Phase 6 follow-through): real messaging worker —
+  v1 `sendExternalMessage` parity (target resolution from topics →
+  users → direct targets filtered by `providerType`; default enabled
+  provider fallback; per-`providerId` identifier grouping;
+  per-adapter batch chunking; expired push tokens mark their target;
+  v1 finalization semantics incl. `Unknown error` on zero deliveries;
+  deliveredTotal/deliveredAt + provider-tagged search index). Vendor
+  adapters constructed from provider credentials 1:1 with the current
+  `@nuvix/messaging` signatures (SMTP/Mailgun/Sendgrid, Twilio/
+  Telesign/TextMagic/Vonage/Msg91, FCM/APNS); per-vendor batch limits
+  mirrored from the adapter implementations. `MessagingJobData`
+  reshaped to v1's `{ projectId, message, scheduleId? }`; message
+  create/update now enqueue (`processing` → immediate, `scheduled` →
+  delayed BullMQ job with delay = scheduledAt − now; v1's internal
+  `schedules` collection + SchedulesHelper hook replaced by
+  BullMQ-native delayed jobs — same delivery semantics, one less
+  moving part, noted for the records). Worker runs on the tenant
+  auth-system session (messages live in the `auth` schema); email
+  cc/bcc target-id resolution ported; storage-backed attachments are
+  deferred (payload carries the references; boundary hook exists).
+- [x] Webhooks dispatch (Phase 6 follow-through): delivery end-to-end —
+  fan-out (`apps/server/src/webhooks/dispatch.ts` porting v1
+  `queueWebhookDelivery`/`eventMatchesPattern`: wildcard matcher with
+  v1's regex-escaping semantics, enabled-webhook filter, 5-attempt
+  exponential-backoff BullMQ jobs, remove-on-complete 1h / fail 24h)
+  and the delivery worker (v1 `deliverWebhook` + `logDelivery`
+  parity: platform-DB re-read of the webhook before every delivery —
+  fresh URL/signatureKey/Basic auth, deleted/disabled webhooks skip
+  without retrying; POST `{event, timestamp, data}` with HMAC-SHA256
+  `X-Webhook-Signature`, `X-Webhook-Event`, `X-Webhook-ID`, Basic
+  auth, 10s timeout, TLS-skip when `security=false`; one
+  `webhook_logs` row per attempt + `attempts` counter reset-on-success/
+  increment-with-truncated-`logs`-on-failure). `WebhookJobData`
+  reshaped to v1's id-only payload (credentials live in the webhook
+  record, never in the job). The fan-out shares the audit emission
+  pipeline via an injectable `WebhookFanout` boundary in
+  `plugins/audit.ts` (replaces v1's `@OnEvent('*')` listener — Elysia
+  has no equivalent global emitter), so every audited domain event
+  fans out to subscribed webhooks automatically. Fixed en route: audit
+  job payloads carried no `projectId` at all → the audits worker
+  silently dropped every row in production; `auditAfter` now extracts
+  the platform project from the request context and both audit rows
+  and webhook fan-out are tenant-correct. `webhook_logs` added to the
+  platform schema (`ensurePlatformSchema` creates it on next run).
+- [x] Stats recording (Phase 6 follow-through): real stats pipeline —
+  metric primitives ported (`@nuvix/utils/metrics`: v1 `MetricFor`/
+  `MetricPeriod` enums + `fnv1a128` deterministic stat-row id hash),
+  real stats worker (batched flush 5000/3s, per-tenant aggregation,
+  one `stats` row per (inf/1h/1d) × metric with create-or-update-
+  with-increase on the tenant auth-system session — v1
+  `StatsQueue.persist` parity), and both v1 sources: network metrics
+  (requests + inbound/outbound bytes per response — v1 `StatsHook`,
+  skipping API-key callers, opt-out via `NUVIX_ENABLE_STATS=false`;
+  Elysia beta.6's minimal afterResponse context is bridged through
+  the shared-instance derive chain) and usage document events (v1
+  `StatsHelper.connect` — `calculate-usage` listeners wired onto
+  every tenant `Database` via a new `TenantResourceDependencies.
+onDatabaseCreated` composition hook). Redesigns over v1 recorded:
+  the user/bucket delete `reduce` compensations are dropped — v2
+  deletes sessions/files row-by-row, so per-row DocumentDelete events
+  already decrement the aggregate metrics (v1's compensation existed
+  because bucket files lived in per-bucket collections deleted
+  wholesale). Per-bucket metrics are KEPT (v1
+  `{bucketInternalId}.files[.storage]` keys — v2 file docs carry
+  `bucketInternalId`).
+- [x] Usage reads (Phase 6 follow-through): `GET /users/usage`,
+  `GET /storage/usage`, and `GET /storage/buckets/:bucketId/usage`
+  now read the recorded `stats` rows (v1 parity) instead of live
+  counts — `apps/server/src/stats/usage.ts` ports the v1
+  `usageConfig` buckets (24h hourly, 7d/30d/90d daily), INF totals +
+  period series with the v1 zero-filled window loop, and the
+  `RangeQueryDTO` validation (`parseUsageRange`; v1's own service
+  default `'1d'` was not a config key — latent v1 crash, v2 defaults
+  `'30d'`). v1's `Authorization.skip` parity is structural: the
+  usage routes run on the tenant auth-system session.
+- [x] Push assets (Phase 6 follow-through): storage-backed push
+  notifications end-to-end — `GET
+/storage/buckets/:bucketId/files/:fileId/push` (v1
+  `getFileForPushNotification` parity: short-lived JWT entitlement
+  with projectId/bucketId/fileId claims, disabled buckets hidden,
+  inline disposition + 45-day Expires + range requests; streaming
+  tail shared with `serveFile`), create/update-time image-ref
+  validation on push messages (v1 parity: bucket exists, file in
+  bucket, png/jpeg only), and delivery-time URL signing in the
+  messaging worker (v1 `processedImage`: 15-day JWT →
+  `/v2/storage/...` push URL; `image` refs stay raw in the message
+  doc and resolve at delivery so tokens never sit stale in the
+  database — v1 signed at create and stored the URL). v1 bug fixed
+  en route: v1 signed the push JWT without the `projectId` claim its
+  own verifier demanded — every vendor fetch failed; v2 signs and
+  verifies all three claims. Vendor-facing base URL comes from
+  `NUVIX_ENDPOINT` (falls back to `http://localhost:$NUVIX_PORT`).
+- [x] Email attachments (Phase 6 follow-through): create/update-time
+  ref validation on email messages (v1 parity: `bucketId:fileId`
+  refs stored as `{bucketId, fileId}` snapshots) and delivery-time
+  byte resolution in the messaging worker (v1 `buildEmailMessage`
+  parity: file bytes read from the storage device into vendor
+  `Attachment` payloads — name/mime/size from the file record;
+  missing buckets/files/device paths become delivery errors like
+  v1's throws).
+- [x] Console auth (platform Phase 4 gap closed): session-based operator
+  auth for the platform app, designed for console UI AND CLI —
+  short-lived access JWTs (`aud: 'console'`, 15 min default via
+  `NUVIX_CONSOLE_ACCESS_TTL`) + opaque rotating refresh tokens
+  (90 days, sha256-hashed at rest in `console_sessions`, reuse
+  detection via `previousHash` — re-presenting a rotated token
+  revokes the session; v1's long-lived opaque console cookie
+  sessions replaced wholesale). Bearer-only enforcement on every
+  platform route via `plugins/auth.ts` (public exceptions:
+  `/health`, `/console/auth*`; audience-separated from tenant JWTs);
+  no API keys on the platform surface. Endpoints: `POST
+/console/auth` (login), `/console/auth/refresh` (rotating),
+  `/console/auth/logout` (revoking); refresh token also set as
+  httpOnly cookie for the browser console. First operator seeded
+  idempotently from
+  `NUVIX_CONSOLE_EMAIL`/`NUVIX_CONSOLE_PASSWORD` at startup (no
+  public registration). Contract: `docs/api/console.md`; platform.md
+  auth-posture updated (was flagged as a blocking deployment gap).
+- [x] API request logs (Phase 6 follow-through): end-to-end —
+  request-log source (v1 `LogsHook`: afterResponse emit; API-key
+  callers, /health and the OpenAPI surface skipped), batched LOGS
+  worker (v1 `ApiLogsQueue`: 5000/3s flush, v1's DEEP recursive
+  metadata redaction moved to buffer time), and a server-side
+  `GET /v2/logs` admin route (v1's platform `getLogs` with the AST
+  filter DSL replaced by simple query params — limit/offset/method/
+  status/path/resource/since/until, newest first). Storage redesign
+  per user decision: logs live in EACH project's tenant database
+  (`api_logs` collection in the `auth` schema — additive via
+  `ensureAuthSchema`; tenants provisioned before it need
+  re-provisioning or a one-off ensure) instead of v1's platform
+  main-pool `system` schema — v1 was not truly multi-tenant, so its
+  main-pool logs table mixed projects. Read auth: tenant-local API
+  key OR console operator JWT (aud 'console') — the console UI
+  reads project logs straight from the server API. Audience
+  separation enforced in the server's authContext (console JWTs
+  never authenticate as tenant users; vice versa on the platform).
+  Contract: `docs/api/logs.md`.
+- [x] Hardening pass (D35 follow-ups): favicon proxy SSRF guards
+  upgraded from hostname-regex to per-hop DNS validation (every
+  resolved address must be public before any request or redirect
+  leaves the process — DNS-rebinding guard; tests assert private/
+  loopback rejection); console login throttling (per email+client
+  failure counter, 5 failures / 15 min in-process window → 429
+  `console_login_throttled` with `retry-after`, reset on success;
+  in-process by design — the platform is single-instance; a Redis
+  store drops in if it ever scales horizontally). The deferred
+  "Redis-cached GeoIP lookups" idea is dropped as unnecessary: the
+  bundled .mmdb reader is in-process and answers in microseconds.
+
+### Phase 9 — Tests & cutover
+
+- [x] Complete fresh suite: unit (co-located) + integration + e2e (`bun test`, 524 tests across 83 files)
+- [x] Perf baseline vs old app (`test/bench/perf.ts`, `docs/perf-baseline.md`)
+- [x] Docker/deploy artifacts for Bun-only runtime (`Dockerfile`, `docker-compose.yml`, `.dockerignore`, `docs/deployment.md`)
+- [x] Dependency hygiene (fresh-clone fix): password hashing moved to native
+  `Bun.password` (D5) — the `argon2`/`bcrypt` npm imports in `@nuvix/core`
+  were phantom dependencies resolvable only through the legacy root's
+  `node_modules` (fresh-clone typecheck/runtime breakage, DoD
+  zero-imports violation); `handlebars` declared in `@nuvix/core`
+  (same phantom path); `@resvg/resvg-js` moved to runtime dependencies
+  (the Docker image installs with `--production` and never installed it).
+  Verified: zero bare imports in `next/**` resolve outside the `next/` tree.
+- [x] Delete root monorepo (Phase 9 cutover, approved 2026-10-31): legacy
+  `apps/`, `libs/`, `docs/`, `scripts/`, `configs/`, `assets/`, and all
+  root configs (package.json, bun.lock, turbo.json, tsconfigs, root
+  Dockerfile/compose, biome.json, env examples) removed; repo root now
+  holds only `next/`, project meta (README, LICENSE, CONTRIBUTING,
+  AGENTS.md, .github) and untracked runtime data (`storage/`). The v2
+  runtime asset tree (avatars, fonts, i18n translations, mail templates,
+  OAuth views, GeoIP db) lives in `next/assets/` — the root `assets/`
+  copy was merged into it first (root values win; the 8 v2-only
+  translation keys preserved), and `oauth-pages.ts` was repointed from
+  the root copy to `next/assets`. CI `docker.yml` now builds
+  `next/Dockerfile` (context `./next`); `next/biome.json` flipped to
+  `"root": true` (no root config remains). Post-cutover gate green from
+  `next/`: frozen install, lint (80 warnings / 0 errors), typecheck (0),
+  `bun test` (531 pass / 0 fail incl. 7 live DB-route tests),
+  `git diff --check` clean.
+- [x] Post-cutover restructure (2026-11-01): the `next/` nesting was flattened
+  to the repo root and the `@nuvix/*` platform libraries (db, cache, pg,
+  storage, messaging) switched from local `file:` sibling links to
+  **published npm packages** (verified byte-identical to the sibling
+  dists; `@nuvix/telemetry` declared in consumers for cache's optional
+  peer; `@nuvix/storage@2.0.1` picked up). `@nuvix/pg-meta` stays a
+  workspace package. Fresh-clone gate now needs NO sibling checkouts.
+- [x] Elysia `2.0.0-rc.1` upgrade + AOT compilation (2026-11-01): migrated the
+  error plugins from the removed `.error('global', …)` scope argument to
+  `.onError(Class, handler)` applied directly to the consuming app via
+  transforms (plugin-instance hooks never reach composed routes in rc);
+  renamed `.request`/`.afterResponse` hooks to `.onRequest`/
+  `.onAfterResponse`. Adopted Elysia 2 AOT compilation: both entries
+  export `app`, runtime side-effects (HTTP server, queue workers,
+  platform persistence) are guarded by `inAotBuild()`, asset paths
+  centralized in `apps/server/src/assets.ts` (depth-stable across src/
+  and dist/), BullMQ runs as in-process handler functions with lazy
+  worker loading, and `build.ts` compiles either app to
+  `apps/<app>/dist` (verified live: bundle serves /v2/health, RFC 9457
+  errors, and asset-backed avatar renders). `typebox@1.3.19` promoted to
+  a direct dependency (the AOT manifest emits bare `typebox` imports).
+- [x] BullMQ over Bun's built-in Redis client (2026-11-10): replaced the
+  implicit ioredis default with the documented
+  `RedisConnection.clientFactory` pattern — `useBunRedisClients()` (new
+  `packages/core/src/queues/redis-factory.ts`, idempotent, lazily requires
+  bullmq) builds a Bun `RedisClient` URL from the merged connection
+  options (host/port/username/password/db, `default`-username
+  convention) and wraps it in BullMQ's own `createBunRedisClient`
+  adapter. Call sites keep passing plain `connection` options
+  (`parseRedisUrl` retained); QueueManager and both worker factories
+  invoke the configurator before constructing Queue/Worker. bullmq is
+  pinned exactly at 6.7.3 (was on `latest`; msgpackr-extract 3.0.7 — its native addon loads fine
+  under bun 1.4.4; earlier 3.0.4 panicked on ARM per bun#18546),
+  `@elysia/openapi` to `^2.0.0-rc.1` (removing the only package patch),
+  `@types/bun` to 1.4.4, and biome re-pinned exact 2.5.10 (caret range
+  had floated to 2.6.4 breaking the config schema). Verified in a
+  pristine clone on bun 1.4.4: full gate green, source and AOT-bundle
+  entries boot against live redis:8-alpine, 8 queues/8 workers register,
+  `CLIENT LIST` shows zero ioredis connections.
+
+---
+
+## 6. `@nuvix/pg` Deferral Strategy
+
+Old usage sites (reference only):
+
+```
+core.service.ts, schema.hook.ts, logs.queue.ts        ← DataSource creation/writes
+pg-meta.service.ts                                     ← introspection
+query/builder.ts, query/join-builder.ts               ← query building
+schemas.service.ts (Raw SQL), database.service.ts     ← data services
+platform metadata.service.ts                           ← platform
+```
+
+**Rules during Phases 1–7:**
+- No `@nuvix/pg` imports anywhere in `next/`.
+- A handful of call sites need raw DDL/SQL that has no `@nuvix/db` document-plane
+  equivalent (e.g. schema CRUD's `system.create_schema`/`drop schema` calls).
+  Use Bun's native `Bun.sql` tagged-template client directly for exactly those
+  calls rather than pulling `@nuvix/pg` in early — it's a query-builder, not a
+  driver, and D12 defers the builder, not raw SQL access.
+- Endpoints requiring the actual `@nuvix/pg` query builder (joins, dynamic
+  filters, etc.) are excluded from their module's v2 contract and tracked in
+  `DEFERRED_ROUTES.md`.
+- `packages/utils` query builders define a minimal `DataSource` interface so
+  the future local implementation drops in without touching call sites.
+
+---
+
+## 6b. Multi-Tenancy Architecture (D20)
+
+The old system was _partially_ multi-tenant (schema separation, shared pools).
+v2 makes tenancy **structural**:
+
+```
+                    ┌─────────────────────────────┐
+                    │  platform app               │
+                    │  creates projects/tenants,  │
+                    │  provisions their DBs       │
+                    └──────────┬──────────────────┘
+                               │ provision
+        ┌──────────┬───────────┼───────────┬──────────┐
+        ▼          ▼           ▼           ▼
+   tenant DB A  tenant DB B  tenant DB C  …          ← one Postgres database
+   (pg 18)      (pg 18)      (pg 18)                 per project, custom image
+                                                     nuvix-dev/postgres
+        ▲          ▲           ▲
+        └──────────┴───────────┘
+                   │ routed by resolved tenant context
+            ┌──────┴──────┐
+            │ server app  │  every request resolves: API key / token
+            └─────────────┘  → project → tenant DB connection
+```
+
+**Rules:**
+1. **One database per tenant/project.** No shared-schema tenancy in v2.
+2. The **platform app owns provisioning**: creating the project record,
+   creating its database (via the pg-18 image's auto-schema bootstrap),
+   tracking connection metadata in the internal/platform DB.
+3. The **server app never hardcodes tenants**: each request resolves
+   `credentials → project → tenant DB handle` through the typed context chain.
+4. Connection management: pooled per-tenant handles with LRU eviction +
+   optional pooler (pgcat) — design lives in `packages/core` (`tenants/`).
+5. Schema/collection model inside a tenant DB is **redesigned freely** (D25) —
+   the pg-18 image's auto-schema features are the foundation; consult
+   github.com/nuvix-dev/postgres when designing.
+6. Platform-side features that depend on provisioning (billing, quotas,
+   region placement) are **explicitly out of scope for now** — interfaces are
+   stubbed so they can be added later without rework.
+
+---
+
+## 7. Open Questions (decide before/at each gate)
+
+Tracked here so nothing gets decided silently:
+
+**Resolved:**
+1. ✅ **API prefix** → `/v2` (D26)
+2. ✅ **Pagination** → cursor-based primary, offset where impractical; all list responses carry `meta` (D27)
+3. ✅ **IDs** → keep existing scheme; port the ID helper (wraps `@nuvix/db` ID) (D28)
+4. ✅ **Legacy compat** → dropped entirely: no legacy data migration, no MD5/legacy password algos, no session survival across cutover (D29)
+5. ✅ **SVG avatars** → keep `@resvg/resvg-js` for now; revisit a zero-dep custom SVG rasterizer later
+6. ✅ **Auth at launch** → D23 resolved at the Phase 4 gate: DB session (long-lived, revocable, `x-nuvix-session`) doubles as the refresh credential; a short-lived JWT minted from it via `POST /v2/account/tokens/jwt` is the access token (`x-nuvix-jwt`) — see `docs/api/account.md`
+
+**Still open:**
+7. **TOTP** — hand-rolled RFC-6238 on `crypto.subtle` vs keep otplib. _(Phase 4)_
+8. **Realtime/WebSocket** — Elysia 2's generator-based `.ws()`; in v2 core scope or post-v2? _(after Phase 3)_
+9. **Auth header names** — keep `x-nuvix-session`/`x-nuvix-key` or rename in v2. _(Phase 1, contract design)_
+
+---
+
+## 8. Risk Register
+
+| Risk                                   | Mitigation                                                                            |
+| -------------------------------------- | ------------------------------------------------------------------------------------- |
+| `elysia@next` beta churn/bugs          | Pin exact; isolate framework glue in `app.ts`/plugins; track changelog between phases |
+| BullMQ Bun adapter immaturity          | Thin queue interface; swap adapter only if broken                                     |
+| Business-rule drift during redesign    | Contracts reviewed before impl; old service code read as reference for every rule     |
+| Redisigned API breaks SDK expectations | Accept (v2); document breaking changes per module in `docs/api/`                      |
+| Scope creep                            | No features beyond defined contracts until Phase 9                                    |
+
+---
+
+## 9. Definition of Done
+
+- [x] All v2 contracts in `docs/api/` implemented across both apps
+  (status lines flipped to IMPLEMENTED after route/error-code
+  verification against code)
+- [x] Zero imports of: `@nestjs/*`, `fastify*`, `class-validator`,
+  `class-transformer`, `reflect-metadata`, `rxjs`, `ioredis`, `pg`,
+  `argon2`, `bcrypt` — verified by resolution audit, not just source
+  grep: the first fresh-clone gate caught undeclared `argon2`/`bcrypt`
+  imports in `@nuvix/core` silently resolving from the LEGACY root
+  node_modules (ambient directory-walk leak that a source scan can't
+  see). Fixed by switching to native `Bun.password` + declaring all
+  phantom deps (91679960).
+- [x] Bun-only runtime; file/crypto/net operations use Bun natives
+  (Bun.password, Bun.file, Bun.dns, Bun build — no pg driver)
+- [x] Fresh gate green in an ISOLATED environment: clone nuvix
+  (v2-rewrite) + the five sibling repos fresh from GitHub, build each
+  sibling (their `dist/` is gitignored — a bare clone cannot even
+  install `next/`), then from `next/`: `bun install --frozen-lockfile`
+  (clean), `bun run lint` (73-warnings baseline, 0 errors),
+  `bun run typecheck` (0), `bun test` (524 pass / 0 fail / 83 files),
+  `git diff --check` (clean). One real defect found by this gate —
+  audit/stats worker buffers leaked across test files in one bun
+  process, flipping with file-run order — fixed (27a46e78) and the
+  gate re-run green end to end.
+- [x] Live DB-route verification against `nuvix/postgres:18.1`
+  (`apps/server/src/schemas/route.integration.test.ts`, 7 live tests:
+  production provisioning → document-schema CRUD → collection →
+  attributes → indexes → documents → tables/RPC surface → posture
+  403 → cleanup → deprovision). The first live run exposed five real
+  production defects the in-memory fakes could never catch, all fixed: 1. `TenantResource.databaseForSchema()` configured an adapter it then
+  discarded — the schema/namespace meta never reached the created
+  `Database`, so document-schema seeding emitted
+  `CREATE TABLE undefined__metadata_perms` (fixed by threading
+  `meta` through the `createDatabase` dependency); 2. `SqlBuilder.getTableName/getSQLIndex` composed `meta.namespace`
+  without a fallback (SQLite builder already defaulted to
+  `"default"`) — fixed in the `database` sibling (a5b5b85); 3. the admin tables surface ran the PostgREST RLS role-switch
+  (`set_config('role', 'authenticated')`) and lost owner privileges
+  on the new schema's tables (42501) — admin posture now skips the
+  switch, the public surface keeps it; 4. attribute formats were never registered into `@nuvix/db`'s
+  `Structure` registry (every `format`-declaring attribute failed
+  with "Format not available") — `registerCoreDbFormats()` ports the
+  seven v1 formats and runs in every composition root; 5. v1 seeded the `any` role into every request context; the v2
+  scoped-session rewrite dropped it, making collections created with
+  the default `Permission.*(Role.any())` grants unreachable —
+  restored in `Auth.getRoles()`.
+  Also fixed in the sibling: `_uid` got a generated default so raw
+  tables-surface inserts into document-backed tables work (41733b7).
+  Operational notes: provisioning is NOT idempotent per projectId (the
+  deterministic volume persists the run's data dir + `nuvix_admin`
+  password — reuse unique names per run), and bun copies `file:`-linked
+  sibling dists at install time — rebuilding a sibling alone does NOT
+  change what `next/` loads; `bun install` in `next` is required.
+- [x] `DEFERRED_ROUTES.md` empty after Phase 8 (file never existed — the
+  deferred-routes ledger lives in each contract's Known gaps section)
+- [x] Root monorepo deleted after explicit final review (Phase 9 cutover,
+  2026-10-31 — see the Phase 9 checklist for the kept/deleted inventory
+  and the post-cutover gate results)

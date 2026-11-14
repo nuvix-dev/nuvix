@@ -1,0 +1,126 @@
+/**
+ * Application errors mapped to RFC-9457 problem+json responses.
+ *
+ * Shared by every v2 app (`apps/server`, `apps/platform`, …) so the error
+ * identity contract — and the problem+json envelope it produces — stays
+ * identical across the whole platform instead of being redefined per app.
+ *
+ *   { type, title, status, detail, code?, instance?, errors? }
+ *
+ * Two-layer error identity (Stripe-style):
+ * - `type` — coarse class (`/errors/not-found`, `/errors/conflict`, …).
+ *   Generic middleware, retry/backoff, and auth-flow logic key off this
+ *   (or off `status`).
+ * - `code` — stable, flat, snake_case machine code (`user_not_found`,
+ *   `schema_already_exists`, …). THE public contract: SDKs and consoles
+ *   branch on this. Additive changes only; never parse `detail`.
+ */
+export interface ProblemFields {
+  /** Coarse problem class URI, e.g. `/errors/not-found`. */
+  type: string
+  /**
+   * Stable machine-readable error code (snake_case), e.g. `user_not_found`.
+   * This is what clients branch on — the public contract.
+   */
+  code?: string
+  /** Short human-readable summary (maps to HTTP status reason). */
+  title?: string
+  /** Human-readable explanation for this occurrence (English fallback). */
+  detail?: string
+  /**
+   * Translation key for a localized `detail` (e.g. `errors.project.notFound`).
+   * Translated at serialization time via the request locale; `detail` remains
+   * the English fallback when no translation exists.
+   */
+  messageKey?: string
+  /** Interpolation params for `messageKey` (ICU syntax). */
+  params?: Record<string, string | number | Date>
+  /** Per-field / per-item validation details. */
+  errors?: Array<{ field?: string; message: string }>
+}
+
+/** Base error carrying an HTTP status plus problem-details fields. */
+export class AppError extends Error {
+  readonly status: number
+  readonly fields: ProblemFields
+
+  constructor(status: number, fields: ProblemFields) {
+    super(fields.detail ?? fields.title ?? 'Unknown error')
+    this.name = new.target.name
+    this.status = status
+    this.fields = fields
+  }
+}
+
+/** Request input failed validation or is malformed. */
+export class BadRequestError extends AppError {
+  constructor(detail: string, fields?: Omit<ProblemFields, 'type' | 'detail'>) {
+    super(400, { type: '/errors/bad-request', detail, ...fields })
+  }
+}
+
+/** Missing or invalid credentials. */
+export class UnauthorizedError extends AppError {
+  constructor(detail = 'Authentication required', fields?: Omit<ProblemFields, 'type' | 'detail'>) {
+    super(401, { type: '/errors/unauthorized', detail, ...fields })
+  }
+}
+
+/** Authenticated caller lacks permission. */
+export class ForbiddenError extends AppError {
+  constructor(
+    detail = 'Insufficient permissions',
+    fields?: Omit<ProblemFields, 'type' | 'detail'>,
+  ) {
+    super(403, { type: '/errors/forbidden', detail, ...fields })
+  }
+}
+
+/** Requested resource does not exist. */
+export class NotFoundError extends AppError {
+  constructor(resource = 'Resource', fields?: Omit<ProblemFields, 'type' | 'detail'>) {
+    super(404, {
+      type: '/errors/not-found',
+      detail: `${resource} not found`,
+      ...fields,
+    })
+  }
+}
+
+/** Request conflicts with current state. */
+export class ConflictError extends AppError {
+  constructor(detail: string, fields?: Omit<ProblemFields, 'type' | 'detail'>) {
+    super(409, { type: '/errors/conflict', detail, ...fields })
+  }
+}
+
+/** The client exceeded a rate limit. */
+export class TooManyRequestsError extends AppError {
+  constructor(
+    detail = 'Too many requests',
+    fields?: Omit<ProblemFields, 'type' | 'status' | 'detail'>,
+  ) {
+    super(429, { type: '/errors/rate-limited', detail, ...fields })
+  }
+}
+
+/** Temporary outage or maintenance. */
+export class ServiceUnavailableError extends AppError {
+  constructor(detail = 'Service unavailable', fields?: Omit<ProblemFields, 'type' | 'detail'>) {
+    super(503, { type: '/errors/service-unavailable', detail, ...fields })
+  }
+}
+
+/** An upstream dependency (e.g. the tenant provisioner's Docker host) failed or was unreachable. */
+export class BadGatewayError extends AppError {
+  constructor(detail: string, fields?: Omit<ProblemFields, 'type' | 'detail'>) {
+    super(502, { type: '/errors/bad-gateway', detail, ...fields })
+  }
+}
+
+/** Operation is known but not implemented yet. */
+export class NotImplementedError extends AppError {
+  constructor(detail = 'Not implemented', fields?: Omit<ProblemFields, 'type' | 'detail'>) {
+    super(501, { type: '/errors/not-implemented', detail, code: 'not_implemented', ...fields })
+  }
+}

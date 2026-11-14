@@ -1,0 +1,43 @@
+/** Starts the Bun HTTP server, attaches queue workers, and coordinates graceful shutdown. */
+
+import { config } from '@nuvix/utils'
+import { inAotBuild } from 'elysia'
+import { app, queues } from './app'
+
+// Exported for the AOT bundler: the build dry-runs this entry to capture
+// route registration and compile the route manifests (see build.ts).
+export { app }
+
+if (!inAotBuild()) {
+  const server = Bun.serve({
+    port: config.port,
+    hostname: config.host,
+    fetch: app.fetch,
+  })
+
+  // Queue workers run in-process (main thread) alongside the API — the audit
+  // batcher buffers writes so the request path never blocks on persistence.
+  // Loaded lazily so the AOT dry-run never touches bullmq/native addons.
+  let workers: { close(): Promise<void> } | undefined
+  if (!config.isTest) {
+    // Fail fast outside tests when the queue backend is not configured.
+    const { createQueueWorkers, parseRedisUrl } = await import('./workers')
+    workers = createQueueWorkers(parseRedisUrl(config.redisUrl))
+  }
+
+  console.log(
+    `[nuvix] v2 API listening on http://${server.hostname}:${server.port} (${config.env})`,
+  )
+
+  async function shutdown(signal: string) {
+    console.log(`[nuvix] ${signal} received — shutting down`)
+    try {
+      await Promise.allSettled([workers?.close(), queues.close(), app.stop(true)])
+    } finally {
+      process.exit(0)
+    }
+  }
+
+  process.on('SIGINT', () => void shutdown('SIGINT'))
+  process.on('SIGTERM', () => void shutdown('SIGTERM'))
+}

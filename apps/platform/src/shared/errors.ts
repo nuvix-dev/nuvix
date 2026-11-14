@@ -1,0 +1,16 @@
+/**
+ * Error classes live in `@nuvix/core` so every app shares one error-identity
+ * contract (see `apps/server/src/shared/errors.ts` for the same re-export).
+ */
+export type { ProblemFields } from '@nuvix/core/errors'
+export {
+  AppError,
+  BadGatewayError,
+  BadRequestError,
+  ConflictError,
+  ForbiddenError,
+  NotFoundError,
+  NotImplementedError,
+  TooManyRequestsError,
+  UnauthorizedError,
+} from '@nuvix/core/errors'

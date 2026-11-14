@@ -1,0 +1,33 @@
+{
+  "name": "@nuvix/core",
+  "version": "2.0.0-alpha.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./auth": "./src/auth/index.ts",
+    "./config": "./src/config/index.ts",
+    "./db": "./src/db/index.ts",
+    "./errors": "./src/errors.ts",
+    "./oauth": "./src/oauth/index.ts",
+    "./platform": "./src/platform/index.ts",
+    "./queues": "./src/queues/index.ts",
+    "./tenant-auth": "./src/tenant-auth/index.ts",
+    "./tenants": "./src/tenants/index.ts",
+    "./audit": "./src/audit/index.ts",
+    "./mail": "./src/mail/index.ts"
+  },
+  "scripts": {
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@nuvix/cache": "^2.0.0",
+    "@nuvix/db": "^1.0.1",
+    "@nuvix/pg": "^2.0.0",
+    "@nuvix/pg-meta": "workspace:*",
+    "@nuvix/telemetry": "^1.0.2",
+    "@nuvix/utils": "workspace:*",
+    "bullmq": "6.7.3",
+    "handlebars": "^4.7.8"
+  }
+}
