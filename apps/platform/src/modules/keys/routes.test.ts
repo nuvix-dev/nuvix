@@ -75,7 +75,8 @@ describe('key routes', () => {
 
     expect(status).toBe(200)
     expect(data?.name).toBe('Single Key')
-    expect(data?.secret).toBe(createRes.data!.secret)
+    // Hash-at-rest: reads never return the secret — create-only (schema-guaranteed).
+    expect('secret' in (data as object)).toBe(false)
   })
 
   test('PUT /projects/:projectId/keys/:keyId updates a key', async () => {

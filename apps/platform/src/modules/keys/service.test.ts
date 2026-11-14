@@ -58,7 +58,8 @@ describe('KeysService', () => {
     const fetched = await keysService.get(projectId, created.$id)
     expect(fetched.$id).toBe(created.$id)
     expect(fetched.name).toBe('To Get Key')
-    expect(fetched.secret).toBe(created.secret)
+    // Hash-at-rest: reads never return the secret.
+    expect(fetched.secret).toBeUndefined()
   })
 
   test('updates a key', async () => {

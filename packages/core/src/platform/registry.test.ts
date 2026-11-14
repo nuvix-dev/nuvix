@@ -1,6 +1,7 @@
 /** Unit tests for the platform registries: project resolution, provider/platform/webhook reads, and API-key lookup. */
 import { beforeAll, describe, expect, test } from 'bun:test'
 import { type Database, Doc } from '@nuvix/db'
+import { Auth } from '../auth'
 import type { TenantTarget } from '../tenants'
 import { createPlatformDatabase } from './database'
 import { KeyRegistry, ProjectRegistry } from './registry'
@@ -80,7 +81,7 @@ describe('KeyRegistry', () => {
         projectId: 'active-project',
         name: 'Standard Key',
         scopes: ['users.read', 'users.write'],
-        secret: 'standard_secret_abc123',
+        secretHash: Auth.hash('standard_secret_abc123'),
         expire: null,
       }),
     )
@@ -110,7 +111,7 @@ describe('KeyRegistry', () => {
         projectId: 'active-project',
         name: 'Expired Key',
         scopes: ['users.read'],
-        secret: 'standard_secret_expired',
+        secretHash: Auth.hash('standard_secret_expired'),
         expire: new Date(Date.now() - 60_000).toISOString(),
       }),
     )

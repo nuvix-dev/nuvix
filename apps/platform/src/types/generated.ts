@@ -1,5 +1,5 @@
 // This file is auto-generated. Do not edit manually.
-// Generated on: 2026-09-24T15:36:37.634Z
+// Generated on: 2026-11-14T14:59:39.340Z
 
 import type { Doc } from '@nuvix/db'
 
@@ -123,6 +123,21 @@ export interface Webhooks extends IEntity {
   attempts?: number | 0
 }
 
+export interface WebhookLogs extends IEntity {
+  /** @required */
+  webhookInternalId: number
+  /** @required */
+  timestamp: Date
+  /** @required */
+  success: boolean
+  /** @optional */
+  statusCode?: number
+  /** @optional */
+  response?: string
+  /** @optional */
+  error?: string
+}
+
 export interface Keys extends IEntity {
   /** @required */
   projectInternalId: number
@@ -135,11 +150,8 @@ export interface Keys extends IEntity {
    * @required
    */
   scopes: string[]
-  /**
-   * @filter encrypt
-   * @required
-   */
-  secret: string
+  /** @required */
+  secretHash: string
   /** @optional */
   expire?: Date
   /** @optional */
@@ -169,11 +181,36 @@ export interface Platforms extends IEntity {
   hostname?: string
 }
 
+export interface ConsoleUsers extends IEntity {
+  /** @required */
+  email: string
+  /** @optional */
+  name?: string
+  /** @required */
+  passwordHash: string
+}
+
+export interface ConsoleSessions extends IEntity {
+  /** @required */
+  userId: string
+  /** @required */
+  refreshHash: string
+  /** @optional */
+  previousHash?: string
+  /** @optional */
+  userAgent?: string
+  /** @required */
+  expireAt: Date
+}
+
 // Document Types
 export type ProjectsDoc = Doc<Projects>
 export type WebhooksDoc = Doc<Webhooks>
+export type WebhookLogsDoc = Doc<WebhookLogs>
 export type KeysDoc = Doc<Keys>
 export type PlatformsDoc = Doc<Platforms>
+export type ConsoleUsersDoc = Doc<ConsoleUsers>
+export type ConsoleSessionsDoc = Doc<ConsoleSessions>
 
 // Utility Types
 
@@ -209,6 +246,22 @@ export type WebhooksUpdate = Partial<WebhooksCreate>
 export type WebhooksKeys = keyof Webhooks
 export type WebhooksValues = Webhooks[WebhooksKeys]
 
+// Utility types for WebhookLogs
+export type WebhookLogsCreate = Omit<
+  WebhookLogs,
+  | '$id'
+  | '$createdAt'
+  | '$updatedAt'
+  | '$permissions'
+  | '$sequence'
+  | '$collection'
+  | '$tenant'
+  | '$schema'
+>
+export type WebhookLogsUpdate = Partial<WebhookLogsCreate>
+export type WebhookLogsKeys = keyof WebhookLogs
+export type WebhookLogsValues = WebhookLogs[WebhookLogsKeys]
+
 // Utility types for Keys
 export type KeysCreate = Omit<
   Keys,
@@ -241,6 +294,38 @@ export type PlatformsUpdate = Partial<PlatformsCreate>
 export type PlatformsKeys = keyof Platforms
 export type PlatformsValues = Platforms[PlatformsKeys]
 
+// Utility types for ConsoleUsers
+export type ConsoleUsersCreate = Omit<
+  ConsoleUsers,
+  | '$id'
+  | '$createdAt'
+  | '$updatedAt'
+  | '$permissions'
+  | '$sequence'
+  | '$collection'
+  | '$tenant'
+  | '$schema'
+>
+export type ConsoleUsersUpdate = Partial<ConsoleUsersCreate>
+export type ConsoleUsersKeys = keyof ConsoleUsers
+export type ConsoleUsersValues = ConsoleUsers[ConsoleUsersKeys]
+
+// Utility types for ConsoleSessions
+export type ConsoleSessionsCreate = Omit<
+  ConsoleSessions,
+  | '$id'
+  | '$createdAt'
+  | '$updatedAt'
+  | '$permissions'
+  | '$sequence'
+  | '$collection'
+  | '$tenant'
+  | '$schema'
+>
+export type ConsoleSessionsUpdate = Partial<ConsoleSessionsCreate>
+export type ConsoleSessionsKeys = keyof ConsoleSessions
+export type ConsoleSessionsValues = ConsoleSessions[ConsoleSessionsKeys]
+
 // Input Types
 
 // Input types for Projects
@@ -253,6 +338,11 @@ export type WebhooksInput = WebhooksCreate
 export type WebhooksCreateInput = WebhooksCreate
 export type WebhooksUpdateInput = WebhooksUpdate
 
+// Input types for WebhookLogs
+export type WebhookLogsInput = WebhookLogsCreate
+export type WebhookLogsCreateInput = WebhookLogsCreate
+export type WebhookLogsUpdateInput = WebhookLogsUpdate
+
 // Input types for Keys
 export type KeysInput = KeysCreate
 export type KeysCreateInput = KeysCreate
@@ -263,11 +353,24 @@ export type PlatformsInput = PlatformsCreate
 export type PlatformsCreateInput = PlatformsCreate
 export type PlatformsUpdateInput = PlatformsUpdate
 
+// Input types for ConsoleUsers
+export type ConsoleUsersInput = ConsoleUsersCreate
+export type ConsoleUsersCreateInput = ConsoleUsersCreate
+export type ConsoleUsersUpdateInput = ConsoleUsersUpdate
+
+// Input types for ConsoleSessions
+export type ConsoleSessionsInput = ConsoleSessionsCreate
+export type ConsoleSessionsCreateInput = ConsoleSessionsCreate
+export type ConsoleSessionsUpdateInput = ConsoleSessionsUpdate
+
 export interface Entities {
   projects: Projects
   webhooks: Webhooks
+  webhook_logs: WebhookLogs
   keys: Keys
   platforms: Platforms
+  console_users: ConsoleUsers
+  console_sessions: ConsoleSessions
 }
 
 type GeneratedEntitiesRegistry = Entities

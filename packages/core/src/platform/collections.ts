@@ -371,12 +371,13 @@ const keys: Collection = {
       array: true,
     },
     {
-      $id: ID.custom('secret'),
-      key: 'secret',
+      // SHA-256 hex of the issued secret. The plaintext is shown once at
+      // create time and is never stored or recoverable.
+      $id: ID.custom('secretHash'),
+      key: 'secretHash',
       type: AttributeType.String,
-      size: 1600,
+      size: 128,
       required: true,
-      filters: ['encrypt'],
     },
     {
       $id: ID.custom('expire'),

@@ -8,6 +8,7 @@ import { Auth, signJwt } from '@nuvix/core/auth'
 import { type Database, Doc, Query } from '@nuvix/db'
 import { config } from '@nuvix/utils'
 import { UnauthorizedError } from '../../shared/errors'
+import type { ConsoleUsers } from '../../types/generated'
 
 /** Access-token TTL seconds (env override; default 15 minutes). */
 export const CONSOLE_ACCESS_TTL_SECONDS = Number.parseInt(
@@ -48,7 +49,7 @@ export function newRefreshToken(): string {
   return randomBytes(32).toString('base64url')
 }
 
-function toUserView(doc: Doc): ConsoleUserView {
+function toUserView(doc: Doc<ConsoleUsers>): ConsoleUserView {
   return {
     $id: doc.getId(),
     email: String(doc.get('email') ?? ''),

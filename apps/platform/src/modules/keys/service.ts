@@ -1,6 +1,7 @@
 /** Platform API key lifecycle: generation, scoping, expiry, and deletion. */
 import { randomBytes } from 'node:crypto'
 import { ID } from '@nuvix/core'
+import { Auth } from '@nuvix/core/auth'
 import { NotFoundError } from '@nuvix/core/errors'
 import { type Database, Doc, Query } from '@nuvix/db'
 import type { Keys } from '../../types/generated'
@@ -19,18 +20,23 @@ export interface UpdateKeyInput {
   expire?: string | null
 }
 
-/** API-key projection with the generated secret needed by clients to configure credentials securely. */
+/** API-key projection; `secret` is present only in the create response (hash-at-rest storage). */
 export interface KeyView {
   $id: string
   projectId: string
   name: string
   scopes: string[]
-  secret: string
+  secret?: string
   expire: Date | string | null
   accessedAt: Date | string | null
   sdks: string[]
   $createdAt: Date | string | null
   $updatedAt: Date | string | null
+}
+
+/** Create-time key projection — the only shape that carries the plaintext secret. */
+export interface CreatedKeyView extends KeyView {
+  secret: string
 }
 
 function toView(doc: Doc<Keys>): KeyView {
@@ -40,7 +46,6 @@ function toView(doc: Doc<Keys>): KeyView {
     projectId: data.projectId,
     name: data.name,
     scopes: data.scopes ?? [],
-    secret: data.secret,
     expire: data.expire ?? null,
     accessedAt: data.accessedAt ?? null,
     sdks: data.sdks ?? [],
@@ -92,7 +97,7 @@ export class KeysService {
   }
 
   /** Issue a project-owned key with a 128-byte random `standard_…` secret. */
-  async create(projectId: string, input: CreateKeyInput): Promise<KeyView> {
+  async create(projectId: string, input: CreateKeyInput): Promise<CreatedKeyView> {
     const project = await this.getProject(projectId)
     const session = this.db.system()
 
@@ -105,14 +110,15 @@ export class KeysService {
       projectId,
       name: input.name,
       scopes: input.scopes ?? [],
-      secret,
+      secretHash: Auth.hash(secret),
       expire: input.expire ? new Date(input.expire) : undefined,
       accessedAt: undefined,
       sdks: [],
     })
 
     const created = await session.createDocument('keys', doc)
-    return toView(created)
+    // The plaintext secret is shown exactly once — at issuance.
+    return { ...toView(created), secret }
   }
 
   /** Fetch one key, enforcing that it belongs to the project. */

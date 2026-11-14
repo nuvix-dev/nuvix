@@ -124,8 +124,10 @@ server's admin surfaces (e.g. `GET /v2/logs`).
 | PATCH  | `…/keys/:keyId` | Partial update                              |
 | DELETE | `…/keys/:keyId` | Delete key                                  |
 
-Key objects include `secret` on every response (not create-only),
-`scopes`, `expire`, `accessedAt`, `sdks`. Unknown key → `404 key_not_found`.
+Key objects include `scopes`, `expire`, `accessedAt`, `sdks`. The full
+`secret` is returned **only** in the create response — it is never stored
+recoverably (SHA-256 hash at rest), so list/get/update omit it. Unknown
+key → `404 key_not_found`.
 
 ## Endpoints — Platforms (`/projects/:projectId/platforms`)
 

@@ -8,6 +8,20 @@ const KeySchema = t.Object({
   projectId: t.String(),
   name: t.String(),
   scopes: t.Array(t.String()),
+  expire: t.Nullable(t.Any()),
+  accessedAt: t.Nullable(t.Any()),
+  sdks: t.Array(t.String()),
+  $createdAt: t.Any(),
+  $updatedAt: t.Any(),
+})
+
+// Only the create response carries the plaintext secret — it is shown once
+// and never stored (only its SHA-256 hash is kept).
+const CreatedKeySchema = t.Object({
+  $id: t.String(),
+  projectId: t.String(),
+  name: t.String(),
+  scopes: t.Array(t.String()),
   secret: t.String(),
   expire: t.Nullable(t.Any()),
   accessedAt: t.Nullable(t.Any()),
@@ -28,7 +42,7 @@ export function keyRoutes(service: KeysService) {
           scopes: t.Optional(t.Array(t.String())),
           expire: t.Optional(t.Nullable(t.String())),
         }),
-        response: KeySchema,
+        response: CreatedKeySchema,
         detail: { summary: 'Create an API key', tags: ['keys'] },
       },
       ({ params: { projectId }, body }) =>

@@ -1,6 +1,7 @@
 /** Read-only control-plane resolvers: project lookup, provider/platform/webhook reads, API-key resolution. */
 import type { Database, Doc } from '@nuvix/db'
 import { Query } from '@nuvix/db'
+import { Auth } from '../auth'
 import type { ProjectMailInfo } from '../mail'
 import type { TenantTarget } from '../tenants'
 
@@ -46,7 +47,7 @@ interface KeyRecord {
   projectId: string
   name: string
   scopes: string[]
-  secret: string
+  secretHash: string
   expire?: Date | string | null
   accessedAt?: Date | string | null
 }
@@ -228,17 +229,21 @@ export class KeyRegistry {
   constructor(private readonly db: Database) {}
 
   /**
-   * Look up a key by exact secret match, honoring expiry and stamping
+   * Look up a key by its stored SHA-256 hash, honoring expiry and stamping
    * `accessedAt` (best-effort). Returns `null` for missing/expired keys.
    */
   async resolve(projectId: string, secret: string): Promise<ResolvedApiKey | null> {
     const session = this.db.system()
-    const docs = (await session.find('keys', (query) =>
-      query.equal('projectId', projectId),
-    )) as Doc<KeyRecord>[]
+    const secretHash = Auth.hash(secret)
+    const docs = (await session.find('keys', [
+      Query.equal('projectId', [projectId]),
+      Query.equal('secretHash', [secretHash]),
+    ])) as Doc<KeyRecord>[]
     if (!docs.length) return null
 
-    const doc = docs.find((d) => d.get('secret') === secret)
+    // Constant-time confirmation of the presented credential against the
+    // stored hash — redundant with the lookup, cheap, and defense-in-depth.
+    const doc = docs.find((d) => Auth.safeCompare(d.get('secretHash'), secretHash))
     if (!doc || doc.empty()) return null
 
     const data = doc.toObject()

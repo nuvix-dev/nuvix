@@ -387,7 +387,7 @@ next/
   PROJECTS queue registration was vestigial (no processor — v1
   provisioned synchronously), so this is a v2 improvement, not
   parity. `docs/api/platform.md` updated (was PROPOSED/stale).
-- [x] Platform API keys slice: CRUD routes (`/projects/:projectId/keys`), 1:1 legacy schema with secret generation `standard_<hex>`
+- [x] Platform API keys slice: CRUD routes (`/projects/:projectId/keys`), 1:1 legacy schema with secret generation `standard_<hex>`; secrets are hashed at rest (SHA-256, `secretHash`) and returned only in the create response (v2 hardening, not parity)
 - [x] Client platforms slice: CRUD routes (`/projects/:projectId/platforms`), 1:1 legacy schema supporting web, flutter, android, apple
 - [x] Auth settings slice: routes under `/projects/:projectId/auth` (session-alerts, limit, duration, password-history, password-dictionary, personal-data, max-sessions, mock-numbers, memberships-privacy, auth methods)
 - [x] Remaining platform slices: extended project configuration (services, APIs, OAuth2, SMTP, JWTs), metadata (`/projects/:projectId/metadata/exposed-schemas`), templates, and project usage stats (`/projects/:projectId/usage`)
