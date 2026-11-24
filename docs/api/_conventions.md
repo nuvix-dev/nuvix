@@ -37,7 +37,6 @@ Every non-2xx response is `application/problem+json`:
 ```
 
 Two-layer error identity (Stripe-style):
-
 - **`type`** — coarse class. Generic middleware, retry/backoff, and auth-flow
   logic key off this (or off `status`). Only the handful of classes below exist.
 - **`code`** — stable, flat, snake_case machine code (`user_not_found`,
@@ -54,21 +53,25 @@ Two-layer error identity (Stripe-style):
 | `detail` | opt     | Human explanation for THIS occurrence                |
 | `errors` | opt     | Array of `{ field?, message }` for validation errors |
 
-Codes are registered in `apps/server/src/shared/errors.ts` (single source of
-truth); a generated error catalog page ships with the docs so each code is
-discoverable without reading source.
+Error classes and problem types live in `@nuvix/core/errors` (each app's
+`shared/errors.ts` re-exports them, so every v2 surface shares one
+error-identity contract). Stable `code` values are documented per endpoint in
+the API contracts (`docs/api/*.md`); there is no generated catalog page yet.
 
 ### Error type registry
 
-| `type`                 | Status | Thrown as           |
-| ---------------------- | ------ | ------------------- |
-| `/errors/bad-request`  | 400    | `BadRequestError`   |
-| `/errors/unauthorized` | 401    | `UnauthorizedError` |
-| `/errors/forbidden`    | 403    | `ForbiddenError`    |
-| `/errors/not-found`    | 404    | `NotFoundError`     |
-| `/errors/conflict`     | 409    | `ConflictError`     |
-| `/errors/bad-gateway`  | 502    | `BadGatewayError`   |
-| `/errors/internal`     | 500    | (never leaked)      |
+| `type`                        | Status | Thrown as                 |
+| ----------------------------- | ------ | ------------------------- |
+| `/errors/bad-request`         | 400    | `BadRequestError`         |
+| `/errors/unauthorized`        | 401    | `UnauthorizedError`       |
+| `/errors/forbidden`           | 403    | `ForbiddenError`          |
+| `/errors/not-found`           | 404    | `NotFoundError`           |
+| `/errors/conflict`            | 409    | `ConflictError`           |
+| `/errors/rate-limited`        | 429    | `TooManyRequestsError`    |
+| `/errors/internal`            | 500    | (never leaked)            |
+| `/errors/not-implemented`     | 501    | `NotImplementedError`     |
+| `/errors/bad-gateway`         | 502    | `BadGatewayError`         |
+| `/errors/service-unavailable` | 503    | `ServiceUnavailableError` |
 
 Framework-native errors (route-not-found, body parse, schema validation) also
 emit problem+json via Elysia 2 built-ins. Validation failures use status 422
@@ -105,7 +108,6 @@ Every list endpoint returns an envelope with a `meta` object:
 ### Offset-based (only where cursors are impractical)
 
 Allowed for small/admin datasets or when the client needs random access:
-
 - Request: `?limit=25&offset=50`
 - Meta becomes `{ total, limit, offset }`.
 - Justification must be noted in the module contract.
@@ -132,17 +134,17 @@ Allowed for small/admin datasets or when the client needs random access:
 Current inventory carried over from v1 (rename decision pending — Open
 Question #9, resolved at Phase 1 contract review):
 
-| Header              | Purpose                        |
-| ------------------- | ------------------------------ |
+| Header                    | Purpose                              |
+| ------------------------- | ------------------------------------ |
 | `x-nuvix-publishable-key` | project selector (not authorization) |
-| `x-nuvix-session`   | user session token             |
-| `x-nuvix-jwt`       | short-lived JWT                |
-| `x-nuvix-key`       | API key (project / console)    |
-| `x-nuvix-mode`      | `admin` / `console` mode flag  |
-| `x-nuvix-id`        | chunked-upload continuation id |
-| `x-nuvix-timestamp` | webhook signature timestamp    |
-| `x-nuvix-signature` | webhook signature              |
-| `x-nuvix-nonce`     | webhook signature nonce        |
+| `x-nuvix-session`         | user session token                   |
+| `x-nuvix-jwt`             | short-lived JWT                      |
+| `x-nuvix-key`             | API key (project / console)          |
+| `x-nuvix-mode`            | `admin` / `console` mode flag        |
+| `x-nuvix-id`              | chunked-upload continuation id       |
+| `x-nuvix-timestamp`       | webhook signature timestamp          |
+| `x-nuvix-signature`       | webhook signature                    |
+| `x-nuvix-nonce`           | webhook signature nonce              |
 
 `x-nuvix-publishable-key` selects the project and therefore its dedicated
 tenant database. It is safe to embed in clients and **never authorizes access**.
@@ -157,11 +159,11 @@ All API tests use Eden `treaty`:
 
 ```ts
 // unit/integration — against the instance (no port needed)
-const client = treaty(app);
-const { data, error } = await client.v2.users.list.get();
+const client = treaty(app)
+const { data, error } = await client.v2.users.list.get()
 
 // e2e — against a running server
-const client = treaty("http://localhost:4000");
+const client = treaty('http://localhost:4000')
 ```
 
 - Paths are compile-time checked; a renamed route breaks tests at `tsc`, not runtime.
