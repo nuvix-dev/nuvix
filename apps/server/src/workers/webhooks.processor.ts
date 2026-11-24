@@ -18,6 +18,7 @@
 
 import { createHmac } from 'node:crypto'
 import type { WebhookJobData } from '@nuvix/core/queues'
+import { validateWebhookUrl, type WebhookUrlCheck } from '@nuvix/core/webhooks'
 import type { Database } from '@nuvix/db'
 import { Doc, ID } from '@nuvix/db'
 import type { Job } from 'bullmq'
@@ -153,6 +154,18 @@ export function setWebhookStore(custom: WebhookStore): void {
   store = custom
 }
 
+/**
+ * SSRF guard seam. Defaults to the DNS-resolving validator; tests can inject
+ * a permissive implementation to stay hermetic, or the real one to assert
+ * rejection.
+ */
+let urlValidator: (url: string) => Promise<WebhookUrlCheck> = validateWebhookUrl
+
+/** Overrides the delivery URL validator (tests). */
+export function setWebhookUrlValidator(custom: (url: string) => Promise<WebhookUrlCheck>): void {
+  urlValidator = custom
+}
+
 /** Entry point wired in `workers/index.ts`. */
 export default async function processWebhooks(
   job: Job<WebhookJobData>,
@@ -175,6 +188,13 @@ export default async function processWebhooks(
   try {
     if (!webhook.url) {
       throw new Error('Webhook URL is not set')
+    }
+
+    // Re-validate immediately before the outbound request: registration only
+    // checked the literal shape, and DNS may have changed since (rebinding).
+    const urlCheck = await urlValidator(webhook.url)
+    if (!urlCheck.ok) {
+      throw new Error(`Webhook URL rejected: ${urlCheck.reason}`)
     }
 
     // Prepare payload
@@ -206,6 +226,9 @@ export default async function processWebhooks(
       headers,
       body: payloadString,
       signal: AbortSignal.timeout(10_000), // 10 second timeout
+      // Webhooks should not redirect a POST; following one is an SSRF pivot
+      // that bypasses the URL check above.
+      redirect: 'manual',
       ...(webhook.security ? {} : { tls: { rejectUnauthorized: false } }),
     })
 

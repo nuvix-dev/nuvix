@@ -497,6 +497,18 @@ next/
   the platform project from the request context and both audit rows
   and webhook fan-out are tenant-correct. `webhook_logs` added to the
   platform schema (`ensurePlatformSchema` creates it on next run).
+- [x] Webhook SSRF guard (security hardening, not parity): delivery
+  targets are validated as public `http(s)` URLs with no embedded
+  credentials — registration/update reject internal literals
+  (loopback, RFC 1918, link-local including `169.254.169.254`, CGNAT,
+  multicast, IPv6 unique-local/link-local/mapped) and internal
+  hostnames (`localhost`, `.local`, `.internal`, `.home.arpa`) with a
+  typed `400 webhook_url_invalid`; the delivery worker re-validates
+  including DNS resolution immediately before every send (rebinding)
+  and no longer follows redirects. Residual: the check-then-connect
+  gap can still be raced by an authoritative DNS server (no IP
+  pinning at the socket layer) — accepted and recorded rather than
+  hidden.
 - [x] Stats recording (Phase 6 follow-through): real stats pipeline —
   metric primitives ported (`@nuvix/utils/metrics`: v1 `MetricFor`/
   `MetricPeriod` enums + `fnv1a128` deterministic stat-row id hash),

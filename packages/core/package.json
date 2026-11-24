@@ -15,7 +15,8 @@
     "./tenant-auth": "./src/tenant-auth/index.ts",
     "./tenants": "./src/tenants/index.ts",
     "./audit": "./src/audit/index.ts",
-    "./mail": "./src/mail/index.ts"
+    "./mail": "./src/mail/index.ts",
+    "./webhooks": "./src/webhooks/index.ts"
   },
   "scripts": {
     "test": "bun test"

@@ -220,6 +220,16 @@ provisioning), `404 tenant_target_not_found`, `404 schema_not_found`,
 
 Unknown webhook → `404 webhook_not_found`.
 
+Delivery URLs must be absolute `http`/`https` URLs without embedded
+credentials and must not target an internal address. Registration and
+update reject IP literals in loopback, private (RFC 1918), link-local
+(including cloud metadata `169.254.169.254`), CGNAT, multicast, and
+test/reserved ranges, plus IPv6 loopback/unique-local/link-local/mapped
+forms and internal hostnames (`localhost`, `.local`, `.internal`,
+`.home.arpa`) with `400 webhook_url_invalid`. The delivery worker repeats
+the check — including DNS resolution — immediately before every send (DNS
+can be rebound after registration) and does not follow redirects.
+
 ---
 
 ## Errors
@@ -230,6 +240,7 @@ Unknown webhook → `404 webhook_not_found`.
 | 400    | `/errors/bad-request`     | `invalid_schemas`                                            | bad exposed-schemas payload           |
 | 400    | `/errors/bad-request`     | `smtp_argument_invalid`                                      | incomplete SMTP config                |
 | 400    | `/errors/bad-request`     | `jwt_disabled`                                               | platform JWT secret not configured    |
+| 400    | `/errors/bad-request`     | `webhook_url_invalid`                                        | non-http or internal webhook target   |
 | 401    | `/errors/unauthorized`    | `console_unauthorized`                                       | missing/invalid/expired console JWT   |
 | 401    | `/errors/unauthorized`    | `console_invalid_credentials`                                | wrong operator login                  |
 | 401    | `/errors/unauthorized`    | `console_invalid_refresh_token`                              | rotated/reused/unknown refresh token  |

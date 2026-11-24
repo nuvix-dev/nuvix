@@ -104,6 +104,34 @@ describe('WebhooksService', () => {
     expect(rotated.signatureKey).not.toBe(created.signatureKey)
   })
 
+  test('rejects internal delivery targets at create and update', async () => {
+    for (const url of [
+      'http://127.0.0.1/hook',
+      'http://[::1]/hook',
+      'http://169.254.169.254/latest/meta-data',
+      'http://10.0.0.5/hook',
+      'http://service.internal/hook',
+      'file:///etc/passwd',
+    ]) {
+      await expect(
+        webhooksService.create(projectId, { name: 'SSRF', url, events: ['*'] }),
+      ).rejects.toThrow()
+    }
+
+    const created = await webhooksService.create(projectId, {
+      name: 'Keep Public URL',
+      url: 'https://example.com/keep',
+      events: ['*'],
+    })
+    await expect(
+      webhooksService.update(projectId, created.$id, { url: 'http://192.168.0.10/hook' }),
+    ).rejects.toThrow()
+
+    // A rejected update must not persist the unsafe URL.
+    const fetched = await webhooksService.get(projectId, created.$id)
+    expect(fetched.url).toBe('https://example.com/keep')
+  })
+
   test('deletes a webhook', async () => {
     const created = await webhooksService.create(projectId, {
       name: 'To Delete',

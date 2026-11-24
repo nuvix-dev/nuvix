@@ -134,6 +134,36 @@ describe('webhook routes', () => {
     expect(data?.signatureKey).not.toBe(originalKey)
   })
 
+  test('POST rejects an internal webhook URL as a typed 400', async () => {
+    const { status, error } = await client.projects({ projectId }).webhooks.post({
+      name: 'Internal Target',
+      url: 'http://169.254.169.254/latest/meta-data',
+      events: ['*'],
+    })
+
+    expect(status).toBe(400)
+    expect(error?.value).toMatchObject({
+      type: '/errors/bad-request',
+      code: 'webhook_url_invalid',
+    })
+  })
+
+  test('PATCH rejects an internal webhook URL as a typed 400', async () => {
+    const createRes = await client.projects({ projectId }).webhooks.post({
+      name: 'Patch Target',
+      url: 'https://api.example.com/patch-target',
+      events: ['*'],
+    })
+
+    const { status, error } = await client
+      .projects({ projectId })
+      .webhooks({ webhookId: createRes.data!.$id })
+      .patch({ url: 'http://localhost/hook' })
+
+    expect(status).toBe(400)
+    expect(error?.value).toMatchObject({ code: 'webhook_url_invalid' })
+  })
+
   test('DELETE /projects/:projectId/webhooks/:webhookId deletes a webhook', async () => {
     const createRes = await client.projects({ projectId }).webhooks.post({
       name: 'To Delete',

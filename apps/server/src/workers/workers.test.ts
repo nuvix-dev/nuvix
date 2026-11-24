@@ -1,6 +1,7 @@
 /** Tests across queue workers: audits batching, webhooks delivery/logging, logs redaction. */
 import { describe, expect, it } from 'bun:test'
 import { existsSync } from 'node:fs'
+import { validateWebhookUrl } from '@nuvix/core/webhooks'
 import { Doc } from '@nuvix/db'
 import type { Job } from 'bullmq'
 import processAudits from './audits.processor'
@@ -12,9 +13,14 @@ import processMessaging, { setMessagingSessionResolver } from './messaging.proce
 import processStats, { flushStats, setStatsPersister } from './stats.processor'
 import processWebhooks, {
   setWebhookStore,
+  setWebhookUrlValidator,
   type WebhookDeliveryLog,
   type WebhookStore,
 } from './webhooks.processor'
+
+// Keep webhook delivery tests hermetic: URL-safety behavior is unit-tested in
+// the core package and asserted explicitly below.
+setWebhookUrlValidator(async () => ({ ok: true }))
 
 describe('Queue Worker Processors', () => {
   it('verifies all processor files exist on disk for BullMQ external workers', () => {
@@ -145,6 +151,54 @@ describe('Queue Worker Processors', () => {
       expect(String(logs[0]!.error)).toContain('HTTP 500')
     } finally {
       globalThis.fetch = originalFetch
+    }
+  })
+
+  it('processWebhooks refuses to deliver to an internal URL (SSRF guard)', async () => {
+    const logs: WebhookDeliveryLog[] = []
+    setWebhookStore({
+      read: async (_projectId, webhookId) => ({
+        id: webhookId,
+        internalId: 9,
+        enabled: true,
+        url: 'http://169.254.169.254/latest/meta-data',
+        signatureKey: undefined,
+        security: true,
+        httpUser: null,
+        httpPass: null,
+      }),
+      log: async (entry) => {
+        logs.push(entry)
+      },
+    })
+
+    // Exercise the production validator (literal address → no DNS needed).
+    setWebhookUrlValidator(validateWebhookUrl)
+    const originalFetch = globalThis.fetch
+    let fetchCalls = 0
+    globalThis.fetch = (async () => {
+      fetchCalls += 1
+      return new Response('{}', { status: 200 })
+    }) as unknown as typeof fetch
+
+    try {
+      const mockJob = {
+        data: {
+          webhookId: 'hook_ssrf',
+          projectId: 'proj_1',
+          event: 'test',
+          payload: {},
+        },
+      } as Job
+
+      await expect(processWebhooks(mockJob)).rejects.toThrow('Webhook URL rejected')
+      expect(fetchCalls).toBe(0)
+      expect(logs).toHaveLength(1)
+      expect(logs[0]!.success).toBe(false)
+      expect(String(logs[0]!.error)).toContain('not a public address')
+    } finally {
+      globalThis.fetch = originalFetch
+      setWebhookUrlValidator(async () => ({ ok: true }))
     }
   })
 

@@ -2,7 +2,8 @@
 
 import { randomBytes } from 'node:crypto'
 import { ID } from '@nuvix/core'
-import { NotFoundError } from '@nuvix/core/errors'
+import { BadRequestError, NotFoundError } from '@nuvix/core/errors'
+import { inspectWebhookUrl } from '@nuvix/core/webhooks'
 import { type Database, Doc, Query } from '@nuvix/db'
 import type { Webhooks } from '../../types/generated'
 
@@ -66,6 +67,20 @@ function toView(doc: Doc<Webhooks>): WebhookView {
 export class WebhooksService {
   constructor(private readonly db: Database) {}
 
+  /**
+   * Reject internal delivery targets at registration time. This is the
+   * network-free half of the SSRF guard; the delivery worker re-validates
+   * with DNS resolution immediately before sending.
+   */
+  private assertDeliveryUrl(url: string): void {
+    const check = inspectWebhookUrl(url)
+    if (!check.ok) {
+      throw new BadRequestError(`Webhook URL is not allowed: ${check.reason}`, {
+        code: 'webhook_url_invalid',
+      })
+    }
+  }
+
   /** Resolve the owning project before any webhook operation. */
   private async getProject(projectId: string) {
     const session = this.db.system()
@@ -107,6 +122,7 @@ export class WebhooksService {
 
   /** Create a project-owned webhook and generate its signing key when none is supplied. */
   async create(projectId: string, input: CreateWebhookInput): Promise<WebhookView> {
+    this.assertDeliveryUrl(input.url)
     const project = await this.getProject(projectId)
     const session = this.db.system()
 
@@ -173,7 +189,10 @@ export class WebhooksService {
     }
 
     if (input.name !== undefined) webhook.set('name', input.name)
-    if (input.url !== undefined) webhook.set('url', input.url)
+    if (input.url !== undefined) {
+      this.assertDeliveryUrl(input.url)
+      webhook.set('url', input.url)
+    }
     if (input.events !== undefined) webhook.set('events', input.events)
     if (input.security !== undefined) webhook.set('security', input.security)
     if (input.httpUser !== undefined) webhook.set('httpUser', input.httpUser)
