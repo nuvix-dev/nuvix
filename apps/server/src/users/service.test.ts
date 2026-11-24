@@ -38,14 +38,19 @@ describe('UsersService', () => {
 
   it('should return usage statistics from recorded stats rows', async () => {
     // INF rows carry totals; 1d rows carry the series and the
-    // window is zero-filled to `limit` buckets.
+    // window is zero-filled to `limit` buckets. Seed relative to now so the
+    // rolling 30-day window always contains the row.
+    const seed = new Date(Date.now() - 86_400_000)
+    seed.setUTCHours(0, 0, 0, 0)
+    const seededDate = seed.toISOString().replace('.000Z', 'Z')
+
     const infTotals: Record<string, number> = { users: 5, sessions: 7 }
     const dayRows: Doc[] = [
       new Doc<Record<string, unknown>>({
         $id: 'r1',
         metric: 'users',
         period: '1d',
-        time: '2026-10-24T00:00:00Z',
+        time: seededDate,
         value: 3,
       }),
     ]
@@ -94,6 +99,6 @@ describe('UsersService', () => {
     expect(usage.sessions).toHaveLength(30)
     // The seeded daily row lands in its bucket; others are zero.
     const seeded = usage.users.find((d) => d.value === 3)
-    expect(seeded?.date).toBe('2026-10-24T00:00:00Z')
+    expect(seeded?.date).toBe(seededDate)
   })
 })

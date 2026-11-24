@@ -58,12 +58,18 @@ describe('readUsageSeries', () => {
   }
 
   it('reads INF totals and zero-fills the window', async () => {
+    // Seed a bucket relative to now: a hardcoded date silently falls out of
+    // the rolling 30-day window as time passes.
+    const seed = new Date(Date.now() - 86_400_000)
+    seed.setUTCHours(0, 0, 0, 0)
+    const seededDate = seed.toISOString().replace('.000Z', 'Z')
+
     const session = statsSession({ [MetricFor.USERS]: 42 }, [
       new Doc<Record<string, unknown>>({
         $id: 'r1',
         metric: MetricFor.USERS,
         period: '1d',
-        time: '2026-10-24T00:00:00Z',
+        time: seededDate,
         value: 6,
       }),
     ])
@@ -74,7 +80,7 @@ describe('readUsageSeries', () => {
     expect(usage[MetricFor.USERS]!.data).toHaveLength(30)
     // Seeded bucket present; the rest zeros.
     const seeded = usage[MetricFor.USERS]!.data.find((d) => d.value === 6)
-    expect(seeded?.date).toBe('2026-10-24T00:00:00Z')
+    expect(seeded?.date).toBe(seededDate)
     expect(usage[MetricFor.USERS]!.data.filter((d) => d.value === 0)).toHaveLength(29)
 
     // Missing metric: total 0, zero-filled series.
