@@ -1,24 +1,23 @@
 {
   "name": "@nuvix/platform",
-  "version": "0.1.0",
-  "description": "Nuvix Platform to manage multiple tenants",
+  "version": "2.0.0-alpha.1",
+  "private": true,
   "type": "module",
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=9.0.0"
-  },
   "scripts": {
-    "build": "bun ../../scripts/bun-build.ts",
-    "postbuild": "bun ../../scripts/gen-pkg.ts platform --deps argon2@^0.44.0 --deps pg-format@^1.0.4 --deps pgsql-parser@^17.8.2",
-    "start": "bun build/main.js",
-    "dev": "bun ../../scripts/bun-build.ts --watch",
-    "lint": "eslint \"src/**/*.ts\" --fix",
-    "typecheck": "tsc --noEmit",
-    "gen:metadata": "bun src/generate-metadata.ts"
+    "dev": "bun --watch run src/index.ts",
+    "start": "bun run src/index.ts",
+    "test": "bun test",
+    "gen:types": "bun --bun nuvix-db --force && bunx biome check --write ./src/types/generated.ts"
   },
-  "devDependencies": {
+  "dependencies": {
+    "@elysia/eden": "2.0.0-beta.5",
+    "@nuvix/cache": "^2.0.0",
     "@nuvix/core": "workspace:*",
+    "@nuvix/db": "^1.0.1",
     "@nuvix/pg-meta": "workspace:*",
-    "@nuvix/utils": "workspace:*"
+    "@nuvix/telemetry": "^1.0.2",
+    "@nuvix/utils": "workspace:*",
+    "bullmq": "6.7.3",
+    "elysia": "2.0.0-rc.1"
   }
 }

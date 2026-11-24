@@ -1,64 +1,53 @@
 # Nuvix Copilot Workspace Instructions
 
 ## Purpose
-This file primes Copilot/agent behavior for the **nuvix** monorepo (backend platform and SDKs). Follow the project conventions, keep responses concise, and use documentation links rather than copying large chunks.
+
+This file primes Copilot/agent behavior for the **nuvix** repository — the Bun-native v2 backend. Follow the project conventions, keep responses concise, and use documentation links rather than copying large chunks.
 
 ## Key project facts
-- Monorepo root: `apps/` + `libs/` + `docs/` + `configs/`
-- API server: `apps/server`
-- Platform services: `apps/platform`
-- Shared logic: `libs/core`, `libs/pg-meta`, `libs/utils`
-- Main language: TypeScript; testing with Vitest; linting with Biome.
-- Local dev commands (from README):
-  - `bun install`
-  - `bun run dev`
-  - `bun run test`
-  - `bun run lint`
 
-## Build/test commands (for agent task steps)
-1. `bun install`
+- **The repo root is the workspace** (`apps/`, `packages/`, `docs/`, `assets/`) — the legacy v1 monorepo was deleted and the old `next/` nesting flattened in the Phase 9 cutover.
+- Workspace: Bun workspaces — `apps/*` (server, platform, workers) and `packages/*`.
+- Runtime: Bun 1.4 (pinned in `package.json` `packageManager`); TypeScript; Elysia 2 + TypeBox contracts; testing with `bun test`; linting/formatting with Biome.
+- Tenant databases: PostgreSQL 18 only (`nuvix/postgres:18.1`). Platform persistence: PostgreSQL or SQLite via `@nuvix/db`.
+
+## Build/test commands (run from the repo root)
+
+1. `bun install --frozen-lockfile`
 2. `bun run lint`
-3. `bun run test`
-4. `bun run test -- --run` (fast single-run as needed)
-5. `bun run vitest --run --config apps/server/vitest.unit.config.ts` (for server unit tests)
+3. `bun run typecheck`
+4. `bun test`
+5. `git diff --check`
 
-> If a PR adds feature/bugfix code, include updated test coverage and run a local baseline:
-> - `bun run test -- --watch` for interactive
-> - `bun run test -- --run` for CI-style report.
+`@nuvix/*` platform libraries come from npm as published packages; no sibling checkouts are needed.
 
-## Architecture and conventions
-- `apps/server/src`: API controllers, modules, services, route definitions
-- `apps/platform/src`: platform tooling, metadata generator (`generate-metadata.ts`)
-- `libs/pg-meta/src`: DB metadata, schema-helper utilities
-- `libs/core/src`: shared guards, schemas, types, common helpers
-- `apps/*/test`: e2e and unit tests; prefer naming `*.spec.ts`.
+## Architecture invariants (see `AGENTS.md` and `MIGRATION.md`)
 
-### Schema patterns
-- Managed mode (auto CRUD + RLS)
-- Document mode (JSON-style operations)
-- Unmanaged mode (raw SQL)
+- Contract-first vertical slices; RFC 9457 problem details with stable snake_case `code`s.
+- Request order: publishable key → platform project → PostgreSQL tenant → tenant-local auth → canonical roles → caller-scoped `Session` → handler.
+- Routes validate transport input and call a service; services own business rules and receive narrow dependencies; infrastructure construction belongs in composition.
 
-### Coding style
-- Prefer existing helpers, avoid duplicating business logic.
-- Use `zod`/`io-ts`-style validation if present in the module.
+## Coding style
+
+- Prefer existing helpers; avoid duplicating business logic.
+- TypeBox (`t.*`) for transport validation.
 - Keep new exports in library entrypoints where needed.
 
 ## How to use this agent instruction
+
 - Always ask: "What is the specific task, and what user story or issue is being solved?"
 - For feature work, identify relevant existing modules and nearby tests first.
 - For bug fixes, reproduce steps using unit/integration tests, then code changes.
 - Provide a short summary and test commands in your final response.
 
-## Workspace doc links (don’t duplicate)
+## Workspace doc links (don't duplicate)
+
 - README: `README.md`
 - Contributing: `CONTRIBUTING.md`
-- API docs: `docs/` and `docs/references/`
+- v2 API contracts: `docs/api/`
+- Architecture & decisions: `MIGRATION.md` (migration record + DoD)
+- Deployment: `docs/deployment.md`
 
-## “Link, don’t embed” principle
+## "Link, don't embed" principle
+
 For high-detail behavior (auth rules, storage policies, messaging flows), prefer linking to docs/data sources above and adding concise notes. Avoid pasting full APIs or long docs into generated code comments.
-
-## Optional advanced assistance
-When the user asks for an automation workflow, consider suggesting or creating:
-- `.github/instructions/**/*.instructions.md` for per-module style rules (database, storage, etc.)
-- `.github/hooks/pre-commit` for auto-lint/test on CI
-- `.github/agents/nuvix.agent.md` for repeated multi-step tasks like "add endpoint + tests + docs"

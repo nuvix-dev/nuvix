@@ -1,0 +1,35 @@
+/** Composes the account API from focused profile, recovery, session, identity, target, MFA, and OAuth2 plugins. */
+import { Elysia } from 'elysia'
+import type { MailComposer } from '../mail/composer'
+import { accountIdentitiesRoutes } from './identities/routes'
+import { accountMfaRoutes } from './mfa/routes'
+import { type OAuth2RouteDeps, oauth2Routes } from './oauth2/routes'
+import { accountProfileRoutes } from './profile/routes'
+import { accountRecoveryRoutes } from './recovery/routes'
+import { accountSessionsRoutes } from './sessions/routes'
+import { accountTargetsRoutes } from './targets/routes'
+import { accountTokensRoutes } from './tokens/routes'
+
+export interface AccountRoutesOptions {
+  jwtSecret?: string
+  /** OAuth2 flow dependencies (control-plane registry + encryption key). */
+  oauth2?: OAuth2RouteDeps
+  /** System-email composer (verification/recovery/magic/OTP mail). */
+  mail?: MailComposer
+}
+
+/** Mount account subroutes under one prefix while enabling optional capabilities explicitly. */
+export const accountRoutes = (options: AccountRoutesOptions = {}) =>
+  new Elysia({ prefix: '/account' })
+    .use(accountProfileRoutes({ mail: options.mail }))
+    .use(accountRecoveryRoutes({ mail: options.mail }))
+    .use(accountSessionsRoutes(options))
+    .use(accountTokensRoutes(options))
+    .use(accountIdentitiesRoutes())
+    .use(accountTargetsRoutes())
+    .use(accountMfaRoutes())
+    .use(
+      options.oauth2
+        ? oauth2Routes(options.oauth2)
+        : new Elysia({ name: 'account-oauth2-disabled' }),
+    )

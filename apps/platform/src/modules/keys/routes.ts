@@ -1,0 +1,140 @@
+/** Defines the project-scoped API-key lifecycle, including creation, pagination, updates, and revocation. */
+import { Elysia, t } from 'elysia'
+import type { KeysService } from './service'
+
+// Keep the response contract centralized so every key operation exposes the same public fields.
+const KeySchema = t.Object({
+  $id: t.String(),
+  projectId: t.String(),
+  name: t.String(),
+  scopes: t.Array(t.String()),
+  expire: t.Nullable(t.Any()),
+  accessedAt: t.Nullable(t.Any()),
+  sdks: t.Array(t.String()),
+  $createdAt: t.Any(),
+  $updatedAt: t.Any(),
+})
+
+// Only the create response carries the plaintext secret — it is shown once
+// and never stored (only its SHA-256 hash is kept).
+const CreatedKeySchema = t.Object({
+  $id: t.String(),
+  projectId: t.String(),
+  name: t.String(),
+  scopes: t.Array(t.String()),
+  secret: t.String(),
+  expire: t.Nullable(t.Any()),
+  accessedAt: t.Nullable(t.Any()),
+  sdks: t.Array(t.String()),
+  $createdAt: t.Any(),
+  $updatedAt: t.Any(),
+})
+
+/** Adds transport validation and delegates key ownership and secret handling to the service. */
+export function keyRoutes(service: KeysService) {
+  return new Elysia({ name: 'key-routes' })
+    .post(
+      '/projects/:projectId/keys',
+      {
+        params: t.Object({ projectId: t.String() }),
+        body: t.Object({
+          name: t.String({ minLength: 1, maxLength: 128 }),
+          scopes: t.Optional(t.Array(t.String())),
+          expire: t.Optional(t.Nullable(t.String())),
+        }),
+        response: CreatedKeySchema,
+        detail: { summary: 'Create an API key', tags: ['keys'] },
+      },
+      ({ params: { projectId }, body }) =>
+        service.create(projectId, {
+          name: body.name,
+          scopes: body.scopes,
+          expire: body.expire,
+        }),
+    )
+    .get(
+      '/projects/:projectId/keys',
+      {
+        params: t.Object({ projectId: t.String() }),
+        query: t.Object({
+          limit: t.Optional(t.Integer({ minimum: 1, maximum: 100, default: 25 })),
+          offset: t.Optional(t.Integer({ minimum: 0, default: 0 })),
+        }),
+        response: t.Object({
+          data: t.Array(KeySchema),
+          meta: t.Object({
+            total: t.Number(),
+            limit: t.Number(),
+            offset: t.Number(),
+          }),
+        }),
+        detail: { summary: 'List API keys', tags: ['keys'] },
+      },
+      async ({ params: { projectId }, query }) => {
+        // Apply contract defaults here so service pagination receives concrete bounds.
+        const limit = query.limit ?? 25
+        const offset = query.offset ?? 0
+        const { keys, total } = await service.list(projectId, limit, offset)
+        return { data: keys, meta: { total, limit, offset } }
+      },
+    )
+    .get(
+      '/projects/:projectId/keys/:keyId',
+      {
+        params: t.Object({ projectId: t.String(), keyId: t.String() }),
+        response: KeySchema,
+        detail: { summary: 'Get an API key', tags: ['keys'] },
+      },
+      ({ params: { projectId, keyId } }) => service.get(projectId, keyId),
+    )
+    .put(
+      '/projects/:projectId/keys/:keyId',
+      {
+        params: t.Object({ projectId: t.String(), keyId: t.String() }),
+        body: t.Object({
+          name: t.Optional(t.String()),
+          scopes: t.Optional(t.Array(t.String())),
+          expire: t.Optional(t.Nullable(t.String())),
+        }),
+        response: KeySchema,
+        detail: { summary: 'Update an API key', tags: ['keys'] },
+      },
+      ({ params: { projectId, keyId }, body }) =>
+        service.update(projectId, keyId, {
+          name: body.name,
+          scopes: body.scopes,
+          expire: body.expire,
+        }),
+    )
+    .patch(
+      '/projects/:projectId/keys/:keyId',
+      {
+        params: t.Object({ projectId: t.String(), keyId: t.String() }),
+        body: t.Object({
+          name: t.Optional(t.String()),
+          scopes: t.Optional(t.Array(t.String())),
+          expire: t.Optional(t.Nullable(t.String())),
+        }),
+        response: KeySchema,
+        detail: { summary: 'Update an API key', tags: ['keys'] },
+      },
+      ({ params: { projectId, keyId }, body }) =>
+        service.update(projectId, keyId, {
+          name: body.name,
+          scopes: body.scopes,
+          expire: body.expire,
+        }),
+    )
+    .delete(
+      '/projects/:projectId/keys/:keyId',
+      {
+        params: t.Object({ projectId: t.String(), keyId: t.String() }),
+        response: t.Object({ status: t.Literal('ok') }),
+        detail: { summary: 'Delete an API key', tags: ['keys'] },
+      },
+      async ({ params: { projectId, keyId } }) => {
+        await service.delete(projectId, keyId)
+        return { status: 'ok' as const }
+      },
+    )
+}

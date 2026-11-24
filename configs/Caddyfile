@@ -1,7 +1,0 @@
-api.example.com {
-  reverse_proxy server:4000
-}
-
-platform.example.com {
-  reverse_proxy platform:4100
-}
