@@ -1,7 +1,7 @@
 /** Tests across queue workers: audits batching, webhooks delivery/logging, logs redaction. */
 import { describe, expect, it } from 'bun:test'
 import { existsSync } from 'node:fs'
-import { validateWebhookUrl } from '@nuvix/core/webhooks'
+import { validateOutboundUrl } from '@nuvix/core/url-safety'
 import { Doc } from '@nuvix/db'
 import type { Job } from 'bullmq'
 import processAudits from './audits.processor'
@@ -173,7 +173,7 @@ describe('Queue Worker Processors', () => {
     })
 
     // Exercise the production validator (literal address → no DNS needed).
-    setWebhookUrlValidator(validateWebhookUrl)
+    setWebhookUrlValidator(validateOutboundUrl)
     const originalFetch = globalThis.fetch
     let fetchCalls = 0
     globalThis.fetch = (async () => {

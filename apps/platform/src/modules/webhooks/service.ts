@@ -3,7 +3,7 @@
 import { randomBytes } from 'node:crypto'
 import { ID } from '@nuvix/core'
 import { BadRequestError, NotFoundError } from '@nuvix/core/errors'
-import { inspectWebhookUrl } from '@nuvix/core/webhooks'
+import { inspectOutboundUrl } from '@nuvix/core/url-safety'
 import { type Database, Doc, Query } from '@nuvix/db'
 import type { Webhooks } from '../../types/generated'
 
@@ -73,7 +73,7 @@ export class WebhooksService {
    * with DNS resolution immediately before sending.
    */
   private assertDeliveryUrl(url: string): void {
-    const check = inspectWebhookUrl(url)
+    const check = inspectOutboundUrl(url)
     if (!check.ok) {
       throw new BadRequestError(`Webhook URL is not allowed: ${check.reason}`, {
         code: 'webhook_url_invalid',

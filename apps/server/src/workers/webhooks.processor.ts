@@ -18,7 +18,7 @@
 
 import { createHmac } from 'node:crypto'
 import type { WebhookJobData } from '@nuvix/core/queues'
-import { validateWebhookUrl, type WebhookUrlCheck } from '@nuvix/core/webhooks'
+import { type OutboundUrlCheck, validateOutboundUrl } from '@nuvix/core/url-safety'
 import type { Database } from '@nuvix/db'
 import { Doc, ID } from '@nuvix/db'
 import type { Job } from 'bullmq'
@@ -159,10 +159,10 @@ export function setWebhookStore(custom: WebhookStore): void {
  * a permissive implementation to stay hermetic, or the real one to assert
  * rejection.
  */
-let urlValidator: (url: string) => Promise<WebhookUrlCheck> = validateWebhookUrl
+let urlValidator: (url: string) => Promise<OutboundUrlCheck> = validateOutboundUrl
 
 /** Overrides the delivery URL validator (tests). */
-export function setWebhookUrlValidator(custom: (url: string) => Promise<WebhookUrlCheck>): void {
+export function setWebhookUrlValidator(custom: (url: string) => Promise<OutboundUrlCheck>): void {
   urlValidator = custom
 }
 

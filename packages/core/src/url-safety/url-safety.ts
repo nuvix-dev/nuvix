@@ -1,16 +1,17 @@
 /**
- * Webhook URL safety (SSRF guard).
+ * Outbound URL safety (SSRF guard).
  *
  * Two entry points with deliberately different cost/coverage:
  *
- * - {@link inspectWebhookUrl} — synchronous, no network. Rejects non-HTTP(S)
+ * - {@link inspectOutboundUrl} — synchronous, no network. Rejects non-HTTP(S)
  *   schemes, embedded credentials, IP-literal internal ranges, and known
- *   internal hostnames. Used when an operator registers or updates a webhook,
- *   so the API stays fast and hermetic.
- * - {@link validateWebhookUrl} — `inspect` plus DNS resolution, rejecting
- *   names that resolve to internal addresses. Used immediately before the
- *   outbound delivery, because DNS can change between registration and send
- *   (rebinding) and literal-only checks are not sufficient.
+ *   internal hostnames. Used when a webhook is registered or updated,
+ *   so that API path stays fast and hermetic.
+ * - {@link validateOutboundUrl} — `inspect` plus DNS resolution, rejecting
+ *   names that resolve to internal addresses. Used immediately before an
+ *   outbound request (webhook delivery, favicon proxy), because DNS can change
+ *   between validation and connect (rebinding) and literal-only checks are not
+ *   sufficient.
  *
  * Both fail closed: anything unrecognized is treated as unsafe.
  */
@@ -19,15 +20,15 @@ import { lookup as dnsLookup } from 'node:dns/promises'
 import { BlockList, isIP } from 'node:net'
 
 /** Result of a URL safety check. */
-export type WebhookUrlCheck = { ok: true } | { ok: false; reason: string }
+export type OutboundUrlCheck = { ok: true } | { ok: false; reason: string }
 
 /** Injectable DNS seam; resolves a hostname to every address it maps to. */
-export interface WebhookUrlOptions {
+export interface OutboundUrlOptions {
   resolve?: (hostname: string) => Promise<string[]>
 }
 
 /**
- * Address ranges that must never be reachable from a webhook delivery:
+ * Address ranges that must never be reachable from an outbound request:
  * loopback, private, link-local (cloud metadata), CGNAT, multicast,
  * documentation/benchmark blocks, and IPv6 equivalents.
  */
@@ -91,7 +92,7 @@ export function isBlockedAddress(address: string): boolean {
  * Synchronous, network-free URL check: scheme, credentials, literal IPs,
  * and internal hostnames. Safe to call on every registration/update.
  */
-export function inspectWebhookUrl(rawUrl: string): WebhookUrlCheck {
+export function inspectOutboundUrl(rawUrl: string): OutboundUrlCheck {
   let url: URL
   try {
     url = new URL(rawUrl)
@@ -129,15 +130,15 @@ export function inspectWebhookUrl(rawUrl: string): WebhookUrlCheck {
  * must be public. A resolution failure is treated as unsafe (fail closed —
  * the outbound client would otherwise resolve independently).
  */
-export async function validateWebhookUrl(
+export async function validateOutboundUrl(
   rawUrl: string,
-  options: WebhookUrlOptions = {},
-): Promise<WebhookUrlCheck> {
-  const inspected = inspectWebhookUrl(rawUrl)
+  options: OutboundUrlOptions = {},
+): Promise<OutboundUrlCheck> {
+  const inspected = inspectOutboundUrl(rawUrl)
   if (!inspected.ok) return inspected
 
   const hostname = new URL(rawUrl).hostname.toLowerCase().replace(/^\[|\]$/g, '')
-  // Literal IPs were fully checked by `inspectWebhookUrl`.
+  // Literal IPs were fully checked by `inspectOutboundUrl`.
   if (isIP(hostname)) return { ok: true }
 
   const resolve = options.resolve ?? defaultResolve

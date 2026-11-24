@@ -133,15 +133,11 @@ export function statsRequestSource(options: {
           /** The handler's mapped return value, not the raw Response. */
           responseValue?: unknown
           project?: unknown
-          auth?: unknown
+          /** Derived by the tenant context: this request authenticated with a tenant API key. */
+          isAPIUser?: boolean
         }
         // API-key callers are maintenance traffic — not product usage.
-        if (
-          ctx.auth &&
-          typeof ctx.auth === 'object' &&
-          'type' in ctx.auth &&
-          (ctx.auth as { type?: string }).type === 'apiKey'
-        ) {
+        if (ctx.isAPIUser === true) {
           return
         }
         const projectId = extractProjectId(ctx.project)

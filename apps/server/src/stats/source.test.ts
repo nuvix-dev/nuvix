@@ -126,12 +126,12 @@ describe('wireStatsDatabase', () => {
 describe('statsRequestSource', () => {
   function makeApp(
     enqueue: (projectId: string, metrics: Array<{ key: string; value: number }>) => Promise<void>,
-    auth: unknown = { type: 'session' },
+    isAPIUser = false,
   ) {
     return new Elysia()
       .derive('plugin', () => ({
         project: { status: 'resolved', project: { id: 'proj_1' } },
-        auth,
+        isAPIUser,
       }))
       .use(statsRequestSource({ enqueue }))
       .get('/ping', () => ({ status: 'ok' }))
@@ -203,12 +203,9 @@ describe('statsRequestSource', () => {
       metrics: Array<{ key: string; value: number }>
     }> = []
 
-    const app = makeApp(
-      async (projectId, metrics) => {
-        enqueued.push({ projectId, metrics })
-      },
-      { type: 'apiKey', keyId: 'k1', mode: 'admin' },
-    )
+    const app = makeApp(async (projectId, metrics) => {
+      enqueued.push({ projectId, metrics })
+    }, true)
 
     await app.handle(new Request('http://localhost/ping'))
     await new Promise((resolve) => setTimeout(resolve, 10))

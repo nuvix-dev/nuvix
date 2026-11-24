@@ -1,6 +1,7 @@
 /** Avatar generation service: builds location-based placeholder avatars and serves uploaded profile files. */
 import { readdir } from 'node:fs/promises'
 import path from 'node:path'
+import { validateOutboundUrl } from '@nuvix/core/url-safety'
 import type { Translator } from '@nuvix/i18n'
 import { Resvg } from '@resvg/resvg-js'
 import QRCode from 'qrcode'
@@ -180,33 +181,6 @@ export function createAvatarService() {
 
   // Favicon proxy with protocol, hostname, DNS, redirect, and content-type checks.
 
-  const PRIVATE_HOST_RE =
-    /^(localhost$|127\.|10\.|192\.168\.|169\.254\.|172\.(1[6-9]|2\d|3[01])\.|\[?::1\]?$)/i
-
-  /**
-   * Resolves every hostname and rejects private/loopback/link-local
-   * addresses BEFORE any request leaves the process (DNS-rebinding guard —
-   * a public hostname resolving to 169.254.169.254 is the classic bypass
-   * of a hostname-only blocklist).
-   */
-  async function assertPublicHost(hostname: string): Promise<void> {
-    if (PRIVATE_HOST_RE.test(hostname)) {
-      throw new Error('SSRF blocked')
-    }
-    const { dns } = await import('bun')
-    let records: Array<{ address: string }>
-    try {
-      records = await dns.lookup(hostname, { family: 4 })
-    } catch {
-      throw new Error('DNS resolution failed')
-    }
-    for (const { address: ip } of records) {
-      if (PRIVATE_HOST_RE.test(ip) || ip.startsWith('0.') || ip.startsWith('224.') || ip === '::') {
-        throw new Error('SSRF blocked')
-      }
-    }
-  }
-
   /**
    * Fetch a remote favicon and re-encode it as PNG after validating every redirect hop.
    */
@@ -227,13 +201,13 @@ export function createAvatarService() {
     try {
       let hops = 0
       while (true) {
-        if (
-          (currentUrl.protocol !== 'http:' && currentUrl.protocol !== 'https:') ||
-          PRIVATE_HOST_RE.test(currentUrl.hostname)
-        ) {
+        // Shared SSRF guard (same rules as webhook delivery): scheme,
+        // embedded credentials, literal ranges, and every DNS answer for
+        // this hop — re-checked on each redirect (rebinding included).
+        const check = await validateOutboundUrl(currentUrl.href)
+        if (!check.ok) {
           throw new Error('SSRF blocked')
         }
-        await assertPublicHost(currentUrl.hostname)
 
         response = await fetch(currentUrl, {
           redirect: 'manual',

@@ -234,16 +234,16 @@ next/
 
 ### Pipeline mapping (conceptual old → new)
 
-| Concern                       | New home                                                |
-| ----------------------------- | ------------------------------------------------------- |
-| CORS / security headers       | global plugins in `app.ts`                              |
-| Project + mode resolution     | `context/project.ts` (`resolve`)                        |
-| Auth (session/JWT/API key)    | `context/auth.ts` (`resolve`) — one place, typed output |
-| Rate limiting                 | `packages/core/ratelimit` on `Bun.redis`                |
-| Audit/stats/logs side-effects | `onAfterResponse` hooks → queues                        |
-| Error handling                | `shared/errors.ts` envelope + single `onError`          |
-| Validation                    | `t` schemas inline per route                            |
-| Response shaping              | `mapResponse` / plain handler returns                   |
+| Concern                       | New home                                                               |
+| ----------------------------- | ---------------------------------------------------------------------- |
+| CORS / security headers       | global plugins in `app.ts`                                             |
+| Project + mode resolution     | `context/project.ts` (`resolve`)                                       |
+| Auth (session/JWT/API key)    | `context/tenant.ts` (`resolveTenantContext`) — one place, typed output |
+| Rate limiting                 | `packages/core/ratelimit` on `Bun.redis`                               |
+| Audit/stats/logs side-effects | `onAfterResponse` hooks → queues                                       |
+| Error handling                | `shared/errors.ts` envelope + single `onError`                         |
+| Validation                    | `t` schemas inline per route                                           |
+| Response shaping              | `mapResponse` / plain handler returns                                  |
 
 ---
 
@@ -270,7 +270,7 @@ next/
 ### Phase 1 — Core pipeline skeleton
 
 - [x] Typed error classes + problem+json envelope (done early in Phase 0 — `apps/server/src/shared/errors.ts` + `plugins/errors.ts`)
-- [x] Auth resolution primitives: JWT util (`utils/jwt.ts`, zero-dep HS256 on `crypto.subtle`), auth context (`context/auth.ts`: guest/session/jwt/apiKey union, pluggable DB-backed verifiers for later phases; precedence session > jwt > key > guest)
+- [x] Auth resolution primitives: JWT util (`utils/jwt.ts`, zero-dep HS256 on `crypto.subtle`), auth context (`context/auth.ts`: guest/session/jwt/apiKey union, pluggable DB-backed verifiers for later phases; precedence session > jwt > key > guest) — later superseded by `context/tenant.ts`, which owns the live pipeline; the standalone plugin (and its unverified production wiring) was deleted
 - [x] CORS (`plugins/cors.ts`, hand-rolled), security headers (`plugins/security.ts`), rate limiting (`plugins/rate-limit.ts`, pluggable `Store`; memory impl now, Redis drops in later) — all tested
 - [x] Context chain — project resolution leg: `context/project.ts`'s `projectContext` derive resolves `x-nuvix-publishable-key` through `@nuvix/core/platform`'s `ProjectRegistry` (the same control-plane DB the platform app writes) into a `ProjectContext` union (`absent | invalid | resolved`); `requireProject()` turns the non-resolved states into typed 400/404 errors for routes that need a tenant. Console/admin mode selection stays deferred to Phase 4 (needs tenant-local auth to mean anything)
 - [x] OpenAPI docs via `@elysia/openapi@2.0.0-beta.1` (D10) — spec at `/v2/openapi/json` (typed from `t` schemas), Scalar UI at `/v2/openapi`. **Requires a Bun patch** (`patches/@elysia+openapi@2.0.0-beta.1.patch`): the published bundle has broken relative `../node_modules/typebox` imports in its `gen` submodule; the patch stubs `Script` (only used by `fromTypes()`, which we don't use). Root `package.json` also carries `elysia` so the patched copy resolves it under Bun's isolated linker. Defaults differ from v1 plugin: spec path is `/openapi/json` (not `/openapi.json`), UI is Scalar (not Swagger).
@@ -505,10 +505,11 @@ next/
   hostnames (`localhost`, `.local`, `.internal`, `.home.arpa`) with a
   typed `400 webhook_url_invalid`; the delivery worker re-validates
   including DNS resolution immediately before every send (rebinding)
-  and no longer follows redirects. Residual: the check-then-connect
-  gap can still be raced by an authoritative DNS server (no IP
-  pinning at the socket layer) — accepted and recorded rather than
-  hidden.
+  and no longer follows redirects. The guard is
+  `@nuvix/core/url-safety`, shared with the favicon proxy. Residual:
+  the check-then-connect gap can still be raced by an authoritative
+  DNS server (no IP pinning at the socket layer) — accepted and
+  recorded rather than hidden.
 - [x] Stats recording (Phase 6 follow-through): real stats pipeline —
   metric primitives ported (`@nuvix/utils/metrics`: v1 `MetricFor`/
   `MetricPeriod` enums + `fnv1a128` deterministic stat-row id hash),
@@ -599,14 +600,22 @@ onDatabaseCreated` composition hook). Redesigns over v1 recorded:
   main-pool logs table mixed projects. Read auth: tenant-local API
   key OR console operator JWT (aud 'console') — the console UI
   reads project logs straight from the server API. Audience
-  separation enforced in the server's authContext (console JWTs
-  never authenticate as tenant users; vice versa on the platform).
-  Contract: `docs/api/logs.md`.
+  separation enforced in the server's tenant context (`context/tenant.ts`
+  — console JWTs never authenticate as tenant users; vice versa on the
+  platform). Contract: `docs/api/logs.md`.
+- [x] Auth-pipeline cleanup: removed the standalone `authContext` plugin.
+  It was mounted without verifiers on the live app, so its session/API-key
+  branches could never authenticate, yet `request-logs` (route gate and
+  emission skip) and the stats source branched on its `auth.type`. Those
+  consumers now use the tenant context's `isAPIUser`/`isAdmin`, so the
+  admin log-gate API-key leg and the maintenance-traffic skip actually
+  work; `context/tenant.ts` remains the single auth resolver.
 - [x] Hardening pass (D35 follow-ups): favicon proxy SSRF guards
   upgraded from hostname-regex to per-hop DNS validation (every
   resolved address must be public before any request or redirect
   leaves the process — DNS-rebinding guard; tests assert private/
-  loopback rejection); console login throttling (per email+client
+  loopback rejection; the logic now lives in the shared
+  `@nuvix/core/url-safety` guard and is reused by webhook delivery); console login throttling (per email+client
   failure counter, 5 failures / 15 min in-process window → 429
   `console_login_throttled` with `retry-after`, reset on success;
   in-process by design — the platform is single-instance; a Redis

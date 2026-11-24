@@ -4,7 +4,7 @@
  * in the worker).
  *
  * Skipped:
- *  - API-key callers (`ctx.auth.type === 'apiKey'`) — platform/console
+ *  - API-key callers (`ctx.isAPIUser`) — platform/console
  *    maintenance traffic, not product usage,
  *  - the health probe and the OpenAPI spec surface.
  *
@@ -65,19 +65,15 @@ export function logsRequestSource(options: {
           responseValue?: unknown
           status?: number
           project?: unknown
-          auth?: unknown
+          /** Derived by the tenant context: this request authenticated with a tenant API key. */
+          isAPIUser?: boolean
         }
 
         const url = new URL(ctx.request?.url ?? 'http://localhost/')
         if (SKIP_PATHS.has(url.pathname)) return
 
         // API-key callers are admin/maintenance traffic, never product usage.
-        if (
-          ctx.auth &&
-          typeof ctx.auth === 'object' &&
-          'type' in ctx.auth &&
-          (ctx.auth as { type?: string }).type === 'apiKey'
-        ) {
+        if (ctx.isAPIUser === true) {
           return
         }
 

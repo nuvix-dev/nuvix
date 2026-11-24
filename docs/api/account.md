@@ -26,7 +26,6 @@ D23 deferred a final call between "DB sessions" and "short-lived access +
 refresh tokens (Clerk-style)" to this gate. **Resolution: both, and they're
 the same mechanism v1 already has, just formalized as primary/secondary
 instead of primary/side-feature:**
-
 - **Session** = the long-lived, DB-backed, revocable credential (v1's
   `sessions` collection, unchanged in spirit). The plaintext secret is
   computed at creation time and presented thereafter via the
@@ -43,9 +42,10 @@ instead of primary/side-feature:**
   verify (no DB hit), so it's the recommended credential for
   latency-sensitive or client-side code paths, while the session secret
   stays server-side/long-lived-storage only where possible.
-- Both headers remain valid simultaneously (`context/auth.ts`'s existing
-  `session > jwt > key > guest` precedence, built in Phase 1, already
-  matches this exactly — no context-chain changes needed).
+- Both headers remain valid simultaneously (the tenant context's documented
+  precedence — a valid session wins over a JWT, and API-key requests bypass
+  both — already matches this exactly, so no context-chain changes were
+  needed).
 - **v2 simplification**: v1's `x-nuvix-session` value is an AES-GCM
   encrypted `{id, secret}` blob (so the id doesn't require a DB hash
   lookup). v2 drops the encryption step: the header carries the raw
@@ -105,8 +105,8 @@ checks (see Known gaps).
 
 Every route requires a project (`x-nuvix-publishable-key`) resolved by the
 shared context chain; the caller is then resolved from session/JWT/API-key
-(`context/auth.ts` — console-audience JWTs are treated as guest, i.e.
-rejected on the tenant surface). Endpoint requirements below: most
+(`context/tenant.ts` — console-audience JWTs are rejected on the tenant
+surface). Endpoint requirements below: most
 self-service endpoints call `requireAuth` (any resolved user —
 `401 user_unauthorized` otherwise); session/token _creation_ endpoints are
 guest-accessible. The v1-style per-endpoint session-type gates
@@ -419,7 +419,6 @@ Both flows now send their emails through the mails worker (v1
 redirect|otp}`. Redirects validate against project platforms; the magic-URL
 `url` falls back to `${origin}/auth/magic-url` (v1's
 `magicAuthDefaultPath`).
-
 - **`phrase` (v1 parity, restored)**: `POST /tokens/magic-url` accepts
   `phrase: true`; the response then carries `phrase` (word-combo +
   4-char suffix) and the email renders the `securityPhrase` block.
@@ -458,7 +457,6 @@ literals for verification tokens; the legacy enum defines
 
 **Field visibility rule (as implemented — v2 uses explicit response views,
 not v1's `class-transformer` `groups: ['admin']` mechanism):**
-
 - `secret` — **always masked (`''`) in v2 session views**, on creation and
   on every read alike (v1's privilege-gated `groups: ['admin']` exposure
   was not ported, and no session-create response delivers the plaintext
@@ -583,7 +581,6 @@ below is verified against the v2 services (not assumed):
 ## v1 → v2 deviations (summary)
 
 See inline call-outs above for full detail; summarized here:
-
 1. **D23 resolved**: session (long-lived, DB) + JWT access token (minted
    via `tokens/jwts`) are formalized as refresh/access-token pair.
 2. **Session header simplified**: raw secret + hash-index lookup, no
@@ -630,7 +627,6 @@ See inline call-outs above for full detail; summarized here:
 
 Documented in earlier drafts, **not implemented** in v2 (no code emits the
 related codes):
-
 - Per-project gate/limit enforcement (D42): `auths.*` method gates
   (`user_auth_method_unsupported`), user-count limit, session-alerts email,
   mock-number OTP bypass, `limits.userSessionsMax` cap with LRU eviction.

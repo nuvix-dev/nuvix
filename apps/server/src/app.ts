@@ -10,7 +10,6 @@ import { accountRoutes } from './account/route'
 import { translationsDir } from './assets'
 import { avatarRoutes } from './avatars/route'
 import { createAvatarService } from './avatars/service'
-import { authContext } from './context/auth'
 import { createGeoIP } from './context/geoip'
 import { getTranslator, localeContext } from './context/locale'
 import { projectContext } from './context/project'
@@ -150,7 +149,6 @@ const v2 = new Elysia({ prefix: '/v2' })
   // Request pipeline order: publishable key -> platform project ->
   // tenant-local auth -> canonical roles -> caller-scoped `Session`.
   .use(projectContext({ lookup: projectRegistry }))
-  .use(authContext({ jwtSecret: config.jwtSecret }))
   // Network usage metrics (requests + bytes) — every project response.
   .use(statsRequestSource({ enqueue: statsEnqueuer, enabled: () => config.stats.enabled }))
   // API request logs — every project response (admin traffic skipped).

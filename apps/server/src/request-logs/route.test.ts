@@ -89,10 +89,10 @@ function makeApp() {
     .use(problemErrors())
     .derive('plugin', ({ request }) => ({
       tenantResource,
-      // Exercise both supported admin authentication paths without external auth services.
-      auth: request.headers.has('x-nuvix-key')
-        ? { type: 'apiKey', mode: 'admin' }
-        : ({ type: 'guest' } as unknown),
+      // Exercise both supported admin authentication paths without external
+      // auth services: the tenant context resolves API keys to `isAPIUser`.
+      isAPIUser: request.headers.has('x-nuvix-key'),
+      isAdmin: request.headers.has('x-nuvix-key'),
     }))
     .use(logsRoutes({ jwtSecret: process.env.NUVIX_JWT_SECRET! }))
 

@@ -4,7 +4,8 @@
  * database).
  *
  * Two auth legs:
- *  - tenant-local secret API key (`x-nuvix-key` → `auth.type === 'apiKey'`),
+ *  - tenant-local secret API key (`x-nuvix-key` → resolved by the tenant
+ *    context as an admin API user, `isAPIUser`),
  *  - console operator JWT (`Authorization: Bearer`, `aud: 'console'`) —
  *    lets the console UI read project logs directly from the server API.
  *
@@ -74,29 +75,29 @@ interface LogsQuery {
 }
 
 interface LogsCtx {
-  auth: unknown
   headers: Record<string, unknown>
   tenantResource?: TenantResource
   query: LogsQuery
+  /** Tenant-context signal: the request authenticated with a tenant API key. */
+  isAPIUser?: boolean
+  /** Tenant-context signal: that API key carries admin scope. */
+  isAdmin?: boolean
 }
 
 async function logsHandler(
   raw: LogsCtx & Record<string, unknown>,
   jwtSecret: string,
 ): Promise<{ total: number; logs: Array<Record<string, unknown>> }> {
-  const { auth, headers, tenantResource, query } = raw
+  const { headers, tenantResource, query } = raw
 
-  // Auth leg 1: tenant-local API key (admin).
-  const isApiKey =
-    auth &&
-    typeof auth === 'object' &&
-    'type' in auth &&
-    (auth as { type?: string }).type === 'apiKey'
+  // Auth leg 1: tenant-local admin API key, already validated by the tenant
+  // context (the plugin that also resolves `tenantResource`).
+  const isApiKeyAdmin = raw.isAPIUser === true && raw.isAdmin === true
 
   // Auth leg 2: console operator JWT.
   const consoleSubject = await consoleJwtSubject(headers.authorization, jwtSecret)
 
-  if (!isApiKey && !consoleSubject) {
+  if (!isApiKeyAdmin && !consoleSubject) {
     throw new UnauthorizedError('Admin auth required', {
       code: 'logs_unauthorized',
     })
